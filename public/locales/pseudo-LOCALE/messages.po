@@ -34,6 +34,22 @@ msgstr ""
 msgid "common.save"
 msgstr ""
 
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-arialabel"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-description"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-label"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.on-description"
+msgstr ""
+
 #: public/app/features/dashboard/components/DashNav/DashNav.tsx
 msgid "dashboard.toolbar.add-panel"
 msgstr ""
@@ -84,50 +100,6 @@ msgstr ""
 
 #: public/app/features/dashboard/components/DashNav/DashNav.tsx
 msgid "dashboard.toolbar.unmark-favorite"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "grafana-ui.refresh-picker.live-arialabel"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "grafana-ui.refresh-picker.live-label"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "grafana-ui.refresh-picker.off-arialabel"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "grafana-ui.refresh-picker.off-description"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "grafana-ui.refresh-picker.off-label"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "grafana-ui.refresh-picker.on-description"
-msgstr ""
-
-#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
-msgid "grafana-ui.time-range-picker.move-back-arialabel"
-msgstr ""
-
-#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
-msgid "grafana-ui.time-range-picker.move-forward-arialabel"
-msgstr ""
-
-#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
-msgid "grafana-ui.time-range-picker.open-picker-arialabel"
-msgstr ""
-
-#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
-msgid "grafana-ui.time-range-picker.zoom-out"
-msgstr ""
-
-#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
-msgid "grafana-ui.time-range-picker.zoom-out-arialabel"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts

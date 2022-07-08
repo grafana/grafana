@@ -5011,9 +5011,6 @@ __metadata:
     "@grafana/schema": 9.1.0-pre
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@lingui/core": 3.13.3
-    "@lingui/macro": 3.13.3
-    "@lingui/react": 3.13.3
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.3.1
     "@popperjs/core": 2.11.5

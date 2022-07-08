@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { t, Trans } from '@lingui/macro';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -92,16 +91,12 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
   const styles = getStyles(theme);
   const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const variant = isSynced ? 'active' : 'default';
-  const formattedRangeLabel = formattedRange(value, timeZone);
 
   return (
     <ButtonGroup className={styles.container}>
       {hasAbsolute && (
         <ToolbarButton
-          aria-label={t({
-            id: 'grafana-ui.time-range-picker.move-back-arialabel',
-            message: 'Move time range backwards',
-          })}
+          aria-label="Move time range backwards"
           variant={variant}
           onClick={onMoveBackward}
           icon="angle-left"
@@ -112,10 +107,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
       <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom" interactive>
         <ToolbarButton
           data-testid={selectors.components.TimePicker.openButton}
-          aria-label={t({
-            id: 'grafana-ui.time-range-picker.open-picker-arialabel',
-            message: `Time range picker with current time range ${formattedRangeLabel} selected`,
-          })}
+          aria-label={`Time range picker with current time range ${formattedRange(value, timeZone)} selected`}
           aria-controls="TimePickerContent"
           onClick={onOpen}
           icon="clock-nine"
@@ -149,10 +141,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
 
       {hasAbsolute && (
         <ToolbarButton
-          aria-label={t({
-            id: 'grafana-ui.time-range-picker.move-forward-arialabel',
-            message: 'Move time range forwards',
-          })}
+          aria-label="Move time range forwards"
           onClick={onMoveForward}
           icon="angle-right"
           narrow
@@ -161,15 +150,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
       )}
 
       <Tooltip content={ZoomOutTooltip} placement="bottom">
-        <ToolbarButton
-          aria-label={t({
-            id: 'grafana-ui.time-range-picker.zoom-out-arialabel',
-            message: 'Zoom out time range',
-          })}
-          onClick={onZoom}
-          icon="search-minus"
-          variant={variant}
-        />
+        <ToolbarButton aria-label="Zoom out time range" onClick={onZoom} icon="search-minus" variant={variant} />
       </Tooltip>
     </ButtonGroup>
   );
@@ -177,9 +158,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
 
 const ZoomOutTooltip = () => (
   <>
-    <Trans id="grafana-ui.time-range-picker.zoom-out">
-      Time range zoom out <br /> CTRL+Z
-    </Trans>
+    Time range zoom out <br /> CTRL+Z
   </>
 );
 

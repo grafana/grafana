@@ -26,43 +26,24 @@ export interface Props {
   noIntervalPicker?: boolean;
   width?: string;
   primary?: boolean;
-}
-
-interface UntranslatedOption {
-  label: MessageDescriptor;
-  value: string;
-  ariaLabel: MessageDescriptor;
+  offOptionLabelMsg?: string;
+  offOptionAriaLabelMsg?: string;
+  offDescriptionAriaLabelMsg?: string;
+  onDescriptionAriaLabelMsg?: (durationAriaLabel: string | undefined) => string;
 }
 
 export class RefreshPicker extends PureComponent<Props> {
   static offOption = {
-    label: defineMessage({
-      id: 'grafana-ui.refresh-picker.off-label',
-      message: 'Off',
-    }),
+    label: 'Off',
     value: '',
-    ariaLabel: defineMessage({
-      id: 'grafana-ui.refresh-picker.off-arialabel',
-      message: 'Turn off auto refresh',
-    }),
+    ariaLabel: 'Turn off auto refresh',
   };
   static liveOption = {
-    label: defineMessage({
-      id: 'grafana-ui.refresh-picker.live-label',
-      message: 'Live',
-    }),
+    label: 'Live',
     value: 'LIVE',
-    ariaLabel: defineMessage({
-      id: 'grafana-ui.refresh-picker.live-arialabel',
-      message: 'Turn on live streaming',
-    }),
+    ariaLabel: 'Turn on live streaming',
   };
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
-  static translateOption = (option: UntranslatedOption) => ({
-    value: option.value,
-    label: i18n._(option.label),
-    ariaLabel: i18n._(option.ariaLabel),
-  });
 
   constructor(props: Props) {
     super(props);
@@ -94,9 +75,13 @@ export class RefreshPicker extends PureComponent<Props> {
 
     const currentValue = value || '';
     const variant = this.getVariant();
-    const options = intervalsToOptions({ intervals });
+    const translatedOffOption = {
+      value: RefreshPicker.offOption.value,
+      label: this.props.offOptionLabelMsg || RefreshPicker.offOption.label,
+      ariaLabel: this.props.offOptionAriaLabelMsg || RefreshPicker.offOption.ariaLabel,
+    };
+    const options = intervalsToOptions({ intervals, offOption: translatedOffOption });
     const option = options.find(({ value }) => value === currentValue);
-    const translatedOffOption = RefreshPicker.translateOption(RefreshPicker.offOption);
     let selectedValue = option || translatedOffOption;
 
     if (selectedValue.label === translatedOffOption.label) {
@@ -106,14 +91,9 @@ export class RefreshPicker extends PureComponent<Props> {
     const durationAriaLabel = selectedValue.ariaLabel;
     const ariaLabel =
       selectedValue.value === ''
-        ? t({
-            id: 'grafana-ui.refresh-picker.off-description',
-            message: 'Auto refresh turned off. Choose refresh time interval',
-          })
-        : t({
-            id: 'grafana-ui.refresh-picker.on-description',
-            message: `Choose refresh time interval with current interval ${durationAriaLabel} selected`,
-          });
+        ? this.props.offDescriptionAriaLabelMsg || 'Auto refresh turned off. Choose refresh time interval'
+        : this.props.onDescriptionAriaLabelMsg?.(durationAriaLabel) ||
+          `Choose refresh time interval with current interval ${durationAriaLabel} selected`;
 
     return (
       <ButtonGroup className="refresh-picker">
@@ -143,11 +123,12 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 }
 
-export function intervalsToOptions({ intervals = defaultIntervals }: { intervals?: string[] } = {}): Array<
-  SelectableValue<string>
-> {
+export function intervalsToOptions({
+  intervals = defaultIntervals,
+  offOption = RefreshPicker.offOption,
+}: { intervals?: string[]; offOption?: SelectableValue<string> } = {}): Array<SelectableValue<string>> {
   const intervalsOrDefault = intervals || defaultIntervals;
-  const options = intervalsOrDefault.map((interval) => {
+  const options: Array<SelectableValue<string>> = intervalsOrDefault.map((interval) => {
     const duration = parseDuration(interval);
     const ariaLabel = formatDuration(duration);
 
@@ -158,6 +139,6 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
     };
   });
 
-  options.unshift(RefreshPicker.translateOption(RefreshPicker.offOption));
+  options.unshift(offOption);
   return options;
 }
