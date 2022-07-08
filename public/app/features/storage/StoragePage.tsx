@@ -230,14 +230,15 @@ export default function StoragePage(props: Props) {
               setIsAddingNewFolder(false);
             }}
             validate={(folderName) => {
-              const trimmedLowerCase = folderName.toLowerCase().trim();
+              const lowerCase = folderName.toLowerCase();
+              const trimmedLowerCase = lowerCase.trim();
               const existingTrimmedLowerCaseNames = fileNames.map((f) => f.trim().toLowerCase());
 
               if (existingTrimmedLowerCaseNames.includes(trimmedLowerCase)) {
                 return 'A file or a folder with the same name already exists';
               }
 
-              if (!folderNameRegex.test(folderName)) {
+              if (!folderNameRegex.test(lowerCase)) {
                 return 'Name contains illegal characters';
               }
 
