@@ -71,14 +71,27 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 
   render() {
-    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width } = this.props;
+    const {
+      onRefresh,
+      intervals,
+      tooltip,
+      value,
+      text,
+      isLoading,
+      noIntervalPicker,
+      width,
+      offOptionLabelMsg,
+      offOptionAriaLabelMsg,
+      offDescriptionAriaLabelMsg,
+      onDescriptionAriaLabelMsg,
+    } = this.props;
 
     const currentValue = value || '';
     const variant = this.getVariant();
     const translatedOffOption = {
       value: RefreshPicker.offOption.value,
-      label: this.props.offOptionLabelMsg || RefreshPicker.offOption.label,
-      ariaLabel: this.props.offOptionAriaLabelMsg || RefreshPicker.offOption.ariaLabel,
+      label: offOptionLabelMsg || RefreshPicker.offOption.label,
+      ariaLabel: offOptionAriaLabelMsg || RefreshPicker.offOption.ariaLabel,
     };
     const options = intervalsToOptions({ intervals, offOption: translatedOffOption });
     const option = options.find(({ value }) => value === currentValue);
@@ -91,8 +104,8 @@ export class RefreshPicker extends PureComponent<Props> {
     const durationAriaLabel = selectedValue.ariaLabel;
     const ariaLabel =
       selectedValue.value === ''
-        ? this.props.offDescriptionAriaLabelMsg || 'Auto refresh turned off. Choose refresh time interval'
-        : this.props.onDescriptionAriaLabelMsg?.(durationAriaLabel) ||
+        ? offDescriptionAriaLabelMsg || 'Auto refresh turned off. Choose refresh time interval'
+        : onDescriptionAriaLabelMsg?.(durationAriaLabel) ||
           `Choose refresh time interval with current interval ${durationAriaLabel} selected`;
 
     return (
