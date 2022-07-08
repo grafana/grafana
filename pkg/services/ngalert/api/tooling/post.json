@@ -3003,6 +3003,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -5344,6 +5345,24 @@
    }
   },
   "/api/v1/provisioning/policies": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RouteResetPolicyTree",
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "summary": "Clears the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "get": {
     "operationId": "RouteGetPolicyTree",
     "responses": {
