@@ -103,7 +103,10 @@ func (ss *SQLStore) GetPlaylist(ctx context.Context, query *models.GetPlaylistBy
 
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		playlist := models.Playlist{UID: query.UID, OrgId: query.OrgId}
-		_, err := sess.Get(&playlist)
+		exists, err := sess.Get(&playlist)
+		if !exists {
+			return models.ErrPlaylistNotFound
+		}
 		query.Result = &playlist
 
 		return err
@@ -117,7 +120,10 @@ func (ss *SQLStore) DeletePlaylist(ctx context.Context, cmd *models.DeletePlayli
 
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		playlist := models.Playlist{UID: cmd.UID, OrgId: cmd.OrgId}
-		_, err := sess.Get(&playlist)
+		exists, err := sess.Get(&playlist)
+		if !exists {
+			return models.ErrPlaylistNotFound
+		}
 		if err != nil {
 			return err
 		}
