@@ -116,7 +116,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     if (prefs.homeDashboardUID && !dashboards.find((d) => d.uid === prefs.homeDashboardUID)) {
       const missingDash = await backendSrv.getDashboardByUid(prefs.homeDashboardUID);
 
-      if (missingDash) {
+      if (missingDash?.dashboard) {
         dashboards.push({
           id: missingDash.dashboard.id,
           title: missingDash.dashboard.title,

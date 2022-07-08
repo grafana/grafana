@@ -27,6 +27,7 @@ jest.mock('app/core/services/backend_srv', () => {
     backendSrv: {
       getDashboardByUid: jest.fn().mockResolvedValue({
         dashboard: {
+          id: 2,
           title: 'My Dashboard',
           uid: 'myDash',
           templating: {
@@ -192,7 +193,7 @@ describe('SharedPreferences', () => {
       timezone: 'browser',
       weekStart: '',
       theme: '',
-      homeDashboardUID: 'default',
+      homeDashboardUID: undefined,
       queryHistory: {
         homeTab: '',
       },
