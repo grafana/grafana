@@ -5,12 +5,14 @@
 }
 
 // TODO: check if this is used
+// TODO (LMKB): transferred to ExplorePaneContainer.tsx => delete here
 .explore {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
 }
 
+// TODO (LMKB): transferred to ExplorePaneContainer.tsx => delete here
 .explore + .explore {
   border-left: 1px dotted $table-border;
 }

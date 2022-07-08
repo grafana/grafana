@@ -1,8 +1,9 @@
+import { css, cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv } from '@grafana/data';
+import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import store from 'app/core/store';
 import {
@@ -21,6 +22,20 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 import Explore from './Explore';
 import { initializeExplore, refreshExplore } from './state/explorePane';
 import { lastSavedUrl, cleanupPaneAction } from './state/main';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    explore: css`
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      'explore &' {
+        // TODO (LMKB): Ask someone whether .explore in .explore is used and if yes whether this is written in the right way
+        border-left: 1px dotted ${theme.colors.background.secondary};
+      }
+    `,
+  };
+};
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -87,7 +102,8 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const exploreClass = this.props.split ? 'explore explore-split' : 'explore';
+    const styles = getStyles(theme);
+    const exploreClass = this.props.split ? cx(styles.explore, 'explore-split') : cx(styles.explore);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
         {this.props.initialized && <Explore exploreId={this.props.exploreId} />}
