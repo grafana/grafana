@@ -156,6 +156,7 @@ type ListOptions struct {
 	Filter       PathFilter
 }
 
+//go:generate mockery --name FileStorage --structname MockFileStorage --inpackage --filename file_storage_mock.go
 type FileStorage interface {
 	Get(ctx context.Context, path string) (*File, error)
 	Delete(ctx context.Context, path string) error

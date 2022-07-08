@@ -94,12 +94,10 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		return storages
 	}
 
-	s := newStandardStorageService(globalRoots, initializeOrgStorages)
-	s.sql = sql
-	return s
+	return newStandardStorageService(sql, globalRoots, initializeOrgStorages)
 }
 
-func newStandardStorageService(globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime) *standardStorageService {
+func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime) *standardStorageService {
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
 
@@ -109,6 +107,7 @@ func newStandardStorageService(globalRoots []storageRuntime, initializeOrgStorag
 	}
 	res.init()
 	return &standardStorageService{
+		sql:  sql,
 		tree: res,
 	}
 }
@@ -148,13 +147,18 @@ type UploadRequest struct {
 	OverwriteExistingFile bool
 }
 
+func storageSupportsMutatingOperations(path string) bool {
+	// TODO: this is temporary - make it rbac-driven
+	return strings.HasPrefix(path, RootResources+"/") || path == RootResources
+}
+
 func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error {
 	upload, _ := s.tree.getRoot(getOrgId(user), RootResources)
 	if upload == nil {
 		return ErrUploadFeatureDisabled
 	}
 
-	if !strings.HasPrefix(req.Path, RootResources+"/") {
+	if !storageSupportsMutatingOperations(req.Path) {
 		return ErrUnsupportedStorage
 	}
 
@@ -199,7 +203,7 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.
 		return fmt.Errorf("resources storage is not enabled")
 	}
 
-	if !strings.HasPrefix(cmd.Path, RootResources+"/") {
+	if !storageSupportsMutatingOperations(cmd.Path) {
 		return ErrUnsupportedStorage
 	}
 
@@ -212,7 +216,7 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.
 }
 
 func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.SignedInUser, cmd *CreateFolderCmd) error {
-	if !strings.HasPrefix(cmd.Path, RootResources+"/") {
+	if !storageSupportsMutatingOperations(cmd.Path) {
 		return ErrUnsupportedStorage
 	}
 
@@ -230,7 +234,7 @@ func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.
 }
 
 func (s *standardStorageService) Delete(ctx context.Context, user *models.SignedInUser, path string) error {
-	if !strings.HasPrefix(path, RootResources+"/") {
+	if !storageSupportsMutatingOperations(path) {
 		return ErrUnsupportedStorage
 	}
 
