@@ -126,7 +126,7 @@ function renderIcon(icon: IconName | React.ReactNode) {
 const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
-  console.log('theme', theme);
+
   const defaultOld = css`
     color: ${theme.colors.text.secondary};
     background-color: ${theme.colors.background.primary};
@@ -136,6 +136,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.colors.background.secondary};
     }
   `;
+
   const defaultTopNav = css`
     color: ${theme.colors.text.secondary};
     background-color: transparent;
