@@ -208,11 +208,7 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.
 	}
 
 	storagePath := strings.TrimPrefix(cmd.Path, RootResources)
-	err := resources.DeleteFolder(ctx, storagePath)
-	if err != nil {
-		return err
-	}
-	return nil
+	return resources.DeleteFolder(ctx, storagePath, &filestorage.DeleteFolderOptions{Force: true})
 }
 
 func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.SignedInUser, cmd *CreateFolderCmd) error {

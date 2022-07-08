@@ -41,13 +41,13 @@ func (_m *MockFileStorage) Delete(ctx context.Context, path string) error {
 	return r0
 }
 
-// DeleteFolder provides a mock function with given fields: ctx, path
-func (_m *MockFileStorage) DeleteFolder(ctx context.Context, path string) error {
-	ret := _m.Called(ctx, path)
+// DeleteFolder provides a mock function with given fields: ctx, path, options
+func (_m *MockFileStorage) DeleteFolder(ctx context.Context, path string, options *DeleteFolderOptions) error {
+	ret := _m.Called(ctx, path, options)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, path)
+	if rf, ok := ret.Get(0).(func(context.Context, string, *DeleteFolderOptions) error); ok {
+		r0 = rf(ctx, path, options)
 	} else {
 		r0 = ret.Error(0)
 	}

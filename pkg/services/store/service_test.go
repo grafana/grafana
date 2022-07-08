@@ -118,7 +118,7 @@ func TestShouldDelegateFolderCreation(t *testing.T) {
 func TestShouldDelegateFolderDeletion(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t)
 
-	mockStorage.On("DeleteFolder", mock.Anything, "").Return(nil)
+	mockStorage.On("DeleteFolder", mock.Anything, "", &filestorage.DeleteFolderOptions{Force: true}).Return(nil)
 
 	err := service.DeleteFolder(context.Background(), dummyUser, &DeleteFolderCmd{
 		Path:  storageName,
