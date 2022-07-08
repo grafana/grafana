@@ -179,7 +179,7 @@ func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTi
 		Expression:        model.Expression,
 	}
 	reNumber := regexp.MustCompile(`^\d+$`)
-	dimensions, err := parseDimensions(model)
+	dimensions, err := parseDimensions(model.Dimensions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse dimensions: %v", err)
 	}
@@ -301,9 +301,9 @@ func getRetainedPeriods(timeSince time.Duration) []int {
 	}
 }
 
-func parseDimensions(model QueryJson) (map[string][]string, error) {
+func parseDimensions(dimensions map[string]interface{}) (map[string][]string, error) {
 	parsedDimensions := make(map[string][]string)
-	for k, v := range model.Dimensions {
+	for k, v := range dimensions {
 		// This is for backwards compatibility. Before 6.5 dimensions values were stored as strings and not arrays
 		if value, ok := v.(string); ok {
 			parsedDimensions[k] = []string{value}
