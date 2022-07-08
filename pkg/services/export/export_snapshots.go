@@ -29,7 +29,7 @@ func exportSnapshots(helper *commitHelper, job *gitExportJob) error {
 
 	gitcmd := commitOptions{
 		when:    time.Now(),
-		comment: "Export playlists",
+		comment: "Export snapshots",
 	}
 
 	for _, snapshot := range cmd.Result {
