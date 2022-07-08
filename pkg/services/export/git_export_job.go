@@ -172,19 +172,16 @@ func (e *gitExportJob) doExportWithHistory() error {
 
 func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 	include := e.cfg.Include
-	lookup, err := exportDataSources(helper, e, include.DS)
-	if err != nil {
-		return err
-	}
-
-	if include.Dash {
-		err = exportDashboards(helper, e, lookup)
-		if err != nil {
-			return err
-		}
-	}
 
 	exporters := []simpleExporter{}
+	if include.Dash {
+		exporters = append(exporters, exportDashboards)
+	}
+
+	if include.DS {
+		exporters = append(exporters, exportDataSources)
+	}
+
 	if include.Auth {
 		exporters = append(exporters, dumpAuthTables)
 	}
@@ -207,12 +204,12 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 	}
 
 	for _, fn := range exporters {
-		err = fn(helper, e)
+		err := fn(helper, e)
 		if err != nil {
 			return err
 		}
 	}
-	return err
+	return nil
 }
 
 /**

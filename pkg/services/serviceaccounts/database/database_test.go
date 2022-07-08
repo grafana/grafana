@@ -105,7 +105,7 @@ func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreI
 	t.Helper()
 	db := sqlstore.InitTestDB(t)
 	kvStore := kvstore.ProvideService(db)
-	return db, NewServiceAccountsStore(db, kvStore)
+	return db, ProvideServiceAccountsStore(db, kvStore)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {

@@ -91,7 +91,7 @@
     "slate-plain-serializer": "0.7.10",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.0",
-    "uplot": "1.6.21",
+    "uplot": "1.6.22",
     "uuid": "8.3.2"
   },
   "devDependencies": {
