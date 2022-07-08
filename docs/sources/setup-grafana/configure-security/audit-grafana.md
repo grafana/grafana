@@ -315,6 +315,8 @@ enabled = false
 loggers = file
 # Keep dashboard content in the logs (request or response fields); this can significantly increase the size of your logs.
 log_dashboard_content = false
+# Log all requests with including GET requests
+log_all_requests = false
 ```
 
 Each exporter has its own configuration fields.
