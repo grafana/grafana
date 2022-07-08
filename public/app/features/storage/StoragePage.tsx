@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 

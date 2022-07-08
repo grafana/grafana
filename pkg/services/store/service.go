@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -33,7 +32,7 @@ const MAX_UPLOAD_SIZE = 3 * 1024 * 1024 // 3MB
 
 type StorageService interface {
 	// List folder contents
-	List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error)
+	List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error)
 
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
@@ -48,9 +47,14 @@ type StorageService interface {
 	sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error)
 }
 
+type storageServiceConfig struct {
+	allowUnsanitizedSvgUpload bool
+}
+
 type standardStorageService struct {
 	sql  *sqlstore.SQLStore
 	tree *nestedTree
+	cfg  storageServiceConfig
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
@@ -104,6 +108,9 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 
 	s := newStandardStorageService(globalRoots, initializeOrgStorages)
 	s.sql = sql
+	s.cfg = storageServiceConfig{
+		allowUnsanitizedSvgUpload: false,
+	}
 	return s
 }
 
@@ -129,7 +136,7 @@ func getOrgId(user *models.SignedInUser) int64 {
 	return user.OrgId
 }
 
-func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error) {
+func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error) {
 	// apply access control here
 
 	return s.tree.ListFolder(ctx, getOrgId(user), path)

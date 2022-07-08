@@ -24,6 +24,7 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
+import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
@@ -65,6 +66,9 @@ export interface TempoJsonData extends DataSourceJsonData {
   lokiSearch?: {
     datasourceUid?: string;
   };
+  spanBar?: {
+    tag: string;
+  };
 }
 
 export interface TempoQuery extends DataQuery {
@@ -105,6 +109,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     datasourceUid?: string;
   };
   uploadedJson?: string | ArrayBuffer | null = null;
+  spanBar?: SpanBarOptions;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
