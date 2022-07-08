@@ -110,12 +110,41 @@ class SimpleStorage implements GrafanaStorage {
 
   // Temporary shim that can be loaded into the existing dashboard page structure
   async getDashboard(path: string): Promise<DashboardDTO> {
-    const result = await backendSrv.get<DashboardDTO>(`/api/storage/dashboard/${path}`);
-    result.meta.slug = path;
-    result.meta.uid = path;
-    result.dashboard.uid = path;
-    delete result.dashboard.id; // remove the internal ID
-    return result;
+    if (path.endsWith('.json')) {
+      const result = await backendSrv.get(`/api/storage/read/${path}`);
+      result.uid = path;
+      delete result.id; // Saved with the dev dashboards!
+
+      return {
+        meta: {
+          uid: path,
+          slug: path,
+          canEdit: true,
+          canSave: true,
+          canStar: false, // needs id
+        },
+        dashboard: result,
+      };
+    }
+
+    // Assume it is a folder
+    return {
+      meta: {
+        uid: path,
+        slug: path,
+        isFolder: true,
+        canEdit: false,
+        canSave: false,
+        canStar: false, // needs id
+      },
+      dashboard: {
+        uid: path,
+        title: path,
+        templating: {
+          list: [],
+        },
+      },
+    };
   }
 }
 

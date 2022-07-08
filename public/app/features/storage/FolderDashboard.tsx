@@ -25,21 +25,32 @@ export function FolderDashboard({ dash }: Props) {
     if (!base.endsWith('/')) {
       base += '/';
     }
+    let parent = '';
+    const idx = base.lastIndexOf('/', base.length - 2);
+    if (idx > 0) {
+      parent = base.substring(0, idx);
+    }
 
     return (
       <div className={styles.wrapper}>
-        {names.map((item) => {
+        <Card href={parent}>
+          <Card.Heading>{parent}</Card.Heading>
+          <Card.Figure>
+            <Icon name={'folder'} size="sm" />
+          </Card.Figure>
+        </Card>
+        <br />
+
+        {names.map((item: string) => {
           let name = item;
-          if (name.endsWith('.json')) {
-            name = name.substring(0, name.length - '.json'.length);
-          }
+          const isFolder = name.endsWith('.json');
 
           const url = base + name;
           return (
             <Card key={name} href={url}>
               <Card.Heading>{name}</Card.Heading>
               <Card.Figure>
-                <Icon name={name === 'directory' ? 'folder' : 'gf-grid'} size="sm" />
+                <Icon name={isFolder ? 'folder' : 'gf-grid'} size="sm" />
               </Card.Figure>
             </Card>
           );
