@@ -2,6 +2,7 @@ package export
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"sync"
@@ -221,6 +222,11 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		}
 	}
 	return nil
+}
+
+func prettyJSON(v interface{}) []byte {
+	b, _ := json.MarshalIndent(v, "", "  ")
+	return b
 }
 
 /**

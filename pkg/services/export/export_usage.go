@@ -65,9 +65,7 @@ func exportUsage(helper *commitHelper, job *gitExportJob) error {
 				return err
 			}
 
-			frame, err := sqlutil.FrameFromRows(rows.Rows, -1, sqlutil.Converter{
-				Dynamic: true,
-			})
+			frame, err := sqlutil.FrameFromRows(rows.Rows, -1, usage.converters...)
 			if err != nil {
 				return err
 			}
