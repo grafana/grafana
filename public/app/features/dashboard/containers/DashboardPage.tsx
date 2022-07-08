@@ -14,6 +14,7 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { FolderDashboard } from 'app/features/storage/FolderDashboard';
 import { KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
@@ -337,7 +338,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     if (dashboard.meta.isFolder) {
-      return <div>TODO: foler view</div>;
+      return <FolderDashboard dash={dashboard} />;
     }
 
     const inspectPanel = this.getInspectPanel();

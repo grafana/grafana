@@ -415,11 +415,6 @@ func (hs *HTTPServer) registerRoutes() {
 				}
 			})
 
-			if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
-				dashboardRoute.Get("/path", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
-				dashboardRoute.Get("/path/*", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
-			}
-
 			dashboardRoute.Post("/calculate-diff", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
 

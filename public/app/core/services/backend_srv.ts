@@ -430,10 +430,6 @@ export class BackendSrv implements BackendService {
     return this.get('/api/search', query);
   }
 
-  getDashboardFromStorage(path: string) {
-    return this.get<DashboardDTO>(`/api/storage/dashboard/${path}`);
-  }
-
   getDashboardByUid(uid: string) {
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
