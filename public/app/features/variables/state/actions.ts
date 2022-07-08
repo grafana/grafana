@@ -36,7 +36,7 @@ import {
   isMulti,
   isQuery,
 } from '../guard';
-import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
+import { calcDependentPanels, getPanelVars } from '../inspect/utils';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
 import {
@@ -594,9 +594,15 @@ export const variableUpdated = (
     const variables = getVariablesByKey(rootStateKey, state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
+
+    const panelVars = getPanelVars(panels);
+
     const event: VariablesChangedEvent = isAdHoc(variableInState)
       ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
-      : { refreshAll: false, panelIds: getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels) };
+      : {
+          refreshAll: false,
+          panelIds: Array.from(calcDependentPanels([variableInState.id], variables, panelVars)),
+        };
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
@@ -643,7 +649,7 @@ export const onTimeRangeUpdated =
     }) as VariableWithOptions[];
 
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
-    const promises = variablesThatNeedRefresh.map((variable: VariableWithOptions) =>
+    const promises = variablesThatNeedRefresh.map((variable) =>
       dispatch(timeRangeUpdated(toKeyedVariableIdentifier(variable)))
     );
 
@@ -678,8 +684,8 @@ export const templateVarsChangedInUrl =
   async (dispatch, getState) => {
     const update: Array<Promise<any>> = [];
     const dashboard = getState().dashboard.getModel();
-    const panelIds = new Set<number>();
     const variables = getVariablesByKey(key, getState());
+
     for (const variable of variables) {
       const key = `var-${variable.name}`;
       if (!vars.hasOwnProperty(key)) {
@@ -706,24 +712,33 @@ export const templateVarsChangedInUrl =
         }
       }
 
-      // for adhoc variables we don't know which panels that will be impacted
-      if (!isAdHoc(variable)) {
-        getAllAffectedPanelIdsForVariableChange(variable.id, variables, dashboard?.panels ?? []).forEach((id) =>
-          panelIds.add(id)
-        );
-      }
+      // // for adhoc variables we don't know which panels that will be impacted
+      // if (!isAdHoc(variable)) {
+      //   getAllAffectedPanelIdsForVariableChange(variable.id, variables, panelVars).forEach((id) => panelIds.add(id));
+      // }
 
       const promise = variableAdapters.get(variable.type).setValueFromUrl(variable, value);
       update.push(promise);
     }
+
+    const filteredVars = variables.filter((v) => {
+      const key = `var-${v.name}`;
+      return vars.hasOwnProperty(key) && isVariableUrlValueDifferentFromCurrent(v, vars[key].value) && !isAdHoc(v);
+    });
+    const panelVars = getPanelVars(dashboard?.panels ?? []);
+    const affectedPanels = calcDependentPanels(
+      filteredVars.map((v) => v.id),
+      variables,
+      panelVars
+    );
 
     if (update.length) {
       await Promise.all(update);
 
       events.publish(
         new VariablesChangedInUrl({
-          refreshAll: panelIds.size === 0,
-          panelIds: Array.from(panelIds),
+          refreshAll: affectedPanels.size === 0,
+          panelIds: Array.from(affectedPanels),
         })
       );
     }

@@ -26,6 +26,7 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
     dependsOn: () => {
       return false;
     },
+    dependencies: () => [],
     setValue: async (variable, option, emitChanges = false) => {
       return;
     },

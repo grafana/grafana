@@ -72,6 +72,13 @@ export function containsVariable(...args: any[]) {
   return !!isMatchingVariable;
 }
 
+export function variableMatches(...args: any[]) {
+  args[0] = typeof args[0] === 'string' ? args[0] : safeStringifyValue(args[0]);
+  const variableString = args.join(' ');
+  const matches = variableString.matchAll(variableRegex);
+  return [...new Set([...matches].map((m) => m[1] || m[2] || m[4]))];
+}
+
 export const isAllVariable = (variable: any): boolean => {
   if (!variable) {
     return false;

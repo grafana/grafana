@@ -24,6 +24,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
     dependsOn: () => {
       return false;
     },
+    dependencies: () => [],
     setValue: async (variable, option, emitChanges = false) => {
       await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },

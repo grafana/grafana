@@ -23,6 +23,7 @@ export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableM
     dependsOn: (variable, variableToTest) => {
       return false;
     },
+    dependencies: () => [],
     setValue: async (variable, option, emitChanges = false) => {
       await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },

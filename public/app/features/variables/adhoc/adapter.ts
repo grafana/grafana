@@ -23,6 +23,7 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     picker: AdHocPicker,
     editor: AdHocVariableEditor,
     dependsOn: () => false,
+    dependencies: () => [],
     setValue: noop,
     setValueFromUrl: async (variable, urlValue) => {
       const filters = urlParser.toFilters(urlValue);

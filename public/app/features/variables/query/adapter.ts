@@ -6,7 +6,7 @@ import { ALL_VARIABLE_TEXT } from '../constants';
 import { optionPickerFactory } from '../pickers';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
-import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
+import { containsVariable, isAllVariable, toKeyedVariableIdentifier, variableMatches } from '../utils';
 
 import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
@@ -24,6 +24,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource?.uid, variable.regex, variableToTest.name);
     },
+    dependencies: (variable) => variableMatches(variable.query, variable.datasource?.uid, variable.regex),
     setValue: async (variable, option, emitChanges = false) => {
       await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
