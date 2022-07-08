@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"reflect"
 
 	// can ignore because we don't need a cryptographically secure hash function
 	// sha1 low chance of collisions and better performance than sha256
@@ -496,18 +497,18 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 	}
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var hashes []interface{}
+		var rawHashes []interface{}
 
 		// xorm does not support `.Delete()` with `.Join()`, so we first have to retrieve all path_hashes and then use them to filter `file_meta` table
 		err := sess.Table("file").
 			Cols("path_hash").
 			Where("LOWER(path) LIKE ?", lowerFolderPath+"%").
-			Find(&hashes)
+			Find(&rawHashes)
 		if err != nil {
 			return err
 		}
 
-		if len(hashes) == 0 {
+		if len(rawHashes) == 0 {
 			s.log.Info("Force deleted folder", "path", lowerFolderPath, "deletedFilesCount", 0, "deletedMetaCount", 0)
 			return nil
 		}
@@ -522,9 +523,22 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 			return err
 		}
 
-		if int64(len(hashes)) != accessibleFilesCount {
-			s.log.Error("force folder delete: unauthorized access", "path", lowerFolderPath, "expectedAccessibleFilesCount", int64(len(hashes)), "actualAccessibleFilesCount", accessibleFilesCount)
+		if int64(len(rawHashes)) != accessibleFilesCount {
+			s.log.Error("force folder delete: unauthorized access", "path", lowerFolderPath, "expectedAccessibleFilesCount", int64(len(rawHashes)), "actualAccessibleFilesCount", accessibleFilesCount)
 			return fmt.Errorf("force folder delete: unauthorized access for path %s", lowerFolderPath)
+		}
+
+		var hashes []interface{}
+		for _, hash := range rawHashes {
+			if hashString, ok := hash.(string); ok {
+				hashes = append(hashes, hashString)
+
+				// MySQL returns the `path_hash` field as []uint8
+			} else if hashUint, ok := hash.([]uint8); ok {
+				hashes = append(hashes, string(hashUint))
+			} else {
+				return fmt.Errorf("invalid hash type: %s", reflect.TypeOf(hash))
+			}
 		}
 
 		deletedFilesCount, err := sess.
