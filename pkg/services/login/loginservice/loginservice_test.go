@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-kit/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
