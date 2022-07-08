@@ -29,11 +29,11 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 
 	var period int64
 	if model.Period != "" {
-		p, err := strconv.Atoi(model.Period)
+		p, err := strconv.ParseInt(model.Period, 10, 64)
 		if err != nil {
 			return nil, err
 		}
-		period = int64(p)
+		period = p
 	}
 
 	if period == 0 && !model.PrefixMatching {
