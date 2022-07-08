@@ -101,27 +101,22 @@ describe('SharePublic', () => {
     const mockDashboard = new DashboardModel({
       uid: 'mockDashboardUid',
     });
-
-    expect(mockDashboard.time.from).toEqual('now-6h');
-    expect(mockDashboard.time.to).toEqual('now');
-
-    mockDashboard.originalTime = { from: 'test-from', to: 'test-to' };
-
     const mockPanel = new PanelModel({
       id: 'mockPanelId',
     });
 
+    expect(mockDashboard.time).toEqual({ from: 'now-6h', to: 'now' });
+    mockDashboard.originalTime = { from: 'test-from', to: 'test-to' };
+
     render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
 
     await waitFor(() => screen.getByText('Link'));
-    expect(screen.getByRole('tablist')).toHaveTextContent('Link');
-    expect(screen.getByRole('tablist')).toHaveTextContent('Public Dashboard');
-
     fireEvent.click(screen.getByText('Public Dashboard'));
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
     expect(screen.getByDisplayValue('test-from')).toBeInTheDocument();
     expect(screen.getByDisplayValue('test-to')).toBeInTheDocument();
   });
+
   // test checking if current version of dashboard in state is persisted to db
 });
