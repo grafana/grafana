@@ -54,7 +54,6 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 
 		existingPlaylist := models.Playlist{UID: cmd.UID, OrgId: cmd.OrgId}
 		_, err := sess.Get(&existingPlaylist)
-
 		if err != nil {
 			return err
 		}
