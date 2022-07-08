@@ -60,7 +60,7 @@ export class CentrifugeLiveChannel<T = any> {
       throw new Error('Channel already initalized: ' + this.id);
     }
     this.initalized = true;
-    
+
     this.subscription!.on('publication', (ctx: PublicationContext) => {
       try {
         if (ctx.data) {
@@ -100,6 +100,10 @@ export class CentrifugeLiveChannel<T = any> {
       }
       this.sendStatus(ctx.data);
     }).on('unsubscribed', (ctx: UnsubscribedContext) => {
+      this.currentStatus.timestamp = Date.now();
+      this.currentStatus.state = LiveChannelConnectionState.Disconnected;
+      this.sendStatus();
+    }).on('subscribing', (ctx: UnsubscribedContext) => {
       this.currentStatus.timestamp = Date.now();
       this.currentStatus.state = LiveChannelConnectionState.Disconnected;
       this.sendStatus();

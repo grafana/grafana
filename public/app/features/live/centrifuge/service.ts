@@ -149,6 +149,7 @@ export class CentrifugeService implements CentrifugeSrv {
     const subscription = this.centrifuge.newSubscription(channel.id, {
       data: channel.addr.data
     });
+    channel.subscription = subscription;
     channel.initalize();
     subscription.subscribe();
     return;
