@@ -126,7 +126,6 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   const getNextPage = async () => {
     while (loadMax > view.dataFrame.length) {
       const from = view.dataFrame.length;
-      console.log('Load NEXT PAGE', { from, loadMax });
       if (from >= meta.count) {
         return;
       }
@@ -174,7 +173,6 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
         }
       }
     }
-    console.log('Finished loading', { loadMax });
     pending = undefined;
   };
 
