@@ -325,6 +325,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	// Use a pure websocket transport.
 	wsHandler := centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
+		ProtocolVersion: centrifuge.ProtocolVersion2,
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin:     checkOrigin,
