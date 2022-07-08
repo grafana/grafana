@@ -233,10 +233,8 @@ func createNotificationPolicyServiceSut() *NotificationPolicyService {
 		provenanceStore: NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
-		settings: &setting.Cfg{
-			UnifiedAlerting: setting.UnifiedAlertingSettings{
-				DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
-			},
+		settings: setting.UnifiedAlertingSettings{
+			DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
 		},
 	}
 }
