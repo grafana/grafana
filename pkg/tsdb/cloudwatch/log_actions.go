@@ -20,9 +20,8 @@ import (
 const (
 	limitExceededException = "LimitExceededException"
 	defaultLimit           = int64(10)
+	logGroupDefaultLimit   = int64(50)
 )
-
-var logGroupDefaultLimit = int64(50)
 
 type AWSError struct {
 	Code    string
@@ -199,19 +198,20 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 	logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters LogQueryJson) (*data.Frame, error) {
+	logGroupLimit := logGroupDefaultLimit
 	if parameters.Limit != nil && *parameters.Limit != 0 {
-		logGroupDefaultLimit = *parameters.Limit
+		logGroupLimit = *parameters.Limit
 	}
 
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
 	if len(parameters.LogGroupNamePrefix) == 0 {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit: aws.Int64(logGroupDefaultLimit),
+			Limit: aws.Int64(logGroupLimit),
 		})
 	} else {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit:              aws.Int64(logGroupDefaultLimit),
+			Limit:              aws.Int64(logGroupLimit),
 			LogGroupNamePrefix: aws.String(parameters.LogGroupNamePrefix),
 		})
 	}
