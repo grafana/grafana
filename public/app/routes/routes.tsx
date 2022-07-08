@@ -210,7 +210,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts',
-      roles: () => contextSrv.evaluatePermission(() => ['Admin'], [AccessControlAction.ServiceAccountsRead]),
+      roles: () =>
+        contextSrv.evaluatePermission(
+          () => ['Admin'],
+          [AccessControlAction.ServiceAccountsRead, AccessControlAction.ServiceAccountsCreate]
+        ),
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ServiceAccountsPage" */ 'app/features/serviceaccounts/ServiceAccountsListPage')
