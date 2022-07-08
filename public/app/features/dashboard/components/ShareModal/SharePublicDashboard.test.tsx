@@ -106,6 +106,7 @@ describe('SharePublic', () => {
     });
 
     expect(mockDashboard.time).toEqual({ from: 'now-6h', to: 'now' });
+    //@ts-ignore
     mockDashboard.originalTime = { from: 'test-from', to: 'test-to' };
 
     render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
