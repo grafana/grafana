@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { useStyles } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
 import { GrafanaCloudBackend } from './types';

@@ -10,6 +10,25 @@ import { LokiQuery, LokiQueryType } from '../../types';
 
 import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
+
+jest.mock('app/core/store', () => {
+  return {
+    get() {
+      return undefined;
+    },
+    set() {},
+    getObject(key: string, defaultValue: any) {
+      return defaultValue;
+    },
+  };
+});
+
 const defaultQuery = {
   refId: 'A',
   expr: '{label1="foo", label2="bar"}',
@@ -31,6 +50,7 @@ const datasource = new LokiDatasource(
 );
 
 datasource.languageProvider.fetchLabels = jest.fn().mockResolvedValue([]);
+datasource.getDataSamples = jest.fn().mockResolvedValue([]);
 
 const defaultProps = {
   datasource,
@@ -56,7 +76,7 @@ describe('LokiQueryEditorSelector', () => {
         }}
       />
     );
-    expectBuilder();
+    await expectBuilder();
   });
 
   it('shows code editor when code mode is set', async () => {
@@ -66,7 +86,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('shows builder when builder mode is set', async () => {
     renderWithMode(QueryEditorMode.Builder);
-    expectBuilder();
+    await expectBuilder();
   });
 
   it('shows explain when explain mode is set', async () => {
@@ -86,27 +106,20 @@ describe('LokiQueryEditorSelector', () => {
   });
 
   it('Can enable raw query', async () => {
-    const { onChange } = renderWithMode(QueryEditorMode.Builder);
-    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
-
+    renderWithMode(QueryEditorMode.Builder);
+    expect(await screen.findByLabelText('selector')).toBeInTheDocument();
     screen.getByLabelText('Raw query').click();
-
-    expect(onChange).toBeCalledWith({
-      refId: 'A',
-      expr: defaultQuery.expr,
-      queryType: 'range',
-      editorMode: QueryEditorMode.Builder,
-      rawQuery: true,
-    });
+    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
   });
 
-  it('Should show raw query', async () => {
+  it('Should show raw query by default', async () => {
     renderWithProps({
-      rawQuery: true,
       editorMode: QueryEditorMode.Builder,
       expr: '{job="grafana"}',
     });
-    expect(screen.getByLabelText('selector').textContent).toBe('{job="grafana"}');
+    const selector = await screen.findByLabelText('selector');
+    expect(selector).toBeInTheDocument();
+    expect(selector.textContent).toBe('{job="grafana"}');
   });
 
   it('changes to code mode', async () => {
@@ -172,8 +185,8 @@ function expectCodeEditor() {
   expect(screen.getByText('Loading labels...')).toBeInTheDocument();
 }
 
-function expectBuilder() {
-  expect(screen.getByText('Labels')).toBeInTheDocument();
+async function expectBuilder() {
+  expect(await screen.findByText('Labels')).toBeInTheDocument();
 }
 
 function expectExplain() {

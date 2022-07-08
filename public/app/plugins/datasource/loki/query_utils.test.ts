@@ -1,4 +1,10 @@
-import { getHighlighterExpressionsFromQuery, getNormalizedLokiQuery } from './query_utils';
+import {
+  getHighlighterExpressionsFromQuery,
+  getNormalizedLokiQuery,
+  isLogsQuery,
+  isQueryWithParser,
+  isValidQuery,
+} from './query_utils';
 import { LokiQuery, LokiQueryType } from './types';
 
 describe('getHighlighterExpressionsFromQuery', () => {
@@ -26,7 +32,7 @@ describe('getHighlighterExpressionsFromQuery', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" | logfmt')).toEqual(['x']);
   });
 
-  it('returns expressions for query with filter chain folowed by log parser', () => {
+  it('returns expressions for query with filter chain followed by log parser', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" |~ "y" | logfmt')).toEqual(['x', 'y']);
   });
 
@@ -96,5 +102,48 @@ describe('getNormalizedLokiQuery', () => {
 
   it('handles new<>old conflict (new wins), instant', () => {
     expectNormalized({ instant: true, range: false, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
+  });
+
+  it('handles invalid new, range', () => {
+    expectNormalized({ queryType: 'invalid' }, LokiQueryType.Range);
+  });
+
+  it('handles invalid new, when old-range exists, use old', () => {
+    expectNormalized({ instant: false, range: true, queryType: 'invalid' }, LokiQueryType.Range);
+  });
+
+  it('handles invalid new, when old-instant exists, use old', () => {
+    expectNormalized({ instant: true, range: false, queryType: 'invalid' }, LokiQueryType.Instant);
+  });
+});
+
+describe('isValidQuery', () => {
+  it('returns false if invalid query', () => {
+    expect(isValidQuery('{job="grafana')).toBe(false);
+  });
+  it('returns true if valid query', () => {
+    expect(isValidQuery('{job="grafana"}')).toBe(true);
+  });
+});
+
+describe('isLogsQuery', () => {
+  it('returns false if metrics query', () => {
+    expect(isLogsQuery('rate({job="grafana"}[5m])')).toBe(false);
+  });
+  it('returns true if valid query', () => {
+    expect(isLogsQuery('{job="grafana"}')).toBe(true);
+  });
+});
+
+describe('isQueryWithParser', () => {
+  it('returns false if query without parser', () => {
+    expect(isQueryWithParser('rate({job="grafana" |= "error" }[5m])')).toBe(false);
+  });
+  it('returns true if log query with parser', () => {
+    expect(isQueryWithParser('{job="grafana"} | json')).toBe(true);
+  });
+
+  it('returns true if metric query with parser', () => {
+    expect(isQueryWithParser('rate({job="grafana"} | json [5m])')).toBe(true);
   });
 });

@@ -26,11 +26,12 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
 		dashboardStore := &dashboards.FakeDashboardStore{}
-		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(nil)
+		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(nil, nil)
 		defer dashboardStore.AssertExpectations(t)
 
 		features := featuremgmt.WithFeatures()
 		mockSQLStore := mockstore.NewSQLStoreMock()
+		ac := accesscontrolmock.New()
 		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
@@ -38,8 +39,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			Cfg:      settings,
 			SQLStore: mockSQLStore,
 			Features: features,
-			dashboardService: dashboardservice.ProvideDashboardService(
-				settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions,
+			DashboardService: dashboardservice.ProvideDashboardService(
+				settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac,
 			),
 			AccessControl: accesscontrolmock.New().WithDisabled(),
 		}

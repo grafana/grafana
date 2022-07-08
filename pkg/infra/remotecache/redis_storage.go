@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const redisCacheType = "redis"
@@ -43,13 +42,13 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		case "db":
 			i, err := strconv.Atoi(connVal)
 			if err != nil {
-				return nil, errutil.Wrap("value for db in redis connection string must be a number", err)
+				return nil, fmt.Errorf("%v: %w", "value for db in redis connection string must be a number", err)
 			}
 			options.DB = i
 		case "pool_size":
 			i, err := strconv.Atoi(connVal)
 			if err != nil {
-				return nil, errutil.Wrap("value for pool_size in redis connection string must be a number", err)
+				return nil, fmt.Errorf("%v: %w", "value for pool_size in redis connection string must be a number", err)
 			}
 			options.PoolSize = i
 		case "ssl":

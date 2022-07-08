@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -32,15 +31,14 @@ func (f *ForkedTestingApi) RouteEvalQueries(ctx *models.ReqContext) response.Res
 	}
 	return f.forkRouteEvalQueries(ctx, conf)
 }
-
 func (f *ForkedTestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteTestRuleConfig(ctx, conf)
+	return f.forkRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
 }
-
 func (f *ForkedTestingApi) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {

@@ -8,8 +8,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 )
 
@@ -38,7 +40,7 @@ func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenari
 			OrgRole: role,
 		}
 		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
 
 		sc := &scenarioContext{
 			t:                t,
@@ -60,7 +62,7 @@ func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenario
 			ApiKeyId: 10,
 		}
 		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
 		sc := &scenarioContext{
 			t:                t,
 			orgRoleScenario:  desc,
@@ -77,7 +79,6 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 	permissions []*models.DashboardAclInfoDTO, fn scenarioFunc) {
 	sc.t.Run(desc, func(t *testing.T) {
 		store := mockstore.NewSQLStoreMock()
-		store.ExpectedDashboardAclInfoList = permissions
 		teams := []*models.TeamDTO{}
 
 		for _, p := range permissions {
@@ -87,8 +88,14 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		}
 		store.ExpectedTeamsByUser = teams
 
+		dashSvc := dashboards.NewFakeDashboardService(t)
+		dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
+			q.Result = permissions
+		}).Return(nil)
+
 		sc.permissionScenario = desc
-		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser, store)
+		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser, store, dashSvc)
 		sc.givenDashboardID = dashboardID
 		sc.givenPermissions = permissions
 		sc.givenTeams = teams

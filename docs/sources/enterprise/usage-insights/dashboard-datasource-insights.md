@@ -1,10 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/usage-insights/dashboard-datasource-insights/"]
-description = "Understand how your dashboards and data sources are used"
-keywords = ["grafana", "usage-insights", "enterprise"]
-title = "Dashboard and data source insights"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/usage-insights/dashboard-datasource-insights/
+description: Understand how your dashboards and data sources are used
+keywords:
+  - grafana
+  - usage-insights
+  - enterprise
+title: Dashboard and data source insights
+weight: 200
+---
 
 # Dashboard and data source insights
 
@@ -12,7 +16,7 @@ For every dashboard and data source, you can access usage information.
 
 ## Dashboard insights
 
-> **Note:** Available in Grafana Enterprise v7.0+.
+> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 To see dashboard usage information, go to the top bar and click **Dashboard insights**.
 
@@ -27,7 +31,7 @@ Dashboard insights show the following information:
 
 ## Data source insights
 
-> **Note:** Available in Grafana Enterprise v7.3+.
+> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) version 7.3 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 Data source insights give you information about how a data source has been used in the past 30 days, such as:
 

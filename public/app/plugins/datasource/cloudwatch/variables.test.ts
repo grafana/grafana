@@ -19,6 +19,7 @@ ds.datasource.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a'
 ds.datasource.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
 ds.datasource.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
 ds.datasource.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
+ds.datasource.describeLogGroups = jest.fn().mockResolvedValue(['a', 'b']);
 const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e' }]);
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
@@ -166,5 +167,15 @@ describe('variables', () => {
       { text: 'Sum', value: 'Sum', expandable: true },
       { text: 'SampleCount', value: 'SampleCount', expandable: true },
     ]);
+  });
+
+  describe('log groups', () => {
+    it('should call describe log groups', async () => {
+      const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.LogGroups });
+      expect(result).toEqual([
+        { text: 'a', value: 'a', expandable: true },
+        { text: 'b', value: 'b', expandable: true },
+      ]);
+    });
   });
 });

@@ -16,7 +16,7 @@ func (hs *HTTPServer) populateDashboardsByID(ctx context.Context, dashboardByIDs
 
 	if len(dashboardByIDs) > 0 {
 		dashboardQuery := models.GetDashboardsQuery{DashboardIds: dashboardByIDs}
-		if err := hs.dashboardService.GetDashboards(ctx, &dashboardQuery); err != nil {
+		if err := hs.DashboardService.GetDashboards(ctx, &dashboardQuery); err != nil {
 			return result, err
 		}
 
@@ -65,8 +65,8 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 	return result
 }
 
-func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, playlistID int64) (dtos.PlaylistDashboardsSlice, error) {
-	playlistItems, _ := hs.LoadPlaylistItems(ctx, playlistID)
+func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
+	playlistItems, _ := hs.LoadPlaylistItems(ctx, playlistUID, orgID)
 
 	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)

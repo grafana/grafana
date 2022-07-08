@@ -1,7 +1,8 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/add-query-editor-help/"]
-title = "Add query editor help"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/add-query-editor-help/
+title: Add query editor help
+---
 
 # Add a query editor help component
 

@@ -102,6 +102,9 @@ type AddOrgUserCommand struct {
 
 	OrgId  int64 `json:"-"`
 	UserId int64 `json:"-"`
+
+	// internal use: avoid adding service accounts to orgs via user routes
+	AllowAddingServiceAccount bool `json:"-"`
 }
 
 type UpdateOrgUserCommand struct {
@@ -119,6 +122,8 @@ type GetOrgUsersQuery struct {
 	OrgId  int64
 	Query  string
 	Limit  int
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
 
 	User   *SignedInUser
 	Result []*OrgUserDTO

@@ -15,7 +15,7 @@ export class AnnotationsQueryRunner implements AnnotationQueryRunner {
       return false;
     }
 
-    return !Boolean(datasource.annotationQuery && !datasource.annotations);
+    return Boolean(!datasource.annotationQuery || datasource.annotations);
   }
 
   run({ annotation, datasource, dashboard, range }: AnnotationQueryRunnerOptions): Observable<AnnotationEvent[]> {

@@ -18,7 +18,8 @@ interface SeriesForSelector {
 }
 
 export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesForSelector): LokiDatasource {
-  const lokiLabelsAndValuesEndpointRegex = /^label\/(\w*)\/values/;
+  // added % to allow urlencoded labelKeys. Note, that this is not confirm with Loki, as loki does not allow specialcharacters in labelKeys, but needed for tests.
+  const lokiLabelsAndValuesEndpointRegex = /^label\/([%\w]*)\/values/;
   const lokiSeriesEndpointRegex = /^series/;
 
   const lokiLabelsEndpoint = 'labels';

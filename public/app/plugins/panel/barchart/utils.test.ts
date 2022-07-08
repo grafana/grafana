@@ -1,3 +1,5 @@
+import { assertIsDefined } from 'test/helpers/asserts';
+
 import {
   createTheme,
   DefaultTimeZone,
@@ -67,11 +69,17 @@ function mockDataFrame() {
     state: {},
   });
 
-  return prepareBarChartDisplayValues([df1], createTheme(), {} as any).aligned;
+  const info = prepareBarChartDisplayValues([df1], createTheme(), {} as any);
+
+  if (!('aligned' in info)) {
+    throw new Error('Bar chart not prepared correctly');
+  }
+
+  return info.aligned;
 }
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   DefaultTimeZone: 'utc',
 }));
 
@@ -150,7 +158,9 @@ describe('BarChart utils', () => {
   describe('prepareGraphableFrames', () => {
     it('will warn when there is no data in the response', () => {
       const result = prepareBarChartDisplayValues([], createTheme(), { stacking: StackingMode.None } as any);
-      expect(result.warn).toEqual('No data in response');
+      const warning = assertIsDefined('warn' in result ? result : null);
+
+      expect(warning.warn).toEqual('No data in response');
     });
 
     it('will warn when there is no string or time field', () => {
@@ -161,8 +171,9 @@ describe('BarChart utils', () => {
         ],
       });
       const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
-      expect(result.warn).toEqual('Bar charts requires a string or time field');
-      expect(result.viz).toBeUndefined();
+      const warning = assertIsDefined('warn' in result ? result : null);
+      expect(warning.warn).toEqual('Bar charts requires a string or time field');
+      expect(warning).not.toHaveProperty('viz');
     });
 
     it('will warn when there are no numeric fields in the response', () => {
@@ -173,8 +184,9 @@ describe('BarChart utils', () => {
         ],
       });
       const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
-      expect(result.warn).toEqual('No numeric fields found');
-      expect(result.viz).toBeUndefined();
+      const warning = assertIsDefined('warn' in result ? result : null);
+      expect(warning.warn).toEqual('No numeric fields found');
+      expect(warning).not.toHaveProperty('viz');
     });
 
     it('will convert NaN and Infinty to nulls', () => {
@@ -185,9 +197,10 @@ describe('BarChart utils', () => {
         ],
       });
       const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
+      const displayValues = assertIsDefined('viz' in result ? result : null);
 
-      const field = result.viz[0].fields[1];
-      expect(field!.values.toArray()).toMatchInlineSnapshot(`
+      const field = displayValues.viz[0].fields[1];
+      expect(field.values.toArray()).toMatchInlineSnapshot(`
       Array [
         -10,
         null,
@@ -210,19 +223,21 @@ describe('BarChart utils', () => {
 
       const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: false },
-      } as any).viz[0];
-      expect(resultAsc.fields[0].type).toBe(FieldType.string);
-      expect(resultAsc.fields[1].name).toBe('a');
-      expect(resultAsc.fields[2].name).toBe('c');
-      expect(resultAsc.fields[3].name).toBe('b');
+      } as any);
+      const displayValuesAsc = assertIsDefined('viz' in resultAsc ? resultAsc : null).viz[0];
+      expect(displayValuesAsc.fields[0].type).toBe(FieldType.string);
+      expect(displayValuesAsc.fields[1].name).toBe('a');
+      expect(displayValuesAsc.fields[2].name).toBe('c');
+      expect(displayValuesAsc.fields[3].name).toBe('b');
 
       const resultDesc = prepareBarChartDisplayValues([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: true },
-      } as any).viz[0];
-      expect(resultDesc.fields[0].type).toBe(FieldType.string);
-      expect(resultDesc.fields[1].name).toBe('b');
-      expect(resultDesc.fields[2].name).toBe('c');
-      expect(resultDesc.fields[3].name).toBe('a');
+      } as any);
+      const displayValuesDesc = assertIsDefined('viz' in resultDesc ? resultDesc : null).viz[0];
+      expect(displayValuesDesc.fields[0].type).toBe(FieldType.string);
+      expect(displayValuesDesc.fields[1].name).toBe('b');
+      expect(displayValuesDesc.fields[2].name).toBe('c');
+      expect(displayValuesDesc.fields[3].name).toBe('a');
     });
   });
 });

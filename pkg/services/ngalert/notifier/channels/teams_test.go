@@ -220,7 +220,7 @@ func TestTeamsNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewTeamsNotifier(cfg, webhookSender, tmpl)
+			pn := NewTeamsNotifier(cfg, webhookSender, &UnavailableImageStore{}, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

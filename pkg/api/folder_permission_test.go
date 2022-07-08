@@ -32,6 +32,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	defer dashboardStore.AssertExpectations(t)
 
 	features := featuremgmt.WithFeatures()
+	ac := accesscontrolmock.New()
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
@@ -41,14 +42,14 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		folderService:               folderService,
 		folderPermissionsService:    folderPermissions,
 		dashboardPermissionsService: dashboardPermissions,
-		dashboardService: service.ProvideDashboardService(
-			settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions,
+		DashboardService: service.ProvideDashboardService(
+			settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac,
 		),
 		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}
 
 	t.Run("Given folder not exists", func(t *testing.T) {
-		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrFolderNotFound).Twice()
+		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, dashboards.ErrFolderNotFound).Twice()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
@@ -80,7 +81,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		})
 
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
-		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrFolderAccessDenied).Twice()
+		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, dashboards.ErrFolderAccessDenied).Twice()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {

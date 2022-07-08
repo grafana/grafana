@@ -39,10 +39,10 @@ load(
     'upload_packages_step',
     'store_packages_step',
     'upload_cdn_step',
-    'validate_scuemata_step',
-    'ensure_cuetsified_step',
+    'verify_gen_cue_step',
     'test_a11y_frontend_step',
-    'trigger_oss'
+    'trigger_oss',
+    'betterer_frontend_step'
 )
 
 load(
@@ -83,6 +83,7 @@ def main_test_frontend():
     ]
     test_steps = [
         lint_frontend_step(),
+        betterer_frontend_step(),
         test_frontend_step(),
     ]
     return pipeline(
@@ -94,6 +95,7 @@ def main_test_backend():
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(edition="oss"),
         wire_install_step(),
     ]
     test_steps = [
@@ -114,18 +116,9 @@ def get_steps(edition):
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(edition="oss"),
         wire_install_step(),
         yarn_install_step(),
-    ]
-    test_steps = [
-        lint_drone_step(),
-        codespell_step(),
-        shellcheck_step(),
-        lint_backend_step(edition=edition),
-        lint_frontend_step(),
-        test_backend_step(edition=edition),
-        test_backend_integration_step(edition=edition),
-        test_frontend_step(),
     ]
     build_steps = [
         trigger_test_release(),
@@ -133,9 +126,7 @@ def get_steps(edition):
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_plugins_step(edition=edition, sign=True),
-        validate_scuemata_step(),
-        ensure_cuetsified_step(),
+        build_plugins_step(edition=edition, ver_mode=ver_mode),
     ]
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
@@ -171,7 +162,7 @@ def get_steps(edition):
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
     store_steps = [store_packages_step(edition=edition, ver_mode=ver_mode),]
 
-    return init_steps, test_steps, build_steps, integration_test_steps, windows_steps, store_steps
+    return init_steps, build_steps, integration_test_steps, windows_steps, store_steps
 
 def trigger_test_release():
     return {
@@ -223,7 +214,7 @@ def main_pipelines(edition):
             ],
         },
     }
-    init_steps, test_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition)
+    init_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition)
 
     pipelines = [docs_pipelines(edition, ver_mode, trigger), main_test_frontend(), main_test_backend(), pipeline(
         name='main-build-e2e-publish', edition=edition, trigger=trigger, services=[],
@@ -231,7 +222,7 @@ def main_pipelines(edition):
         volumes=volumes,
     ), pipeline(
         name='main-integration-tests', edition=edition, trigger=trigger, services=services,
-        steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
+        steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition="oss"), wire_install_step(), ] + integration_test_steps,
         volumes=volumes,
     ), pipeline(
         name='main-windows', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
@@ -242,7 +233,7 @@ def main_pipelines(edition):
         template=drone_change_template, secret='drone-changes-webhook',
     ), pipeline(
         name='main-publish', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
-        steps=[download_grabpl_step(), identify_runner_step(),] + store_steps,
+        steps=[download_grabpl_step(), gen_version_step(ver_mode), identify_runner_step(),] + store_steps,
         depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests', 'main-windows', ],
     ), notify_pipeline(
         name='main-notify', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),

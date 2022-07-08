@@ -85,13 +85,6 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         let channel = templateSrv.replace(target.channel, request.scopedVars);
         const { filter } = target;
 
-        // Help migrate pre-release channel paths saved in dashboards
-        // NOTE: this should be removed before V8 is released
-        if (channel && channel.startsWith('telegraf/')) {
-          channel = 'stream/' + channel;
-          target.channel = channel; // mutate the current query object so it is saved with `stream/` prefix
-        }
-
         const addr = parseLiveChannelAddress(channel);
         if (!isValidLiveChannelAddress(addr)) {
           continue;

@@ -1,15 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/influxdb/influxdb-templates/"]
-description = "Guide for templates in InfluxDB"
-title = "InfluxDB templates"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/influxdb/influxdb-templates/
+description: Guide for templates in InfluxDB
+title: InfluxDB templates
+weight: 300
+---
 
 ## InfluxDB templates
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
 
-For more information, refer to [Templates and variables]({{< relref "../../variables/_index.md" >}}).
+For more information, refer to [Templates and variables]({{< relref "../../variables/" >}}).
 
 ## Using variables in InfluxDB queries
 
@@ -34,7 +35,7 @@ Example dashboard:
 
 ## Query variables
 
-If you add a query template variable, then you can write an InfluxDB exploration (metadata) query. These queries can return things like measurement names, key names or key values. For more information, refer to [Add query variable]({{< relref "../../variables/variable-types/add-query-variable.md" >}}).
+If you add a query template variable, then you can write an InfluxDB exploration (metadata) query. These queries can return things like measurement names, key names or key values. For more information, refer to [Add query variable]({{< relref "../../variables/variable-types/add-query-variable/" >}}).
 
 For example, you can have a variable that contains all values for tag `hostname` if you specify a query like this in the query variable **Query**.
 
@@ -44,7 +45,7 @@ SHOW TAG VALUES WITH KEY = "hostname"
 
 ## Chained or nested variables
 
-You can also create nested variables, sometimes called [chained variables]({{< relref "../../variables/variable-types/chained-variables.md" >}}).
+You can also create nested variables, sometimes called [chained variables]({{< relref "../../variables/variable-types/chained-variables/" >}}).
 
 For example, if you had another variable, for example `region`. Then you could have the hosts variable only show hosts from the current selected region with a query like this:
 
@@ -64,4 +65,4 @@ If you have a variable with key names you can use this variable in a group by cl
 
 InfluxDB supports the special `Ad hoc filters` variable type. This variable allows you to specify any number of key/value filters on the fly. These filters are automatically applied to all your InfluxDB queries.
 
-For more information, refer to [Add ad hoc filters]({{< relref "../../variables/variable-types/add-ad-hoc-filters.md" >}}).
+For more information, refer to [Add ad hoc filters]({{< relref "../../variables/variable-types/add-ad-hoc-filters/" >}}).

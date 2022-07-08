@@ -28,7 +28,7 @@ import {
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { Placement } from '../types';
+import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { constraintViewable, dimensionViewable } from './ables';
 import { ElementState } from './element';
@@ -62,6 +62,8 @@ export class Scene {
   skipNextSelectionBroadcast = false;
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
+
+  inlineEditingCallback?: () => void;
 
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
@@ -106,7 +108,7 @@ export class Scene {
         this.currentLayer = this.root;
         this.selection.next([]);
       }
-    }, 100);
+    });
     return this.root;
   }
 
@@ -226,7 +228,7 @@ export class Scene {
         if (this.div) {
           this.initMoveable(true, this.isEditingEnabled);
         }
-      }, 100);
+      });
     }
   };
 
@@ -307,7 +309,7 @@ export class Scene {
     this.selecto = new Selecto({
       container: this.div,
       selectableTargets: targetElements,
-      selectByClick: true,
+      toggleContinueSelect: 'shift',
     });
 
     this.moveable = new Moveable(this.div!, {
@@ -349,6 +351,18 @@ export class Scene {
 
         this.moved.next(Date.now());
       })
+      .on('resizeStart', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement.tempConstraint = { ...targetedElement.options.constraint };
+          targetedElement.options.constraint = {
+            vertical: VerticalConstraint.Top,
+            horizontal: HorizontalConstraint.Left,
+          };
+          targetedElement.setPlacementFromConstraint();
+        }
+      })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyResize(event);
@@ -365,7 +379,12 @@ export class Scene {
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
-          targetedElement?.setPlacementFromConstraint();
+          if (targetedElement.tempConstraint) {
+            targetedElement.options.constraint = targetedElement.tempConstraint;
+            targetedElement.tempConstraint = undefined;
+          }
+
+          targetedElement.setPlacementFromConstraint();
         }
       });
 
@@ -377,8 +396,12 @@ export class Scene {
         this.moveable!.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
-      if (isTargetMoveableElement) {
-        // Prevent drawing selection box when selected target is a moveable element
+      const isTargetAlreadySelected = this.selecto
+        ?.getSelectedTargets()
+        .includes(selectedTarget.parentElement.parentElement);
+
+      if (isTargetMoveableElement || isTargetAlreadySelected) {
+        // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
       }
     }).on('selectEnd', (event) => {

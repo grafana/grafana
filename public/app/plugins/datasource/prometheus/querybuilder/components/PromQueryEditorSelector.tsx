@@ -1,6 +1,6 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
-import { LoadingState } from '@grafana/data';
+import { CoreApp, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
@@ -13,19 +13,23 @@ import { FeedbackLink } from '../shared/FeedbackLink';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
-import { changeEditorMode, getQueryWithDefaults } from '../state';
+import { changeEditorMode, getQueryWithDefaults, useRawQuery } from '../state';
 
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
-export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
+type Props = PromQueryEditorProps;
+
+export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
 
   const query = getQueryWithDefaults(props.query, app);
+  const [rawQuery, setRawQuery] = useRawQuery();
+  // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
 
   const onEditorModeChange = useCallback(
@@ -56,7 +60,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, rawQuery: isEnabled });
+    setRawQuery(isEnabled);
   };
 
   const onChangeInternal = (query: PromQuery) => {
@@ -78,40 +82,41 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         onDismiss={() => setParseModalOpen(false)}
       />
       <EditorHeader>
+        <InlineSelect
+          value={null}
+          placeholder="Query patterns"
+          allowCustomValue
+          onChange={({ value }) => {
+            // TODO: Bit convoluted as we don't have access to visualQuery model here. Maybe would make sense to
+            //  move it inside the editor?
+            const result = buildVisualQueryFromString(query.expr || '');
+            result.query.operations = value?.operations!;
+            onChange({
+              ...query,
+              expr: promQueryModeller.renderQuery(result.query),
+            });
+          }}
+          options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
+        />
+
         {editorMode === QueryEditorMode.Builder && (
           <>
-            <InlineSelect
-              value={null}
-              placeholder="Query patterns"
-              allowCustomValue
-              onChange={({ value }) => {
-                // TODO: Bit convoluted as we don't have access to visualQuery model here. Maybe would make sense to
-                //  move it inside the editor?
-                const result = buildVisualQueryFromString(query.expr || '');
-                result.query.operations = value?.operations!;
-                onChange({
-                  ...query,
-                  expr: promQueryModeller.renderQuery(result.query),
-                });
-              }}
-              options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
-            />
-            <QueryHeaderSwitch label="Raw query" value={query.rawQuery} onChange={onQueryPreviewChange} />
+            <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
+            <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
           </>
         )}
-        {editorMode === QueryEditorMode.Builder && (
-          <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
-        )}
         <FlexItem grow={1} />
-        <Button
-          variant={dataIsStale ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={onRunQuery}
-          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
-          disabled={data?.state === LoadingState.Loading}
-        >
-          Run query
-        </Button>
+        {app !== CoreApp.Explore && (
+          <Button
+            variant={dataIsStale ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={onRunQuery}
+            icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+            disabled={data?.state === LoadingState.Loading}
+          >
+            Run queries
+          </Button>
+        )}
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
@@ -124,6 +129,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
             data={data}
+            showRawQuery={rawQuery}
           />
         )}
         {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={query.expr} />}

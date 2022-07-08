@@ -16,7 +16,8 @@ type NotificationPolicyService struct {
 	log             log.Logger
 }
 
-func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *NotificationPolicyService {
+func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore,
+	xact TransactionManager, log log.Logger) *NotificationPolicyService {
 	return &NotificationPolicyService{
 		amStore:         am,
 		provenanceStore: prov,
@@ -38,7 +39,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, err
 	}
 
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	cfg, err := deserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -64,30 +65,36 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	q := models.GetLatestAlertmanagerConfigurationQuery{
-		OrgID: orgID,
-	}
-	err = nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
+	revision, err := getLastConfiguration(ctx, orgID, nps.amStore)
 	if err != nil {
 		return err
 	}
 
-	concurrencyToken := q.Result.ConfigurationHash
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	receivers, err := nps.receiversToMap(revision.cfg.AlertmanagerConfig.Receivers)
+	err = tree.ValidateReceivers(receivers)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	cfg.AlertmanagerConfig.Config.Route = &tree
+	muteTimes := map[string]struct{}{}
+	for _, mt := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
+		muteTimes[mt.Name] = struct{}{}
+	}
+	err = tree.ValidateMuteTimes(muteTimes)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+	}
 
-	serialized, err := SerializeAlertmanagerConfig(*cfg)
+	revision.cfg.AlertmanagerConfig.Config.Route = &tree
+
+	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
 		return err
 	}
 	cmd := models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
-		ConfigurationVersion:      q.Result.ConfigurationVersion,
-		FetchedConfigurationHash:  concurrencyToken,
+		ConfigurationVersion:      revision.version,
+		FetchedConfigurationHash:  revision.concurrencyToken,
 		Default:                   false,
 		OrgID:                     orgID,
 	}
@@ -107,4 +114,12 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 
 	return nil
+}
+
+func (nps *NotificationPolicyService) receiversToMap(records []*definitions.PostableApiReceiver) (map[string]struct{}, error) {
+	receivers := map[string]struct{}{}
+	for _, receiver := range records {
+		receivers[receiver.Name] = struct{}{}
+	}
+	return receivers, nil
 }

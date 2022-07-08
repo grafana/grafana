@@ -131,20 +131,20 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
   return (
     <Draggable draggableId={fieldName} index={index}>
       {(provided) => (
-        <div
-          className="gf-form-inline"
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-        >
+        <div className="gf-form-inline" ref={provided.innerRef} {...provided.draggableProps}>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--justify-left width-30">
-              <Icon name="draggabledots" title="Drag and drop to reorder" size="lg" className={styles.draggable} />
+              <Icon
+                name="draggabledots"
+                title="Drag and drop to reorder"
+                size="lg"
+                className={styles.draggable}
+                {...provided.dragHandleProps}
+              />
               <IconButton
                 className={styles.toggle}
                 size="md"
                 name={visible ? 'eye' : 'eye-slash'}
-                surface="header"
                 onClick={() => onToggleVisibility(fieldName, visible)}
               />
               <span className={styles.name} title={fieldName}>

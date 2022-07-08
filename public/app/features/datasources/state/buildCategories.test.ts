@@ -52,7 +52,10 @@ describe('buildCategories', () => {
   });
 
   it('should add enterprise phantom plugins', () => {
-    expect(categories[3].title).toBe('Enterprise plugins');
-    expect(categories[3].plugins.length).toBe(17);
+    const enterprisePluginsCategory = categories[3];
+    expect(enterprisePluginsCategory.title).toBe('Enterprise plugins');
+    expect(enterprisePluginsCategory.plugins.length).toBe(17);
+    expect(enterprisePluginsCategory.plugins[0].name).toBe('AppDynamics');
+    expect(enterprisePluginsCategory.plugins[enterprisePluginsCategory.plugins.length - 1].name).toBe('Wavefront');
   });
 });

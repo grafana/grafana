@@ -12,6 +12,7 @@ export { featureEnabled } from './utils/licensing';
 export { logInfo, logDebug, logWarning, logError } from './utils/logging';
 export {
   DataSourceWithBackend,
+  HealthCheckError,
   HealthCheckResult,
   HealthCheckResultDetails,
   HealthStatus,

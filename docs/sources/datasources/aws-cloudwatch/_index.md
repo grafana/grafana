@@ -1,14 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/aws-cloudwatch/", "/docs/grafana/latest/datasources/cloudwatch/"]
-description = "Guide for using CloudWatch in Grafana"
-keywords = ["grafana", "cloudwatch", "guide"]
-title = "AWS CloudWatch"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/aws-cloudwatch/
+  - /docs/grafana/latest/datasources/cloudwatch/
+description: Guide for using CloudWatch in Grafana
+keywords:
+  - grafana
+  - cloudwatch
+  - guide
+title: AWS CloudWatch
+weight: 200
+---
 
 # AWS CloudWatch data source
 
-Grafana ships with built-in support for CloudWatch. This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source. For instructions on how to add a data source to Grafana, refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
+Grafana ships with built-in support for CloudWatch. This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source. For instructions on how to add a data source to Grafana, refer to [Add a data source]({{< relref "../add-a-data-source/" >}}). Only users with the organization admin role can add data sources.
 
 Once you have added the Cloudwatch data source, you can build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 
@@ -18,7 +23,7 @@ Once you have added the Cloudwatch data source, you can build dashboards or use 
 
 To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the AWS Cloudwatch data source.
 
-For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication.md" >}}) topic.
+For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication/" >}}) topic.
 
 ### CloudWatch specific data source configuration
 
@@ -160,7 +165,7 @@ Link an X-Ray data source in the "X-Ray trace link" section of the configuration
 
 The data source select will contain only existing data source instances of type X-Ray so in order to use this feature you need to have existing X-Ray data source already configured, see [X-Ray docs](https://grafana.com/grafana/plugins/grafana-x-ray-datasource/) for details.
 
-The X-Ray link will then appear in the log details section which is accessible by clicking on the log row either in Explore or in dashboard [Logs panel]({{< relref "../../visualizations/logs-panel.md" >}}). To log the `@xrayTraceId` in your logs see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana your log queries also have to contain the `@xrayTraceId` field, for example using query `fields @message, @xrayTraceId`.
+The X-Ray link will then appear in the log details section which is accessible by clicking on the log row either in Explore or in dashboard [Logs panel]({{< relref "../../visualizations/logs-panel/" >}}). To log the `@xrayTraceId` in your logs see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana your log queries also have to contain the `@xrayTraceId` field, for example using query `fields @message, @xrayTraceId`.
 
 ![Trace link in log details](/static/img/docs/cloudwatch/xray-link-log-details-8-2.png 'Trace link in log details')
 
@@ -288,21 +293,13 @@ A period is the length of time associated with a specific Amazon CloudWatch stat
 
 If the period field is left blank or set to `auto`, then it calculates automatically based on the time range and [cloudwatch's retention policy](https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/). The formula used is `time range in seconds / 2000`, and then it snaps to the next higher value in an array of predefined periods `[60, 300, 900, 3600, 21600, 86400]` after removing periods based on retention. By clicking `Show Query Preview` in the query editor, you can see what period Grafana used.
 
-#### Alias
+#### Label
 
-The alias field allows you to override the default name of the metric legend.
+The label field allows you to override the default name of the metric legend using CloudWatch dynamic labels. If you're using a time-based dynamic label such as `${MIN_MAX_TIME_RANGE}`, then the legend value is derived from the current timezone specified in the time range picker. To see the full list of label patterns and the dynamic label limitations, refer to the [CloudWatch dynamic labels](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html) documentation.
 
-##### Alias patterns
+**Alias pattern deprecation:** In Grafana 9, dynamic labels have replaced alias patterns in the CloudWatch data source. Any existing alias pattern will get migrated to a corresponding dynamic label pattern. If you wish to use alias patterns instead of dynamic labels, set the feature toggle `cloudWatchDynamicLabels` to `false` in the Grafana configuration file. It will revert to the alias pattern system and use the previous alias formatting logic.
 
-| Alias Pattern          | Description                                                   | Example Result   |
-| ---------------------- | ------------------------------------------------------------- | ---------------- |
-| `{{region}}`           | returns the region                                            | `us-east-1`      |
-| `{{period}}`           | returns the period                                            | `3000`           |
-| `{{metric}}`           | returns the metric                                            | `CPUUtilization` |
-| `{{label}}`            | returns the label returned by the API (only in Metric Search) | `i-01343`        |
-| `{{namespace}}`        | returns the namespace (only in Metric Search)                 | `AWS/EC2`        |
-| `{{stat}}`             | returns the statistic (only in Metric Search)                 | `Average`        |
-| `{{[dimension name]}}` | returns the dimension name (only in Metric Search)            | `i-01343`        |
+The alias field will be deprecated and removed in a release. During this interim period, we won’t fix bugs related to the alias pattern system. For details on why we're doing this change, refer to [issue 48434](https://github.com/grafana/grafana/issues/48434).
 
 ## Using the Logs query editor
 
@@ -333,11 +330,11 @@ filter @message like /Exception/
 
 **NOTE**: When trying to alert on a query, if an error like `input data must be a wide series but got ...` is received, make sure that your query returns valid numeric data that can be printed in a Time series panel.
 
-For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting/_index.md" >}}) documentation.
+For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting/" >}}) documentation.
 
 ## Configure CloudWatch with grafana.ini
 
-The Grafana [configuration]({{< relref "../../administration/configuration.md#aws" >}}) file includes an `AWS` section where you can customize the data source.
+The Grafana [configuration]({{< relref "../../setup-grafana/configure-grafana/#aws" >}}) file includes an `AWS` section where you can customize the data source.
 
 | Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

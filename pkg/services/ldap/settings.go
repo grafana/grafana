@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const defaultTimeout = 10
@@ -126,18 +125,18 @@ func readConfig(configFile string) (*Config, error) {
 	// We can ignore the gosec G304 warning on this one because `filename` comes from grafana configuration file
 	fileBytes, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to load LDAP config file", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to load LDAP config file", err)
 	}
 
 	// interpolate full toml string (it can contain ENV variables)
 	stringContent, err := setting.ExpandVar(string(fileBytes))
 	if err != nil {
-		return nil, errutil.Wrap("Failed to expand variables", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to expand variables", err)
 	}
 
 	_, err = toml.Decode(stringContent, result)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to load LDAP config file", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to load LDAP config file", err)
 	}
 
 	if len(result.Servers) == 0 {
@@ -148,11 +147,11 @@ func readConfig(configFile string) (*Config, error) {
 		// set default org id
 		err = assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		if err != nil {
-			return nil, errutil.Wrap("Failed to validate SearchFilter section", err)
+			return nil, fmt.Errorf("%v: %w", "Failed to validate SearchFilter section", err)
 		}
 		err = assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 		if err != nil {
-			return nil, errutil.Wrap("Failed to validate SearchBaseDNs section", err)
+			return nil, fmt.Errorf("%v: %w", "Failed to validate SearchBaseDNs section", err)
 		}
 
 		for _, groupMap := range server.Groups {

@@ -15,6 +15,7 @@ import {
   deleteQueryInRichHistory,
   migrateQueryHistoryFromLocalStorage,
   SortOrder,
+  LocalStorageMigrationStatus,
 } from './richHistory';
 
 const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
@@ -75,7 +76,7 @@ const key = 'grafana.explore.richHistory';
 
 describe('richHistory', () => {
   beforeEach(() => {
-    jest.useFakeTimers('modern');
+    jest.useFakeTimers();
     jest.setSystemTime(new Date(1970, 0, 1));
 
     richHistoryStorageMock.addToRichHistory = jest.fn((r) => {
@@ -184,16 +185,26 @@ describe('richHistory', () => {
     });
 
     it('migrates history', async () => {
-      const history = [{ id: 'test' }, { id: 'test2' }];
+      const history = { richHistory: [{ id: 'test' }, { id: 'test2' }], total: 2 };
 
       richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
-      await migrateQueryHistoryFromLocalStorage();
-      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history);
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history.richHistory);
+      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.Successful);
+      expect(migrationResult.error).toBeUndefined();
     });
     it('does not migrate if there are no entries', async () => {
-      richHistoryLocalStorageMock.getRichHistory.mockReturnValue([]);
-      await migrateQueryHistoryFromLocalStorage();
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue({ richHistory: [] });
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
       expect(richHistoryRemoteStorageMock.migrate).not.toBeCalled();
+      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.NotNeeded);
+      expect(migrationResult.error).toBeUndefined();
+    });
+    it('propagates thrown errors', async () => {
+      richHistoryLocalStorageMock.getRichHistory.mockRejectedValue(new Error('migration failed'));
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.Failed);
+      expect(migrationResult.error?.message).toBe('migration failed');
     });
   });
 

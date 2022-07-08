@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package store_test
 
 import (
@@ -27,7 +24,10 @@ func mockTimeNow() {
 	}
 }
 
-func TestAlertInstanceOperations(t *testing.T) {
+func TestIntegrationAlertInstanceOperations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
