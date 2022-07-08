@@ -29,7 +29,7 @@ type HTTPStorageService interface {
 	Upload(c *models.ReqContext) response.Response
 
 	// Dashboard/Folder hack
-	GetDashboard(c *models.ReqContext, path string) (*dtos.DashboardFullWithMeta, error)
+	GetDashboard(c *models.ReqContext) response.Response
 }
 
 type httpStorage struct {
@@ -61,12 +61,15 @@ func UploadErrorToStatusCode(err error) int {
 	}
 }
 
-func (s *httpStorage) GetDashboard(c *models.ReqContext, path string) (*dtos.DashboardFullWithMeta, error) {
+func (s *httpStorage) GetDashboard(c *models.ReqContext) response.Response {
+	path := web.Params(c.Req)["*"] // path based endpoint
+
 	// TODO: permission check!
 	if strings.HasSuffix(path, ".json") {
-		return nil, fmt.Errorf("invalid path, must not include .json")
+		return response.Error(400, "invalid path, must not include .json", nil)
 	}
 
+	var err error
 	var file *filestorage.File
 	var frame *data.Frame
 	g, ctx := errgroup.WithContext(c.Req.Context())
@@ -83,30 +86,33 @@ func (s *httpStorage) GetDashboard(c *models.ReqContext, path string) (*dtos.Das
 	})
 
 	if err := g.Wait(); err != nil {
-		return nil, err
+		return response.Error(500, "error running query", err)
 	}
 
+	var dto *dtos.DashboardFullWithMeta
 	if file == nil {
 		if frame != nil {
-			return getFolderDashboard(path, frame)
+			dto, err = getFolderDashboard(path, frame)
+			if err != nil {
+				return response.Error(500, "error reading folder", err)
+			}
 		}
-		return nil, errors.New("failed to load dashboard")
+	} else {
+		js, err := simplejson.NewJson(file.Contents)
+		if err != nil {
+			return response.Error(500, "error reading dashboard", err)
+		}
+		dto = &dtos.DashboardFullWithMeta{
+			Dashboard: js,
+			Meta: dtos.DashboardMeta{
+				CanSave: true,
+				CanEdit: true,
+				CanStar: true,
+				Slug:    path,
+			},
+		}
 	}
-
-	js, err := simplejson.NewJson(file.Contents)
-	if err != nil {
-		return nil, err
-	}
-
-	return &dtos.DashboardFullWithMeta{
-		Dashboard: js,
-		Meta: dtos.DashboardMeta{
-			CanSave: true,
-			CanEdit: true,
-			CanStar: true,
-			Slug:    path,
-		},
-	}, nil
+	return response.JSON(200, dto)
 }
 
 func getFolderDashboard(path string, frame *data.Frame) (*dtos.DashboardFullWithMeta, error) {

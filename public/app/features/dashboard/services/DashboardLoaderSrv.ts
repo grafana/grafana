@@ -53,7 +53,7 @@ export class DashboardLoaderSrv {
         });
     } else if (type === DashboardRoutes.Path) {
       // explore dashboards as code
-      promise = backendSrv.getDashboardByPath(slug).then((result: any) => {
+      promise = backendSrv.getDashboardFromStorage(slug).then((result: any) => {
         // Force everythign to match the request path
         result.meta.slug = slug;
         result.meta.uid = slug;
