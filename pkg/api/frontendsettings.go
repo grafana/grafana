@@ -198,7 +198,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 	if c.OrgId != 0 {
 		query := datasources.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := hs.SQLStore.GetDataSources(c.Req.Context(), &query)
+		err := hs.dataSourcesService.GetDataSources(c.Req.Context(), &query)
 
 		if err != nil {
 			return nil, err
@@ -253,7 +253,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 		if ds.Access == datasources.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
-				password, err := hs.DataSourcesService.DecryptedBasicAuthPassword(c.Req.Context(), ds)
+				password, err := hs.dataSourcesService.DecryptedBasicAuthPassword(c.Req.Context(), ds)
 				if err != nil {
 					return nil, err
 				}
@@ -268,7 +268,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			}
 
 			if ds.Type == datasources.DS_INFLUXDB_08 {
-				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				password, err := hs.dataSourcesService.DecryptedPassword(c.Req.Context(), ds)
 				if err != nil {
 					return nil, err
 				}
@@ -279,7 +279,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			}
 
 			if ds.Type == datasources.DS_INFLUXDB {
-				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				password, err := hs.dataSourcesService.DecryptedPassword(c.Req.Context(), ds)
 				if err != nil {
 					return nil, err
 				}

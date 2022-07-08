@@ -15,7 +15,7 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error
 	cmd := &datasources.GetDataSourcesQuery{
 		OrgId: job.orgID,
 	}
-	err := job.sql.GetDataSources(helper.ctx, cmd)
+	err := job.datasourceService.GetDataSources(helper.ctx, cmd)
 	if err != nil {
 		return nil, err
 	}

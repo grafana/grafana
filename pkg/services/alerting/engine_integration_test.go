@@ -23,7 +23,7 @@ func TestIntegrationEngineTimeouts(t *testing.T) {
 	}
 	usMock := &usagestats.UsageStatsMock{T: t}
 	tracer := tracing.InitializeTracerForTest()
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, nil, setting.NewCfg(), nil, nil)
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, nil, setting.NewCfg(), nil, nil, nil)
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
 	engine.resultHandler = &FakeResultHandler{}

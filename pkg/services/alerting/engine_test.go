@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -46,16 +47,8 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 // A mock implementation of the AlertStore interface, allowing to override certain methods individually
 type AlertStoreMock struct {
 	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) error
-	getDataSource                      func(context.Context, *datasources.GetDataSourceQuery) error
 	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
 	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
-}
-
-func (a *AlertStoreMock) GetDataSource(c context.Context, cmd *datasources.GetDataSourceQuery) error {
-	if a.getDataSource != nil {
-		return a.getDataSource(c, cmd)
-	}
-	return nil
 }
 
 func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.GetAllAlertsQuery) error {
@@ -104,7 +97,8 @@ func TestEngineProcessJob(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 
 	store := &AlertStoreMock{}
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil, nil)
+	datasourceSvc := &fakes.FakeDataSourceService{}
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil, nil, datasourceSvc)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
@@ -121,7 +115,7 @@ func TestEngineProcessJob(t *testing.T) {
 			return nil
 		}
 
-		store.getDataSource = func(ctx context.Context, q *datasources.GetDataSourceQuery) error {
+		datasourceSvc.GetDataSourceFn = func(ctx context.Context, q *datasources.GetDataSourceQuery) error {
 			q.Result = &datasources.DataSource{Id: 1, Type: datasources.DS_PROMETHEUS}
 			return nil
 		}

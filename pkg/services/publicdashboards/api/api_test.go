@@ -16,13 +16,16 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/database"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -490,11 +493,13 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
+	dsdb := database.ProvideStore(db)
+	dsSvc := service.ProvideService(dsdb, nil, nil, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
-	cacheService := service.ProvideCacheService(localcache.ProvideService(), db)
+	cacheService := service.ProvideCacheService(localcache.ProvideService(), dsSvc)
 	qds := buildQueryDataService(t, cacheService, nil, db)
 
-	_ = db.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	_ = dsdb.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 		Uid:      "ds1",
 		OrgId:    1,
 		Name:     "laban",

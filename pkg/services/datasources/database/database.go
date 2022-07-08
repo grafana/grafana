@@ -1,4 +1,4 @@
-package sqlstore
+package database
 
 import (
 	"context"
@@ -11,23 +11,38 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// DatasourceStore implements the Store interface
+var _ datasources.Store = (*Store)(nil)
+
+type Store struct {
+	store db.DB
+	log   log.Logger
+}
+
+func ProvideStore(db db.DB) *Store {
+	return &Store{store: db, log: log.New("datasource.store")}
+}
+
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
-// either uid (preferred), id, or name and is added to the bus.
-func (ss *SQLStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+// either uid (preferred), id, or name.
+func (s *Store) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 	metrics.MDBDataSourceQueryByID.Inc()
 
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		return ss.getDataSource(ctx, query, sess)
+	return s.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return s.getDataSource(ctx, query, sess)
 	})
 }
 
-func (ss *SQLStore) getDataSource(ctx context.Context, query *datasources.GetDataSourceQuery, sess *DBSession) error {
+func (s *Store) getDataSource(ctx context.Context, query *datasources.GetDataSourceQuery, sess *sqlstore.DBSession) error {
 	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
 		return datasources.ErrDataSourceIdentifierNotSet
 	}
@@ -36,7 +51,7 @@ func (ss *SQLStore) getDataSource(ctx context.Context, query *datasources.GetDat
 	has, err := sess.Get(datasource)
 
 	if err != nil {
-		sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
+		s.log.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
 		return err
 	} else if !has {
 		return datasources.ErrDataSourceNotFound
@@ -47,9 +62,10 @@ func (ss *SQLStore) getDataSource(ctx context.Context, query *datasources.GetDat
 	return nil
 }
 
-func (ss *SQLStore) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
+func (s *Store) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
+	// TODO: remove xorm
 	var sess *xorm.Session
-	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+	return s.store.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
 		if query.DataSourceLimit <= 0 {
 			sess = dbSess.Where("org_id=?", query.OrgId).Asc("name")
 		} else {
@@ -61,22 +77,22 @@ func (ss *SQLStore) GetDataSources(ctx context.Context, query *datasources.GetDa
 	})
 }
 
-// GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
-func (ss *SQLStore) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+// GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string.
+func (s *Store) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	if query.Type == "" {
-		return fmt.Errorf("datasource type cannot be empty")
+		return datasources.ErrDataSourceTypeNotSet
 	}
 
 	query.Result = make([]*datasources.DataSource, 0)
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+	return s.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return sess.Where("type=?", query.Type).Asc("id").Find(&query.Result)
 	})
 }
 
 // GetDefaultDataSource is used to get the default datasource of organization
-func (ss *SQLStore) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
-	datasource := datasources.DataSource{}
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+func (s *Store) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
+	return s.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		datasource := datasources.DataSource{}
 		exists, err := sess.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
 
 		if !exists {
@@ -88,12 +104,13 @@ func (ss *SQLStore) GetDefaultDataSource(ctx context.Context, query *datasources
 	})
 }
 
-// DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
-// and is added to the bus. It also removes permissions related to the datasource.
-func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+// DeleteDataSource removes a datasource by org_id as well as either uid
+// (preferred), id, or name. It also removes permissions related to the
+// datasource.
+func (s *Store) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
+	return s.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		dsQuery := &datasources.GetDataSourceQuery{Id: cmd.ID, Uid: cmd.UID, Name: cmd.Name, OrgId: cmd.OrgID}
-		errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
+		errGettingDS := s.getDataSource(ctx, dsQuery, sess)
 
 		if errGettingDS != nil && !errors.Is(errGettingDS, datasources.ErrDataSourceNotFound) {
 			return errGettingDS
@@ -109,22 +126,23 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 
 			cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
 
+			// TODO: refactor so this is a separate function handled by an access control service.
 			// Remove associated AccessControl permissions
-			if _, errDeletingPerms := sess.Exec("DELETE FROM permission WHERE scope=?",
-				ac.Scope("datasources", "id", fmt.Sprint(dsQuery.Result.Id))); errDeletingPerms != nil {
-				return errDeletingPerms
+			if _, err := sess.Exec("DELETE FROM permission WHERE scope=?",
+				accesscontrol.Scope("datasources", "id", fmt.Sprint(dsQuery.Result.Id))); err != nil {
+				return err
 			}
 		}
 
 		if cmd.UpdateSecretFn != nil {
 			if err := cmd.UpdateSecretFn(); err != nil {
-				sqlog.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.UID, "name", cmd.Name, "orgId", cmd.OrgID)
+				s.log.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.UID, "name", cmd.Name, "orgId", cmd.OrgID)
 				return err
 			}
 		}
 
 		// Publish data source deletion event
-		sess.publishAfterCommit(&events.DataSourceDeleted{
+		sess.PublishAfterCommit(&events.DataSourceDeleted{
 			Timestamp: time.Now(),
 			Name:      cmd.Name,
 			ID:        cmd.ID,
@@ -136,8 +154,8 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 	})
 }
 
-func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+func (s *Store) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
+	return s.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existing := datasources.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
 
@@ -179,7 +197,8 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
-			if dialect.IsUniqueConstraintViolation(err) && strings.Contains(strings.ToLower(dialect.ErrorMessage(err)), "uid") {
+			d := s.store.GetDialect()
+			if d.IsUniqueConstraintViolation(err) && strings.Contains(strings.ToLower(d.ErrorMessage(err)), "uid") {
 				return datasources.ErrDataSourceUidExists
 			}
 			return err
@@ -188,16 +207,9 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			return err
 		}
 
-		if cmd.UpdateSecretFn != nil {
-			if err := cmd.UpdateSecretFn(); err != nil {
-				sqlog.Error("Failed to update datasource secrets -- rolling back update", "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgId)
-				return err
-			}
-		}
-
 		cmd.Result = ds
 
-		sess.publishAfterCommit(&events.DataSourceCreated{
+		sess.PublishAfterCommit(&events.DataSourceCreated{
 			Timestamp: time.Now(),
 			Name:      cmd.Name,
 			ID:        ds.Id,
@@ -208,19 +220,8 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 	})
 }
 
-func updateIsDefaultFlag(ds *datasources.DataSource, sess *DBSession) error {
-	// Handle is default flag
-	if ds.IsDefault {
-		rawSQL := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
-		if _, err := sess.Exec(rawSQL, false, ds.OrgId, ds.Id); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+func (s *Store) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
+	return s.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
@@ -279,7 +280,7 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 
 		if cmd.UpdateSecretFn != nil {
 			if err := cmd.UpdateSecretFn(); err != nil {
-				sqlog.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.Uid, "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgId)
+				s.log.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.Uid, "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgId)
 				return err
 			}
 		}
@@ -289,9 +290,9 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 	})
 }
 
-func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
+func generateNewDatasourceUid(sess *sqlstore.DBSession, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
-		uid := generateNewUid()
+		uid := util.GenerateShortUID()
 
 		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&datasources.DataSource{})
 		if err != nil {
@@ -306,4 +307,13 @@ func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
 	return "", datasources.ErrDataSourceFailedGenerateUniqueUid
 }
 
-var generateNewUid func() string = util.GenerateShortUID
+func updateIsDefaultFlag(ds *datasources.DataSource, sess *sqlstore.DBSession) error {
+	// Handle is default flag
+	if ds.IsDefault {
+		rawSQL := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
+		if _, err := sess.Exec(rawSQL, false, ds.OrgId, ds.Id); err != nil {
+			return err
+		}
+	}
+	return nil
+}

@@ -12,12 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 )
 
 func TestAlertingUsageStats(t *testing.T) {
 	store := &AlertStoreMock{}
+	dsSvc := &fakes.FakeDataSourceService{}
 	ae := &AlertEngine{
-		sqlStore: store,
+		sqlStore:          store,
+		datasourceService: dsSvc,
 	}
 
 	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) error {
@@ -41,7 +44,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	}
 
-	store.getDataSource = func(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+	dsSvc.GetDataSourceFn = func(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 		ds := map[int64]*datasources.DataSource{
 			1: {Type: "influxdb"},
 			2: {Type: "graphite"},

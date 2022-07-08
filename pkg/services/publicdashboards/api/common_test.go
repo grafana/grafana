@@ -7,29 +7,30 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
+	datasourceDB "github.com/grafana/grafana/pkg/services/datasources/database"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 type Server struct {
@@ -107,9 +108,13 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 		store = sqlstore.InitTestDB(t)
 	}
 
+	// datasource service
+	dsStore := datasourceDB.ProvideStore(store)
+	dsService := datasourceService.ProvideService(dsStore, nil, nil, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+
 	// default cache service
 	if cs == nil {
-		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store)
+		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), dsService)
 	}
 
 	// default fakePluginClient

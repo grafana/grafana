@@ -9,21 +9,22 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore) *CacheServiceImpl {
+func ProvideCacheService(
+	cacheService *localcache.CacheService, datasourceSvc datasources.DataSourceService,
+) *CacheServiceImpl {
 	return &CacheServiceImpl{
-		logger:       log.New("datasources"),
-		CacheService: cacheService,
-		SQLStore:     sqlStore,
+		logger:            log.New("datasources"),
+		CacheService:      cacheService,
+		datasourceService: datasourceSvc,
 	}
 }
 
 type CacheServiceImpl struct {
-	logger       log.Logger
-	CacheService *localcache.CacheService
-	SQLStore     *sqlstore.SQLStore
+	logger            log.Logger
+	CacheService      *localcache.CacheService
+	datasourceService datasources.DataSourceService
 }
 
 func (dc *CacheServiceImpl) GetDatasource(
@@ -46,7 +47,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	dc.logger.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 
 	query := &datasources.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
-	err := dc.SQLStore.GetDataSource(ctx, query)
+	err := dc.datasourceService.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +86,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	dc.logger.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
 	query := &datasources.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
-	err := dc.SQLStore.GetDataSource(ctx, query)
+	err := dc.datasourceService.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}

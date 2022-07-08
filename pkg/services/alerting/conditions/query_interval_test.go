@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -140,12 +141,19 @@ func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejso
 		store := mockstore.NewSQLStoreMock()
 		store.ExpectedDatasource = &datasources.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
 
+		datasourceSvc := &fakes.FakeDataSourceService{}
+		datasourceSvc.GetDataSourceFn = func(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+			query.Result = &datasources.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
+			return nil
+		}
+
 		ctx := &queryIntervalTestContext{}
 		ctx.result = &alerting.EvalContext{
-			Ctx:              context.Background(),
-			Rule:             &alerting.Rule{},
-			RequestValidator: &validations.OSSPluginRequestValidator{},
-			Store:            store,
+			Ctx:               context.Background(),
+			Rule:              &alerting.Rule{},
+			RequestValidator:  &validations.OSSPluginRequestValidator{},
+			Store:             store,
+			DatasourceService: datasourceSvc,
 		}
 
 		jsonModel, err := simplejson.NewJson([]byte(`{

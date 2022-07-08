@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/database"
+	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -52,9 +54,10 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []accesscontrol.Permission) {
 	b.Helper()
 	store := sqlstore.InitTestDB(b)
+	dataSvc := service.ProvideService(database.ProvideStore(store), nil, nil, nil, nil, nil, nil)
 
 	for i := 1; i <= numDs; i++ {
-		err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		err := dataSvc.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			Name:  fmt.Sprintf("ds:%d", i),
 			OrgId: 1,
 		})

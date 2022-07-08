@@ -68,7 +68,7 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 		am := &AlertmanagerNotifier{log: log.New("test.logger")}
 		evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 			State: tc.prevState,
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 
 		evalContext.Rule.State = tc.newState
 

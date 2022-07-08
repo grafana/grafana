@@ -29,7 +29,6 @@ import (
 // A subset is needed to make it easier to mock during the tests.
 type AlertStore interface {
 	GetAllAlertQueryHandler(context.Context, *models.GetAllAlertsQuery) error
-	GetDataSource(context.Context, *datasources.GetDataSourceQuery) error
 	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
 	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
 	GetAlertNotificationUidWithId(context.Context, *models.GetAlertNotificationUidQuery) error
@@ -59,6 +58,7 @@ type AlertEngine struct {
 	sqlStore           AlertStore
 	dashAlertExtractor DashAlertExtractor
 	dashboardService   dashboards.DashboardService
+	datasourceService  datasources.DataSourceService
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
@@ -70,7 +70,7 @@ func (e *AlertEngine) IsDisabled() bool {
 func ProvideAlertEngine(renderer rendering.Service, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore AlertStore, cfg *setting.Cfg,
-	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService) *AlertEngine {
+	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, datasourceService datasources.DataSourceService) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:                cfg,
 		RenderService:      renderer,
@@ -81,6 +81,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 		sqlStore:           sqlStore,
 		dashAlertExtractor: dashAlertExtractor,
 		dashboardService:   dashboardService,
+		datasourceService:  datasourceService,
 	}
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
@@ -203,7 +204,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
-	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.sqlStore, e.dashboardService)
+	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.sqlStore, e.dashboardService, e.datasourceService)
 	evalContext.Ctx = alertCtx
 
 	go func() {

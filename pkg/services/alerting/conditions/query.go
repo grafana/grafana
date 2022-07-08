@@ -1,16 +1,11 @@
 package conditions
 
 import (
+	gocontext "context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-
-	gocontext "context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -18,6 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
 func init() {
@@ -147,7 +145,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		OrgId: context.Rule.OrgID,
 	}
 
-	if err := context.Store.GetDataSource(context.Ctx, getDsInfo); err != nil {
+	if err := context.DatasourceService.GetDataSource(context.Ctx, getDsInfo); err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 

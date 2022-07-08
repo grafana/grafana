@@ -46,7 +46,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		hs := &HTTPServer{
 			Cfg:         setting.NewCfg(),
 			pluginStore: &fakePluginStore{},
-			DataSourcesService: &dataSourcesServiceMock{
+			dataSourcesService: &dataSourcesServiceMock{
 				expectedDatasources: ds,
 			},
 			DatasourcePermissionsService: mockDatasourcePermissionService,
@@ -81,7 +81,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 func TestAddDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 	hs := &HTTPServer{
-		DataSourcesService: &dataSourcesServiceMock{},
+		dataSourcesService: &dataSourcesServiceMock{},
 	}
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -105,7 +105,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	hs := &HTTPServer{
-		DataSourcesService: &dataSourcesServiceMock{
+		dataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
 	}
@@ -130,7 +130,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 // Updating data sources with invalid URLs should lead to an error.
 func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	hs := &HTTPServer{
-		DataSourcesService: &dataSourcesServiceMock{},
+		dataSourcesService: &dataSourcesServiceMock{},
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
@@ -155,7 +155,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	hs := &HTTPServer{
-		DataSourcesService: &dataSourcesServiceMock{
+		dataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
 	}
@@ -511,7 +511,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			if test.expectedDS == nil {
 				dsPermissionService.DsResult = nil
 			}
-			hs.DataSourcesService = dsServiceMock
+			hs.dataSourcesService = dsServiceMock
 			hs.DatasourcePermissionsService = dsPermissionService
 
 			// Create a middleware to pretend user is logged in

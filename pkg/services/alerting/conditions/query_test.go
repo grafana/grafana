@@ -6,21 +6,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/grafana/grafana/pkg/services/validations"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-
-	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 func newTimeSeriesPointsFromArgs(values ...float64) legacydata.DataTimeSeriesPoints {
@@ -37,15 +36,20 @@ func TestQueryCondition(t *testing.T) {
 	setup := func() *queryConditionTestContext {
 		ctx := &queryConditionTestContext{}
 		store := mockstore.NewSQLStoreMock()
-		store.ExpectedDatasource = &datasources.DataSource{Id: 1, Type: "graphite"}
+		datasourceSvc := &fakes.FakeDataSourceService{}
+		datasourceSvc.GetDataSourceFn = func(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+			query.Result = &datasources.DataSource{Id: 1, Type: "graphite"}
+			return nil
+		}
 
 		ctx.reducer = `{"type":"avg"}`
 		ctx.evaluator = `{"type":"gt","params":[100]}`
 		ctx.result = &alerting.EvalContext{
-			Ctx:              context.Background(),
-			Rule:             &alerting.Rule{},
-			RequestValidator: &validations.OSSPluginRequestValidator{},
-			Store:            store,
+			Ctx:               context.Background(),
+			Rule:              &alerting.Rule{},
+			RequestValidator:  &validations.OSSPluginRequestValidator{},
+			Store:             store,
+			DatasourceService: datasourceSvc,
 		}
 		return ctx
 	}

@@ -6,11 +6,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/database"
+	"github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -165,13 +172,17 @@ func TestFilter_Datasources(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			store := sqlstore.InitTestDB(t)
-
+			secretsStore := kvstore.SetupTestService(t)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			permsSvc := acmock.NewMockedPermissionsService()
+			permsSvc.On("SetPermissions", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string"), mock.AnythingOfType("[]accesscontrol.SetResourcePermissionCommand")).Return([]accesscontrol.ResourcePermission{}, nil)
+			dataSvc := service.ProvideService(database.ProvideStore(store), secretsService, secretsStore, nil, nil, acmock.New(), permsSvc)
 			sess := store.NewSession(context.Background())
 			defer sess.Close()
 
 			// seed 10 data sources
 			for i := 1; i <= 10; i++ {
-				err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), Uid: fmt.Sprintf("uid%d", i)})
+				err := dataSvc.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), Uid: fmt.Sprintf("uid%d", i)})
 				require.NoError(t, err)
 			}
 

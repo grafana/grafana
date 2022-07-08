@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error {
@@ -183,7 +184,7 @@ func (ss *SQLStore) GetPlaylistItem(ctx context.Context, query *models.GetPlayli
 // can also specify playlist uids during provisioning.
 func generateAndValidateNewPlaylistUid(sess *DBSession, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
-		uid := generateNewUid()
+		uid := util.GenerateShortUID()
 
 		playlist := models.Playlist{OrgId: orgId, UID: uid}
 		exists, err := sess.Get(&playlist)

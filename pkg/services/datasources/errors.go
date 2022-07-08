@@ -10,4 +10,5 @@ var (
 	ErrDataSourceAccessDenied            = errors.New("data source access denied")
 	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
 	ErrDataSourceIdentifierNotSet        = errors.New("unique identifier and org id are needed to be able to get or delete a datasource")
+	ErrDataSourceTypeNotSet              = errors.New("datasource type cannot be empty")
 )

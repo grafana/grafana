@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -75,23 +74,14 @@ func setupResourceBenchmark(b *testing.B, dsNum, usersNum int) (*AccessControlSt
 }
 
 func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *AccessControlStore, dsNum, usersNum, permissionsPerDs int) []int64 {
-	dataSources := make([]int64, 0)
+	datasourceIDs := make([]int64, 0)
 	for i := 0; i < dsNum; i++ {
-		addDSCommand := &datasources.AddDataSourceCommand{
-			OrgId:  0,
-			Name:   fmt.Sprintf("ds_%d", i),
-			Type:   datasources.DS_GRAPHITE,
-			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
-		}
-
-		_ = db.AddDataSource(context.Background(), addDSCommand)
-		dataSources = append(dataSources, addDSCommand.Result.Id)
+		datasourceIDs = append(datasourceIDs, int64(i))
 	}
 
 	userIds, teamIds := generateTeamsAndUsers(b, db, usersNum)
 
-	for _, dsID := range dataSources {
+	for _, dsID := range datasourceIDs {
 		// Add DS permissions for the users
 		maxPermissions := int(math.Min(float64(permissionsPerDs), float64(len(userIds))))
 		for i := 0; i < maxPermissions; i++ {
@@ -129,7 +119,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 		}
 	}
 
-	return dataSources
+	return datasourceIDs
 }
 
 func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]int64, []int64) {

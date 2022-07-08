@@ -11,13 +11,18 @@ import (
 )
 
 type FakeDataSourceService struct {
-	lastId      int64
-	DataSources []*datasources.DataSource
+	lastId          int64
+	DataSources     []*datasources.DataSource
+	GetDataSourceFn func(context.Context, *datasources.GetDataSourceQuery) error
 }
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
 
 func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+	if s.GetDataSourceFn != nil {
+		return s.GetDataSourceFn(ctx, query)
+	}
+
 	for _, datasource := range s.DataSources {
 		idMatch := query.Id != 0 && query.Id == datasource.Id
 		uidMatch := query.Uid != "" && query.Uid == datasource.Uid
