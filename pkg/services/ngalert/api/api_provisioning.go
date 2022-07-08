@@ -40,6 +40,7 @@ type TemplateService interface {
 type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance) error
+	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
 }
 
 type MuteTimingService interface {
@@ -83,6 +84,14 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *models.ReqContext, tree defini
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
+}
+
+func (srv *ProvisioningSrv) RouteResetPolicyTree(c *models.ReqContext) response.Response {
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusAccepted, tree)
 }
 
 func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response.Response {
