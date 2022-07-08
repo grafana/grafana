@@ -256,26 +256,58 @@ func (b wrapper) CreateFolder(ctx context.Context, path string) error {
 	return b.wrapped.CreateFolder(ctx, rootedPath)
 }
 
-func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
+func (b wrapper) deleteFolderOptionsWithDefaults(options *DeleteFolderOptions) *DeleteFolderOptions {
+	if options == nil {
+		return &DeleteFolderOptions{
+			Force:        false,
+			AccessFilter: b.filter,
+		}
+	}
+
+	if options.AccessFilter == nil {
+		return &DeleteFolderOptions{
+			Force:        options.Force,
+			AccessFilter: b.filter,
+		}
+	}
+
+	var filter PathFilter
+	if options.AccessFilter != nil {
+		filter = newAndPathFilter(b.filter, wrapPathFilter(options.AccessFilter, b.rootFolder))
+	} else {
+		filter = b.filter
+	}
+
+	return &DeleteFolderOptions{
+		Force:        options.Force,
+		AccessFilter: filter,
+	}
+}
+
+func (b wrapper) DeleteFolder(ctx context.Context, path string, options *DeleteFolderOptions) error {
 	if err := b.validatePath(path); err != nil {
 		return err
 	}
 
 	rootedPath := b.addRoot(path)
-	if !b.filter.IsAllowed(rootedPath) {
-		return nil
+
+	optionsWithDefaults := b.deleteFolderOptionsWithDefaults(options)
+	if !optionsWithDefaults.AccessFilter.IsAllowed(rootedPath) {
+		return fmt.Errorf("delete folder unauthorized - no access to %s", rootedPath)
 	}
 
-	isEmpty, err := b.isFolderEmpty(ctx, path)
-	if err != nil {
-		return err
+	if !optionsWithDefaults.Force {
+		isEmpty, err := b.isFolderEmpty(ctx, path)
+		if err != nil {
+			return err
+		}
+
+		if !isEmpty {
+			return fmt.Errorf("folder %s is not empty - cant remove it", path)
+		}
 	}
 
-	if !isEmpty {
-		return fmt.Errorf("folder %s is not empty - cant remove it", path)
-	}
-
-	return b.wrapped.DeleteFolder(ctx, rootedPath)
+	return b.wrapped.DeleteFolder(ctx, rootedPath, optionsWithDefaults)
 }
 
 func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {

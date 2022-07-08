@@ -228,8 +228,10 @@ func (hs *HTTPServer) registerRoutes() {
 				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
 
 				if hs.Features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-					orgRoute.Delete("/delete/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
-					orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.StorageService.Upload))
+					orgRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Delete))
+					orgRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Upload))
+					orgRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.CreateFolder))
+					orgRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.DeleteFolder))
 				}
 			})
 		}
