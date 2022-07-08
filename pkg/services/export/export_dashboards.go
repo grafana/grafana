@@ -11,11 +11,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) error {
+func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 	alias := make(map[string]string, 100)
 	ids := make(map[int64]string, 100)
 	folders := make(map[int64]string, 100)
@@ -25,13 +26,18 @@ func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) 
 		folders[0] = job.cfg.GeneralFolderPath // "general"
 	}
 
+	lookup, err := searchV2.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
+	if err != nil {
+		return err
+	}
+
 	rootDir := path.Join(helper.orgDir, "root")
 	folderStructure := commitOptions{
 		when:    time.Now(),
 		comment: "Exported folder structure",
 	}
 
-	err := job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	err = job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
 		type dashDataQueryResult struct {
 			Id       int64
 			UID      string `xorm:"uid"`

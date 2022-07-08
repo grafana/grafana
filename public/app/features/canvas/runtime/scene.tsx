@@ -63,6 +63,8 @@ export class Scene {
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
+  inlineEditingCallback?: () => void;
+
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
   }

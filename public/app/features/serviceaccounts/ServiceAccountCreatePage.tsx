@@ -13,7 +13,11 @@ import { OrgRolePicker } from '../admin/OrgRolePicker';
 
 export interface Props {}
 
-const createServiceAccount = async (sa: ServiceAccountDTO) => getBackendSrv().post('/api/serviceaccounts/', sa);
+const createServiceAccount = async (sa: ServiceAccountDTO) => {
+  const result = await getBackendSrv().post('/api/serviceaccounts/', sa);
+  await contextSrv.fetchUserPermissions();
+  return result;
+};
 
 const updateServiceAccount = async (id: number, sa: ServiceAccountDTO) =>
   getBackendSrv().patch(`/api/serviceaccounts/${id}`, sa);
@@ -44,7 +48,10 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
           setRoleOptions(options);
         }
 
-        if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+        if (
+          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
+        ) {
           const builtInRoles = await fetchBuiltinRoles(currentOrgId);
           setBuiltinRoles(builtInRoles);
         }
@@ -75,7 +82,11 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
           tokens: response.tokens,
         };
         await updateServiceAccount(response.id, data);
-        if (contextSrv.licensedAccessControlEnabled()) {
+        if (
+          contextSrv.licensedAccessControlEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+          contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove)
+        ) {
           await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
         }
       } catch (e) {
