@@ -265,27 +265,6 @@ func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTi
 	}
 
 	return &cloudWatchQuery, nil
-
-	/* return &cloudWatchQuery{
-		RefId:             refId,
-		Region:            model.Region,
-		Id:                id,
-		Namespace:         model.Namespace,
-		MetricName:        model.MetricName,
-		Statistic:         statValue,
-		Expression:        model.Expression,
-		ReturnData:        returnData,
-		Dimensions:        dimensions,
-		Period:            period,
-		Alias:             aliasValue,
-		Label:             labelValue,
-		MatchExact:        matchExactValue,
-		UsedExpression:    "",
-		MetricQueryType:   model.MetricQueryType,
-		MetricEditorMode:  metricEditorModeValue,
-		SqlExpression:     model.SqlExpression,
-		TimezoneUTCOffset: model.TimezoneUTCOffset,
-	}, nil */
 }
 
 func getRetainedPeriods(timeSince time.Duration) []int {
