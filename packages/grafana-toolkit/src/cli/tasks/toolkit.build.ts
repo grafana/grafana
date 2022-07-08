@@ -10,6 +10,8 @@ const path = require('path');
 
 let distDir: string, cwd: string;
 
+const clean = () => useSpinner('Cleaning', () => execa('npm', ['run', 'clean']));
+
 const compile = () =>
   useSpinner('Compiling sources', async () => {
     try {
@@ -85,6 +87,7 @@ const toolkitBuildTaskRunner: TaskRunner<ToolkitBuildOptions> = async () => {
   const pkg = require(`${cwd}/package.json`);
   console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
 
+  await clean();
   await compile();
   fs.mkdirSync('./dist/bin');
   fs.mkdirSync('./dist/sass');
