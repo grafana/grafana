@@ -114,7 +114,8 @@ export const generateColumns = (
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values.get(p.row.index);
       if (!name?.length) {
-        name = 'Missing title'; // normal for panels
+        const url = access.uid.values.get(p.row.index);
+        name = url ? 'Missing title' : 'Loading...'; // normal for panels
         classNames += ' ' + styles.missingTitleText;
       }
       return (

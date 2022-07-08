@@ -69,8 +69,8 @@ export class BlugeSearcher implements GrafanaSearcher {
   }
 }
 
-const firstPageSize = 5; //50;
-const nextPageSizes = 5; //100;
+const firstPageSize = 50;
+const nextPageSizes = 100;
 
 async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   query = await replaceCurrentFolderQuery(query);
