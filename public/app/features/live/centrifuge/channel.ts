@@ -5,7 +5,6 @@ import {
   PublicationContext,
   SubscriptionErrorContext,
   SubscribedContext,
-  SubscriptionEvents,
   UnsubscribedContext,
 } from 'centrifuge';
 import { Subject, of, Observable } from 'rxjs';
@@ -56,70 +55,59 @@ export class CentrifugeLiveChannel<T = any> {
   }
 
   // This should only be called when centrifuge is connected
-  initalize(): SubscriptionEvents {
+  initalize(): void {
     if (this.initalized) {
       throw new Error('Channel already initalized: ' + this.id);
     }
     this.initalized = true;
-
-    const events: SubscriptionEvents = {
-      // Called when a message is received from the socket
-      publication: (ctx: PublicationContext) => {
-        try {
-          if (ctx.data) {
-            if (ctx.data.schema) {
-              this.lastMessageWithSchema = ctx.data as DataFrameJSON;
-            }
-
-            this.stream.next({
-              type: LiveChannelEventType.Message,
-              message: ctx.data,
-            });
+    
+    this.subscription!.on('publication', (ctx: PublicationContext) => {
+      try {
+        if (ctx.data) {
+          if (ctx.data.schema) {
+            this.lastMessageWithSchema = ctx.data as DataFrameJSON;
           }
 
-          // Clear any error messages
-          if (this.currentStatus.error) {
-            this.currentStatus.timestamp = Date.now();
-            delete this.currentStatus.error;
-            this.sendStatus();
-          }
-        } catch (err) {
-          console.log('publish error', this.addr, err);
-          this.currentStatus.error = err;
+          this.stream.next({
+            type: LiveChannelEventType.Message,
+            message: ctx.data,
+          });
+        }
+
+        // Clear any error messages
+        if (this.currentStatus.error) {
           this.currentStatus.timestamp = Date.now();
+          delete this.currentStatus.error;
           this.sendStatus();
         }
-      },
-      error: (ctx: SubscriptionErrorContext) => {
+      } catch (err) {
+        console.log('publish error', this.addr, err);
+        this.currentStatus.error = err;
         this.currentStatus.timestamp = Date.now();
-        this.currentStatus.error = ctx.error.message;
         this.sendStatus();
-      },
-      subscribed: (ctx: SubscribedContext) => {
-        this.currentStatus.timestamp = Date.now();
-        this.currentStatus.state = LiveChannelConnectionState.Connected;
-        delete this.currentStatus.error;
+      }
+    }).on('error', (ctx: SubscriptionErrorContext) => {
+      this.currentStatus.timestamp = Date.now();
+      this.currentStatus.error = ctx.error.message;
+      this.sendStatus();
+    }).on('subscribed', (ctx: SubscribedContext) => {
+      this.currentStatus.timestamp = Date.now();
+      this.currentStatus.state = LiveChannelConnectionState.Connected;
+      delete this.currentStatus.error;
 
-        if (ctx.data?.schema) {
-          this.lastMessageWithSchema = ctx.data as DataFrameJSON;
-        }
-
-        this.sendStatus(ctx.data);
-      },
-      unsubscribed: (ctx: UnsubscribedContext) => {
-        this.currentStatus.timestamp = Date.now();
-        this.currentStatus.state = LiveChannelConnectionState.Disconnected;
-        this.sendStatus();
-      },
-    };
-
-    events.join = (ctx: JoinContext) => {
+      if (ctx.data?.schema) {
+        this.lastMessageWithSchema = ctx.data as DataFrameJSON;
+      }
+      this.sendStatus(ctx.data);
+    }).on('unsubscribed', (ctx: UnsubscribedContext) => {
+      this.currentStatus.timestamp = Date.now();
+      this.currentStatus.state = LiveChannelConnectionState.Disconnected;
+      this.sendStatus();
+    }).on('join', (ctx: JoinContext) => {
       this.stream.next({ type: LiveChannelEventType.Join, user: ctx.info.user });
-    };
-    events.leave = (ctx: LeaveContext) => {
+    }).on('leave', (ctx: LeaveContext) => {
       this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
-    };
-    return events;
+    });
   }
 
   private sendStatus(message?: any) {

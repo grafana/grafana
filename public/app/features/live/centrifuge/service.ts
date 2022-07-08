@@ -143,11 +143,14 @@ export class CentrifugeService implements CentrifugeSrv {
   }
 
   private async initChannel(channel: CentrifugeLiveChannel): Promise<void> {
-    const events = channel.initalize();
     if (this.centrifuge.state !== State.Connected) {
       await this.connectionBlocker;
     }
-    channel.subscription = this.centrifuge.subscribe(channel.id, events, { data: channel.addr.data });
+    const subscription = this.centrifuge.newSubscription(channel.id, {
+      data: channel.addr.data
+    });
+    channel.initalize();
+    subscription.subscribe();
     return;
   }
 
