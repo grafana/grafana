@@ -164,8 +164,7 @@ type HTTPServer struct {
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
 	starService                  star.Service
-	CoremodelRegistry            *registry.Generic
-	CoremodelStaticRegistry      *registry.Static
+	Coremodels                   *registry.Base
 	kvStore                      kvstore.KVStore
 	secretsMigrator              secrets.Migrator
 }
@@ -201,7 +200,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
+	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -284,8 +283,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardPermissionsService:  dashboardPermissionsService,
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
-		CoremodelRegistry:            coremodelRegistry,
-		CoremodelStaticRegistry:      coremodelStaticRegistry,
+		Coremodels:                   coremodels,
 		kvStore:                      kvStore,
 		secretsMigrator:              secretsMigrator,
 	}

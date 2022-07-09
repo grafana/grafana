@@ -57,8 +57,8 @@ func TestGetHomeDashboard(t *testing.T) {
 		SQLStore:                mockstore.NewSQLStoreMock(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
+		Coremodels:              registry.NewBase(),
 	}
-	hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 	tests := []struct {
 		name                  string
@@ -141,8 +141,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Features:                featuremgmt.WithFeatures(),
 			dashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
+			Coremodels:              registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		setUp := func() {
 			viewerRole := models.ROLE_VIEWER
@@ -261,8 +261,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			AccessControl:           accesscontrolmock.New(),
 			dashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
+			Coremodels:              registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		setUp := func() {
 			origCanEdit := setting.ViewersCanEdit
@@ -901,8 +901,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				SQLStore:                     mockSQLStore,
 				AccessControl:                accesscontrolmock.New(),
 				dashboardService:             dashboardService,
+				Coremodels:                   registry.NewBase(),
 			}
-			hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 			hs.callGetDashboard(sc)
 
 			assert.Equal(t, 200, sc.resp.Code)
@@ -955,8 +955,8 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 			folderPermissions, dashboardPermissions, ac,
 		),
 		dashboardService: dashboardService,
+		Coremodels:       registry.NewBase(),
 	}
-	hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 	hs.callGetDashboard(sc)
 
@@ -1021,8 +1021,8 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			dashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
+			Coremodels:            registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -1053,8 +1053,8 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
+			Coremodels:              registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -1092,8 +1092,8 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,
+			Coremodels:              registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
@@ -1115,16 +1115,6 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 
 		fn(sc)
 	})
-}
-
-func setupDashboardCoremodel(t *testing.T) (*registry.Static, *registry.Generic) {
-	// TODO abstract and generalize this further for wider reuse
-	t.Helper()
-	sreg, err := registry.ProvideStatic()
-	require.NoError(t, err)
-	greg, err := registry.ProvideGeneric()
-	require.NoError(t, err)
-	return sreg, greg
 }
 
 func (sc *scenarioContext) ToJSON() *simplejson.Json {

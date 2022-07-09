@@ -8,12 +8,12 @@ import (
 )
 
 func TestSchemaAssignability(t *testing.T) {
-	reg, err := registry.ProvideGeneric()
+	reg, err := registry.NewBase()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	for _, cm := range reg.List() {
+	for _, cm := range reg.All() {
 		tcm := cm
 		t.Run(tcm.Lineage().Name(), func(t *testing.T) {
 			err := thema.AssignableTo(tcm.CurrentSchema(), tcm.GoType())
