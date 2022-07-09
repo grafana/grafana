@@ -28,8 +28,6 @@ interface Acknowledgements {
 
 export const SharePublicDashboard = (props: Props) => {
   const dashboardVariables = props.dashboard.getVariables();
-  const dashboardChanged = props.dashboard.hasUnsavedChanges();
-
   const [publicDashboard, setPublicDashboardConfig] = useState<PublicDashboard>({
     isEnabled: false,
     uid: '',
