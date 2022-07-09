@@ -228,9 +228,6 @@ func (hs *HTTPServer) registerRoutes() {
 				orgRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
 				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
 
-				// hack files into dashboards
-				orgRoute.Get("/dashboard/*", routing.Wrap(hs.StorageService.GetDashboard))
-
 				if hs.Features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
 					orgRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Delete))
 					orgRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Upload))
