@@ -7,7 +7,6 @@ package registry
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
@@ -49,8 +48,5 @@ func doProvideBase(lib thema.Library) *Base {
 	}
 	reg.all = append(reg.all, reg.dashboard)
 
-	sort.Slice(reg.all, func(i, j int) bool {
-		return reg.all[i].Lineage().Name() < reg.all[j].Lineage().Name()
-	})
 	return reg
 }

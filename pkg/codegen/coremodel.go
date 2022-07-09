@@ -461,9 +461,6 @@ func doProvideBase(lib thema.Library) *Base {
     reg.all = append(reg.all, reg.{{ .Name }})
 {{end}}
 
-	sort.Slice(reg.all, func(i, j int) bool {
-		return reg.all[i].Lineage().Name() < reg.all[j].Lineage().Name()
-	})
 	return reg
 }
 `))
