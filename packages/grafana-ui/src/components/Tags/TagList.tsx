@@ -9,8 +9,11 @@ import { IconName } from '../../types/icon';
 import { OnTagClick, Tag } from './Tag';
 
 export interface Props {
+  /** Maximum number of the tags to display */
   displayMax?: number;
+  /** Names of the tags to display */
   tags: string[];
+  /** Callback when the tag is clicked */
   onClick?: OnTagClick;
   /** Custom styles for the wrapper component */
   className?: string;
