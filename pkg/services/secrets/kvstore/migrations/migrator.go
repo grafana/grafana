@@ -2,13 +2,13 @@ package migrations
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"reflect"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 )
 
 var logger = log.New("secret.migration")
