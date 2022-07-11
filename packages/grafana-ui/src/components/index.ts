@@ -79,6 +79,7 @@ export { TableCellDisplayMode, TableSortByFieldState } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
+export { VerticalTab } from './Tabs/VerticalTab';
 export { TabContent } from './Tabs/TabContent';
 export { Counter } from './Tabs/Counter';
 
@@ -178,7 +179,8 @@ export { RangeSlider } from './Slider/RangeSlider';
 export { Form } from './Forms/Form';
 export { sharedInputStyle } from './Forms/commonStyles';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow, ButtonProps } from './Button';
+export { Button, LinkButton, ButtonVariant, ButtonGroup, ButtonProps } from './Button';
+export { ToolbarButton, ToolbarButtonRow } from './ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';

@@ -444,7 +444,7 @@ export class DashboardModel implements TimeModel {
 
       const rowPanels = panel.panels ?? [];
       for (const rowPanel of rowPanels) {
-        yield rowPanel as PanelModel;
+        yield rowPanel;
       }
     }
   }
@@ -499,10 +499,6 @@ export class DashboardModel implements TimeModel {
 
   hasUnsavedChanges() {
     const changedPanel = this.panels.find((p) => p.hasChanged);
-    if (changedPanel) {
-      console.log('Panel has changed', changedPanel);
-    }
-
     return Boolean(changedPanel);
   }
 
@@ -875,6 +871,10 @@ export class DashboardModel implements TimeModel {
       row.panels = rowPanels.map((panel: PanelModel) => panel.getSaveModel());
       row.collapsed = true;
 
+      if (rowPanels.some((panel) => panel.hasChanged)) {
+        row.configRev++;
+      }
+
       // emit change event
       this.events.publish(new DashboardPanelsChangedEvent());
       return;
@@ -1106,6 +1106,10 @@ export class DashboardModel implements TimeModel {
     if (shouldUpdateGridPositionLayout) {
       this.events.publish(new DashboardPanelsChangedEvent());
     }
+  }
+
+  getDefaultTime() {
+    return this.originalTime;
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {

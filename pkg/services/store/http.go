@@ -1,13 +1,17 @@
 package store
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -18,6 +22,8 @@ type HTTPStorageService interface {
 	List(c *models.ReqContext) response.Response
 	Read(c *models.ReqContext) response.Response
 	Delete(c *models.ReqContext) response.Response
+	DeleteFolder(c *models.ReqContext) response.Response
+	CreateFolder(c *models.ReqContext) response.Response
 	Upload(c *models.ReqContext) response.Response
 }
 
@@ -57,13 +63,22 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	}
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
-		return response.Error(400, "Please limit file uploaded under 1MB", err)
+		msg := fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
+		return response.Error(400, msg, err)
 	}
 
 	files := c.Req.MultipartForm.File["file"]
 	if len(files) != 1 {
 		return response.JSON(400, map[string]interface{}{
 			"message": "please upload files one at a time",
+			"err":     true,
+		})
+	}
+
+	folder, ok := c.Req.MultipartForm.Value["folder"]
+	if !ok || len(folder) != 1 {
+		return response.JSON(400, map[string]interface{}{
+			"message": "please specify the upload folder",
 			"err":     true,
 		})
 	}
@@ -92,7 +107,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		return errFileTooBig
 	}
 
-	path := RootUpload + "/" + fileHeader.Filename
+	path := folder[0] + "/" + fileHeader.Filename
 
 	mimeType := http.DetectContentType(data)
 
@@ -123,6 +138,11 @@ func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(400, "cannot call read", err)
 	}
+
+	if file == nil || file.Contents == nil {
+		return response.Error(404, "file does not exist", err)
+	}
+
 	// set the correct content type for svg
 	if strings.HasSuffix(path, ".svg") {
 		c.Resp.Header().Set("Content-Type", "image/svg+xml")
@@ -132,14 +152,72 @@ func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 
 func (s *httpStorage) Delete(c *models.ReqContext) response.Response {
 	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
-	_, path := getPathAndScope(c)
-	err := s.store.Delete(c.Req.Context(), c.SignedInUser, "/"+path)
+	scope, path := getPathAndScope(c)
+
+	err := s.store.Delete(c.Req.Context(), c.SignedInUser, scope+"/"+path)
 	if err != nil {
-		return response.Error(400, "cannot call delete", err)
+		return response.Error(400, "failed to delete the file: "+err.Error(), err)
 	}
-	return response.JSON(200, map[string]string{
+	return response.JSON(200, map[string]interface{}{
 		"message": "Removed file from storage",
+		"success": true,
 		"path":    path,
+	})
+}
+
+func (s *httpStorage) DeleteFolder(c *models.ReqContext) response.Response {
+	body, err := io.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(500, "error reading bytes", err)
+	}
+
+	cmd := &DeleteFolderCmd{}
+	err = json.Unmarshal(body, cmd)
+	if err != nil {
+		return response.Error(400, "error parsing body", err)
+	}
+
+	if cmd.Path == "" {
+		return response.Error(400, "empty path", err)
+	}
+
+	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
+	_, path := getPathAndScope(c)
+	if err := s.store.DeleteFolder(c.Req.Context(), c.SignedInUser, cmd); err != nil {
+		return response.Error(400, "failed to delete the folder: "+err.Error(), err)
+	}
+
+	return response.JSON(200, map[string]interface{}{
+		"message": "Removed folder from storage",
+		"success": true,
+		"path":    path,
+	})
+}
+
+func (s *httpStorage) CreateFolder(c *models.ReqContext) response.Response {
+	body, err := io.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(500, "error reading bytes", err)
+	}
+
+	cmd := &CreateFolderCmd{}
+	err = json.Unmarshal(body, cmd)
+	if err != nil {
+		return response.Error(400, "error parsing body", err)
+	}
+
+	if cmd.Path == "" {
+		return response.Error(400, "empty path", err)
+	}
+
+	if err := s.store.CreateFolder(c.Req.Context(), c.SignedInUser, cmd); err != nil {
+		return response.Error(400, "failed to create the folder: "+err.Error(), err)
+	}
+
+	return response.JSON(200, map[string]interface{}{
+		"message": "Folder created",
+		"success": true,
+		"path":    cmd.Path,
 	})
 }
 

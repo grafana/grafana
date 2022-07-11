@@ -53,9 +53,13 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 
 	if err := hs.SQLStore.GetUserById(c.Req.Context(), &userQuery); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, "User not found", err)
+			return response.Error(http.StatusNotFound, "User not found", err)
+		} else if errors.Is(err, models.ErrCaseInsensitive) {
+			return response.Error(http.StatusConflict,
+				"User has conflicting login or email with another user. Please contact server admin", err)
 		}
-		return response.Error(500, "Failed to get user", err)
+
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
 	tokens, err := hs.AuthTokenService.GetUserTokens(c.Req.Context(), userID)

@@ -187,6 +187,9 @@ var (
 
 	// StatsTotalDataKeys is a metric of total number of data keys stored in Grafana.
 	StatsTotalDataKeys *prometheus.GaugeVec
+
+	// MStatTotalPublicDashboards is a metric total amount of public dashboards
+	MStatTotalPublicDashboards prometheus.Gauge
 )
 
 func init() {
@@ -550,6 +553,12 @@ func init() {
 		Help:      "total amount of data keys in the database",
 		Namespace: ExporterName,
 	}, []string{"active"})
+
+	MStatTotalPublicDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_public_dashboard",
+		Help:      "total amount of public dashboards",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -644,5 +653,6 @@ func initMetricVars() {
 		StatsTotalLibraryPanels,
 		StatsTotalLibraryVariables,
 		StatsTotalDataKeys,
+		MStatTotalPublicDashboards,
 	)
 }

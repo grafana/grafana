@@ -3,9 +3,11 @@ import { debounce } from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
+import store from 'app/core/store';
 import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
 
 import { ServiceAccountToken } from '../components/CreateTokenModal';
+import { API_KEYS_MIGRATION_INFO_STORAGE_KEY } from '../constants';
 
 import {
   acOptionsLoaded,
@@ -15,7 +17,9 @@ import {
   serviceAccountsFetchBegin,
   serviceAccountsFetched,
   serviceAccountsFetchEnd,
+  apiKeysMigrationStatusLoaded,
   stateFilterChanged,
+  showApiKeysMigrationInfoLoaded,
 } from './reducers';
 
 const BASE_URL = `/api/serviceaccounts`;
@@ -41,6 +45,15 @@ export function fetchACOptions(): ThunkResult<void> {
   };
 }
 
+export function getApiKeysMigrationStatus(): ThunkResult<void> {
+  return async (dispatch) => {
+    if (contextSrv.hasPermission(AccessControlAction.ServiceAccountsRead)) {
+      const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
+      dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
+    }
+  };
+}
+
 interface FetchServiceAccountsParams {
   withLoadingIndicator: boolean;
 }
@@ -50,20 +63,22 @@ export function fetchServiceAccounts(
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      if (withLoadingIndicator) {
-        dispatch(serviceAccountsFetchBegin());
+      if (contextSrv.hasPermission(AccessControlAction.ServiceAccountsRead)) {
+        if (withLoadingIndicator) {
+          dispatch(serviceAccountsFetchBegin());
+        }
+        const { perPage, page, query, serviceAccountStateFilter } = getState().serviceAccounts;
+        const result = await getBackendSrv().get(
+          `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}${getStateFilter(
+            serviceAccountStateFilter
+          )}&accesscontrol=true`
+        );
+        dispatch(serviceAccountsFetched(result));
       }
-      const { perPage, page, query, serviceAccountStateFilter } = getState().serviceAccounts;
-      const result = await getBackendSrv().get(
-        `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}${getStateFilter(
-          serviceAccountStateFilter
-        )}&accesscontrol=true`
-      );
-      dispatch(serviceAccountsFetched(result));
     } catch (error) {
       console.error(error);
     } finally {
-      serviceAccountsFetchEnd();
+      dispatch(serviceAccountsFetchEnd());
     }
   };
 }
@@ -130,5 +145,19 @@ export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(pageChanged(page));
     dispatch(fetchServiceAccounts());
+  };
+}
+
+export function getApiKeysMigrationInfo(): ThunkResult<void> {
+  return async (dispatch) => {
+    const showApiKeysMigrationInfo = store.getBool(API_KEYS_MIGRATION_INFO_STORAGE_KEY, false);
+    dispatch(showApiKeysMigrationInfoLoaded(showApiKeysMigrationInfo));
+  };
+}
+
+export function closeApiKeysMigrationInfo(): ThunkResult<void> {
+  return async (dispatch) => {
+    store.set(API_KEYS_MIGRATION_INFO_STORAGE_KEY, false);
+    dispatch(getApiKeysMigrationInfo());
   };
 }

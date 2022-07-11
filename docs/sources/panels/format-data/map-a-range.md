@@ -10,12 +10,6 @@ weight: 30
 
 Map a range of values when you want to format multiple, continuous values.
 
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
-
-**To map a range**:
-
 1. Edit the panel for which you want to map a range of values.
 1. In panel display options, in the **Value mappings** section, click **Add value mappings**.
 1. Click **Add a new mapping** and then select **Range**.

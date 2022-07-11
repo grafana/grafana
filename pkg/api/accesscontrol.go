@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -36,9 +37,13 @@ var (
 // grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
+	// Declare plugins roles
+	if err := plugins.DeclareRBACRoles(hs.AccessControl); err != nil {
+		return err
+	}
+
 	provisioningWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     3,
 			Name:        "fixed:provisioning:writer",
 			DisplayName: "Provisioning writer",
 			Description: "Reload provisioning.",
@@ -55,7 +60,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	datasourcesExplorerRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     4,
 			Name:        "fixed:datasources:explorer",
 			DisplayName: "Data source explorer",
 			Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
@@ -75,7 +79,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	datasourcesReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     3,
 			Name:        "fixed:datasources:reader",
 			DisplayName: "Data source reader",
 			Description: "Read and query all data sources.",
@@ -101,7 +104,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	datasourcesWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     3,
 			Name:        "fixed:datasources:writer",
 			DisplayName: "Data source writer",
 			Description: "Create, update, delete, read, or query data sources.",
@@ -125,7 +127,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	datasourcesIdReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     4,
 			Name:        "fixed:datasources.id:reader",
 			DisplayName: "Data source ID reader",
 			Description: "Read the ID of a data source based on its name.",
@@ -142,7 +143,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	apikeyReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     1,
 			Name:        "fixed:apikeys:reader",
 			DisplayName: "APIKeys reader",
 			Description: "Gives access to read api keys.",
@@ -159,7 +159,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	apikeyWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     1,
 			Name:        "fixed:apikeys:writer",
 			DisplayName: "APIKeys writer",
 			Description: "Gives access to add and delete api keys.",
@@ -179,7 +178,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	orgReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     5,
 			Name:        "fixed:organization:reader",
 			DisplayName: "Organization reader",
 			Description: "Read an organization, such as its ID, name, address, or quotas.",
@@ -194,7 +192,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	orgWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     5,
 			Name:        "fixed:organization:writer",
 			DisplayName: "Organization writer",
 			Description: "Read an organization, its quotas, or its preferences. Update organization properties, or its preferences.",
@@ -210,7 +207,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	orgMaintainerRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     5,
 			Name:        "fixed:organization:maintainer",
 			DisplayName: "Organization maintainer",
 			Description: "Create, read, write, or delete an organization. Read or write an organization's quotas. Needs to be assigned globally.",
@@ -233,12 +229,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: ac.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
-			Description: "Create teams and read organisation users (required to manage the created teams).",
+			Description: "Create teams and read organisation users and service accounts (required to manage the created teams).",
 			Group:       "Teams",
-			Version:     2,
 			Permissions: []ac.Permission{
 				{Action: ac.ActionTeamsCreate},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
+				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
 			},
 		},
 		Grants: teamCreatorGrants,
@@ -250,7 +246,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Team writer",
 			Description: "Create, read, write, or delete a team as well as controlling team memberships.",
 			Group:       "Teams",
-			Version:     2,
 			Permissions: []ac.Permission{
 				{Action: ac.ActionTeamsCreate},
 				{Action: ac.ActionTeamsDelete, Scope: ac.ScopeTeamsAll},
@@ -269,7 +264,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Annotation reader",
 			Description: "Read annotations and tags",
 			Group:       "Annotations",
-			Version:     2,
 			Permissions: []ac.Permission{
 				{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
 			},
@@ -283,7 +277,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Dashboard annotation writer",
 			Description: "Update annotations associated with dashboards.",
 			Group:       "Annotations",
-			Version:     3,
 			Permissions: []ac.Permission{
 				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeDashboard},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeDashboard},
@@ -299,7 +292,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Annotation writer",
 			Description: "Update all annotations.",
 			Group:       "Annotations",
-			Version:     2,
 			Permissions: []ac.Permission{
 				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
@@ -311,7 +303,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	dashboardsCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     2,
 			Name:        "fixed:dashboards:creator",
 			DisplayName: "Dashboard creator",
 			Description: "Create dashboard in general folder.",
@@ -326,7 +317,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	dashboardsReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     1,
 			Name:        "fixed:dashboards:reader",
 			DisplayName: "Dashboard reader",
 			Description: "Read all dashboards.",
@@ -340,7 +330,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	dashboardsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     1,
 			Name:        "fixed:dashboards:writer",
 			DisplayName: "Dashboard writer",
 			Group:       "Dashboards",
@@ -358,7 +347,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	foldersCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     1,
 			Name:        "fixed:folders:creator",
 			DisplayName: "Folder creator",
 			Description: "Create folders.",
@@ -372,7 +360,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	foldersReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     1,
 			Name:        "fixed:folders:reader",
 			DisplayName: "Folder reader",
 			Description: "Read all folders and dashboards.",
@@ -387,7 +374,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	foldersWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     1,
 			Name:        "fixed:folders:writer",
 			DisplayName: "Folder writer",
 			Description: "Create, read, write or delete all folders and dashboards and their permissions.",
@@ -443,6 +429,13 @@ var orgsCreateAccessEvaluator = ac.EvalAll(
 	ac.EvalPermission(ActionOrgsCreate),
 )
 
+// usersInviteEvaluator is used to protect the "Configuration > Users > Invite" page access
+// accessible to org admins and server admins by default
+var usersInviteEvaluator = ac.EvalAny(
+	ac.EvalPermission(ac.ActionUsersCreate),
+	ac.EvalPermission(ac.ActionOrgUsersAdd),
+)
+
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
 // grants access to a user when they can either create teams or can read and update a team
 var teamsAccessEvaluator = ac.EvalAny(
@@ -470,7 +463,10 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 var apiKeyAccessEvaluator = ac.EvalPermission(ac.ActionAPIKeyRead)
 
 // serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
-var serviceAccountAccessEvaluator = ac.EvalPermission(serviceaccounts.ActionRead)
+var serviceAccountAccessEvaluator = ac.EvalAny(
+	ac.EvalPermission(serviceaccounts.ActionRead),
+	ac.EvalPermission(serviceaccounts.ActionCreate),
+)
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource

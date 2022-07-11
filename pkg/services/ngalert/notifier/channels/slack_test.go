@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -26,13 +25,6 @@ import (
 func TestSlackNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
-	// Create our temporary image file.
-	f, err := os.CreateTemp("", "ngalert-images-example*.png")
-	if err != nil {
-		panic("Temp file error!")
-	}
-	defer func() { _ = os.Remove(f.Name()) }()
-
 	fakeImageStore := &fakeImageStore{
 		Images: []*models.Image{
 			{
@@ -41,9 +33,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 		},
 	}
-
-	_, _ = f.Write([]byte("test image"))
-	_ = f.Close()
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -139,7 +128,7 @@ func TestSlackNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-with-url"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertImageToken__": "test-with-url"},
 					},
 				},
 			},

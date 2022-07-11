@@ -13,14 +13,22 @@ var (
 )
 
 const (
-	ActionRead   = "serviceaccounts:read"
-	ActionWrite  = "serviceaccounts:write"
-	ActionCreate = "serviceaccounts:create"
-	ActionDelete = "serviceaccounts:delete"
+	ActionRead             = "serviceaccounts:read"
+	ActionWrite            = "serviceaccounts:write"
+	ActionCreate           = "serviceaccounts:create"
+	ActionDelete           = "serviceaccounts:delete"
+	ActionPermissionsRead  = "serviceaccounts.permissions:read"
+	ActionPermissionsWrite = "serviceaccounts.permissions:write"
 )
 
 type ServiceAccount struct {
 	Id int64
+}
+
+type CreateServiceAccountForm struct {
+	Name       string           `json:"name" binding:"Required"`
+	Role       *models.RoleType `json:"role"`
+	IsDisabled *bool            `json:"isDisabled"`
 }
 
 type UpdateServiceAccountForm struct {
@@ -72,6 +80,10 @@ type ServiceAccountProfileDTO struct {
 }
 
 type ServiceAccountFilter string // used for filtering
+
+type APIKeysMigrationStatus struct {
+	Migrated bool `json:"migrated"`
+}
 
 const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"

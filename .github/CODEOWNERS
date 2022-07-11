@@ -12,8 +12,8 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation owner: Jita Chatterjee
-/docs/ @grafana/docs-squad @pkolyvas
-/contribute/ @marcusolsson @grafana/docs-squad @pkolyvas
+/docs/ @grafana/docs-squad
+/contribute/ @marcusolsson @grafana/docs-squad
 /docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend @marcusolsson @grafana/docs-squad @grafana/plugins-platform-backend
 /docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
@@ -31,9 +31,9 @@ go.sum @grafana/backend-platform
 /pkg/build/ @grafana/grafana-release-eng
 
 # Cloud Datasources backend code
-/pkg/tsdb/cloudwatch @grafana/cloud-datasources
-/pkg/tsdb/azuremonitor @grafana/cloud-datasources
-/pkg/tsdb/cloudmonitoring @grafana/cloud-datasources
+/pkg/tsdb/cloudwatch @grafana/aws-plugins
+/pkg/tsdb/azuremonitor @grafana/cloud-provider-plugins
+/pkg/tsdb/cloudmonitoring @grafana/cloud-provider-plugins
 
 # Observability backend code
 /pkg/tsdb/prometheus @grafana/observability-metrics
@@ -108,6 +108,7 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /public/app/features/comments/ @grafana/grafana-edge-squad
 /public/app/features/dimensions/ @grafana/grafana-edge-squad
 /public/app/features/geo/ @grafana/grafana-edge-squad
+/public/app/features/storage/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/observability-experience-squad
 /public/app/features/plugins @grafana/plugins-platform-frontend
@@ -143,14 +144,15 @@ lerna.json @grafana/frontend-ops
 .eslintrc @grafana/frontend-ops
 .pa11yci.conf.js @grafana/user-essentials
 .pa11yci-pr.conf.js @grafana/user-essentials
+.betterer.results @joshhunt
 
 # @grafana/ui component documentation
 *.mdx @marcusolsson @jessover9000 @grafana/plugins-platform-frontend
 
 # Core datasources
-/public/app/plugins/datasource/cloudwatch @grafana/cloud-datasources
+/public/app/plugins/datasource/cloudwatch @grafana/aws-plugins
 /public/app/plugins/datasource/elasticsearch @grafana/observability-logs-and-traces
-/public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/cloud-datasources
+/public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/cloud-provider-plugins
 /public/app/plugins/datasource/graphite @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb @grafana/observability-metrics
 /public/app/plugins/datasource/jaeger @grafana/observability-logs-and-traces
@@ -160,7 +162,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/opentsdb @grafana/backend-platform
 /public/app/plugins/datasource/postgres @grafana/grafana-bi-squad
 /public/app/plugins/datasource/prometheus @grafana/observability-metrics
-/public/app/plugins/datasource/cloud-monitoring @grafana/cloud-datasources
+/public/app/plugins/datasource/cloud-monitoring @grafana/cloud-provider-plugins
 /public/app/plugins/datasource/zipkin @grafana/observability-logs-and-traces
 /public/app/plugins/datasource/tempo @grafana/observability-logs-and-traces
 /public/app/plugins/datasource/alertmanager @grafana/alerting-squad

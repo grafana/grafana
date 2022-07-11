@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
@@ -76,8 +76,8 @@ func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*
 	return res, nil
 }
 
-func DataSourceModel() *models.DataSource {
-	return &models.DataSource{
+func DataSourceModel() *datasources.DataSource {
+	return &datasources.DataSource{
 		Id:             DatasourceID,
 		Uid:            DatasourceUID,
 		Name:           DatasourceUID,

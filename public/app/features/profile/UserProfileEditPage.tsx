@@ -4,7 +4,7 @@ import { useMount } from 'react-use';
 
 import { NavModel } from '@grafana/data';
 import { VerticalGroup } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';

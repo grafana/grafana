@@ -8980,7 +8980,7 @@
           "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "type": "string"
+          "$ref": "#/definitions/State"
         },
         "templateVars": {
           "type": "object"
@@ -9450,9 +9450,6 @@
         "isHome": {
           "type": "boolean"
         },
-        "isPublic": {
-          "type": "boolean"
-        },
         "isSnapshot": {
           "type": "boolean"
         },
@@ -9465,7 +9462,7 @@
         "provisionedExternalId": {
           "type": "string"
         },
-        "publicDashboardUid": {
+        "publicDashboardAccessToken": {
           "type": "string"
         },
         "slug": {
@@ -10054,6 +10051,9 @@
     "Folder": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "canAdmin": {
           "type": "boolean"
         },
@@ -10105,6 +10105,9 @@
     "FolderSearchHit": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -10987,6 +10990,9 @@
         "homeDashboardUID": {
           "type": "string"
         },
+        "locale": {
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -11122,6 +11128,9 @@
           "format": "int64"
         },
         "homeDashboardUID": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "navbar": {
@@ -11694,6 +11703,9 @@
           "format": "int64"
         }
       }
+    },
+    "State": {
+      "type": "string"
     },
     "Status": {
       "type": "object",
@@ -12317,6 +12329,9 @@
           "default": 0
         },
         "homeDashboardUID": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "navbar": {

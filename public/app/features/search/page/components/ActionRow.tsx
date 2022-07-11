@@ -7,6 +7,7 @@ import { HorizontalGroup, RadioButtonGroup, useStyles2, Checkbox, Button } from 
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { SEARCH_SELECTED_LAYOUT } from '../../constants';
 import { DashboardQuery, SearchLayout } from '../../types';
 
 export const layoutOptions = [
@@ -69,6 +70,11 @@ export const ActionRow: FC<Props> = ({
   // Disabled folder layout option when query is present
   const disabledOptions = query.query ? [SearchLayout.Folders] : [];
 
+  const updateLayoutPreference = (layout: SearchLayout) => {
+    localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
+    onLayoutChange(layout);
+  };
+
   return (
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
@@ -77,7 +83,7 @@ export const ActionRow: FC<Props> = ({
             <RadioButtonGroup
               options={layoutOptions}
               disabledOptions={disabledOptions}
-              onChange={onLayoutChange}
+              onChange={updateLayoutPreference}
               value={layout}
             />
           )}
