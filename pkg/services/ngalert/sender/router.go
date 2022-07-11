@@ -21,7 +21,7 @@ import (
 // Based on rule's orgID and the configuration for that organization,
 // it determines whether an alert needs to be sent to an external Alertmanager and\or internal notifier.Alertmanager
 //
-// After creating a Dispatcher, you must call Run to keep the Dispatcher's
+// After creating a AlertsRouter, you must call Run to keep the AlertsRouter's
 // state synchronized with the alerting configuration.
 type AlertsRouter struct {
 	AdminConfigMtx   sync.RWMutex
@@ -43,7 +43,7 @@ type AlertsRouter struct {
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *AlertsRouter {
 	d := &AlertsRouter{
 		AdminConfigMtx:   sync.RWMutex{},
-		logger:           log.New("ngalert-notifications-dispatcher"),
+		logger:           log.New("alerts-router"),
 		clock:            clk,
 		adminConfigStore: store,
 
@@ -253,7 +253,7 @@ func (d *AlertsRouter) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 	return s.DroppedAlertmanagers()
 }
 
-// Run starts regular updates of the configuration
+// Run starts regular updates of the configuration.
 func (d *AlertsRouter) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Add(1)
