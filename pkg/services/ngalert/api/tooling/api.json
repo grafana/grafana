@@ -4032,6 +4032,14 @@
   "/api/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
+    "parameters": [
+     {
+      "description": "Filter by name",
+      "in": "query",
+      "name": "name",
+      "type": "string"
+     }
+    ],
     "responses": {
      "200": {
       "description": "ContactPoints",

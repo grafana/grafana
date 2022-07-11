@@ -1804,6 +1804,14 @@
         ],
         "summary": "Get all the contact points.",
         "operationId": "RouteGetContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Filter by name",
+            "name": "name",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "ContactPoints",
@@ -5734,7 +5742,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5760,6 +5767,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -6195,7 +6203,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"

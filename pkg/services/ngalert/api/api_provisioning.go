@@ -25,7 +25,7 @@ type ProvisioningSrv struct {
 }
 
 type ContactPointService interface {
-	GetContactPoints(ctx context.Context, orgID int64) ([]definitions.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
@@ -95,7 +95,11 @@ func (srv *ProvisioningSrv) RouteResetPolicyTree(c *models.ReqContext) response.
 }
 
 func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response.Response {
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), c.OrgId)
+	q := provisioning.ContactPointQuery{
+		Name:  c.Query("name"),
+		OrgID: c.OrgId,
+	}
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
