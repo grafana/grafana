@@ -24,16 +24,17 @@ import (
 // After creating a AlertsRouter, you must call Run to keep the AlertsRouter's
 // state synchronized with the alerting configuration.
 type AlertsRouter struct {
-	AdminConfigMtx   sync.RWMutex
 	logger           log.Logger
 	clock            clock.Clock
 	adminConfigStore store.AdminConfigurationStore
 
 	// Senders help us send alerts to external Alertmanagers.
-	Senders          map[int64]*Sender
-	SendersCfgHash   map[int64]string
+	AdminConfigMtx sync.RWMutex
+	SendAlertsTo   map[int64]models.AlertmanagersChoice
+	Senders        map[int64]*Sender
+	SendersCfgHash map[int64]string
+
 	MultiOrgNotifier *notifier.MultiOrgAlertmanager
-	SendAlertsTo     map[int64]models.AlertmanagersChoice
 
 	appURL                  *url.URL
 	disabledOrgs            map[int64]struct{}
@@ -42,15 +43,16 @@ type AlertsRouter struct {
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *AlertsRouter {
 	d := &AlertsRouter{
-		AdminConfigMtx:   sync.RWMutex{},
 		logger:           log.New("alerts-router"),
 		clock:            clk,
 		adminConfigStore: store,
 
-		Senders:          map[int64]*Sender{},
-		SendersCfgHash:   map[int64]string{},
+		AdminConfigMtx: sync.RWMutex{},
+		Senders:        map[int64]*Sender{},
+		SendersCfgHash: map[int64]string{},
+		SendAlertsTo:   map[int64]models.AlertmanagersChoice{},
+
 		MultiOrgNotifier: multiOrgNotifier,
-		SendAlertsTo:     map[int64]models.AlertmanagersChoice{},
 
 		appURL:                  appURL,
 		disabledOrgs:            disabledOrgs,
