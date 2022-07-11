@@ -241,7 +241,7 @@ func TestPluginProxy(t *testing.T) {
 
 		routes := []*plugins.Route{
 			{
-				Path: "",
+				Path: "/",
 				URL:  backendServer.URL,
 			},
 		}
