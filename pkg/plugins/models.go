@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 const (
@@ -199,17 +200,18 @@ type PluginMetaDTO struct {
 }
 
 type DataSourceDTO struct {
-	ID         int64                  `json:"id,omitempty"`
-	UID        string                 `json:"uid,omitempty"`
-	Type       string                 `json:"type"`
-	Name       string                 `json:"name"`
-	PluginMeta *PluginMetaDTO         `json:"meta"`
-	URL        string                 `json:"url,omitempty"`
-	IsDefault  bool                   `json:"isDefault"`
-	Access     string                 `json:"access,omitempty"`
-	Preload    bool                   `json:"preload"`
-	Module     string                 `json:"module,omitempty"`
-	JSONData   map[string]interface{} `json:"jsonData"`
+	ID           int64                     `json:"id,omitempty"`
+	UID          string                    `json:"uid,omitempty"`
+	Type         string                    `json:"type"`
+	Name         string                    `json:"name"`
+	PluginMeta   *PluginMetaDTO            `json:"meta"`
+	URL          string                    `json:"url,omitempty"`
+	IsDefault    bool                      `json:"isDefault"`
+	Access       string                    `json:"access,omitempty"`
+	Preload      bool                      `json:"preload"`
+	Module       string                    `json:"module,omitempty"`
+	Correlations []datasources.Correlation `json:"correlations"`
+	JSONData     map[string]interface{}    `json:"jsonData"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
