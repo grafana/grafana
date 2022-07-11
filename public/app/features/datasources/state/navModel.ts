@@ -119,7 +119,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (featureEnabled('caching')) {
-    navModel.children!.push(caching);
+    if (contextSrv.hasPermission(AccessControlAction.DataSourcesCachingRead)) {
+      navModel.children!.push(caching);
+    }
   } else if (highlightsEnabled && !isLoadingNav) {
     navModel.children!.push({
       ...caching,
