@@ -23,7 +23,7 @@ These are the data sources that are compatible with and supported by Grafana Ale
 - [Graphite]({{< relref "../../datasources/graphite/" >}})
 - [InfluxDB]({{< relref "influxdb/" >}})
 - [Loki]({{< relref "../../datasources/loki/" >}})
-- ]Microsoft SQL Server (MSSQL)]({{< relref "../../datasources/mssql/" >}})
+- [Microsoft SQL Server (MSSQL)]({{< relref "../../datasources/mssql/" >}})
 - [MySQL]({{< relref "../../datasources/mysql/" >}})
 - [Open TSDB]({{< relref "../../datasources/opentsdb/" >}})
 - [PostgreSQL]({{< relref "../../datasources/postgres/" >}})
