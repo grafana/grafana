@@ -50,7 +50,9 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
   onSelect = (item: ElementState) => {
     const { settings } = this.props.item;
-    doSelect(settings, item);
+    if (settings?.scene) {
+      doSelect(settings.scene, item);
+    }
   };
 
   onClearSelection = () => {

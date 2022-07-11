@@ -35,7 +35,9 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   }
 
   const onSelect = (selectedKeys: Key[], info: any) => {
-    doSelect(item.settings, info.node.dataRef);
+    if (item.settings?.scene) {
+      doSelect(item.settings.scene, info.node.dataRef);
+    }
   };
 
   const allowDrop = () => {
@@ -64,6 +66,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
   const switcherIcon = (obj: { isLeaf: boolean; expanded: boolean }) => {
     if (obj.isLeaf) {
+      // TODO: Implement element specific icons
       return getSvgIcon('');
     }
 
