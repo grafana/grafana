@@ -62,3 +62,66 @@ Perf
 | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer
 | order by TimeGenerated asc
 ```
+
+## Limitations
+
+As of Grafana 9.0, a resource URI is constructed to identify resources using the resource picker. If a dashboard had been created prior to Grafana 9.0 then any queries utilising the prior resource picking mechanism will be migrated to resource URIs.
+
+This presents an issue as some resource types make use of nested namespaces and resource names e.g:
+`Microsoft.Storage/tableServices` and `storageAccount/default` or `Microsoft.Sql/servers/databases` and `serverName/databaseName`. There are possible cases where template variables cannot be used as a malformed resource URI may be constructed.
+
+### Supported cases
+
+1. Standard namespaces and resource names.
+
+   ```kusto
+   metricDefinition = $ns
+   $ns = Microsoft.Compute/virtualMachines
+   resourceName = $rs
+   $rs = testvirtualmachine
+   ```
+
+2. Namespaces with a non-templated sub-namespace.
+
+```kusto
+metricDefinition = $ns/tableServices
+$ns = Microsoft.Storage/storageAccounts
+resourceName = $rs/default
+$rs = storageaccount
+```
+
+3. Storage namespaces missing the `default` keyword.
+
+```kusto
+metricDefinition = $ns/tableServices
+$ns = Microsoft.Storage/storageAccounts
+resourceName = $rs
+$rs = storageaccount
+```
+
+4. Namespaces with a templated sub-namespace.
+
+```kusto
+metricDefinition = $ns/$sns
+$ns = Microsoft.Storage/storageAccounts
+$sns = tableServices
+resourceName = $rs
+$rs = storageaccount
+```
+
+### Unsupported case
+
+The following case is currently unsupported. If a dashboard makes use of the below it should be migrated to one of the aforementioned supported cases.
+
+If a namespace or resource name template variable contains multiple segments then the resource URI will not be constructed correctly as the template variable cannot be appropriately split.
+
+For example:
+
+```kusto
+metricDefinition = $ns
+resourceName = $rs
+$ns = 'Microsoft.Storage/storageAccounts/tableServices'
+$rs = 'storageaccount/default'
+```
+
+Would lead to an incorrect resource URI containing `Microsoft.Storage/storageAccounts/tableServices/storageaccount/default`. However, the correct URI would have the format `Microsoft.Storage/storageAccounts/storageaccount/tableServices/default`.
