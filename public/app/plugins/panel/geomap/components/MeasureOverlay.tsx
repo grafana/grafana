@@ -11,7 +11,7 @@ import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 interface Props {
@@ -19,9 +19,12 @@ interface Props {
 }
 
 interface State {
-  length?: boolean;
+  typeSelect: string;
+  menuActive: false;
+  tipString: string;
 }
 
+// Open Layer styles
 const style = new Style({
   fill: new Fill({
     color: 'rgba(255, 255, 255, 0.2)',
@@ -158,6 +161,7 @@ const formatArea = function (polygon: Geometry) {
   return output;
 };
 
+// TODO: reconcile Feature type in open layers
 // eslint-disable-next-line
 function styleFunction(feature: any, segments: boolean, drawType?: string, tip?: string) {
   const styles = [style];
@@ -267,16 +271,32 @@ export class MeasureOverlay extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { length: true };
+    this.state = { ...this.state, typeSelect: 'LineString' };
   }
 
   componentDidMount() {
     // TODO: base these options on control state
-    initMeasure(this.props.map, 'Polygon', true, false);
+    initMeasure(this.props.map, this.state.typeSelect, true, false);
   }
 
   render() {
-    return <div className={this.style.infoWrap}>measurement tools go here</div>;
+    return (
+      <div className={this.style.infoWrap}>
+        <RadioButtonGroup
+          value={this.state.typeSelect}
+          options={[
+            { label: 'Length', value: 'LineString' },
+            { label: 'Area', value: 'Polygon' },
+          ]}
+          onChange={(e) => {
+            this.setState({ typeSelect: e });
+            this.props.map.removeInteraction(draw);
+            addInteraction(this.props.map, e, true, false);
+          }}
+        />
+        <div>tooltip will go here</div>
+      </div>
+    );
   }
 }
 
