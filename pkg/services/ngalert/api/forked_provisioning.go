@@ -27,6 +27,10 @@ func (f *ForkedProvisioningApi) forkRoutePutPolicyTree(ctx *models.ReqContext, r
 	return f.svc.RoutePutPolicyTree(ctx, route)
 }
 
+func (f *ForkedProvisioningApi) forkRouteResetPolicyTree(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteResetPolicyTree(ctx)
+}
+
 func (f *ForkedProvisioningApi) forkRouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteGetContactPoints(ctx)
 }

@@ -124,7 +124,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			user := &user.User{ID: c.SignedInUser.UserId, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
-				c.Handle(hs.Cfg, 500, "Failed to sign in user", err)
+				c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to sign in user", err)
 				return
 			}
 		}
