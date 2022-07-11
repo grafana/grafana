@@ -151,7 +151,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert data source to instance settings: %w", err)
+		return nil, err
 	}
 
 	req := &backend.QueryDataRequest{
@@ -343,12 +343,12 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.Signe
 	return nil, NewErrBadQuery("missing data source ID/UID")
 }
 
-func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) map[string]string {
-	return func(ds *datasources.DataSource) map[string]string {
+func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
+	return func(ds *datasources.DataSource) (map[string]string, error) {
 		decryptedJsonData, err := s.dataSourceService.DecryptedValues(ctx, ds)
 		if err != nil {
 			s.log.Error("Failed to decrypt secure json data", "error", err)
 		}
-		return decryptedJsonData
+		return decryptedJsonData, err
 	}
 }

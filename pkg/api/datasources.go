@@ -626,13 +626,13 @@ func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *datasource
 	return response.JSON(http.StatusOK, payload)
 }
 
-func (hs *HTTPServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) map[string]string {
-	return func(ds *datasources.DataSource) map[string]string {
+func (hs *HTTPServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
+	return func(ds *datasources.DataSource) (map[string]string, error) {
 		decryptedJsonData, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
 		if err != nil {
 			hs.log.Error("Failed to decrypt secure json data", "error", err)
 		}
-		return decryptedJsonData
+		return decryptedJsonData, err
 	}
 }
 
