@@ -2,6 +2,7 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { DataSourceApi, HistoryItem } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
@@ -43,6 +44,12 @@ export function changeDatasource(
     const orgId = getState().user.orgId;
     const { history, instance } = await loadAndInitDatasource(orgId, { uid: datasourceUid });
     const currentDataSourceInstance = getState().explore[exploreId]!.datasourceInstance;
+
+    if (instance.meta.mixed) {
+      reportInteraction('explore_change_ds_to_mixed');
+    } else if (currentDataSourceInstance?.meta.mixed) {
+      reportInteraction('explore_change_ds_from_mixed');
+    }
 
     dispatch(
       updateDatasourceInstanceAction({
