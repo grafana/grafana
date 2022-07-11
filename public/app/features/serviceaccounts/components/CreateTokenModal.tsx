@@ -148,7 +148,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
                 <ClipboardButton
                   icon="copy"
                   className={styles.modalCopyToClipboardButton}
-                  variant="secondary"
+                  variant="primary"
                   size="md"
                   getText={() => token}
                 >
