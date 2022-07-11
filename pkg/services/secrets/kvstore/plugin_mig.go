@@ -47,7 +47,7 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 	// TODO LND DONE 1- check if the configuration is set to true.
 	// TODO LND DONE 2- Retrieve all the secrets from the secretsKVStoreSQL (we may need to add a new service there).
 	// TODO LND DONE 3- Store one by one to the plugin
-	// TODO LND 4- Delete all the secrets once all are migrated
+	// TODO LND DONE 4- Delete all the secrets once all are migrated
 	// TODO LND DONE We need to take into account HA, see gui conversation to check how to lock on that - This is done, as with Gui implementation this runs within a lock.
 
 	// TODO LND Check the config key if need rename it
@@ -81,7 +81,7 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 			}
 		}
 		// as no err was returned, when we delete all the secrets from the sql store
-		// TODO LND Should we do this as we save into the plugin??
+		// TODO LND Should we do this as we save into the plugin?? Or we still need that for
 		for _, sec := range allSec {
 			err = secretsSql.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
 			if err != nil {

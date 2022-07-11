@@ -31,8 +31,6 @@ type cachedDecrypted struct {
 
 var b64 = base64.RawStdEncoding
 
-// TODO LND Write a test for this implementation
-
 // Get an item from the store
 func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	item := Item{
