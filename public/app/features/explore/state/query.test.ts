@@ -154,7 +154,7 @@ describe('running queries', () => {
 describe('importing queries', () => {
   describe('when importing queries between the same type of data source', () => {
     it('remove datasource property from all of the queries', async () => {
-      const datasources = [
+      const datasources: DataSourceApi[] = [
         {
           name: 'testDs',
           type: 'postgres',
@@ -162,8 +162,7 @@ describe('importing queries', () => {
           getRef: () => {
             return { type: 'postgres', uid: 'ds1' };
           },
-        },
-
+        } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
         {
           name: 'testDs2',
           type: 'postgres',
@@ -171,7 +170,7 @@ describe('importing queries', () => {
           getRef: () => {
             return { type: 'postgres', uid: 'ds2' };
           },
-        },
+        } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
       ];
 
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
