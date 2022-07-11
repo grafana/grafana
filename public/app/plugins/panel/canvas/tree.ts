@@ -34,6 +34,11 @@ export function getTreeData(root?: RootElement | FrameState, selection?: string[
 
       if (item instanceof FrameState) {
         element.children = getTreeData(item, selection, selectedColor);
+        if (isSelected) {
+          element.children.map((child) => {
+            child.style = { backgroundColor: selectedColor };
+          });
+        }
       }
       elements.push(element);
     }
