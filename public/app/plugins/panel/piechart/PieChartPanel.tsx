@@ -11,7 +11,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
+import { HideSeriesConfig, LegendDisplayMode, LegendVisibility } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -27,6 +27,7 @@ import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
+  showLegend: LegendVisibility.Visible,
   placement: 'right',
   calcs: [],
   values: [PieChartLegendValues.Percent],
@@ -77,7 +78,7 @@ export function PieChartPanel(props: Props) {
 function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const legendOptions = props.options.legend ?? defaultLegendOptions;
 
-  if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
+  if (legendOptions.showLegend === LegendVisibility.Hidden) {
     return undefined;
   }
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);

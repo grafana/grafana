@@ -1,5 +1,5 @@
 import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
-import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
+import { LegendDisplayMode, LegendVisibility, OptionsWithLegend } from '@grafana/schema';
 
 /**
  * @alpha
@@ -27,11 +27,11 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       name: 'Show legend',
       category: ['Legend'],
       description: '',
-      defaultValue: LegendDisplayMode.List,
+      defaultValue: LegendVisibility.Visible,
       settings: {
         options: [
-          { value: LegendDisplayMode.List, label: 'Visible' },
-          { value: LegendDisplayMode.Hidden, label: 'Hidden' },
+          { value: LegendVisibility.Visible, label: 'Visible' },
+          { value: LegendVisibility.Hidden, label: 'Hidden' },
         ],
       },
     })
@@ -47,7 +47,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
           { value: 'right', label: 'Right' },
         ],
       },
-      showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
+      showIf: (c) => c.legend.showLegend !== LegendVisibility.Hidden,
     })
     .addNumberInput({
       path: 'legend.width',
@@ -56,7 +56,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       settings: {
         placeholder: 'Auto',
       },
-      showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden && c.legend.placement === 'right',
+      showIf: (c) => c.legend.showLegend !== LegendVisibility.Hidden && c.legend.placement === 'right',
     });
 
   if (includeLegendCalcs) {
@@ -71,7 +71,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       settings: {
         allowMultiple: true,
       },
-      showIf: (currentConfig) => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
+      showIf: (currentConfig) => currentConfig.legend.showLegend !== LegendVisibility.Hidden,
     });
   }
 }

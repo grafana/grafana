@@ -161,9 +161,13 @@ export interface GraphThresholdsStyleConfig {
 export type LegendPlacement = ('bottom' | 'right');
 
 export enum LegendDisplayMode {
-  Hidden = 'hidden',
   List = 'list',
   Table = 'table',
+}
+
+export enum LegendVisibility {
+  Hidden = 'hidden',
+  Visible = 'visible',
 }
 
 export interface TableSortByFieldState {
@@ -274,6 +278,7 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
   placement: LegendPlacement;
+  showLegend: LegendVisibility;
   sortBy?: string;
   sortDesc?: boolean;
   width?: number;

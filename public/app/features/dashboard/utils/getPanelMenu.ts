@@ -44,6 +44,11 @@ export function getPanelMenu(
     sharePanel(dashboard, panel);
   };
 
+  const onToggleLegend = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    console.log('helloooo')
+  };
+
   const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
@@ -118,10 +123,17 @@ export function getPanelMenu(
     menu.push({
       text: 'Explore',
       iconClassName: 'compass',
-      shortcut: 'x',
       onClick: onNavigateToExplore,
+      shortcut: 'x',
     });
   }
+
+  menu.push({
+    text: 'Toggle legend',
+    iconClassName: '',
+    onClick: onToggleLegend,
+    shortcut: 'p l'
+  })
 
   const inspectMenu: PanelMenuItem[] = [];
 

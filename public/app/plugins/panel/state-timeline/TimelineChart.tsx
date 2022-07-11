@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
-import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
+import { LegendVisibility, VisibilityMode } from '@grafana/schema';
 import {
   PanelContext,
   PanelContextRoot,
@@ -70,7 +70,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
   renderLegend = (config: UPlotConfigBuilder) => {
     const { legend, legendItems } = this.props;
 
-    if (!config || !legendItems || !legend || legend.displayMode === LegendDisplayMode.Hidden) {
+    if (!config || !legendItems || !legend || legend.showLegend === LegendVisibility.Hidden) {
       return null;
     }
 

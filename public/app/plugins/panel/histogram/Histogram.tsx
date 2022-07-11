@@ -14,7 +14,7 @@ import {
 } from '@grafana/data/src/transformations/transformers/histogram';
 import {
   VizLegendOptions,
-  LegendDisplayMode,
+  LegendVisibility,
   ScaleDistribution,
   AxisPlacement,
   ScaleDirection,
@@ -273,7 +273,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
-    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
+    if (!config || legend.showLegend === LegendVisibility.Hidden) {
       return null;
     }
 

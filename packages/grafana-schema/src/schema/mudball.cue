@@ -128,7 +128,11 @@ GraphThresholdsStyleConfig: {
 LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 
 // TODO docs
-LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(kind="enum")
+LegendDisplayMode: "list" | "table" @cuetsy(kind="enum")
+
+// TODO docs
+
+LegendVisibility: "visible" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
 TableSortByFieldState: {
@@ -225,6 +229,7 @@ GraphFieldConfig: {
 VizLegendOptions: {
 	displayMode:  LegendDisplayMode
 	placement:    LegendPlacement
+	showLegend: 	LegendVisibility
 	asTable?:     bool
 	isVisible?:   bool
   sortBy?:      string
