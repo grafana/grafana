@@ -2,14 +2,11 @@ package pluginproxy
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,19 +19,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-var pluginProxyTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{
-		//InsecureSkipVerify: hs.Cfg.PluginsAppsSkipVerifyTLS,
-		Renegotiation: tls.RenegotiateFreelyAsClient,
-	},
-	Proxy: http.ProxyFromEnvironment,
-	DialContext: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}).DialContext,
-	TLSHandshakeTimeout: 10 * time.Second,
-}
-
 type PluginProxy struct {
 	ps             *pluginsettings.DTO
 	pluginRoutes   []*plugins.Route
@@ -44,11 +28,13 @@ type PluginProxy struct {
 	cfg            *setting.Cfg
 	secretsService secrets.Service
 	tracer         tracing.Tracer
+	transport      *http.Transport
 }
 
 // NewPluginProxy creates a plugin proxy.
 func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *models.ReqContext,
-	proxyPath string, cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer) (*PluginProxy, error) {
+	proxyPath string, cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer,
+	transport *http.Transport) (*PluginProxy, error) {
 	return &PluginProxy{
 		ps:             ps,
 		pluginRoutes:   routes,
@@ -57,6 +43,7 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *models
 		cfg:            cfg,
 		secretsService: secretsService,
 		tracer:         tracer,
+		transport:      transport,
 	}, nil
 }
 
@@ -103,7 +90,7 @@ func (proxy *PluginProxy) HandleRequest() {
 	reverseProxy := proxyutil.NewReverseProxy(
 		proxyErrorLogger,
 		proxy.director,
-		proxyutil.WithTransport(pluginProxyTransport),
+		proxyutil.WithTransport(proxy.transport),
 	)
 
 	proxy.logRequest()

@@ -256,7 +256,7 @@ func TestPluginProxy(t *testing.T) {
 		ps := &pluginsettings.DTO{
 			SecureJSONData: map[string][]byte{},
 		}
-		proxy, err := NewPluginProxy(ps, routes, ctx, "", &setting.Cfg{}, secretsService, tracing.InitializeTracerForTest())
+		proxy, err := NewPluginProxy(ps, routes, ctx, "", &setting.Cfg{}, secretsService, tracing.InitializeTracerForTest(), &http.Transport{})
 		require.NoError(t, err)
 		proxy.HandleRequest()
 
@@ -280,7 +280,7 @@ func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsServic
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest())
+	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{})
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
