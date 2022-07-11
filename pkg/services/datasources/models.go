@@ -168,8 +168,6 @@ type DeleteDataSourceCommand struct {
 	UpdateSecretFn UpdateSecretFn
 }
 
-// Correlations are uniquely identified by a SourceUid+TargetUid pair.
-
 // CreateCorrelationCommand adds a correlation
 type CreateCorrelationCommand struct {
 	TargetUID   string `json:"targetUid" binding:"Required"`
