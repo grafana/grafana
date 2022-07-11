@@ -761,8 +761,8 @@ Query Parameters:
 
 #### Required permissions
 
-| Action           | Scope                |
-| ---------------- | -------------------- |
+| Action           | Scope                           |
+| ---------------- | ------------------------------- |
 | users.roles:read | users:id:`<service account ID>` |
 
 #### Example request

@@ -24,9 +24,9 @@ title: 'Service account HTTP API'
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action               | Scope                     |
-| -------------------- | ------------------------- |
-| serviceaccounts:read | global:serviceaccounts:\* |
+| Action               | Scope |
+| -------------------- | ----- |
+| serviceaccounts:read | n/a   |
 
 **Example Request**:
 
