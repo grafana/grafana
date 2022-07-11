@@ -8,7 +8,7 @@ import { getSchema, showDatabases, showTables } from './MSSqlMetaQuery';
 import { MSSqlQueryModel } from './MSSqlQueryModel';
 import { MSSqlResponseParser } from './response_parser';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
-import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
+import { getIcon, getRAQBType, SCHEMA_NAME, toRawSql } from './sqlUtil';
 
 export class MssqlDatasource extends SqlDatasource {
   completionProvider: LanguageCompletionProvider | undefined = undefined;
@@ -72,7 +72,7 @@ export class MssqlDatasource extends SqlDatasource {
       lookup: async (path?: string) => {
         if (!path) {
           const datasets = await this.fetchDatasets();
-          return datasets.map((d) => ({ name: d, completion: `${d}.` }));
+          return datasets.map((d) => ({ name: d, completion: `${d}.${SCHEMA_NAME}.` }));
         } else {
           const parts = path.split('.').filter((s: string) => s);
           if (parts.length > 2) {
@@ -80,7 +80,7 @@ export class MssqlDatasource extends SqlDatasource {
           }
           if (parts.length === 1) {
             const tables = await this.fetchTables(parts[0]);
-            return tables.map((t) => ({ name: t, completion: `${t}\`` }));
+            return tables.map((t) => ({ name: t, completion: `${t}` }));
           } else {
             return [];
           }
