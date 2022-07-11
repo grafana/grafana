@@ -24,7 +24,7 @@ type PluginSecretMigrationService struct {
 
 func ProvidePluginSecretMigrationService(
 	features featuremgmt.FeatureToggles,
-// TODO LND We need to check if this is actually a plugin store
+	// TODO LND We need to check if this is actually a plugin store
 	secretsStore SecretsKVStore,
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
