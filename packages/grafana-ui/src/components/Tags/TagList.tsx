@@ -36,8 +36,8 @@ export const TagList = memo(
             <Tag name={tag} icon={icon} onClick={onClick} aria-label={getAriaLabel?.(tag, i)} data-tag-id={i} />
           </li>
         ))}
-        {displayMax && displayMax > 0 && numTags - 1 > 0 && (
-          <span className={styles.moreTagsLabel}>+ {numTags - 1}</span>
+        {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
+          <span className={styles.moreTagsLabel}>+ {numTags - displayMax}</span>
         )}
       </ul>
     );
