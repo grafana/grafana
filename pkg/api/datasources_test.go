@@ -177,6 +177,25 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	assert.Equal(t, 200, sc.resp.Code)
 }
 
+func TestCreateCorrelation(t *testing.T) {
+	t.Run("Creating a correlation without a targetUID should result in a 400", func(t *testing.T) {
+		hs := &HTTPServer{
+			DataSourcesService: &dataSourcesServiceMock{},
+		}
+
+		sc := setupScenarioContext(t, "/api/datasources/1234/correlations")
+
+		sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(datasources.CreateCorrelationCommand{})
+			return hs.CreateCorrelation(c)
+		}))
+
+		sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+		assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
+	})
+}
+
 func TestAPI_Datasources_AccessControl(t *testing.T) {
 	testDatasource := datasources.DataSource{
 		Id:     3,
@@ -549,6 +568,7 @@ type dataSourcesServiceMock struct {
 
 	expectedDatasources []*datasources.DataSource
 	expectedDatasource  *datasources.DataSource
+	expectedCorrelation *datasources.CorrelationDTO
 	expectedError       error
 }
 
@@ -581,6 +601,11 @@ func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *datasou
 
 func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
 	cmd.Result = m.expectedDatasource
+	return m.expectedError
+}
+
+func (m *dataSourcesServiceMock) CreateCorrelation(ctx context.Context, cmd *datasources.CreateCorrelationCommand) error {
+	cmd.Result = *m.expectedCorrelation
 	return m.expectedError
 }
 
