@@ -2,8 +2,6 @@ package kvstore
 
 import (
 	"context"
-	"strconv"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -44,14 +42,8 @@ func ProvidePluginSecretMigrationService(
 }
 
 func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
-	// TODO LND DONE 1- check if the configuration is set to true.
-	// TODO LND DONE 2- Retrieve all the secrets from the secretsKVStoreSQL (we may need to add a new service there).
-	// TODO LND DONE 3- Store one by one to the plugin
-	// TODO LND DONE 4- Delete all the secrets once all are migrated
-	// TODO LND DONE We need to take into account HA, see gui conversation to check how to lock on that - This is done, as with Gui implementation this runs within a lock.
-
 	// TODO LND Check the config key if need rename it
-	// TODO LND check other parameters with gui, if legacy mode or other config is enabled what whould we do
+	// TODO LND check other parameters with gui, if legacy mode or other config is enabled what would we do
 	// Check if we should migrate to plugin - default false
 	if s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_to_plugin").MustBool(false) &&
 		s.remoteCheck.ShouldUseRemoteSecretsPlugin() {
@@ -66,13 +58,10 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 			},
 		}
 
-		// TODO LND this needs to change to return all the rows
 		allSec, err := secretsSql.GetAll(ctx)
 		if err != nil {
 			return nil
 		}
-		// TODO LND Remove this log
-		s.logger.Debug("item count" + strconv.Itoa(len(allSec)))
 		// We just set it again as the current secret store should be the plugin secret
 		for _, sec := range allSec {
 			err = s.secretsStore.Set(ctx, *sec.OrgId, *sec.Namespace, *sec.Type, sec.Value)
@@ -81,7 +70,6 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 			}
 		}
 		// as no err was returned, when we delete all the secrets from the sql store
-		// TODO LND Should we do this as we save into the plugin?? Or we still need that for
 		for _, sec := range allSec {
 			err = secretsSql.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
 			if err != nil {
