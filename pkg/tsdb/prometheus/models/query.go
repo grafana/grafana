@@ -181,7 +181,7 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 		return time.Duration(0)
 	}
 
-	rateInterval := time.Duration(int(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
+	rateInterval := time.Duration(int64(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
 	return rateInterval
 }
 
