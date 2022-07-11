@@ -200,7 +200,7 @@ func TestAMConfigMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
@@ -224,7 +224,7 @@ func TestAMConfigMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "notifier1",
+							Receiver:   "notifier1",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
