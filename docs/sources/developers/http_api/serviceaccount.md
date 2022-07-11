@@ -9,12 +9,12 @@ keywords:
   - documentation
   - api
   - serviceaccount
-title: 'Service account HTTP API '
+title: 'Service account HTTP API'
 ---
 
 # Service account API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Search service accounts with Paging
 
@@ -105,7 +105,8 @@ Authorization: Basic YWRtaW46YWRtaW4=
 
 {
   "name": "grafana",
-  "role": "Admin",
+  "role": "Viewer",
+  "isDisabled" : false
 }
 ```
 
@@ -131,7 +132,7 @@ Content-Type: application/json
 }
 ```
 
-## Get single serviceaccount by Id
+## Get a service account by ID
 
 `GET /api/serviceaccounts/:id`
 
