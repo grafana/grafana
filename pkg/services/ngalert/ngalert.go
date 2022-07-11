@@ -143,6 +143,9 @@ func (ng *AlertNG) init() error {
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
+	alertRuleService := provisioning.NewAlertRuleService(store, store, store,
+		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
+		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
 
 	api := api.API{
 		Cfg:                  ng.Cfg,
@@ -164,6 +167,7 @@ func (ng *AlertNG) init() error {
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
 		ContactPointService:  contactPointService,
+		AlertRules:           alertRuleService,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

@@ -367,7 +367,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			for _, rule := range authorizedChanges.New {
 				inserts = append(inserts, *rule)
 			}
-			err = srv.store.InsertAlertRules(tranCtx, inserts)
+			_, err = srv.store.InsertAlertRules(tranCtx, inserts)
 			if err != nil {
 				return fmt.Errorf("failed to add rules: %w", err)
 			}

@@ -42,3 +42,23 @@ func (f *ForkedProvisioningApi) forkRoutePutContactpoints(ctx *models.ReqContext
 func (f *ForkedProvisioningApi) forkRouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteDeleteContactPoint(ctx)
 }
+
+func (f *ForkedProvisioningApi) forkRouteGetAlertRule(ctx *models.ReqContext, UID string) response.Response {
+	return f.svc.RouteRouteGetAlertRule(ctx, UID)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule) response.Response {
+	return f.svc.RoutePostAlertRule(ctx, ar)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule, UID string) response.Response {
+	return f.svc.RoutePutAlertRule(ctx, ar, UID)
+}
+
+func (f *ForkedProvisioningApi) forkRouteDeleteAlertRule(ctx *models.ReqContext, UID string) response.Response {
+	return f.svc.RouteDeleteAlertRule(ctx, UID)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePutAlertRuleGroup(ctx *models.ReqContext, ag apimodels.AlertRuleGroup, folder, group string) response.Response {
+	return f.svc.RoutePutAlertRuleGroup(ctx, ag, folder, group)
+}
