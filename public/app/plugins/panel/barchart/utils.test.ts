@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import {
   LegendDisplayMode,
+  LegendVisibility,
   TooltipDisplayMode,
   VisibilityMode,
   GraphGradientMode,
@@ -94,6 +95,7 @@ describe('BarChart utils', () => {
       showValue: VisibilityMode.Always,
       legend: {
         displayMode: LegendDisplayMode.List,
+        showLegend: LegendVisibility.Visible,
         placement: 'bottom',
         calcs: [],
       },

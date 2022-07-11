@@ -3,7 +3,7 @@ import {
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
-  LegendDisplayMode,
+  LegendVisibility,
   LineInterpolation,
   StackingMode,
 } from '@grafana/schema';
@@ -33,7 +33,7 @@ export class TimeSeriesSuggestionsSupplier {
       },
       cardOptions: {
         previewModifier: (s) => {
-          s.options!.legend.displayMode = LegendDisplayMode.Hidden;
+          s.options!.legend.showLegend = LegendVisibility.Hidden;
 
           if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
             s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);

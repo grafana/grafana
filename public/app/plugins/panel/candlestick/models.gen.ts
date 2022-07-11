@@ -3,7 +3,7 @@
 // It is currenty hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
+import { LegendDisplayMode, LegendVisibility, OptionsWithLegend } from '@grafana/schema';
 
 export const modelVersion = Object.freeze([1, 0]);
 
@@ -66,6 +66,7 @@ export const defaultPanelOptions: CandlestickOptions = {
   fields: {},
   legend: {
     displayMode: LegendDisplayMode.List,
+    showLegend: LegendVisibility.Visible,
     placement: 'bottom',
     calcs: [],
   },

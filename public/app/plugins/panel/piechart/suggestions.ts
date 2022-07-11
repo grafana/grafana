@@ -1,5 +1,5 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
+import { LegendVisibility } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { PieChartLabels, PieChartOptions, PieChartType } from './types';
@@ -23,7 +23,7 @@ export class PieChartSuggestionsSupplier {
       cardOptions: {
         previewModifier: (s) => {
           // Hide labels in preview
-          s.options!.legend.displayMode = LegendDisplayMode.Hidden;
+          s.options!.legend.showLegend = LegendVisibility.Hidden;
         },
       },
     });

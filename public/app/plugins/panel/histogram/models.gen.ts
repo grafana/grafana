@@ -5,6 +5,7 @@
 
 import {
   LegendDisplayMode,
+  LegendVisibility,
   OptionsWithLegend,
   OptionsWithTooltip,
   TooltipDisplayMode,
@@ -25,6 +26,7 @@ export const defaultPanelOptions: PanelOptions = {
   bucketOffset: 0,
   legend: {
     displayMode: LegendDisplayMode.List,
+    showLegend: LegendVisibility.Visible,
     placement: 'bottom',
     calcs: [],
   },

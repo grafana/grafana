@@ -17,6 +17,7 @@ import {
 } from '@grafana/data';
 import {
   LegendDisplayMode,
+  LegendVisibility,
   TooltipDisplayMode,
   AxisPlacement,
   GraphDrawStyle,
@@ -319,6 +320,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   const options: TimeSeriesOptions = {
     legend: {
       displayMode: LegendDisplayMode.List,
+      showLegend: LegendVisibility.Visible,
       placement: 'bottom',
       calcs: [],
     },
@@ -334,7 +336,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     if (legendConfig.show) {
       options.legend.displayMode = legendConfig.alignAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List;
     } else {
-      options.legend.displayMode = LegendDisplayMode.Hidden;
+      options.legend.showLegend = LegendVisibility.Hidden;
     }
 
     if (legendConfig.rightSide) {

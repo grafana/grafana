@@ -497,7 +497,7 @@ export function prepareTimelineLegendItems(
   options: VizLegendOptions,
   theme: GrafanaTheme2
 ): VizLegendItem[] | undefined {
-  if (!frames || options.displayMode === 'hidden') {
+  if (!frames || options.showLegend === 'hidden') {
     return undefined;
   }
 

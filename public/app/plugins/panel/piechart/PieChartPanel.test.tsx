@@ -11,7 +11,7 @@ import {
   getDefaultTimeRange,
   EventBusSrv,
 } from '@grafana/data';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, LegendVisibility, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions, PieChartType, PieChartLegendValues } from './types';
@@ -171,6 +171,7 @@ const setup = (propsOverrides?: {}) => {
     displayLabels: [],
     legend: {
       displayMode: LegendDisplayMode.List,
+      showLegend: LegendVisibility.Visible,
       placement: 'right',
       calcs: [],
       values: [PieChartLegendValues.Percent],

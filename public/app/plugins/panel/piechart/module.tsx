@@ -1,5 +1,5 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
+import { LegendVisibility } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { addStandardDataReduceOptions } from '../stat/common';
@@ -70,7 +70,7 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
           { value: PieChartLegendValues.Value, label: 'Value' },
         ],
       },
-      showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
+      showIf: (c) => c.legend.showLegend !== LegendVisibility.Hidden,
     });
   })
   .setSuggestionsSupplier(new PieChartSuggestionsSupplier());
