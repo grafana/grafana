@@ -191,6 +191,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingProvisioningRead) // organization scope
 
 	case http.MethodPut + "/api/v1/provisioning/policies",
+		http.MethodDelete + "/api/v1/provisioning/policies",
 		http.MethodPost + "/api/v1/provisioning/contact-points",
 		http.MethodPut + "/api/v1/provisioning/contact-points/{UID}",
 		http.MethodDelete + "/api/v1/provisioning/contact-points/{UID}",

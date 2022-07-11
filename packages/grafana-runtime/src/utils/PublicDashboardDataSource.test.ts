@@ -7,6 +7,7 @@ import {
   PUBLIC_DATASOURCE,
   PublicDashboardDataSource,
 } from '../../../../public/app/features/dashboard/services/PublicDashboardDataSource';
+import { MIXED_DATASOURCE_NAME } from '../../../../public/app/plugins/datasource/mixed/MixedDataSource';
 
 import { DataSourceWithBackend } from './DataSourceWithBackend';
 
@@ -74,5 +75,27 @@ describe('PublicDashboardDatasource', () => {
     const datasource = new DataSourceWithBackend(settings);
     let ds = new PublicDashboardDataSource(datasource);
     expect(ds.uid).toBe('abc123');
+  });
+
+  test('isMixedDatasource returns true when datasource is mixed', () => {
+    const datasource = new DataSourceWithBackend({ id: 1, uid: MIXED_DATASOURCE_NAME } as DataSourceInstanceSettings);
+    let ds = new PublicDashboardDataSource(datasource);
+    expect(ds.meta.mixed).toBeTruthy();
+  });
+
+  test('isMixedDatasource returns false when datasource is not mixed', () => {
+    const datasource = new DataSourceWithBackend({ id: 1, uid: 'abc123' } as DataSourceInstanceSettings);
+    let ds = new PublicDashboardDataSource(datasource);
+    expect(ds.meta.mixed).toBeFalsy();
+  });
+
+  test('isMixedDatasource returns false when datasource is a string', () => {
+    let ds = new PublicDashboardDataSource('abc123');
+    expect(ds.meta.mixed).toBeFalsy();
+  });
+
+  test('isMixedDatasource returns false when datasource is null', () => {
+    let ds = new PublicDashboardDataSource(null);
+    expect(ds.meta.mixed).toBeFalsy();
   });
 });

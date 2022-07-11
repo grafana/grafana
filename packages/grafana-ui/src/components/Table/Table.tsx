@@ -257,13 +257,14 @@ export const Table: FC<Props> = memo((props: Props) => {
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
     let itemsRangeEnd = itemsRangeStart + state.pageSize - 1;
-    const isSmall = width < 500;
+    const isSmall = width < 550;
     if (itemsRangeEnd > data.length) {
       itemsRangeEnd = data.length;
     }
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
-        <div>
+        {isSmall ? null : <div className={tableStyles.paginationItem} />}
+        <div className={tableStyles.paginationCenterItem}>
           <Pagination
             currentPage={state.pageIndex + 1}
             numberOfPages={pageOptions.length}

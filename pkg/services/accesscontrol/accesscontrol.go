@@ -62,6 +62,10 @@ type DatasourcePermissionsService interface {
 	PermissionsService
 }
 
+type ServiceAccountPermissionsService interface {
+	PermissionsService
+}
+
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
