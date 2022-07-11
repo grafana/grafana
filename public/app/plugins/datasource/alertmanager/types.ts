@@ -310,4 +310,7 @@ export type MuteTimeInterval = {
   provenance?: string;
 };
 
-export type AlertManagerDataSourceJsonData = DataSourceJsonData & { implementation?: AlertManagerImplementation };
+export interface AlertManagerDataSourceJsonData extends DataSourceJsonData {
+  implementation?: AlertManagerImplementation;
+  handleGrafanaManagedAlerts?: boolean;
+}

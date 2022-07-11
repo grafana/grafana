@@ -2,19 +2,22 @@ import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   Button,
+  Card,
   ConfirmModal,
   Field,
   HorizontalGroup,
   Icon,
   RadioButtonGroup,
+  Select,
   Tooltip,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { loadDataSources } from 'app/features/datasources/state/actions';
 import { StoreState } from 'app/types/store';
 
 import { useExternalAmSelector } from '../../hooks/useExternalAmSelector';
@@ -23,6 +26,7 @@ import {
   fetchExternalAlertmanagersAction,
   fetchExternalAlertmanagersConfigAction,
 } from '../../state/actions';
+import { getAlertManagerDataSources } from '../../utils/datasource';
 
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 
@@ -39,6 +43,18 @@ export const ExternalAlertmanagers = () => {
   const [deleteModalState, setDeleteModalState] = useState({ open: false, index: 0 });
 
   const externalAlertManagers = useExternalAmSelector();
+  const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
+
+  const amDataSources = useSelector((state: StoreState) => state.dataSources.dataSources).filter(
+    (ds) => ds.type === 'alertmanager'
+  );
+  const availableExternalDsToPassAlerts = amDataSources
+    .filter((ds) => !ds.readOnly)
+    .map<SelectableValue<{}>>((ds) => ({
+      label: ds.name,
+      value: ds.uid,
+    }));
+
   const alertmanagersChoice = useSelector(
     (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagersChoice
   );
@@ -47,6 +63,7 @@ export const ExternalAlertmanagers = () => {
   useEffect(() => {
     dispatch(fetchExternalAlertmanagersAction());
     dispatch(fetchExternalAlertmanagersConfigAction());
+    dispatch(loadDataSources());
     const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
 
     return () => {
@@ -188,6 +205,27 @@ export const ExternalAlertmanagers = () => {
               })}
             </tbody>
           </table>
+
+          <h5>Alert manager data sources</h5>
+          <div className={styles.externalDs}>
+            {externalDsAlertManagers.map((ds) => (
+              <Card key={ds.uid}>
+                <Card.Heading>{ds.name}</Card.Heading>
+                <Card.Figure>
+                  <img
+                    src="public/app/plugins/datasource/alertmanager/img/logo.svg"
+                    alt=""
+                    height="40px"
+                    width="40px"
+                    style={{ objectFit: 'contain' }}
+                  />
+                </Card.Figure>
+              </Card>
+            ))}
+          </div>
+          <Button>Add More</Button>
+          <Select options={availableExternalDsToPassAlerts} onChange={() => {}} />
+
           <div>
             <Field
               label="Send alerts to"
@@ -202,6 +240,7 @@ export const ExternalAlertmanagers = () => {
           </div>
         </>
       )}
+
       <ConfirmModal
         isOpen={deleteModalState.open}
         title="Remove Alertmanager"
@@ -235,5 +274,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   table: css`
     margin-bottom: ${theme.spacing(2)};
+  `,
+  externalDs: css`
+    display: grid;
+    gap: ${theme.spacing(1)};
+    padding-bottom: ${theme.spacing(3)};
+  `,
+  externalDsItem: css`
+    display: flex;
+    flex-direction: row;
+    gap: ${theme.spacing(2)};
+    align-items: center;
   `,
 });
