@@ -4812,7 +4812,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@9.1.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
@@ -5256,6 +5256,7 @@ __metadata:
     "@emotion/css": 11.9.0
     "@grafana/data": 9.1.0-pre
     "@grafana/e2e-selectors": 9.1.0-pre
+    "@grafana/runtime": 9.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 9.1.0-pre
     "@testing-library/jest-dom": 5.16.4

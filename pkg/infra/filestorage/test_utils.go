@@ -32,8 +32,9 @@ type cmdCreateFolder struct {
 }
 
 type cmdDeleteFolder struct {
-	path  string
-	error *cmdErrorOutput
+	path    string
+	error   *cmdErrorOutput
+	options *DeleteFolderOptions
 }
 
 type queryGetInput struct {
@@ -175,7 +176,7 @@ func handleCommand(t *testing.T, ctx context.Context, cmd interface{}, cmdName s
 		}
 		expectedErr = c.error
 	case cmdDeleteFolder:
-		err = fs.DeleteFolder(ctx, c.path)
+		err = fs.DeleteFolder(ctx, c.path, c.options)
 		if c.error == nil {
 			require.NoError(t, err, "%s: should be able to delete %s", cmdName, c.path)
 		}
