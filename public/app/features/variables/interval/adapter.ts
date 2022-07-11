@@ -23,7 +23,6 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
     dependsOn: () => {
       return false;
     },
-    dependencies: () => [],
     setValue: async (variable, option, emitChanges = false) => {
       await dispatch(updateAutoValue(toKeyedVariableIdentifier(variable)));
       await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));

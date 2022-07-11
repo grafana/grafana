@@ -4,15 +4,9 @@ import { variableAdapters } from '../adapters';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createQueryVariableAdapter } from '../query/adapter';
+import { createGraph } from '../state/actions';
 
-import {
-  flattenPanels,
-  getAffectedPanelIdsForVariable,
-  getAllAffectedPanelIdsForVariableChange,
-  getDependenciesForVariable,
-  getPanelVars,
-  getPropsWithVariable,
-} from './utils';
+import { flattenPanels, getAllAffectedPanelIdsForVariableChange, getPanelVars, getPropsWithVariable } from './utils';
 
 describe('getPropsWithVariable', () => {
   it('when called it should return the correct graph', () => {
@@ -218,39 +212,11 @@ describe('getPropsWithVariable', () => {
   });
 });
 
-describe('getAffectedPanelIdsForVariable', () => {
-  describe('when called with a real world example with rows and repeats', () => {
-    it('then it should return correct panel ids', () => {
-      const panelVarPairs = getPanelVars(dashWithRepeatsAndRows.panels);
-      const result = getAffectedPanelIdsForVariable('query0', panelVarPairs);
-      expect(result).toEqual([15, 16, 17, 11, 12, 13, 2, 5, 7, 6]);
-    });
-  });
-});
-
 variableAdapters.setInit(() => [
   createDataSourceVariableAdapter(),
   createCustomVariableAdapter(),
   createQueryVariableAdapter(),
 ]);
-
-describe('getDependenciesForVariable', () => {
-  describe('when called with a real world example with dependencies', () => {
-    it('then it should return correct dependencies', () => {
-      const {
-        templating: { list: variables },
-      } = dashWithTemplateDependenciesAndPanels;
-      const result = getDependenciesForVariable('ds_instance', variables, new Set());
-      expect([...result]).toEqual([
-        'ds',
-        'query_with_ds',
-        'depends_on_query_with_ds',
-        'depends_on_query_with_ds_regex',
-        'depends_on_all',
-      ]);
-    });
-  });
-});
 
 describe('getAllAffectedPanelIdsForVariableChange ', () => {
   describe('when called with a real world example with dependencies and panels', () => {
@@ -260,8 +226,10 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
         templating: { list: variables },
       } = dashWithTemplateDependenciesAndPanels;
       const panelVarPairs = getPanelVars(panelsAsJson);
-      const result = getAllAffectedPanelIdsForVariableChange('ds_instance', variables, panelVarPairs);
-      expect(result).toEqual([2, 3, 4, 5]);
+      const varGraph = createGraph(variables);
+
+      const result = [...getAllAffectedPanelIdsForVariableChange(['ds_instance'], varGraph, panelVarPairs)];
+      expect(result).toEqual([5, 2, 4, 3]);
     });
   });
 
@@ -272,7 +240,8 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
         templating: { list: variables },
       } = dashWithTemplateDependenciesAndPanels;
       const panelVarPairs = getPanelVars(panelsAsJson);
-      const result = getAllAffectedPanelIdsForVariableChange('depends_on_all', variables, panelVarPairs);
+      const varGraph = createGraph(variables);
+      const result = [...getAllAffectedPanelIdsForVariableChange(['depends_on_all'], varGraph, panelVarPairs)];
       expect(result).toEqual([2]);
     });
   });
@@ -284,7 +253,8 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
         templating: { list: variables },
       } = dashWithAllVariables;
       const panelVarPairs = getPanelVars(panelsAsJson);
-      const result = getAllAffectedPanelIdsForVariableChange('unknown', variables, panelVarPairs);
+      const varGraph = createGraph(variables);
+      const result = [...getAllAffectedPanelIdsForVariableChange(['unknown'], varGraph, panelVarPairs)];
       expect(result).toEqual([2, 3]);
     });
   });

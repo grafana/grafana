@@ -6,7 +6,7 @@ import { ALL_VARIABLE_TEXT } from '../constants';
 import { optionPickerFactory } from '../pickers';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { DataSourceVariableModel } from '../types';
-import { containsVariable, isAllVariable, toKeyedVariableIdentifier, variableMatches, variableRegex } from '../utils';
+import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
@@ -26,12 +26,6 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
         return containsVariable(variable.regex, variableToTest.name);
       }
       return false;
-    },
-    dependencies: (variable) => {
-      if (!variable.regex) {
-        return [];
-      }
-      return variableMatches(variableRegex);
     },
     setValue: async (variable, option, emitChanges = false) => {
       await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));

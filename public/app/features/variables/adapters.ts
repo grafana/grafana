@@ -14,7 +14,6 @@ export interface VariableAdapter<Model extends VariableModel> {
   name: string;
   initialState: Model;
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
-  dependencies: (variable: Model) => string[];
   setValue: (variable: Model, option: VariableOption, emitChanges?: boolean) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;

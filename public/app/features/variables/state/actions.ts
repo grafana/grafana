@@ -36,7 +36,7 @@ import {
   isMulti,
   isQuery,
 } from '../guard';
-import { calcDependentPanels, getPanelVars } from '../inspect/utils';
+import { getAllAffectedPanelIdsForVariableChange, getPanelVars } from '../inspect/utils';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
 import {
@@ -549,7 +549,7 @@ export const setOptionAsCurrent = (
   };
 };
 
-const createGraph = (variables: VariableModel[]) => {
+export const createGraph = (variables: VariableModel[]) => {
   const g = new Graph();
 
   variables.forEach((v) => {
@@ -594,14 +594,13 @@ export const variableUpdated = (
     const variables = getVariablesByKey(rootStateKey, state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
-
     const panelVars = getPanelVars(panels);
 
     const event: VariablesChangedEvent = isAdHoc(variableInState)
       ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
       : {
           refreshAll: false,
-          panelIds: Array.from(calcDependentPanels([variableInState.id], variables, panelVars)),
+          panelIds: Array.from(getAllAffectedPanelIdsForVariableChange([variableInState.id], g, panelVars)),
         };
 
     const node = g.getNode(variableInState.name);
@@ -712,11 +711,6 @@ export const templateVarsChangedInUrl =
         }
       }
 
-      // // for adhoc variables we don't know which panels that will be impacted
-      // if (!isAdHoc(variable)) {
-      //   getAllAffectedPanelIdsForVariableChange(variable.id, variables, panelVars).forEach((id) => panelIds.add(id));
-      // }
-
       const promise = variableAdapters.get(variable.type).setValueFromUrl(variable, value);
       update.push(promise);
     }
@@ -725,10 +719,11 @@ export const templateVarsChangedInUrl =
       const key = `var-${v.name}`;
       return vars.hasOwnProperty(key) && isVariableUrlValueDifferentFromCurrent(v, vars[key].value) && !isAdHoc(v);
     });
+    const varGraph = createGraph(variables);
     const panelVars = getPanelVars(dashboard?.panels ?? []);
-    const affectedPanels = calcDependentPanels(
+    const affectedPanels = getAllAffectedPanelIdsForVariableChange(
       filteredVars.map((v) => v.id),
-      variables,
+      varGraph,
       panelVars
     );
 

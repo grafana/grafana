@@ -1,4 +1,5 @@
 import { DataLinkBuiltInVars } from '@grafana/data';
+import { Graph } from 'app/core/utils/dag';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
@@ -255,56 +256,18 @@ function createUnknownsNetwork(variables: VariableModel[], dashboard: DashboardM
   This doesn't take circular dependencies in consideration.
  */
 
-export function calcDependentPanels(
+export function getAllAffectedPanelIdsForVariableChange(
   variableIds: string[],
-  variables: VariableModel[],
+  variableGraph: Graph,
   panelsByVar: Record<string, Set<number>>
 ): Set<number> {
-  let varGraph: Record<string, { dependsOn: string[] }> = {};
-  calcDependencies(variableIds, variables, varGraph);
-  const allDependencies = Object.values(varGraph).flatMap((v) => v.dependsOn);
-
-  const varsToInspect = [...new Set([...variableIds, DataLinkBuiltInVars.includeVars, ...allDependencies])];
-  const affectedPanelIds = getDependentPanels(varsToInspect, panelsByVar);
-  return affectedPanelIds;
-}
-
-export function calcDependencies(
-  variableIds: string[],
-  allVariables: VariableModel[],
-  varGraph: Record<string, { dependsOn: string[] }> = {}
-): void {
-  if (!variableIds.length || !allVariables.length) {
-    return;
+  const allDependencies = new Set(variableGraph.descendants(variableIds).map((n) => n.name));
+  allDependencies.add(DataLinkBuiltInVars.includeVars);
+  for (const id of variableIds) {
+    allDependencies.add(id);
   }
 
-  for (const variableId of variableIds) {
-    if (variableId in varGraph) {
-      continue;
-    }
-
-    const theVar = allVariables.find((v) => v.id === variableId);
-    if (!theVar) {
-      continue;
-    }
-
-    const varDependencies = variableAdapters.get(theVar.type).dependencies(theVar);
-    varGraph[variableId] = { dependsOn: varDependencies };
-    calcDependencies(varDependencies, allVariables, varGraph);
-  }
-}
-
-export function getAffectedPanelIdsForVariable(
-  variableId: string,
-  panelIdWithVars: Array<{ id: number; varNames: Set<string | undefined> }>
-): number[] {
-  const affectedPanelIds: number[] = [];
-  for (const { id: panelId, varNames } of panelIdWithVars) {
-    if (varNames.has(variableId)) {
-      affectedPanelIds.push(panelId);
-    }
-  }
-
+  const affectedPanelIds = getDependentPanels([...allDependencies], panelsByVar);
   return affectedPanelIds;
 }
 
@@ -318,20 +281,6 @@ export function getDependentPanels(variables: string[], panelsByVarUsage: Record
   }
 
   return new Set(thePanels);
-}
-
-export function getAffectedPanelIdsForVariables(
-  variableId: string,
-  panelIdWithVars: Array<{ id: number; varNames: Set<string | undefined> }>
-): number[] {
-  const affectedPanelIds: number[] = [];
-  for (const { id: panelId, varNames } of panelIdWithVars) {
-    if (varNames.has(variableId)) {
-      affectedPanelIds.push(panelId);
-    }
-  }
-
-  return affectedPanelIds;
 }
 
 export interface UsagesToNetwork {
@@ -417,17 +366,6 @@ export function flattenPanels(panels: PanelModel[]): PanelModel[] {
   }
 
   return result;
-}
-
-export function* panelIterator(panels: PanelModel[]) {
-  for (const panel of panels) {
-    yield panel;
-
-    const rowPanels = panel.panels ?? [];
-    for (const rowPanel of rowPanels) {
-      yield rowPanel;
-    }
-  }
 }
 
 // Accepts an array of panel models, and returns an array of panel IDs paired with

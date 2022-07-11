@@ -118,7 +118,7 @@ export class Node {
 }
 
 export class Graph {
-  nodes: any = {};
+  nodes: Record<string, Node> = {};
 
   constructor() {}
 
@@ -189,6 +189,33 @@ export class Graph {
     return edges;
   }
 
+  descendants(nodes: Node[] | string[]): Node[] {
+    if (!nodes.length) {
+      return [];
+    }
+
+    if (isStringArray(nodes)) {
+      nodes = nodes.map((n) => this.nodes[n]).filter((n) => n !== undefined);
+    }
+
+    return this.descendantsRecursive(nodes);
+  }
+
+  private descendantsRecursive(nodes: Node[], descendants = new Set<Node>()): Node[] {
+    for (const node of nodes) {
+      const newDescendants = node.inputEdges
+        .map((n) => n.inputNode!)
+        .filter((n) => n !== undefined && !descendants.has(n));
+      for (const n of newDescendants) {
+        descendants.add(n);
+      }
+
+      this.descendantsRecursive(newDescendants, descendants);
+    }
+
+    return [...descendants];
+  }
+
   createEdge(): Edge {
     return new Edge();
   }
@@ -212,3 +239,7 @@ export const printGraph = (g: Graph) => {
     console.log(`${n.name}:\n - links to:   ${outputEdges}\n - links from: ${inputEdges}`);
   });
 };
+
+function isStringArray(arr: unknown[]): arr is string[] {
+  return arr.length > 0 && typeof arr[0] === 'string';
+}
