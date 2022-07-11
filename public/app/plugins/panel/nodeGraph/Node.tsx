@@ -17,7 +17,7 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
     cursor: pointer;
     font-size: 10px;
     transition: opacity 300ms;
-    opacity: ${hovering === 'inactive' ? 0.6 : 1};
+    opacity: ${hovering === 'inactive' ? 0.5 : 1};
   `,
 
   mainCircle: css`
@@ -69,6 +69,7 @@ export const Node = memo(function Node(props: {
   const { node, onMouseEnter, onMouseLeave, onClick, hovering } = props;
   const theme = useTheme2();
   const styles = getStyles(theme, hovering);
+  const isHovered = hovering === 'active';
 
   if (!(node.x !== undefined && node.y !== undefined)) {
     return null;
@@ -90,30 +91,23 @@ export const Node = memo(function Node(props: {
       aria-label={`Node: ${node.title}`}
     >
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
-      {hovering === 'active' && (
-        <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />
-      )}
+      {isHovered && <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />}
       <ColorCircle node={node} />
       <g className={styles.text}>
-        <foreignObject
-          x={node.x - (hovering === 'active' ? 100 : 35)}
-          y={node.y - 15}
-          width={hovering === 'active' ? '200' : '70'}
-          height="40"
-        >
-          <div className={cx(styles.statsText, hovering === 'active' && styles.textHovering)}>
+        <foreignObject x={node.x - (isHovered ? 100 : 35)} y={node.y - 15} width={isHovered ? '200' : '70'} height="40">
+          <div className={cx(styles.statsText, isHovered && styles.textHovering)}>
             <span>{node.mainStat && statToString(node.mainStat, node.dataFrameRowIndex)}</span>
             <br />
             <span>{node.secondaryStat && statToString(node.secondaryStat, node.dataFrameRowIndex)}</span>
           </div>
         </foreignObject>
         <foreignObject
-          x={node.x - (hovering === 'active' ? 100 : 50)}
+          x={node.x - (isHovered ? 100 : 50)}
           y={node.y + nodeR + 5}
-          width={hovering === 'active' ? '200' : '100'}
+          width={isHovered ? '200' : '100'}
           height="40"
         >
-          <div className={cx(styles.titleText, hovering === 'active' && styles.textHovering)}>
+          <div className={cx(styles.titleText, isHovered && styles.textHovering)}>
             <span>{node.title}</span>
             <br />
             <span>{node.subTitle}</span>

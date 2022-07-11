@@ -21,7 +21,7 @@ import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
 import { useHighlight } from './useHighlight';
 import { usePanning } from './usePanning';
 import { useZoom } from './useZoom';
-import { processNodes, Bounds } from './utils';
+import { processNodes, Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
@@ -135,28 +135,13 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
   // sure they are visible on top of everything else
   const { nodeHover, setNodeHover, clearNodeHover, edgeHover, setEdgeHover, clearEdgeHover } = useHover();
-  const [hoveringIds, setHoveringIds] = useState<Set<string>>(new Set());
+  const [hoveringIds, setHoveringIds] = useState<string[]>([]);
   useEffect(() => {
-    let linked: Set<string> = new Set();
+    let linked: string[] = [];
     if (nodeHover) {
-      const node = processed.nodes.find((node) => node.id === nodeHover);
-      if (node) {
-        // Find connected nodes via connected edges
-        const edges = processed.edges.filter((edge) => edge.source === node.id || edge.target === node.id);
-        linked = new Set(
-          edges.flatMap((edge) =>
-            processed.nodes.filter((n) => edge.source === n.id || edge.target === n.id).map((n) => n.id)
-          )
-        );
-      }
+      linked = findConnectedNodesForNode(processed.nodes, processed.edges, nodeHover);
     } else if (edgeHover) {
-      const edge = processed.edges.find((edge) => edge.id === edgeHover);
-      if (edge) {
-        // Find connecting nodes
-        linked = new Set(
-          processed.nodes.filter((node) => edge.source === node.id || edge.target === node.id).map((node) => node.id)
-        );
-      }
+      linked = findConnectedNodesForEdge(processed.nodes, processed.edges, edgeHover);
     }
     setHoveringIds(linked);
   }, [nodeHover, edgeHover, processed]);
@@ -241,7 +226,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
               onMouseEnter={setNodeHover}
               onMouseLeave={clearNodeHover}
               onClick={onNodeOpen}
-              hoveringIds={[...hoveringIds] || [highlightId]}
+              hoveringIds={hoveringIds || [highlightId]}
             />
 
             <Markers markers={markers || []} onClick={setFocused} />
