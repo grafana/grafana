@@ -18,7 +18,7 @@ const TeamPermissions = (props: TeamPermissionsProps) => {
 
   return (
     <Permissions
-      title="Members"
+      title=""
       addPermissionTitle="Add member"
       buttonLabel="Add member"
       resource="teams"

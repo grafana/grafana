@@ -40,6 +40,7 @@ type ProvisioningApiForkingService interface {
 	RoutePutMuteTiming(*models.ReqContext) response.Response
 	RoutePutPolicyTree(*models.ReqContext) response.Response
 	RoutePutTemplate(*models.ReqContext) response.Response
+	RouteResetPolicyTree(*models.ReqContext) response.Response
 }
 
 func (f *ForkedProvisioningApi) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
@@ -155,6 +156,9 @@ func (f *ForkedProvisioningApi) RoutePutTemplate(ctx *models.ReqContext) respons
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.forkRoutePutTemplate(ctx, conf, nameParam)
+}
+func (f *ForkedProvisioningApi) RouteResetPolicyTree(ctx *models.ReqContext) response.Response {
+	return f.forkRouteResetPolicyTree(ctx)
 }
 
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
@@ -366,6 +370,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodPut,
 				"/api/v1/provisioning/templates/{name}",
 				srv.RoutePutTemplate,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/v1/provisioning/policies"),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/policies"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/v1/provisioning/policies",
+				srv.RouteResetPolicyTree,
 				m,
 			),
 		)
