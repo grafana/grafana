@@ -78,7 +78,7 @@ export function onNodeDrop(
   const data = [...treeData];
 
   // Find dragObject
-  let srcElement: TreeElement;
+  let srcElement: TreeElement | undefined = undefined;
   loop(data, srcKey, (item: TreeElement, index: number, arr: TreeElement[]) => {
     arr.splice(index, 1);
     srcElement = item;
@@ -88,23 +88,21 @@ export function onNodeDrop(
     // Drop on the content
     loop(data, destKey, (item: TreeElement) => {
       item.children = item.children || [];
-      item.children.unshift(srcElement);
+      item.children.unshift(srcElement!);
     });
   } else {
     // Drop on the gap (insert before or insert after)
-    let ar;
-    let i: number;
+    let ar: TreeElement[] = [];
+    let i = 0;
     loop(data, destKey, (item: TreeElement, index: number, arr: TreeElement[]) => {
       ar = arr;
       i = index;
     });
 
     if (destPosition === -1) {
-      // @ts-ignore
-      ar.splice(i, 0, srcElement);
+      ar.splice(i, 0, srcElement!);
     } else {
-      // @ts-ignore
-      ar.splice(i + 1, 0, srcElement);
+      ar.splice(i + 1, 0, srcElement!);
     }
   }
 
