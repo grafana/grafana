@@ -25,6 +25,8 @@ export const Page: PageType = ({
   className,
   layout = PageLayoutType.Default,
   toolbar,
+  scrollTop,
+  scrollRef,
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
@@ -48,7 +50,7 @@ export const Page: PageType = ({
         <div className={styles.panes}>
           {navModel && navModel.main.children && <SectionNav model={navModel} />}
           <div className={styles.pageContent}>
-            <CustomScrollbar autoHeightMin={'100%'}>
+            <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
                 {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
@@ -60,7 +62,7 @@ export const Page: PageType = ({
         </div>
       )}
       {layout === PageLayoutType.Dashboard && (
-        <CustomScrollbar autoHeightMin={'100%'}>
+        <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className={styles.dashboardPage}>
             {toolbar}
             {children}
