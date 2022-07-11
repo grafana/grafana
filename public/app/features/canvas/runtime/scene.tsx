@@ -63,6 +63,8 @@ export class Scene {
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
+  inlineEditingCallback?: () => void;
+
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
   }
@@ -307,7 +309,7 @@ export class Scene {
     this.selecto = new Selecto({
       container: this.div,
       selectableTargets: targetElements,
-      selectByClick: true,
+      toggleContinueSelect: 'shift',
     });
 
     this.moveable = new Moveable(this.div!, {
@@ -394,8 +396,12 @@ export class Scene {
         this.moveable!.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
-      if (isTargetMoveableElement) {
-        // Prevent drawing selection box when selected target is a moveable element
+      const isTargetAlreadySelected = this.selecto
+        ?.getSelectedTargets()
+        .includes(selectedTarget.parentElement.parentElement);
+
+      if (isTargetMoveableElement || isTargetAlreadySelected) {
+        // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
       }
     }).on('selectEnd', (event) => {

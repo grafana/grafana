@@ -959,10 +959,15 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 
 	alertsRouter := sender.NewAlertsRouter(moa, acs, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute) // do not poll in unit tests.
 
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval:            time.Second,
+		MaxAttempts:             1,
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+	}
+
 	schedCfg := SchedulerCfg{
+		Cfg:           cfg,
 		C:             mockedClock,
-		BaseInterval:  time.Second,
-		MaxAttempts:   1,
 		Evaluator:     eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil, secretsService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil)),
 		RuleStore:     rs,
 		InstanceStore: is,

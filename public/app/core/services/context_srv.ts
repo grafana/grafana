@@ -166,7 +166,7 @@ export class ContextSrv {
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 
-  hasAccess(action: string, fallBack: boolean) {
+  hasAccess(action: string, fallBack: boolean): boolean {
     if (!this.accessControlEnabled()) {
       return fallBack;
     }
@@ -174,7 +174,7 @@ export class ContextSrv {
   }
 
   hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
-    if (!config.rbacEnabled) {
+    if (!this.accessControlEnabled()) {
       return fallBack;
     }
     return this.hasPermissionInMetadata(action, object);

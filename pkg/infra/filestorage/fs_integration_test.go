@@ -1183,6 +1183,123 @@ func TestIntegrationFsStorage(t *testing.T) {
 					},
 				},
 			},
+			{
+				name: "should be able to delete folders with files if using force",
+				steps: []interface{}{
+					cmdCreateFolder{
+						path: "/folder/dashboards/myNewFolder",
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder/dashboards/myNewFolder/file.jpg",
+							Contents: emptyContents,
+						},
+					},
+					cmdDeleteFolder{
+						path: "/folder/dashboards/myNewFolder",
+						options: &DeleteFolderOptions{
+							Force: true,
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
+						checks: [][]interface{}{
+							checks(fPath("/folder")),
+							checks(fPath("/folder/dashboards")),
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/folder/dashboards/myNewFolder/file.jpg",
+						},
+					},
+				},
+			},
+			{
+				name: "should be able to delete root folder with force",
+				steps: []interface{}{
+					cmdCreateFolder{
+						path: "/folder/dashboards/myNewFolder",
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder/dashboards/myNewFolder/file.jpg",
+							Contents: emptyContents,
+						},
+					},
+					cmdDeleteFolder{
+						path: "/",
+						options: &DeleteFolderOptions{
+							Force: true,
+						},
+					},
+					queryListFolders{
+						input:  queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
+						checks: [][]interface{}{},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/folder/dashboards/myNewFolder/file.jpg",
+						},
+					},
+				},
+			},
+			{
+				name: "should not be able to delete a folder unless have access to all nested files",
+				steps: []interface{}{
+					cmdCreateFolder{
+						path: "/folder/dashboards/myNewFolder",
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder/dashboards/myNewFolder/file.jpg",
+							Contents: emptyContents,
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder/dashboards/abc/file.jpg",
+							Contents: emptyContents,
+						},
+					},
+					cmdDeleteFolder{
+						path: "/",
+						options: &DeleteFolderOptions{
+							Force:        true,
+							AccessFilter: NewPathFilter([]string{"/"}, nil, nil, []string{"/folder/dashboards/abc/file.jpg"}),
+						},
+						error: &cmdErrorOutput{
+							message: "force folder delete: unauthorized access for path %s",
+							args:    []interface{}{"/"},
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
+						checks: [][]interface{}{
+							checks(fPath("/folder")),
+							checks(fPath("/folder/dashboards")),
+							checks(fPath("/folder/dashboards/abc")),
+							checks(fPath("/folder/dashboards/myNewFolder")),
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/folder/dashboards/myNewFolder/file.jpg",
+						},
+						checks: checks(
+							fName("file.jpg"),
+						),
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/folder/dashboards/myNewFolder/file.jpg",
+						},
+						checks: checks(
+							fName("file.jpg"),
+						),
+					},
+				},
+			},
 		}
 	}
 

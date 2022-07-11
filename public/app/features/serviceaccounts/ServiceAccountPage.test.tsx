@@ -11,6 +11,7 @@ jest.mock('app/core/core', () => ({
     licensedAccessControlEnabled: () => false,
     hasPermission: () => true,
     hasPermissionInMetadata: () => true,
+    hasAccessInMetadata: () => false,
   },
 }));
 
@@ -23,14 +24,6 @@ const setup = (propOverrides: Partial<Props>) => {
   const updateServiceAccountMock = jest.fn();
 
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Service accounts',
-      },
-    },
     serviceAccount: {} as ServiceAccountDTO,
     tokens: [],
     builtInRoles: {},

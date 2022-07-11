@@ -141,7 +141,7 @@ func (ng *AlertNG) init() error {
 
 	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
 
-    // Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
+	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(); err != nil {
 		return fmt.Errorf("failed to initialize alerting because alert notifications router failed to warm up: %w", err)
 	}
@@ -149,18 +149,15 @@ func (ng *AlertNG) init() error {
 	ng.AlertsRouter = alertsRouter
 
 	schedCfg := schedule.SchedulerCfg{
-		C:               clk,
-		BaseInterval:    ng.Cfg.UnifiedAlerting.BaseInterval,
-		Logger:          ng.Log,
-		MaxAttempts:     ng.Cfg.UnifiedAlerting.MaxAttempts,
-		Evaluator:       eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
-		InstanceStore:   store,
-		RuleStore:       store,
-		OrgStore:        store,
-		Metrics:         ng.Metrics.GetSchedulerMetrics(),
-		DisabledOrgs:    ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		MinRuleInterval: ng.Cfg.UnifiedAlerting.MinInterval,
-		AlertSender:     alertsRouter,
+		Cfg:           ng.Cfg.UnifiedAlerting,
+		C:             clk,
+		Logger:        ng.Log,
+		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
+		InstanceStore: store,
+		RuleStore:     store,
+		OrgStore:      store,
+		Metrics:       ng.Metrics.GetSchedulerMetrics(),
+		AlertSender:   alertsRouter,
 	}
 
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk)
@@ -170,7 +167,7 @@ func (ng *AlertNG) init() error {
 	ng.schedule = scheduler
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)
+	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Cfg.UnifiedAlerting, ng.Log)
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)

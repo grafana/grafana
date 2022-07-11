@@ -11,7 +11,7 @@ title: Images in notifications
 
 # Images in notifications
 
-Images in notifications helps recipients of alert notifications better understand why an alert has fired or resolved by including an image of the panel for the Grafana managed alert rule.
+Images in notifications helps recipients of alert notifications better understand why an alert has fired or resolved by including an image of the panel associated with the Grafana managed alert rule.
 
 > **Note**: Images in notifications are not available for Grafana Mimir and Loki managed alert rules, or when Grafana is set up to send alert notifications to an external Alertmanager.
 
@@ -19,6 +19,8 @@ If Grafana is set up to send images in notifications, it takes a screenshot of t
 
 1. The alert rule transitions from pending to firing
 2. The alert rule transitions from firing to OK
+
+Grafana does not support images for alert rules that are not associated with a panel. An alert rule is associated with a panel when it has both Dashboard UID and Panel ID annotations.
 
 Images are stored in the [data]({{< relref "../setup-grafana/configure-grafana/#paths" >}}) path and so Grafana must have write-access to this path. If Grafana cannot write to this path then screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt. In addition to storing images on disk, Grafana can also store the image in an external image store such as Amazon S3, Azure Blob Storage, Google Cloud Storage and even Grafana where screenshots are stored in `public/img/attachments`. Screenshots older than `temp_data_lifetime` are deleted from disk but not the external image store. If Grafana is the external image store then screenshots are deleted from `data` but not from `public/img/attachments`.
 
@@ -63,18 +65,18 @@ Images in notifications are supported in the following notifiers and additional 
 | Discord                 | Yes                     | Yes                     |
 | Email                   | Yes                     | Yes                     |
 | Google Hangouts Chat    | No                      | Yes                     |
-| Kafka                   | No                      | Yes                     |
-| Line                    | No                      | Yes                     |
+| Kafka                   | No                      | No                      |
+| Line                    | No                      | No                      |
 | Microsoft Teams         | No                      | Yes                     |
 | Opsgenie                | No                      | Yes                     |
 | Pagerduty               | No                      | Yes                     |
-| Prometheus Alertmanager | No                      | Yes                     |
+| Prometheus Alertmanager | No                      | No                      |
 | Pushover                | No                      | No                      |
-| Sensu Go                | No                      | Yes                     |
+| Sensu Go                | No                      | No                      |
 | Slack                   | No                      | Yes                     |
 | Telegram                | No                      | No                      |
-| Threema                 | No                      | Yes                     |
-| VictorOps               | No                      | Yes                     |
+| Threema                 | No                      | No                      |
+| VictorOps               | No                      | No                      |
 | Webhook                 | No                      | Yes                     |
 
 Include images from URL refers to using the external image store.
