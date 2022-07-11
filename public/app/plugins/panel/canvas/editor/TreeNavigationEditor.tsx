@@ -5,6 +5,7 @@ import SVG from 'react-inlinesvg';
 
 import { StandardEditorProps } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
+import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
@@ -34,7 +35,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     return <div>No settings</div>;
   }
 
-  const onSelect = (selectedKeys: Key[], info: any) => {
+  const onSelect = (selectedKeys: Key[], info: { node: { dataRef: ElementState } }) => {
     if (item.settings?.scene) {
       doSelect(item.settings.scene, info.node.dataRef);
     }
