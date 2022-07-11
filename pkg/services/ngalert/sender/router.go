@@ -3,7 +3,6 @@ package sender
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 	"sync"
 	"time"
@@ -166,11 +165,11 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
-func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) error {
+func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
 	logger := d.logger.New("rule_uid", key.UID, "org", key.OrgID)
 	if len(alerts.PostableAlerts) == 0 {
 		logger.Debug("no alerts to notify about")
-		return nil
+		return
 	}
 	// Send alerts to local notifier if they need to be handled internally
 	// or if no external AMs have been discovered yet.
@@ -206,9 +205,8 @@ func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.Postable
 	}
 
 	if !localNotifierExist && !externalNotifierExist {
-		return fmt.Errorf("no external or internal notifier - [%d] alerts not delivered", len(alerts.PostableAlerts))
+		logger.Error("no external or internal notifier - [%d] alerts not delivered", len(alerts.PostableAlerts))
 	}
-	return nil
 }
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.

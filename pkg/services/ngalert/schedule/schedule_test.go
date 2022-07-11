@@ -155,7 +155,7 @@ func TestAlertingTicker(t *testing.T) {
 	}
 
 	notifier := &schedule.AlertsSenderMock{}
-	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return(nil)
+	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return()
 
 	schedCfg := schedule.SchedulerCfg{
 		Cfg: cfg,

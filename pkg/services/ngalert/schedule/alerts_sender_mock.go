@@ -23,17 +23,8 @@ func (_m *AlertsSenderMock) EXPECT() *AlertsSenderMock_Expecter {
 }
 
 // Send provides a mock function with given fields: key, alerts
-func (_m *AlertsSenderMock) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) error {
-	ret := _m.Called(key, alerts)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(models.AlertRuleKey, definitions.PostableAlerts) error); ok {
-		r0 = rf(key, alerts)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
+func (_m *AlertsSenderMock) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+	_m.Called(key, alerts)
 }
 
 // AlertsSenderMock_Send_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Send'
@@ -55,7 +46,7 @@ func (_c *AlertsSenderMock_Send_Call) Run(run func(key models.AlertRuleKey, aler
 	return _c
 }
 
-func (_c *AlertsSenderMock_Send_Call) Return(_a0 error) *AlertsSenderMock_Send_Call {
-	_c.Call.Return(_a0)
+func (_c *AlertsSenderMock_Send_Call) Return() *AlertsSenderMock_Send_Call {
+	_c.Call.Return()
 	return _c
 }

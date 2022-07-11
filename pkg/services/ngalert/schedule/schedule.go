@@ -47,7 +47,7 @@ type ScheduleService interface {
 //go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
 type AlertsSender interface {
-	Send(key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts) error
+	Send(key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }
 
 type schedule struct {
@@ -350,10 +350,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		states := sch.stateManager.GetStatesForRuleUID(key.OrgID, key.UID)
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		sch.stateManager.RemoveByRuleUID(key.OrgID, key.UID)
-		err := sch.alertsSender.Send(key, expiredAlerts)
-		if err != nil {
-			logger.Error("failed to expire firing alerts", "err", err)
-		}
+		sch.alertsSender.Send(key, expiredAlerts)
 	}
 
 	updateRule := func(ctx context.Context, oldRule *ngmodels.AlertRule) (*ngmodels.AlertRule, error) {
@@ -415,10 +412,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results)
 		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
-		err = sch.alertsSender.Send(key, alerts)
-		if err != nil {
-			logger.Error("failed to send alerts", "err", err)
-		}
+		sch.alertsSender.Send(key, alerts)
 		return nil
 	}
 
