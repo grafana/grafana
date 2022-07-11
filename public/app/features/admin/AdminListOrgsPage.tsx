@@ -4,7 +4,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';

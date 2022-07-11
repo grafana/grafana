@@ -185,11 +185,13 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/templates/{name}",
 		http.MethodGet + "/api/v1/provisioning/mute-timings",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}",
-		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}":
+		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
+		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		fallback = middleware.ReqOrgAdmin
 		eval = ac.EvalPermission(ac.ActionAlertingProvisioningRead) // organization scope
 
 	case http.MethodPut + "/api/v1/provisioning/policies",
+		http.MethodDelete + "/api/v1/provisioning/policies",
 		http.MethodPost + "/api/v1/provisioning/contact-points",
 		http.MethodPut + "/api/v1/provisioning/contact-points/{UID}",
 		http.MethodDelete + "/api/v1/provisioning/contact-points/{UID}",

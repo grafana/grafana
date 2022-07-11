@@ -91,7 +91,7 @@
     "slate-plain-serializer": "0.7.10",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.0",
-    "uplot": "1.6.21",
+    "uplot": "1.6.22",
     "uuid": "8.3.2"
   },
   "devDependencies": {
@@ -110,6 +110,7 @@
     "@storybook/addons": "6.4.21",
     "@storybook/api": "6.4.21",
     "@storybook/builder-webpack5": "6.4.21",
+    "@storybook/client-api": "6.4.21",
     "@storybook/components": "6.4.21",
     "@storybook/core-events": "6.4.21",
     "@storybook/manager-webpack5": "6.4.21",

@@ -158,7 +158,7 @@ func (ng *AlertNG) init() error {
 	ng.schedule = scheduler
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)
+	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Cfg.UnifiedAlerting, ng.Log)
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
