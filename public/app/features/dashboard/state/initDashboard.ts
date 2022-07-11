@@ -103,6 +103,19 @@ async function fetchDashboard(
   }
 }
 
+const logQueryOnDashboardLoaded = (target: DataQuery, panel: PanelModel, collapsed: boolean, dashboardUid: string) => {
+  reportInteraction('grafana_dashboard_loaded', {
+    dashboard_id: dashboardUid,
+    panel_id: panel.id,
+    panel_type: panel.type,
+    hidden: !!target.hide,
+    collapsed: collapsed,
+    datasource: target.datasource?.type,
+    grafana_version: config.buildInfo.version,
+    query_type: target.queryType,
+  });
+};
+
 /**
  * This action (or saga) does everything needed to bootstrap a dashboard & dashboard model.
  * First it handles the process of fetching the dashboard, correcting the url if required (causing redirects/url updates)
@@ -210,31 +223,19 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       setWeekStart(config.bootData.user.weekStart);
     }
 
-    const logQueryOnDashboardLoaded = (target: DataQuery, panel: PanelModel, collapsed: boolean) => {
-      reportInteraction('grafana_dashboard_loaded', {
-        dashboard_id: dashDTO.dashboard.uid,
-        panel_id: panel.id,
-        panel_type: panel.type,
-        hidden: !!target.hide,
-        collapsed: collapsed,
-        datasource: target.datasource?.type,
-        grafana_version: config.buildInfo.version,
-        query_type: target.queryType,
-      });
-    };
-
     // yay we are done
-    if (dashDTO.dashboard.uid) {
+    const dashboardId = dashDTO.dashboard.uid;
+    if (dashboardId) {
       dashboard.panels.forEach((panel) => {
         if (panel.panels) {
           panel.panels.forEach((subPanel) => {
             subPanel.targets.forEach((target) => {
-              logQueryOnDashboardLoaded(target, subPanel, !!panel.collapsed);
+              logQueryOnDashboardLoaded(target, subPanel, !!panel.collapsed, dashboardId);
             });
           });
         } else {
           panel.targets.forEach((target) => {
-            logQueryOnDashboardLoaded(target, panel, !!panel.collapsed);
+            logQueryOnDashboardLoaded(target, panel, !!panel.collapsed, dashboardId);
           });
         }
       });
