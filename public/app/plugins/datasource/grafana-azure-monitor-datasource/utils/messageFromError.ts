@@ -1,4 +1,8 @@
-export default function messageFromError(error: any): string | undefined {
+import { isValidElement } from 'react';
+
+import { AzureMonitorErrorish } from '../types';
+
+export default function messageFromError(error: any): AzureMonitorErrorish | undefined {
   if (!error || typeof error !== 'object') {
     return undefined;
   }
@@ -9,6 +13,10 @@ export default function messageFromError(error: any): string | undefined {
 
   if (typeof error.data?.error?.message === 'string') {
     return error.data.error.message;
+  }
+
+  if (isValidElement(error)) {
+    return error;
   }
 
   // Copied from the old Angular code - this might be checking for errors in places
