@@ -2,6 +2,7 @@ package kvstore
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -23,7 +24,7 @@ type PluginSecretMigrationService struct {
 
 func ProvidePluginSecretMigrationService(
 	features featuremgmt.FeatureToggles,
-	// TODO LND We need to check if this is actually a plugin store
+// TODO LND We need to check if this is actually a plugin store
 	secretsStore SecretsKVStore,
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
