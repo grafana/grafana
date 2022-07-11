@@ -35,6 +35,7 @@ func NewContactPointService(store AMConfigStore, encryptionService secrets.Servi
 }
 
 type ContactPointQuery struct {
+	// Optionally filter by name.
 	Name  string
 	OrgID int64
 }
