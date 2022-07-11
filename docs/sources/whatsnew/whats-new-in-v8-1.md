@@ -162,7 +162,7 @@ You can now encrypt the query data cached by Grafana. This improves the security
 
 You can now customize Grafana’s loading logo, which displays while Grafana is loading in a user’s browser. White labeling in Grafana Enterprise allows you to customize the look and feel of Grafana to match your product’s or company’s brand. This makes Grafana a more integrated part of your observability stack and keep Grafana consistent with other visualizations displayed in public.
 
-To find out how you can configure it along with other Grafana UI elements, like the corner logo and application footer, refer to the [White labeling]({{< relref "../setup-grafana/enable-custom-branding/" >}}) topic of the Grafana Enterprise docs.
+To find out how you can configure it along with other Grafana UI elements, like the corner logo and application footer, refer to the [White labeling]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) topic of the Grafana Enterprise docs.
 
 ### Oauth2 - Team Sync to Group Mapping
 
