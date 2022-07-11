@@ -307,35 +307,6 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
     ctx.storeState.explore.left.queries = mockQueries;
   });
 
-  it('Should send action dashboardInitFetching', () => {
-    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
-  });
-
-  it('Should send action dashboardInitServices ', () => {
-    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
-  });
-
-  it('Should update location with orgId query param', () => {
-    const search = locationService.getSearch();
-    expect(search.get('orgId')).toBe('12');
-  });
-
-  it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[8].payload.title).toBe('My cool dashboard');
-  });
-
-  it('Should initialize services', () => {
-    expect(getTimeSrv().init).toBeCalled();
-    expect(getDashboardSrv().setCurrent).toBeCalled();
-    expect(getDashboardQueryRunner().run).toBeCalled();
-    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
-  });
-
-  it('Should initialize redux variables if newVariables is enabled', () => {
-    expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
-  });
-
   it('should log dashboard_loaded event', () => {
     expect(reportInteraction).toBeCalledTimes(3);
     expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_loaded', {
@@ -378,6 +349,35 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
       query_type: undefined,
       grafana_version: '1.0',
     });
+  });
+
+  it('Should send action dashboardInitFetching', () => {
+    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
+  });
+
+  it('Should send action dashboardInitServices ', () => {
+    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
+  });
+
+  it('Should update location with orgId query param', () => {
+    const search = locationService.getSearch();
+    expect(search.get('orgId')).toBe('12');
+  });
+
+  it('Should send action dashboardInitCompleted', () => {
+    expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[8].payload.title).toBe('My cool dashboard');
+  });
+
+  it('Should initialize services', () => {
+    expect(getTimeSrv().init).toBeCalled();
+    expect(getDashboardSrv().setCurrent).toBeCalled();
+    expect(getDashboardQueryRunner().run).toBeCalled();
+    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
+  });
+
+  it('Should initialize redux variables if newVariables is enabled', () => {
+    expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
   });
 });
 
