@@ -104,6 +104,7 @@ export function prepareGraphableFields(
     if (hasTimeField && hasValueField) {
       frames.push({
         ...frame,
+        length: nulledFrame.length,
         fields,
       });
     }
