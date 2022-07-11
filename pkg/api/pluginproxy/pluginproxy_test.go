@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -227,46 +228,46 @@ func TestPluginProxy(t *testing.T) {
 		require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
 	})
 
-	// 	t.Run("When proxying a request should set expected response headers", func(t *testing.T) {
-	// 		requestHandled := false
-	// 		backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 			w.WriteHeader(200)
-	// 			_, _ = w.Write([]byte("I am the backend"))
-	// 			requestHandled = true
-	// 		}))
-	// 		t.Cleanup(backendServer.Close)
+	t.Run("When proxying a request should set expected response headers", func(t *testing.T) {
+		requestHandled := false
+		backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(200)
+			_, _ = w.Write([]byte("I am the backend"))
+			requestHandled = true
+		}))
+		t.Cleanup(backendServer.Close)
 
-	// 		responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
+		responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
 
-	// 		routes := []*plugins.Route{
-	// 			{
-	// 				Path: "/",
-	// 				URL:  backendServer.URL,
-	// 			},
-	// 		}
+		routes := []*plugins.Route{
+			{
+				Path: "",
+				URL:  backendServer.URL,
+			},
+		}
 
-	// 		ctx := &models.ReqContext{
-	// 			SignedInUser: &models.SignedInUser{},
-	// 			Context: &web.Context{
-	// 				Req:  httptest.NewRequest("GET", "/", nil),
-	// 				Resp: responseWriter,
-	// 			},
-	// 		}
-	// 		ps := &pluginsettings.DTO{
-	// 			SecureJSONData: map[string][]byte{},
-	// 		}
-	// 		proxy, err := NewPluginProxy(ps, routes, ctx, "", &setting.Cfg{}, secretsService, tracing.InitializeTracerForTest())
-	// 		require.NoError(t, err)
-	// 		proxy.HandleRequest()
+		ctx := &models.ReqContext{
+			SignedInUser: &models.SignedInUser{},
+			Context: &web.Context{
+				Req:  httptest.NewRequest("GET", "/", nil),
+				Resp: responseWriter,
+			},
+		}
+		ps := &pluginsettings.DTO{
+			SecureJSONData: map[string][]byte{},
+		}
+		proxy, err := NewPluginProxy(ps, routes, ctx, "", &setting.Cfg{}, secretsService, tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		proxy.HandleRequest()
 
-	// 		for {
-	// 			if requestHandled {
-	// 				break
-	// 			}
-	// 		}
+		for {
+			if requestHandled {
+				break
+			}
+		}
 
-	// 		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
-	// 	})
+		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
+	})
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
