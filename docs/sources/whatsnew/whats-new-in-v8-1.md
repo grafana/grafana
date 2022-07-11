@@ -146,7 +146,7 @@ These features are included in the Grafana Enterprise edition.
 
 Role-based access control remains in beta. You can now grant or revoke permissions for Viewers, Editors, or Admins to use Explore mode, configure LDAP or SAML settings, or view the admin/stats page. These new permissions enhance the existing permissions that can be customized, namely permissions to access Users, Orgs, LDAP settings, and Reports in Grafana.
 
-Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of role-based access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../enterprise/access-control/" >}}) documentation.
+Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of role-based access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) documentation.
 
 ### New and improved reporting scheduler
 
@@ -162,7 +162,7 @@ You can now encrypt the query data cached by Grafana. This improves the security
 
 You can now customize Grafana’s loading logo, which displays while Grafana is loading in a user’s browser. White labeling in Grafana Enterprise allows you to customize the look and feel of Grafana to match your product’s or company’s brand. This makes Grafana a more integrated part of your observability stack and keep Grafana consistent with other visualizations displayed in public.
 
-To find out how you can configure it along with other Grafana UI elements, like the corner logo and application footer, refer to the [White labeling]({{< relref "../setup-grafana/enable-custom-branding/" >}}) topic of the Grafana Enterprise docs.
+To find out how you can configure it along with other Grafana UI elements, like the corner logo and application footer, refer to the [White labeling]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) topic of the Grafana Enterprise docs.
 
 ### Oauth2 - Team Sync to Group Mapping
 

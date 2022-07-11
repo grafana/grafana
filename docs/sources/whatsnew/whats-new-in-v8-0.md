@@ -35,7 +35,7 @@ To learn more about the differences between new alerts and the legacy alerts, re
 
 ### Library panels
 
-Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../panels/library-panels/" >}}).
+Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../dashboards/manage-library-panels/" >}}).
 
 ### Real-time streaming
 
@@ -156,7 +156,7 @@ Log navigation in Explore has been significantly improved. We added pagination t
 
 You can now use the Plugin catalog app to easily manage your plugins from within Grafana. Install, update, and uninstall plugins without requiring a server restart.
 
-[Plugin catalog]({{< relref "../plugins/catalog/" >}}) was added as a result of this feature.
+[Plugin catalog]({{< relref "../administration/plugin-management#plugin-catalog/" >}}) was added as a result of this feature.
 
 ### Performance improvements
 
@@ -294,7 +294,7 @@ These features are included in the Grafana Enterprise edition.
 
 You can now add or remove detailed permissions from Viewer, Editor, and Admin org roles, to grant users just the right amount of access within Grafana. Available permissions include the ability to view and manage Users, Reports, and the Access Control API itself. Grafana will support more and more permissions over the coming months.
 
-[Role-based access control docs]({{< relref "../enterprise/access-control/" >}}) were added as a result of this feature.
+[Role-based access control docs]({{< relref "../administration/roles-and-permissions/access-control/" >}}) were added as a result of this feature.
 
 ### Data source query caching
 
@@ -318,7 +318,7 @@ For more information, refer to [Reporting docs]({{< relref "../enterprise/report
 
 The Grafana Enterprise documentation has been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles.
 
-For more information, refer to [License restrictions docs]({{< relref "../enterprise/license/license-restrictions/" >}}).
+For more information, refer to [License restrictions docs]({{< relref "../administration/enterprise-licensing#license-restrictions" >}}).
 
 ## Breaking changes
 
