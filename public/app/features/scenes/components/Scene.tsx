@@ -3,6 +3,8 @@ import React from 'react';
 import { config } from '@grafana/runtime';
 import { PageToolbar, ToolbarButton } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { Page } from 'app/core/components/Page/Page';
+import { PageLayoutType } from 'app/core/components/Page/types';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneObjectState, SceneObject } from '../core/types';
@@ -45,17 +47,16 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
     );
   }
 
+  const pageToolbar = config.featureToggles.topnav ? (
+    <AppChromeUpdate pageNav={{ text: title }} actions={toolbarActions} />
+  ) : (
+    <PageToolbar title={title}>{toolbarActions}</PageToolbar>
+  );
+
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0 }}>
-      {config.featureToggles.topnav ? (
-        <AppChromeUpdate pageNav={{ text: title }} actions={toolbarActions} />
-      ) : (
-        <PageToolbar title={title}>{toolbarActions}</PageToolbar>
-      )}
-      <div style={{ flexGrow: 1, display: 'flex', padding: '16px', gap: '8px', overflow: 'auto' }}>
-        <layout.Component model={layout} isEditing={isEditing} />
-        {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
-      </div>
-    </div>
+    <Page navId="scenes" layout={PageLayoutType.Dashboard} toolbar={pageToolbar}>
+      <layout.Component model={layout} isEditing={isEditing} />
+      {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
+    </Page>
   );
 }
