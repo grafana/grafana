@@ -326,12 +326,6 @@ export class Scene {
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })
-      .on('dragStart', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
-        if (targetedElement) {
-          targetedElement.isMoving = true;
-        }
-      })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyDrag(event);
@@ -346,7 +340,6 @@ export class Scene {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
           targetedElement.setPlacementFromConstraint();
-          targetedElement.isMoving = false;
         }
 
         this.moved.next(Date.now());
