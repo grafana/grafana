@@ -11,6 +11,6 @@ var (
 	ErrDataSourceFailedGenerateUniqueUid  = errors.New("failed to generate unique datasource ID")
 	ErrDataSourceIdentifierNotSet         = errors.New("unique identifier and org id are needed to be able to get or delete a datasource")
 	ErrDatasourceIsReadOnly               = errors.New("data source is readonly, can only be updated from configuration")
-	ErrCorrelationUidExists               = errors.New("correlation to the same uid already exists")
+	ErrCorrelationUidExists               = errors.New("correlation with the same uid already exists")
 	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation ID")
 )
