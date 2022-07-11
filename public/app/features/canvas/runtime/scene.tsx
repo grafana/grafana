@@ -418,41 +418,47 @@ export class Scene {
   };
 
   reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {
-    if (dragToGap) {
-      if (destPosition === -1) {
-        // top of the tree
-        if (src.parent instanceof FrameState) {
-          // move outside the frame
+    switch (dragToGap) {
+      case true:
+        switch (destPosition) {
+          case -1:
+            // top of the tree
+            if (src.parent instanceof FrameState) {
+              // move outside the frame
+              if (dest.parent) {
+                this.updateElements(src, dest.parent, dest.parent.elements.length);
+                src.updateData(dest.parent.scene.context);
+              }
+            } else {
+              dest.parent?.reorderTree(src, dest, true);
+            }
+            break;
+          default:
+            if (dest.parent) {
+              this.updateElements(src, dest.parent, dest.parent.elements.indexOf(dest));
+              src.updateData(dest.parent.scene.context);
+            }
+            break;
+        }
+        break;
+      case false:
+        if (dest instanceof FrameState) {
+          if (src.parent === dest) {
+            // same frame parent
+            src.parent?.reorderTree(src, dest, true);
+          } else {
+            this.updateElements(src, dest);
+            src.updateData(dest.scene.context);
+          }
+        } else if (src.parent === dest.parent) {
+          src.parent?.reorderTree(src, dest);
+        } else {
           if (dest.parent) {
-            this.updateElements(src, dest.parent, dest.parent.elements.length);
+            this.updateElements(src, dest.parent);
             src.updateData(dest.parent.scene.context);
           }
-        } else {
-          dest.parent?.reorderTree(src, dest, true);
         }
-      } else {
-        if (dest.parent) {
-          this.updateElements(src, dest.parent, dest.parent.elements.indexOf(dest));
-          src.updateData(dest.parent.scene.context);
-        }
-      }
-    } else {
-      if (dest instanceof FrameState) {
-        if (src.parent === dest) {
-          // same frame parent
-          src.parent?.reorderTree(src, dest, true);
-        } else {
-          this.updateElements(src, dest);
-          src.updateData(dest.scene.context);
-        }
-      } else if (src.parent === dest.parent) {
-        src.parent?.reorderTree(src, dest);
-      } else {
-        if (dest.parent) {
-          this.updateElements(src, dest.parent);
-          src.updateData(dest.parent.scene.context);
-        }
-      }
+        break;
     }
   };
 
