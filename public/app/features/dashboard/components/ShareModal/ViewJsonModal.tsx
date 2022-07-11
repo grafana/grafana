@@ -16,7 +16,9 @@ export function ViewJsonModal({ json, onDismiss }: ViewJsonModalProps): JSX.Elem
         {({ width }) => <CodeEditor value={json} language="json" showMiniMap={false} height="500px" width={width} />}
       </AutoSizer>
       <Modal.ButtonRow>
-        <ClipboardButton getText={getClipboardText}>Copy to Clipboard</ClipboardButton>
+        <ClipboardButton icon="copy" getText={getClipboardText}>
+          Copy to Clipboard
+        </ClipboardButton>
       </Modal.ButtonRow>
     </Modal>
   );

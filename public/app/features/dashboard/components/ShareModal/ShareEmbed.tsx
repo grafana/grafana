@@ -99,7 +99,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
           />
         </Field>
         <Modal.ButtonRow>
-          <ClipboardButton variant="primary" getText={this.getIframeHtml}>
+          <ClipboardButton icon="copy" variant="primary" getText={this.getIframeHtml}>
             Copy to clipboard
           </ClipboardButton>
         </Modal.ButtonRow>

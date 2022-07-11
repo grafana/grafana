@@ -200,9 +200,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
       rightButtons.push(
         <ClipboardButton
           key="copy"
-          onClipboardCopy={() => {
-            notifyApp.success('URL copied!');
-          }}
+          icon="copy"
           onClipboardError={(copiedText) => {
             notifyApp.error('Error while copying URL', copiedText);
           }}
