@@ -1,6 +1,6 @@
 import deepEqual from 'fast-deep-equal';
 import { defaults } from 'lodash';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { getTemplateSrv } from '@grafana/runtime';
 
