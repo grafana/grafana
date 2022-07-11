@@ -5,11 +5,14 @@ import SVG from 'react-inlinesvg';
 import { Field, FieldType, formattedValueToString, getDisplayProcessor, getFieldDisplayName } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { PluginIconName } from 'app/features/plugins/admin/types';
+import { ShowModalReactEvent } from 'app/types/events';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
+import { ExplainScorePopup } from './ExplainScorePopup';
 import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
@@ -38,6 +41,10 @@ export const generateColumns = (
       sortFieldWith += 25;
     }
     availableWidth -= sortFieldWith; // pre-allocate the space for the last column
+  }
+
+  if (access.explain && access.score) {
+    availableWidth -= 100; // pre-allocate the space for the last column
   }
 
   let width = 50;
@@ -107,7 +114,8 @@ export const generateColumns = (
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values.get(p.row.index);
       if (!name?.length) {
-        name = 'Missing title'; // normal for panels
+        const loading = p.row.index >= response.view.dataFrame.length;
+        name = loading ? 'Loading...' : 'Missing title'; // normal for panels
         classNames += ' ' + styles.missingTitleText;
       }
       return (
@@ -193,6 +201,37 @@ export const generateColumns = (
       id: `column-sort-field`,
       field: sortField,
       width: sortFieldWith,
+    });
+  }
+
+  if (access.explain && access.score) {
+    const vals = access.score.values;
+    const showExplainPopup = (row: number) => {
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: ExplainScorePopup,
+          props: {
+            name: access.name.values.get(row),
+            explain: access.explain.values.get(row),
+            frame: response.view.dataFrame,
+            row: row,
+          },
+        })
+      );
+    };
+
+    columns.push({
+      Header: () => <div className={styles.sortedHeader}>Score</div>,
+      Cell: (p) => {
+        return (
+          <div {...p.cellProps} className={styles.explainItem} onClick={() => showExplainPopup(p.row.index)}>
+            {vals.get(p.row.index)}
+          </div>
+        );
+      },
+      id: `column-score-field`,
+      field: access.score,
+      width: 100,
     });
   }
 

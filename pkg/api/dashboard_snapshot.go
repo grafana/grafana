@@ -268,23 +268,27 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 		return response.Error(404, "Failed to get dashboard snapshot", nil)
 	}
 
-	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
-
-	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
-	canEdit, err := guardian.CanEdit()
-	// check for permissions only if the dahboard is found
-	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-		return response.Error(500, "Error while checking permissions for snapshot", err)
-	}
-
-	if !canEdit && query.Result.UserId != c.SignedInUser.UserId && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-		return response.Error(403, "Access denied to this snapshot", nil)
-	}
-
 	if query.Result.External {
 		err := deleteExternalDashboardSnapshot(query.Result.ExternalDeleteUrl)
 		if err != nil {
 			return response.Error(500, "Failed to delete external dashboard", err)
+		}
+	} else {
+		// When creating an external snapshot, its dashboard content is empty. This means that the mustInt here returns a 0,
+		// which before RBAC would result in a dashboard which has no ACL. A dashboard without an ACL would fallback
+		// to the user’s org role, which for editors and admins would essentially always be allowed here. With RBAC,
+		// all permissions must be explicit, so the lack of a rule for dashboard 0 means the guardian will reject.
+		dashboardID := query.Result.Dashboard.Get("id").MustInt64()
+
+		guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
+		canEdit, err := guardian.CanEdit()
+		// check for permissions only if the dahboard is found
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(500, "Error while checking permissions for snapshot", err)
+		}
+
+		if !canEdit && query.Result.UserId != c.SignedInUser.UserId && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(403, "Access denied to this snapshot", nil)
 		}
 	}
 

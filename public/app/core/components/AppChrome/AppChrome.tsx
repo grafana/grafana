@@ -52,6 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     content: css({
       display: 'flex',
+      flexDirection: 'column',
       paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
       flexGrow: 1,
       height: '100%',

@@ -44,6 +44,15 @@ func TestProvisioningApi(t *testing.T) {
 			require.Equal(t, 202, response.Status())
 		})
 
+		t.Run("successful DELETE returns 202", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+
+			response := sut.RouteResetPolicyTree(&rc)
+
+			require.Equal(t, 202, response.Status())
+		})
+
 		t.Run("when new policy tree is invalid", func(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
@@ -101,6 +110,18 @@ func TestProvisioningApi(t *testing.T) {
 				tree := definitions.Route{}
 
 				response := sut.RoutePutPolicyTree(&rc, tree)
+
+				require.Equal(t, 500, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "something went wrong")
+			})
+
+			t.Run("DELETE returns 500", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				sut.policies = &fakeFailingNotificationPolicyService{}
+				rc := createTestRequestCtx()
+
+				response := sut.RouteResetPolicyTree(&rc)
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
@@ -335,6 +356,11 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	return nil
 }
 
+func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+	f.tree = definitions.Route{} // TODO
+	return f.tree, nil
+}
+
 type fakeFailingNotificationPolicyService struct{}
 
 func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
@@ -345,6 +371,10 @@ func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Cont
 	return fmt.Errorf("something went wrong")
 }
 
+func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+	return definitions.Route{}, fmt.Errorf("something went wrong")
+}
+
 type fakeRejectingNotificationPolicyService struct{}
 
 func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
@@ -353,6 +383,10 @@ func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Conte
 
 func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
 	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
+}
+
+func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+	return definitions.Route{}, nil
 }
 
 func createInvalidContactPoint() definitions.EmbeddedContactPoint {

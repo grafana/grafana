@@ -1,7 +1,6 @@
 package store
 
 import (
-	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -27,5 +26,5 @@ func getPathAndScope(c *models.ReqContext) (string, string) {
 	if path == "" {
 		return "", ""
 	}
-	return splitFirstSegment(filepath.Clean(path))
+	return splitFirstSegment(path)
 }
