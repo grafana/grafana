@@ -456,8 +456,7 @@ func (hs *HTTPServer) CreateCorrelation(c *models.ReqContext) response.Response 
 		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
 	}
 
-	// TODO: maybe this?
-	// hs.Live.HandleDatasourceUpdate(c.OrgId, cmd.SourceUID)
+	hs.Live.HandleDatasourceUpdate(c.OrgId, cmd.SourceUID)
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message":     "Correlation created",
