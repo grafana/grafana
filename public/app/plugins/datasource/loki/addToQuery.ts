@@ -66,7 +66,7 @@ function getStreamSelectorPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
+    enter: ({ type, from, to }): false | void => {
       if (type.name === 'Selector') {
         positions.push({ from, to });
         return false;
@@ -84,7 +84,7 @@ export function getParserPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
+    enter: ({ type, from, to }): false | void => {
       if (type.name === 'LabelParser') {
         positions.push({ from, to });
         return false;
@@ -102,7 +102,7 @@ function getLineFiltersPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
+    enter: ({ type, from, to }): false | void => {
       if (type.name === 'LineFilters') {
         positions.push({ from, to });
         return false;

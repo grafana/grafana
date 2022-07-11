@@ -1,4 +1,4 @@
-import { parser } from 'lezer-promql';
+import { parser } from '@prometheus-io/lezer-promql';
 
 import { PromQueryModeller } from './querybuilder/PromQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';

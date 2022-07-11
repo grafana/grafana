@@ -1,5 +1,5 @@
 import type { Tree, SyntaxNode } from '@lezer/common';
-import { parser } from 'lezer-promql';
+import { parser } from '@prometheus-io/lezer-promql';
 
 import { NeverCaseError } from './util';
 
