@@ -10,6 +10,7 @@ import {
   duplicatePanel,
   removePanel,
   sharePanel,
+  toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
@@ -46,7 +47,7 @@ export function getPanelMenu(
 
   const onToggleLegend = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    console.log('helloooo')
+    toggleLegend(panel);
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
