@@ -107,7 +107,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:551014442": [
       [13, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:381298544": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:689615064": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/common/NewWindowIcon.test.js:1750458349": [
