@@ -3,6 +3,7 @@ package export
 import (
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -97,6 +98,9 @@ func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
 
 			rows, err := sess.DB().QueryContext(helper.ctx, auth.sql)
 			if err != nil {
+				if strings.HasPrefix(err.Error(), "no such table") {
+					continue
+				}
 				return err
 			}
 
