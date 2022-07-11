@@ -197,13 +197,8 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
       }
       &-treenode-active {
         background: rgba(0, 0, 0, 0.1);
-
-        // .rc-tree-node-content-wrapper {
-        //   background: rgba(0, 0, 0, 0.1);
-        // }
       }
       &-node-selected {
-        // box-shadow: 0 0 0 1px #ffb951;
         opacity: 0.8;
       }
       &-icon__open {
