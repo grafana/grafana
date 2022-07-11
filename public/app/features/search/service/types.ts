@@ -33,6 +33,10 @@ export interface DashboardQueryResult {
   tags: string[];
   location: string; // url that can be split
   ds_uid: string[];
+
+  // debugging fields
+  score: number;
+  explain: {};
 }
 
 export interface LocationInfo {
