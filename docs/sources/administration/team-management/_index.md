@@ -89,7 +89,7 @@ You can remove a team member when you no longer want to apply team permissions t
 1. Sign in to Grafana as an organization administrator or team administrator.
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
 1. Click a team from which you want to remove a user or a service account.
-1. Click the **X** next to the name of the user or a service account.
+1. Click the **X** next to the name of the user or service account.
 1. Click **Delete**.
 
 ## Delete a team

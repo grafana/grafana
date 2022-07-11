@@ -763,7 +763,7 @@ Query Parameters:
 
 | Action           | Scope                |
 | ---------------- | -------------------- |
-| users.roles:read | users:id:`<user ID>` |
+| users.roles:read | users:id:`<service account ID>` |
 
 #### Example request
 
