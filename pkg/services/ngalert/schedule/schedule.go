@@ -86,7 +86,7 @@ type schedule struct {
 
 	metrics *metrics.Scheduler
 
-	notifier        AlertsSender
+	alertsSender    AlertsSender
 	disabledOrgs    map[int64]struct{}
 	minRuleInterval time.Duration
 
@@ -142,7 +142,7 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.SchedulableAlertRule)},
 		bus:                   bus,
-		notifier:              cfg.AlertSender,
+		alertsSender:          cfg.AlertSender,
 	}
 
 	bus.AddEventListener(sch.folderUpdateHandler)
@@ -350,9 +350,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		states := sch.stateManager.GetStatesForRuleUID(key.OrgID, key.UID)
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		sch.stateManager.RemoveByRuleUID(key.OrgID, key.UID)
-		err := sch.notifier.Send(key, expiredAlerts)
+		err := sch.alertsSender.Send(key, expiredAlerts)
 		if err != nil {
-			logger.Error("failed to send alerts to notifier", "err", err)
+			logger.Error("failed to expire firing alerts", "err", err)
 		}
 	}
 
@@ -413,9 +413,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results)
 		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
-		err = sch.notifier.Send(key, alerts)
+		err = sch.alertsSender.Send(key, alerts)
 		if err != nil {
-			logger.Error("failed to send alerts to notifier", "err", err)
+			logger.Error("failed to send alerts", "err", err)
 		}
 		return nil
 	}
