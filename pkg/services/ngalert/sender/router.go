@@ -61,27 +61,6 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 	return d
 }
 
-func (d *AlertsRouter) adminConfigSync(ctx context.Context) error {
-	for {
-		select {
-		case <-time.After(d.adminConfigPollInterval):
-			if err := d.SyncAndApplyConfigFromDatabase(); err != nil {
-				d.logger.Error("unable to sync admin configuration", "err", err)
-			}
-		case <-ctx.Done():
-			// Stop sending alerts to all external Alertmanager(s).
-			d.AdminConfigMtx.Lock()
-			for orgID, s := range d.Senders {
-				delete(d.Senders, orgID) // delete before we stop to make sure we don't accept any more alerts.
-				s.Stop()
-			}
-			d.AdminConfigMtx.Unlock()
-
-			return nil
-		}
-	}
-}
-
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database
 // and adjusts the sender(s) and alert handling mechanism accordingly.
 func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
@@ -257,14 +236,22 @@ func (d *AlertsRouter) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 
 // Run starts regular updates of the configuration.
 func (d *AlertsRouter) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := d.adminConfigSync(ctx); err != nil {
-			d.logger.Error("failure while running the admin configuration sync", "err", err)
+	for {
+		select {
+		case <-time.After(d.adminConfigPollInterval):
+			if err := d.SyncAndApplyConfigFromDatabase(); err != nil {
+				d.logger.Error("unable to sync admin configuration", "err", err)
+			}
+		case <-ctx.Done():
+			// Stop sending alerts to all external Alertmanager(s).
+			d.AdminConfigMtx.Lock()
+			for orgID, s := range d.Senders {
+				delete(d.Senders, orgID) // delete before we stop to make sure we don't accept any more alerts.
+				s.Stop()
+			}
+			d.AdminConfigMtx.Unlock()
+
+			return nil
 		}
-	}()
-	wg.Wait()
-	return nil
+	}
 }
