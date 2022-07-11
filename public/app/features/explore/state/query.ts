@@ -830,17 +830,7 @@ export const processQueryResponse = (
   action: PayloadAction<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const {
-    request,
-    state: loadingState,
-    series,
-    error,
-    graphResult,
-    logsResult,
-    tableResult,
-    traceFrames,
-    nodeGraphFrames,
-  } = response;
+  const { request, state: loadingState, series, error, frames, logsResult } = response;
 
   if (error) {
     if (error.type === DataQueryErrorType.Timeout) {
@@ -874,14 +864,8 @@ export const processQueryResponse = (
   return {
     ...state,
     queryResponse: response,
-    graphResult,
-    tableResult,
+    frames,
     logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-    showLogs: !!logsResult,
-    showMetrics: !!graphResult,
-    showTable: !!tableResult,
-    showTrace: !!traceFrames.length,
-    showNodeGraph: !!nodeGraphFrames.length,
   };
 };

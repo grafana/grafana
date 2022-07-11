@@ -8,7 +8,7 @@ import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { ScopedVars } from './ScopedVars';
 import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
-import { LoadingState, PreferredVisualisationType } from './data';
+import { LoadingState } from './data';
 import { DataFrame, FieldType } from './dataFrame';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { FieldConfigSource } from './fieldOverrides';
@@ -26,6 +26,8 @@ export interface PanelPluginMeta extends PluginMeta {
   hideFromList?: boolean;
   /** Sort order */
   sort: number;
+
+  visualizationType?: string[];
 }
 
 export interface PanelData {
@@ -242,7 +244,7 @@ export interface PanelDataSummary {
   hasTimeField?: boolean;
   hasStringField?: boolean;
   /** The first frame that set's this value */
-  preferredVisualisationType?: PreferredVisualisationType;
+  preferredVisualisationType?: string;
 }
 
 /**
@@ -277,7 +279,7 @@ export class VisualizationSuggestionsBuilder {
     let rowCountTotal = 0;
     let rowCountMax = 0;
     let fieldCount = 0;
-    let preferredVisualisationType: PreferredVisualisationType | undefined;
+    let preferredVisualisationType: string | undefined;
 
     for (const frame of frames) {
       rowCountTotal += frame.length;

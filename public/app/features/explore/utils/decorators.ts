@@ -24,60 +24,29 @@ import { preProcessPanelData } from '../../query/state/runRequest';
  * dataFrames with different type of data. This is later used for type specific processing. As we use this in
  * Observable pipeline, it decorates the existing panelData to pass the results to later processing stages.
  */
-export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData => {
-  const graphFrames: DataFrame[] = [];
-  const tableFrames: DataFrame[] = [];
-  const logsFrames: DataFrame[] = [];
-  const traceFrames: DataFrame[] = [];
-  const nodeGraphFrames: DataFrame[] = [];
+export const groupFramesByVisType = (data: PanelData): ExplorePanelData => {
+  const frames: { [key: string]: DataFrame[] } = {};
 
   for (const frame of data.series) {
-    switch (frame.meta?.preferredVisualisationType) {
-      case 'logs':
-        logsFrames.push(frame);
-        break;
-      case 'graph':
-        graphFrames.push(frame);
-        break;
-      case 'trace':
-        traceFrames.push(frame);
-        break;
-      case 'table':
-        tableFrames.push(frame);
-        break;
-      case 'nodeGraph':
-        nodeGraphFrames.push(frame);
-        break;
-      default:
-        if (isTimeSeries(frame)) {
-          graphFrames.push(frame);
-          tableFrames.push(frame);
-        } else {
-          // We fallback to table if we do not have any better meta info about the dataframe.
-          tableFrames.push(frame);
-        }
+    const visType = frame.meta?.preferredVisualisationType;
+    if (visType) {
+      frames[visType] = frames[visType] || [];
+      frames[visType].push(frame);
+    } else {
+      if (isTimeSeries(frame)) {
+        frames['graph'].push(frame);
+        frames['table'].push(frame);
+      } else {
+        // We fallback to table if we do not have any better meta info about the dataframe.
+        frames['table'].push(frame);
+      }
     }
   }
 
   return {
     ...data,
-    graphFrames,
-    tableFrames,
-    logsFrames,
-    traceFrames,
-    nodeGraphFrames,
-    graphResult: null,
-    tableResult: null,
-    logsResult: null,
+    frames,
   };
-};
-
-export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
-  if (!data.graphFrames.length) {
-    return { ...data, graphResult: null };
-  }
-
-  return { ...data, graphResult: data.graphFrames };
 };
 
 /**
@@ -85,12 +54,13 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
  * In this case the transformer should return single result but it is possible that in the future it could return
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
-export const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
-  if (data.tableFrames.length === 0) {
+export const mergeTableFrames = (data: ExplorePanelData): Observable<ExplorePanelData> => {
+  let tableFrames = data.frames['table'];
+  if (tableFrames?.length === 0) {
     return of({ ...data, tableResult: null });
   }
 
-  data.tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
+  tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
     const frameARefId = frameA.refId!;
     const frameBRefId = frameB.refId!;
 
@@ -103,14 +73,14 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
     return 0;
   });
 
-  const hasOnlyTimeseries = data.tableFrames.every((df) => isTimeSeries(df));
+  const hasOnlyTimeseries = tableFrames.every((df) => isTimeSeries(df));
 
   // If we have only timeseries we do join on default time column which makes more sense. If we are showing
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const transformer = hasOnlyTimeseries
-    ? of(data.tableFrames).pipe(standardTransformers.seriesToColumnsTransformer.operator({}))
-    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
+    ? of(tableFrames).pipe(standardTransformers.seriesToColumnsTransformer.operator({}))
+    : of(tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
 
   return transformer.pipe(
     map((frames) => {
@@ -132,7 +102,8 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   );
 };
 
-export const decorateWithLogsResult =
+// For logs specifically we process the dataFrames early and transform to a logs model data.
+export const processLogs =
   (
     options: {
       absoluteRange?: AbsoluteTimeRange;
@@ -142,12 +113,12 @@ export const decorateWithLogsResult =
     } = {}
   ) =>
   (data: ExplorePanelData): ExplorePanelData => {
-    if (data.logsFrames.length === 0) {
-      return { ...data, logsResult: null };
+    if (data.frames['logs'].length === 0) {
+      return { ...data, logsResult: undefined };
     }
 
     const intervalMs = data.request?.intervalMs;
-    const newResults = dataFrameToLogsModel(data.logsFrames, intervalMs, options.absoluteRange, options.queries);
+    const newResults = dataFrameToLogsModel(data.frames['logs'], intervalMs, options.absoluteRange, options.queries);
     const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
@@ -168,10 +139,9 @@ export function decorateData(
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-    map(decorateWithFrameTypeMetadata),
-    map(decorateWithGraphResult),
-    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
-    mergeMap(decorateWithTableResult)
+    map(groupFramesByVisType),
+    map(processLogs({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
+    mergeMap(mergeTableFrames)
   );
 }
 

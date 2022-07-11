@@ -37,6 +37,7 @@ import { changeSize, changeGraphStyle } from './state/explorePane';
 import { splitOpen } from './state/main';
 import { addQueryRow, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { makeAbsoluteTime, updateTimeRange } from './state/time';
+import { getPanelForVisType } from './utils/panelsRegistry';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -311,37 +312,44 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
+  renderPanels() {
+    const { queryResponse, frames } = this.props;
+    const showNoData =
+      queryResponse.state === LoadingState.Done && Object.values(frames).every((frame) => frame.length === 0);
+
+    if (showNoData) {
+      return <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>;
+    }
+
+    // TODO: this needs to be changed to something like this:
+    // for (key of Object.keys(frames)) {
+    //   const panel = getPanelForVisType(key)
+    //   if panel {
+    //     panel.render(frames)
+    //   }
+    // }
+    // But also panels need to get some unified API for rendering as right now there are some custom things for
+    // each supported panel in explore
+    return (
+      <>
+        {showMetrics && graphResult && <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>}
+        {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
+        {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+        {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
+        {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+      </>
+    );
+  }
+
   render() {
-    const {
-      datasourceInstance,
-      datasourceMissing,
-      exploreId,
-      graphResult,
-      queryResponse,
-      isLive,
-      theme,
-      showMetrics,
-      showTable,
-      showLogs,
-      showTrace,
-      showNodeGraph,
-      timeZone,
-    } = this.props;
+    const { datasourceInstance, datasourceMissing, exploreId, queryResponse, isLive, theme, timeZone, frames } =
+      this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
-    const showNoData =
-      queryResponse.state === LoadingState.Done &&
-      [
-        queryResponse.logsFrames,
-        queryResponse.graphFrames,
-        queryResponse.nodeGraphFrames,
-        queryResponse.tableFrames,
-        queryResponse.traceFrames,
-      ].every((e) => e.length === 0);
 
     return (
       <CustomScrollbar
@@ -378,18 +386,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 return (
                   <main className={cx(styles.exploreMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
-                      {showPanels && (
-                        <>
-                          {showMetrics && graphResult && (
-                            <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
-                          )}
-                          {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
-                          {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
-                          {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-                          {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
-                        </>
-                      )}
+                      {showPanels && this.renderPanels()}
                       {showRichHistory && (
                         <RichHistoryContainer
                           width={width}
@@ -427,17 +424,12 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     datasourceMissing,
     queryKeys,
     isLive,
-    graphResult,
     logsResult,
-    showLogs,
-    showMetrics,
-    showTable,
-    showTrace,
     absoluteRange,
     queryResponse,
-    showNodeGraph,
     loading,
     graphStyle,
+    frames,
   } = item;
 
   return {
@@ -445,19 +437,14 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     datasourceMissing,
     queryKeys,
     isLive,
-    graphResult,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
     syncedTimes,
     timeZone,
-    showLogs,
-    showMetrics,
-    showTable,
-    showTrace,
-    showNodeGraph,
     loading,
     graphStyle,
+    frames,
   };
 }
 

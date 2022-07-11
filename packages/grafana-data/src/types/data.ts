@@ -43,7 +43,7 @@ export interface QueryResultMeta {
   transformations?: string[];
 
   /** Currently used to show results in Explore only in preferred visualisation option */
-  preferredVisualisationType?: PreferredVisualisationType;
+  preferredVisualisationType?: string;
 
   /** The path for live stream updates for this frame */
   channel?: string;

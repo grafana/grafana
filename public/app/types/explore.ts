@@ -88,10 +88,6 @@ export interface ExploreItemState {
    */
   eventBridge: EventBusExtended;
   /**
-   * List of timeseries to be shown in the Explore graph result viewer.
-   */
-  graphResult: DataFrame[] | null;
-  /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
   history: HistoryItem[];
@@ -108,7 +104,8 @@ export interface ExploreItemState {
   /**
    * Log query result to be displayed in the logs result viewer.
    */
-  logsResult: LogsModel | null;
+  logsResult?: LogsModel;
+  frames: { [key: string]: DataFrame[] };
 
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
@@ -126,10 +123,6 @@ export interface ExploreItemState {
   scanRange?: RawTimeRange;
 
   loading: boolean;
-  /**
-   * Table model that combines all query table results into a single table.
-   */
-  tableResult: DataFrame | null;
 
   /**
    * React keys for rendering of QueryRows
@@ -154,12 +147,6 @@ export interface ExploreItemState {
   querySubscription?: Unsubscribable;
 
   queryResponse: ExplorePanelData;
-
-  showLogs?: boolean;
-  showMetrics?: boolean;
-  showTable?: boolean;
-  showTrace?: boolean;
-  showNodeGraph?: boolean;
 
   /**
    * History of all queries
@@ -221,12 +208,6 @@ export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
 };
 
 export interface ExplorePanelData extends PanelData {
-  graphFrames: DataFrame[];
-  tableFrames: DataFrame[];
-  logsFrames: DataFrame[];
-  traceFrames: DataFrame[];
-  nodeGraphFrames: DataFrame[];
-  graphResult: DataFrame[] | null;
-  tableResult: DataFrame | null;
-  logsResult: LogsModel | null;
+  frames: { [key: string]: DataFrame[] };
+  logsResult?: LogsModel;
 }
