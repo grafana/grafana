@@ -57,7 +57,7 @@ func (hs *HTTPServer) ProxyPluginRequest(c *models.ReqContext) {
 	p.HandleRequest()
 }
 
-var pluginProxyPathRegexp = regexp.MustCompile(`^\/api\/plugin-proxy\/([\w]+)\/?`)
+var pluginProxyPathRegexp = regexp.MustCompile(`^\/api\/plugin-proxy\/([\w\-]+)\/?`)
 
 func extractProxyPath(originalRawPath string) string {
 	return pluginProxyPathRegexp.ReplaceAllString(originalRawPath, "")

@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
+	"github.com/grafana/grafana/pkg/web"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -55,8 +55,7 @@ func (proxy *PluginProxy) HandleRequest() {
 			continue
 		}
 
-		// route match
-		if !(proxy.proxyPath == "" && (route.Path == "" || route.Path == "/")) && !strings.HasPrefix(proxy.proxyPath, route.Path) {
+		if !web.MatchTest(route.Path, proxy.proxyPath) {
 			continue
 		}
 
@@ -94,7 +93,7 @@ func (proxy *PluginProxy) HandleRequest() {
 	)
 
 	proxy.logRequest()
-	ctx, span := proxy.tracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
+	ctx, span := proxy.tracer.Start(proxy.ctx.Req.Context(), "plugin reverse proxy")
 	defer span.End()
 
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)

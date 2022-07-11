@@ -23,6 +23,10 @@ func TestExtractPluginProxyPath(t *testing.T) {
 			"/api/plugin-proxy/test2/api/services/afsd%2Fafsd/operations",
 			"api/services/afsd%2Fafsd/operations",
 		},
+		{
+			"/api/plugin-proxy/cloudflare-app/with-token/api/v4/accounts",
+			"with-token/api/v4/accounts",
+		},
 	}
 	for _, tc := range testCases {
 		t.Run("Given raw path, should extract expected proxy path", func(t *testing.T) {
