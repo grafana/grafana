@@ -2,7 +2,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { Subject } from 'rxjs';
 
-import { FetchError, locationService, setEchoSrv } from '@grafana/runtime';
+import { FetchError, locationService, setEchoSrv, reportInteraction } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
@@ -42,6 +42,12 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, orgName: 'TestOrg' },
   },
 }));
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
 
 variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);
@@ -77,10 +83,63 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
               id: 2,
               targets: [
                 {
+                  datasource: {
+                    type: 'grafana-azure-monitor-datasource',
+                    uid: 'ABCD',
+                    name: 'azMonitor',
+                  },
+                  queryType: 'Azure Log Analytics',
                   refId: 'A',
                   expr: 'old expr',
                 },
+                {
+                  datasource: {
+                    type: 'cloudwatch',
+                    uid: '1234',
+                    name: 'Cloud Watch',
+                  },
+                  refId: 'B',
+                },
               ],
+            },
+            {
+              collapsed: true,
+              gridPos: {
+                h: 1,
+                w: 24,
+                x: 0,
+                y: 8,
+              },
+              id: 22,
+              panels: [
+                {
+                  datasource: {
+                    type: 'grafana-redshift-datasource',
+                    uid: 'V6_lLJf7k',
+                  },
+                  gridPos: {
+                    h: 8,
+                    w: 12,
+                    x: 12,
+                    y: 9,
+                  },
+                  id: 8,
+                  targets: [
+                    {
+                      datasource: {
+                        type: 'grafana-redshift-datasource',
+                        uid: 'V6_lLJf7k',
+                      },
+                      rawSQL: '',
+                      refId: 'A',
+                    },
+                  ],
+                  title: 'Redshift',
+                  type: 'stat',
+                },
+              ],
+              title: 'Collapsed Panel',
+              type: 'row',
             },
           ],
           templating: {
@@ -189,6 +248,10 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
     expect(getDashboardQueryRunner().run).toBeCalled();
     expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
+
+  it('should not log dashboard_loaded event', () => {
+    expect(reportInteraction).not.toBeCalled();
+  });
 });
 
 describeInitScenario('Initializing home dashboard', (ctx) => {
@@ -271,6 +334,50 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   it('Should initialize redux variables if newVariables is enabled', () => {
     expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
+  });
+
+  it('should log dashboard_loaded event', () => {
+    expect(reportInteraction).toBeCalledTimes(3);
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_loaded', {
+      dashboard_id: DASH_UID,
+      panel_id: 2,
+      panel_type: 'add-panel',
+      hidden: false,
+      collapsed: false,
+      datasource: 'grafana-azure-monitor-datasource',
+      query_type: 'Azure Log Analytics',
+      grafana_version: '1.0',
+    });
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_loaded', {
+      dashboard_id: DASH_UID,
+      panel_id: 2,
+      panel_type: 'add-panel',
+      hidden: false,
+      collapsed: false,
+      datasource: 'cloudwatch',
+      query_type: undefined,
+      grafana_version: '1.0',
+    });
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_loaded', {
+      dashboard_id: DASH_UID,
+      panel_id: 8,
+      panel_type: 'stat',
+      hidden: false,
+      collapsed: true,
+      datasource: 'grafana-redshift-datasource',
+      query_type: undefined,
+      grafana_version: '1.0',
+    });
+    expect(reportInteraction).not.toHaveBeenCalledWith('grafana_dashboard_loaded', {
+      dashboard_id: DASH_UID,
+      panel_id: 22,
+      panel_type: 'row',
+      hidden: false,
+      collapsed: true,
+      datasource: undefined,
+      query_type: undefined,
+      grafana_version: '1.0',
+    });
   });
 });
 

@@ -1,5 +1,5 @@
-import { locationUtil, setWeekStart } from '@grafana/data';
-import { config, isFetchError, locationService } from '@grafana/runtime';
+import { DataQuery, locationUtil, setWeekStart } from '@grafana/data';
+import { config, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -17,6 +17,7 @@ import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
 
 import { DashboardModel } from './DashboardModel';
+import { PanelModel } from './PanelModel';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 
@@ -209,7 +210,35 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       setWeekStart(config.bootData.user.weekStart);
     }
 
+    const logQueryOnDashboardLoaded = (target: DataQuery, panel: PanelModel, collapsed: boolean) => {
+      reportInteraction('grafana_dashboard_loaded', {
+        dashboard_id: dashDTO.dashboard.uid,
+        panel_id: panel.id,
+        panel_type: panel.type,
+        hidden: !!target.hide,
+        collapsed: collapsed,
+        datasource: target.datasource?.type,
+        grafana_version: config.buildInfo.version,
+        query_type: target.queryType,
+      });
+    };
+
     // yay we are done
+    if (dashDTO.dashboard.uid) {
+      dashboard.panels.forEach((panel) => {
+        if (panel.panels) {
+          panel.panels.forEach((subPanel) => {
+            subPanel.targets.forEach((target) => {
+              logQueryOnDashboardLoaded(target, subPanel, !!panel.collapsed);
+            });
+          });
+        } else {
+          panel.targets.forEach((target) => {
+            logQueryOnDashboardLoaded(target, panel, !!panel.collapsed);
+          });
+        }
+      });
+    }
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
