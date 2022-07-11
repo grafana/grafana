@@ -10,14 +10,14 @@ keywords:
   - api
   - licensing
   - enterprise
-title: 'Licensing HTTP API '
+title: 'Licensing HTTP API'
 ---
 
 # Enterprise License API
 
 Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Check license availability
 
