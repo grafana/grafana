@@ -44,13 +44,22 @@ func GroupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
+			// if query target has no datasource, set it to have the datasource on the panel
 			if _, ok := query.CheckGet("datasource"); !ok {
-				datasource, err := panel.Get("datasource").Map()
-				if err != nil {
-					continue
-				}
+				_, err := panel.Get("datasource").String()
 
-				query.Set("datasource", datasource)
+				if err != nil {
+					// panel datasource is a json object
+					datasource, err := panel.Get("datasource").Map()
+					if err != nil {
+						continue
+					}
+					query.Set("datasource", datasource)
+				} else {
+					// panel datasource is a string
+					datasource := panel.Get("datasource").MustString()
+					query.Set("datasource", datasource)
+				}
 			}
 
 			panelQueries = append(panelQueries, query)
