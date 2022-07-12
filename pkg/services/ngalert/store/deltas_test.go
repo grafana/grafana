@@ -267,7 +267,6 @@ func TestCalculateChanges(t *testing.T) {
 	})
 }
 
-<<<<<<< HEAD
 func TestCalculateAutomaticChanges(t *testing.T) {
 	orgID := rand.Int63()
 
@@ -403,8 +402,6 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 	})
 }
 
-=======
->>>>>>> 5c6c653e07 (Extract group change detection logic to dedicated file)
 // simulateSubmitted resets some fields of the structure that are not populated by API model to model conversion
 func simulateSubmitted(rule *models.AlertRule) {
 	rule.ID = 0
@@ -455,9 +452,5 @@ func randFolder() *grafana_models.Folder {
 		Updated:   time.Time{},
 		UpdatedBy: 0,
 		CreatedBy: 0,
-<<<<<<< HEAD
-=======
-		HasAcl:    false,
->>>>>>> 5c6c653e07 (Extract group change detection logic to dedicated file)
 	}
 }
