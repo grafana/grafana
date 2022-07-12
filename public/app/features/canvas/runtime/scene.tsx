@@ -60,6 +60,7 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   skipNextSelectionBroadcast = false;
+  shouldSkipDataUpdate = false;
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
@@ -326,6 +327,9 @@ export class Scene {
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })
+      .on('dragStart', (event) => {
+        this.shouldSkipDataUpdate = true;
+      })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyDrag(event);
@@ -343,6 +347,7 @@ export class Scene {
         }
 
         this.moved.next(Date.now());
+        this.shouldSkipDataUpdate = false;
       })
       .on('resizeStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
