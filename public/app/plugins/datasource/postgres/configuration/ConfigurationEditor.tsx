@@ -34,7 +34,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
     { value: PostgresTLSMethods.fileContent, label: 'Certificate content' },
   ];
 
-  var postgresVersions: Array<SelectableValue<number>> = [
+  const postgresVersions: Array<SelectableValue<number>> = [
     { label: '9.3', value: 903 },
     { label: '9.4', value: 904 },
     { label: '9.5', value: 905 },
