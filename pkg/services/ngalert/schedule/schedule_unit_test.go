@@ -945,18 +945,22 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 
-	schedCfg := SchedulerCfg{
-		C:                       mockedClock,
+	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval:            time.Second,
 		MaxAttempts:             1,
-		Evaluator:               eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil, secretsService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil)),
-		RuleStore:               rs,
-		InstanceStore:           is,
-		AdminConfigStore:        acs,
-		MultiOrgNotifier:        moa,
-		Logger:                  logger,
-		Metrics:                 m.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+	}
+
+	schedCfg := SchedulerCfg{
+		Cfg:              cfg,
+		C:                mockedClock,
+		Evaluator:        eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil, secretsService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil)),
+		RuleStore:        rs,
+		InstanceStore:    is,
+		AdminConfigStore: acs,
+		MultiOrgNotifier: moa,
+		Logger:           logger,
+		Metrics:          m.GetSchedulerMetrics(),
 	}
 	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	appUrl := &url.URL{

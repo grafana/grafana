@@ -18,7 +18,7 @@ import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
-import { getGrafanaStorage } from './helper';
+import { getGrafanaStorage, filenameAlreadyExists } from './helper';
 import { StorageView } from './types';
 
 interface RouteParams {
@@ -211,7 +211,7 @@ export default function StoragePage(props: Props) {
           ))}
         </TabsBar>
         {isFolder ? (
-          <FolderView path={path} listing={frame} onPathChange={setPath} view={view} />
+          <FolderView path={path} listing={frame} onPathChange={setPath} view={view} fileNames={fileNames} />
         ) : (
           <FileView path={path} listing={frame} onPathChange={setPath} view={view} />
         )}
@@ -231,10 +231,8 @@ export default function StoragePage(props: Props) {
             }}
             validate={(folderName) => {
               const lowerCase = folderName.toLowerCase();
-              const trimmedLowerCase = lowerCase.trim();
-              const existingTrimmedLowerCaseNames = fileNames.map((f) => f.trim().toLowerCase());
 
-              if (existingTrimmedLowerCaseNames.includes(trimmedLowerCase)) {
+              if (filenameAlreadyExists(folderName, fileNames)) {
                 return 'A file or a folder with the same name already exists';
               }
 

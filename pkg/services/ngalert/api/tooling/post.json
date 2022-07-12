@@ -2761,7 +2761,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -2954,7 +2953,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5012,6 +5010,14 @@
   "/api/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
+    "parameters": [
+     {
+      "description": "Filter by name",
+      "in": "query",
+      "name": "name",
+      "type": "string"
+     }
+    ],
     "responses": {
      "200": {
       "description": "ContactPoints",
