@@ -1,9 +1,9 @@
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { ErrorBoundaryAlert, withTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
@@ -14,6 +14,15 @@ import { getNavModel } from '../../core/selectors/navModel';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
+
+const getStyles = () => {
+  return {
+    exploreWrapper: css`
+      display: flex;
+      height: 100%;
+    `,
+  };
+};
 
 interface RouteProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {}
 interface OwnProps {}
@@ -68,13 +77,14 @@ class WrapperUnconnected extends PureComponent<Props> {
   }
 
   render() {
+    const styles = getStyles();
     const { left, right } = this.props.queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
 
     return (
       <div className="page-scrollbar-wrapper">
         <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
-        <div className="explore-wrapper">
+        <div className={cx(styles.exploreWrapper)}>
           <ErrorBoundaryAlert style="page">
             <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
           </ErrorBoundaryAlert>
