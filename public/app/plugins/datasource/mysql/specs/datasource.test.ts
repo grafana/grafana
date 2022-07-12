@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
 import {
+  AnnotationQueryRequest,
   dataFrameToJSON,
   DataQueryRequest,
   DataSourceInstanceSettings,
@@ -69,11 +70,23 @@ describe('MySQLDatasource', () => {
       annotation: {
         name: annotationName,
         rawQuery: 'select time_sec, text, tags from table;',
+        enable: true,
+        iconColor: '',
       },
       range: {
         from: dateTime(1432288354),
         to: dateTime(1432288401),
+        raw: {
+          from: '',
+          to: '',
+        },
       },
+      rangeRaw: {
+        from: '',
+        to: '',
+      },
+      dashboard: 'foo',
+      enable: true,
     };
     const response = {
       results: {
@@ -95,7 +108,8 @@ describe('MySQLDatasource', () => {
 
     beforeEach(async () => {
       const { ds } = setupTextContext(response);
-      const data = await ds.annotationQuery(options!);
+      const request: AnnotationQueryRequest<SQLQuery> = options;
+      const data = await ds.annotationQuery!(request);
       results = data;
     });
 
@@ -382,6 +396,7 @@ describe('MySQLDatasource', () => {
       const query = {
         rawSql,
         rawQuery: true,
+        refId: '',
       };
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },
@@ -406,6 +421,7 @@ describe('MySQLDatasource', () => {
       const query = {
         rawSql,
         rawQuery: true,
+        refId: '',
       };
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },
