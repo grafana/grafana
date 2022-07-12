@@ -112,7 +112,11 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		toDelete = append(toDelete, rule)
 	}
 
+<<<<<<< HEAD
 	return &GroupDelta{
+=======
+	return &GroupDiff{
+>>>>>>> 5c6c653e07 (Extract group change detection logic to dedicated file)
 		GroupKey:       groupKey,
 		AffectedGroups: affectedGroups,
 		New:            toAdd,
@@ -120,6 +124,7 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		Update:         toUpdate,
 	}, nil
 }
+<<<<<<< HEAD
 
 // UpdateCalculatedRuleFields refreshes the calculated fields in a set of alert rule changes.
 // This may generate new changes to keep a group consistent, such as versions or rule indexes.
@@ -164,3 +169,5 @@ func UpdateCalculatedRuleFields(ch *GroupDelta) *GroupDelta {
 		Delete:         ch.Delete,
 	}
 }
+=======
+>>>>>>> 5c6c653e07 (Extract group change detection logic to dedicated file)
