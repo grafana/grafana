@@ -1780,6 +1780,14 @@
         ],
         "summary": "Get all the contact points.",
         "operationId": "RouteGetContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Filter by name",
+            "name": "name",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "ContactPoints",
@@ -5138,7 +5146,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5163,6 +5170,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -5328,6 +5336,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -5536,7 +5545,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"
