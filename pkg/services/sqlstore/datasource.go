@@ -123,6 +123,8 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 			}
 		}
 
+		// TODO: delete correlations having sourceUID or targetUID = cmd.UID
+
 		// Publish data source deletion event
 		sess.publishAfterCommit(&events.DataSourceDeleted{
 			Timestamp: time.Now(),
@@ -169,7 +171,6 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			BasicAuth:       cmd.BasicAuth,
 			BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
-			Correlations:    cmd.Correlations,
 			JsonData:        cmd.JsonData,
 			SecureJsonData:  cmd.EncryptedSecureJsonData,
 			Created:         time.Now(),
@@ -286,40 +287,6 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		}
 
 		cmd.Result = ds
-		return err
-	})
-}
-
-func (ss *SQLStore) UpdateCorrelations(ctx context.Context, cmd *datasources.UpdateCorrelationsCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		ds := &datasources.DataSource{
-			Correlations: cmd.Correlations,
-			Updated:      time.Now(),
-			Version:      cmd.Version + 1,
-		}
-
-		updateSession := sess.Omit("json_data")
-
-		if cmd.Version != 0 {
-			// the reason we allow cmd.version > db.version is make it possible for people to force
-			// updates to datasources using the datasource.yaml file without knowing exactly what version
-			// a datasource have in the db.
-			updateSession = updateSession.Where("uid=? and org_id=? and version < ?", cmd.SourceUID, cmd.OrgId, ds.Version)
-		} else {
-			updateSession = updateSession.Where("uid=? and org_id=?", cmd.SourceUID, cmd.OrgId)
-		}
-		affected, err := updateSession.Update(ds)
-
-		if err != nil {
-			return err
-		}
-
-		if affected == 0 {
-			return datasources.ErrDataSourceUpdatingOldVersion
-		}
-
-		cmd.Version = ds.Version
-		cmd.Result = cmd.Correlations
 		return err
 	})
 }

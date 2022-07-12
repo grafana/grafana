@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 )
@@ -16,6 +17,11 @@ type Store interface {
 	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
 }
 
+type CorrelationsStore interface {
+	DeleteCorrelationsBySourceUID(ctx context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error
+	CreateCorrelation(ctx context.Context, cmd correlations.CreateCorrelationCommand) (correlations.CorrelationDTO, error)
+}
+
 var (
 	// ErrInvalidConfigToManyDefault indicates that multiple datasource in the provisioning files
 	// contains more than one datasource marked as default.
@@ -24,24 +30,26 @@ var (
 
 // Provision scans a directory for provisioning config files
 // and provisions the datasource in those files.
-func Provision(ctx context.Context, configDirectory string, store Store, orgStore utils.OrgStore) error {
-	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), store, orgStore)
+func Provision(ctx context.Context, configDirectory string, store Store, correlationsStore CorrelationsStore, orgStore utils.OrgStore) error {
+	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), store, correlationsStore, orgStore)
 	return dc.applyChanges(ctx, configDirectory)
 }
 
 // DatasourceProvisioner is responsible for provisioning datasources based on
 // configuration read by the `configReader`
 type DatasourceProvisioner struct {
-	log         log.Logger
-	cfgProvider *configReader
-	store       Store
+	log               log.Logger
+	cfgProvider       *configReader
+	store             Store
+	correlationsStore CorrelationsStore
 }
 
-func newDatasourceProvisioner(log log.Logger, store Store, orgStore utils.OrgStore) DatasourceProvisioner {
+func newDatasourceProvisioner(log log.Logger, store Store, correlationsStore CorrelationsStore, orgStore utils.OrgStore) DatasourceProvisioner {
 	return DatasourceProvisioner{
-		log:         log,
-		cfgProvider: &configReader{log: log, orgStore: orgStore},
-		store:       store,
+		log:               log,
+		cfgProvider:       &configReader{log: log, orgStore: orgStore},
+		store:             store,
+		correlationsStore: correlationsStore,
 	}
 }
 
@@ -49,6 +57,8 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources); err != nil {
 		return err
 	}
+
+	correlationsToInsert := make([]correlations.CreateCorrelationCommand, 0)
 
 	for _, ds := range cfg.Datasources {
 		cmd := &datasources.GetDataSourceQuery{OrgId: ds.OrgID, Name: ds.Name}
@@ -63,13 +73,48 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 			if err := dc.store.AddDataSource(ctx, insertCmd); err != nil {
 				return err
 			}
+
+			for _, correlation := range ds.Correlations {
+				if field, ok := correlation.(map[string]interface{}); ok {
+					correlationsToInsert = append(correlationsToInsert, correlations.CreateCorrelationCommand{
+						SourceUID:   insertCmd.Result.Uid,
+						TargetUID:   field["targetUid"].(string),
+						Label:       field["label"].(string),
+						Description: field["description"].(string),
+						OrgId:       insertCmd.OrgId,
+					})
+				}
+			}
+
 		} else {
 			updateCmd := createUpdateCommand(ds, cmd.Result.Id)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.Uid)
 			if err := dc.store.UpdateDataSource(ctx, updateCmd); err != nil {
 				return err
 			}
+
+			if len(ds.Correlations) > 0 {
+				dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
+					SourceUID: cmd.Result.Uid,
+				})
+			}
+
+			for _, correlation := range ds.Correlations {
+				if field, ok := correlation.(map[string]interface{}); ok {
+					correlationsToInsert = append(correlationsToInsert, correlations.CreateCorrelationCommand{
+						SourceUID:   cmd.Result.Uid,
+						TargetUID:   field["targetUid"].(string),
+						Label:       field["label"].(string),
+						Description: field["description"].(string),
+						OrgId:       updateCmd.OrgId,
+					})
+				}
+			}
 		}
+	}
+
+	for _, createCorrelationCmd := range correlationsToInsert {
+		dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd)
 	}
 
 	return nil

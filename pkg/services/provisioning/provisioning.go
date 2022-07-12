@@ -10,6 +10,7 @@ import (
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/correlations"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -29,6 +30,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService,
 	datasourceService datasourceservice.DataSourceService,
+	correlationsService correlations.Service,
 	dashboardService dashboardservice.DashboardService,
 	alertingService *alerting.AlertNotificationService, pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,
@@ -47,6 +49,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		dashboardProvisioningService: dashboardProvisioningService,
 		dashboardService:             dashboardService,
 		datasourceService:            datasourceService,
+		correlationsService:          correlationsService,
 		alertingService:              alertingService,
 		pluginsSettings:              pluginSettings,
 		searchService:                searchService,
@@ -80,7 +83,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error,
-	provisionDatasources func(context.Context, string, datasources.Store, utils.OrgStore) error,
+	provisionDatasources func(context.Context, string, datasources.Store, datasources.CorrelationsStore, utils.OrgStore) error,
 	provisionPlugins func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
@@ -103,12 +106,13 @@ type ProvisioningServiceImpl struct {
 	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
 	dashboardProvisioner         dashboards.DashboardProvisioner
 	provisionNotifiers           func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
-	provisionDatasources         func(context.Context, string, datasources.Store, utils.OrgStore) error
+	provisionDatasources         func(context.Context, string, datasources.Store, datasources.CorrelationsStore, utils.OrgStore) error
 	provisionPlugins             func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error
 	mutex                        sync.Mutex
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService
 	dashboardService             dashboardservice.DashboardService
 	datasourceService            datasourceservice.DataSourceService
+	correlationsService          correlations.Service
 	alertingService              *alerting.AlertNotificationService
 	pluginsSettings              pluginsettings.Service
 	searchService                searchV2.SearchService
@@ -167,7 +171,7 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 
 func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) error {
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
-	if err := ps.provisionDatasources(ctx, datasourcePath, ps.datasourceService, ps.SQLStore); err != nil {
+	if err := ps.provisionDatasources(ctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.SQLStore); err != nil {
 		err = fmt.Errorf("%v: %w", "Datasource provisioning error", err)
 		ps.log.Error("Failed to provision data sources", "error", err)
 		return err

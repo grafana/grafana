@@ -30,24 +30,6 @@ const (
 
 type DsAccess string
 
-type Correlation struct {
-	Uid         string `json:"uid"`
-	Target      string `json:"target"`
-	Label       string `json:"label,omitempty"`
-	Description string `json:"description,omitempty"`
-}
-
-// CorrelationDTO extends Correlation by adding `Version`, which is persisted and read from the `version` column
-// in the data_source table. It's not part of the Correlation model but needed when editing correlations to handle
-// concurrent edits.
-type CorrelationDTO struct {
-	Uid         string `json:"uid"`
-	Target      string `json:"target"`
-	Label       string `json:"label,omitempty"`
-	Description string `json:"description,omitempty"`
-	Version     int    `json:"version,omitempty"`
-}
-
 type DataSource struct {
 	Id      int64 `json:"id,omitempty"`
 	OrgId   int64 `json:"orgId,omitempty"`
@@ -67,7 +49,6 @@ type DataSource struct {
 	BasicAuthPassword string            `json:"-"`
 	WithCredentials   bool              `json:"withCredentials"`
 	IsDefault         bool              `json:"isDefault"`
-	Correlations      []Correlation     `json:"correlations"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
@@ -113,7 +94,6 @@ type AddDataSourceCommand struct {
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
 	IsDefault       bool              `json:"isDefault"`
-	Correlations    []Correlation     `json:"-"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Uid             string            `json:"uid"`
@@ -139,7 +119,6 @@ type UpdateDataSourceCommand struct {
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
 	IsDefault       bool              `json:"isDefault"`
-	Correlations    []Correlation     `json:"-"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
@@ -166,30 +145,6 @@ type DeleteDataSourceCommand struct {
 	DeletedDatasourcesCount int64
 
 	UpdateSecretFn UpdateSecretFn
-}
-
-// CreateCorrelationCommand adds a correlation
-type CreateCorrelationCommand struct {
-	TargetUID   string `json:"targetUid" binding:"Required"`
-	Label       string `json:"label"`
-	Description string `json:"description"`
-	Version     int    `json:"version"`
-
-	Uid       string         `json:"-"`
-	SourceUID string         `json:"-"`
-	OrgID     int64          `json:"-"`
-	Result    CorrelationDTO `json:"-"`
-}
-
-// UpdateCorrelationsCommand updates a correlation
-type UpdateCorrelationsCommand struct {
-	SourceUID    string
-	Uid          string
-	Correlations []Correlation
-	OrgId        int64
-
-	Version int
-	Result  []Correlation
 }
 
 // Function for updating secrets along with datasources, to ensure atomicity

@@ -33,9 +33,6 @@ type DataSourceService interface {
 	// GetDefaultDataSource gets the default datasource.
 	GetDefaultDataSource(ctx context.Context, query *GetDefaultDataSourceQuery) error
 
-	// CreateCorrelation adds a correlation between two datasources.
-	CreateCorrelation(ctx context.Context, cmd *CreateCorrelationCommand) error
-
 	// GetHTTPTransport gets a datasource specific HTTP transport.
 	GetHTTPTransport(ctx context.Context, ds *DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error)
 
