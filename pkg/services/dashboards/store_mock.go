@@ -435,6 +435,10 @@ func (_m *FakeDashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dash
 	return r0, r1
 }
 
+func (_m *FakeDashboardStore) DeleteAclByUser(ctx context.Context, userID int64) error{
+	return nil
+}
+
 // NewFakeDashboardStore creates a new instance of FakeDashboardStore. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
 func NewFakeDashboardStore(t testing.TB) *FakeDashboardStore {
 	mock := &FakeDashboardStore{}
