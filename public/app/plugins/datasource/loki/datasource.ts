@@ -1,9 +1,6 @@
-// Libraries
 import { cloneDeep, map as lodashMap } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-
-// Types
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
@@ -359,7 +356,7 @@ export class LokiDatasource
       expr: query.expr,
       queryType: LokiQueryType.Range,
       refId: 'log-samples',
-      maxLines: 100,
+      maxLines: 50,
     };
 
     // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
@@ -412,7 +409,6 @@ export class LokiDatasource
       }
       case 'ADD_NO_PIPELINE_ERROR': {
         expression = addNoPipelineErrorToQuery(expression);
-        console.log(expression);
         break;
       }
       default:
