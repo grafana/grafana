@@ -1,6 +1,6 @@
 import { uniqBy } from 'lodash';
 
-import { AnnotationEvent, DataFrame, MetricFindValue } from '@grafana/data';
+import { AnnotationEvent, AnnotationQueryRequest, DataFrame, MetricFindValue } from '@grafana/data';
 import { BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
 
 export default class ResponseParser {
@@ -26,8 +26,11 @@ export default class ResponseParser {
     return uniqBy(values, 'text');
   }
 
-  async transformAnnotationResponse(options: any, data: BackendDataSourceResponse): Promise<AnnotationEvent[]> {
-    const frames = toDataQueryResponse({ data: data }).data as DataFrame[];
+  async transformAnnotationResponse(
+    options: AnnotationQueryRequest,
+    data: BackendDataSourceResponse
+  ): Promise<AnnotationEvent[]> {
+    const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
     if (!frames || !frames.length) {
       return [];
     }
