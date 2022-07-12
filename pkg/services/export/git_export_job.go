@@ -2,6 +2,7 @@ package export
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"sync"
@@ -22,7 +23,6 @@ type gitExportJob struct {
 	logger                    log.Logger
 	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
-	orgID                     int64
 	rootDir                   string
 
 	statusMu    sync.Mutex
@@ -40,7 +40,6 @@ func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapsh
 		cfg:                       cfg,
 		sql:                       sql,
 		dashboardsnapshotsService: dashboardsnapshotsService,
-		orgID:                     orgID,
 		rootDir:                   rootDir,
 		broadcaster:               broadcaster,
 		status: ExportStatus{
@@ -176,6 +175,14 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 	exporters := []simpleExporter{}
 	if include.Dash {
 		exporters = append(exporters, exportDashboards)
+
+		if include.DashThumbs {
+			exporters = append(exporters, exportDashboardThumbnails)
+		}
+	}
+
+	if include.Alerts {
+		exporters = append(exporters, exportAlerts)
 	}
 
 	if include.DS {
@@ -186,12 +193,17 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		exporters = append(exporters, dumpAuthTables)
 	}
 
+	if include.Usage {
+		exporters = append(exporters, exportUsage)
+	}
+
 	if include.Services {
 		exporters = append(exporters, exportFiles,
 			exportSystemPreferences,
 			exportSystemStars,
 			exportSystemPlaylists,
 			exportKVStore,
+			exportSystemShortURL,
 			exportLive)
 	}
 
@@ -210,6 +222,11 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		}
 	}
 	return nil
+}
+
+func prettyJSON(v interface{}) []byte {
+	b, _ := json.MarshalIndent(v, "", "  ")
+	return b
 }
 
 /**

@@ -1,8 +1,10 @@
 package store
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -20,6 +22,8 @@ type HTTPStorageService interface {
 	List(c *models.ReqContext) response.Response
 	Read(c *models.ReqContext) response.Response
 	Delete(c *models.ReqContext) response.Response
+	DeleteFolder(c *models.ReqContext) response.Response
+	CreateFolder(c *models.ReqContext) response.Response
 	Upload(c *models.ReqContext) response.Response
 }
 
@@ -71,6 +75,15 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		})
 	}
 
+	folder, ok := getMultipartFormValue(c.Req, "folder")
+	if !ok || folder == "" {
+		return response.JSON(400, map[string]interface{}{
+			"message": "please specify the upload folder",
+			"err":     true,
+		})
+	}
+	overwriteExistingFile, _ := getMultipartFormValue(c.Req, "overwriteExistingFile")
+
 	fileHeader := files[0]
 	if fileHeader.Size > MAX_UPLOAD_SIZE {
 		return errFileTooBig
@@ -95,7 +108,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		return errFileTooBig
 	}
 
-	path := RootResources + "/" + fileHeader.Filename
+	path := folder + "/" + fileHeader.Filename
 
 	mimeType := http.DetectContentType(data)
 
@@ -104,7 +117,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		MimeType:              mimeType,
 		EntityType:            EntityTypeImage,
 		Path:                  path,
-		OverwriteExistingFile: true,
+		OverwriteExistingFile: overwriteExistingFile == "true",
 	})
 
 	if err != nil {
@@ -117,6 +130,14 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		"file":    fileHeader.Filename,
 		"err":     true,
 	})
+}
+
+func getMultipartFormValue(req *http.Request, key string) (string, bool) {
+	v, ok := req.MultipartForm.Value[key]
+	if !ok || len(v) != 1 {
+		return "", false
+	}
+	return v[0], ok
 }
 
 func (s *httpStorage) Read(c *models.ReqContext) response.Response {
@@ -140,14 +161,72 @@ func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 
 func (s *httpStorage) Delete(c *models.ReqContext) response.Response {
 	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
-	_, path := getPathAndScope(c)
-	err := s.store.Delete(c.Req.Context(), c.SignedInUser, "/"+path)
+	scope, path := getPathAndScope(c)
+
+	err := s.store.Delete(c.Req.Context(), c.SignedInUser, scope+"/"+path)
 	if err != nil {
-		return response.Error(400, "cannot call delete", err)
+		return response.Error(400, "failed to delete the file: "+err.Error(), err)
 	}
-	return response.JSON(200, map[string]string{
+	return response.JSON(200, map[string]interface{}{
 		"message": "Removed file from storage",
+		"success": true,
 		"path":    path,
+	})
+}
+
+func (s *httpStorage) DeleteFolder(c *models.ReqContext) response.Response {
+	body, err := io.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(500, "error reading bytes", err)
+	}
+
+	cmd := &DeleteFolderCmd{}
+	err = json.Unmarshal(body, cmd)
+	if err != nil {
+		return response.Error(400, "error parsing body", err)
+	}
+
+	if cmd.Path == "" {
+		return response.Error(400, "empty path", err)
+	}
+
+	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
+	_, path := getPathAndScope(c)
+	if err := s.store.DeleteFolder(c.Req.Context(), c.SignedInUser, cmd); err != nil {
+		return response.Error(400, "failed to delete the folder: "+err.Error(), err)
+	}
+
+	return response.JSON(200, map[string]interface{}{
+		"message": "Removed folder from storage",
+		"success": true,
+		"path":    path,
+	})
+}
+
+func (s *httpStorage) CreateFolder(c *models.ReqContext) response.Response {
+	body, err := io.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(500, "error reading bytes", err)
+	}
+
+	cmd := &CreateFolderCmd{}
+	err = json.Unmarshal(body, cmd)
+	if err != nil {
+		return response.Error(400, "error parsing body", err)
+	}
+
+	if cmd.Path == "" {
+		return response.Error(400, "empty path", err)
+	}
+
+	if err := s.store.CreateFolder(c.Req.Context(), c.SignedInUser, cmd); err != nil {
+		return response.Error(400, "failed to create the folder: "+err.Error(), err)
+	}
+
+	return response.JSON(200, map[string]interface{}{
+		"message": "Folder created",
+		"success": true,
+		"path":    cmd.Path,
 	})
 }
 

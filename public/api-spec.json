@@ -5806,6 +5806,231 @@
         }
       }
     },
+    "/playlists": {
+      "get": {
+        "tags": ["playlists"],
+        "summary": "Get playlists.",
+        "operationId": "searchPlaylists",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "in:limit",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchPlaylistsResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["playlists"],
+        "summary": "Create playlist.",
+        "operationId": "createPlaylist",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreatePlaylistCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createPlaylistResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/playlists/{uid}": {
+      "get": {
+        "tags": ["playlists"],
+        "summary": "Get playlist by UID.",
+        "operationId": "getPlaylist",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPlaylistResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": ["playlists"],
+        "summary": "Update playlist.",
+        "operationId": "updatePlaylist",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePlaylistCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updatePlaylistResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["playlists"],
+        "summary": "Delete pllaylist.",
+        "operationId": "deletePlaylist",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/playlists/{uid}/dashboards": {
+      "get": {
+        "tags": ["playlists"],
+        "summary": "Get playlist dashboards.",
+        "operationId": "getPlaylistDashboards",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPlaylistDashboardsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/playlists/{uid}/items": {
+      "get": {
+        "tags": ["playlists"],
+        "summary": "Get playlist items.",
+        "operationId": "getPlaylistItems",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPlaylistItemsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/query-history": {
       "get": {
         "description": "Returns a list of queries in the query history that matches the search criteria.\nQuery history search supports pagination. Use the `limit` parameter to control the maximum number of queries returned; the default limit is 100.\nYou can also use the `page` query parameter to fetch queries from any page other than the first one.",
@@ -9170,6 +9395,26 @@
         }
       }
     },
+    "CreatePlaylistCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/Playlist"
+        },
+        "interval": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItemDTO"
+          }
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "CreateQueryInQueryHistoryCommand": {
       "description": "CreateQueryInQueryHistoryCommand is the command for adding query history",
       "type": "object",
@@ -11066,6 +11311,112 @@
       "type": "integer",
       "format": "int64"
     },
+    "Playlist": {
+      "description": "Playlist model",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "interval": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PlaylistDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "interval": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItemDTO"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PlaylistDashboard": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uri": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "PlaylistDashboardsSlice": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PlaylistDashboard"
+      }
+    },
+    "PlaylistItemDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "playlistid": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "Playlists": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Playlist"
+      }
+    },
     "PostAnnotationsCmd": {
       "type": "object",
       "properties": {
@@ -12319,6 +12670,29 @@
         }
       }
     },
+    "UpdatePlaylistCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/PlaylistDTO"
+        },
+        "interval": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItemDTO"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "UpdatePrefsCmd": {
       "type": "object",
       "properties": {
@@ -12784,6 +13158,12 @@
         }
       }
     },
+    "createPlaylistResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Playlist"
+      }
+    },
     "createReportResponse": {
       "description": "",
       "schema": {
@@ -13204,6 +13584,27 @@
         "$ref": "#/definitions/AddPermissionDTO"
       }
     },
+    "getPlaylistDashboardsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PlaylistDashboardsSlice"
+      }
+    },
+    "getPlaylistItemsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/PlaylistItemDTO"
+        }
+      }
+    },
+    "getPlaylistResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PlaylistDTO"
+      }
+    },
     "getPreferencesResponse": {
       "description": "",
       "schema": {
@@ -13557,6 +13958,12 @@
         }
       }
     },
+    "searchPlaylistsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Playlists"
+      }
+    },
     "searchResponse": {
       "description": "",
       "schema": {
@@ -13620,6 +14027,12 @@
       "description": "UnprocessableEntityError",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "updatePlaylistResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PlaylistDTO"
       }
     },
     "userResponse": {

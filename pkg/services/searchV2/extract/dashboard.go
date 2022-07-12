@@ -35,7 +35,11 @@ func (d *datasourceVariableLookup) getDsRefsByTemplateVariableValue(value string
 			// get the actual default DS
 			candidateDs = d.dsLookup.ByRef(nil)
 		}
-		return []DataSourceRef{*candidateDs}
+
+		if candidateDs != nil {
+			return []DataSourceRef{*candidateDs}
+		}
+		return []DataSourceRef{}
 	case "$__all":
 		// TODO: filter datasources by template variable's regex
 		return d.dsLookup.ByType(datasourceType)
