@@ -404,3 +404,30 @@ export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOpti
     return frame;
   });
 };
+
+// Returns an array of node ids which are connected to a given edge
+export const findConnectedNodesForEdge = (nodes: NodeDatum[], edges: EdgeDatum[], edgeId: string): string[] => {
+  const edge = edges.find((edge) => edge.id === edgeId);
+  if (edge) {
+    return [
+      ...new Set(nodes.filter((node) => edge.source === node.id || edge.target === node.id).map((node) => node.id)),
+    ];
+  }
+  return [];
+};
+
+// Returns an array of node ids which are connected to a given node
+export const findConnectedNodesForNode = (nodes: NodeDatum[], edges: EdgeDatum[], nodeId: string): string[] => {
+  const node = nodes.find((node) => node.id === nodeId);
+  if (node) {
+    const linkedEdges = edges.filter((edge) => edge.source === node.id || edge.target === node.id);
+    return [
+      ...new Set(
+        linkedEdges.flatMap((edge) =>
+          nodes.filter((n) => edge.source === n.id || edge.target === n.id).map((n) => n.id)
+        )
+      ),
+    ];
+  }
+  return [];
+};

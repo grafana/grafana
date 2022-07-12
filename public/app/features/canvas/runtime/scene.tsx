@@ -63,6 +63,8 @@ export class Scene {
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
+  inlineEditingCallback?: () => void;
+
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
   }
@@ -413,6 +415,65 @@ export class Scene {
         });
       }
     });
+  };
+
+  reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {
+    switch (dragToGap) {
+      case true:
+        switch (destPosition) {
+          case -1:
+            // top of the tree
+            if (src.parent instanceof FrameState) {
+              // move outside the frame
+              if (dest.parent) {
+                this.updateElements(src, dest.parent, dest.parent.elements.length);
+                src.updateData(dest.parent.scene.context);
+              }
+            } else {
+              dest.parent?.reorderTree(src, dest, true);
+            }
+            break;
+          default:
+            if (dest.parent) {
+              this.updateElements(src, dest.parent, dest.parent.elements.indexOf(dest));
+              src.updateData(dest.parent.scene.context);
+            }
+            break;
+        }
+        break;
+      case false:
+        if (dest instanceof FrameState) {
+          if (src.parent === dest) {
+            // same frame parent
+            src.parent?.reorderTree(src, dest, true);
+          } else {
+            this.updateElements(src, dest);
+            src.updateData(dest.scene.context);
+          }
+        } else if (src.parent === dest.parent) {
+          src.parent?.reorderTree(src, dest);
+        } else {
+          if (dest.parent) {
+            this.updateElements(src, dest.parent);
+            src.updateData(dest.parent.scene.context);
+          }
+        }
+        break;
+    }
+  };
+
+  private updateElements = (src: ElementState, dest: FrameState | RootElement, idx: number | null = null) => {
+    src.parent?.doAction(LayerActionID.Delete, src);
+    src.parent = dest;
+
+    const elementContainer = src.div?.getBoundingClientRect();
+    src.setPlacementFromConstraint(elementContainer, dest.div?.getBoundingClientRect());
+
+    const destIndex = idx ?? dest.elements.length - 1;
+    dest.elements.splice(destIndex, 0, src);
+    dest.scene.save();
+
+    dest.reinitializeMoveable();
   };
 
   render() {

@@ -3,13 +3,13 @@ package cloudwatch
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type annotationEvent struct {
@@ -19,29 +19,37 @@ type annotationEvent struct {
 	Text  string
 }
 
-func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginContext, model *simplejson.Json, query backend.DataQuery) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginContext, model DataQueryJson, query backend.DataQuery) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
+	statistic := ""
 
-	usePrefixMatch := model.Get("prefixMatching").MustBool(false)
-	region := model.Get("region").MustString("")
-	namespace := model.Get("namespace").MustString("")
-	metricName := model.Get("metricName").MustString("")
-	dimensions := model.Get("dimensions").MustMap()
-	statistic := model.Get("statistic").MustString()
-	period := int64(model.Get("period").MustInt(0))
-	if period == 0 && !usePrefixMatch {
+	if model.Statistic != nil {
+		statistic = *model.Statistic
+	}
+
+	var period int64
+	if model.Period != "" {
+		p, err := strconv.ParseInt(model.Period, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		period = p
+	}
+
+	if period == 0 && !model.PrefixMatching {
 		period = 300
 	}
-	actionPrefix := model.Get("actionPrefix").MustString("")
-	alarmNamePrefix := model.Get("alarmNamePrefix").MustString("")
 
-	cli, err := e.getCWClient(pluginCtx, region)
+	actionPrefix := model.ActionPrefix
+	alarmNamePrefix := model.AlarmNamePrefix
+
+	cli, err := e.getCWClient(pluginCtx, model.Region)
 	if err != nil {
 		return nil, err
 	}
 
 	var alarmNames []*string
-	if usePrefixMatch {
+	if model.PrefixMatching {
 		params := &cloudwatch.DescribeAlarmsInput{
 			MaxRecords:      aws.Int64(100),
 			ActionPrefix:    aws.String(actionPrefix),
@@ -51,14 +59,14 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 		if err != nil {
 			return nil, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarms", err)
 		}
-		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistic, period)
+		alarmNames = filterAlarms(resp, model.Namespace, model.MetricName, model.Dimensions, statistic, period)
 	} else {
-		if region == "" || namespace == "" || metricName == "" || statistic == "" {
+		if model.Region == "" || model.Namespace == "" || model.MetricName == "" || statistic == "" {
 			return result, errors.New("invalid annotations query")
 		}
 
 		var qd []*cloudwatch.Dimension
-		for k, v := range dimensions {
+		for k, v := range model.Dimensions {
 			if vv, ok := v.([]interface{}); ok {
 				for _, vvv := range vv {
 					if vvvv, ok := vvv.(string); ok {
@@ -71,8 +79,8 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 			}
 		}
 		params := &cloudwatch.DescribeAlarmsForMetricInput{
-			Namespace:  aws.String(namespace),
-			MetricName: aws.String(metricName),
+			Namespace:  aws.String(model.Namespace),
+			MetricName: aws.String(model.MetricName),
 			Dimensions: qd,
 			Statistic:  aws.String(statistic),
 			Period:     aws.Int64(period),

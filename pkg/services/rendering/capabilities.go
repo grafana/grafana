@@ -16,6 +16,7 @@ type CapabilityName string
 const (
 	ScalingDownImages CapabilityName = "ScalingDownImages"
 	FullHeightImages  CapabilityName = "FullHeightImages"
+	SvgSanitization   CapabilityName = "SvgSanitization"
 )
 
 var ErrUnknownCapability = errors.New("unknown capability")
