@@ -14,8 +14,8 @@ const backendSrv = {
   },
 } as unknown as BackendSrv;
 
-jest.mock('../services', () => ({
-  ...jest.requireActual('../services'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
