@@ -11,8 +11,8 @@ interface RepeatOptions extends SceneObjectState {
 }
 
 export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
-  onMount() {
-    super.onMount();
+  activate(): void {
+    super.activate();
 
     this.subs.add(
       this.getData().subscribe({

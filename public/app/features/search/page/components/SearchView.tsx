@@ -64,6 +64,7 @@ export const SearchView = ({
       ds_uid: query.datasource as string,
       location: folderDTO?.uid, // This will scope all results to the prefix
       sort: query.sort?.value,
+      explain: query.explain,
     };
 
     // Only dashboards have additional properties

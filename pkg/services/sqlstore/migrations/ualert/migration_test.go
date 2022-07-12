@@ -9,12 +9,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -156,7 +158,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert1")}, // These Matchers are temporary and will be replaced below with generated rule_uid.
 								{Matchers: createAlertNameMatchers("alert2"), Routes: []*ualert.Route{
@@ -177,7 +180,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(2): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "notifier6",
+							Receiver:   "notifier6",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Matchers: createAlertNameMatchers("alert4"), Routes: []*ualert.Route{
 									{Receiver: "notifier4", Matchers: createAlertNameMatchers("alert4"), Continue: true},
@@ -209,7 +213,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -229,7 +234,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "notifier1",
+							Receiver:   "notifier1",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -249,7 +255,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -272,7 +279,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -297,7 +305,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -322,7 +331,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert1")},
 								{Matchers: createAlertNameMatchers("alert2"), Routes: []*ualert.Route{
@@ -350,7 +360,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -372,7 +383,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -395,7 +407,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert1")},
 							},

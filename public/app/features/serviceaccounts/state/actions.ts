@@ -47,8 +47,10 @@ export function fetchACOptions(): ThunkResult<void> {
 
 export function getApiKeysMigrationStatus(): ThunkResult<void> {
   return async (dispatch) => {
-    const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
-    dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
+    if (contextSrv.hasPermission(AccessControlAction.ServiceAccountsRead)) {
+      const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
+      dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
+    }
   };
 }
 
@@ -61,20 +63,22 @@ export function fetchServiceAccounts(
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      if (withLoadingIndicator) {
-        dispatch(serviceAccountsFetchBegin());
+      if (contextSrv.hasPermission(AccessControlAction.ServiceAccountsRead)) {
+        if (withLoadingIndicator) {
+          dispatch(serviceAccountsFetchBegin());
+        }
+        const { perPage, page, query, serviceAccountStateFilter } = getState().serviceAccounts;
+        const result = await getBackendSrv().get(
+          `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}${getStateFilter(
+            serviceAccountStateFilter
+          )}&accesscontrol=true`
+        );
+        dispatch(serviceAccountsFetched(result));
       }
-      const { perPage, page, query, serviceAccountStateFilter } = getState().serviceAccounts;
-      const result = await getBackendSrv().get(
-        `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}${getStateFilter(
-          serviceAccountStateFilter
-        )}&accesscontrol=true`
-      );
-      dispatch(serviceAccountsFetched(result));
     } catch (error) {
       console.error(error);
     } finally {
-      serviceAccountsFetchEnd();
+      dispatch(serviceAccountsFetchEnd());
     }
   };
 }

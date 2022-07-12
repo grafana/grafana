@@ -176,6 +176,7 @@ type AlertRuleGroupMetadata struct {
 	Interval int64 `json:"interval"`
 }
 
+// swagger:model
 type AlertRuleGroup struct {
 	Title     string             `json:"title"`
 	FolderUID string             `json:"folderUid"`

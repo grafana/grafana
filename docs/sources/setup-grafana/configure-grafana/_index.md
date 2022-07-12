@@ -1305,6 +1305,18 @@ Uploads screenshots to the local Grafana server or remote storage such as Azure,
 
 <hr>
 
+## [unified_alerting.reserved_labels]
+
+For more information about Grafana Reserved Labels, refer to [Labels in Grafana Alerting]({{< relref "../../alerting/fundamentals/annotation-label/how-to-use-labels/#grafana-reserved-labels" >}}).
+
+### disabled_labels
+
+Comma-separated list of reserved labels added by the Grafana Alerting engine that should be disabled.
+
+For example: `disabled_labels=grafana_folder`
+
+<hr>
+
 ## [alerting]
 
 For more information about the legacy dashboard alerting feature in Grafana, refer to [Alerts overview]({{< relref "../../alerting/" >}}).
