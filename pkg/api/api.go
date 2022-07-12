@@ -455,7 +455,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
-			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert(*setting.AlertingEnabled)))
+			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert(setting.AlertingEnabled)))
 			alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
 			alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
@@ -549,7 +549,7 @@ func (hs *HTTPServer) registerRoutes() {
 			adminRoute.Get("/settings/features", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), hs.Features.HandleGetSettings)
 		}
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
-		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts(*setting.AlertingEnabled)))
+		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts(setting.AlertingEnabled)))
 
 		if hs.ThumbService != nil && hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
 			adminRoute.Post("/crawler/start", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.StartCrawler))
