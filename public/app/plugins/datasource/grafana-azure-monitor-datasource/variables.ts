@@ -29,18 +29,29 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     const promisedResults = async () => {
       const queryObj = await migrateStringQueriesToObjectQueries(request.targets[0], { datasource: this.datasource });
 
-      if (queryObj.queryType === AzureQueryType.GrafanaTemplateVariableFn && queryObj.grafanaTemplateVariableFn) {
-        try {
-          const templateVariablesResults = await this.callGrafanaTemplateVariableFn(queryObj.grafanaTemplateVariableFn);
+      switch (queryObj.queryType) {
+        case AzureQueryType.SubscriptionsQuery:
+          const res = await this.datasource.getSubscriptions();
           return {
-            data: templateVariablesResults?.length ? [toDataFrame(templateVariablesResults)] : [],
+            data: res?.length ? [toDataFrame(res)] : [],
           };
-        } catch (err) {
-          return { data: [], error: { message: messageFromError(err) } };
-        }
+        case AzureQueryType.GrafanaTemplateVariableFn:
+          if (queryObj.grafanaTemplateVariableFn) {
+            try {
+              const templateVariablesResults = await this.callGrafanaTemplateVariableFn(
+                queryObj.grafanaTemplateVariableFn
+              );
+              return {
+                data: templateVariablesResults?.length ? [toDataFrame(templateVariablesResults)] : [],
+              };
+            } catch (err) {
+              return { data: [], error: { message: messageFromError(err) } };
+            }
+          }
+        default:
+          request.targets[0] = queryObj;
+          return lastValueFrom(this.datasource.query(request));
       }
-      request.targets[0] = queryObj;
-      return lastValueFrom(this.datasource.query(request));
     };
 
     return from(promisedResults());
