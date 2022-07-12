@@ -9,7 +9,6 @@ import createMockPanelData from '../../__mocks__/panelData';
 import createMockQuery from '../../__mocks__/query';
 
 import DimensionFields from './DimensionFields';
-import NewDimensionFields from './NewDimensionFields';
 import { appendDimensionFilter, setDimensionFilterValue } from './setQueryValue';
 
 const variableOptionGroup = {
@@ -22,14 +21,6 @@ const tests = [
   {
     component: DimensionFields,
     label: 'Dimension Fields',
-    addDimension: async () => {
-      const addDimension = await screen.findByText('Add new dimension');
-      await user.click(addDimension);
-    },
-  },
-  {
-    component: NewDimensionFields,
-    label: 'Dimension Fields experimental UI',
     addDimension: async () => {
       const addDimension = await screen.findByLabelText('Add');
       await user.click(addDimension);
