@@ -5,7 +5,7 @@ import rimrafCallback from 'rimraf';
 import { promisify } from 'util';
 
 import { getPluginId } from '../../config/utils/getPluginId';
-import { getPluginJson, isValidRootUrl } from '../../config/utils/pluginValidation';
+import { assertRootUrlIsValid, getPluginJson } from '../../config/utils/pluginValidation';
 import {
   getJobFolder,
   writeJobStats,
@@ -141,11 +141,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
       manifest.signatureType = signatureType;
     }
     if (rootUrls) {
-      rootUrls.forEach((rootUrl) => {
-        if (!isValidRootUrl(rootUrl)) {
-          throw new Error(`${rootUrl} is not a valid URL`);
-        }
-      });
+      rootUrls.forEach(assertRootUrlIsValid);
       manifest.rootUrls = rootUrls;
     }
     const signedManifest = await signManifest(manifest);
