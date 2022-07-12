@@ -11,6 +11,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/coremodel/pluginmeta"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/thema"
@@ -35,18 +36,26 @@ var (
 // Static is a registry that provides access to individual coremodels via
 // explicit method calls, to aid with static analysis.
 type Static struct {
-	dashboard *dashboard.Coremodel
+	dashboard  *dashboard.Coremodel
+	pluginmeta *pluginmeta.Coremodel
 }
 
 // type guards
 var (
 	_ coremodel.Interface = &dashboard.Coremodel{}
+	_ coremodel.Interface = &pluginmeta.Coremodel{}
 )
 
 // Dashboard returns the dashboard coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
 func (s *Static) Dashboard() *dashboard.Coremodel {
 	return s.dashboard
+}
+
+// Pluginmeta returns the pluginmeta coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Pluginmeta() *pluginmeta.Coremodel {
+	return s.pluginmeta
 }
 
 func provideStatic(lib *thema.Library) (*Static, error) {
@@ -69,6 +78,11 @@ func doProvideStatic(lib thema.Library) (*Static, error) {
 		return nil, err
 	}
 
+	reg.pluginmeta, err = pluginmeta.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
 	return reg, nil
 }
 
@@ -87,5 +101,6 @@ func provideGeneric() (*Generic, error) {
 func doProvideGeneric(ereg *Static) (*Generic, error) {
 	return NewRegistry(
 		ereg.Dashboard(),
+		ereg.Pluginmeta(),
 	)
 }
