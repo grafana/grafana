@@ -55,7 +55,11 @@ func (proxy *PluginProxy) HandleRequest() {
 			continue
 		}
 
-		if !web.MatchTest(route.Path, proxy.proxyPath) {
+		t := web.NewTree()
+		t.Add(route.Path, nil)
+		_, params, isMatch := t.Match(proxy.proxyPath)
+
+		if !isMatch {
 			continue
 		}
 
@@ -64,6 +68,10 @@ func (proxy *PluginProxy) HandleRequest() {
 				proxy.ctx.JsonApiErr(http.StatusForbidden, "plugin proxy route access denied", nil)
 				return
 			}
+		}
+
+		if path, exists := params["*"]; exists {
+			proxy.proxyPath = path
 		}
 
 		proxy.matchedRoute = route
