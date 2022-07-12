@@ -444,5 +444,15 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
+	//LOGZ.IO GRAFANA CHANGE :: validate Error and No Data state string
+	if _, err := ngmodels.NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+		return fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
+	}
+
+	if _, err := ngmodels.ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+		return fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
+	}
+	//LOGZ.IO GRAFANA CHANGE :: end
+
 	return nil
 }
