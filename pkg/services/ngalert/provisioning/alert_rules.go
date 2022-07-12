@@ -164,7 +164,51 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 }
 
 func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, group definitions.AlertRuleGroup) error {
-	return nil
+	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
+		return err
+	}
+
+	// If the provided request did not provide the rules list at all, treat it as though it does not wish to change rules.
+	// This is done for backwards compatibility. Requests which specify only the interval must update only the interval.
+	if group.Rules == nil {
+		listRulesQuery := models.ListAlertRulesQuery{
+			OrgID:         orgID,
+			NamespaceUIDs: []string{group.FolderUID},
+			RuleGroup:     group.Title,
+		}
+		if err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery); err != nil {
+			return fmt.Errorf("failed to list alert rules: %w", err)
+		}
+		group.Rules = make([]models.AlertRule, 0, len(listRulesQuery.Result))
+		for _, r := range listRulesQuery.Result {
+			if r != nil {
+				group.Rules = append(group.Rules, *r)
+			}
+		}
+	}
+
+	key := models.AlertRuleGroupKey{
+		OrgID:        orgID,
+		NamespaceUID: group.FolderUID,
+		RuleGroup:    group.Title,
+	}
+	rules := make([]*models.AlertRule, len(group.Rules))
+	for i, r := range group.Rules {
+		// Interval is actually stored on every single affected rule. Copy this value across all of them. The diff-checking later will see whether it changed.
+		r.IntervalSeconds = group.Interval
+		rules[i] = &r
+	}
+	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
+	if err != nil {
+		return fmt.Errorf("failed to calculate diff for alert rules: %w", err)
+	}
+
+	// TODO: calculateAutomaticChanges
+
+	// TODO: exit out early if no delta.New or no delta.Update or no delta.Delete
+	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		// TODO: delete the things.
+	})
 }
 
 // CreateAlertRule creates a new alert rule. This function will ignore any
