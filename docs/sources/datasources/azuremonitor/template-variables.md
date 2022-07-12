@@ -65,22 +65,22 @@ Perf
 
 ## Limitations
 
-As of Grafana 9.0, a resource URI is constructed to identify resources using the resource picker. If a dashboard had been created prior to Grafana 9.0 then any queries utilising the prior resource picking mechanism will be migrated to resource URIs.
+As of Grafana 9.0, a resource URI is constructed to identify resources using the resource picker. On dashboards created prior to Grafana 9.0, Grafana automatically migrates any queries using the prior resource-picking mechanism to use this method.
 
-Some resource types use nested namespaces and resource names, such as `Microsoft.Storage/tableServices` and `storageAccount/default`, or `Microsoft.Sql/servers/databases` and `serverName/databaseName`. Such template variables cannot be used because the result could be a malformed resource URI.
+Some resource types use nested namespaces and resource names, such as `Microsoft.Storage/storageAccounts/tableServices` and `storageAccount/default`, or `Microsoft.Sql/servers/databases` and `serverName/databaseName`. Such template variables cannot be used because the result could be a malformed resource URI.
 
 ### Supported cases
 
-1. Standard namespaces and resource names.
+#### Standard namespaces and resource names
 
-   ```kusto
-   metricDefinition = $ns
-   $ns = Microsoft.Compute/virtualMachines
-   resourceName = $rs
-   $rs = testvirtualmachine
-   ```
+```kusto
+metricDefinition = $ns
+$ns = Microsoft.Compute/virtualMachines
+resourceName = $rs
+$rs = testvirtualmachine
+```
 
-2. Namespaces with a non-templated sub-namespace.
+#### Namespaces with a non-templated sub-namespace
 
 ```kusto
 metricDefinition = $ns/tableServices
@@ -89,7 +89,7 @@ resourceName = $rs/default
 $rs = storageaccount
 ```
 
-3. Storage namespaces missing the `default` keyword.
+#### Storage namespaces missing the `default` keyword
 
 ```kusto
 metricDefinition = $ns/tableServices
@@ -98,7 +98,7 @@ resourceName = $rs
 $rs = storageaccount
 ```
 
-4. Namespaces with a templated sub-namespace.
+#### Namespaces with a templated sub-namespace
 
 ```kusto
 metricDefinition = $ns/$sns
@@ -110,9 +110,9 @@ $rs = storageaccount
 
 ### Unsupported case
 
-The following case is currently unsupported. If a dashboard makes use of the below it should be migrated to one of the aforementioned supported cases.
+If a dashboard uses this unsupported case, migrate it to one of the [supported cases](#supported-cases).
 
-If a namespace or resource name template variable contains multiple segments then the resource URI will not be constructed correctly as the template variable cannot be appropriately split.
+If a namespace or resource name template variable contains multiple segments, Grafana will construct the resource URI incorrectly because the template variable cannot be appropriately split.
 
 For example:
 
@@ -123,4 +123,6 @@ $ns = 'Microsoft.Storage/storageAccounts/tableServices'
 $rs = 'storageaccount/default'
 ```
 
-Would lead to an incorrect resource URI containing `Microsoft.Storage/storageAccounts/tableServices/storageaccount/default`. However, the correct URI would have the format `Microsoft.Storage/storageAccounts/storageaccount/tableServices/default`.
+This would result in an incorrect resource URI containing `Microsoft.Storage/storageAccounts/tableServices/storageaccount/default`. However, the correct URI would have the format `Microsoft.Storage/storageAccounts/storageaccount/tableServices/default`.
+
+An appropriate fix would be to update the template variable that does not match a supported case. If the namespace variable `$ns` is of the form `Microsoft.Storage/storageAccounts/tableServices` this could be split into two variables: `$ns1 = Microsoft.Storage/storageAccounts` and `$ns2 = tableServices`. The metric definition would then take the form `$ns1/$ns2` which leads to a correctly formatted URI.
