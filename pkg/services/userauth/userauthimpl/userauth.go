@@ -1,15 +1,28 @@
 package userauthimpl
 
-import "context"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/userauth"
+)
 
 type Service struct {
 	store store
 }
 
-func (s *Service) DeleteUserAuth(ctx context.Context, userID int64) error {
-	return s.store.DeleteUserAuth(ctx, userID)
+func ProvideService(db db.DB) userauth.Service {
+	return &Service{
+		store: &sqlStore{
+			db: db,
+		},
+	}
 }
 
-func (s *Service) DeleteUserAuthToken(ctx context.Context, userID int64) error {
-	return s.store.DeleteUserAuthToken(ctx, userID)
+func (s *Service) Delete(ctx context.Context, userID int64) error {
+	return s.store.Delete(ctx, userID)
+}
+
+func (s *Service) DeleteToken(ctx context.Context, userID int64) error {
+	return s.store.DeleteToken(ctx, userID)
 }
