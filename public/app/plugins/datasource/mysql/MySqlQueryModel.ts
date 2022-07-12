@@ -6,11 +6,11 @@ import { TemplateSrv } from '@grafana/runtime';
 import { MySQLQuery } from './types';
 
 export default class MySQLQueryModel {
-  target: MySQLQuery;
-  templateSrv: any;
-  scopedVars: any;
+  target: Partial<MySQLQuery>;
+  templateSrv?: TemplateSrv;
+  scopedVars?: ScopedVars;
 
-  constructor(target: MySQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
+  constructor(target: Partial<MySQLQuery>, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.target = target;
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
@@ -33,11 +33,11 @@ export default class MySQLQueryModel {
     return "'" + value.replace(/'/g, "''") + "'";
   }
 
-  escapeLiteral(value: any) {
+  escapeLiteral(value: string) {
     return String(value).replace(/'/g, "''");
   }
 
-  format = (value: string, variable: { multi: any; includeAll: any }, defaultFormatFn: any) => {
+  format = (value: string, variable: { multi: boolean; includeAll: boolean }) => {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return this.escapeLiteral(value);
@@ -52,7 +52,7 @@ export default class MySQLQueryModel {
   };
 
   interpolate() {
-    return this.templateSrv.replace(this.target.rawSql, this.scopedVars, this.format);
+    return this.templateSrv!.replace(this.target.rawSql, this.scopedVars, this.format);
   }
 
   getDatabase() {

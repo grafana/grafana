@@ -22,7 +22,7 @@ export class MySqlDatasource extends SqlDatasource {
     this.completionProvider = undefined;
   }
 
-  getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MySQLQueryModel {
+  getQueryModel(target?: Partial<SQLQuery>, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MySQLQueryModel {
     return new MySQLQueryModel(target!, templateSrv, scopedVars);
   }
 
@@ -34,9 +34,10 @@ export class MySqlDatasource extends SqlDatasource {
     if (this.completionProvider !== undefined) {
       return this.completionProvider;
     }
+
     const args = {
       getColumns: { current: (query: MySQLQuery) => fetchColumns(db, query) },
-      getTables: { current: (dataset?: string) => fetchTables(db, { dataset } as SQLQuery) },
+      getTables: { current: (dataset?: string) => fetchTables(db, { dataset }) },
       fetchMeta: { current: (path?: string) => this.fetchMeta(path) },
     };
     this.completionProvider = getSqlCompletionProvider(args);
@@ -53,12 +54,12 @@ export class MySqlDatasource extends SqlDatasource {
     return tables.map((t) => t.text);
   }
 
-  async fetchFields(query: SQLQuery) {
+  async fetchFields(query: Partial<SQLQuery>) {
     if (!query.dataset || !query.table) {
       return [];
     }
     const queryString = buildColumnQuery(this.getQueryModel(query), query.table!);
-    const frame = await this.runSql(queryString);
+    const frame = await this.runSql<string[]>(queryString);
     const fields = frame.map((f) => ({ name: f[0], text: f[0], value: f[0], type: f[1], label: f[0] }));
     return mapFieldsToTypes(fields);
   }
@@ -81,7 +82,7 @@ export class MySqlDatasource extends SqlDatasource {
         const tables = await this.fetchTables(parts[0]);
         return tables.map((t) => ({ name: t, completion: t, kind: CompletionItemKind.Class }));
       } else if (parts.length === 1 && defaultDB) {
-        const fields = await this.fetchFields({ dataset: defaultDB, table: parts[0] } as SQLQuery);
+        const fields = await this.fetchFields({ dataset: defaultDB, table: parts[0] });
         return fields.map((t) => ({ name: t.value, completion: t.value, kind: CompletionItemKind.Field }));
       } else {
         return [];
@@ -97,7 +98,8 @@ export class MySqlDatasource extends SqlDatasource {
       datasets: () => this.fetchDatasets(),
       tables: (dataset?: string) => this.fetchTables(dataset),
       fields: (query: SQLQuery) => this.fetchFields(query),
-      validateQuery: (query: SQLQuery, range?: TimeRange) => Promise.resolve({} as ValidationResults),
+      validateQuery: (query: SQLQuery, range?: TimeRange) =>
+        Promise.resolve({ query, error: '', isError: false, isValid: true }),
       dsID: () => this.id,
       lookup: (path?: string) => this.fetchMeta(path),
       getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),

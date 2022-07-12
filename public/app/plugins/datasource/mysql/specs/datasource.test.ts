@@ -95,7 +95,7 @@ describe('MySQLDatasource', () => {
 
     beforeEach(async () => {
       const { ds } = setupTextContext(response);
-      const data = await ds.annotationQuery(options);
+      const data = await ds.annotationQuery(options!);
       results = data;
     });
 

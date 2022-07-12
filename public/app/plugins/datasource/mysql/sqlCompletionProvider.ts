@@ -185,7 +185,7 @@ export async function fetchColumns(db: DB, q: SQLQuery) {
   }
 }
 
-export async function fetchTables(db: DB, q: SQLQuery) {
+export async function fetchTables(db: DB, q: Partial<SQLQuery>) {
   const tables = await db.lookup(q.dataset);
   return tables;
 }
