@@ -7,8 +7,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Alert, FieldSet, InlineField, InlineFieldRow, InlineSwitch, Input, Link } from '@grafana/ui';
-import { SecretInput } from '@grafana/ui/src/components/SecretInput/SecretInput';
+import { Alert, FieldSet, InlineField, InlineFieldRow, InlineSwitch, Input, Link, SecretInput } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 
@@ -47,7 +46,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             name="host"
             type="text"
             value={options.url || ''}
-            placeholder="localhost:5432"
+            placeholder="localhost:3306"
             onChange={onDSOptionChanged('url')}
           ></Input>
         </InlineField>
@@ -100,22 +99,29 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           ></Input>
         </InlineField>
         <InlineFieldRow>
-          <InlineField labelWidth={mediumWidth} label="TLS Client Auth">
-            <InlineSwitch onChange={onSwitchChanged('tlsAuth')} value={jsonData.tlsAuth || false}></InlineSwitch>
+          <InlineField labelWidth={mediumWidth} htmlFor="tlsAuth" label="TLS Client Auth">
+            <InlineSwitch
+              id="tlsAuth"
+              onChange={onSwitchChanged('tlsAuth')}
+              value={jsonData.tlsAuth || false}
+            ></InlineSwitch>
           </InlineField>
           <InlineField
             labelWidth={mediumWidth}
             tooltip="Needed for verifing self-signed TLS Certs"
+            htmlFor="tlsCaCert"
             label="With CA Cert"
           >
             <InlineSwitch
+              id="tlsCaCert"
               onChange={onSwitchChanged('tlsAuthWithCACert')}
               value={jsonData.tlsAuthWithCACert || false}
             ></InlineSwitch>
           </InlineField>
         </InlineFieldRow>
-        <InlineField labelWidth={mediumWidth} label="Skip TLS Verify">
+        <InlineField labelWidth={mediumWidth} htmlFor="skipTLSVerify" label="Skip TLS Verify">
           <InlineSwitch
+            id="skipTLSVerify"
             onChange={onSwitchChanged('tlsSkipVerify')}
             value={jsonData.tlsSkipVerify || false}
           ></InlineSwitch>

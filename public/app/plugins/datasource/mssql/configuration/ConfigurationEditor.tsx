@@ -1,21 +1,33 @@
+import { css } from '@emotion/css';
 import React, { SyntheticEvent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
+  GrafanaTheme2,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Alert, FieldSet, InlineField, InlineFieldRow, InlineSwitch, Input, Select } from '@grafana/ui';
-import { SecretInput } from '@grafana/ui/src/components/SecretInput/SecretInput';
+import {
+  Alert,
+  FieldSet,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  Input,
+  SecretInput,
+  Select,
+  useStyles2,
+} from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MssqlOptions>) => {
   const { options, onOptionsChange } = props;
+  const styles = useStyles2(getStyles);
   const jsonData = options.jsonData;
 
   const onResetPassword = () => {
@@ -88,8 +100,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         <InlineField
           label="Authentication"
           labelWidth={shortWidth}
+          htmlFor="authenticationType"
           tooltip={
-            <ul>
+            <ul className={styles.ulPadding}>
               <li>
                 <i>SQL Server Authentication</i> This is the default mechanism to connect to MS SQL Server. Enter the
                 SQL Server Authentication login or the Windows Authentication login in the DOMAIN\User format.
@@ -103,6 +116,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         >
           <Select
             value={jsonData.authenticationType || MSSQLAuthenticationType.sqlAuth}
+            inputId="authenticationType"
             options={authenticationOptions}
             onChange={onAuthenticationMethodChanged}
           ></Select>
@@ -133,10 +147,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
       <FieldSet label="TLS/SSL Auth">
         <InlineField
           labelWidth={labelWidthSSL}
+          htmlFor="encrypt"
           tooltip={
-            <span>
+            <>
               Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
-              <ul>
+              <ul className={styles.ulPadding}>
                 <li>
                   <i>disable</i> - Data sent between client and server is not encrypted.
                 </li>
@@ -149,21 +164,26 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
               </ul>
               If you&apos;re using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable
               encryption to be able to connect.
-            </span>
+            </>
           }
           label="Encrypt"
         >
           <Select
             options={encryptOptions}
             value={jsonData.encrypt || MSSQLEncryptOptions.disable}
+            inputId="encrypt"
             onChange={onEncryptChanged}
           ></Select>
         </InlineField>
 
         {jsonData.encrypt === MSSQLEncryptOptions.true ? (
           <>
-            <InlineField labelWidth={labelWidthSSL} label="Skip TLS Verify">
-              <InlineSwitch onChange={onSkipTLSVerifyChanged} value={jsonData.tlsSkipVerify || false}></InlineSwitch>
+            <InlineField labelWidth={labelWidthSSL} htmlFor="skipTlsVerify" label="Skip TLS Verify">
+              <InlineSwitch
+                id="skipTlsVerify"
+                onChange={onSkipTLSVerifyChanged}
+                value={jsonData.tlsSkipVerify || false}
+              ></InlineSwitch>
             </InlineField>
             {jsonData.tlsSkipVerify ? null : (
               <>
@@ -231,3 +251,12 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     </>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    ulPadding: css({
+      margin: theme.spacing(1, 0),
+      paddingLeft: theme.spacing(5),
+    }),
+  };
+}

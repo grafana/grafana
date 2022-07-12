@@ -8,8 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Alert, InlineSwitch, FieldSet, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
-import { SecretInput } from '@grafana/ui/src/components/SecretInput/SecretInput';
+import { Alert, InlineSwitch, FieldSet, InlineField, InlineFieldRow, Input, Select, SecretInput } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 
@@ -103,10 +102,12 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         <InlineField
           labelWidth={labelWidthConnection}
           label="TLS/SSL Mode"
+          htmlFor="tlsMode"
           tooltip="This option determines whether or with what priority a secure TLS/SSL TCP/IP connection will be negotiated with the server."
         >
           <Select
             options={tlsModes}
+            inputId="tlsMode"
             value={jsonData.sslmode || PostgresTLSModes.verifyFull}
             onChange={onJSONDataOptionSelected('sslmode')}
           ></Select>
@@ -115,6 +116,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           <InlineField
             labelWidth={labelWidthConnection}
             label="TLS/SSL Method"
+            htmlFor="tlsMethod"
             tooltip={
               <span>
                 This option determines how TLS/SSL certifications are configured. Selecting <i>File system path</i> will
@@ -132,6 +134,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           >
             <Select
               options={tlsMethods}
+              inputId="tlsMethod"
               value={jsonData.tlsConfigurationMethod || PostgresTLSMethods.filePath}
               onChange={onJSONDataOptionSelected('tlsConfigurationMethod')}
             ></Select>
@@ -209,10 +212,12 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         <InlineField
           tooltip="This option controls what functions are available in the PostgreSQL query builder"
           labelWidth={labelWidthShort}
+          htmlFor="postgresVersion"
           label="Version"
         >
           <Select
             value={jsonData.postgresVersion || 903}
+            inputId="postgresVersion"
             onChange={onJSONDataOptionSelected('postgresVersion')}
             options={postgresVersions}
           ></Select>
@@ -227,8 +232,13 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           }
           labelWidth={labelWidthShort}
           label="TimescaleDB"
+          htmlFor="timescaledb"
         >
-          <InlineSwitch value={jsonData.timescaledb || false} onChange={onTimeScaleDBChanged}></InlineSwitch>
+          <InlineSwitch
+            id="timescaledb"
+            value={jsonData.timescaledb || false}
+            onChange={onTimeScaleDBChanged}
+          ></InlineSwitch>
         </InlineField>
         <InlineField
           tooltip={
