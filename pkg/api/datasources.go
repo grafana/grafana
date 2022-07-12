@@ -457,6 +457,67 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	hs.callPluginResource(c, plugin.ID, ds.Uid)
 }
 
+//LOGZ.IO GRAFANA CHANGE :: Create endpoints to return summary of datasources
+// GET /api/datasources/summary
+func (hs *HTTPServer) GetDataSourcesSummary(c *models.ReqContext) response.Response {
+	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
+
+	if err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query); err != nil {
+		return response.Error(500, "Failed to query datasources summary", err)
+	}
+
+	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+	if err != nil {
+		return response.Error(500, "Failed to query datasources summary", err)
+	}
+
+	result := make(dtos.DataSourceSummaryList, 0)
+	for _, ds := range filtered {
+		dsItem := dtos.DataSourceSummaryListItemDTO{
+			Id:       ds.Id,
+			UID:      ds.Uid,
+			Name:     ds.Name,
+			Type:     ds.Type,
+			Database: ds.Database,
+		}
+
+		result = append(result, dsItem)
+	}
+
+	sort.Sort(result)
+
+	return response.JSON(200, &result)
+}
+
+// GET /api/datasources/name/:name/summary
+func (hs *HTTPServer) GetDataSourceSummaryByName(c *models.ReqContext) response.Response {
+	query := models.GetDataSourceQuery{Name: web.Params(c.Req)[":name"], OrgId: c.OrgId}
+
+	if err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query); err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
+		}
+		return response.Error(500, "Failed to query datasources summary", err)
+	}
+
+	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
+	if err != nil || len(filtered) != 1 {
+		return response.Error(404, "Data source not found", err)
+	}
+
+	foundDs := filtered[0]
+	dto := dtos.DataSourceSummaryListItemDTO{
+		Id:       foundDs.Id,
+		UID:      foundDs.Uid,
+		Name:     foundDs.Name,
+		Type:     foundDs.Type,
+		Database: foundDs.Database,
+	}
+	return response.JSON(200, &dto)
+}
+
+//LOGZ.IO GRAFANA CHANGE :: end
+
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 	dto := dtos.DataSource{
 		Id:                ds.Id,

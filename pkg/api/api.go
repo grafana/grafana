@@ -298,6 +298,10 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceById))
 			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceByUID))
 			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceByName))
+			//LOGZ.IO GRAFANA CHANGE :: Create endpoints to return summary of datasources
+			datasourceRoute.Get("/summary", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourcesSummary))
+			datasourceRoute.Get("/name/:name/summary", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceSummaryByName))
+			//LOGZ.IO GRAFANA CHANGE :: end
 		})
 
 		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name")))), routing.Wrap(hs.GetDataSourceIdByName))
