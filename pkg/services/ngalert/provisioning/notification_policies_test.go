@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
@@ -213,6 +214,17 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrValidation)
 	})
+
+	t.Run("deleting route replaces with default", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+
+		tree, err := sut.ResetPolicyTree(context.Background(), 1)
+
+		require.NoError(t, err)
+		require.Equal(t, "grafana-default-email", tree.Receiver)
+		require.Nil(t, tree.Routes)
+		require.Equal(t, []model.LabelName{models.FolderTitleLabel, model.AlertNameLabel}, tree.GroupBy)
+	})
 }
 
 func createNotificationPolicyServiceSut() *NotificationPolicyService {
@@ -221,6 +233,9 @@ func createNotificationPolicyServiceSut() *NotificationPolicyService {
 		provenanceStore: NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
+		settings: setting.UnifiedAlertingSettings{
+			DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
+		},
 	}
 }
 
