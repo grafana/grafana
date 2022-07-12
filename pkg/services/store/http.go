@@ -113,12 +113,16 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		path = folder + "/" + fileHeader.Filename
 	}
 
+	entityType := EntityTypeJSON
 	mimeType := http.DetectContentType(data)
+	if strings.HasPrefix(mimeType, "image") {
+		entityType = EntityTypeImage
+	}
 
 	err = s.store.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
 		Contents:              data,
 		MimeType:              mimeType,
-		EntityType:            EntityTypeImage,
+		EntityType:            entityType,
 		Path:                  path,
 		OverwriteExistingFile: overwriteExistingFile == "true",
 	})

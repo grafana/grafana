@@ -150,8 +150,6 @@ class SimpleStorage implements GrafanaStorage {
   }
 
   async saveDashboard(options: SaveDashboardCommand): Promise<any> {
-    console.log('SAVE', options);
-
     const blob = new Blob([JSON.stringify(options.dashboard)], {
       type: 'application/json',
     });
@@ -168,20 +166,15 @@ class SimpleStorage implements GrafanaStorage {
       method: 'POST',
       body: formData,
     });
-    alert('TODO... save');
 
     let body = (await res.json()) as UploadReponse;
-    if (!body) {
-      body = {} as any;
+    if (res.status !== 200 && !body?.err) {
+      console.log('SAVE', options, body);
+      return Promise.reject({ message: body?.message ?? res.statusText });
     }
-    body.status = res.status;
-    body.statusText = res.statusText;
-    if (res.status !== 200 && !body.err) {
-      body.err = true;
-    }
-    return body;
 
-    // TODO... actually save!
+    alert('TODO... save');
+
     return {
       uid: 'xxx',
       id: 123,

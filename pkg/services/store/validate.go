@@ -74,15 +74,15 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 	}
 
 	switch req.EntityType {
+	case EntityTypeJSON:
+		fallthrough
 	case EntityTypeFolder:
 		fallthrough
 	case EntityTypeDashboard:
 		// TODO: add proper validation
-		var something interface{}
-		if err := json.Unmarshal(req.Contents, &something); err != nil {
-			return fail(err.Error())
+		if !json.Valid(req.Contents) {
+			return fail("invalid json")
 		}
-
 		return success()
 	case EntityTypeImage:
 		return s.validateImage(ctx, user, req)
