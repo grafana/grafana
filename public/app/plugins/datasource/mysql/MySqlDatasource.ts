@@ -3,11 +3,11 @@ import { map as _map } from 'lodash';
 import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
-import MySQLQueryModel from 'app/plugins/datasource/mysql/MySqlQueryModel';
 
-import { SqlDatasource } from '../sql/datasource/SqlDatasource';
-import { DB, ResponseParser, SQLOptions, SQLQuery, ValidationResults } from '../sql/types';
+import { SqlDatasource } from '../../../features/plugins/sql/datasource/SqlDatasource';
+import { DB, ResponseParser, SQLOptions, SQLQuery, ValidationResults } from '../../../features/plugins/sql/types';
 
+import MySQLQueryModel from './MySqlQueryModel';
 import MySqlResponseParser from './MySqlResponseParser';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';

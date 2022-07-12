@@ -3,14 +3,14 @@ import { map } from 'lodash';
 import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
-import { SQLQuery } from '../sql/types';
+import { MySQLQuery } from './types';
 
 export default class MySQLQueryModel {
-  target: SQLQuery;
+  target: MySQLQuery;
   templateSrv: any;
   scopedVars: any;
 
-  constructor(target: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
+  constructor(target: MySQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.target = target;
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;

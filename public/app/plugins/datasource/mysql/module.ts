@@ -5,8 +5,8 @@ import {
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
-import { SqlQueryEditor } from '../sql/components/QueryEditor';
-import { SQLQuery } from '../sql/types';
+import { SqlQueryEditor } from '../../../features/plugins/sql/components/QueryEditor';
+import { SQLQuery } from '../../../features/plugins/sql/types';
 
 import { MySqlDatasource } from './MySqlDatasource';
 

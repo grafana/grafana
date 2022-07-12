@@ -11,8 +11,8 @@ import { FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { SQLOptions, SQLQuery } from '../../../../features/plugins/sql/types';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { SQLOptions, SQLQuery } from '../../sql/types';
 import { MySqlDatasource } from '../MySqlDatasource';
 
 describe('MySQLDatasource', () => {

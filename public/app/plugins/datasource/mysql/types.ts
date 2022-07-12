@@ -1,4 +1,6 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData } from '@grafana/data';
+
+import { SQLQuery } from '../../../features/plugins/sql/types';
 export interface MysqlQueryForInterpolation {
   alias?: any;
   format?: any;
@@ -13,8 +15,4 @@ export interface MySQLOptions extends DataSourceJsonData {
 
 export type ResultFormat = 'time_series' | 'table';
 
-export interface MySQLQuery extends DataQuery {
-  alias?: string;
-  format?: ResultFormat;
-  rawSql?: any;
-}
+export interface MySQLQuery extends SQLQuery {}

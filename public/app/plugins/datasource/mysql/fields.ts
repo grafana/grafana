@@ -1,4 +1,4 @@
-import { RAQBFieldTypes, SQLSelectableValue } from '../sql/types';
+import { RAQBFieldTypes, SQLSelectableValue } from '../../../features/plugins/sql/types';
 
 export function mapFieldsToTypes(columns: SQLSelectableValue[]) {
   const fields: SQLSelectableValue[] = [];
