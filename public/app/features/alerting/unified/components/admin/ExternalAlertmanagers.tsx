@@ -223,10 +223,6 @@ export const ExternalAlertmanagers = () => {
               </Card>
             ))}
           </div>
-          <div className={styles.externalDsAddRow}>
-            <Button>Add More</Button>
-            <Select options={availableExternalDsToPassAlerts} onChange={() => {}} />
-          </div>
 
           <div>
             <Field
