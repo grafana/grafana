@@ -63,67 +63,6 @@ describe('MySQLDatasource', () => {
     });
   });
 
-  describe('When performing annotationQuery', () => {
-    let results: any;
-    const annotationName = 'MyAnno';
-    const options = {
-      annotation: {
-        name: annotationName,
-        rawQuery: 'select time_sec, text, tags from table;',
-        enable: true,
-        iconColor: '',
-      },
-      range: {
-        from: dateTime(1432288354),
-        to: dateTime(1432288401),
-        raw: {
-          from: '',
-          to: '',
-        },
-      },
-      rangeRaw: {
-        from: '',
-        to: '',
-      },
-      dashboard: 'foo',
-      enable: true,
-    };
-    const response = {
-      results: {
-        MyAnno: {
-          frames: [
-            dataFrameToJSON(
-              new MutableDataFrame({
-                fields: [
-                  { name: 'time_sec', values: [1432288355, 1432288390, 1432288400] },
-                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
-                  { name: 'tags', values: ['TagA,TagB', ' TagB , TagC', null] },
-                ],
-              })
-            ),
-          ],
-        },
-      },
-    };
-
-    beforeEach(async () => {
-      const { ds } = setupTextContext(response);
-      const request: AnnotationQueryRequest<SQLQuery> = options;
-      const data = await ds.annotationQuery!(request);
-      results = data;
-    });
-
-    it('should return annotation list', async () => {
-      expect(results.length).toBe(3);
-      expect(results[0].text).toBe('some text');
-      expect(results[0].tags[0]).toBe('TagA');
-      expect(results[0].tags[1]).toBe('TagB');
-      expect(results[1].tags[0]).toBe('TagB');
-      expect(results[1].tags[1]).toBe('TagC');
-      expect(results[2].tags.length).toBe(0);
-    });
-  });
-
   describe('When performing metricFindQuery that returns multiple string fields', () => {
     const query = 'select * from atable';
     const response = {
