@@ -213,6 +213,7 @@ export { AutoSizeInput } from './Input/AutoSizeInput';
 export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
 export * from './SecretInput';
+export * from './SecretTextArea';
 
 export { Switch, InlineSwitch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';

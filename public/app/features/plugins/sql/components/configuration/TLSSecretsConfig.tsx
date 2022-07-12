@@ -7,8 +7,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { InlineField } from '@grafana/ui';
-import { SecretTextArea } from '@grafana/ui/src/components/SecretTextArea/SecretTextArea';
+import { InlineField, SecretTextArea } from '@grafana/ui';
 
 export interface Props<T> {
   editorProps: DataSourcePluginOptionsEditorProps<T>;
