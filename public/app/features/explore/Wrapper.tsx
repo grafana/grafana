@@ -17,6 +17,11 @@ import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './st
 
 const getStyles = () => {
   return {
+    pageScrollbarWrapper: css`
+      width: 100%;
+      flex-grow: 1;
+      min-height: 0;
+    `,
     exploreWrapper: css`
       display: flex;
       height: 100%;
@@ -82,7 +87,7 @@ class WrapperUnconnected extends PureComponent<Props> {
     const hasSplit = Boolean(left) && Boolean(right);
 
     return (
-      <div className="page-scrollbar-wrapper">
+      <div className={cx(styles.pageScrollbarWrapper)}>
         <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
         <div className={cx(styles.exploreWrapper)}>
           <ErrorBoundaryAlert style="page">
