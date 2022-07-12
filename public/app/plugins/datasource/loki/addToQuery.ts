@@ -70,7 +70,7 @@ export function addNoPipelineErrorToQuery(query: string): string {
     return query;
   }
 
-  const filter = toLabelFilter('__error__', '``', '=');
+  const filter = toLabelFilter('__error__', '', '=');
   return addFilterAsLabelFilter(query, parserPositions, filter);
 }
 
@@ -102,7 +102,7 @@ export function getParserPositions(query: string): Position[] {
   const positions: Position[] = [];
   tree.iterate({
     enter: (type, from, to, get): false | void => {
-      if (type.name === 'LabelParser') {
+      if (type.name === 'LabelParser' || type.name === 'JsonExpressionParser') {
         positions.push({ from, to });
         return false;
       }
