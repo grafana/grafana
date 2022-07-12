@@ -69,6 +69,7 @@ export const UploadView = ({ folder, onUpload, fileNames }: Props) => {
   };
 
   const filenameExists = file ? filenameAlreadyExists(file.name, fileNames) : false;
+  const isUploadDisabled = !file || (filenameExists && !overwriteExistingFile);
 
   return (
     <div>
@@ -101,12 +102,7 @@ export const UploadView = ({ folder, onUpload, fileNames }: Props) => {
       )}
 
       <ButtonGroup>
-        <Button
-          className={styles.button}
-          variant={'primary'}
-          disabled={!file || (filenameExists && !overwriteExistingFile)}
-          onClick={doUpload}
-        >
+        <Button className={styles.button} variant={'primary'} disabled={isUploadDisabled} onClick={doUpload}>
           Upload
         </Button>
       </ButtonGroup>
