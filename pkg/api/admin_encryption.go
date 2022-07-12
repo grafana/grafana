@@ -20,21 +20,31 @@ func (hs *HTTPServer) AdminReEncryptEncryptionKeys(c *models.ReqContext) respons
 		return response.Error(http.StatusInternalServerError, "Failed to re-encrypt data keys", err)
 	}
 
-	return response.Respond(http.StatusNoContent, "")
+	return response.Respond(http.StatusOK, "Data encryption keys re-encrypted successfully")
 }
 
 func (hs *HTTPServer) AdminReEncryptSecrets(c *models.ReqContext) response.Response {
-	if err := hs.secretsMigrator.ReEncryptSecrets(c.Req.Context()); err != nil {
+	success, err := hs.secretsMigrator.ReEncryptSecrets(c.Req.Context())
+	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to re-encrypt secrets", err)
 	}
 
-	return response.Respond(http.StatusNoContent, "")
+	if !success {
+		return response.Error(http.StatusPartialContent, "Something unexpected happened, refer to the server logs for more details", err)
+	}
+
+	return response.Respond(http.StatusOK, "Secrets re-encrypted successfully")
 }
 
 func (hs *HTTPServer) AdminRollbackSecrets(c *models.ReqContext) response.Response {
-	if err := hs.secretsMigrator.RollBackSecrets(c.Req.Context()); err != nil {
+	success, err := hs.secretsMigrator.RollBackSecrets(c.Req.Context())
+	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to rollback secrets", err)
 	}
 
-	return response.Respond(http.StatusNoContent, "")
+	if !success {
+		return response.Error(http.StatusPartialContent, "Something unexpected happened, refer to the server logs for more details", err)
+	}
+
+	return response.Respond(http.StatusOK, "Secrets rolled back successfully")
 }
