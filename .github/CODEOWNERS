@@ -144,6 +144,7 @@ lerna.json @grafana/frontend-ops
 .eslintrc @grafana/frontend-ops
 .pa11yci.conf.js @grafana/user-essentials
 .pa11yci-pr.conf.js @grafana/user-essentials
+.betterer.results @joshhunt
 
 # @grafana/ui component documentation
 *.mdx @marcusolsson @jessover9000 @grafana/plugins-platform-frontend

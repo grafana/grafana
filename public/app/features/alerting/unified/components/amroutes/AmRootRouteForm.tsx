@@ -10,6 +10,7 @@ import {
   optionalPositiveInteger,
   stringToSelectableValue,
   stringsToSelectableValues,
+  commonGroupByOptions,
 } from '../../utils/amroutes';
 import { makeAMLink } from '../../utils/misc';
 import { timeOptions } from '../../utils/time';
@@ -86,7 +87,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                     setValue('groupBy', [...field.value, opt]);
                   }}
                   onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-                  options={groupByOptions}
+                  options={[...commonGroupByOptions, groupByOptions]}
                 />
               )}
               control={control}

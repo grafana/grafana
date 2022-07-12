@@ -20,13 +20,15 @@ type ExportConfig struct {
 	KeepHistory       bool   `json:"history"`
 
 	Include struct {
-		Auth      bool `json:"auth"`
-		DS        bool `json:"ds"`
-		Dash      bool `json:"dash"`
-		Services  bool `json:"services"`
-		Usage     bool `json:"usage"`
-		Anno      bool `json:"anno"`
-		Snapshots bool `json:"snapshots"`
+		Auth       bool `json:"auth"`
+		DS         bool `json:"ds"`
+		Dash       bool `json:"dash"`
+		DashThumbs bool `json:"dash_thumbs"`
+		Alerts     bool `json:"alerts"`
+		Services   bool `json:"services"`
+		Usage      bool `json:"usage"`
+		Anno       bool `json:"anno"`
+		Snapshots  bool `json:"snapshots"`
 	} `json:"include"`
 
 	// Depends on the format

@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -36,6 +37,11 @@ var (
 // grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
+	// Declare plugins roles
+	if err := plugins.DeclareRBACRoles(hs.AccessControl); err != nil {
+		return err
+	}
+
 	provisioningWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:provisioning:writer",
@@ -421,6 +427,13 @@ var orgsAccessEvaluator = ac.EvalPermission(ActionOrgsRead)
 var orgsCreateAccessEvaluator = ac.EvalAll(
 	ac.EvalPermission(ActionOrgsRead),
 	ac.EvalPermission(ActionOrgsCreate),
+)
+
+// usersInviteEvaluator is used to protect the "Configuration > Users > Invite" page access
+// accessible to org admins and server admins by default
+var usersInviteEvaluator = ac.EvalAny(
+	ac.EvalPermission(ac.ActionUsersCreate),
+	ac.EvalPermission(ac.ActionOrgUsersAdd),
 )
 
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
