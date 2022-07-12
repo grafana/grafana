@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
+  Alert,
   Button,
   Card,
   ConfirmModal,
@@ -153,6 +154,11 @@ export const ExternalAlertmanagers = () => {
           </Button>
         )}
       </div>
+
+      <Alert severity="warning" title="Deprecation notice">
+        The URL-based configuration method is deprecated and will be removed in the future versions of Grafana <br />
+        Please use Alertmanager data sources to configure external alert managers.
+      </Alert>
       {noAlertmanagers ? (
         <EmptyListCTA
           title="You have not added any external alertmanagers"
