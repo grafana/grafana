@@ -1,7 +1,6 @@
 package export
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -16,17 +15,14 @@ var _ Job = new(dummyExportJob)
 type dummyExportJob struct {
 	logger log.Logger
 
-	statusMu    sync.Mutex
-	status      ExportStatus
-	cfg         ExportConfig
-	broadcaster statusBroadcaster
+	statusMu      sync.Mutex
+	status        ExportStatus
+	cfg           ExportConfig
+	broadcaster   statusBroadcaster
+	stopRequested bool
 }
 
 func startDummyExportJob(cfg ExportConfig, broadcaster statusBroadcaster) (Job, error) {
-	if cfg.Format != "git" {
-		return nil, errors.New("only git format is supported")
-	}
-
 	job := &dummyExportJob{
 		logger:      log.New("dummy_export_job"),
 		cfg:         cfg,
@@ -43,6 +39,10 @@ func startDummyExportJob(cfg ExportConfig, broadcaster statusBroadcaster) (Job, 
 	broadcaster(job.status)
 	go job.start()
 	return job, nil
+}
+
+func (e *dummyExportJob) requestStop() {
+	e.stopRequested = true
 }
 
 func (e *dummyExportJob) start() {
@@ -79,7 +79,7 @@ func (e *dummyExportJob) start() {
 		e.statusMu.Unlock()
 
 		// Wait till we are done
-		shouldStop := e.status.Current >= e.status.Count
+		shouldStop := e.stopRequested || e.status.Current >= e.status.Count
 		e.broadcaster(e.status)
 
 		if shouldStop {

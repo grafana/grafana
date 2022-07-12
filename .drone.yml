@@ -1,6 +1,49 @@
 ---
 depends_on: []
 kind: pipeline
+name: pr-verify-drone
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - scripts/drone/**
+    - .drone.yml
+    - .drone.star
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
 name: pr-test-frontend
 node:
   type: no-parallel
@@ -15,7 +58,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -91,7 +134,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -116,12 +159,6 @@ steps:
   - verify-gen-cue
   image: grafana/build-container:1.5.7
   name: wire-install
-- commands:
-  - ./bin/grabpl verify-drone
-  depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
 - commands:
   - |-
     echo -e "unknwon
@@ -197,7 +234,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -243,7 +280,6 @@ steps:
       from_secret: drone_token
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
   depends_on:
   - gen-version
   - wire-install
@@ -455,7 +491,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -530,115 +566,81 @@ volumes:
   temp:
     medium: memory
 ---
+depends_on: []
 kind: pipeline
 name: pr-docs
 node:
   type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
 steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
-- command:
-  - go
-  - build
-  - -o
-  - /var/scribe/pipeline
-  - ./pkg/build/ci
-  environment:
-    CGO_ENABLED: "0"
-    GOARCH: amd64
-    GOOS: linux
-  image: grafana/shipwright:go-v0.9.17
-  name: builtin-compile-pipeline
-  volumes:
-  - name: scribe
-    path: /var/scribe
 - commands:
-  - /var/scribe/pipeline -step=1 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - builtin-compile-pipeline
-  image: grafana/shipwright:v0.9.17
-  name: download_grabpl
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
-- commands:
-  - /var/scribe/pipeline -step=2 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
-  depends_on:
-  - download_grabpl
+  - grabpl
   image: grafana/build-container:1.5.7
-  name: yarn_install
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: gen-version
 - commands:
-  - /var/scribe/pipeline -step=5 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - yarn install --immutable
   depends_on:
-  - yarn_install
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: yarn-install
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   image: grafana/build-container:1.5.7
   name: codespell
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
 - commands:
-  - /var/scribe/pipeline -step=6 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - yarn run prettier:checkDocs
   depends_on:
-  - yarn_install
+  - yarn-install
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.7
-  name: lint_docs
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: lint-docs
 - commands:
-  - /var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - codespell
-  - lint_docs
+  - gen-version
+  - yarn-install
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.7
-  name: build_frontend_package
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: build-frontend-packages
 - commands:
-  - /var/scribe/pipeline -step=9 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build_frontend_package
+  - build-frontend-packages
   image: grafana/build-container:1.5.7
-  name: build_frontend_documentation
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: build-frontend-docs
 - commands:
-  - /var/scribe/pipeline -step=10 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - mkdir -p /hugo/content/docs/grafana
+  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
+  - cd /hugo && make prod
   depends_on:
-  - build_frontend_documentation
+  - build-frontend-docs
   image: grafana/docs-base:latest
-  name: build_documentation_website
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: build-docs-website
 trigger:
   event:
   - pull_request
@@ -650,136 +652,94 @@ trigger:
     - latest.json
 type: docker
 volumes:
-- name: scribe
-  temp: {}
-- name: scribe-state
-  temp: {}
 - host:
     path: /var/run/docker.sock
-  name: docker_socket
+  name: docker
 ---
+depends_on: []
 kind: pipeline
 name: main-docs
 node:
   type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
 steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
-- command:
-  - go
-  - build
-  - -o
-  - /var/scribe/pipeline
-  - ./pkg/build/ci
-  environment:
-    CGO_ENABLED: "0"
-    GOARCH: amd64
-    GOOS: linux
-  image: grafana/shipwright:go-v0.9.17
-  name: builtin-compile-pipeline
-  volumes:
-  - name: scribe
-    path: /var/scribe
 - commands:
-  - /var/scribe/pipeline -step=1 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - builtin-compile-pipeline
-  image: grafana/shipwright:v0.9.17
-  name: download_grabpl
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
-- commands:
-  - /var/scribe/pipeline -step=2 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
-  depends_on:
-  - download_grabpl
+  - grabpl
   image: grafana/build-container:1.5.7
-  name: yarn_install
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: gen-version
 - commands:
-  - /var/scribe/pipeline -step=5 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - yarn install --immutable
   depends_on:
-  - yarn_install
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: yarn-install
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   image: grafana/build-container:1.5.7
   name: codespell
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
 - commands:
-  - /var/scribe/pipeline -step=6 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - yarn run prettier:checkDocs
   depends_on:
-  - yarn_install
+  - yarn-install
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.7
-  name: lint_docs
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: lint-docs
 - commands:
-  - /var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - codespell
-  - lint_docs
+  - gen-version
+  - yarn-install
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.7
-  name: build_frontend_package
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: build-frontend-packages
 - commands:
-  - /var/scribe/pipeline -step=9 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build_frontend_package
+  - build-frontend-packages
   image: grafana/build-container:1.5.7
-  name: build_frontend_documentation
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: build-frontend-docs
 - commands:
-  - /var/scribe/pipeline -step=10 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.17 ./pkg/build/ci
+  - mkdir -p /hugo/content/docs/grafana
+  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
+  - cd /hugo && make prod
   depends_on:
-  - build_frontend_documentation
+  - build-frontend-docs
   image: grafana/docs-base:latest
-  name: build_documentation_website
-  volumes:
-  - name: scribe
-    path: /var/scribe
-  - name: scribe-state
-    path: /var/scribe-state
+  name: build-docs-website
 trigger:
   branch: main
   event:
   - push
 type: docker
 volumes:
-- name: scribe
-  temp: {}
-- name: scribe-state
-  temp: {}
 - host:
     path: /var/run/docker.sock
-  name: docker_socket
+  name: docker
 ---
 depends_on: []
 kind: pipeline
@@ -797,7 +757,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -865,7 +825,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -960,7 +920,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1055,7 +1015,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
@@ -1306,7 +1266,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
+  - ./bin/grabpl upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1323,7 +1283,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -1384,7 +1344,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1474,7 +1434,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -1562,10 +1522,16 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: gen-version
 - commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
@@ -1574,7 +1540,7 @@ steps:
   - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
     ${DRONE_BUILD_NUMBER}
   depends_on:
-  - grabpl
+  - gen-version
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -1647,7 +1613,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1704,7 +1670,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
@@ -1854,8 +1820,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --src-bucket "$${PRERELEASE_BUCKET}" --src-dir
-    artifacts/static-assets
+  - ./bin/grabpl upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -1866,7 +1831,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1945,7 +1910,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2080,7 +2045,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2174,7 +2139,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -2233,7 +2198,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2320,7 +2285,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise
   depends_on:
   - gen-version
   - yarn-install
@@ -2469,8 +2434,7 @@ steps:
     - success
     - failure
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --src-bucket "$${PRERELEASE_BUCKET}"
-    --src-dir artifacts/static-assets
+  - ./bin/grabpl upload-cdn --edition enterprise
   depends_on:
   - package
   environment:
@@ -2481,7 +2445,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition enterprise
   depends_on:
   - package
   environment:
@@ -2522,8 +2486,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --src-bucket "$${PRERELEASE_BUCKET}"
-    --src-dir artifacts/static-assets
+  - ./bin/grabpl upload-cdn --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -2534,7 +2497,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
+  - ./bin/grabpl upload-packages --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -2581,7 +2544,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2764,7 +2727,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2906,7 +2869,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2981,7 +2944,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3059,7 +3022,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3120,7 +3083,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3199,7 +3162,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3261,7 +3224,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3299,7 +3262,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3337,7 +3300,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3393,15 +3356,21 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: gen-version
+- commands:
   - ./bin/grabpl store-packages --edition oss --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
-  - grabpl
+  - gen-version
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3441,15 +3410,21 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: gen-version
+- commands:
   - ./bin/grabpl store-packages --edition enterprise --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
-  - grabpl
+  - gen-version
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3476,6 +3451,38 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
+name: publish-artifacts-page
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl artifacts-page
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: artifacts-page
+trigger:
+  event:
+  - promote
+  target: security
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
 name: release-branch-oss-build-e2e-publish
 node:
   type: no-parallel
@@ -3490,7 +3497,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3547,7 +3554,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
@@ -3697,7 +3704,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -3711,7 +3718,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
+  - ./bin/grabpl upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -3758,7 +3765,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3887,7 +3894,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3975,7 +3982,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -4023,7 +4030,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4108,7 +4115,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise
   depends_on:
   - gen-version
   - yarn-install
@@ -4269,7 +4276,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --src-bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise
   depends_on:
   - package
   environment:
@@ -4283,7 +4290,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
+  - ./bin/grabpl upload-packages --edition enterprise
   depends_on:
   - package
   environment:
@@ -4317,7 +4324,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --src-bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -4328,7 +4335,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2
+  - ./bin/grabpl upload-packages --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -4369,7 +4376,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4543,7 +4550,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4676,7 +4683,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -4873,6 +4880,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 61a0ccdfd54e557de7389bdedc7e9fc8eb9d53939cf446c930a898ddf1c7f7ac
+hmac: 55383abbbc205824d35aa689a0e00f374e74520d77dc387e354b063e4ade0869
 
 ...
