@@ -328,6 +328,7 @@ describe('PanelAlertTabContent', () => {
           model: {
             refId: 'B',
             hide: false,
+            expression: 'A',
             type: 'classic_conditions',
             datasource: {
               type: ExpressionDatasourceRef.type,

@@ -26,9 +26,6 @@ export class ElementState implements LayerElement {
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
 
-  // Determine whether or not element is in motion or not (via moveable)
-  isMoving = false;
-
   // Temp stored constraint for visualization purposes (switch to top / left constraint to simplify some functionality)
   tempConstraint: Constraint | undefined;
 

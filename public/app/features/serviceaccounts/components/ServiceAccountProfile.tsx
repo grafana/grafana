@@ -37,7 +37,7 @@ export function ServiceAccountProfile({
 
   return (
     <div className={styles.section}>
-      <h4>Information</h4>
+      <h3>Information</h3>
       <table className="filter-table">
         <tbody>
           <ServiceAccountProfileRow

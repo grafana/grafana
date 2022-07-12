@@ -14,8 +14,7 @@ export function useSqlChange({ query, onQueryChange, db }: UseSqlChange) {
   const onSqlChange = useCallback(
     (sql: SQLExpression) => {
       const toRawSql = db.toRawSql || defaultToRawSql;
-      const q: Partial<SQLQuery> = { sql, dataset: query.dataset, table: query.table };
-      const rawSql = toRawSql(q);
+      const rawSql = toRawSql({ sql, dataset: query.dataset, table: query.table, refId: query.refId });
       const newQuery: SQLQuery = { ...query, sql, rawSql };
       onQueryChange(newQuery);
     },
