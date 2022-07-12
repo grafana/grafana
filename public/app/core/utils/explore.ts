@@ -70,19 +70,6 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   let exploreTargets: DataQuery[] = panel.targets.map((t) => omit(t, 'legendFormat'));
   let url: string | undefined;
 
-  // Mixed datasources need to choose only one datasource
-  if (exploreDatasource.meta?.id === 'mixed' && exploreTargets) {
-    // Find first explore datasource among targets
-    for (const t of exploreTargets) {
-      const datasource = await datasourceSrv.get(t.datasource || undefined);
-      if (datasource) {
-        exploreDatasource = datasource;
-        exploreTargets = panel.targets.filter((t) => t.datasource === datasource.name);
-        break;
-      }
-    }
-  }
-
   if (exploreDatasource) {
     const range = timeSrv.timeRangeForUrl();
     let state: Partial<ExploreUrlState> = { range };
@@ -99,7 +86,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreTargets.map((t) => ({ ...t, datasource: exploreDatasource.getRef() })),
+        queries: exploreTargets,
       };
     }
 
