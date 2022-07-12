@@ -43,20 +43,13 @@ export const reportPageview = () => {
  * @public
  */
 export const reportInteraction = (interactionName: string, properties?: Record<string, any>) => {
-  if (process.env.NODE_ENV === 'production') {
-    getEchoSrv().addEvent<InteractionEchoEvent>({
-      type: EchoEventType.Interaction,
-      payload: {
-        interactionName,
-        properties,
-      },
-    });
-  } else if (process.env.NODE_ENV === 'development') {
-    console.log({
+  getEchoSrv().addEvent<InteractionEchoEvent>({
+    type: EchoEventType.Interaction,
+    payload: {
       interactionName,
-      ...properties,
-    });
-  }
+      properties,
+    },
+  });
 };
 
 /**
