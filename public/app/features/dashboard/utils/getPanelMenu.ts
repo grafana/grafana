@@ -61,6 +61,7 @@ export function getPanelMenu(
   };
 
   const onInspectPanel = (tab?: string) => {
+    console.log('activated')
     locationService.partial({
       inspect: panel.id,
       inspectTab: tab,
