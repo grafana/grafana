@@ -272,6 +272,7 @@
    },
    "type": "object"
   },
+<<<<<<< HEAD
   "AlertRuleGroupMetadata": {
    "properties": {
     "interval": {
@@ -284,6 +285,8 @@
   "AlertStateType": {
    "type": "string"
   },
+=======
+>>>>>>> bf422ca546 (Wire up to full alert rule struct)
   "AlertingRule": {
    "description": "adapted from cortex",
    "properties": {
@@ -3381,6 +3384,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3624,7 +3628,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -5923,15 +5926,15 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroupMetadata"
+       "$ref": "#/definitions/AlertRuleGroup"
       }
      }
     ],
     "responses": {
      "200": {
-      "description": "AlertRuleGroupMetadata",
+      "description": "AlertRuleGroup",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroupMetadata"
+       "$ref": "#/definitions/AlertRuleGroup"
       }
      },
      "400": {

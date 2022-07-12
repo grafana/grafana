@@ -56,7 +56,7 @@ type AlertRuleService interface {
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
 	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (definitions.AlertRuleGroup, error)
-	UpdateRuleGroup(ctx context.Context, orgID int64, folderUID, rulegroup string, interval int64) error
+	ReplaceRuleGroup(ctx context.Context, orgID int64, group definitions.AlertRuleGroup) error
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
@@ -312,8 +312,10 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *models.ReqContext, folder 
 	return response.JSON(http.StatusOK, g)
 }
 
-func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroupMetadata, folderUID string, group string) response.Response {
-	err := srv.alertRules.UpdateRuleGroup(c.Req.Context(), c.OrgId, folderUID, group, ag.Interval)
+func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
+	ag.FolderUID = folderUID
+	ag.Title = group
+	err := srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgId, ag)
 	if err != nil {
 		if errors.Is(err, store.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")

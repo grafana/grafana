@@ -134,8 +134,12 @@ func (f *ProvisioningApiHandler) RoutePutAlertRuleGroup(ctx *models.ReqContext) 
 	// Parse Path Parameters
 	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
 	groupParam := web.Params(ctx.Req)[":Group"]
+<<<<<<< HEAD
 	// Parse Request Body
 	conf := apimodels.AlertRuleGroupMetadata{}
+=======
+	conf := apimodels.AlertRuleGroup{}
+>>>>>>> 7b67c4ee1a (Wire up to full alert rule struct)
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

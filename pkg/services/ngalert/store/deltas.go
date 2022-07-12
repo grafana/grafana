@@ -80,10 +80,11 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 					}
 					loadedRulesByUID[rule.UID] = rule
 				}
-				if existing == nil {
-					return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, models.ErrAlertRuleNotFound)
+				if existing != nil {
+					affectedGroups[existing.GetGroupKey()] = q.Result
 				}
-				affectedGroups[existing.GetGroupKey()] = q.Result
+				// If we still have nothing by this point, just fall back and consider it an insert.
+				// This can happen if we are inserting a rule with a preallocated UID.
 			}
 		}
 
