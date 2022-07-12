@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Badge, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { NodeGraph } from '../../plugins/panel/nodeGraph';
@@ -27,12 +28,13 @@ interface OwnProps {
   exploreId: ExploreId;
   // When showing the node graph together with trace view we do some changes so it works better.
   withTraceView?: boolean;
+  datasourceType: string;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export function UnconnectedNodeGraphContainer(props: Props) {
-  const { dataFrames, range, splitOpen, withTraceView } = props;
+  const { dataFrames, range, splitOpen, withTraceView, datasourceType } = props;
   const getLinks = useLinks(range, splitOpen);
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -53,6 +55,13 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   const { nodes } = useCategorizeFrames(frames);
   const [open, toggleOpen] = useToggle(false);
+  const toggled = () => {
+    toggleOpen();
+    reportInteraction('grafana_traces_node_graph_panel_clicked', {
+      datasourceType: datasourceType,
+      expanded: !open,
+    });
+  };
 
   // Calculate node graph height based on window and top position, with some padding
   const { height: windowHeight } = useWindowSize();
@@ -82,7 +91,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
       collapsible={withTraceView}
       // We allow collapsing this only when it is shown together with trace view.
       isOpen={withTraceView ? open : true}
-      onToggle={withTraceView ? () => toggleOpen() : undefined}
+      onToggle={withTraceView ? () => toggled() : undefined}
     >
       <div
         ref={containerRef}

@@ -64,15 +64,13 @@ const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) =>
       font-weight: ${theme.typography.weight.semibold};
       font-size: ${theme.typography.size.sm};
       line-height: ${theme.typography.lineHeight.xs};
+      vertical-align: baseline;
       background-color: ${colors.color};
       color: ${theme.palette.gray98};
       white-space: nowrap;
       text-shadow: none;
       padding: 3px 6px;
       border-radius: ${theme.border.radius.md};
-      display: flex;
-      align-items: center;
-      gap: 3px;
     `,
     hover: css`
       &:hover {
