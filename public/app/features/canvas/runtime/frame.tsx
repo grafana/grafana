@@ -74,6 +74,19 @@ export class FrameState extends ElementState {
     this.reinitializeMoveable();
   }
 
+  // used for tree view
+  reorderTree(src: ElementState, dest: ElementState, firstPosition = false) {
+    const result = Array.from(this.elements);
+    const srcIndex = this.elements.indexOf(src);
+    const destIndex = firstPosition ? this.elements.length - 1 : this.elements.indexOf(dest);
+
+    const [removed] = result.splice(srcIndex, 1);
+    result.splice(destIndex, 0, removed);
+    this.elements = result;
+
+    this.reinitializeMoveable();
+  }
+
   doMove(child: ElementState, action: LayerActionID) {
     const vals = this.elements.filter((v) => v !== child);
     if (action === LayerActionID.MoveBottom) {
@@ -176,7 +189,7 @@ export class FrameState extends ElementState {
 
   render() {
     return (
-      <div key={this.UID} ref={this.initElement} style={{ overflow: 'hidden' }}>
+      <div key={this.UID} ref={this.initElement}>
         {this.elements.map((v) => v.render())}
       </div>
     );

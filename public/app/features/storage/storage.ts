@@ -1,9 +1,8 @@
 import { DataFrame, dataFrameFromJSON, DataFrameJSON, getDisplayProcessor } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DashboardDTO } from 'app/types';
-
-import { SaveDashboardCommand } from '../dashboard/components/SaveDashboard/types';
 
 import { UploadReponse } from './types';
 
@@ -11,7 +10,7 @@ import { UploadReponse } from './types';
 export interface GrafanaStorage {
   get: <T = any>(path: string) => Promise<T>;
   list: (path: string) => Promise<DataFrame | undefined>;
-  upload: (folder: string, file: File) => Promise<UploadReponse>;
+  upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadReponse>;
   createFolder: (path: string) => Promise<{ error?: string }>;
   delete: (path: { isFolder: boolean; path: string }) => Promise<{ error?: string }>;
 
@@ -90,7 +89,7 @@ class SimpleStorage implements GrafanaStorage {
     return req.isFolder ? this.deleteFolder({ path: req.path, force: true }) : this.deleteFile({ path: req.path });
   }
 
-  async upload(folder: string, file: File): Promise<UploadReponse> {
+  async upload(folder: string, file: File, overwriteExistingFile: boolean): Promise<UploadReponse> {
     const formData = new FormData();
     formData.append('folder', folder);
     formData.append('file', file);
@@ -162,6 +161,14 @@ class SimpleStorage implements GrafanaStorage {
       url: '',
     };
   }
+}
+
+export function filenameAlreadyExists(folderName: string, fileNames: string[]) {
+  const lowerCase = folderName.toLowerCase();
+  const trimmedLowerCase = lowerCase.trim();
+  const existingTrimmedLowerCaseNames = fileNames.map((f) => f.trim().toLowerCase());
+
+  return existingTrimmedLowerCaseNames.includes(trimmedLowerCase);
 }
 
 let storage: GrafanaStorage | undefined;

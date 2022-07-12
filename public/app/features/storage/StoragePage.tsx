@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup } from '@grafana/ui';
+import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -18,7 +18,7 @@ import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
-import { getGrafanaStorage } from './storage';
+import { getGrafanaStorage, filenameAlreadyExists } from './storage';
 import { StorageView } from './types';
 
 interface RouteParams {
@@ -162,12 +162,18 @@ export default function StoragePage(props: Props) {
     }
     const canAddFolder = isFolder && path.startsWith('resources');
     const canDelete = path.startsWith('resources/');
+    const canViewDashboard = path.startsWith('devenv/');
 
     return (
       <div className={styles.wrapper}>
         <HorizontalGroup width="100%" justify="space-between" spacing={'md'} height={25}>
           <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={navModel.node.icon as IconName} />
           <HorizontalGroup>
+            {canViewDashboard && (
+              <LinkButton icon="link" href={`g/${path}`}>
+                View
+              </LinkButton>
+            )}
             {canAddFolder && <Button onClick={() => setIsAddingNewFolder(true)}>New Folder</Button>}
             {canDelete && (
               <Button
@@ -211,7 +217,7 @@ export default function StoragePage(props: Props) {
           ))}
         </TabsBar>
         {isFolder ? (
-          <FolderView path={path} listing={frame} onPathChange={setPath} view={view} />
+          <FolderView path={path} listing={frame} onPathChange={setPath} view={view} fileNames={fileNames} />
         ) : (
           <FileView path={path} listing={frame} onPathChange={setPath} view={view} />
         )}
@@ -231,10 +237,8 @@ export default function StoragePage(props: Props) {
             }}
             validate={(folderName) => {
               const lowerCase = folderName.toLowerCase();
-              const trimmedLowerCase = lowerCase.trim();
-              const existingTrimmedLowerCaseNames = fileNames.map((f) => f.trim().toLowerCase());
 
-              if (existingTrimmedLowerCaseNames.includes(trimmedLowerCase)) {
+              if (filenameAlreadyExists(folderName, fileNames)) {
                 return 'A file or a folder with the same name already exists';
               }
 
