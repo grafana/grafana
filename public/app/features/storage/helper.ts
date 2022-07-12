@@ -7,7 +7,7 @@ import { UploadReponse } from './types';
 export interface GrafanaStorage {
   get: <T = any>(path: string) => Promise<T>;
   list: (path: string) => Promise<DataFrame | undefined>;
-  upload: (folder: string, file: File) => Promise<UploadReponse>;
+  upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadReponse>;
   createFolder: (path: string) => Promise<{ error?: string }>;
   delete: (path: { isFolder: boolean; path: string }) => Promise<{ error?: string }>;
 }
@@ -82,10 +82,11 @@ class SimpleStorage implements GrafanaStorage {
     return req.isFolder ? this.deleteFolder({ path: req.path, force: true }) : this.deleteFile({ path: req.path });
   }
 
-  async upload(folder: string, file: File): Promise<UploadReponse> {
+  async upload(folder: string, file: File, overwriteExistingFile: boolean): Promise<UploadReponse> {
     const formData = new FormData();
     formData.append('folder', folder);
     formData.append('file', file);
+    formData.append('overwriteExistingFile', String(overwriteExistingFile));
     const res = await fetch('/api/storage/upload', {
       method: 'POST',
       body: formData,
@@ -111,4 +112,12 @@ export function getGrafanaStorage() {
     storage = new SimpleStorage();
   }
   return storage;
+}
+
+export function filenameAlreadyExists(folderName: string, fileNames: string[]) {
+  const lowerCase = folderName.toLowerCase();
+  const trimmedLowerCase = lowerCase.trim();
+  const existingTrimmedLowerCaseNames = fileNames.map((f) => f.trim().toLowerCase());
+
+  return existingTrimmedLowerCaseNames.includes(trimmedLowerCase);
 }
