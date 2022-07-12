@@ -45,7 +45,12 @@ func GroupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 			query := simplejson.NewFromAny(queryObj)
 
 			if _, ok := query.CheckGet("datasource"); !ok {
-				query.Set("datasource", panel.Get("datasource"))
+				datasource, err := panel.Get("datasource").Map()
+				if err != nil {
+					continue
+				}
+
+				query.Set("datasource", datasource)
 			}
 
 			panelQueries = append(panelQueries, query)
