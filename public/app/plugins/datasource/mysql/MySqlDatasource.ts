@@ -3,7 +3,7 @@ import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experim
 import { TemplateSrv } from '@grafana/runtime';
 
 import { SqlDatasource } from '../../../features/plugins/sql/datasource/SqlDatasource';
-import { DB, ResponseParser, SQLOptions, SQLQuery, ValidationResults } from '../../../features/plugins/sql/types';
+import { DB, ResponseParser, SQLOptions, SQLQuery } from '../../../features/plugins/sql/types';
 
 import MySQLQueryModel from './MySqlQueryModel';
 import MySqlResponseParser from './MySqlResponseParser';
