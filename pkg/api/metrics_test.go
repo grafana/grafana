@@ -142,7 +142,8 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
+		_, err = buf.ReadFrom(resp.Body)
+		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 		var resObj secretsErrorResponseBody
 		err = json.Unmarshal(buf.Bytes(), &resObj)
@@ -150,5 +151,4 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		require.Equal(t, "unknown error", resObj.Error)
 		require.Contains(t, resObj.Message, "Secrets Plugin error:")
 	})
-
 }
