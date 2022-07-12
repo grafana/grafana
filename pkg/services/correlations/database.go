@@ -29,7 +29,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		if query.Result.ReadOnly {
+		if !cmd.SkipReadOnlyCheck && query.Result.ReadOnly {
 			return ErrSourceDataSourceReadOnly
 		}
 

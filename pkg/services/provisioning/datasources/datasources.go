@@ -77,11 +77,12 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 			for _, correlation := range ds.Correlations {
 				if field, ok := correlation.(map[string]interface{}); ok {
 					correlationsToInsert = append(correlationsToInsert, correlations.CreateCorrelationCommand{
-						SourceUID:   insertCmd.Result.Uid,
-						TargetUID:   field["targetUid"].(string),
-						Label:       field["label"].(string),
-						Description: field["description"].(string),
-						OrgId:       insertCmd.OrgId,
+						SourceUID:         insertCmd.Result.Uid,
+						TargetUID:         field["targetUid"].(string),
+						Label:             field["label"].(string),
+						Description:       field["description"].(string),
+						OrgId:             insertCmd.OrgId,
+						SkipReadOnlyCheck: true,
 					})
 				}
 			}
@@ -102,11 +103,12 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 			for _, correlation := range ds.Correlations {
 				if field, ok := correlation.(map[string]interface{}); ok {
 					correlationsToInsert = append(correlationsToInsert, correlations.CreateCorrelationCommand{
-						SourceUID:   cmd.Result.Uid,
-						TargetUID:   field["targetUid"].(string),
-						Label:       field["label"].(string),
-						Description: field["description"].(string),
-						OrgId:       updateCmd.OrgId,
+						SourceUID:         cmd.Result.Uid,
+						TargetUID:         field["targetUid"].(string),
+						Label:             field["label"].(string),
+						Description:       field["description"].(string),
+						OrgId:             updateCmd.OrgId,
+						SkipReadOnlyCheck: true,
 					})
 				}
 			}

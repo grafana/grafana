@@ -40,11 +40,12 @@ type CreateCorrelationResponse struct {
 type CreateCorrelationCommand struct {
 	// UID of the data source for which correlation is created.
 	// example: PE1C5CBDA0504A6A3
-	SourceUID   string
-	OrgId       int64
-	TargetUID   string `json:"targetUid" binding:"Required"`
-	Label       string `json:"label"`
-	Description string `json:"description"`
+	SourceUID         string
+	OrgId             int64
+	TargetUID         string `json:"targetUid" binding:"Required"`
+	Label             string `json:"label"`
+	Description       string `json:"description"`
+	SkipReadOnlyCheck bool
 }
 
 type DeleteCorrelationsBySourceUIDCommand struct {
