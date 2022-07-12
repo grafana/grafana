@@ -11,8 +11,9 @@ import (
 )
 
 type FakeDataSourceService struct {
-	lastId      int64
-	DataSources []*datasources.DataSource
+	lastId                int64
+	DataSources           []*datasources.DataSource
+	SimulatePluginFailure bool
 }
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
@@ -107,6 +108,9 @@ func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *dataso
 }
 
 func (s *FakeDataSourceService) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	if s.SimulatePluginFailure {
+		return nil, datasources.ErrDatasourceSecretsPluginUserFriendly{Err: "unknown error"}
+	}
 	values := make(map[string]string)
 	return values, nil
 }
