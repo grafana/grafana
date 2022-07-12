@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
@@ -98,15 +99,18 @@ func TestWarmStateCache(t *testing.T) {
 	}
 	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
 
-	schedCfg := schedule.SchedulerCfg{
-		C:            clock.NewMock(),
-		BaseInterval: time.Second,
-		Logger:       log.New("ngalert cache warming test"),
-
-		RuleStore:               dbstore,
-		InstanceStore:           dbstore,
-		Metrics:                 testMetrics.GetSchedulerMetrics(),
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval:            time.Second,
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+	}
+
+	schedCfg := schedule.SchedulerCfg{
+		Cfg:           cfg,
+		C:             clock.NewMock(),
+		Logger:        log.New("ngalert cache warming test"),
+		RuleStore:     dbstore,
+		InstanceStore: dbstore,
+		Metrics:       testMetrics.GetSchedulerMetrics(),
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	st.Warm(ctx)
@@ -140,25 +144,28 @@ func TestAlertingTicker(t *testing.T) {
 	stopAppliedCh := make(chan models.AlertRuleKey, len(alerts))
 
 	mockedClock := clock.NewMock()
-	baseInterval := time.Second
+
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval:            time.Second,
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+		DisabledOrgs: map[int64]struct{}{
+			disabledOrgID: {},
+		},
+	}
 
 	schedCfg := schedule.SchedulerCfg{
-		C:            mockedClock,
-		BaseInterval: baseInterval,
+		Cfg: cfg,
+		C:   mockedClock,
 		EvalAppliedFunc: func(alertDefKey models.AlertRuleKey, now time.Time) {
 			evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
 		},
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		RuleStore:               dbstore,
-		InstanceStore:           dbstore,
-		Logger:                  log.New("ngalert schedule test"),
-		Metrics:                 testMetrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
-		DisabledOrgs: map[int64]struct{}{
-			disabledOrgID: {},
-		},
+		RuleStore:     dbstore,
+		InstanceStore: dbstore,
+		Logger:        log.New("ngalert schedule test"),
+		Metrics:       testMetrics.GetSchedulerMetrics(),
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	appUrl := &url.URL{
