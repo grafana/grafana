@@ -206,7 +206,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   targetContainsTemplate(target: SQLQuery) {
     let queryWithoutMacros = target.rawSql;
     MACRO_NAMES.forEach((value) => {
-      queryWithoutMacros = queryWithoutMacros?.replace(value, '') || '';
+      queryWithoutMacros = queryWithoutMacros?.replace(value, '') || queryWithoutMacros;
     });
     return this.templateSrv.containsTemplate(queryWithoutMacros);
   }
