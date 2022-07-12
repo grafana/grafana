@@ -51,3 +51,7 @@ type CreateCorrelationCommand struct {
 type DeleteCorrelationsBySourceUIDCommand struct {
 	SourceUID string
 }
+
+type DeleteCorrelationsByTargetUIDCommand struct {
+	TargetUID string
+}

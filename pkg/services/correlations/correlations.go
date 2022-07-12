@@ -4,12 +4,14 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister, datasourceService datasources.DataSourceService) *CorrelationsService {
+func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister, datasourceService datasources.DataSourceService, bus bus.Bus) *CorrelationsService {
 	s := &CorrelationsService{
 		SQLStore:          sqlStore,
 		RouteRegister:     routeRegister,
@@ -18,6 +20,8 @@ func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegi
 	}
 
 	s.registerAPIEndpoints()
+
+	bus.AddEventListener(s.handleDatasourceDeletion)
 
 	return s
 }
@@ -40,4 +44,16 @@ func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCo
 
 func (s CorrelationsService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.deleteCorrelationsBySourceUID(ctx, cmd)
+}
+
+func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
+	s.deleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{
+		SourceUID: event.UID,
+	})
+
+	s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
+		TargetUID: event.UID,
+	})
+
+	return nil
 }

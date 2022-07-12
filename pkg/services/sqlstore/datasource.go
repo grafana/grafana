@@ -123,8 +123,6 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 			}
 		}
 
-		// TODO: delete correlations having sourceUID or targetUID = cmd.UID
-
 		// Publish data source deletion event
 		sess.publishAfterCommit(&events.DataSourceDeleted{
 			Timestamp: time.Now(),
