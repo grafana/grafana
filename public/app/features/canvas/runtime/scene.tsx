@@ -330,6 +330,9 @@ export class Scene {
       .on('dragStart', (event) => {
         this.shouldSkipDataUpdate = true;
       })
+      .on('dragGroupStart', (event) => {
+        this.shouldSkipDataUpdate = true;
+      })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyDrag(event);
@@ -339,6 +342,17 @@ export class Scene {
           const targetedElement = this.findElementByTarget(event.target);
           targetedElement!.applyDrag(event);
         });
+      })
+      .on('dragGroupEnd', (e) => {
+        e.events.forEach((event) => {
+          const targetedElement = this.findElementByTarget(event.target);
+          if (targetedElement) {
+            targetedElement.setPlacementFromConstraint();
+          }
+        });
+
+        this.moved.next(Date.now());
+        this.shouldSkipDataUpdate = false;
       })
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
