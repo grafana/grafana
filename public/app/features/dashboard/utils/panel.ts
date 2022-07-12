@@ -102,9 +102,9 @@ export const refreshPanel = (panel: PanelModel) => {
 };
 
 export const toggleLegend = (panel: PanelModel) => {
-  console.log('panel.options.legend', panel.options.legend);
-  // We need to set panel.legend defaults first
-  // panel.options.legend.showLegend = !panel.options.legend.showLegend;
+  panel.options.legend.showLegend === 'visible'
+    ? (panel.options.legend.showLegend = 'hidden')
+    : (panel.options.legend.showLegend = 'visible');
   refreshPanel(panel);
 };
 
