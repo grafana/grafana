@@ -103,16 +103,26 @@ async function fetchDashboard(
   }
 }
 
-const logQueryOnDashboardLoaded = (target: DataQuery, panel: PanelModel, collapsed: boolean, dashboardUid: string) => {
-  reportInteraction('grafana_dashboard_loaded', {
-    dashboard_id: dashboardUid,
-    panel_id: panel.id,
-    panel_type: panel.type,
-    hidden: !!target.hide,
-    collapsed: collapsed,
-    datasource: target.datasource?.type,
-    grafana_version: config.buildInfo.version,
-    query_type: target.queryType,
+const logQueryOnDashboardPanels = (panels: PanelModel[], dashboardId: string, collapsed?: boolean): void => {
+  panels.forEach((panel) => {
+    // panel is collapsed or parent is
+    collapsed = !!panel.collapsed || !!collapsed;
+    if (panel.panels) {
+      logQueryOnDashboardPanels(panel.panels, dashboardId, collapsed);
+    } else {
+      panel.targets.forEach((target) => {
+        reportInteraction('grafana_dashboard_loaded', {
+          dashboard_id: dashboardId,
+          panel_id: panel.id,
+          panel_type: panel.type,
+          hidden: !!target.hide,
+          collapsed: collapsed,
+          datasource: target.datasource?.type,
+          grafana_version: config.buildInfo.version,
+          query_type: target.queryType,
+        });
+      });
+    }
   });
 };
 
@@ -226,19 +236,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // yay we are done
     const dashboardId = dashDTO.dashboard.uid;
     if (dashboardId) {
-      dashboard.panels.forEach((panel) => {
-        if (panel.panels) {
-          panel.panels.forEach((subPanel) => {
-            subPanel.targets.forEach((target) => {
-              logQueryOnDashboardLoaded(target, subPanel, !!panel.collapsed, dashboardId);
-            });
-          });
-        } else {
-          panel.targets.forEach((target) => {
-            logQueryOnDashboardLoaded(target, panel, !!panel.collapsed, dashboardId);
-          });
-        }
-      });
+      logQueryOnDashboardPanels(dashboard.panels, dashboardId);
     }
     dispatch(dashboardInitCompleted(dashboard));
   };
