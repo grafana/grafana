@@ -126,9 +126,8 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
                 <br />
                 <br />
                 Selecting <i>Certificate content</i> will allow you to configure certificates by specifying its content.
-                The conTrollhättantent will be stored encrypted in Grafana&apos;s database. When connecting to the
-                database the certificates will be written as files to Grafana&apos;s configured data path on the local
-                file system.
+                The content will be stored encrypted in Grafana&apos;s database. When connecting to the database the
+                certificates will be written as files to Grafana&apos;s configured data path on the local file system.
               </span>
             }
           >
