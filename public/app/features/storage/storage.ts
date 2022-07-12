@@ -158,9 +158,8 @@ class SimpleStorage implements GrafanaStorage {
     if (options.message) {
       formData.append('message', options.message);
     }
-    formData.append('path', options.dashboard.uid);
-    formData.append('folder', options.dashboard.uid); // <<< not used when path is set!
     formData.append('overwriteExistingFile', options.overwrite === false ? 'false' : 'true');
+    formData.append('file.path', options.dashboard.uid);
     formData.append('file', blob);
     const res = await fetch('/api/storage/upload', {
       method: 'POST',
