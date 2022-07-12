@@ -345,10 +345,6 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.Signe
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
 	return func(ds *datasources.DataSource) (map[string]string, error) {
-		decryptedJsonData, err := s.dataSourceService.DecryptedValues(ctx, ds)
-		if err != nil {
-			s.log.Error("Failed to decrypt secure json data", "error", err)
-		}
-		return decryptedJsonData, err
+		return s.dataSourceService.DecryptedValues(ctx, ds)
 	}
 }
