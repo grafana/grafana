@@ -13,6 +13,4 @@ export interface MySQLOptions extends DataSourceJsonData {
   timeInterval: string;
 }
 
-export type ResultFormat = 'time_series' | 'table';
-
 export interface MySQLQuery extends SQLQuery {}
