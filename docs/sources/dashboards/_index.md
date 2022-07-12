@@ -18,6 +18,7 @@ Before you begin, ensure that you have configured a data source. See also:
 - [Dashboard folders]({{< relref "dashboard-folders/" >}})
 - [Create dashboard]({{< relref "dashboard-create/" >}})
 - [Manage dashboards]({{< relref "dashboard-manage/" >}})
+- [Public dashboards]({{< relref "dashboard-public/" >}})
 - [Annotations]({{< relref "annotations/" >}})
 - [Playlist]({{< relref "playlist/" >}})
 - [Reporting]({{< relref "reporting/" >}})
