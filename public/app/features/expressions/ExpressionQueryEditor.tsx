@@ -50,7 +50,7 @@ function useExpressionsCache() {
 }
 
 export function ExpressionQueryEditor(props: Props) {
-  const { query, onChange } = props;
+  const { query, queries, onRunQuery, onChange } = props;
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
 
   useEffect(() => {
@@ -68,7 +68,6 @@ export function ExpressionQueryEditor(props: Props) {
   );
 
   const renderExpressionType = () => {
-    const { onChange, onRunQuery, query, queries } = props;
     const refIds = queries!.filter((q) => query.refId !== q.refId).map((q) => ({ value: q.refId, label: q.refId }));
 
     switch (query.type) {
