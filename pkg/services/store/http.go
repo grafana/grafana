@@ -108,7 +108,10 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		return errFileTooBig
 	}
 
-	path := folder + "/" + fileHeader.Filename
+	path, ok := getMultipartFormValue(c.Req, "path")
+	if !ok {
+		path = folder + "/" + fileHeader.Filename
+	}
 
 	mimeType := http.DetectContentType(data)
 

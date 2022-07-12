@@ -152,7 +152,34 @@ class SimpleStorage implements GrafanaStorage {
   async saveDashboard(options: SaveDashboardCommand): Promise<any> {
     console.log('SAVE', options);
 
+    const blob = new Blob([JSON.stringify(options.dashboard)], {
+      type: 'application/json',
+    });
+
+    const formData = new FormData();
+    if (options.message) {
+      formData.append('message', options.message);
+    }
+    formData.append('path', options.dashboard.uid);
+    formData.append('folder', options.dashboard.uid); // <<< not used when path is set!
+    formData.append('overwriteExistingFile', options.overwrite === false ? 'false' : 'true');
+    formData.append('file', blob);
+    const res = await fetch('/api/storage/upload', {
+      method: 'POST',
+      body: formData,
+    });
     alert('TODO... save');
+
+    let body = (await res.json()) as UploadReponse;
+    if (!body) {
+      body = {} as any;
+    }
+    body.status = res.status;
+    body.statusText = res.statusText;
+    if (res.status !== 200 && !body.err) {
+      body.err = true;
+    }
+    return body;
 
     // TODO... actually save!
     return {
