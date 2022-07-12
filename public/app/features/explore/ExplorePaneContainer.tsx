@@ -2,11 +2,9 @@ import { css, cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { compose } from 'redux';
 
-import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
+import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Themeable2, withTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
@@ -25,7 +23,7 @@ import Explore from './Explore';
 import { initializeExplore, refreshExplore } from './state/explorePane';
 import { lastSavedUrl, cleanupPaneAction } from './state/main';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = () => {
   return {
     explore: css`
       display: flex;
@@ -37,16 +35,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
-//   // TODO (LMKB): Ask someone whether .explore in .explore is used and if yes whether this is written in the right way
-// 'explore &' {
-//   border-left: 1px dotted ${theme.colors.background.secondary};
-// }
 
-interface OwnProps extends Themeable2 {
+interface OwnProps {
   exploreId: ExploreId;
   urlQuery: string;
   split: boolean;
-  theme: GrafanaTheme2;
 }
 
 interface Props extends OwnProps, ConnectedProps<typeof connector> {}
@@ -108,8 +101,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme } = this.props;
-    const styles = getStyles(theme);
+    const styles = getStyles();
     const exploreClass = this.props.split ? cx(styles.explore, styles.exploreSplit) : cx(styles.explore);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
@@ -151,4 +143,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const ExplorePaneContainer = compose(connector, withTheme2)(ExplorePaneContainerUnconnected);
+export const ExplorePaneContainer = connector(ExplorePaneContainerUnconnected);
