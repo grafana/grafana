@@ -140,7 +140,7 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
 
-    if (data !== nextProps.data && !this.scene.shouldSkipDataUpdate) {
+    if (data !== nextProps.data && !this.scene.ignoreDataUpdate) {
       this.scene.updateData(nextProps.data);
       changed = true;
     }

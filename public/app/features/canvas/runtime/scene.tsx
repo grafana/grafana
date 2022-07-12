@@ -60,7 +60,7 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   skipNextSelectionBroadcast = false;
-  shouldSkipDataUpdate = false;
+  ignoreDataUpdate = false;
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
@@ -328,10 +328,10 @@ export class Scene {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })
       .on('dragStart', (event) => {
-        this.shouldSkipDataUpdate = true;
+        this.ignoreDataUpdate = true;
       })
       .on('dragGroupStart', (event) => {
-        this.shouldSkipDataUpdate = true;
+        this.ignoreDataUpdate = true;
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -352,7 +352,7 @@ export class Scene {
         });
 
         this.moved.next(Date.now());
-        this.shouldSkipDataUpdate = false;
+        this.ignoreDataUpdate = false;
       })
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -361,7 +361,7 @@ export class Scene {
         }
 
         this.moved.next(Date.now());
-        this.shouldSkipDataUpdate = false;
+        this.ignoreDataUpdate = false;
       })
       .on('resizeStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
