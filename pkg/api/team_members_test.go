@@ -31,6 +31,10 @@ func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int
 	return t.result
 }
 
+func (t *TeamGuardianMock) DeleteByUser(ctx context.Context, userID int64) error {
+	return t.result
+}
+
 func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	const testOrgID int64 = 1
 	var userCmd user.CreateUserCommand
