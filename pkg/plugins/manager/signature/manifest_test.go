@@ -181,10 +181,18 @@ func Test_urlMatch(t *testing.T) {
 			shouldMatch: false,
 		},
 		{
+			name: "Support double wildcard matching multiple paths",
+			args: args{
+				specs:  []string{"https://www.example.com/**"},
+				target: "https://www.example.com/other/grafana",
+			},
+			shouldMatch: true,
+		},
+		{
 			name: "Do not support subdomain mismatch",
 			args: args{
 				specs:  []string{"https://www.test.example.com/grafana/docs"},
-				target: "https://www.example.com/grafana/grafana/docs",
+				target: "https://www.test.example.com/grafana/grafana/docs",
 			},
 			shouldMatch: false,
 		},
@@ -207,8 +215,8 @@ func Test_urlMatch(t *testing.T) {
 		{
 			name: "Do not support path mismatch",
 			args: args{
-				specs:  []string{"https://www.example.com/grafana"},
-				target: "https://www.example.com/grafana1",
+				specs:  []string{"https://example.com/grafana"},
+				target: "https://example.com/grafana1",
 			},
 			shouldMatch: false,
 		},
@@ -227,6 +235,38 @@ func Test_urlMatch(t *testing.T) {
 				target: "https://www.example.com/grafana1",
 			},
 			shouldMatch: false,
+		},
+		{
+			name: "Support exact match",
+			args: args{
+				specs:  []string{"https://example.com/test"},
+				target: "https://example.com/test",
+			},
+			shouldMatch: true,
+		},
+		{
+			name: "Does not support scheme mismatch",
+			args: args{
+				specs:  []string{"https://test.example.com/grafana"},
+				target: "http://test.example.com/grafana",
+			},
+			shouldMatch: false,
+		},
+		{
+			name: "Support trailing slash in spec",
+			args: args{
+				specs:  []string{"https://example.com/"},
+				target: "https://example.com",
+			},
+			shouldMatch: true,
+		},
+		{
+			name: "Support trailing slash in target",
+			args: args{
+				specs:  []string{"https://example.com"},
+				target: "https://example.com/",
+			},
+			shouldMatch: true,
 		},
 	}
 	for _, tt := range tests {

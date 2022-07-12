@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -146,18 +147,12 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 
 	// Validate that private is running within defined root URLs
 	if manifest.SignatureType == plugins.PrivateSignature {
-		appURL, err := url.Parse(setting.AppUrl)
-		if err != nil {
-			mlog.Warn("Could not parse Grafana app URL", "plugin", plugin.ID, "appURL", appURL)
-			return plugins.Signature{}, err
-		}
-
-		if match, err := urlMatch(manifest.RootURLs, appURL.String()); err != nil {
+		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl); err != nil {
 			mlog.Warn("Could verify if root URLs match", "plugin", plugin.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err
 		} else if !match {
 			mlog.Warn("Could not find root URL that matches running application URL", "plugin", plugin.ID,
-				"appUrl", appURL, "rootUrls", manifest.RootURLs)
+				"appUrl", setting.AppUrl, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
 				Status: plugins.SignatureInvalid,
 			}, nil
@@ -289,12 +284,29 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 }
 
 func urlMatch(specs []string, target string) (bool, error) {
+	targetURL, err := url.Parse(target)
+	if err != nil {
+		return false, err
+	}
+
 	for _, spec := range specs {
+		specURL, err := url.Parse(spec)
+		if err != nil {
+			return false, err
+		}
+
+		if specURL.Scheme == targetURL.Scheme && specURL.Host == targetURL.Host &&
+			path.Clean(specURL.RequestURI()) == path.Clean(targetURL.RequestURI()) {
+			return true, nil
+		}
+
 		sp, err := glob.Compile(spec, '/', '.')
 		if err != nil {
 			return false, err
 		}
-		return sp.Match(target), nil
+		if match := sp.Match(target); match {
+			return true, nil
+		}
 	}
 	return false, nil
 }
