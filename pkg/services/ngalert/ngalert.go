@@ -129,20 +129,16 @@ func (ng *AlertNG) init() error {
 	}
 
 	schedCfg := schedule.SchedulerCfg{
-		C:                       clock.New(),
-		BaseInterval:            ng.Cfg.UnifiedAlerting.BaseInterval,
-		Logger:                  ng.Log,
-		MaxAttempts:             ng.Cfg.UnifiedAlerting.MaxAttempts,
-		Evaluator:               eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
-		InstanceStore:           store,
-		RuleStore:               store,
-		AdminConfigStore:        store,
-		OrgStore:                store,
-		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
-		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
-		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		MinRuleInterval:         ng.Cfg.UnifiedAlerting.MinInterval,
+		Cfg:              ng.Cfg.UnifiedAlerting,
+		C:                clock.New(),
+		Logger:           ng.Log,
+		Evaluator:        eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
+		InstanceStore:    store,
+		RuleStore:        store,
+		AdminConfigStore: store,
+		OrgStore:         store,
+		MultiOrgNotifier: ng.MultiOrgAlertmanager,
+		Metrics:          ng.Metrics.GetSchedulerMetrics(),
 	}
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)

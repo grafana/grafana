@@ -25,6 +25,8 @@ interface ExportInclude {
   auth: boolean;
   ds: boolean;
   dash: boolean;
+  dash_thumbs: boolean;
+  alerts: boolean;
   services: boolean;
   usage: boolean;
   anno: boolean;
@@ -44,6 +46,8 @@ const includAll: ExportInclude = {
   auth: true,
   ds: true,
   dash: true,
+  dash_thumbs: true,
+  alerts: true,
   services: true,
   usage: true,
   anno: true,
