@@ -41,6 +41,6 @@ export const assertRootUrlIsValid = (rootUrl: string) => {
   try {
     new URL(rootUrl);
   } catch (err) {
-    throw new Error(`${rootUrl} is not a valid URL yo`);
+    throw new Error(`${rootUrl} is not a valid URL`);
   }
 };
