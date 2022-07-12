@@ -67,8 +67,7 @@ Perf
 
 As of Grafana 9.0, a resource URI is constructed to identify resources using the resource picker. If a dashboard had been created prior to Grafana 9.0 then any queries utilising the prior resource picking mechanism will be migrated to resource URIs.
 
-This presents an issue as some resource types make use of nested namespaces and resource names e.g:
-`Microsoft.Storage/tableServices` and `storageAccount/default` or `Microsoft.Sql/servers/databases` and `serverName/databaseName`. There are possible cases where template variables cannot be used as a malformed resource URI may be constructed.
+Some resource types use nested namespaces and resource names, such as `Microsoft.Storage/tableServices` and `storageAccount/default`, or `Microsoft.Sql/servers/databases` and `serverName/databaseName`. Such template variables cannot be used because the result could be a malformed resource URI.
 
 ### Supported cases
 
