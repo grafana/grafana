@@ -1,5 +1,3 @@
-import { map as _map } from 'lodash';
-
 import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
