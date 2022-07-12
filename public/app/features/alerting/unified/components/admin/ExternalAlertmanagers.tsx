@@ -223,8 +223,10 @@ export const ExternalAlertmanagers = () => {
               </Card>
             ))}
           </div>
-          <Button>Add More</Button>
-          <Select options={availableExternalDsToPassAlerts} onChange={() => {}} />
+          <div className={styles.externalDsAddRow}>
+            <Button>Add More</Button>
+            <Select options={availableExternalDsToPassAlerts} onChange={() => {}} />
+          </div>
 
           <div>
             <Field
@@ -278,12 +280,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   externalDs: css`
     display: grid;
     gap: ${theme.spacing(1)};
-    padding-bottom: ${theme.spacing(3)};
+    padding-bottom: ${theme.spacing(2)};
   `,
-  externalDsItem: css`
+  externalDsAddRow: css`
     display: flex;
     flex-direction: row;
     gap: ${theme.spacing(2)};
     align-items: center;
+    padding-bottom: ${theme.spacing(3)};
   `,
 });
