@@ -19,12 +19,11 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
   render() {
     const { row, showDetectedFields, getFieldLinks, wrapLogMessage } = this.props;
     const fields = getAllFields(row, getFieldLinks);
-    const wrapClassName = cx(
-      wrapLogMessage &&
-        css`
-          white-space: pre-wrap;
-        `
-    );
+    const wrapClassName = wrapLogMessage
+      ? ''
+      : cx(css`
+          white-space: nowrap;
+        `);
 
     const line = showDetectedFields
       .map((parsedKey) => {
