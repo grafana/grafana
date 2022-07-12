@@ -287,7 +287,16 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 }
 
 func TestGroupQueriesByPanelId(t *testing.T) {
-	t.Run("can extract queries from dashboard that has no datasource on panel targets", func(t *testing.T) {
+	t.Run("can extract queries from dashboard with panel datasource string that has no datasource on panel targets", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(oldStyleDashboard))
+		require.NoError(t, err)
+		queries := GroupQueriesByPanelId(json)
+
+		panelId := int64(2)
+		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
+		require.Len(t, queriesByDatasource[0], 1)
+	})
+	t.Run("can extract queries from dashboard with panel json datasource that has no datasource on panel targets", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithTargetsWithNoDatasources))
 		require.NoError(t, err)
 		queries := GroupQueriesByPanelId(json)
@@ -361,7 +370,10 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		query, err := queries[2][0].MarshalJSON()
 		require.NoError(t, err)
 		require.JSONEq(t, `{
-            "datasource": "_yxMP8Ynk",
+            "datasource": {
+				"uid": "_yxMP8Ynk",
+				"type": "public-ds"
+			},
             "exemplar": true,
             "expr": "go_goroutines{job=\"$job\"}",
             "interval": "",
