@@ -1,5 +1,4 @@
-﻿import { config } from '@grafana/runtime';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+﻿import { getBackendSrv } from 'app/core/services/backend_srv';
 import store from 'app/core/store';
 import { API_KEYS_MIGRATION_INFO_STORAGE_KEY } from 'app/features/serviceaccounts/constants';
 import { ApiKey, ThunkResult } from 'app/types';
@@ -64,11 +63,8 @@ export function migrateAll(): ThunkResult<void> {
 
 export function getApiKeysMigrationStatus(): ThunkResult<void> {
   return async (dispatch) => {
-    // TODO: remove when service account enabled by default (or use another way to detect if it's enabled)
-    if (config.featureToggles.serviceAccounts) {
-      const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
-      dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
-    }
+    const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
+    dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
   };
 }
 

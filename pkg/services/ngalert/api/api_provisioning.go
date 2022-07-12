@@ -25,7 +25,7 @@ type ProvisioningSrv struct {
 }
 
 type ContactPointService interface {
-	GetContactPoints(ctx context.Context, orgID int64) ([]definitions.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
@@ -40,6 +40,7 @@ type TemplateService interface {
 type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance) error
+	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
 }
 
 type MuteTimingService interface {
@@ -85,8 +86,20 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *models.ReqContext, tree defini
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
 }
 
+func (srv *ProvisioningSrv) RouteResetPolicyTree(c *models.ReqContext) response.Response {
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusAccepted, tree)
+}
+
 func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response.Response {
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), c.OrgId)
+	q := provisioning.ContactPointQuery{
+		Name:  c.Query("name"),
+		OrgID: c.OrgId,
+	}
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
