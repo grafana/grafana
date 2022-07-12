@@ -32,6 +32,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 1 1 auto;
       flex-direction: column;
     `,
+    exploreSplit: css`
+      width: 50%;
+    `,
   };
 };
 //   // TODO (LMKB): Ask someone whether .explore in .explore is used and if yes whether this is written in the right way
@@ -107,7 +110,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   render() {
     const { theme } = this.props;
     const styles = getStyles(theme);
-    const exploreClass = this.props.split ? cx(styles.explore, 'explore-split') : cx(styles.explore);
+    const exploreClass = this.props.split ? cx(styles.explore, styles.exploreSplit) : cx(styles.explore);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
         {this.props.initialized && <Explore exploreId={this.props.exploreId} />}

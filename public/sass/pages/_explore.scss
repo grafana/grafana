@@ -20,10 +20,6 @@
 .explore-wrapper {
   display: flex;
   height: 100%;
-
-  > .explore-split {
-    width: 50%;
-  }
 }
 
 // TODO: this is used in Loki & Prometheus, move it
