@@ -1,9 +1,8 @@
 import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
-
-import { SqlDatasource } from '../../../features/plugins/sql/datasource/SqlDatasource';
-import { DB, ResponseParser, SQLOptions, SQLQuery } from '../../../features/plugins/sql/types';
+import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
+import { DB, ResponseParser, SQLOptions, SQLQuery } from 'app/features/plugins/sql/types';
 
 import MySQLQueryModel from './MySqlQueryModel';
 import MySqlResponseParser from './MySqlResponseParser';

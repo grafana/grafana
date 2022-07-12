@@ -1,6 +1,5 @@
 import { DataSourceJsonData } from '@grafana/data';
-
-import { SQLQuery } from '../../../features/plugins/sql/types';
+import { SQLQuery } from 'app/features/plugins/sql/types';
 export interface MysqlQueryForInterpolation {
   alias?: any;
   format?: any;

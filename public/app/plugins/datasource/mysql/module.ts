@@ -1,12 +1,11 @@
 import { DataSourcePlugin } from '@grafana/data';
-
 import {
   createChangeHandler,
   createResetHandler,
   PasswordFieldEnum,
-} from '../../../features/datasources/utils/passwordHandlers';
-import { SqlQueryEditor } from '../../../features/plugins/sql/components/QueryEditor';
-import { SQLQuery } from '../../../features/plugins/sql/types';
+} from 'app/features/datasources/utils/passwordHandlers';
+import { SqlQueryEditor } from 'app/features/plugins/sql/components/QueryEditor';
+import { SQLQuery } from 'app/features/plugins/sql/types';
 
 import { MySqlDatasource } from './MySqlDatasource';
 

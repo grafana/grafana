@@ -11,9 +11,8 @@ import {
   TokenType,
 } from '@grafana/experimental';
 import { PositionContext } from '@grafana/experimental/dist/sql-editor/types';
-
-import { AGGREGATE_FNS, OPERATORS } from '../../../features/plugins/sql/constants';
-import { DB, MetaDefinition, SQLQuery } from '../../../features/plugins/sql/types';
+import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
+import { DB, MetaDefinition, SQLQuery } from 'app/features/plugins/sql/types';
 
 interface CompletionProviderGetterArgs {
   getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;
