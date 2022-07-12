@@ -4,7 +4,7 @@ import { connect, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 

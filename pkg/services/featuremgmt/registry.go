@@ -228,6 +228,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "scenes",
+			Description:  "Experimental framework to build interactive dashboards",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "useLegacyHeatmapPanel",
 			Description: "Continue to use the angular/flot based heatmap panel",
 			State:       FeatureStateStable,
@@ -237,6 +243,12 @@ var (
 			Description:  "Use grafana-experimental UI in Cloud Monitoring",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "disableSecretsCompatibility",
+			Description:     "Disable duplicated secret storage in legacy tables",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",

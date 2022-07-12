@@ -167,6 +167,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagScenes
+	// Experimental framework to build interactive dashboards
+	FlagScenes = "scenes"
+
 	// FlagUseLegacyHeatmapPanel
 	// Continue to use the angular/flot based heatmap panel
 	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
@@ -174,6 +178,10 @@ const (
 	// FlagCloudMonitoringExperimentalUI
 	// Use grafana-experimental UI in Cloud Monitoring
 	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
+
+	// FlagDisableSecretsCompatibility
+	// Disable duplicated secret storage in legacy tables
+	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
 
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown

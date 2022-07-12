@@ -9,8 +9,11 @@ import { IconName } from '../../types/icon';
 import { OnTagClick, Tag } from './Tag';
 
 export interface Props {
+  /** Maximum number of the tags to display */
   displayMax?: number;
+  /** Names of the tags to display */
   tags: string[];
+  /** Callback when the tag is clicked */
   onClick?: OnTagClick;
   /** Custom styles for the wrapper component */
   className?: string;
@@ -33,8 +36,8 @@ export const TagList = memo(
             <Tag name={tag} icon={icon} onClick={onClick} aria-label={getAriaLabel?.(tag, i)} data-tag-id={i} />
           </li>
         ))}
-        {displayMax && displayMax > 0 && numTags - 1 > 0 && (
-          <span className={styles.moreTagsLabel}>+ {numTags - 1}</span>
+        {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
+          <span className={styles.moreTagsLabel}>+ {numTags - displayMax}</span>
         )}
       </ul>
     );

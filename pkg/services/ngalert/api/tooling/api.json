@@ -167,71 +167,25 @@
   },
   "AlertRule": {
    "properties": {
-    "annotations": {
+    "Annotations": {
      "additionalProperties": {
       "type": "string"
      },
-     "example": {
-      "runbook_url": "https://supercoolrunbook.com/page/13"
-     },
      "type": "object"
     },
-    "condition": {
-     "example": "A",
+    "Condition": {
      "type": "string"
     },
-    "data": {
-     "example": [
-      {
-       "datasourceUid": "-100",
-       "model": {
-        "conditions": [
-         {
-          "evaluator": {
-           "params": [
-            0,
-            0
-           ],
-           "type": "gt"
-          },
-          "operator": {
-           "type": "and"
-          },
-          "query": {
-           "params": []
-          },
-          "reducer": {
-           "params": [],
-           "type": "avg"
-          },
-          "type": "query"
-         }
-        ],
-        "datasource": {
-         "type": "__expr__",
-         "uid": "__expr__"
-        },
-        "expression": "1 == 1",
-        "hide": false,
-        "intervalMs": 1000,
-        "maxDataPoints": 43200,
-        "refId": "A",
-        "type": "math"
-       },
-       "queryType": "",
-       "refId": "A",
-       "relativeTimeRange": {
-        "from": 0,
-        "to": 0
-       }
-      }
-     ],
+    "DashboardUID": {
+     "type": "string"
+    },
+    "Data": {
      "items": {
       "$ref": "#/definitions/AlertQuery"
      },
      "type": "array"
     },
-    "execErrState": {
+    "ExecErrState": {
      "enum": [
       "Alerting",
       "Error",
@@ -239,27 +193,27 @@
      ],
      "type": "string"
     },
-    "folderUID": {
-     "example": "project_x",
-     "type": "string"
-    },
-    "for": {
+    "For": {
      "$ref": "#/definitions/Duration"
     },
-    "id": {
+    "ID": {
      "format": "int64",
      "type": "integer"
     },
-    "labels": {
+    "IntervalSeconds": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Labels": {
      "additionalProperties": {
       "type": "string"
      },
-     "example": {
-      "team": "sre-team-1"
-     },
      "type": "object"
     },
-    "noDataState": {
+    "NamespaceUID": {
+     "type": "string"
+    },
+    "NoDataState": {
      "enum": [
       "Alerting",
       "NoData",
@@ -267,48 +221,61 @@
      ],
      "type": "string"
     },
-    "orgID": {
+    "OrgID": {
      "format": "int64",
      "type": "integer"
     },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
+    "PanelID": {
+     "format": "int64",
+     "type": "integer"
     },
-    "ruleGroup": {
-     "example": "eval_group_1",
-     "maxLength": 190,
-     "minLength": 1,
+    "RuleGroup": {
      "type": "string"
     },
-    "title": {
-     "example": "Always firing",
-     "maxLength": 190,
-     "minLength": 1,
+    "RuleGroupIndex": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Title": {
      "type": "string"
     },
-    "uid": {
+    "UID": {
      "type": "string"
     },
-    "updated": {
+    "Updated": {
      "format": "date-time",
-     "readOnly": true,
      "type": "string"
+    },
+    "Version": {
+     "format": "int64",
+     "type": "integer"
     }
    },
-   "required": [
-    "orgID",
-    "folderUID",
-    "ruleGroup",
-    "title",
-    "condition",
-    "data",
-    "noDataState",
-    "execErrState",
-    "for"
-   ],
+   "title": "AlertRule is the model for alert rules in unified alerting.",
    "type": "object"
   },
   "AlertRuleGroup": {
+   "properties": {
+    "folderUid": {
+     "type": "string"
+    },
+    "interval": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "rules": {
+     "items": {
+      "$ref": "#/definitions/AlertRule"
+     },
+     "type": "array"
+    },
+    "title": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "AlertRuleGroupMetadata": {
    "properties": {
     "interval": {
      "format": "int64",
@@ -469,30 +436,6 @@
     "$ref": "#/definitions/EmbeddedContactPoint"
    },
    "type": "array"
-  },
-  "DashboardAclUpdateItem": {
-   "properties": {
-    "permission": {
-     "$ref": "#/definitions/PermissionType"
-    },
-    "role": {
-     "enum": [
-      "Viewer",
-      "Editor",
-      "Admin"
-     ],
-     "type": "string"
-    },
-    "teamId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "userId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
   },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -1336,48 +1279,6 @@
    },
    "type": "array"
   },
-  "MetricRequest": {
-   "properties": {
-    "debug": {
-     "type": "boolean"
-    },
-    "from": {
-     "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
-     "example": "now-1h",
-     "type": "string"
-    },
-    "queries": {
-     "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
-     "example": [
-      {
-       "datasource": {
-        "uid": "PD8C576611E62080A"
-       },
-       "format": "table",
-       "intervalMs": 86400000,
-       "maxDataPoints": 1092,
-       "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
-       "refId": "A"
-      }
-     ],
-     "items": {
-      "$ref": "#/definitions/Json"
-     },
-     "type": "array"
-    },
-    "to": {
-     "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
-     "example": "now",
-     "type": "string"
-    }
-   },
-   "required": [
-    "from",
-    "to",
-    "queries"
-   ],
-   "type": "object"
-  },
   "MonthRange": {
    "properties": {
     "Begin": {
@@ -1422,34 +1323,6 @@
      "$ref": "#/definitions/GettableRuleGroupConfig"
     },
     "type": "array"
-   },
-   "type": "object"
-  },
-  "NavLink": {
-   "properties": {
-    "id": {
-     "type": "string"
-    },
-    "target": {
-     "type": "string"
-    },
-    "text": {
-     "type": "string"
-    },
-    "url": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "NavbarPreference": {
-   "properties": {
-    "savedItems": {
-     "items": {
-      "$ref": "#/definitions/NavLink"
-     },
-     "type": "array"
-    }
    },
    "type": "object"
   },
@@ -1668,52 +1541,8 @@
    },
    "type": "object"
   },
-  "PatchPrefsCmd": {
-   "properties": {
-    "homeDashboardId": {
-     "default": 0,
-     "description": "The numerical :id of a favorited dashboard",
-     "format": "int64",
-     "type": "integer"
-    },
-    "homeDashboardUID": {
-     "type": "string"
-    },
-    "locale": {
-     "type": "string"
-    },
-    "navbar": {
-     "$ref": "#/definitions/NavbarPreference"
-    },
-    "queryHistory": {
-     "$ref": "#/definitions/QueryHistoryPreference"
-    },
-    "theme": {
-     "enum": [
-      "light",
-      "dark"
-     ],
-     "type": "string"
-    },
-    "timezone": {
-     "enum": [
-      "utc",
-      "browser"
-     ],
-     "type": "string"
-    },
-    "weekStart": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "PermissionDenied": {
    "type": "object"
-  },
-  "PermissionType": {
-   "format": "int64",
-   "type": "integer"
   },
   "Point": {
    "properties": {
@@ -2032,14 +1861,6 @@
     },
     "user_key": {
      "$ref": "#/definitions/Secret"
-    }
-   },
-   "type": "object"
-  },
-  "QueryHistoryPreference": {
-   "properties": {
-    "homeTab": {
-     "type": "string"
     }
    },
    "type": "object"
@@ -2773,57 +2594,6 @@
    "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
-  "UpdateDashboardAclCommand": {
-   "properties": {
-    "items": {
-     "items": {
-      "$ref": "#/definitions/DashboardAclUpdateItem"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "UpdatePrefsCmd": {
-   "properties": {
-    "homeDashboardId": {
-     "default": 0,
-     "description": "The numerical :id of a favorited dashboard",
-     "format": "int64",
-     "type": "integer"
-    },
-    "homeDashboardUID": {
-     "type": "string"
-    },
-    "locale": {
-     "type": "string"
-    },
-    "navbar": {
-     "$ref": "#/definitions/NavbarPreference"
-    },
-    "queryHistory": {
-     "$ref": "#/definitions/QueryHistoryPreference"
-    },
-    "theme": {
-     "enum": [
-      "light",
-      "dark"
-     ],
-     "type": "string"
-    },
-    "timezone": {
-     "enum": [
-      "utc",
-      "browser"
-     ],
-     "type": "string"
-    },
-    "weekStart": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
    "type": "object"
@@ -3178,6 +2948,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -3233,7 +3004,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -3616,6 +3386,14 @@
   "/api/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
+    "parameters": [
+     {
+      "description": "Filter by name",
+      "in": "query",
+      "name": "name",
+      "type": "string"
+     }
+    ],
     "responses": {
      "200": {
       "description": "ContactPoints",
@@ -3730,6 +3508,38 @@
    }
   },
   "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+   "get": {
+    "operationId": "RouteGetAlertRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRuleGroup",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroup"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Get a rule group.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "put": {
     "consumes": [
      "application/json"
@@ -3752,15 +3562,15 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
+       "$ref": "#/definitions/AlertRuleGroupMetadata"
       }
      }
     ],
     "responses": {
      "200": {
-      "description": "AlertRuleGroup",
+      "description": "AlertRuleGroupMetadata",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
+       "$ref": "#/definitions/AlertRuleGroupMetadata"
       }
      },
      "400": {
@@ -3917,6 +3727,24 @@
    }
   },
   "/api/v1/provisioning/policies": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RouteResetPolicyTree",
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "summary": "Clears the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "get": {
     "operationId": "RouteGetPolicyTree",
     "responses": {

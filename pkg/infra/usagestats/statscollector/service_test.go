@@ -121,6 +121,24 @@ func TestFeatureUsageStats(t *testing.T) {
 
 func TestCollectingUsageStats(t *testing.T) {
 	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore.ExpectedDataSources = []*datasources.DataSource{
+		{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": "2.0.0",
+			}),
+		},
+		{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": "2.0.0",
+			}),
+		},
+		{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": "70.1.1",
+			}),
+		},
+	}
+
 	s := createService(t, &setting.Cfg{
 		ReportingEnabled:     true,
 		BuildVersion:         "5.0.0",
@@ -130,7 +148,8 @@ func TestCollectingUsageStats(t *testing.T) {
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
-	}, sqlStore)
+	}, sqlStore,
+		withDatasources(mockDatasourceService{datasources: sqlStore.ExpectedDataSources}))
 
 	s.startTime = time.Now().Add(-1 * time.Minute)
 
@@ -182,6 +201,45 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
 }
 
+func TestElasticStats(t *testing.T) {
+	sqlStore := mockstore.NewSQLStoreMock()
+
+	s := createService(t, &setting.Cfg{
+		ReportingEnabled:     true,
+		BuildVersion:         "5.0.0",
+		AnonymousEnabled:     true,
+		BasicAuthEnabled:     true,
+		LDAPEnabled:          true,
+		AuthProxyEnabled:     true,
+		Packaging:            "deb",
+		ReportingDistributor: "hosted-grafana",
+	}, sqlStore,
+		withDatasources(mockDatasourceService{datasources: sqlStore.ExpectedDataSources}))
+
+	sqlStore.ExpectedDataSources = []*datasources.DataSource{
+		{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": "2.0.0",
+			}),
+		},
+		{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": "2.0.0",
+			}),
+		},
+		{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": "70.1.1",
+			}),
+		},
+	}
+
+	metrics, err := s.collectElasticStats(context.Background())
+	require.NoError(t, err)
+
+	assert.EqualValues(t, 2, metrics["stats.ds."+datasources.DS_ES+".v2_0_0.count"])
+	assert.EqualValues(t, 1, metrics["stats.ds."+datasources.DS_ES+".v70_1_1.count"])
+}
 func TestDatasourceStats(t *testing.T) {
 	sqlStore := mockstore.NewSQLStoreMock()
 	s := createService(t, &setting.Cfg{}, sqlStore)
