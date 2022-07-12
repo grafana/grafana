@@ -13,13 +13,13 @@ export interface DashboardDTO {
 export interface DashboardMeta {
   slug?: string;
   uid?: string;
-  url?: string;
   canSave?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
   canShare?: boolean;
   canStar?: boolean;
   canAdmin?: boolean;
+  url?: string;
   folderId?: number;
   folderUid?: string;
   canMakeEditable?: boolean;
@@ -63,7 +63,7 @@ export interface DashboardDataDTO {
   };
   panels?: any[];
 
-  /** @deprecated -- system should move to never depend on id */
+  /** @deprecated -- components should key on uid rather than id */
   id?: number;
 }
 

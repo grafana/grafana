@@ -3,6 +3,8 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardDTO } from 'app/types';
 
+import { SaveDashboardCommand } from '../dashboard/components/SaveDashboard/types';
+
 import { UploadReponse } from './types';
 
 // Likely should be built into the search interface!
@@ -15,6 +17,7 @@ export interface GrafanaStorage {
 
   /** Temporary shim that will return a DashboardDTO shape for files in storage */
   getDashboard: (path: string) => Promise<DashboardDTO>;
+  saveDashboard: (options: SaveDashboardCommand) => Promise<any>;
 }
 
 class SimpleStorage implements GrafanaStorage {
@@ -144,6 +147,19 @@ class SimpleStorage implements GrafanaStorage {
           list: [],
         },
       },
+    };
+  }
+
+  async saveDashboard(options: SaveDashboardCommand): Promise<any> {
+    console.log('SAVE', options);
+
+    alert('TODO... save');
+
+    // TODO... actually save!
+    return {
+      uid: 'xxx',
+      id: 123,
+      url: '',
     };
   }
 }
