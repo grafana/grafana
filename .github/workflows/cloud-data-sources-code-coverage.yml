@@ -14,7 +14,7 @@ on:
 
 jobs:
   workflow-call:
-    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@d8106da761ffe37d76b26ea6d56442a2ef7ef7c3
+    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@ee501b6a6ccac9f3ff09641b12d7c386eff93db2
     with:
       frontend-path-regexp: public\/app\/plugins\/datasource\/(grafana-azure-monitor-datasource|cloud-monitoring|cloudwatch)
       backend-path-regexp: pkg\/tsdb\/(azuremonitor|cloudmonitoring|cloudwatch)
