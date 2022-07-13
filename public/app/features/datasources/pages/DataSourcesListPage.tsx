@@ -5,18 +5,18 @@ import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
-import { DataSourcesListPageContent } from './DataSourcesListPageContent';
+import { DataSourcesList } from '../components/DataSourcesList';
 
-export const DataSourcesListPage = () => {
+export function DataSourcesListPage(): React.ReactElement {
   const navModel = useSelector(({ navIndex }: StoreState) => getNavModel(navIndex, 'datasources'));
 
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <DataSourcesListPageContent />
+        <DataSourcesList />
       </Page.Contents>
     </Page>
   );
-};
+}
 
 export default DataSourcesListPage;
