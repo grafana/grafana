@@ -342,7 +342,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 
 		panelId, err := strconv.ParseInt(panelUid, 10, 64)
 		if err != nil {
-			st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+			st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "err", err.Error())
 			return
 		}
 

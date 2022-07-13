@@ -4,19 +4,13 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-var (
-	ServiceAccountFeatureToggleNotFound = "FeatureToggle serviceAccounts not found, try adding it to your custom.ini"
 )
 
 type ServiceAccountsService struct {
@@ -26,14 +20,15 @@ type ServiceAccountsService struct {
 
 func ProvideServiceAccountsService(
 	cfg *setting.Cfg,
-	store *sqlstore.SQLStore,
-	kvStore kvstore.KVStore,
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
 	usageStats usagestats.Service,
+	serviceAccountsStore serviceaccounts.Store,
+	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) (*ServiceAccountsService, error) {
+	database.InitMetrics()
 	s := &ServiceAccountsService{
-		store: database.NewServiceAccountsStore(store, kvStore),
+		store: serviceAccountsStore,
 		log:   log.New("serviceaccounts"),
 	}
 
@@ -43,14 +38,19 @@ func ProvideServiceAccountsService(
 
 	usageStats.RegisterMetricsFunc(s.store.GetUsageMetrics)
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, permissionService)
 	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	return s, nil
 }
 
-func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {
-	return sa.store.CreateServiceAccount(ctx, orgID, name)
+func (sa *ServiceAccountsService) Run(ctx context.Context) error {
+	sa.log.Debug("Started Service Account Metrics collection service")
+	return sa.store.RunMetricsCollection(ctx)
+}
+
+func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	return sa.store.CreateServiceAccount(ctx, orgID, saForm)
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {

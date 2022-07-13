@@ -12,7 +12,9 @@ export function getLayersExtent(layers: Collection<BaseLayer>): Extent {
       if (l instanceof LayerGroup) {
         return getLayerGroupExtent(l);
       } else if (l instanceof VectorLayer) {
-        return l.getSource().getExtent() ?? [];
+        return [l.getSource().getExtent()] ?? [];
+      } else {
+        return [];
       }
     })
     .reduce(extend, createEmpty());

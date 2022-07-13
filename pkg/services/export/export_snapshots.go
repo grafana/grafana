@@ -10,7 +10,7 @@ import (
 
 func exportSnapshots(helper *commitHelper, job *gitExportJob) error {
 	cmd := &dashboardsnapshots.GetDashboardSnapshotsQuery{
-		OrgId:        job.orgID,
+		OrgId:        helper.orgID,
 		Limit:        500000,
 		SignedInUser: nil,
 	}
@@ -29,7 +29,7 @@ func exportSnapshots(helper *commitHelper, job *gitExportJob) error {
 
 	gitcmd := commitOptions{
 		when:    time.Now(),
-		comment: "Export playlists",
+		comment: "Export snapshots",
 	}
 
 	for _, snapshot := range cmd.Result {

@@ -105,24 +105,26 @@ func exportAnnotations(helper *commitHelper, job *gitExportJob) error {
 			}
 		}
 
-		frame := data.NewFrame("", f_ID, f_DashboardID, f_PanelID, f_Epoch, f_EpochEnd, f_Text, f_Tags)
-		js, err := jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent(frame, "", "  ")
-		if err != nil {
-			return err
-		}
+		if f_ID.Len() > 0 {
+			frame := data.NewFrame("", f_ID, f_DashboardID, f_PanelID, f_Epoch, f_EpochEnd, f_Text, f_Tags)
+			js, err := jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent(frame, "", "  ")
+			if err != nil {
+				return err
+			}
 
-		err = helper.add(commitOptions{
-			body: []commitBody{
-				{
-					fpath: filepath.Join(helper.orgDir, "annotations", "annotations.json"),
-					body:  js, // TODO, pretty?
+			err = helper.add(commitOptions{
+				body: []commitBody{
+					{
+						fpath: filepath.Join(helper.orgDir, "annotations", "annotations.json"),
+						body:  js, // TODO, pretty?
+					},
 				},
-			},
-			when:    time.Now(),
-			comment: "Exported annotations",
-		})
-		if err != nil {
-			return err
+				when:    time.Now(),
+				comment: "Exported annotations",
+			})
+			if err != nil {
+				return err
+			}
 		}
 		return err
 	})

@@ -25,7 +25,7 @@ type ProvisioningSrv struct {
 }
 
 type ContactPointService interface {
-	GetContactPoints(ctx context.Context, orgID int64) ([]definitions.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
@@ -40,6 +40,7 @@ type TemplateService interface {
 type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance) error
+	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
 }
 
 type MuteTimingService interface {
@@ -85,8 +86,20 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *models.ReqContext, tree defini
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
 }
 
+func (srv *ProvisioningSrv) RouteResetPolicyTree(c *models.ReqContext) response.Response {
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusAccepted, tree)
+}
+
 func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response.Response {
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), c.OrgId)
+	q := provisioning.ContactPointQuery{
+		Name:  c.Query("name"),
+		OrgID: c.OrgId,
+	}
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -240,7 +253,7 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext, UID str
 	return response.JSON(http.StatusOK, definitions.NewAlertRule(rule, provenace))
 }
 
-func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.AlertRule) response.Response {
+func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -257,7 +270,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	return response.JSON(http.StatusCreated, ar)
 }
 
-func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.AlertRule, UID string) response.Response {
+func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule, UID string) response.Response {
 	updated := ar.UpstreamModel()
 	updated.UID = UID
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)

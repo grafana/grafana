@@ -41,6 +41,11 @@ func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datas
 	return nil
 }
 
+func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
+	query.Result = s.DataSources
+	return nil
+}
+
 func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	for _, datasource := range s.DataSources {
 		typeMatch := query.Type != "" && query.Type == datasource.Type
