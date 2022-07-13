@@ -113,7 +113,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
 				_, err := service.DeleteFolder(context.Background(), user, orgID, folderUID, false)
 				require.Error(t, err)
-				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
+				require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Cleanup(func() {
@@ -182,9 +182,9 @@ func TestIntegrationFolderService(t *testing.T) {
 				_, err := service.DeleteFolder(context.Background(), user, orgID, f.Uid, expectedForceDeleteRules)
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)
-				require.Equal(t, f.Id, actualCmd.Id)
-				require.Equal(t, orgID, actualCmd.OrgId)
-				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
+				assert.Equal(t, f.Id, actualCmd.Id)
+				assert.Equal(t, orgID, actualCmd.OrgId)
+				assert.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
 			})
 
 			t.Cleanup(func() {
@@ -203,8 +203,8 @@ func TestIntegrationFolderService(t *testing.T) {
 				store.On("GetFolderByID", mock.Anything, orgID, expected.Id).Return(expected, nil)
 
 				actual, err := service.GetFolderByID(context.Background(), user, expected.Id, orgID)
-				require.Equal(t, expected, actual)
 				require.NoError(t, err)
+				assert.Equal(t, expected, actual)
 			})
 
 			t.Run("When get folder by uid should return folder", func(t *testing.T) {
@@ -214,8 +214,8 @@ func TestIntegrationFolderService(t *testing.T) {
 				store.On("GetFolderByUID", mock.Anything, orgID, expected.Uid).Return(expected, nil)
 
 				actual, err := service.GetFolderByUID(context.Background(), user, orgID, expected.Uid)
-				require.Equal(t, expected, actual)
 				require.NoError(t, err)
+				assert.Equal(t, expected, actual)
 			})
 
 			t.Run("When get folder by title should return folder", func(t *testing.T) {
@@ -224,8 +224,8 @@ func TestIntegrationFolderService(t *testing.T) {
 				store.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
 
 				actual, err := service.GetFolderByTitle(context.Background(), user, orgID, expected.Title)
-				require.Equal(t, expected, actual)
 				require.NoError(t, err)
+				assert.Equal(t, expected, actual)
 			})
 
 			t.Cleanup(func() {
@@ -250,7 +250,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			for _, tc := range testCases {
 				actualError := toFolderError(tc.ActualError)
-				assert.EqualErrorf(t, actualError, tc.ExpectedError.Error(),
+				assert.ErrorIs(t, actualError, tc.ExpectedError,
 					"For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
 			}
 		})

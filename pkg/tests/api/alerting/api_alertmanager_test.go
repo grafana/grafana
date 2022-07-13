@@ -783,7 +783,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.JSONEq(t, `{"message":"folder cannot be deleted: folder contains alert rules"}`, string(b))
+		require.Contains(t, string(b), "folder contains alert rules")
 	}
 
 	// Next, the editor can delete the folder if forceDeleteRules is true.
