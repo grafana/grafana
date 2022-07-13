@@ -118,6 +118,7 @@ export interface ScaleDistributionConfig {
 }
 
 export interface AxisConfig {
+  axisColorFromSeries?: boolean;
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
@@ -125,7 +126,6 @@ export interface AxisConfig {
   axisSoftMin?: number;
   axisWidth?: number;
   scaleDistribution?: ScaleDistributionConfig;
-  axisColorFromSeries?: boolean;
 }
 
 export interface HideSeriesConfig {

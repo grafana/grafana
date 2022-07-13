@@ -84,13 +84,14 @@ ScaleDistributionConfig: {
 
 // TODO docs
 AxisConfig: {
-	axisPlacement?:     AxisPlacement
-	axisLabel?:         string
-	axisWidth?:         number
-	axisSoftMin?:       number
-	axisSoftMax?:       number
-	axisGridShow?:      bool
-	scaleDistribution?: ScaleDistributionConfig
+	axisPlacement?:       AxisPlacement
+	axisLabel?:           string
+	axisWidth?:           number
+	axisSoftMin?:         number
+	axisSoftMax?:         number
+	axisGridShow?:        bool
+	scaleDistribution?:   ScaleDistributionConfig
+	axisColorFromSeries?: bool
 } @cuetsy(kind="interface")
 
 // TODO docs
