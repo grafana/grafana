@@ -499,7 +499,11 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
+<<<<<<< HEAD
 	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName, hs.log))
+=======
+	m.UseMiddleware(hs.Csrf.Middleware())
+>>>>>>> 06bd8b8e7a (CSRF: Fix additional headers option (#50629))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
