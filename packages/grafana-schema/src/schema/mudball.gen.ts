@@ -124,8 +124,8 @@ export interface AxisConfig {
   axisSoftMax?: number;
   axisSoftMin?: number;
   axisWidth?: number;
-  axisColorFromSeries?: boolean;
   scaleDistribution?: ScaleDistributionConfig;
+  axisColorFromSeries?: boolean;
 }
 
 export interface HideSeriesConfig {

@@ -1,7 +1,7 @@
 package notifications
 
 import (
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -24,7 +24,7 @@ type Message struct {
 	AttachedFiles []*AttachedFile
 }
 
-func setDefaultTemplateData(cfg *setting.Cfg, data map[string]interface{}, u *models.User) {
+func setDefaultTemplateData(cfg *setting.Cfg, data map[string]interface{}, u *user.User) {
 	data["AppUrl"] = setting.AppUrl
 	data["BuildVersion"] = setting.BuildVersion
 	data["BuildStamp"] = setting.BuildStamp

@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { setEchoSrv } from '@grafana/runtime/src';
 import config from 'app/core/config';
 
+import { Echo } from '../../../../core/services/echo/Echo';
 import { DashboardModel, PanelModel } from '../../state';
 
 import { ShareEmbed } from './ShareEmbed';
@@ -49,6 +51,7 @@ describe('ShareEmbed', () => {
   let originalBootData: any;
 
   beforeAll(() => {
+    setEchoSrv(new Echo());
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
 

@@ -105,13 +105,26 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 
 		ss.oAuthProvider[name] = info
 
+		var authStyle oauth2.AuthStyle
+		switch strings.ToLower(sec.Key("auth_style").String()) {
+		case "inparams":
+			authStyle = oauth2.AuthStyleInParams
+		case "inheader":
+			authStyle = oauth2.AuthStyleInHeader
+		case "autodetect", "":
+			authStyle = oauth2.AuthStyleAutoDetect
+		default:
+			logger.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
+			authStyle = oauth2.AuthStyleAutoDetect
+		}
+
 		config := oauth2.Config{
 			ClientID:     info.ClientId,
 			ClientSecret: info.ClientSecret,
 			Endpoint: oauth2.Endpoint{
 				AuthURL:   info.AuthUrl,
 				TokenURL:  info.TokenUrl,
-				AuthStyle: oauth2.AuthStyleAutoDetect,
+				AuthStyle: authStyle,
 			},
 			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,

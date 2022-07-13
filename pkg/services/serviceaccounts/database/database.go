@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type ServiceAccountsStoreImpl struct {
@@ -22,7 +23,7 @@ type ServiceAccountsStoreImpl struct {
 	log      log.Logger
 }
 
-func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
+func ProvideServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
 		sqlStore: store,
 		kvStore:  kvStore,
@@ -31,30 +32,61 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) 
 }
 
 // CreateServiceAccount creates service account
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
-	generatedLogin := "sa-" + strings.ToLower(name)
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	generatedLogin := "sa-" + strings.ToLower(saForm.Name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
-	cmd := models.CreateUserCommand{
-		Login:            generatedLogin,
-		OrgId:            orgId,
-		Name:             name,
-		IsServiceAccount: true,
+	isDisabled := false
+	role := models.ROLE_VIEWER
+	if saForm.IsDisabled != nil {
+		isDisabled = *saForm.IsDisabled
 	}
+	if saForm.Role != nil {
+		role = *saForm.Role
+	}
+	var newSA *user.User
+	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) (err error) {
+		var errUser error
+		newSA, errUser = s.sqlStore.CreateUser(ctx, user.CreateUserCommand{
+			Login:            generatedLogin,
+			OrgID:            orgId,
+			Name:             saForm.Name,
+			IsDisabled:       isDisabled,
+			IsServiceAccount: true,
+			SkipOrgSetup:     true,
+		})
+		if errUser != nil {
+			return errUser
+		}
 
-	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
-	if err != nil {
-		if errors.Is(err, models.ErrUserAlreadyExists) {
+		errAddOrgUser := s.sqlStore.AddOrgUser(ctx, &models.AddOrgUserCommand{
+			Role:                      role,
+			OrgId:                     orgId,
+			UserId:                    newSA.ID,
+			AllowAddingServiceAccount: true,
+		})
+		if errAddOrgUser != nil {
+			return errAddOrgUser
+		}
+
+		return nil
+	})
+
+	if createErr != nil {
+		if errors.Is(createErr, models.ErrUserAlreadyExists) {
 			return nil, ErrServiceAccountAlreadyExists
 		}
-		return nil, fmt.Errorf("failed to create service account: %w", err)
+
+		return nil, fmt.Errorf("failed to create service account: %w", createErr)
 	}
 
 	return &serviceaccounts.ServiceAccountDTO{
-		Id:     newuser.Id,
-		Name:   newuser.Name,
-		Login:  newuser.Login,
-		OrgId:  newuser.OrgId,
-		Tokens: 0,
+		Id:         newSA.ID,
+		Name:       newSA.Name,
+		Login:      newSA.Login,
+		OrgId:      newSA.OrgID,
+		Tokens:     0,
+		Role:       string(role),
+		IsDisabled: isDisabled,
 	}, nil
 }
 
@@ -89,7 +121,7 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 		}
 
 		if saForm.Name != nil || saForm.IsDisabled != nil {
-			user := models.User{
+			user := user.User{
 				Updated: updateTime,
 			}
 
@@ -131,7 +163,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 }
 
 func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *sqlstore.DBSession, orgId, serviceAccountId int64) error {
-	user := models.User{}
+	user := user.User{}
 	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
 		orgId, serviceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
 	if err != nil {
@@ -141,7 +173,7 @@ func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *sqlstore.DBSession
 		return serviceaccounts.ErrServiceAccountNotFound
 	}
 	for _, sql := range ServiceAccountDeletions() {
-		_, err := sess.Exec(sql, user.Id)
+		_, err := sess.Exec(sql, user.ID)
 		if err != nil {
 			return err
 		}
@@ -405,10 +437,10 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *models.ApiKey) error {
 	prefix := "sa-autogen"
-	cmd := models.CreateUserCommand{
+	cmd := user.CreateUserCommand{
 		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgId, key.Name),
 		Name:             fmt.Sprintf("%v-%v", prefix, key.Name),
-		OrgId:            key.OrgId,
+		OrgID:            key.OrgId,
 		DefaultOrgRole:   string(key.Role),
 		IsServiceAccount: true,
 	}
@@ -419,8 +451,8 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 			return fmt.Errorf("failed to create service account: %w", errCreateSA)
 		}
 
-		if err := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.Id); err != nil {
-			if err := s.sqlStore.DeleteUser(ctx, &models.DeleteUserCommand{UserId: newSA.Id}); err != nil {
+		if err := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.ID); err != nil {
+			if err := s.sqlStore.DeleteUser(ctx, &models.DeleteUserCommand{UserId: newSA.ID}); err != nil {
 				s.log.Error("Error deleting service account", "error", err)
 			}
 			return fmt.Errorf("failed to migrate API key to service account token: %w", err)
@@ -451,7 +483,7 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 	}
 
 	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		user := models.User{}
+		user := user.User{}
 		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
 			key.OrgId, *key.ServiceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
 		if err != nil {

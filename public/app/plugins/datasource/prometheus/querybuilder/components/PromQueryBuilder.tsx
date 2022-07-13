@@ -6,22 +6,22 @@ import { EditorRow } from '@grafana/experimental';
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
 import { promQueryModeller } from '../PromQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
 import { LabelFilters } from '../shared/LabelFilters';
 import { OperationList } from '../shared/OperationList';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
+import { QueryBuilderHints } from '../shared/QueryBuilderHints';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { MetricSelect } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
-import { PromQueryBuilderHints } from './PromQueryBuilderHints';
 
 export interface Props {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;
   onRunQuery: () => void;
-  nested?: boolean;
   data?: PanelData;
 }
 
@@ -109,7 +109,14 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onChange={onChange}
           onRunQuery={onRunQuery}
         />
-        <PromQueryBuilderHints datasource={datasource} query={query} onChange={onChange} data={data} />
+        <QueryBuilderHints<PromVisualQuery>
+          datasource={datasource}
+          query={query}
+          onChange={onChange}
+          data={data}
+          queryModeller={promQueryModeller}
+          buildVisualQueryFromString={buildVisualQueryFromString}
+        />
       </OperationsEditorRow>
       {query.binaryQueries && query.binaryQueries.length > 0 && (
         <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
@@ -132,6 +139,11 @@ async function getMetrics(
   // don't use it with the visual builder and there is no need to run all the start() setup anyway.
   if (!datasource.languageProvider.metricsMetadata) {
     await datasource.languageProvider.loadMetricsMetadata();
+  }
+
+  // Error handling for when metrics metadata returns as undefined
+  if (!datasource.languageProvider.metricsMetadata) {
+    datasource.languageProvider.metricsMetadata = {};
   }
 
   let metrics;

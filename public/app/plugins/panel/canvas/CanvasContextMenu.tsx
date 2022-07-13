@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useObservable } from 'react-use';
 import { first } from 'rxjs/operators';
 
 import { ContextMenu, MenuItem } from '@grafana/ui';
 
 import { Scene } from '../../../features/canvas/runtime/scene';
 
+import { activePanelSubject } from './CanvasPanel';
 import { LayerActionID } from './types';
 
 type Props = {
@@ -18,6 +20,8 @@ type AnchorPoint = {
 };
 
 export const CanvasContextMenu = ({ scene }: Props) => {
+  const activePanel = useObservable(activePanelSubject);
+  const inlineEditorOpen = activePanel?.panel.state.openInlineEdit;
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [anchorPoint, setAnchorPoint] = useState<AnchorPoint>({ x: 0, y: 0 });
 
@@ -83,6 +87,20 @@ export const CanvasContextMenu = ({ scene }: Props) => {
           label="Send to back"
           onClick={() => {
             contextMenuAction(LayerActionID.MoveBottom);
+            closeContextMenu();
+          }}
+          className={styles.menuItem}
+        />
+        <MenuItem
+          label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
+          onClick={() => {
+            if (scene.inlineEditingCallback) {
+              if (inlineEditorOpen) {
+                activePanel.panel.inlineEditButtonClose();
+              } else {
+                scene.inlineEditingCallback();
+              }
+            }
             closeContextMenu();
           }}
           className={styles.menuItem}

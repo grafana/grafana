@@ -1,9 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { BackendSrv } from '@grafana/runtime';
+import { BackendSrv, setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+
+import { Echo } from '../../../../core/services/echo/Echo';
 
 import { ShareModal } from './ShareModal';
 import { PublicDashboard } from './SharePublicDashboardUtils';
@@ -45,6 +47,7 @@ describe('SharePublic', () => {
   let originalBootData: any;
 
   beforeAll(() => {
+    setEchoSrv(new Echo());
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
 
@@ -93,10 +96,28 @@ describe('SharePublic', () => {
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
   });
 
-  // test when checkboxes show up
-  // test checkboxes hidden
-  // test url hidden
-  // test url shows up
-  //
+  it('renders default time in inputs', async () => {
+    config.featureToggles.publicDashboards = true;
+    const mockDashboard = new DashboardModel({
+      uid: 'mockDashboardUid',
+    });
+    const mockPanel = new PanelModel({
+      id: 'mockPanelId',
+    });
+
+    expect(mockDashboard.time).toEqual({ from: 'now-6h', to: 'now' });
+    //@ts-ignore
+    mockDashboard.originalTime = { from: 'test-from', to: 'test-to' };
+
+    render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
+
+    await waitFor(() => screen.getByText('Link'));
+    fireEvent.click(screen.getByText('Public Dashboard'));
+
+    await screen.findByText('Welcome to Grafana public dashboards alpha!');
+    expect(screen.getByDisplayValue('test-from')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('test-to')).toBeInTheDocument();
+  });
+
   // test checking if current version of dashboard in state is persisted to db
 });

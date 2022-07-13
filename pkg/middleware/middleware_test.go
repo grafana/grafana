@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -365,7 +366,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should respect auto signup option", func(t *testing.T, sc *scenarioContext) {
 			var actualAuthProxyAutoSignUp *bool = nil
-			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *models.User {
+			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
 				actualAuthProxyAutoSignUp = &cmd.SignupAllowed
 				return nil
 			}
@@ -386,7 +387,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
 			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
-			sc.loginService.ExpectedUser = &models.User{Id: userID}
+			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -403,10 +404,10 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should assign role from header to default org", func(t *testing.T, sc *scenarioContext) {
 			var storedRoleInfo map[int64]models.RoleType = nil
-			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *models.User {
+			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
 				sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: defaultOrgId, UserId: userID, OrgRole: storedRoleInfo[defaultOrgId]}
-				return &models.User{Id: userID}
+				return &user.User{ID: userID}
 			}
 
 			sc.fakeReq("GET", "/")
@@ -426,10 +427,10 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should NOT assign role from header to non-default org", func(t *testing.T, sc *scenarioContext) {
 			var storedRoleInfo map[int64]models.RoleType = nil
-			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *models.User {
+			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
 				sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID, OrgRole: storedRoleInfo[orgID]}
-				return &models.User{Id: userID}
+				return &user.User{ID: userID}
 			}
 
 			sc.fakeReq("GET", "/")
@@ -453,7 +454,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario(t, "Should use organisation specified by targetOrgId parameter", func(t *testing.T, sc *scenarioContext) {
 			var targetOrgID int64 = 123
 			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: targetOrgID, UserId: userID}
-			sc.loginService.ExpectedUser = &models.User{Id: userID}
+			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", fmt.Sprintf("/?targetOrgId=%d", targetOrgID))
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -497,7 +498,7 @@ func TestMiddlewareContext(t *testing.T) {
 			const orgID int64 = 2
 
 			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
-			sc.loginService.ExpectedUser = &models.User{Id: userID}
+			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -513,7 +514,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
 			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
-			sc.loginService.ExpectedUser = &models.User{Id: userID}
+			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -530,7 +531,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should not allow the request from whitelisted IP", func(t *testing.T, sc *scenarioContext) {
-			sc.loginService.ExpectedUser = &models.User{Id: userID}
+			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -642,7 +643,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.S
 	authJWTSvc := models.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, mockSQLStore)
-	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &models.User{}}
+	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
 	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, authenticator)
 }
 

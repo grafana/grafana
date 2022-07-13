@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { config } from '@grafana/runtime';
 import { Form } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 
 import { NotificationChannelDTO, StoreState } from '../../types';

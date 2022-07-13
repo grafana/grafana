@@ -47,7 +47,6 @@ export interface FeatureToggles {
   explore2Dashboard?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
-  savedItems?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   azureMonitorExperimentalUI?: boolean;
@@ -57,8 +56,10 @@ export interface FeatureToggles {
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
+  scenes?: boolean;
   useLegacyHeatmapPanel?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
+  disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   internationalization?: boolean;

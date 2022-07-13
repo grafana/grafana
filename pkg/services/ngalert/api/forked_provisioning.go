@@ -27,6 +27,10 @@ func (f *ForkedProvisioningApi) forkRoutePutPolicyTree(ctx *models.ReqContext, r
 	return f.svc.RoutePutPolicyTree(ctx, route)
 }
 
+func (f *ForkedProvisioningApi) forkRouteResetPolicyTree(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteResetPolicyTree(ctx)
+}
+
 func (f *ForkedProvisioningApi) forkRouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteGetContactPoints(ctx)
 }
@@ -83,11 +87,11 @@ func (f *ForkedProvisioningApi) forkRouteGetAlertRule(ctx *models.ReqContext, UI
 	return f.svc.RouteRouteGetAlertRule(ctx, UID)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule) response.Response {
+func (f *ForkedProvisioningApi) forkRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.ProvisionedAlertRule) response.Response {
 	return f.svc.RoutePostAlertRule(ctx, ar)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule, UID string) response.Response {
+func (f *ForkedProvisioningApi) forkRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.ProvisionedAlertRule, UID string) response.Response {
 	return f.svc.RoutePutAlertRule(ctx, ar, UID)
 }
 
@@ -95,6 +99,10 @@ func (f *ForkedProvisioningApi) forkRouteDeleteAlertRule(ctx *models.ReqContext,
 	return f.svc.RouteDeleteAlertRule(ctx, UID)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePutAlertRuleGroup(ctx *models.ReqContext, ag apimodels.AlertRuleGroup, folder, group string) response.Response {
+func (f *ForkedProvisioningApi) forkRouteGetAlertRuleGroup(ctx *models.ReqContext, folder, group string) response.Response {
+	return f.svc.RouteGetAlertRuleGroup(ctx, folder, group)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePutAlertRuleGroup(ctx *models.ReqContext, ag apimodels.AlertRuleGroupMetadata, folder, group string) response.Response {
 	return f.svc.RoutePutAlertRuleGroup(ctx, ag, folder, group)
 }

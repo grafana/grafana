@@ -7,11 +7,12 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	m "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -21,9 +22,11 @@ func TestIntegrationDashboardService(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Dashboard service tests", func(t *testing.T) {
-		fakeStore := m.FakeDashboardStore{}
+		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
+
 		service := &DashboardServiceImpl{
+			cfg:                setting.NewCfg(),
 			log:                log.New("test.logger"),
 			dashboardStore:     &fakeStore,
 			dashAlertExtractor: &dummyDashAlertExtractor{},
@@ -34,7 +37,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 		t.Run("Save dashboard validation", func(t *testing.T) {
-			dto := &m.SaveDashboardDTO{}
+			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("When saving a dashboard with empty title it should return error", func(t *testing.T) {
 				titles := []string{"", " ", "   \t   "}
@@ -42,7 +45,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 				for _, title := range titles {
 					dto.Dashboard = models.NewDashboard(title)
 					_, err := service.SaveDashboard(context.Background(), dto, false)
-					require.Equal(t, err, models.ErrDashboardTitleEmpty)
+					require.Equal(t, err, dashboards.ErrDashboardTitleEmpty)
 				}
 			})
 
@@ -50,13 +53,13 @@ func TestIntegrationDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboardFolder("Folder")
 				dto.Dashboard.FolderId = 1
 				_, err := service.SaveDashboard(context.Background(), dto, false)
-				require.Equal(t, err, models.ErrDashboardFolderCannotHaveParent)
+				require.Equal(t, err, dashboards.ErrDashboardFolderCannotHaveParent)
 			})
 
 			t.Run("Should return validation error if folder is named General", func(t *testing.T) {
 				dto.Dashboard = models.NewDashboardFolder("General")
 				_, err := service.SaveDashboard(context.Background(), dto, false)
-				require.Equal(t, err, models.ErrDashboardFolderNameExists)
+				require.Equal(t, err, dashboards.ErrDashboardFolderNameExists)
 			})
 
 			t.Run("When saving a dashboard should validate uid", func(t *testing.T) {
@@ -68,9 +71,9 @@ func TestIntegrationDashboardService(t *testing.T) {
 					{Uid: "   ", Error: nil},
 					{Uid: "  \t  ", Error: nil},
 					{Uid: "asdf90_-", Error: nil},
-					{Uid: "asdf/90", Error: models.ErrDashboardInvalidUid},
+					{Uid: "asdf/90", Error: dashboards.ErrDashboardInvalidUid},
 					{Uid: "   asdfghjklqwertyuiopzxcvbnmasdfghjklqwer   ", Error: nil},
-					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: models.ErrDashboardUidTooLong},
+					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: dashboards.ErrDashboardUidTooLong},
 				}
 
 				for _, tc := range testCases {
@@ -94,13 +97,12 @@ func TestIntegrationDashboardService(t *testing.T) {
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, false)
-				require.Equal(t, err, models.ErrDashboardCannotSaveProvisionedDashboard)
+				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 
 			t.Run("Should not return validation error if dashboard is provisioned but UI updates allowed", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
 				fakeStore.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
-				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -110,6 +112,20 @@ func TestIntegrationDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should return validation error if alert data is invalid", func(t *testing.T) {
+				origAlertingEnabledSet := setting.AlertingEnabled != nil
+				origAlertingEnabledVal := false
+				if origAlertingEnabledSet {
+					origAlertingEnabledVal = *setting.AlertingEnabled
+				}
+				setting.AlertingEnabled = pointer.Bool(true)
+				t.Cleanup(func() {
+					if !origAlertingEnabledSet {
+						setting.AlertingEnabled = nil
+					} else {
+						setting.AlertingEnabled = &origAlertingEnabledVal
+					}
+				})
+
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(nil, nil).Once()
 				fakeStore.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
@@ -118,17 +134,17 @@ func TestIntegrationDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, false)
+				require.Error(t, err)
 				require.Equal(t, err.Error(), "alert validation error")
 			})
 		})
 
 		t.Run("Save provisioned dashboard validation", func(t *testing.T) {
-			dto := &m.SaveDashboardDTO{}
+			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
 				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
-				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -140,7 +156,6 @@ func TestIntegrationDashboardService(t *testing.T) {
 			t.Run("Should override invalid refresh interval if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
 				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
-				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				oldRefreshInterval := setting.MinRefreshInterval
 				setting.MinRefreshInterval = "5m"
@@ -157,7 +172,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 		})
 
 		t.Run("Import dashboard validation", func(t *testing.T) {
-			dto := &m.SaveDashboardDTO{}
+			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
@@ -167,7 +182,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.ImportDashboard(context.Background(), dto)
-				require.Equal(t, err, models.ErrDashboardCannotSaveProvisionedDashboard)
+				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 		})
 
@@ -182,7 +197,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 			t.Run("DeleteDashboard should fail to delete it when provisioning information is missing", func(t *testing.T) {
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{}, nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, 1)
-				require.Equal(t, err, models.ErrDashboardCannotDeleteProvisionedDashboard)
+				require.Equal(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard)
 			})
 		})
 

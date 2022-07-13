@@ -13,6 +13,7 @@ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '..
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
+import { Tokenize } from '../Tokenize';
 
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
@@ -105,7 +106,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
-  const hasRuler = useHasRuler();
+  const { hasRuler, rulerRulesLoaded } = useHasRuler();
 
   return useMemo((): RuleTableColumnProps[] => {
     const columns: RuleTableColumnProps[] = [
@@ -117,8 +118,8 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
           const { namespace } = rule;
           const { rulesSource } = namespace;
           const { promRule, rulerRule } = rule;
-          const isDeleting = !!(hasRuler(rulesSource) && promRule && !rulerRule);
-          const isCreating = !!(hasRuler(rulesSource) && rulerRule && !promRule);
+          const isDeleting = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
+          const isCreating = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
           return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />;
         },
         size: '165px',
@@ -160,7 +161,9 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         id: 'summary',
         label: 'Summary',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: rule }) => rule.annotations[Annotation.summary] ?? '',
+        renderCell: ({ data: rule }) => {
+          return <Tokenize input={rule.annotations[Annotation.summary] ?? ''} />;
+        },
         size: 5,
       });
     }
@@ -185,5 +188,5 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
       });
     }
     return columns;
-  }, [hasRuler, showSummaryColumn, showGroupColumn]);
+  }, [hasRuler, rulerRulesLoaded, showSummaryColumn, showGroupColumn]);
 }
