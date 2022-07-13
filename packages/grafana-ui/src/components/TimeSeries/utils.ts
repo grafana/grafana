@@ -27,6 +27,7 @@ import {
   StackingMode,
   GraphTransform,
   AxisColorMode,
+  GraphGradientMode,
 } from '@grafana/schema';
 
 import { buildScaleKey } from '../GraphNG/utils';
@@ -194,12 +195,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
-      const thresholdColorGrad: uPlot.Axis.Stroke = getScaleGradientFn(
-        1,
-        theme,
-        { id: FieldColorModeId.Thresholds, name: '', getCalculator: () => () => '' },
-        field.config.thresholds
-      );
+      let axisColor: uPlot.Axis.Stroke | undefined;
+
+      if (customConfig.axisColor?.mode === AxisColorMode.Series) {
+        if (
+          colorMode.isByValue &&
+          field.config.custom?.gradientMode === GraphGradientMode.Scheme &&
+          colorMode.id === FieldColorModeId.Thresholds
+        ) {
+          axisColor = getScaleGradientFn(1, theme, colorMode, field.config.thresholds);
+        } else {
+          axisColor = seriesColor;
+        }
+      }
 
       builder.addAxis(
         tweakAxis(
@@ -215,17 +223,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             border: {
               show: true,
               width: 1,
-              stroke: customConfig.axisColor?.mode === AxisColorMode.Thresholds ? thresholdColorGrad : undefined,
+              stroke: axisColor,
             },
             ticks: {
-              stroke: customConfig.axisColor?.mode === AxisColorMode.Thresholds ? thresholdColorGrad : undefined,
+              stroke: axisColor,
             },
-            color:
-              customConfig.axisColor?.mode === AxisColorMode.Series
-                ? seriesColor
-                : customConfig.axisColor?.mode === AxisColorMode.Thresholds
-                ? thresholdColorGrad
-                : undefined,
+            color: customConfig.axisColor?.mode === AxisColorMode.Series ? axisColor : undefined,
           },
           field
         )

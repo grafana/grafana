@@ -18,7 +18,6 @@ export enum AxisPlacement {
 export enum AxisColorMode {
   Auto = 'auto',
   Series = 'series',
-  Thresholds = 'thresholds',
 }
 
 export enum VisibilityMode {

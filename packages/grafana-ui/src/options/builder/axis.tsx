@@ -91,7 +91,6 @@ export function addAxisConfig(
         options: [
           { value: AxisColorMode.Auto, label: 'Auto' },
           { value: AxisColorMode.Series, label: 'From series' },
-          { value: AxisColorMode.Thresholds, label: 'From thresholds' },
         ],
       },
     });

@@ -6,7 +6,7 @@ package schema
 AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
-AxisColorMode:      "auto" | "series" | "thresholds"                        @cuetsy(kind="enum")
+AxisColorMode:      "auto" | "series"                                       @cuetsy(kind="enum")
 
 // TODO docs
 VisibilityMode:     "auto" | "never" | "always"                             @cuetsy(kind="enum")
