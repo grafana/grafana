@@ -5,39 +5,24 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
+	if errors.As(err, &errutil.Error{}) {
+		return response.Err(err)
+	}
+
 	var dashboardErr dashboards.DashboardErr
-	if ok := errors.As(err, &dashboardErr); ok {
+	if errors.As(err, &dashboardErr) {
 		return response.Error(dashboardErr.StatusCode, err.Error(), err)
 	}
 
-	if errors.Is(err, dashboards.ErrFolderTitleEmpty) ||
-		errors.Is(err, dashboards.ErrDashboardTypeMismatch) ||
+	if errors.Is(err, dashboards.ErrDashboardTypeMismatch) ||
 		errors.Is(err, dashboards.ErrDashboardInvalidUid) ||
-		errors.Is(err, dashboards.ErrDashboardUidTooLong) ||
-		errors.Is(err, dashboards.ErrFolderContainsAlertRules) {
+		errors.Is(err, dashboards.ErrDashboardUidTooLong) {
 		return response.Error(400, err.Error(), nil)
-	}
-
-	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
-		return response.Error(403, "Access denied", err)
-	}
-
-	if errors.Is(err, dashboards.ErrFolderNotFound) {
-		return response.JSON(404, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error()})
-	}
-
-	if errors.Is(err, dashboards.ErrFolderSameNameExists) ||
-		errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
-		return response.Error(409, err.Error(), nil)
-	}
-
-	if errors.Is(err, dashboards.ErrFolderVersionMismatch) {
-		return response.JSON(412, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
 	}
 
 	return response.Error(500, "Folder API error", err)

@@ -315,7 +315,7 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 		dash.OrgId = cfg.OrgID
 		// set dashboard folderUid if given
 		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
-			return 0, dashboards.ErrFolderInvalidUID
+			return 0, dashboards.ErrFolderInvalidUID.Errorf("folders cannot have the UID 'general'")
 		}
 		dash.Dashboard.SetUid(cfg.FolderUID)
 		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)

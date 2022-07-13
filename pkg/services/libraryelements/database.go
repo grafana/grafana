@@ -708,7 +708,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 
 		if len(folderUIDs) == 0 {
-			return dashboards.ErrFolderNotFound
+			return dashboards.ErrFolderNotFound.Errorf("folder not found: could not delete library element with folder UID '%s' in %d", folderUID, signedInUser.OrgId)
 		}
 
 		if len(folderUIDs) != 1 {

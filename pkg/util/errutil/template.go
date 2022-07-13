@@ -115,3 +115,10 @@ func (t Template) Build(data TemplateData) error {
 
 	return e
 }
+
+// Error implements the error interface for Template.
+// This is a hack to let the errors.Is predicate to work for comparing
+// errors with their bases.
+func (Template) Error() string {
+	return "errutil.Template should not be directly used as an error and must be instantiated using .Errorf"
+}

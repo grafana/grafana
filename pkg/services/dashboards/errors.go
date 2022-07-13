@@ -1,9 +1,8 @@
 package dashboards
 
 import (
-	"errors"
-
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Typed errors
@@ -148,15 +147,15 @@ var (
 		StatusCode: 400,
 	}
 
-	ErrFolderNotFound                = errors.New("folder not found")
-	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")
-	ErrFolderTitleEmpty              = errors.New("folder title cannot be empty")
-	ErrFolderWithSameUIDExists       = errors.New("a folder/dashboard with the same uid already exists")
-	ErrFolderInvalidUID              = errors.New("invalid uid for folder provided")
-	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
-	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
-	ErrFolderAccessDenied            = errors.New("access denied to folder")
-	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
+	ErrFolderNotFound                = errutil.NewBase(errutil.StatusNotFound, "folder.not-found", errutil.WithPublicMessage("Could not find folder"))
+	ErrFolderVersionMismatch         = errutil.NewBase(errutil.StatusVersionMismatch, "folder.version-mismatch", errutil.WithPublicMessage("The folder has been changed by someone else"))
+	ErrFolderTitleEmpty              = errutil.NewBase(errutil.StatusValidationFailed, "folder.title-empty", errutil.WithPublicMessage("Folder title cannot be empty"))
+	ErrFolderWithSameUIDExists       = errutil.NewBase(errutil.StatusConflict, "folder.uid-conflict", errutil.WithPublicMessage("A folder or dashboard with the same UID already exists"))
+	ErrFolderInvalidUID              = errutil.NewBase(errutil.StatusValidationFailed, "folder.invalid-uid", errutil.WithPublicMessage("Invalid UID for folder"))
+	ErrFolderSameNameExists          = errutil.NewBase(errutil.StatusConflict, "folder.uid-conflict", errutil.WithPublicMessage("A folder or dashboard in the general folder with the same name already exists"))
+	ErrFolderFailedGenerateUniqueUid = errutil.NewBase(errutil.StatusInternal, "folder.cannot-generate-uid", errutil.WithPublicMessage("Failed to generate unique folder UID"))
+	ErrFolderAccessDenied            = errutil.NewBase(errutil.StatusForbidden, "folder.access-denied", errutil.WithPublicMessage("Access denied to folder"))
+	ErrFolderContainsAlertRules      = errutil.NewBase(errutil.StatusValidationFailed, "folder.not-empty-alerts", errutil.WithPublicMessage("Cannot delete folder, the folder contains alert rules"))
 )
 
 // DashboardErr represents a dashboard error.

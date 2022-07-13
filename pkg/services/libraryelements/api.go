@@ -4,11 +4,12 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/util/errutil"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -162,6 +163,9 @@ func (l *LibraryElementService) getByNameHandler(c *models.ReqContext) response.
 }
 
 func toLibraryElementError(err error, message string) response.Response {
+	if errors.As(err, &errutil.Error{}) {
+		return response.Err(err)
+	}
 	if errors.Is(err, errLibraryElementAlreadyExists) {
 		return response.Error(400, errLibraryElementAlreadyExists.Error(), err)
 	}
@@ -173,12 +177,6 @@ func toLibraryElementError(err error, message string) response.Response {
 	}
 	if errors.Is(err, errLibraryElementVersionMismatch) {
 		return response.Error(412, errLibraryElementVersionMismatch.Error(), err)
-	}
-	if errors.Is(err, dashboards.ErrFolderNotFound) {
-		return response.Error(404, dashboards.ErrFolderNotFound.Error(), err)
-	}
-	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
-		return response.Error(403, dashboards.ErrFolderAccessDenied.Error(), err)
 	}
 	if errors.Is(err, errLibraryElementHasConnections) {
 		return response.Error(403, errLibraryElementHasConnections.Error(), err)

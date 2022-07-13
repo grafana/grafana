@@ -46,6 +46,18 @@ const (
 	// features.
 	// HTTP status code 501.
 	StatusNotImplemented CoreStatus = "Not implemented"
+	// StatusVersionMismatch means that the request cannot be fulfilled
+	// because the version in the request is outside off the expected
+	// range. Possibly triggered by intermediate updates.
+	// HTTP status code 412.
+	//
+	// MDN seem to suggest using '409 Conflict' for version control
+	// conflicts, https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409 .
+	StatusVersionMismatch CoreStatus = "Version mismatch"
+	// StatusConflict means that it is not possible to perform the
+	// request because of a conflicting internal state. This could be
+	// trying to create something with a name that already exists.
+	StatusConflict CoreStatus = "Conflict"
 )
 
 // StatusReason allows for wrapping of CoreStatus.
@@ -79,6 +91,10 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusNotImplemented
 	case StatusUnknown, StatusInternal:
 		return http.StatusInternalServerError
+	case StatusVersionMismatch:
+		return http.StatusPreconditionFailed
+	case StatusConflict:
+		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError
 	}
@@ -105,6 +121,10 @@ func (s CoreStatus) LogLevel() LogLevel {
 		return LevelError
 	case StatusUnknown, StatusInternal:
 		return LevelError
+	case StatusVersionMismatch:
+		return LevelInfo
+	case StatusConflict:
+		return LevelInfo
 	default:
 		return LevelUnknown
 	}

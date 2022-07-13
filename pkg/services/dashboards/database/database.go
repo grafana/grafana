@@ -60,7 +60,7 @@ func (d *DashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard
 
 func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*models.Folder, error) {
 	if title == "" {
-		return nil, dashboards.ErrFolderTitleEmpty
+		return nil, dashboards.ErrFolderTitleEmpty.Errorf("cannot get a folder by title with an empty title")
 	}
 
 	// there is a unique constraint on org_id, folder_id, title
@@ -72,7 +72,7 @@ func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, titl
 			return err
 		}
 		if !has {
-			return dashboards.ErrFolderNotFound
+			return dashboards.ErrFolderNotFound.Errorf("folder not found in org %d with title '%s'", orgID, title)
 		}
 		dashboard.SetId(dashboard.Id)
 		dashboard.SetUid(dashboard.Uid)
@@ -89,7 +89,7 @@ func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int6
 			return err
 		}
 		if !has {
-			return dashboards.ErrFolderNotFound
+			return dashboards.ErrFolderNotFound.Errorf("folder not found in org %d with id %d", orgID, id)
 		}
 		dashboard.SetId(dashboard.Id)
 		dashboard.SetUid(dashboard.Uid)
@@ -113,7 +113,7 @@ func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid st
 			return err
 		}
 		if !has {
-			return dashboards.ErrFolderNotFound
+			return dashboards.ErrFolderNotFound.Errorf("folder not found in org %d with uid '%s'", orgID, uid)
 		}
 		dashboard.SetId(dashboard.Id)
 		dashboard.SetUid(dashboard.Uid)
@@ -778,7 +778,7 @@ func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, ses
 		}
 		if exists {
 			if !cmd.ForceDeleteFolderRules {
-				return fmt.Errorf("folder cannot be deleted: %w", dashboards.ErrFolderContainsAlertRules)
+				return dashboards.ErrFolderContainsAlertRules.Errorf("cannot delete folder with ID %d in org %d because it contains alert rules", cmd.Id, cmd.OrgId)
 			}
 
 			// Delete all rules under this folder.

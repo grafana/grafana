@@ -94,7 +94,7 @@ func (f *FolderServiceImpl) GetFolderByID(ctx context.Context, user *models.Sign
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, dashboards.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied.Errorf("user %d is not allowed to view folder with ID %d in org %d", user.UserId, id, orgID)
 	}
 
 	return dashFolder, nil
@@ -111,7 +111,7 @@ func (f *FolderServiceImpl) GetFolderByUID(ctx context.Context, user *models.Sig
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, dashboards.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied.Errorf("user %d is not allowed to view folder with UID '%s' in org %d", user.UserId, uid, orgID)
 	}
 
 	return dashFolder, nil
@@ -128,7 +128,7 @@ func (f *FolderServiceImpl) GetFolderByTitle(ctx context.Context, user *models.S
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, dashboards.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied.Errorf("user %d is not allowed to view folder with title '%s' in org %d", user, title, orgID)
 	}
 
 	return dashFolder, nil
@@ -140,7 +140,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 
 	trimmedUID := strings.TrimSpace(uid)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
-		return nil, dashboards.ErrFolderInvalidUID
+		return nil, dashboards.ErrFolderInvalidUID.Errorf("folders cannot have the UID 'general'")
 	}
 
 	dashFolder.SetUid(trimmedUID)
@@ -201,7 +201,7 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 	dashFolder := query.Result
 
 	if !dashFolder.IsFolder {
-		return dashboards.ErrFolderNotFound
+		return dashboards.ErrFolderNotFound.Errorf("'%s' in org %d is a dashboard, not a folder", existingUid, orgID)
 	}
 
 	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserId)
@@ -254,7 +254,8 @@ func (f *FolderServiceImpl) DeleteFolder(ctx context.Context, user *models.Signe
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, dashboards.ErrFolderAccessDenied
+
+		return nil, dashboards.ErrFolderAccessDenied.Errorf("user %d cannot delete folder with UID '%s' in orgID %d", user.UserId, uid, orgID)
 	}
 
 	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
@@ -272,11 +273,11 @@ func (f *FolderServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, user
 
 func toFolderError(err error) error {
 	if errors.Is(err, dashboards.ErrDashboardTitleEmpty) {
-		return dashboards.ErrFolderTitleEmpty
+		return dashboards.ErrFolderTitleEmpty.Errorf("folder title is empty")
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardUpdateAccessDenied) {
-		return dashboards.ErrFolderAccessDenied
+		return dashboards.ErrFolderAccessDenied.Errorf("folder access denied")
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardWithSameNameInFolderExists) {
@@ -284,19 +285,19 @@ func toFolderError(err error) error {
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardWithSameUIDExists) {
-		return dashboards.ErrFolderWithSameUIDExists
+		return dashboards.ErrFolderWithSameUIDExists.Errorf("dashboard or folder with same UID exists")
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardVersionMismatch) {
-		return dashboards.ErrFolderVersionMismatch
+		return dashboards.ErrFolderVersionMismatch.Errorf("folder version mismatch")
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
-		return dashboards.ErrFolderNotFound
+		return dashboards.ErrFolderNotFound.Errorf("folder not found")
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardFailedGenerateUniqueUid) {
-		err = dashboards.ErrFolderFailedGenerateUniqueUid
+		err = dashboards.ErrFolderFailedGenerateUniqueUid.Errorf("failed to generate unique uid for folder")
 	}
 
 	return err

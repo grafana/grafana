@@ -92,6 +92,13 @@ func (b Base) Is(err error) bool {
 	return b.reason.Status() == gfErr.Reason.Status() && b.messageID == gfErr.MessageID
 }
 
+// Error implements the error interface for Base.
+// This is a hack to let the errors.Is predicate to work for comparing
+// errors with their bases.
+func (Base) Error() string {
+	return "errutil.Base should not be directly used as an error and must be instantiated using .Errorf"
+}
+
 // Error is the error type for errors within Grafana, extending
 // the Go error type with Grafana specific metadata to reduce
 // boilerplate error handling for status codes and internationalization
@@ -133,17 +140,16 @@ func (e Error) Unwrap() error {
 // Is is used by errors.Is to allow for custom definitions of equality
 // between two errors.
 func (e Error) Is(other error) bool {
-	// The linter complains that it wants to use errors.As because it
-	// handles unwrapping, we don't want to do that here since we want
-	// to validate the equality between the two objects.
-	// errors.Is handles the unwrapping, should you want it.
-	//nolint:errorlint
-	o, ok := other.(Error)
-	if !ok {
+	switch o := other.(type) {
+	case Error:
+		return o.Reason == e.Reason && o.MessageID == e.MessageID && o.Error() == e.Error()
+	case Base:
+		return o.Is(e)
+	case Template:
+		return o.Base.Is(e)
+	default:
 		return false
 	}
-
-	return o.Reason == e.Reason && o.MessageID == e.MessageID && o.Error() == e.Error()
 }
 
 // PublicError is derived from Error and only contains information
