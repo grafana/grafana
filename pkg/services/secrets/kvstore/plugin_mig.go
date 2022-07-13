@@ -24,7 +24,6 @@ type PluginSecretMigrationService struct {
 
 func ProvidePluginSecretMigrationService(
 	features featuremgmt.FeatureToggles,
-	// TODO LND We need to check if this is actually a plugin store
 	secretsStore SecretsKVStore,
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
@@ -43,8 +42,6 @@ func ProvidePluginSecretMigrationService(
 }
 
 func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
-	// TODO LND Check the config key if need rename it
-	// TODO LND check other parameters with gui, if legacy mode or other config is enabled what would we do
 	// Check if we should migrate to plugin - default false
 	if s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_to_plugin").MustBool(false) &&
 		s.remoteCheck.ShouldUseRemoteSecretsPlugin() {
