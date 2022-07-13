@@ -19,17 +19,7 @@ type ExportConfig struct {
 	GeneralFolderPath string `json:"generalFolderPath"`
 	KeepHistory       bool   `json:"history"`
 
-	Include struct {
-		Auth       bool `json:"auth"`
-		DS         bool `json:"ds"`
-		Dash       bool `json:"dash"`
-		DashThumbs bool `json:"dash_thumbs"`
-		Alerts     bool `json:"alerts"`
-		Services   bool `json:"services"`
-		Usage      bool `json:"usage"`
-		Anno       bool `json:"anno"`
-		Snapshots  bool `json:"snapshots"`
-	} `json:"include"`
+	Exclude map[string]bool `json:"exclude"`
 
 	// Depends on the format
 	Git GitExportConfig `json:"git"`
@@ -45,3 +35,12 @@ type Job interface {
 
 // Will broadcast the live status
 type statusBroadcaster func(s ExportStatus)
+
+type Exporter struct {
+	Key         string     `json:"key"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Exporters   []Exporter `json:"exporters,omitempty"`
+
+	process func(helper *commitHelper, job *gitExportJob) error
+}
