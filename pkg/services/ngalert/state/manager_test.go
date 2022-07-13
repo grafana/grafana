@@ -53,7 +53,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		Instance:    data.Labels{"instance_label": "testValue2"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
-	}})
+	}}, nil)
 
 	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - Alerting"}
 	sort.Strings(expected)
@@ -1887,7 +1887,7 @@ func TestProcessEvalResults(t *testing.T) {
 			annotations.SetRepository(fakeAnnoRepo)
 
 			for _, res := range tc.evalResults {
-				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res)
+				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, nil)
 			}
 
 			states := st.GetStatesForRuleUID(tc.alertRule.OrgID, tc.alertRule.UID)
@@ -2012,7 +2012,7 @@ func TestStaleResultsHandler(t *testing.T) {
 					evalTime = re.EvaluatedAt
 				}
 			}
-			st.ProcessEvalResults(context.Background(), evalTime, rule, res)
+			st.ProcessEvalResults(context.Background(), evalTime, rule, res, nil)
 			for _, s := range tc.expectedStates {
 				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				require.NoError(t, err)

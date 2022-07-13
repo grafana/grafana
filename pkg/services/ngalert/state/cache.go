@@ -9,11 +9,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	prometheusModel "github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	prometheusModel "github.com/prometheus/common/model"
 )
 
 type cache struct {
@@ -33,7 +34,7 @@ func newCache(logger log.Logger, metrics *metrics.State, externalURL *url.URL) *
 	}
 }
 
-func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
+func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
@@ -42,8 +43,36 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	attachRuleLabels(labels, alertRule)
 	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, alertRule, labels, result)
 
-	// if duplicate labels exist, alertRule label will take precedence
-	lbs := mergeLabels(ruleLabels, result.Instance)
+	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
+	dupes := make(data.Labels)
+	for key, val := range extraLabels {
+		lbs[key] = val
+	}
+	for key, val := range ruleLabels {
+		_, ok := lbs[key]
+		// if duplicate labels exist, reserved label will take precedence
+		if ok {
+			dupes[key] = val
+		} else {
+			lbs[key] = val
+		}
+	}
+	if len(dupes) > 0 {
+		c.log.Warn("rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
+	}
+	dupes = make(data.Labels)
+	for key, val := range result.Instance {
+		_, ok := lbs[key]
+		// if duplicate labels exist, reserved or alert rule label will take precedence
+		if ok {
+			dupes[key] = val
+		} else {
+			lbs[key] = val
+		}
+	}
+	if len(dupes) > 0 {
+		c.log.Warn("evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
+	}
 	attachRuleLabels(lbs, alertRule)
 
 	il := ngModels.InstanceLabels(lbs)
@@ -200,20 +229,6 @@ func (c *cache) recordMetrics() {
 	for k, n := range ct {
 		c.metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
 	}
-}
-
-// if duplicate labels exist, keep the value from the first set
-func mergeLabels(a, b data.Labels) data.Labels {
-	newLbs := data.Labels{}
-	for k, v := range a {
-		newLbs[k] = v
-	}
-	for k, v := range b {
-		if _, ok := newLbs[k]; !ok {
-			newLbs[k] = v
-		}
-	}
-	return newLbs
 }
 
 func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {

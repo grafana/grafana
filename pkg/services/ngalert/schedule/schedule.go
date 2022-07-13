@@ -337,6 +337,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan struct{}) error {
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
+	extraLabels := make(map[string]string, 1)
 
 	orgID := fmt.Sprint(key.OrgID)
 	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
@@ -373,13 +374,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				logger.Error("failed to fetch alert rule namespace", "err", err)
 				return nil, err
 			}
-
-			if q.Result.Labels == nil {
-				q.Result.Labels = make(map[string]string)
-			} else if val, ok := q.Result.Labels[ngmodels.FolderTitleLabel]; ok {
-				logger.Warn("alert rule contains protected label, value will be overwritten", "label", ngmodels.FolderTitleLabel, "value", val)
-			}
-			q.Result.Labels[ngmodels.FolderTitleLabel] = folder.Title
+			extraLabels[ngmodels.FolderTitleLabel] = folder.Title
 		}
 
 		return q.Result, nil
@@ -400,7 +395,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 		}
 
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results)
+		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results, extraLabels)
 		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		sch.alertsSender.Send(key, alerts)
