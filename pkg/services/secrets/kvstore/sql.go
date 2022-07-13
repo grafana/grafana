@@ -227,13 +227,46 @@ func (kv *secretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace 
 // GetAll this returns all the secrets stored in the database. This is not part of the kvstore interface as we
 // only need it for migration from sql to plugin at this moment
 func (kv *secretsKVStoreSQL) GetAll(ctx context.Context) ([]Item, error) {
-	// TODO LND should we do this for a certain orgId?
 	var items []Item
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		return dbSession.Find(&items)
 	})
 	if err != nil {
 		kv.log.Debug("error getting all the items", "err", err)
+		return nil, err
 	}
+
+	// decrypting value
+	kv.decryptionCache.Lock()
+	defer kv.decryptionCache.Unlock()
+	for i := range items {
+		var decryptedValue []byte
+		if cache, ok := kv.decryptionCache.cache[items[i].Id]; ok && items[i].Updated.Equal(cache.updated) {
+			kv.log.Debug("got secret value from decryption cache", "orgId", items[i].OrgId, "type", items[i].Type, "namespace", items[i].Namespace)
+			items[i].Value = cache.value
+			continue
+		}
+
+		decodedValue, err := b64.DecodeString(items[i].Value)
+		if err != nil {
+			kv.log.Debug("error decoding secret value", "orgId", items[i].OrgId, "type", items[i].Type, "namespace", items[i].Namespace, "err", err)
+			items[i].Value = ""
+			continue
+		}
+
+		decryptedValue, err = kv.secretsService.Decrypt(ctx, decodedValue)
+		if err != nil {
+			kv.log.Debug("error decrypting secret value", "orgId", items[i].OrgId, "type", items[i].Type, "namespace", items[i].Namespace, "err", err)
+			items[i].Value = ""
+			continue
+		}
+
+		items[i].Value = string(decryptedValue)
+		kv.decryptionCache.cache[items[i].Id] = cachedDecrypted{
+			updated: items[i].Updated,
+			value:   string(decryptedValue),
+		}
+	}
+
 	return items, err
 }
