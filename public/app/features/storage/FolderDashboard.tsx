@@ -33,17 +33,18 @@ export function FolderDashboard({ dash }: Props) {
 
     return (
       <div className={styles.wrapper}>
+        <h1>{dash.uid}</h1>
         <Card href={parent}>
           <Card.Heading>{parent}</Card.Heading>
           <Card.Figure>
-            <Icon name={'folder'} size="sm" />
+            <Icon name="arrow-left" size="sm" />
           </Card.Figure>
         </Card>
         <br />
 
         {names.map((item: string) => {
           let name = item;
-          const isFolder = name.endsWith('.json');
+          const isFolder = !name.endsWith('.json');
 
           const url = base + name;
           return (

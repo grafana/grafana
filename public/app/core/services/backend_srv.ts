@@ -432,7 +432,7 @@ export class BackendSrv implements BackendService {
   }
 
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
-    if (uid.indexOf('/') > 0 && config.featureToggles.storage) {
+    if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
       return getGrafanaStorage().getDashboard(uid);
     }
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);

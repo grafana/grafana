@@ -13,7 +13,7 @@ interface Props {
 }
 
 interface RootFolder {
-  name: string;
+  name: string; //
   title: string;
   storageType: string;
   description: string;

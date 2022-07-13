@@ -38,7 +38,8 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
   useEffect(() => {
     if (state.error) {
       notifyApp.error(state.error.message ?? 'Error saving dashboard');
-    } else if (state.value) {
+    }
+    if (state.value) {
       dashboard.version = state.value.version;
       dashboard.clearUnsavedChanges();
 

@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -138,16 +138,19 @@ export default function StoragePage(props: Props) {
       return <RootView root={frame} onPathChange={setPath} />;
     }
 
+    const isConfigurable = isFolder && !['public-static', 'resources'].includes(path);
     const opts = [{ what: StorageView.Data, text: 'Data' }];
 
     // Root folders have a config page
-    if (path.indexOf('/') < 0) {
+    if (isConfigurable) {
       opts.push({ what: StorageView.Config, text: 'Configure' });
     }
 
     // Lets only apply permissions to folders (for now)
     if (isFolder) {
-      opts.push({ what: StorageView.Perms, text: 'Permissions' });
+      if (isConfigurable) {
+        opts.push({ what: StorageView.Perms, text: 'Permissions' });
+      }
     } else {
       // TODO: only if the file exists in a storage engine with
       opts.push({ what: StorageView.History, text: 'History' });
@@ -162,7 +165,8 @@ export default function StoragePage(props: Props) {
     }
     const canAddFolder = isFolder && path.startsWith('resources');
     const canDelete = path.startsWith('resources/');
-    const canViewDashboard = path.startsWith('devenv/');
+    const canViewDashboard =
+      path.startsWith('devenv/') && config.featureToggles.dashboardsFromStorage && (isFolder || path.endsWith('.json'));
 
     return (
       <div className={styles.wrapper}>
@@ -170,8 +174,8 @@ export default function StoragePage(props: Props) {
           <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={navModel.node.icon as IconName} />
           <HorizontalGroup>
             {canViewDashboard && (
-              <LinkButton icon="link" href={`g/${path}`}>
-                View
+              <LinkButton icon="dashboard" href={`g/${path}`}>
+                Dashboard
               </LinkButton>
             )}
             {canAddFolder && <Button onClick={() => setIsAddingNewFolder(true)}>New Folder</Button>}
