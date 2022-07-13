@@ -39,7 +39,7 @@ This section describes the areas of the Grafana panel editor.
 
    - [Apply color to series and fields]({{< relref "../panels/working-with-panels/apply-color-to-series/" >}})
    - [Format a standard field]({{< relref "../panels/working-with-panels/format-standard-fields/" >}})
-   - [Add a title and description to a panel]({{< relref "../panels/working-with-panels/add-title-and-description/" >}})
+   - [Add a title and description to a panel]({{< relref "../panels/configure-panels/#add-a-title-and-description-to-a-panel" >}})
 
 > Not all options are available for each visualization.
 
