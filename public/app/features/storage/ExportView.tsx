@@ -1,9 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useLocalStorage } from 'react-use';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { useAsync, useLocalStorage } from 'react-use';
 
 import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
-import { Button, CodeEditor, HorizontalGroup, LinkButton } from '@grafana/ui';
+import {
+  Button,
+  CodeEditor,
+  HorizontalGroup,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  LinkButton,
+} from '@grafana/ui';
 
 import { StorageView } from './types';
 
@@ -21,44 +29,20 @@ interface ExportStatusMessage {
   status: string;
 }
 
-interface ExportInclude {
-  auth: boolean;
-  ds: boolean;
-  dash: boolean;
-  dash_thumbs: boolean;
-  alerts: boolean;
-  services: boolean;
-  usage: boolean;
-  anno: boolean;
-  snapshots: boolean;
-}
-
 interface ExportJob {
   format: 'git';
   generalFolderPath: string;
   history: boolean;
-  include: ExportInclude;
+  include: Record<string, boolean>;
 
   git?: {};
 }
-
-const includAll: ExportInclude = {
-  auth: true,
-  ds: true,
-  dash: true,
-  dash_thumbs: true,
-  alerts: true,
-  services: true,
-  usage: true,
-  anno: true,
-  snapshots: false, // will fail until we have a real user
-};
 
 const defaultJob: ExportJob = {
   format: 'git',
   generalFolderPath: 'general',
   history: true,
-  include: includAll,
+  include: {},
   git: {},
 };
 
@@ -69,7 +53,22 @@ interface Props {
 export const ExportView = ({ onPathChange }: Props) => {
   const [status, setStatus] = useState<ExportStatusMessage>();
   const [rawBody, setBody] = useLocalStorage<ExportJob>(EXPORT_LOCAL_STORAGE_KEY, defaultJob);
-  const body = { ...defaultJob, ...rawBody, include: { ...includAll, ...rawBody?.include } };
+
+  const serverOptions = useAsync(() => {
+    return getBackendSrv().get<ExportJob>('/api/admin/export/options');
+  }, []);
+
+  const body = useMemo(() => {
+    if (!serverOptions.value) {
+      return rawBody;
+    }
+    const v = { ...defaultJob, ...serverOptions.value, ...rawBody };
+    v.include = {};
+    for (const k of Object.keys(serverOptions.value.include)) {
+      v.include[k] = rawBody!.include[k] !== false;
+    }
+    return v;
+  }, [rawBody, serverOptions]);
 
   const doStart = () => {
     getBackendSrv().post('/api/admin/export', body);
@@ -77,6 +76,13 @@ export const ExportView = ({ onPathChange }: Props) => {
   const doStop = () => {
     getBackendSrv().post('/api/admin/export/stop');
   };
+
+  const setInclude = useCallback(
+    (k: string, v: boolean) => {
+      setBody({ ...rawBody!, include: { ...rawBody!.include, [k]: v } });
+    },
+    [rawBody, setBody]
+  );
 
   useEffect(() => {
     const subscription = getGrafanaLiveSrv()
@@ -132,6 +138,20 @@ export const ExportView = ({ onPathChange }: Props) => {
             }}
           />
           <br />
+          {serverOptions.value && (
+            <div>
+              {Object.keys(serverOptions.value.include).map((k) => (
+                <InlineFieldRow key={k}>
+                  <InlineField label={k} labelWidth={12}>
+                    <InlineSwitch
+                      value={body?.include[k] !== false}
+                      onChange={(v) => setInclude(k, v.currentTarget.checked)}
+                    />
+                  </InlineField>
+                </InlineFieldRow>
+              ))}
+            </div>
+          )}
 
           <HorizontalGroup>
             <Button onClick={doStart} variant="primary">

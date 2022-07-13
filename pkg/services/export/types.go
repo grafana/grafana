@@ -29,6 +29,7 @@ type ExportConfig struct {
 		Usage      bool `json:"usage"`
 		Anno       bool `json:"anno"`
 		Snapshots  bool `json:"snapshots"`
+		Plugins    bool `json:"plugins"`
 	} `json:"include"`
 
 	// Depends on the format

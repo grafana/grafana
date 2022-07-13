@@ -23,6 +23,9 @@ type ExportService interface {
 	// List folder contents
 	HandleGetStatus(c *models.ReqContext) response.Response
 
+	// List Get Options
+	HandleGetOptions(c *models.ReqContext) response.Response
+
 	// Read raw file contents out of the store
 	HandleRequestExport(c *models.ReqContext) response.Response
 
@@ -57,6 +60,11 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		exportJob:                 &stoppedJob{},
 		dataDir:                   cfg.DataPath,
 	}
+}
+
+func (ex *StandardExport) HandleGetOptions(c *models.ReqContext) response.Response {
+	cfg := ExportConfig{}
+	return response.JSON(http.StatusOK, cfg)
 }
 
 func (ex *StandardExport) HandleGetStatus(c *models.ReqContext) response.Response {
