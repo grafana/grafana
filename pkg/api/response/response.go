@@ -239,14 +239,14 @@ func Err(err error) *NormalResponse {
 	return resp
 }
 
-// ErrWithFallback uses the information in an errutil.Error if available
+// ErrOrFallback uses the information in an errutil.Error if available
 // and otherwise falls back to the status and message provided as
 // arguments.
 //
 // The signature is equivalent to that of Error which allows us to
 // rename this to Error when we're confident that that would be safe to
 // do.
-func ErrWithFallback(status int, message string, err error) *NormalResponse {
+func ErrOrFallback(status int, message string, err error) *NormalResponse {
 	grafanaErr := &errutil.Error{}
 	if errors.As(err, grafanaErr) {
 		return Err(err)

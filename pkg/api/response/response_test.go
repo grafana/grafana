@@ -116,8 +116,8 @@ func TestErrors(t *testing.T) {
 			fallbackResponse = tc.newResponse
 		}
 		t.Run(
-			tc.name+" ErrWithFallback",
-			compareResponses(fallbackResponse, ErrWithFallback(
+			tc.name+" ErrOrFallback",
+			compareResponses(fallbackResponse, ErrOrFallback(
 				tc.statusCode,
 				tc.message,
 				tc.err,
