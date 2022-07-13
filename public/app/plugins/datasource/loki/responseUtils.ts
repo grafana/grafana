@@ -35,6 +35,5 @@ export function extractHasErrorLabelFromDataFrame(frame: DataFrame): boolean {
   }
 
   const labels: Array<{ [key: string]: string }> = labelField.values.toArray();
-  const hasErrorLabel = labels.find((label) => label['__error__']);
-  return !!hasErrorLabel;
+  return labels.some((label) => label['__error__']);
 }

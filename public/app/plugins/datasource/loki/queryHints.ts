@@ -50,7 +50,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
       if (hasError && !hasPipelineErrorFiltering) {
         hints.push({
           type: 'ADD_NO_PIPELINE_ERROR',
-          label: 'Some logs in your selected log streams might have parsing error.',
+          label: 'Some logs in your selected log streams have parsing error.',
           fix: {
             label: 'Consider filtering out logs with parsing errors.',
             action: {
