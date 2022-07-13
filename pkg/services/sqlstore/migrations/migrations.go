@@ -81,6 +81,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			accesscontrol.AddTeamMembershipMigrations(mg)
 			accesscontrol.AddDashboardPermissionsMigrator(mg)
 			accesscontrol.AddAlertingPermissionsMigrator(mg)
+			accesscontrol.AddManagedFolderAlertActionsMigration(mg)
 		}
 	}
 	addQueryHistoryStarMigrations(mg)
@@ -91,7 +92,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addCommentMigrations(mg)
 		}
 	}
-	accesscontrol.AddManagedFolderAlertActionsMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
