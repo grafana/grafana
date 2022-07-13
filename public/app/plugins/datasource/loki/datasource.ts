@@ -1,6 +1,7 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
+
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
