@@ -220,6 +220,7 @@ const getDefaultExpression = (refId: string): AlertQuery => {
         },
       },
     ],
+    expression: 'A',
   };
 
   return {

@@ -255,30 +255,34 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
       const dataSources: AsyncRequestMapSlice<PromBasedDataSource> = (getState() as StoreState).unifiedAlerting
         .dataSources;
       const hasLoaded = Boolean(dataSources[rulesSourceName]?.result);
-      return !hasLoaded;
+      const hasError = Boolean(dataSources[rulesSourceName]?.error);
+
+      return !(hasLoaded || hasError);
     },
   }
 );
 
 export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    await dispatch(fetchAllPromBuildInfoAction());
+    return Promise.all(
+      getAllRulesSourceNames().map(async (rulesSourceName) => {
+        await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-    const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
+        const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
+        const dataSourceConfig = dataSources[rulesSourceName].result;
 
-    getAllRulesSourceNames().map((rulesSourceName) => {
-      const dataSourceConfig = dataSources[rulesSourceName].result;
-      if (!dataSourceConfig) {
-        return;
-      }
+        if (!dataSourceConfig) {
+          return;
+        }
 
-      if (force || !promRules[rulesSourceName]?.loading) {
-        dispatch(fetchPromRulesAction({ rulesSourceName }));
-      }
-      if ((force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig) {
-        dispatch(fetchRulerRulesAction({ rulesSourceName }));
-      }
-    });
+        if (force || !promRules[rulesSourceName]?.loading) {
+          dispatch(fetchPromRulesAction({ rulesSourceName }));
+        }
+        if ((force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig) {
+          dispatch(fetchRulerRulesAction({ rulesSourceName }));
+        }
+      })
+    );
   };
 }
 

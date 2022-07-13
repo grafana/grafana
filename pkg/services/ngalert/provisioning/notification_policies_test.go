@@ -223,7 +223,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "grafana-default-email", tree.Receiver)
 		require.Nil(t, tree.Routes)
-		require.Nil(t, tree.GroupBy)
+		require.Equal(t, []model.LabelName{models.FolderTitleLabel, model.AlertNameLabel}, tree.GroupBy)
 	})
 }
 

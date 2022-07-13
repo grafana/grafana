@@ -25,7 +25,7 @@ type ProvisioningSrv struct {
 }
 
 type ContactPointService interface {
-	GetContactPoints(ctx context.Context, orgID int64) ([]definitions.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
@@ -95,7 +95,11 @@ func (srv *ProvisioningSrv) RouteResetPolicyTree(c *models.ReqContext) response.
 }
 
 func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response.Response {
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), c.OrgId)
+	q := provisioning.ContactPointQuery{
+		Name:  c.Query("name"),
+		OrgID: c.OrgId,
+	}
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -249,7 +253,7 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext, UID str
 	return response.JSON(http.StatusOK, definitions.NewAlertRule(rule, provenace))
 }
 
-func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.AlertRule) response.Response {
+func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -266,7 +270,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	return response.JSON(http.StatusCreated, ar)
 }
 
-func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.AlertRule, UID string) response.Response {
+func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule, UID string) response.Response {
 	updated := ar.UpstreamModel()
 	updated.UID = UID
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
