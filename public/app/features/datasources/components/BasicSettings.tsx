@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineSwitch, Input } from '@grafana/ui';
@@ -10,7 +10,7 @@ export interface Props {
   onDefaultChange: (value: boolean) => void;
 }
 
-const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, onNameChange }) => {
+export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange }: Props): React.ReactElement {
   return (
     <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">
@@ -45,6 +45,4 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
       </div>
     </div>
   );
-};
-
-export default BasicSettings;
+}

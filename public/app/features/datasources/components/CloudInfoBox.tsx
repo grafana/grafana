@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
@@ -12,7 +12,7 @@ export interface Props {
   dataSource: DataSourceSettings;
 }
 
-export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
+export function CloudInfoBox({ dataSource }: Props): React.ReactElement | null {
   let mainDS = '';
   let extraDS = '';
 
@@ -71,4 +71,4 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
       }}
     </LocalStorageValueProvider>
   );
-};
+}

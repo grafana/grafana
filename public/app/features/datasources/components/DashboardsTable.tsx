@@ -1,16 +1,18 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Button, Icon } from '@grafana/ui';
-
-import { PluginDashboard } from '../../types';
+import { PluginDashboard } from 'app/types';
 
 export interface Props {
+  // List of plugin dashboards to show in the table
   dashboards: PluginDashboard[];
+  // Callback used when the user clicks on importing a dashboard
   onImport: (dashboard: PluginDashboard, overwrite: boolean) => void;
+  // Callback used when the user clicks on removing a dashboard
   onRemove: (dashboard: PluginDashboard) => void;
 }
 
-const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
+export function DashboardsTable({ dashboards, onImport, onRemove }: Props): React.ReactElement {
   function buttonText(dashboard: PluginDashboard) {
     return dashboard.revision !== dashboard.importedRevision ? 'Update' : 'Re-import';
   }
@@ -57,6 +59,6 @@ const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
       </tbody>
     </table>
   );
-};
+}
 
 export default DashboardsTable;

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import ButtonRow, { Props } from './ButtonRow';
+import { ButtonRow, Props } from '../ButtonRow';
 
 jest.mock('app/core/core', () => {
   return {
@@ -28,7 +28,7 @@ const setup = (propOverrides?: object) => {
   return render(<ButtonRow {...props} />);
 };
 
-describe('Button Row', () => {
+describe('<ButtonRow>', () => {
   it('should render component', () => {
     setup();
 

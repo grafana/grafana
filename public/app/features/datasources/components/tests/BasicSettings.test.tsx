@@ -3,7 +3,7 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import BasicSettings, { Props } from './BasicSettings';
+import { BasicSettings, Props } from '../BasicSettings';
 
 const setup = () => {
   const props: Props = {
@@ -16,7 +16,7 @@ const setup = () => {
   return render(<BasicSettings {...props} />);
 };
 
-describe('Basic Settings', () => {
+describe('<BasicSettings>', () => {
   it('should render component', () => {
     setup();
 

@@ -1,9 +1,9 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, LinkButton } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types/';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 export interface Props {
   exploreUrl: string;
@@ -14,7 +14,7 @@ export interface Props {
   onTest: (event: any) => void;
 }
 
-const ButtonRow: FC<Props> = ({ canSave, canDelete, onDelete, onSubmit, onTest, exploreUrl }) => {
+export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest, exploreUrl }: Props): React.ReactElement {
   const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   return (
@@ -46,12 +46,10 @@ const ButtonRow: FC<Props> = ({ canSave, canDelete, onDelete, onSubmit, onTest, 
         </Button>
       )}
       {!canSave && (
-        <Button type="submit" variant="primary" onClick={onTest}>
+        <Button variant="primary" onClick={onTest}>
           Test
         </Button>
       )}
     </div>
   );
-};
-
-export default ButtonRow;
+}
