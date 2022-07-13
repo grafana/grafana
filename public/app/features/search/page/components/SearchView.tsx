@@ -254,6 +254,7 @@ export const SearchView = ({
             }
             onLayoutChange(v);
           }}
+          showStarredFilter={!hidePseudoFolders}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}
