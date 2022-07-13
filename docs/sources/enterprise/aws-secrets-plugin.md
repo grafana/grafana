@@ -12,9 +12,9 @@ title: AWS Secrets Manager Plugin
 weight: 2000
 ---
 
-# AWS Secrets Manager plugin
+# AWS Secrets Manager Plugin
 
-By default, Grafana stores all encrypted secrets in its own SQL database. The AWS Secrets Manager plugin is available for users who wish to store secrets in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/). In the current version of Grafana, this is limited to datasource secrets, but it will eventually include all secrets.
+By default, Grafana stores all encrypted secrets in its own SQL database. The AWS Secrets Manager plugin is available for users who wish to store secrets in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/). In the current version of Grafana, this is limited to datasource secrets, but it will eventually include all secrets (e.g. user credentials).
 
 There are a number of configuration options available that determine secret storage behavior in AWS Secrets Manager. We also provide the ability to migrate secrets from existing Grafana instances to AWS Secrets Manager. We provide a degree of backwards compatibility so that the plugin can be quickly uninstalled, but it has some [limitations](#limitations).
 
@@ -35,7 +35,7 @@ use_plugin = true
 
 ## Authentication
 
-By default, the AWS SDK will attempt to authenticate and select an AWS region using parameters read from the runtime environment. For more details, see the [AWS CLI](https://aws.amazon.com/cli/) setup documentation.
+By default, the plugin will attempt to authenticate and select an AWS region using parameters read from the runtime environment. For more details, see the [AWS CLI](https://aws.amazon.com/cli/) setup documentation.
 
 Alternatively, you can configure authentication and region selection explicitly through Grafana’s configuration. The full list of available options can be found below. For more information on configuring Grafana, see [Configuring Grafana]({{< relref "../setup-grafana/configure-grafana/" >}}).
 
