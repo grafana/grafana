@@ -187,5 +187,30 @@ describe('VariableEditor:', () => {
         })
       );
     });
+
+    it('should show template variables as options ', async () => {
+      grafanaRuntime.config.featureToggles.azTemplateVars = true;
+      const ds = createMockDatasource({
+        getSubscriptions: jest.fn().mockResolvedValue([{ text: 'Primary Subscription', value: 'sub' }]),
+        getVariablesRaw: jest.fn().mockReturnValue([
+          { label: 'query0', value: 'sub0' },
+          { label: 'query1', value: 'rg', query: { queryType: AzureQueryType.ResourceGroupsQuery } },
+        ]),
+      });
+      render(<VariableEditor {...defaultProps} datasource={ds} />);
+      // wait for initial load
+      await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
+      // Select RGs variable
+      openMenu(screen.getByLabelText('select query type'));
+      screen.getByText('Resource Groups').click();
+      await waitFor(() => expect(screen.getByText('Select subscription')).toBeInTheDocument());
+      // Select a subscription
+      openMenu(screen.getByLabelText('select subscription'));
+      await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
+      screen.getByText('Template Variables').click();
+      await waitFor(() => expect(screen.getByText('query0')).toBeInTheDocument());
+      // Template variables of the same type than the current one should not appear
+      expect(screen.queryByText('query1')).not.toBeInTheDocument();
+    });
   });
 });

@@ -1,3 +1,4 @@
+import { get } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
@@ -7,7 +8,7 @@ import { Alert, InlineField, Select } from '@grafana/ui';
 
 import DataSource from '../../datasource';
 import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import useLastError from '../../utils/useLastError';
 import LogsQueryEditor from '../LogsQueryEditor';
 import { Space } from '../Space';
@@ -33,7 +34,10 @@ const VariableEditor = (props: Props) => {
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery });
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery });
   }
-
+  const [variableOptionGroup, setVariableOptionGroup] = useState<{ label: string; options: AzureMonitorOption[] }>({
+    label: 'Template Variables',
+    options: [],
+  });
   const [query, setQuery] = useState(defaultQuery);
   const [requireSubscription, setRequireSubscription] = useState(false);
   const [subscriptions, setSubscriptions] = useState<SelectableValue[]>([]);
@@ -53,6 +57,19 @@ const VariableEditor = (props: Props) => {
         setRequireSubscription(false);
     }
   }, [query.queryType]);
+
+  useEffect(() => {
+    const options: AzureMonitorOption[] = [];
+    props.datasource.getVariablesRaw().forEach((v) => {
+      if (get(v, 'query.queryType') !== query.queryType) {
+        options.push({ label: v.label || v.name, value: v.name });
+      }
+    });
+    setVariableOptionGroup({
+      label: 'Template Variables',
+      options,
+    });
+  }, [props.datasource, query.queryType]);
 
   useEffectOnce(() => {
     props.datasource.getSubscriptions().then((subs) => {
@@ -92,13 +109,6 @@ const VariableEditor = (props: Props) => {
   };
 
   const [errorMessage, setError] = useLastError();
-
-  const variableOptionGroup = {
-    label: 'Template Variables',
-    // TODO: figure out a way to filter out the current variable from the variables list
-    // options: props.datasource.getVariables().map((v) => ({ label: v, value: v })),
-    options: [],
-  };
 
   return (
     <>
@@ -140,7 +150,7 @@ const VariableEditor = (props: Props) => {
           <Select
             aria-label="select subscription"
             onChange={onChangeSubscription}
-            options={subscriptions}
+            options={subscriptions.concat(variableOptionGroup)}
             width={25}
             value={query.subscription}
           />
