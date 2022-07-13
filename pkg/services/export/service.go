@@ -33,6 +33,108 @@ type ExportService interface {
 	HandleRequestStop(c *models.ReqContext) response.Response
 }
 
+var exporters = []Exporter{
+	{
+		Key:         "auth",
+		Name:        "Authentication",
+		Description: "Saves raw SQL tables",
+		process:     dumpAuthTables,
+	},
+	{
+		Key:         "dash",
+		Name:        "Dashboards",
+		Description: "Save dashboard JSON",
+		process:     exportDashboards,
+		Exporters: []Exporter{
+			{
+				Key:         "dash_thumbs",
+				Name:        "Dashboard thumbnails",
+				Description: "Save current dashboard preview images",
+				process:     exportDashboardThumbnails,
+			},
+		},
+	},
+	{
+		Key:         "alerts",
+		Name:        "Alerts",
+		Description: "Archive alert rules and configuration",
+		process:     exportAlerts,
+	},
+	{
+		Key:         "ds",
+		Name:        "Data sources",
+		Description: "Data source configurations",
+		process:     exportDataSources,
+	},
+	{
+		Key:         "services",
+		Name:        "Services",
+		Description: "Save service settings",
+		Exporters: []Exporter{
+			{
+				Name:        "Preferences",
+				Description: "User and team preferences",
+				process:     exportSystemPreferences,
+			},
+			{
+				Name:        "Stars",
+				Description: "User stars",
+				process:     exportSystemStars,
+			},
+			{
+				Name:        "Playlists",
+				Description: "Playlists",
+				process:     exportSystemPlaylists,
+			},
+			{
+				Name:        "Key Value store",
+				Description: "Internal KV store",
+				process:     exportKVStore,
+			},
+			{
+				Name:        "Short URLs",
+				Description: "saved links",
+				process:     exportSystemShortURL,
+			},
+			{
+				Name:        "Grafana live",
+				Description: "archived messages",
+				process:     exportLive,
+			},
+		},
+	},
+	{
+		Key:         "files",
+		Name:        "Files",
+		Description: "Export internal file system",
+		process:     exportFiles,
+	},
+	{
+		Key:         "anno",
+		Name:        "Annotations",
+		Description: "Write an DataFrame for all annotations on a dashboard",
+		process:     exportAnnotations,
+	},
+	{
+		Key:         "plugins",
+		Name:        "Plugins",
+		Description: "Save settings for all configured plugins",
+		process:     exportPlugins,
+	},
+	{
+		Key:         "usage",
+		Name:        "Usage",
+		Description: "archive current usage stats",
+		process:     exportUsage,
+	},
+	// {
+	// 	Key:         "snapshots",
+	// 	Name:        "Snapshots",
+	// 	Description: "write snapshots",
+	// 	process:     exportSnapshots,
+	// },
+}
+
 type StandardExport struct {
 	logger  log.Logger
 	glive   *live.GrafanaLive
@@ -63,8 +165,10 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 }
 
 func (ex *StandardExport) HandleGetOptions(c *models.ReqContext) response.Response {
-	cfg := ExportConfig{}
-	return response.JSON(http.StatusOK, cfg)
+	info := map[string]interface{}{
+		"exporters": exporters,
+	}
+	return response.JSON(http.StatusOK, info)
 }
 
 func (ex *StandardExport) HandleGetStatus(c *models.ReqContext) response.Response {
@@ -122,7 +226,12 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 	}
 
 	ex.exportJob = job
-	return response.JSON(http.StatusOK, ex.exportJob.getStatus())
+
+	info := map[string]interface{}{
+		"cfg":    cfg, // parsed job we are running
+		"status": ex.exportJob.getStatus(),
+	}
+	return response.JSON(http.StatusOK, info)
 }
 
 func (ex *StandardExport) broadcastStatus(orgID int64, s ExportStatus) {
