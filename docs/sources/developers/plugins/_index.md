@@ -42,7 +42,7 @@ If you're looking to build your first plugin, check out these introductory tutor
 
 Ready to learn more? Check out our other tutorials:
 
-- [Build a panel plugin with D3.js](/tutorials/build-a-panel-plugin-with-d3/)
+- [Build a panel plugin with D3.js]({{< ref "build-a-panel-plugin-with-d3.md" >}})
 
 ### Guides
 
