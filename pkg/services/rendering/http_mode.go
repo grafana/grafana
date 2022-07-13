@@ -95,8 +95,8 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 	}
 
 	queryParams := rendererURL.Query()
-	url := rs.getURL(opts.Path)
-	queryParams.Add("url", url)
+	pathURL := rs.getURL(opts.Path)
+	queryParams.Add("url", pathURL)
 	queryParams.Add("renderKey", renderKey)
 	queryParams.Add("domain", rs.domain)
 	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
@@ -125,9 +125,13 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 	if err != nil {
 		return nil, err
 	}
-	downloadFileName := params["filename"]
 
-	err = rs.readFileResponse(reqContext, resp, filePath, url)
+	downloadFileName, err := url.PathUnescape(params["filename"])
+	if err != nil {
+		return nil, err
+	}
+
+	err = rs.readFileResponse(reqContext, resp, filePath, pathURL)
 	if err != nil {
 		return nil, err
 	}
