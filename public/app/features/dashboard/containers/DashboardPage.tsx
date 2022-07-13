@@ -340,7 +340,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return <DashboardLoading initPhase={this.props.initPhase} />;
     }
 
-    if (dashboard.meta.isFolder) {
+    if (dashboard.meta.isFolder && config.featureToggles.dashboardsFromStorage) {
       return <FolderDashboard dash={dashboard} />;
     }
 

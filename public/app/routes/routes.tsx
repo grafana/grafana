@@ -40,7 +40,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/g/:slug*',
+      path: '/g/:slug*', // NOTE: this requires: config.featureToggles.dashboardsFromStorage
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Path,
       component: SafeDynamicImport(

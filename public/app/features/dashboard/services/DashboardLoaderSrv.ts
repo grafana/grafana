@@ -9,7 +9,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getGrafanaStorage } from 'app/features/storage/storage';
-import { DashboardDTO, DashboardRoutes } from 'app/types';
+import { DashboardRoutes } from 'app/types';
 
 import { appEvents } from '../../../core/core';
 
@@ -17,48 +17,46 @@ import { getDashboardSrv } from './DashboardSrv';
 
 export class DashboardLoaderSrv {
   constructor() {}
-  _dashboardLoadFailed(title: string, snapshot?: boolean): DashboardDTO {
+  _dashboardLoadFailed(title: string, snapshot?: boolean) {
+    snapshot = snapshot || false;
     return {
       meta: {
         canStar: false,
-        isSnapshot: snapshot || false,
+        isSnapshot: snapshot,
         canDelete: false,
         canSave: false,
         canEdit: false,
         dashboardNotFound: true,
       },
       dashboard: { title },
-    } as any;
+    };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: string | undefined, uid: string | undefined): Promise<DashboardDTO> {
-    const loader = (): Promise<DashboardDTO> => {
-      if (type === 'script') {
-        return this._loadScriptedDashboard(slug!);
-      }
-      if (type === 'snapshot') {
-        return backendSrv.get('/api/snapshots/' + slug).catch(() => {
-          return this._dashboardLoadFailed('Snapshot not found', true);
+  loadDashboard(type: UrlQueryValue, slug: any, uid: any) {
+    let promise;
+
+    if (type === 'script') {
+      promise = this._loadScriptedDashboard(slug);
+    } else if (type === 'snapshot') {
+      promise = backendSrv.get('/api/snapshots/' + slug).catch(() => {
+        return this._dashboardLoadFailed('Snapshot not found', true);
+      });
+    } else if (type === DashboardRoutes.Path) {
+      promise = getGrafanaStorage().getDashboard(slug!);
+    } else if (type === 'ds') {
+      promise = this._loadFromDatasource(slug); // explore dashboards as code
+    } else if (type === 'public') {
+      promise = backendSrv
+        .getPublicDashboardByUid(uid)
+        .then((result: any) => {
+          return result;
+        })
+        .catch(() => {
+          return this._dashboardLoadFailed('Public Dashboard Not found', true);
         });
-      }
-      if (type === 'ds') {
-        return this._loadFromDatasource(slug!); // explore dashboards as code
-      }
-      if (type === 'public') {
-        return backendSrv
-          .getPublicDashboardByUid(uid!)
-          .then((result: any) => {
-            return result;
-          })
-          .catch(() => {
-            return this._dashboardLoadFailed('Public Dashboard Not found', true);
-          });
-      }
-      if (type === DashboardRoutes.Path) {
-        return getGrafanaStorage().getDashboard(slug!);
-      }
-      return backendSrv
-        .getDashboardByUid(uid!)
+    } else {
+      promise = backendSrv
+        .getDashboardByUid(uid)
         .then((result: any) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -69,15 +67,17 @@ export class DashboardLoaderSrv {
         .catch(() => {
           return this._dashboardLoadFailed('Not found', true);
         });
-    };
+    }
 
-    return loader().then((result) => {
-      // _dashboardLoadFailed adds this additional propery when missing
-      if ((result.meta as any).dashboardNotFound !== true) {
-        impressionSrv.addDashboardImpression(result.dashboard.id!);
+    promise.then((result: any) => {
+      if (result.meta.dashboardNotFound !== true) {
+        impressionSrv.addDashboardImpression(result.dashboard.id);
       }
+
       return result;
     });
+
+    return promise;
   }
 
   _loadScriptedDashboard(file: string) {
@@ -96,7 +96,7 @@ export class DashboardLoaderSrv {
               canStar: false,
             },
             dashboard: result.data,
-          } as DashboardDTO;
+          };
         },
         (err: any) => {
           console.error('Script dashboard error ' + err);
