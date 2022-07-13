@@ -30,7 +30,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 	}
 
 	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_VIEWER) {
-		return dashboards.ErrFolderAccessDenied
+		return dashboards.ErrFolderAccessDenied.Errorf("viewers cannot edit library elements in the 'general' folder")
 	}
 	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
 	if err != nil {
@@ -44,7 +44,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 		return err
 	}
 	if !canEdit {
-		return dashboards.ErrFolderAccessDenied
+		return dashboards.ErrFolderAccessDenied.Errorf("user %d does not have permissions to edit library elements in folder with ID %d in org %d", user.UserId, folder.Id, user.OrgId)
 	}
 
 	return nil
@@ -67,7 +67,7 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 		return err
 	}
 	if !canView {
-		return dashboards.ErrFolderAccessDenied
+		return dashboards.ErrFolderAccessDenied.Errorf("user %d cannot view library elements in folder with id %d in org %d", user.UserId, folder.Id, user.OrgId)
 	}
 
 	return nil

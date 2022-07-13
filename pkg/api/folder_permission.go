@@ -25,7 +25,9 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
+		return apierrors.ToFolderErrorResponse(
+			dashboards.ErrFolderAccessDenied.Errorf("listing folder permissions forbidden: user %d is not admin for folder with ID %d in org %d", c.SignedInUser.UserId, folder.Id, c.OrgId),
+		)
 	}
 
 	acl, err := g.GetAcl()
@@ -79,7 +81,9 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 	}
 
 	if !canAdmin {
-		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
+		return apierrors.ToFolderErrorResponse(
+			dashboards.ErrFolderAccessDenied.Errorf("updating folder permissions forbidden: user %d is not admin for folder with ID %d in org %d", c.SignedInUser.UserId, folder.Id, c.OrgId),
+		)
 	}
 
 	var items []*models.DashboardAcl
