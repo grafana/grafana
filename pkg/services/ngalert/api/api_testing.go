@@ -55,10 +55,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		now = timeNow()
 	}
 
-	evalResults, err := srv.evaluator.ConditionEval(&evalCond, now)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
-	}
+	evalResults := srv.evaluator.ConditionEval(c.Req.Context(), evalCond, now)
 
 	frame := evalResults.AsDataFrame()
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
@@ -121,7 +118,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now)
+	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.Req.Context(), c.SignedInUser.OrgId, cmd.Data, now)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}

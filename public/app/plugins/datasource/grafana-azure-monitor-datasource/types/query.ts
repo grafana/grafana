@@ -6,6 +6,8 @@ export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   LogAnalytics = 'Azure Log Analytics',
   AzureResourceGraph = 'Azure Resource Graph',
+  SubscriptionsQuery = 'Azure Subscriptions',
+  /** Deprecated */
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
 }
 

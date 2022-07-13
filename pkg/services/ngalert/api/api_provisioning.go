@@ -253,7 +253,7 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext, UID str
 	return response.JSON(http.StatusOK, definitions.NewAlertRule(rule, provenace))
 }
 
-func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.AlertRule) response.Response {
+func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -270,7 +270,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	return response.JSON(http.StatusCreated, ar)
 }
 
-func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.AlertRule, UID string) response.Response {
+func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule, UID string) response.Response {
 	updated := ar.UpstreamModel()
 	updated.UID = UID
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
