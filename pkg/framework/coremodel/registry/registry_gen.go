@@ -10,7 +10,135 @@ import (
 
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/coremodel/activeuserstats"
+	"github.com/grafana/grafana/pkg/coremodel/addapikeycommand"
+	"github.com/grafana/grafana/pkg/coremodel/addbuiltinrolecommand"
+	"github.com/grafana/grafana/pkg/coremodel/addinviteform"
+	"github.com/grafana/grafana/pkg/coremodel/addorgusercommand"
+	"github.com/grafana/grafana/pkg/coremodel/address"
+	"github.com/grafana/grafana/pkg/coremodel/addteammembercommand"
+	"github.com/grafana/grafana/pkg/coremodel/addteamrolecommand"
+	"github.com/grafana/grafana/pkg/coremodel/adduserrolecommand"
+	"github.com/grafana/grafana/pkg/coremodel/admincreateuserform"
+	"github.com/grafana/grafana/pkg/coremodel/adminstats"
+	"github.com/grafana/grafana/pkg/coremodel/adminupdateuserpasswordform"
+	"github.com/grafana/grafana/pkg/coremodel/adminupdateuserpermissionsform"
+	"github.com/grafana/grafana/pkg/coremodel/alertinstancesresponse"
+	"github.com/grafana/grafana/pkg/coremodel/alertmanager"
+	"github.com/grafana/grafana/pkg/coremodel/alertmanagerconfig"
+	"github.com/grafana/grafana/pkg/coremodel/alertmanagernotfound"
+	"github.com/grafana/grafana/pkg/coremodel/alertmanagernotready"
+	"github.com/grafana/grafana/pkg/coremodel/alertnotificationlookup"
+	"github.com/grafana/grafana/pkg/coremodel/alertrulegroup"
+	"github.com/grafana/grafana/pkg/coremodel/alertstatus"
+	"github.com/grafana/grafana/pkg/coremodel/alerttestresultlog"
+	"github.com/grafana/grafana/pkg/coremodel/annotationactions"
+	"github.com/grafana/grafana/pkg/coremodel/brandingoptionsdto"
+	"github.com/grafana/grafana/pkg/coremodel/changeuserpasswordcommand"
+	"github.com/grafana/grafana/pkg/coremodel/createfoldercommand"
+	"github.com/grafana/grafana/pkg/coremodel/createlibraryelementcommand"
+	"github.com/grafana/grafana/pkg/coremodel/createorgcommand"
+	"github.com/grafana/grafana/pkg/coremodel/createteamcommand"
+	"github.com/grafana/grafana/pkg/coremodel/custompermissionsrecorddto"
 	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/coremodel/dashboardredirect"
+	"github.com/grafana/grafana/pkg/coremodel/dashboardreportdto"
+	"github.com/grafana/grafana/pkg/coremodel/dashboardsnapshotdto"
+	"github.com/grafana/grafana/pkg/coremodel/dashboardtagclouditem"
+	"github.com/grafana/grafana/pkg/coremodel/dashboardversiondto"
+	"github.com/grafana/grafana/pkg/coremodel/datalink"
+	"github.com/grafana/grafana/pkg/coremodel/dayofmonthrange"
+	"github.com/grafana/grafana/pkg/coremodel/deletetokencommand"
+	"github.com/grafana/grafana/pkg/coremodel/errorresponsebody"
+	"github.com/grafana/grafana/pkg/coremodel/faileduser"
+	"github.com/grafana/grafana/pkg/coremodel/float"
+	"github.com/grafana/grafana/pkg/coremodel/gettablengalertconfig"
+	"github.com/grafana/grafana/pkg/coremodel/hostport"
+	"github.com/grafana/grafana/pkg/coremodel/importdashboardinput"
+	"github.com/grafana/grafana/pkg/coremodel/importdashboardresponse"
+	"github.com/grafana/grafana/pkg/coremodel/inclusiverange"
+	"github.com/grafana/grafana/pkg/coremodel/json"
+	"github.com/grafana/grafana/pkg/coremodel/label"
+	"github.com/grafana/grafana/pkg/coremodel/labelset"
+	"github.com/grafana/grafana/pkg/coremodel/libraryelementdtometauser"
+	"github.com/grafana/grafana/pkg/coremodel/massdeleteannotationscmd"
+	"github.com/grafana/grafana/pkg/coremodel/matcher"
+	"github.com/grafana/grafana/pkg/coremodel/messagetemplatecontent"
+	"github.com/grafana/grafana/pkg/coremodel/metadata"
+	"github.com/grafana/grafana/pkg/coremodel/monthrange"
+	"github.com/grafana/grafana/pkg/coremodel/multistatus"
+	"github.com/grafana/grafana/pkg/coremodel/navlink"
+	"github.com/grafana/grafana/pkg/coremodel/newapikeyresult"
+	"github.com/grafana/grafana/pkg/coremodel/notfound"
+	"github.com/grafana/grafana/pkg/coremodel/notifierconfig"
+	"github.com/grafana/grafana/pkg/coremodel/opsgenieconfigresponder"
+	"github.com/grafana/grafana/pkg/coremodel/orgdto"
+	"github.com/grafana/grafana/pkg/coremodel/orguserdto"
+	"github.com/grafana/grafana/pkg/coremodel/overridelabels"
+	"github.com/grafana/grafana/pkg/coremodel/pagerdutyimage"
+	"github.com/grafana/grafana/pkg/coremodel/pagerdutylink"
+	"github.com/grafana/grafana/pkg/coremodel/patchannotationscmd"
+	"github.com/grafana/grafana/pkg/coremodel/patchlibraryelementcommand"
+	"github.com/grafana/grafana/pkg/coremodel/patchquerycommentinqueryhistorycommand"
+	"github.com/grafana/grafana/pkg/coremodel/pausealertcommand"
+	"github.com/grafana/grafana/pkg/coremodel/pauseallalertscommand"
+	"github.com/grafana/grafana/pkg/coremodel/peerstatus"
+	"github.com/grafana/grafana/pkg/coremodel/permission"
+	"github.com/grafana/grafana/pkg/coremodel/permissiondenied"
+	"github.com/grafana/grafana/pkg/coremodel/playlist"
+	"github.com/grafana/grafana/pkg/coremodel/playlistdashboard"
+	"github.com/grafana/grafana/pkg/coremodel/playlistitemdto"
+	"github.com/grafana/grafana/pkg/coremodel/point"
+	"github.com/grafana/grafana/pkg/coremodel/postablengalertconfig"
+	"github.com/grafana/grafana/pkg/coremodel/postgraphiteannotationscmd"
+	"github.com/grafana/grafana/pkg/coremodel/prometheusremotewritetargetjson"
+	"github.com/grafana/grafana/pkg/coremodel/queryhistorydeletequeryresponse"
+	"github.com/grafana/grafana/pkg/coremodel/queryhistorymigrationresponse"
+	"github.com/grafana/grafana/pkg/coremodel/queryhistorypreference"
+	"github.com/grafana/grafana/pkg/coremodel/receiver"
+	"github.com/grafana/grafana/pkg/coremodel/recordingrulejson"
+	"github.com/grafana/grafana/pkg/coremodel/regexp"
+	"github.com/grafana/grafana/pkg/coremodel/reportemaildto"
+	"github.com/grafana/grafana/pkg/coremodel/responsedetails"
+	"github.com/grafana/grafana/pkg/coremodel/restoredashboardversioncommand"
+	"github.com/grafana/grafana/pkg/coremodel/revokeauthtokencmd"
+	"github.com/grafana/grafana/pkg/coremodel/scheduledto"
+	"github.com/grafana/grafana/pkg/coremodel/settingsbag"
+	"github.com/grafana/grafana/pkg/coremodel/setuserrolescommand"
+	"github.com/grafana/grafana/pkg/coremodel/silencestatus"
+	"github.com/grafana/grafana/pkg/coremodel/slackconfirmationfield"
+	"github.com/grafana/grafana/pkg/coremodel/slackfield"
+	"github.com/grafana/grafana/pkg/coremodel/status"
+	"github.com/grafana/grafana/pkg/coremodel/successresponsebody"
+	"github.com/grafana/grafana/pkg/coremodel/tagsdto"
+	"github.com/grafana/grafana/pkg/coremodel/teamgroupdto"
+	"github.com/grafana/grafana/pkg/coremodel/teamgroupmapping"
+	"github.com/grafana/grafana/pkg/coremodel/testreceiverconfigresult"
+	"github.com/grafana/grafana/pkg/coremodel/timerange"
+	"github.com/grafana/grafana/pkg/coremodel/timerangedto"
+	"github.com/grafana/grafana/pkg/coremodel/tlsconfig"
+	"github.com/grafana/grafana/pkg/coremodel/updateannotationscmd"
+	"github.com/grafana/grafana/pkg/coremodel/updatefoldercommand"
+	"github.com/grafana/grafana/pkg/coremodel/updateorgaddressform"
+	"github.com/grafana/grafana/pkg/coremodel/updateorgform"
+	"github.com/grafana/grafana/pkg/coremodel/updateorgquotacmd"
+	"github.com/grafana/grafana/pkg/coremodel/updateorgusercommand"
+	"github.com/grafana/grafana/pkg/coremodel/updateteamcommand"
+	"github.com/grafana/grafana/pkg/coremodel/updateusercommand"
+	"github.com/grafana/grafana/pkg/coremodel/updateuserquotacmd"
+	"github.com/grafana/grafana/pkg/coremodel/useriddto"
+	"github.com/grafana/grafana/pkg/coremodel/userinfo"
+	"github.com/grafana/grafana/pkg/coremodel/userlookupdto"
+	"github.com/grafana/grafana/pkg/coremodel/userorgdto"
+	"github.com/grafana/grafana/pkg/coremodel/userprofiledto"
+	"github.com/grafana/grafana/pkg/coremodel/userquotadto"
+	"github.com/grafana/grafana/pkg/coremodel/usersearchhitdto"
+	"github.com/grafana/grafana/pkg/coremodel/usertoken"
+	"github.com/grafana/grafana/pkg/coremodel/validationerror"
+	"github.com/grafana/grafana/pkg/coremodel/valuemapping"
+	"github.com/grafana/grafana/pkg/coremodel/versioninfo"
+	"github.com/grafana/grafana/pkg/coremodel/weekdayrange"
+	"github.com/grafana/grafana/pkg/coremodel/yearrange"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/thema"
@@ -35,18 +163,1042 @@ var (
 // Static is a registry that provides access to individual coremodels via
 // explicit method calls, to aid with static analysis.
 type Static struct {
-	dashboard *dashboard.Coremodel
+	activeuserstats                        *activeuserstats.Coremodel
+	addapikeycommand                       *addapikeycommand.Coremodel
+	addbuiltinrolecommand                  *addbuiltinrolecommand.Coremodel
+	addinviteform                          *addinviteform.Coremodel
+	addorgusercommand                      *addorgusercommand.Coremodel
+	address                                *address.Coremodel
+	addteammembercommand                   *addteammembercommand.Coremodel
+	addteamrolecommand                     *addteamrolecommand.Coremodel
+	adduserrolecommand                     *adduserrolecommand.Coremodel
+	admincreateuserform                    *admincreateuserform.Coremodel
+	adminstats                             *adminstats.Coremodel
+	adminupdateuserpasswordform            *adminupdateuserpasswordform.Coremodel
+	adminupdateuserpermissionsform         *adminupdateuserpermissionsform.Coremodel
+	alertinstancesresponse                 *alertinstancesresponse.Coremodel
+	alertmanager                           *alertmanager.Coremodel
+	alertmanagerconfig                     *alertmanagerconfig.Coremodel
+	alertmanagernotfound                   *alertmanagernotfound.Coremodel
+	alertmanagernotready                   *alertmanagernotready.Coremodel
+	alertnotificationlookup                *alertnotificationlookup.Coremodel
+	alertrulegroup                         *alertrulegroup.Coremodel
+	alertstatus                            *alertstatus.Coremodel
+	alerttestresultlog                     *alerttestresultlog.Coremodel
+	annotationactions                      *annotationactions.Coremodel
+	brandingoptionsdto                     *brandingoptionsdto.Coremodel
+	changeuserpasswordcommand              *changeuserpasswordcommand.Coremodel
+	createfoldercommand                    *createfoldercommand.Coremodel
+	createlibraryelementcommand            *createlibraryelementcommand.Coremodel
+	createorgcommand                       *createorgcommand.Coremodel
+	createteamcommand                      *createteamcommand.Coremodel
+	custompermissionsrecorddto             *custompermissionsrecorddto.Coremodel
+	dashboard                              *dashboard.Coremodel
+	dashboardredirect                      *dashboardredirect.Coremodel
+	dashboardreportdto                     *dashboardreportdto.Coremodel
+	dashboardsnapshotdto                   *dashboardsnapshotdto.Coremodel
+	dashboardtagclouditem                  *dashboardtagclouditem.Coremodel
+	dashboardversiondto                    *dashboardversiondto.Coremodel
+	datalink                               *datalink.Coremodel
+	dayofmonthrange                        *dayofmonthrange.Coremodel
+	deletetokencommand                     *deletetokencommand.Coremodel
+	errorresponsebody                      *errorresponsebody.Coremodel
+	faileduser                             *faileduser.Coremodel
+	float                                  *float.Coremodel
+	gettablengalertconfig                  *gettablengalertconfig.Coremodel
+	hostport                               *hostport.Coremodel
+	importdashboardinput                   *importdashboardinput.Coremodel
+	importdashboardresponse                *importdashboardresponse.Coremodel
+	inclusiverange                         *inclusiverange.Coremodel
+	json                                   *json.Coremodel
+	label                                  *label.Coremodel
+	labelset                               *labelset.Coremodel
+	libraryelementdtometauser              *libraryelementdtometauser.Coremodel
+	massdeleteannotationscmd               *massdeleteannotationscmd.Coremodel
+	matcher                                *matcher.Coremodel
+	messagetemplatecontent                 *messagetemplatecontent.Coremodel
+	metadata                               *metadata.Coremodel
+	monthrange                             *monthrange.Coremodel
+	multistatus                            *multistatus.Coremodel
+	navlink                                *navlink.Coremodel
+	newapikeyresult                        *newapikeyresult.Coremodel
+	notfound                               *notfound.Coremodel
+	notifierconfig                         *notifierconfig.Coremodel
+	opsgenieconfigresponder                *opsgenieconfigresponder.Coremodel
+	orgdto                                 *orgdto.Coremodel
+	orguserdto                             *orguserdto.Coremodel
+	overridelabels                         *overridelabels.Coremodel
+	pagerdutyimage                         *pagerdutyimage.Coremodel
+	pagerdutylink                          *pagerdutylink.Coremodel
+	patchannotationscmd                    *patchannotationscmd.Coremodel
+	patchlibraryelementcommand             *patchlibraryelementcommand.Coremodel
+	patchquerycommentinqueryhistorycommand *patchquerycommentinqueryhistorycommand.Coremodel
+	pausealertcommand                      *pausealertcommand.Coremodel
+	pauseallalertscommand                  *pauseallalertscommand.Coremodel
+	peerstatus                             *peerstatus.Coremodel
+	permission                             *permission.Coremodel
+	permissiondenied                       *permissiondenied.Coremodel
+	playlist                               *playlist.Coremodel
+	playlistdashboard                      *playlistdashboard.Coremodel
+	playlistitemdto                        *playlistitemdto.Coremodel
+	point                                  *point.Coremodel
+	postablengalertconfig                  *postablengalertconfig.Coremodel
+	postgraphiteannotationscmd             *postgraphiteannotationscmd.Coremodel
+	prometheusremotewritetargetjson        *prometheusremotewritetargetjson.Coremodel
+	queryhistorydeletequeryresponse        *queryhistorydeletequeryresponse.Coremodel
+	queryhistorymigrationresponse          *queryhistorymigrationresponse.Coremodel
+	queryhistorypreference                 *queryhistorypreference.Coremodel
+	receiver                               *receiver.Coremodel
+	recordingrulejson                      *recordingrulejson.Coremodel
+	regexp                                 *regexp.Coremodel
+	reportemaildto                         *reportemaildto.Coremodel
+	responsedetails                        *responsedetails.Coremodel
+	restoredashboardversioncommand         *restoredashboardversioncommand.Coremodel
+	revokeauthtokencmd                     *revokeauthtokencmd.Coremodel
+	scheduledto                            *scheduledto.Coremodel
+	settingsbag                            *settingsbag.Coremodel
+	setuserrolescommand                    *setuserrolescommand.Coremodel
+	silencestatus                          *silencestatus.Coremodel
+	slackconfirmationfield                 *slackconfirmationfield.Coremodel
+	slackfield                             *slackfield.Coremodel
+	status                                 *status.Coremodel
+	successresponsebody                    *successresponsebody.Coremodel
+	tagsdto                                *tagsdto.Coremodel
+	teamgroupdto                           *teamgroupdto.Coremodel
+	teamgroupmapping                       *teamgroupmapping.Coremodel
+	testreceiverconfigresult               *testreceiverconfigresult.Coremodel
+	timerange                              *timerange.Coremodel
+	timerangedto                           *timerangedto.Coremodel
+	tlsconfig                              *tlsconfig.Coremodel
+	updateannotationscmd                   *updateannotationscmd.Coremodel
+	updatefoldercommand                    *updatefoldercommand.Coremodel
+	updateorgaddressform                   *updateorgaddressform.Coremodel
+	updateorgform                          *updateorgform.Coremodel
+	updateorgquotacmd                      *updateorgquotacmd.Coremodel
+	updateorgusercommand                   *updateorgusercommand.Coremodel
+	updateteamcommand                      *updateteamcommand.Coremodel
+	updateusercommand                      *updateusercommand.Coremodel
+	updateuserquotacmd                     *updateuserquotacmd.Coremodel
+	useriddto                              *useriddto.Coremodel
+	userinfo                               *userinfo.Coremodel
+	userlookupdto                          *userlookupdto.Coremodel
+	userorgdto                             *userorgdto.Coremodel
+	userprofiledto                         *userprofiledto.Coremodel
+	userquotadto                           *userquotadto.Coremodel
+	usersearchhitdto                       *usersearchhitdto.Coremodel
+	usertoken                              *usertoken.Coremodel
+	validationerror                        *validationerror.Coremodel
+	valuemapping                           *valuemapping.Coremodel
+	versioninfo                            *versioninfo.Coremodel
+	weekdayrange                           *weekdayrange.Coremodel
+	yearrange                              *yearrange.Coremodel
 }
 
 // type guards
 var (
+	_ coremodel.Interface = &activeuserstats.Coremodel{}
+	_ coremodel.Interface = &addapikeycommand.Coremodel{}
+	_ coremodel.Interface = &addbuiltinrolecommand.Coremodel{}
+	_ coremodel.Interface = &addinviteform.Coremodel{}
+	_ coremodel.Interface = &addorgusercommand.Coremodel{}
+	_ coremodel.Interface = &address.Coremodel{}
+	_ coremodel.Interface = &addteammembercommand.Coremodel{}
+	_ coremodel.Interface = &addteamrolecommand.Coremodel{}
+	_ coremodel.Interface = &adduserrolecommand.Coremodel{}
+	_ coremodel.Interface = &admincreateuserform.Coremodel{}
+	_ coremodel.Interface = &adminstats.Coremodel{}
+	_ coremodel.Interface = &adminupdateuserpasswordform.Coremodel{}
+	_ coremodel.Interface = &adminupdateuserpermissionsform.Coremodel{}
+	_ coremodel.Interface = &alertinstancesresponse.Coremodel{}
+	_ coremodel.Interface = &alertmanager.Coremodel{}
+	_ coremodel.Interface = &alertmanagerconfig.Coremodel{}
+	_ coremodel.Interface = &alertmanagernotfound.Coremodel{}
+	_ coremodel.Interface = &alertmanagernotready.Coremodel{}
+	_ coremodel.Interface = &alertnotificationlookup.Coremodel{}
+	_ coremodel.Interface = &alertrulegroup.Coremodel{}
+	_ coremodel.Interface = &alertstatus.Coremodel{}
+	_ coremodel.Interface = &alerttestresultlog.Coremodel{}
+	_ coremodel.Interface = &annotationactions.Coremodel{}
+	_ coremodel.Interface = &brandingoptionsdto.Coremodel{}
+	_ coremodel.Interface = &changeuserpasswordcommand.Coremodel{}
+	_ coremodel.Interface = &createfoldercommand.Coremodel{}
+	_ coremodel.Interface = &createlibraryelementcommand.Coremodel{}
+	_ coremodel.Interface = &createorgcommand.Coremodel{}
+	_ coremodel.Interface = &createteamcommand.Coremodel{}
+	_ coremodel.Interface = &custompermissionsrecorddto.Coremodel{}
 	_ coremodel.Interface = &dashboard.Coremodel{}
+	_ coremodel.Interface = &dashboardredirect.Coremodel{}
+	_ coremodel.Interface = &dashboardreportdto.Coremodel{}
+	_ coremodel.Interface = &dashboardsnapshotdto.Coremodel{}
+	_ coremodel.Interface = &dashboardtagclouditem.Coremodel{}
+	_ coremodel.Interface = &dashboardversiondto.Coremodel{}
+	_ coremodel.Interface = &datalink.Coremodel{}
+	_ coremodel.Interface = &dayofmonthrange.Coremodel{}
+	_ coremodel.Interface = &deletetokencommand.Coremodel{}
+	_ coremodel.Interface = &errorresponsebody.Coremodel{}
+	_ coremodel.Interface = &faileduser.Coremodel{}
+	_ coremodel.Interface = &float.Coremodel{}
+	_ coremodel.Interface = &gettablengalertconfig.Coremodel{}
+	_ coremodel.Interface = &hostport.Coremodel{}
+	_ coremodel.Interface = &importdashboardinput.Coremodel{}
+	_ coremodel.Interface = &importdashboardresponse.Coremodel{}
+	_ coremodel.Interface = &inclusiverange.Coremodel{}
+	_ coremodel.Interface = &json.Coremodel{}
+	_ coremodel.Interface = &label.Coremodel{}
+	_ coremodel.Interface = &labelset.Coremodel{}
+	_ coremodel.Interface = &libraryelementdtometauser.Coremodel{}
+	_ coremodel.Interface = &massdeleteannotationscmd.Coremodel{}
+	_ coremodel.Interface = &matcher.Coremodel{}
+	_ coremodel.Interface = &messagetemplatecontent.Coremodel{}
+	_ coremodel.Interface = &metadata.Coremodel{}
+	_ coremodel.Interface = &monthrange.Coremodel{}
+	_ coremodel.Interface = &multistatus.Coremodel{}
+	_ coremodel.Interface = &navlink.Coremodel{}
+	_ coremodel.Interface = &newapikeyresult.Coremodel{}
+	_ coremodel.Interface = &notfound.Coremodel{}
+	_ coremodel.Interface = &notifierconfig.Coremodel{}
+	_ coremodel.Interface = &opsgenieconfigresponder.Coremodel{}
+	_ coremodel.Interface = &orgdto.Coremodel{}
+	_ coremodel.Interface = &orguserdto.Coremodel{}
+	_ coremodel.Interface = &overridelabels.Coremodel{}
+	_ coremodel.Interface = &pagerdutyimage.Coremodel{}
+	_ coremodel.Interface = &pagerdutylink.Coremodel{}
+	_ coremodel.Interface = &patchannotationscmd.Coremodel{}
+	_ coremodel.Interface = &patchlibraryelementcommand.Coremodel{}
+	_ coremodel.Interface = &patchquerycommentinqueryhistorycommand.Coremodel{}
+	_ coremodel.Interface = &pausealertcommand.Coremodel{}
+	_ coremodel.Interface = &pauseallalertscommand.Coremodel{}
+	_ coremodel.Interface = &peerstatus.Coremodel{}
+	_ coremodel.Interface = &permission.Coremodel{}
+	_ coremodel.Interface = &permissiondenied.Coremodel{}
+	_ coremodel.Interface = &playlist.Coremodel{}
+	_ coremodel.Interface = &playlistdashboard.Coremodel{}
+	_ coremodel.Interface = &playlistitemdto.Coremodel{}
+	_ coremodel.Interface = &point.Coremodel{}
+	_ coremodel.Interface = &postablengalertconfig.Coremodel{}
+	_ coremodel.Interface = &postgraphiteannotationscmd.Coremodel{}
+	_ coremodel.Interface = &prometheusremotewritetargetjson.Coremodel{}
+	_ coremodel.Interface = &queryhistorydeletequeryresponse.Coremodel{}
+	_ coremodel.Interface = &queryhistorymigrationresponse.Coremodel{}
+	_ coremodel.Interface = &queryhistorypreference.Coremodel{}
+	_ coremodel.Interface = &receiver.Coremodel{}
+	_ coremodel.Interface = &recordingrulejson.Coremodel{}
+	_ coremodel.Interface = &regexp.Coremodel{}
+	_ coremodel.Interface = &reportemaildto.Coremodel{}
+	_ coremodel.Interface = &responsedetails.Coremodel{}
+	_ coremodel.Interface = &restoredashboardversioncommand.Coremodel{}
+	_ coremodel.Interface = &revokeauthtokencmd.Coremodel{}
+	_ coremodel.Interface = &scheduledto.Coremodel{}
+	_ coremodel.Interface = &settingsbag.Coremodel{}
+	_ coremodel.Interface = &setuserrolescommand.Coremodel{}
+	_ coremodel.Interface = &silencestatus.Coremodel{}
+	_ coremodel.Interface = &slackconfirmationfield.Coremodel{}
+	_ coremodel.Interface = &slackfield.Coremodel{}
+	_ coremodel.Interface = &status.Coremodel{}
+	_ coremodel.Interface = &successresponsebody.Coremodel{}
+	_ coremodel.Interface = &tagsdto.Coremodel{}
+	_ coremodel.Interface = &teamgroupdto.Coremodel{}
+	_ coremodel.Interface = &teamgroupmapping.Coremodel{}
+	_ coremodel.Interface = &testreceiverconfigresult.Coremodel{}
+	_ coremodel.Interface = &timerange.Coremodel{}
+	_ coremodel.Interface = &timerangedto.Coremodel{}
+	_ coremodel.Interface = &tlsconfig.Coremodel{}
+	_ coremodel.Interface = &updateannotationscmd.Coremodel{}
+	_ coremodel.Interface = &updatefoldercommand.Coremodel{}
+	_ coremodel.Interface = &updateorgaddressform.Coremodel{}
+	_ coremodel.Interface = &updateorgform.Coremodel{}
+	_ coremodel.Interface = &updateorgquotacmd.Coremodel{}
+	_ coremodel.Interface = &updateorgusercommand.Coremodel{}
+	_ coremodel.Interface = &updateteamcommand.Coremodel{}
+	_ coremodel.Interface = &updateusercommand.Coremodel{}
+	_ coremodel.Interface = &updateuserquotacmd.Coremodel{}
+	_ coremodel.Interface = &useriddto.Coremodel{}
+	_ coremodel.Interface = &userinfo.Coremodel{}
+	_ coremodel.Interface = &userlookupdto.Coremodel{}
+	_ coremodel.Interface = &userorgdto.Coremodel{}
+	_ coremodel.Interface = &userprofiledto.Coremodel{}
+	_ coremodel.Interface = &userquotadto.Coremodel{}
+	_ coremodel.Interface = &usersearchhitdto.Coremodel{}
+	_ coremodel.Interface = &usertoken.Coremodel{}
+	_ coremodel.Interface = &validationerror.Coremodel{}
+	_ coremodel.Interface = &valuemapping.Coremodel{}
+	_ coremodel.Interface = &versioninfo.Coremodel{}
+	_ coremodel.Interface = &weekdayrange.Coremodel{}
+	_ coremodel.Interface = &yearrange.Coremodel{}
 )
+
+// Activeuserstats returns the activeuserstats coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Activeuserstats() *activeuserstats.Coremodel {
+	return s.activeuserstats
+}
+
+// Addapikeycommand returns the addapikeycommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Addapikeycommand() *addapikeycommand.Coremodel {
+	return s.addapikeycommand
+}
+
+// Addbuiltinrolecommand returns the addbuiltinrolecommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Addbuiltinrolecommand() *addbuiltinrolecommand.Coremodel {
+	return s.addbuiltinrolecommand
+}
+
+// Addinviteform returns the addinviteform coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Addinviteform() *addinviteform.Coremodel {
+	return s.addinviteform
+}
+
+// Addorgusercommand returns the addorgusercommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Addorgusercommand() *addorgusercommand.Coremodel {
+	return s.addorgusercommand
+}
+
+// Address returns the address coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Address() *address.Coremodel {
+	return s.address
+}
+
+// Addteammembercommand returns the addteammembercommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Addteammembercommand() *addteammembercommand.Coremodel {
+	return s.addteammembercommand
+}
+
+// Addteamrolecommand returns the addteamrolecommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Addteamrolecommand() *addteamrolecommand.Coremodel {
+	return s.addteamrolecommand
+}
+
+// Adduserrolecommand returns the adduserrolecommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Adduserrolecommand() *adduserrolecommand.Coremodel {
+	return s.adduserrolecommand
+}
+
+// Admincreateuserform returns the admincreateuserform coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Admincreateuserform() *admincreateuserform.Coremodel {
+	return s.admincreateuserform
+}
+
+// Adminstats returns the adminstats coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Adminstats() *adminstats.Coremodel {
+	return s.adminstats
+}
+
+// Adminupdateuserpasswordform returns the adminupdateuserpasswordform coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Adminupdateuserpasswordform() *adminupdateuserpasswordform.Coremodel {
+	return s.adminupdateuserpasswordform
+}
+
+// Adminupdateuserpermissionsform returns the adminupdateuserpermissionsform coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Adminupdateuserpermissionsform() *adminupdateuserpermissionsform.Coremodel {
+	return s.adminupdateuserpermissionsform
+}
+
+// Alertinstancesresponse returns the alertinstancesresponse coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Alertinstancesresponse() *alertinstancesresponse.Coremodel {
+	return s.alertinstancesresponse
+}
+
+// Alertmanager returns the alertmanager coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Alertmanager() *alertmanager.Coremodel {
+	return s.alertmanager
+}
+
+// Alertmanagerconfig returns the alertmanagerconfig coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Alertmanagerconfig() *alertmanagerconfig.Coremodel {
+	return s.alertmanagerconfig
+}
+
+// Alertmanagernotfound returns the alertmanagernotfound coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Alertmanagernotfound() *alertmanagernotfound.Coremodel {
+	return s.alertmanagernotfound
+}
+
+// Alertmanagernotready returns the alertmanagernotready coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Alertmanagernotready() *alertmanagernotready.Coremodel {
+	return s.alertmanagernotready
+}
+
+// Alertnotificationlookup returns the alertnotificationlookup coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Alertnotificationlookup() *alertnotificationlookup.Coremodel {
+	return s.alertnotificationlookup
+}
+
+// Alertrulegroup returns the alertrulegroup coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Alertrulegroup() *alertrulegroup.Coremodel {
+	return s.alertrulegroup
+}
+
+// Alertstatus returns the alertstatus coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Alertstatus() *alertstatus.Coremodel {
+	return s.alertstatus
+}
+
+// Alerttestresultlog returns the alerttestresultlog coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Alerttestresultlog() *alerttestresultlog.Coremodel {
+	return s.alerttestresultlog
+}
+
+// Annotationactions returns the annotationactions coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Annotationactions() *annotationactions.Coremodel {
+	return s.annotationactions
+}
+
+// Brandingoptionsdto returns the brandingoptionsdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Brandingoptionsdto() *brandingoptionsdto.Coremodel {
+	return s.brandingoptionsdto
+}
+
+// Changeuserpasswordcommand returns the changeuserpasswordcommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Changeuserpasswordcommand() *changeuserpasswordcommand.Coremodel {
+	return s.changeuserpasswordcommand
+}
+
+// Createfoldercommand returns the createfoldercommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Createfoldercommand() *createfoldercommand.Coremodel {
+	return s.createfoldercommand
+}
+
+// Createlibraryelementcommand returns the createlibraryelementcommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Createlibraryelementcommand() *createlibraryelementcommand.Coremodel {
+	return s.createlibraryelementcommand
+}
+
+// Createorgcommand returns the createorgcommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Createorgcommand() *createorgcommand.Coremodel {
+	return s.createorgcommand
+}
+
+// Createteamcommand returns the createteamcommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Createteamcommand() *createteamcommand.Coremodel {
+	return s.createteamcommand
+}
+
+// Custompermissionsrecorddto returns the custompermissionsrecorddto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Custompermissionsrecorddto() *custompermissionsrecorddto.Coremodel {
+	return s.custompermissionsrecorddto
+}
 
 // Dashboard returns the dashboard coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
 func (s *Static) Dashboard() *dashboard.Coremodel {
 	return s.dashboard
+}
+
+// Dashboardredirect returns the dashboardredirect coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Dashboardredirect() *dashboardredirect.Coremodel {
+	return s.dashboardredirect
+}
+
+// Dashboardreportdto returns the dashboardreportdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Dashboardreportdto() *dashboardreportdto.Coremodel {
+	return s.dashboardreportdto
+}
+
+// Dashboardsnapshotdto returns the dashboardsnapshotdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Dashboardsnapshotdto() *dashboardsnapshotdto.Coremodel {
+	return s.dashboardsnapshotdto
+}
+
+// Dashboardtagclouditem returns the dashboardtagclouditem coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Dashboardtagclouditem() *dashboardtagclouditem.Coremodel {
+	return s.dashboardtagclouditem
+}
+
+// Dashboardversiondto returns the dashboardversiondto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Dashboardversiondto() *dashboardversiondto.Coremodel {
+	return s.dashboardversiondto
+}
+
+// Datalink returns the datalink coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Datalink() *datalink.Coremodel {
+	return s.datalink
+}
+
+// Dayofmonthrange returns the dayofmonthrange coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Dayofmonthrange() *dayofmonthrange.Coremodel {
+	return s.dayofmonthrange
+}
+
+// Deletetokencommand returns the deletetokencommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Deletetokencommand() *deletetokencommand.Coremodel {
+	return s.deletetokencommand
+}
+
+// Errorresponsebody returns the errorresponsebody coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Errorresponsebody() *errorresponsebody.Coremodel {
+	return s.errorresponsebody
+}
+
+// Faileduser returns the faileduser coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Faileduser() *faileduser.Coremodel {
+	return s.faileduser
+}
+
+// Float returns the float coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Float() *float.Coremodel {
+	return s.float
+}
+
+// Gettablengalertconfig returns the gettablengalertconfig coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Gettablengalertconfig() *gettablengalertconfig.Coremodel {
+	return s.gettablengalertconfig
+}
+
+// Hostport returns the hostport coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Hostport() *hostport.Coremodel {
+	return s.hostport
+}
+
+// Importdashboardinput returns the importdashboardinput coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Importdashboardinput() *importdashboardinput.Coremodel {
+	return s.importdashboardinput
+}
+
+// Importdashboardresponse returns the importdashboardresponse coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Importdashboardresponse() *importdashboardresponse.Coremodel {
+	return s.importdashboardresponse
+}
+
+// Inclusiverange returns the inclusiverange coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Inclusiverange() *inclusiverange.Coremodel {
+	return s.inclusiverange
+}
+
+// Json returns the json coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Json() *json.Coremodel {
+	return s.json
+}
+
+// Label returns the label coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Label() *label.Coremodel {
+	return s.label
+}
+
+// Labelset returns the labelset coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Labelset() *labelset.Coremodel {
+	return s.labelset
+}
+
+// Libraryelementdtometauser returns the libraryelementdtometauser coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Libraryelementdtometauser() *libraryelementdtometauser.Coremodel {
+	return s.libraryelementdtometauser
+}
+
+// Massdeleteannotationscmd returns the massdeleteannotationscmd coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Massdeleteannotationscmd() *massdeleteannotationscmd.Coremodel {
+	return s.massdeleteannotationscmd
+}
+
+// Matcher returns the matcher coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Matcher() *matcher.Coremodel {
+	return s.matcher
+}
+
+// Messagetemplatecontent returns the messagetemplatecontent coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Messagetemplatecontent() *messagetemplatecontent.Coremodel {
+	return s.messagetemplatecontent
+}
+
+// Metadata returns the metadata coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Metadata() *metadata.Coremodel {
+	return s.metadata
+}
+
+// Monthrange returns the monthrange coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Monthrange() *monthrange.Coremodel {
+	return s.monthrange
+}
+
+// Multistatus returns the multistatus coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Multistatus() *multistatus.Coremodel {
+	return s.multistatus
+}
+
+// Navlink returns the navlink coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Navlink() *navlink.Coremodel {
+	return s.navlink
+}
+
+// Newapikeyresult returns the newapikeyresult coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Newapikeyresult() *newapikeyresult.Coremodel {
+	return s.newapikeyresult
+}
+
+// Notfound returns the notfound coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Notfound() *notfound.Coremodel {
+	return s.notfound
+}
+
+// Notifierconfig returns the notifierconfig coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Notifierconfig() *notifierconfig.Coremodel {
+	return s.notifierconfig
+}
+
+// Opsgenieconfigresponder returns the opsgenieconfigresponder coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Opsgenieconfigresponder() *opsgenieconfigresponder.Coremodel {
+	return s.opsgenieconfigresponder
+}
+
+// Orgdto returns the orgdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Orgdto() *orgdto.Coremodel {
+	return s.orgdto
+}
+
+// Orguserdto returns the orguserdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Orguserdto() *orguserdto.Coremodel {
+	return s.orguserdto
+}
+
+// Overridelabels returns the overridelabels coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Overridelabels() *overridelabels.Coremodel {
+	return s.overridelabels
+}
+
+// Pagerdutyimage returns the pagerdutyimage coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Pagerdutyimage() *pagerdutyimage.Coremodel {
+	return s.pagerdutyimage
+}
+
+// Pagerdutylink returns the pagerdutylink coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Pagerdutylink() *pagerdutylink.Coremodel {
+	return s.pagerdutylink
+}
+
+// Patchannotationscmd returns the patchannotationscmd coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Patchannotationscmd() *patchannotationscmd.Coremodel {
+	return s.patchannotationscmd
+}
+
+// Patchlibraryelementcommand returns the patchlibraryelementcommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Patchlibraryelementcommand() *patchlibraryelementcommand.Coremodel {
+	return s.patchlibraryelementcommand
+}
+
+// Patchquerycommentinqueryhistorycommand returns the patchquerycommentinqueryhistorycommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Patchquerycommentinqueryhistorycommand() *patchquerycommentinqueryhistorycommand.Coremodel {
+	return s.patchquerycommentinqueryhistorycommand
+}
+
+// Pausealertcommand returns the pausealertcommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Pausealertcommand() *pausealertcommand.Coremodel {
+	return s.pausealertcommand
+}
+
+// Pauseallalertscommand returns the pauseallalertscommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Pauseallalertscommand() *pauseallalertscommand.Coremodel {
+	return s.pauseallalertscommand
+}
+
+// Peerstatus returns the peerstatus coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Peerstatus() *peerstatus.Coremodel {
+	return s.peerstatus
+}
+
+// Permission returns the permission coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Permission() *permission.Coremodel {
+	return s.permission
+}
+
+// Permissiondenied returns the permissiondenied coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Permissiondenied() *permissiondenied.Coremodel {
+	return s.permissiondenied
+}
+
+// Playlist returns the playlist coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Playlist() *playlist.Coremodel {
+	return s.playlist
+}
+
+// Playlistdashboard returns the playlistdashboard coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Playlistdashboard() *playlistdashboard.Coremodel {
+	return s.playlistdashboard
+}
+
+// Playlistitemdto returns the playlistitemdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Playlistitemdto() *playlistitemdto.Coremodel {
+	return s.playlistitemdto
+}
+
+// Point returns the point coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Point() *point.Coremodel {
+	return s.point
+}
+
+// Postablengalertconfig returns the postablengalertconfig coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Postablengalertconfig() *postablengalertconfig.Coremodel {
+	return s.postablengalertconfig
+}
+
+// Postgraphiteannotationscmd returns the postgraphiteannotationscmd coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Postgraphiteannotationscmd() *postgraphiteannotationscmd.Coremodel {
+	return s.postgraphiteannotationscmd
+}
+
+// Prometheusremotewritetargetjson returns the prometheusremotewritetargetjson coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Prometheusremotewritetargetjson() *prometheusremotewritetargetjson.Coremodel {
+	return s.prometheusremotewritetargetjson
+}
+
+// Queryhistorydeletequeryresponse returns the queryhistorydeletequeryresponse coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Queryhistorydeletequeryresponse() *queryhistorydeletequeryresponse.Coremodel {
+	return s.queryhistorydeletequeryresponse
+}
+
+// Queryhistorymigrationresponse returns the queryhistorymigrationresponse coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Queryhistorymigrationresponse() *queryhistorymigrationresponse.Coremodel {
+	return s.queryhistorymigrationresponse
+}
+
+// Queryhistorypreference returns the queryhistorypreference coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Queryhistorypreference() *queryhistorypreference.Coremodel {
+	return s.queryhistorypreference
+}
+
+// Receiver returns the receiver coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Receiver() *receiver.Coremodel {
+	return s.receiver
+}
+
+// Recordingrulejson returns the recordingrulejson coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Recordingrulejson() *recordingrulejson.Coremodel {
+	return s.recordingrulejson
+}
+
+// Regexp returns the regexp coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Regexp() *regexp.Coremodel {
+	return s.regexp
+}
+
+// Reportemaildto returns the reportemaildto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Reportemaildto() *reportemaildto.Coremodel {
+	return s.reportemaildto
+}
+
+// Responsedetails returns the responsedetails coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Responsedetails() *responsedetails.Coremodel {
+	return s.responsedetails
+}
+
+// Restoredashboardversioncommand returns the restoredashboardversioncommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Restoredashboardversioncommand() *restoredashboardversioncommand.Coremodel {
+	return s.restoredashboardversioncommand
+}
+
+// Revokeauthtokencmd returns the revokeauthtokencmd coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Revokeauthtokencmd() *revokeauthtokencmd.Coremodel {
+	return s.revokeauthtokencmd
+}
+
+// Scheduledto returns the scheduledto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Scheduledto() *scheduledto.Coremodel {
+	return s.scheduledto
+}
+
+// Settingsbag returns the settingsbag coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Settingsbag() *settingsbag.Coremodel {
+	return s.settingsbag
+}
+
+// Setuserrolescommand returns the setuserrolescommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Setuserrolescommand() *setuserrolescommand.Coremodel {
+	return s.setuserrolescommand
+}
+
+// Silencestatus returns the silencestatus coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Silencestatus() *silencestatus.Coremodel {
+	return s.silencestatus
+}
+
+// Slackconfirmationfield returns the slackconfirmationfield coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Slackconfirmationfield() *slackconfirmationfield.Coremodel {
+	return s.slackconfirmationfield
+}
+
+// Slackfield returns the slackfield coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Slackfield() *slackfield.Coremodel {
+	return s.slackfield
+}
+
+// Status returns the status coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Status() *status.Coremodel {
+	return s.status
+}
+
+// Successresponsebody returns the successresponsebody coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Successresponsebody() *successresponsebody.Coremodel {
+	return s.successresponsebody
+}
+
+// Tagsdto returns the tagsdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Tagsdto() *tagsdto.Coremodel {
+	return s.tagsdto
+}
+
+// Teamgroupdto returns the teamgroupdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Teamgroupdto() *teamgroupdto.Coremodel {
+	return s.teamgroupdto
+}
+
+// Teamgroupmapping returns the teamgroupmapping coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Teamgroupmapping() *teamgroupmapping.Coremodel {
+	return s.teamgroupmapping
+}
+
+// Testreceiverconfigresult returns the testreceiverconfigresult coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Testreceiverconfigresult() *testreceiverconfigresult.Coremodel {
+	return s.testreceiverconfigresult
+}
+
+// Timerange returns the timerange coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Timerange() *timerange.Coremodel {
+	return s.timerange
+}
+
+// Timerangedto returns the timerangedto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Timerangedto() *timerangedto.Coremodel {
+	return s.timerangedto
+}
+
+// Tlsconfig returns the tlsconfig coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Tlsconfig() *tlsconfig.Coremodel {
+	return s.tlsconfig
+}
+
+// Updateannotationscmd returns the updateannotationscmd coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Updateannotationscmd() *updateannotationscmd.Coremodel {
+	return s.updateannotationscmd
+}
+
+// Updatefoldercommand returns the updatefoldercommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Updatefoldercommand() *updatefoldercommand.Coremodel {
+	return s.updatefoldercommand
+}
+
+// Updateorgaddressform returns the updateorgaddressform coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Updateorgaddressform() *updateorgaddressform.Coremodel {
+	return s.updateorgaddressform
+}
+
+// Updateorgform returns the updateorgform coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Updateorgform() *updateorgform.Coremodel {
+	return s.updateorgform
+}
+
+// Updateorgquotacmd returns the updateorgquotacmd coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Updateorgquotacmd() *updateorgquotacmd.Coremodel {
+	return s.updateorgquotacmd
+}
+
+// Updateorgusercommand returns the updateorgusercommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Updateorgusercommand() *updateorgusercommand.Coremodel {
+	return s.updateorgusercommand
+}
+
+// Updateteamcommand returns the updateteamcommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Updateteamcommand() *updateteamcommand.Coremodel {
+	return s.updateteamcommand
+}
+
+// Updateusercommand returns the updateusercommand coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Updateusercommand() *updateusercommand.Coremodel {
+	return s.updateusercommand
+}
+
+// Updateuserquotacmd returns the updateuserquotacmd coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Updateuserquotacmd() *updateuserquotacmd.Coremodel {
+	return s.updateuserquotacmd
+}
+
+// Useriddto returns the useriddto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Useriddto() *useriddto.Coremodel {
+	return s.useriddto
+}
+
+// Userinfo returns the userinfo coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Userinfo() *userinfo.Coremodel {
+	return s.userinfo
+}
+
+// Userlookupdto returns the userlookupdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Userlookupdto() *userlookupdto.Coremodel {
+	return s.userlookupdto
+}
+
+// Userorgdto returns the userorgdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Userorgdto() *userorgdto.Coremodel {
+	return s.userorgdto
+}
+
+// Userprofiledto returns the userprofiledto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Userprofiledto() *userprofiledto.Coremodel {
+	return s.userprofiledto
+}
+
+// Userquotadto returns the userquotadto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Userquotadto() *userquotadto.Coremodel {
+	return s.userquotadto
+}
+
+// Usersearchhitdto returns the usersearchhitdto coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Usersearchhitdto() *usersearchhitdto.Coremodel {
+	return s.usersearchhitdto
+}
+
+// Usertoken returns the usertoken coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Usertoken() *usertoken.Coremodel {
+	return s.usertoken
+}
+
+// Validationerror returns the validationerror coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Validationerror() *validationerror.Coremodel {
+	return s.validationerror
+}
+
+// Valuemapping returns the valuemapping coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Valuemapping() *valuemapping.Coremodel {
+	return s.valuemapping
+}
+
+// Versioninfo returns the versioninfo coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Versioninfo() *versioninfo.Coremodel {
+	return s.versioninfo
+}
+
+// Weekdayrange returns the weekdayrange coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Weekdayrange() *weekdayrange.Coremodel {
+	return s.weekdayrange
+}
+
+// Yearrange returns the yearrange coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Static) Yearrange() *yearrange.Coremodel {
+	return s.yearrange
 }
 
 func provideStatic(lib *thema.Library) (*Static, error) {
@@ -64,7 +1216,647 @@ func doProvideStatic(lib thema.Library) (*Static, error) {
 	var err error
 	reg := &Static{}
 
+	reg.activeuserstats, err = activeuserstats.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.addapikeycommand, err = addapikeycommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.addbuiltinrolecommand, err = addbuiltinrolecommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.addinviteform, err = addinviteform.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.addorgusercommand, err = addorgusercommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.address, err = address.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.addteammembercommand, err = addteammembercommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.addteamrolecommand, err = addteamrolecommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.adduserrolecommand, err = adduserrolecommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.admincreateuserform, err = admincreateuserform.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.adminstats, err = adminstats.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.adminupdateuserpasswordform, err = adminupdateuserpasswordform.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.adminupdateuserpermissionsform, err = adminupdateuserpermissionsform.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.alertinstancesresponse, err = alertinstancesresponse.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.alertmanager, err = alertmanager.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.alertmanagerconfig, err = alertmanagerconfig.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.alertmanagernotfound, err = alertmanagernotfound.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.alertmanagernotready, err = alertmanagernotready.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.alertnotificationlookup, err = alertnotificationlookup.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.alertrulegroup, err = alertrulegroup.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.alertstatus, err = alertstatus.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.alerttestresultlog, err = alerttestresultlog.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.annotationactions, err = annotationactions.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.brandingoptionsdto, err = brandingoptionsdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.changeuserpasswordcommand, err = changeuserpasswordcommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.createfoldercommand, err = createfoldercommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.createlibraryelementcommand, err = createlibraryelementcommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.createorgcommand, err = createorgcommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.createteamcommand, err = createteamcommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.custompermissionsrecorddto, err = custompermissionsrecorddto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
 	reg.dashboard, err = dashboard.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.dashboardredirect, err = dashboardredirect.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.dashboardreportdto, err = dashboardreportdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.dashboardsnapshotdto, err = dashboardsnapshotdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.dashboardtagclouditem, err = dashboardtagclouditem.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.dashboardversiondto, err = dashboardversiondto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.datalink, err = datalink.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.dayofmonthrange, err = dayofmonthrange.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.deletetokencommand, err = deletetokencommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.errorresponsebody, err = errorresponsebody.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.faileduser, err = faileduser.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.float, err = float.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.gettablengalertconfig, err = gettablengalertconfig.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.hostport, err = hostport.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.importdashboardinput, err = importdashboardinput.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.importdashboardresponse, err = importdashboardresponse.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.inclusiverange, err = inclusiverange.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.json, err = json.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.label, err = label.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.labelset, err = labelset.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.libraryelementdtometauser, err = libraryelementdtometauser.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.massdeleteannotationscmd, err = massdeleteannotationscmd.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.matcher, err = matcher.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.messagetemplatecontent, err = messagetemplatecontent.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.metadata, err = metadata.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.monthrange, err = monthrange.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.multistatus, err = multistatus.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.navlink, err = navlink.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.newapikeyresult, err = newapikeyresult.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.notfound, err = notfound.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.notifierconfig, err = notifierconfig.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.opsgenieconfigresponder, err = opsgenieconfigresponder.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.orgdto, err = orgdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.orguserdto, err = orguserdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.overridelabels, err = overridelabels.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.pagerdutyimage, err = pagerdutyimage.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.pagerdutylink, err = pagerdutylink.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.patchannotationscmd, err = patchannotationscmd.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.patchlibraryelementcommand, err = patchlibraryelementcommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.patchquerycommentinqueryhistorycommand, err = patchquerycommentinqueryhistorycommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.pausealertcommand, err = pausealertcommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.pauseallalertscommand, err = pauseallalertscommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.peerstatus, err = peerstatus.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.permission, err = permission.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.permissiondenied, err = permissiondenied.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.playlist, err = playlist.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.playlistdashboard, err = playlistdashboard.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.playlistitemdto, err = playlistitemdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.point, err = point.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.postablengalertconfig, err = postablengalertconfig.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.postgraphiteannotationscmd, err = postgraphiteannotationscmd.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.prometheusremotewritetargetjson, err = prometheusremotewritetargetjson.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.queryhistorydeletequeryresponse, err = queryhistorydeletequeryresponse.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.queryhistorymigrationresponse, err = queryhistorymigrationresponse.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.queryhistorypreference, err = queryhistorypreference.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.receiver, err = receiver.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.recordingrulejson, err = recordingrulejson.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.regexp, err = regexp.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.reportemaildto, err = reportemaildto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.responsedetails, err = responsedetails.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.restoredashboardversioncommand, err = restoredashboardversioncommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.revokeauthtokencmd, err = revokeauthtokencmd.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.scheduledto, err = scheduledto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.settingsbag, err = settingsbag.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.setuserrolescommand, err = setuserrolescommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.silencestatus, err = silencestatus.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.slackconfirmationfield, err = slackconfirmationfield.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.slackfield, err = slackfield.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.status, err = status.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.successresponsebody, err = successresponsebody.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.tagsdto, err = tagsdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.teamgroupdto, err = teamgroupdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.teamgroupmapping, err = teamgroupmapping.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.testreceiverconfigresult, err = testreceiverconfigresult.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.timerange, err = timerange.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.timerangedto, err = timerangedto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.tlsconfig, err = tlsconfig.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.updateannotationscmd, err = updateannotationscmd.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.updatefoldercommand, err = updatefoldercommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.updateorgaddressform, err = updateorgaddressform.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.updateorgform, err = updateorgform.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.updateorgquotacmd, err = updateorgquotacmd.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.updateorgusercommand, err = updateorgusercommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.updateteamcommand, err = updateteamcommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.updateusercommand, err = updateusercommand.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.updateuserquotacmd, err = updateuserquotacmd.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.useriddto, err = useriddto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.userinfo, err = userinfo.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.userlookupdto, err = userlookupdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.userorgdto, err = userorgdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.userprofiledto, err = userprofiledto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.userquotadto, err = userquotadto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.usersearchhitdto, err = usersearchhitdto.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.usertoken, err = usertoken.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.validationerror, err = validationerror.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.valuemapping, err = valuemapping.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.versioninfo, err = versioninfo.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.weekdayrange, err = weekdayrange.New(lib)
+	if err != nil {
+		return nil, err
+	}
+
+	reg.yearrange, err = yearrange.New(lib)
 	if err != nil {
 		return nil, err
 	}
@@ -86,6 +1878,134 @@ func provideGeneric() (*Generic, error) {
 
 func doProvideGeneric(ereg *Static) (*Generic, error) {
 	return NewRegistry(
+		ereg.Activeuserstats(),
+		ereg.Addapikeycommand(),
+		ereg.Addbuiltinrolecommand(),
+		ereg.Addinviteform(),
+		ereg.Addorgusercommand(),
+		ereg.Address(),
+		ereg.Addteammembercommand(),
+		ereg.Addteamrolecommand(),
+		ereg.Adduserrolecommand(),
+		ereg.Admincreateuserform(),
+		ereg.Adminstats(),
+		ereg.Adminupdateuserpasswordform(),
+		ereg.Adminupdateuserpermissionsform(),
+		ereg.Alertinstancesresponse(),
+		ereg.Alertmanager(),
+		ereg.Alertmanagerconfig(),
+		ereg.Alertmanagernotfound(),
+		ereg.Alertmanagernotready(),
+		ereg.Alertnotificationlookup(),
+		ereg.Alertrulegroup(),
+		ereg.Alertstatus(),
+		ereg.Alerttestresultlog(),
+		ereg.Annotationactions(),
+		ereg.Brandingoptionsdto(),
+		ereg.Changeuserpasswordcommand(),
+		ereg.Createfoldercommand(),
+		ereg.Createlibraryelementcommand(),
+		ereg.Createorgcommand(),
+		ereg.Createteamcommand(),
+		ereg.Custompermissionsrecorddto(),
 		ereg.Dashboard(),
+		ereg.Dashboardredirect(),
+		ereg.Dashboardreportdto(),
+		ereg.Dashboardsnapshotdto(),
+		ereg.Dashboardtagclouditem(),
+		ereg.Dashboardversiondto(),
+		ereg.Datalink(),
+		ereg.Dayofmonthrange(),
+		ereg.Deletetokencommand(),
+		ereg.Errorresponsebody(),
+		ereg.Faileduser(),
+		ereg.Float(),
+		ereg.Gettablengalertconfig(),
+		ereg.Hostport(),
+		ereg.Importdashboardinput(),
+		ereg.Importdashboardresponse(),
+		ereg.Inclusiverange(),
+		ereg.Json(),
+		ereg.Label(),
+		ereg.Labelset(),
+		ereg.Libraryelementdtometauser(),
+		ereg.Massdeleteannotationscmd(),
+		ereg.Matcher(),
+		ereg.Messagetemplatecontent(),
+		ereg.Metadata(),
+		ereg.Monthrange(),
+		ereg.Multistatus(),
+		ereg.Navlink(),
+		ereg.Newapikeyresult(),
+		ereg.Notfound(),
+		ereg.Notifierconfig(),
+		ereg.Opsgenieconfigresponder(),
+		ereg.Orgdto(),
+		ereg.Orguserdto(),
+		ereg.Overridelabels(),
+		ereg.Pagerdutyimage(),
+		ereg.Pagerdutylink(),
+		ereg.Patchannotationscmd(),
+		ereg.Patchlibraryelementcommand(),
+		ereg.Patchquerycommentinqueryhistorycommand(),
+		ereg.Pausealertcommand(),
+		ereg.Pauseallalertscommand(),
+		ereg.Peerstatus(),
+		ereg.Permission(),
+		ereg.Permissiondenied(),
+		ereg.Playlist(),
+		ereg.Playlistdashboard(),
+		ereg.Playlistitemdto(),
+		ereg.Point(),
+		ereg.Postablengalertconfig(),
+		ereg.Postgraphiteannotationscmd(),
+		ereg.Prometheusremotewritetargetjson(),
+		ereg.Queryhistorydeletequeryresponse(),
+		ereg.Queryhistorymigrationresponse(),
+		ereg.Queryhistorypreference(),
+		ereg.Receiver(),
+		ereg.Recordingrulejson(),
+		ereg.Regexp(),
+		ereg.Reportemaildto(),
+		ereg.Responsedetails(),
+		ereg.Restoredashboardversioncommand(),
+		ereg.Revokeauthtokencmd(),
+		ereg.Scheduledto(),
+		ereg.Settingsbag(),
+		ereg.Setuserrolescommand(),
+		ereg.Silencestatus(),
+		ereg.Slackconfirmationfield(),
+		ereg.Slackfield(),
+		ereg.Status(),
+		ereg.Successresponsebody(),
+		ereg.Tagsdto(),
+		ereg.Teamgroupdto(),
+		ereg.Teamgroupmapping(),
+		ereg.Testreceiverconfigresult(),
+		ereg.Timerange(),
+		ereg.Timerangedto(),
+		ereg.Tlsconfig(),
+		ereg.Updateannotationscmd(),
+		ereg.Updatefoldercommand(),
+		ereg.Updateorgaddressform(),
+		ereg.Updateorgform(),
+		ereg.Updateorgquotacmd(),
+		ereg.Updateorgusercommand(),
+		ereg.Updateteamcommand(),
+		ereg.Updateusercommand(),
+		ereg.Updateuserquotacmd(),
+		ereg.Useriddto(),
+		ereg.Userinfo(),
+		ereg.Userlookupdto(),
+		ereg.Userorgdto(),
+		ereg.Userprofiledto(),
+		ereg.Userquotadto(),
+		ereg.Usersearchhitdto(),
+		ereg.Usertoken(),
+		ereg.Validationerror(),
+		ereg.Valuemapping(),
+		ereg.Versioninfo(),
+		ereg.Weekdayrange(),
+		ereg.Yearrange(),
 	)
 }
