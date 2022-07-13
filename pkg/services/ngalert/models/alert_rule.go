@@ -315,8 +315,6 @@ type ListAlertRulesQuery struct {
 }
 
 type GetAlertRulesForSchedulingQuery struct {
-	ExcludeOrgIDs []int64
-
 	Result []*SchedulableAlertRule
 }
 

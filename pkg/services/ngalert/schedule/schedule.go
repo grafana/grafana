@@ -89,7 +89,6 @@ type schedule struct {
 	metrics *metrics.Scheduler
 
 	alertsSender    AlertsSender
-	disabledOrgs    map[int64]struct{}
 	minRuleInterval time.Duration
 
 	// schedulableAlertRules contains the alert rules that are considered for
@@ -138,7 +137,6 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		appURL:                appURL,
 		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
 		stateManager:          stateManager,
-		disabledOrgs:          cfg.Cfg.DisabledOrgs,
 		minRuleInterval:       cfg.Cfg.MinInterval,
 		schedulableAlertRules: schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.SchedulableAlertRule)},
 		bus:                   bus,
@@ -225,17 +223,13 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			sch.metrics.BehindSeconds.Set(start.Sub(tick).Seconds())
 
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
-			for disabledOrg := range sch.disabledOrgs {
-				disabledOrgs = append(disabledOrgs, disabledOrg)
-			}
 
-			if err := sch.updateSchedulableAlertRules(ctx, disabledOrgs); err != nil {
+			if err := sch.updateSchedulableAlertRules(ctx); err != nil {
 				sch.log.Error("scheduler failed to update alert rules", "err", err)
 			}
 			alertRules := sch.schedulableAlertRules.all()
 
-			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
+			sch.log.Debug("alert rules fetched", "count", len(alertRules))
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle

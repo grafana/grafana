@@ -403,9 +403,9 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		alerts := make([]*ngmodels.SchedulableAlertRule, 0)
 		q := sess.Table("alert_rule")
-		if len(query.ExcludeOrgIDs) > 0 {
-			excludeOrgs := make([]interface{}, 0, len(query.ExcludeOrgIDs))
-			for _, orgID := range query.ExcludeOrgIDs {
+		if len(st.Cfg.DisabledOrgs) > 0 {
+			excludeOrgs := make([]interface{}, 0, len(st.Cfg.DisabledOrgs))
+			for orgID := range st.Cfg.DisabledOrgs {
 				excludeOrgs = append(excludeOrgs, orgID)
 			}
 			q = q.NotIn("org_id", excludeOrgs...)
