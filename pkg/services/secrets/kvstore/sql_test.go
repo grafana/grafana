@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,8 +24,27 @@ func (t *TestCase) Value() string {
 	return fmt.Sprintf("%d:%s:%s:%d", t.OrgId, t.Namespace, t.Type, t.Revision)
 }
 
-func TestKVStore(t *testing.T) {
-	kv := SetupTestService(t)
+func setupTestService(t *testing.T) *secretsKVStoreSQL {
+	t.Helper()
+
+	sqlStore := sqlstore.InitTestDB(t)
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	secretsService := manager.SetupTestService(t, store)
+
+	kv := &secretsKVStoreSQL{
+		sqlStore:       sqlStore,
+		log:            log.New("secrets.kvstore"),
+		secretsService: secretsService,
+		decryptionCache: decryptionCache{
+			cache: make(map[int64]cachedDecrypted),
+		},
+	}
+
+	return kv
+}
+
+func TestSecretsKVStoreSQL(t *testing.T) {
+	kv := setupTestService(t)
 
 	ctx := context.Background()
 
@@ -152,7 +175,7 @@ func TestKVStore(t *testing.T) {
 	})
 
 	t.Run("listing existing keys", func(t *testing.T) {
-		kv := SetupTestService(t)
+		kv := setupTestService(t)
 
 		ctx := context.Background()
 
@@ -222,5 +245,72 @@ func TestKVStore(t *testing.T) {
 		keys, err = kv.Keys(ctx, AllOrganizations, "not_existing_namespace", "not_existing_type")
 		require.NoError(t, err, "querying a not existing namespace should not throw an error")
 		require.Len(t, keys, 0, "querying a not existing namespace should return an empty slice")
+	})
+
+	t.Run("getting all secrets", func(t *testing.T) {
+		kv := setupTestService(t)
+
+		ctx := context.Background()
+
+		namespace, typ := "listtest", "listtest"
+
+		testCases := []*TestCase{
+			{
+				OrgId:     1,
+				Type:      typ,
+				Namespace: namespace,
+			},
+			{
+				OrgId:     2,
+				Type:      typ,
+				Namespace: namespace,
+			},
+			{
+				OrgId:     3,
+				Type:      typ,
+				Namespace: namespace,
+			},
+			{
+				OrgId:     4,
+				Type:      typ,
+				Namespace: namespace,
+			},
+			{
+				OrgId:     1,
+				Type:      typ,
+				Namespace: "other_key",
+			},
+			{
+				OrgId:     4,
+				Type:      typ,
+				Namespace: "another_one",
+			},
+		}
+
+		for _, tc := range testCases {
+			err := kv.Set(ctx, tc.OrgId, tc.Namespace, tc.Type, tc.Value())
+			require.NoError(t, err)
+		}
+
+		secrets, err := kv.GetAll(ctx)
+
+		require.NoError(t, err)
+		require.Len(t, secrets, 6)
+
+		found := 0
+
+		for _, s := range secrets {
+			for _, tc := range testCases {
+				if *s.OrgId == tc.OrgId &&
+					*s.Namespace == tc.Namespace &&
+					*s.Type == tc.Type &&
+					s.Value == tc.Value() {
+					found++
+					break
+				}
+			}
+		}
+
+		require.Equal(t, 6, found, "querying for all secrets should return 6 records")
 	})
 }
