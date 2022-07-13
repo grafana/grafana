@@ -3,7 +3,7 @@ import React, { ComponentType } from 'react';
 import { Provider } from 'react-redux';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
 
-import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { config, GrafanaContext, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
 import { SearchWrapper } from 'app/features/search';
 import { getAppRoutes } from 'app/routes/routes';
@@ -19,7 +19,7 @@ import { I18nProvider } from './core/localisation';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
-import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
+import { ThemeProvider } from './core/utils/ConfigProvider';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
@@ -99,6 +99,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   render() {
+    const { app } = this.props;
     const { ready } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
@@ -114,7 +115,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
       <Provider store={store}>
         <I18nProvider>
           <ErrorBoundaryAlert style="page">
-            <ConfigContext.Provider value={config}>
+            <GrafanaContext.Provider value={app.context}>
               <ThemeProvider>
                 <KBarProvider
                   actions={[]}
@@ -147,7 +148,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   </ModalsProvider>
                 </KBarProvider>
               </ThemeProvider>
-            </ConfigContext.Provider>
+            </GrafanaContext.Provider>
           </ErrorBoundaryAlert>
         </I18nProvider>
       </Provider>

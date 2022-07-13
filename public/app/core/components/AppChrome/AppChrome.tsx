@@ -5,10 +5,10 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { useGrafanaInternal } from 'app/core/context/GrafanaContextInternal';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
 
-import { appChromeService } from './AppChromeService';
 import { NavToolbar } from './NavToolbar';
 import { TopSearchBar } from './TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -19,7 +19,7 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const [searchBarHidden, toggleSearchBar] = useToggle(false); // repace with local storage
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
-  const state = appChromeService.useState();
+  const state = useGrafanaInternal().chrome.useState();
 
   if (state.chromeless || !config.featureToggles.topnav) {
     return <main className="main-view">{children} </main>;
