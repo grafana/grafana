@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-// import Feature from 'ol/Feature';
 import Map from 'ol/Map';
 import { Geometry, LineString, Point } from 'ol/geom';
 import { Draw, Modify } from 'ol/interaction';
@@ -11,7 +10,7 @@ import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme } from '@grafana/data';
-import { RadioButtonGroup, stylesFactory } from '@grafana/ui';
+import { IconButton, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 interface Props {
@@ -19,9 +18,11 @@ interface Props {
 }
 
 interface State {
+  clearPrevious: boolean;
+  firstLoad: boolean;
+  menuActive: boolean;
+  showSegments: boolean;
   typeSelect: string;
-  menuActive: false;
-  tipString: string;
 }
 
 // Open Layer styles
@@ -135,6 +136,14 @@ const segmentStyle = new Style({
 
 const segmentStyles = [segmentStyle];
 const source = new VectorSource();
+const vector = new VectorLayer({
+  source: source,
+  style: function (feature) {
+    return styleFunction(feature, false);
+  },
+  visible: true,
+});
+
 const modify = new Modify({ source: source, style: modifyStyle });
 let tipPoint: Geometry;
 let draw: Draw; // global so we can remove it later
@@ -213,8 +222,9 @@ function styleFunction(feature: any, segments: boolean, drawType?: string, tip?:
 
 function addInteraction(map: Map, typeSelect: string, showSegments: boolean, clearPrevious: boolean) {
   const drawType = typeSelect;
-  const activeTip = 'Click to continue ' + (drawType === 'Polygon' ? 'polygon' : 'line');
-  const idleTip = 'Click to start';
+  const activeTip =
+    ' Click to continue ' + (drawType === 'Polygon' ? 'polygon' : 'line') + ' \n (double-click to end) ';
+  const idleTip = ' Click to start ';
   let tip = idleTip;
   draw = new Draw({
     source: source,
@@ -242,59 +252,55 @@ function addInteraction(map: Map, typeSelect: string, showSegments: boolean, cle
   map.addInteraction(draw);
 }
 
-const initMeasure = function (map: Map, typeSelect: string, showSegments: boolean, clearPrevious: boolean) {
-  const vector = new VectorLayer({
-    source: source,
-    style: function (feature) {
-      return styleFunction(feature, showSegments);
-    },
-  });
-
-  map.addLayer(vector);
-  map.addInteraction(modify);
-  addInteraction(map, typeSelect, showSegments, clearPrevious);
-
-  // TODO: add handlers for option change
-  // typeSelect.onchange = function () {
-  //   map.removeInteraction(draw);
-  //   addInteraction();
-  // };
-
-  // showSegments.onchange = function () {
-  //   vector.changed();
-  //   draw.getOverlay().changed();
-  // };
-};
-
 export class MeasureOverlay extends PureComponent<Props, State> {
   style = getStyles(config.theme);
 
   constructor(props: Props) {
     super(props);
-    this.state = { ...this.state, typeSelect: 'LineString' };
-  }
-
-  componentDidMount() {
-    // TODO: base these options on control state
-    initMeasure(this.props.map, this.state.typeSelect, true, false);
+    // TODO: refactor into functional component
+    // TODO: add clearPrevious and showSegments to control options
+    this.state = { ...this.state, clearPrevious: true, firstLoad: true, showSegments: false, typeSelect: 'LineString' };
   }
 
   render() {
     return (
-      <div className={this.style.infoWrap}>
-        <RadioButtonGroup
-          value={this.state.typeSelect}
-          options={[
-            { label: 'Length', value: 'LineString' },
-            { label: 'Area', value: 'Polygon' },
-          ]}
-          onChange={(e) => {
-            this.setState({ typeSelect: e });
-            this.props.map.removeInteraction(draw);
-            addInteraction(this.props.map, e, true, false);
+      <div className={this.style.infoWrap} style={{ paddingBottom: '4px' }}>
+        {this.state.menuActive ? (
+          <RadioButtonGroup
+            value={this.state.typeSelect}
+            options={[
+              { label: 'Length', value: 'LineString' },
+              { label: 'Area', value: 'Polygon' },
+            ]}
+            onChange={(e) => {
+              this.props.map.removeInteraction(draw);
+              this.setState({ typeSelect: e });
+              addInteraction(this.props.map, e, this.state.showSegments, this.state.clearPrevious);
+            }}
+          />
+        ) : null}
+        <IconButton
+          name="ruler-combined"
+          tooltip={`${this.state.menuActive ? 'hide' : 'show'} measure tools`}
+          tooltipPlacement="right"
+          onClick={() => {
+            this.setState({ ...this.state, menuActive: !this.state.menuActive });
+            if (this.state.menuActive) {
+              this.props.map.removeInteraction(draw);
+              vector.set('visible', false);
+            } else {
+              if (this.state.firstLoad) {
+                // Initialize on first load
+                this.setState({ ...this.state, firstLoad: false });
+                this.props.map.addLayer(vector);
+                this.props.map.addInteraction(modify);
+              }
+              vector.set('visible', true);
+              this.props.map.removeInteraction(draw); // Remove last interaction
+              addInteraction(this.props.map, this.state.typeSelect, this.state.showSegments, this.state.clearPrevious);
+            }
           }}
         />
-        <div>tooltip will go here</div>
       </div>
     );
   }
