@@ -16,7 +16,7 @@ weight: 400
 
 # Graph and color schemes
 
-To set the graph and color schemes, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series/" >}}).
+To set the graph and color schemes, refer to [Apply color to series and fields]({{< relref "../../panels/configure-visualizations/#apply-color-to-series-and-fields" >}}).
 
 ## Classic palette
 

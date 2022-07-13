@@ -37,7 +37,7 @@ This section describes the areas of the Grafana panel editor.
 
 1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization, including:
 
-   - [Apply color to series and fields]({{< relref "../panels/working-with-panels/apply-color-to-series/" >}})
+   - [Apply color to series and fields]({{< relref "../panels/configure-visualizations/#apply-color-to-series-and-fields" >}})
    - [Format a standard field]({{< relref "../panels/working-with-panels/format-standard-fields/" >}})
    - [Add a title and description to a panel]({{< relref "../panels/working-with-panels/add-title-and-description/" >}})
 
@@ -101,7 +101,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    - [Visualization-specific options]({{< relref "../visualizations/" >}})
    - [Override field values]({{< relref "../panels/override-field-values/about-field-overrides/" >}})
    - [Configure thresholds]({{< relref "../panels/configure-thresholds/" >}})
-   - [Apply color to series and fields]({{< relref "../panels/working-with-panels/apply-color-to-series/" >}})
+   - [Apply color to series and fields]({{< relref "../panels/configure-visualizations/#apply-color-to-series-and-fields" >}})
 
 1. Add a note to describe the visualization (or describe your changes) and then click **Save** in the upper-right corner of the page.
 
