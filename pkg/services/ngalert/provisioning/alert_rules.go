@@ -207,7 +207,43 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 
 	// TODO: exit out early if no delta.New or no delta.Update or no delta.Delete
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		// TODO: delete the things.
+		inserts := make([]models.AlertRule, 0, len(delta.New))
+		for _, insert := range delta.New {
+			if insert != nil {
+				inserts = append(inserts, *insert)
+			}
+		}
+		if _, err := service.ruleStore.InsertAlertRules(ctx, inserts); err != nil {
+			return fmt.Errorf("failed to insert alert rules: %w", err)
+		}
+
+		updates := make([]store.UpdateRule, 0, len(delta.Update))
+		for _, update := range delta.Update {
+			if update.New != nil {
+				updates = append(updates, store.UpdateRule{
+					Existing: update.Existing,
+					New:      *update.New,
+				})
+			}
+		}
+		if err = service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
+			return fmt.Errorf("failed to update alert rules: %w", err)
+		}
+
+		deletes := make([]string, 0, len(delta.Delete))
+		for _, delete := range delta.Delete {
+			if delete != nil {
+				deletes = append(deletes, delete.UID)
+			}
+		}
+		if err = service.ruleStore.DeleteAlertRulesByUID(ctx, orgID, deletes...); err != nil {
+			return fmt.Errorf("failed to delete alert rules: %w", err)
+		}
+
+		// After insertions and deletions are done, make sure we aren't exceeding the limit on alert rules.
+		// TODO
+
+		return nil
 	})
 }
 
