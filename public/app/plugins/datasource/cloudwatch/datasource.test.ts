@@ -431,7 +431,11 @@ describe('datasource', () => {
       expect(fetchMock.mock.calls[0][0].data.queries[0].endTime).toBe(4);
       expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe(undefined);
 
-      await datasource.getLogRowContext(row, { direction: 'FORWARD' }, { ...validLogsQuery, region: 'eu-east' });
+      const testQuery = {
+        ...validLogsQuery,
+        region: 'eu-east',
+      };
+      await datasource.getLogRowContext(row, { direction: 'FORWARD', query: testQuery });
       expect(fetchMock.mock.calls[1][0].data.queries[0].startTime).toBe(4);
       expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
     });

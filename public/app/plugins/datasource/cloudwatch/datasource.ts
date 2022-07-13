@@ -5,6 +5,7 @@ import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, ta
 
 import {
   DataFrame,
+  DataQuery,
   DataQueryError,
   DataQueryErrorType,
   DataQueryRequest,
@@ -47,6 +48,7 @@ import {
   CloudWatchLogsRequest,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
+  CloudWatchRowContextOptions,
   DescribeLogGroupsRequest,
   Dimensions,
   GetLogEventsRequest,
@@ -89,7 +91,7 @@ const displayCustomError = (title: string, message: string) =>
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
+  implements DataSourceWithLogsContextSupport
 {
   proxyUrl: any;
   defaultRegion: any;
@@ -488,8 +490,7 @@ export class CloudWatchDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {},
-    query?: CloudWatchLogsQuery
+    { limit = 10, direction = 'BACKWARD', query }: CloudWatchRowContextOptions = {}
   ): Promise<{ data: DataFrame[] }> => {
     let logStreamField = null;
     let logField = null;
