@@ -56,5 +56,10 @@ func TestIntegrationUserStarsDataAccess(t *testing.T) {
 				require.False(t, isStarred)
 			})
 		})
+
+		t.Run("delete by user", func(t *testing.T) {
+			err := starStore.DeleteByUser(context.Background(), 1)
+			require.NoError(t, err)
+		})
 	})
 }

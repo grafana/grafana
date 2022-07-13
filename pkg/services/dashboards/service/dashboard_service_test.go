@@ -218,4 +218,18 @@ func TestIntegrationDashboardService(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("Delete user by acl", func(t *testing.T) {
+		fakeStore := dashboards.FakeDashboardStore{}
+		defer fakeStore.AssertExpectations(t)
+
+		service := &DashboardServiceImpl{
+			cfg:                setting.NewCfg(),
+			log:                log.New("test.logger"),
+			dashboardStore:     &fakeStore,
+			dashAlertExtractor: &dummyDashAlertExtractor{},
+		}
+		err := service.DeleteAclByUser(context.Background(), 1)
+		require.NoError(t, err)
+	})
 }

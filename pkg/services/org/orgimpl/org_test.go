@@ -46,6 +46,11 @@ func TestOrgService(t *testing.T) {
 
 	setting.AutoAssignOrg = false
 	setting.AutoAssignOrgId = 0
+
+	t.Run("delete org by user", func(t *testing.T) {
+		err := orgService.DeleteUser(context.Background(), 1)
+		require.NoError(t, err)
+	})
 }
 
 type FakeOrgStore struct {
