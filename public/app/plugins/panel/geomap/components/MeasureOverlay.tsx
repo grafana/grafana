@@ -272,6 +272,7 @@ export class MeasureOverlay extends PureComponent<Props, State> {
               { label: 'Length', value: 'LineString' },
               { label: 'Area', value: 'Polygon' },
             ]}
+            size="sm"
             onChange={(e) => {
               this.props.map.removeInteraction(draw);
               this.setState({ typeSelect: e });
@@ -281,6 +282,7 @@ export class MeasureOverlay extends PureComponent<Props, State> {
         ) : null}
         <IconButton
           name="ruler-combined"
+          style={{ marginLeft: '5px' }}
           tooltip={`${this.state.menuActive ? 'hide' : 'show'} measure tools`}
           tooltipPlacement="right"
           onClick={() => {
