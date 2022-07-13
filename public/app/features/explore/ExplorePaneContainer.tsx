@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { compose } from 'redux';
 
 import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -45,7 +44,6 @@ interface OwnProps extends Themeable2 {
   exploreId: ExploreId;
   urlQuery: string;
   split: boolean;
-  theme: GrafanaTheme2;
 }
 
 interface Props extends OwnProps, ConnectedProps<typeof connector> {}
@@ -150,4 +148,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const ExplorePaneContainer = compose(connector, withTheme2)(ExplorePaneContainerUnconnected);
+export const ExplorePaneContainer = withTheme2(connector(ExplorePaneContainerUnconnected));
