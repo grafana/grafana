@@ -3,15 +3,15 @@ import { lastValueFrom, Observable, of, OperatorFunction, pipe, throwError } fro
 import { catchError, map } from 'rxjs/operators';
 
 import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  AbstractQuery,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
-  AbstractQuery,
-  AbstractLabelOperator,
-  AbstractLabelMatcher,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
@@ -25,6 +25,7 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/data
 
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
+import { convertToGraphiteQueryObject } from './components/helpers';
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
 // Types
@@ -34,6 +35,7 @@ import {
   GraphiteOptions,
   GraphiteQuery,
   GraphiteQueryImportConfiguration,
+  GraphiteQueryType,
   GraphiteType,
   MetricTankRequestMeta,
 } from './types';
@@ -452,8 +454,15 @@ export class GraphiteDatasource
     return date.unix();
   }
 
-  metricFindQuery(query: string, optionalOptions?: any): Promise<MetricFindValue[]> {
+  metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {
     const options: any = optionalOptions || {};
+
+    const queryObject = convertToGraphiteQueryObject(findQuery);
+    if (queryObject.queryType !== GraphiteQueryType.Default) {
+      return this.requestMetricRender(queryObject, options.requestId, options.range);
+    }
+
+    let query = queryObject.target ?? '';
 
     // First attempt to check for tag-related functions (using empty wildcard for interpolation)
     let interpolatedQuery = this.templateSrv.replace(
@@ -499,6 +508,27 @@ export class GraphiteDatasource
     } else {
       return this.requestMetricFind(interpolatedQuery, options.requestId, range);
     }
+  }
+
+  private async requestMetricRender(
+    queryObject: GraphiteQuery,
+    requestId: string,
+    range: TimeRange
+  ): Promise<MetricFindValue[]> {
+    const queryReq: DataQueryRequest<GraphiteQuery> = {
+      app: 'graphite-variable-editor',
+      interval: '1s',
+      intervalMs: 10000,
+      startTime: Date.now(),
+      targets: [{ ...queryObject }],
+      timezone: 'browser',
+      scopedVars: {},
+      requestId,
+      range,
+    };
+    const data = await lastValueFrom(this.query(queryReq));
+    console.log(data);
+    return Promise.resolve([]);
   }
 
   /**
