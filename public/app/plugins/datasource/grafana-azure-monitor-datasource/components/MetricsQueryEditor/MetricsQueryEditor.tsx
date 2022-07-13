@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
 import { PanelData } from '@grafana/data/src/types';
@@ -71,10 +70,6 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
               onQueryChange={onChange}
               setError={setError}
             />
-          </EditorFieldGroup>
-        </EditorRow>
-        <EditorRow>
-          <EditorFieldGroup>
             <AggregationField
               query={query}
               datasource={datasource}
@@ -129,11 +124,5 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
     </span>
   );
 };
-
-const getStyles = () => ({
-  row: css({
-    rowGap: 0,
-  }),
-});
 
 export default MetricsQueryEditor;

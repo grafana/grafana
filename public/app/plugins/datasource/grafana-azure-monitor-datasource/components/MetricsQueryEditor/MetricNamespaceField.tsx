@@ -46,7 +46,6 @@ const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
         value={query.azureMonitor?.metricNamespace}
         onChange={handleChange}
         options={options}
-        width={38}
         allowCustomValue
       />
     </Field>
