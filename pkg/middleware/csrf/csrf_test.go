@@ -1,6 +1,7 @@
 package csrf
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -181,7 +182,7 @@ func TestCSRF_Check(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				var actual *errorWithStatus
-				require.True(errors.As(err, &actual))
+				require.True(t, errors.As(err, &actual))
 				assert.EqualValues(t, tc.expectedStatus, actual.HTTPStatus)
 			}
 		})
