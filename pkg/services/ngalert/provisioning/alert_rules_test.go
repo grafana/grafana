@@ -15,12 +15,14 @@ import (
 
 func TestAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t)
+
 	t.Run("alert rule creation should return the created id", func(t *testing.T) {
 		var orgID int64 = 1
 		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", orgID), models.ProvenanceNone, 0)
 		require.NoError(t, err)
 		require.NotEqual(t, 0, rule.ID, "expected to get the created id and not the zero value")
 	})
+
 	t.Run("alert rule creation should set the right provenance", func(t *testing.T) {
 		var orgID int64 = 1
 		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#2", orgID), models.ProvenanceAPI, 0)
@@ -30,6 +32,7 @@ func TestAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceAPI, provenance)
 	})
+
 	t.Run("alert rule group should be updated correctly", func(t *testing.T) {
 		var orgID int64 = 1
 		rule := dummyRule("test#3", orgID)
@@ -46,6 +49,7 @@ func TestAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
+
 	t.Run("alert rule should get interval from existing rule group", func(t *testing.T) {
 		var orgID int64 = 1
 		rule := dummyRule("test#4", orgID)
@@ -63,6 +67,7 @@ func TestAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
+
 	t.Run("updating a rule group should bump the version number", func(t *testing.T) {
 		const (
 			orgID              = 123
@@ -91,6 +96,7 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, int64(2), rule.Version)
 		require.Equal(t, newInterval, rule.IntervalSeconds)
 	})
+
 	t.Run("alert rule provenace should be correctly checked", func(t *testing.T) {
 		tests := []struct {
 			name   string
@@ -151,6 +157,17 @@ func TestAlertRuleService(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("quota met causes create to be rejected", func(t *testing.T) {
+		ruleService := createAlertRuleService(t)
+		checker := &MockQuotaChecker{}
+		checker.EXPECT().LimitExceeded()
+		ruleService.quotas = checker
+
+		_, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", 1), models.ProvenanceNone, 0)
+
+		require.ErrorIs(t, err, models.ErrQuotaReached)
+	})
 }
 
 func createAlertRuleService(t *testing.T) AlertRuleService {
@@ -161,6 +178,7 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		BaseInterval: time.Second * 10,
 	}
 	quotas := MockQuotaChecker{}
+	quotas.EXPECT().LimitOK()
 	return AlertRuleService{
 		ruleStore:              store,
 		provenanceStore:        store,

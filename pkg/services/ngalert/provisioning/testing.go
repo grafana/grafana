@@ -170,3 +170,13 @@ func (m *MockProvisioningStore_Expecter) SaveSucceeds() *MockProvisioningStore_E
 	m.DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	return m
 }
+
+func (m *MockQuotaChecker_Expecter) LimitOK() *MockQuotaChecker_Expecter {
+	m.CheckQuotaReached(mock.Anything, mock.Anything, mock.Anything).Return(false, nil)
+	return m
+}
+
+func (m *MockQuotaChecker_Expecter) LimitExceeded() *MockQuotaChecker_Expecter {
+	m.CheckQuotaReached(mock.Anything, mock.Anything, mock.Anything).Return(true, nil)
+	return m
+}
