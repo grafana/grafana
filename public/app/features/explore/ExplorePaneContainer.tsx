@@ -6,7 +6,7 @@ import { compose } from 'redux';
 
 import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { withTheme2 } from '@grafana/ui';
+import { Themeable2, withTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
@@ -41,10 +41,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-interface OwnProps {
+interface OwnProps extends Themeable2 {
   exploreId: ExploreId;
   urlQuery: string;
   split: boolean;
+  theme: GrafanaTheme2;
 }
 
 interface Props extends OwnProps, ConnectedProps<typeof connector> {}
@@ -106,12 +107,12 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme } = this.props;
+    const { theme, split, exploreId, initialized } = this.props;
     const styles = getStyles(theme);
-    const exploreClass = cx(styles.explore, this.props.split && styles.exploreSplit);
+    const exploreClass = cx(styles.explore, split && styles.exploreSplit);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
-        {this.props.initialized && <Explore exploreId={this.props.exploreId} />}
+        {initialized && <Explore exploreId={exploreId} />}
       </div>
     );
   }
