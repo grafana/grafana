@@ -246,7 +246,7 @@ export class DatasourceSrv implements DataSourceService {
 
     if (filters.variables) {
       for (const variable of this.templateSrv.getVariables()) {
-        if (!isDataSource(variable) || variable.multi) {
+        if (!isDataSource(variable) || variable.multi || variable.includeAll) {
           continue;
         }
         const dsName = variable.current.value === 'default' ? this.defaultName : variable.current.value;
