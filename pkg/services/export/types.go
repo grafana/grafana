@@ -28,8 +28,8 @@ type ExportConfig struct {
 		Services   bool `json:"services"`
 		Usage      bool `json:"usage"`
 		Anno       bool `json:"anno"`
-		Snapshots  bool `json:"snapshots"`
-		Plugins    bool `json:"plugins"`
+		//	Snapshots  bool `json:"snapshots"`
+		Plugins bool `json:"plugins"`
 	} `json:"include"`
 
 	// Depends on the format

@@ -215,7 +215,7 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		exporters = append(exporters, exportPlugins)
 	}
 
-	if include.Snapshots {
+	if false { //include.Snapshots {
 		exporters = append(exporters, exportSnapshots)
 	}
 
