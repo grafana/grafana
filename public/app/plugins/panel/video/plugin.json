@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Video",
+  "id": "video",
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/video.svg",
+      "large": "img/video.svg"
+    }
+  }
+}

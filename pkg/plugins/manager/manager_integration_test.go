@@ -137,6 +137,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, pm *PluginMana
 		"text":           {},
 		"timeseries":     {},
 		"welcome":        {},
+		"video":          {},
 		"xychart":        {},
 	}
 

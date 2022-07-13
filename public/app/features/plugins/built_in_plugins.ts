@@ -70,6 +70,7 @@ import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 // Async loaded panels
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
+const videoPanel = async () => await import(/* webpackChunkName: "videoPanel" */ 'app/plugins/panel/video/module');
 const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ 'app/plugins/panel/icon/module');
 const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');
 const heatmapPanel = async () =>
@@ -140,6 +141,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/barchart/module': barChartPanel,
   'app/plugins/panel/logs/module': logsPanel,
   'app/plugins/panel/traces/module': tracesPanel,
+  'app/plugins/panel/video/module': videoPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
   'app/plugins/panel/nodeGraph/module': nodeGraph,
   'app/plugins/panel/histogram/module': histogramPanel,
