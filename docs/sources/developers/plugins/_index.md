@@ -25,8 +25,8 @@ npx @grafana/toolkit plugin:create my-grafana-plugin
 
 If you want a more guided introduction to plugin development, check out our tutorials:
 
-- [Build a panel plugin](https://grafana.com/tutorials/build-a-panel-plugin/)
-- [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)
+- [Build a panel plugin]({{< ref "build-a-panel-plugin.md" >}})
+- [Build a data source plugin]({{< ref "build-a-data-source-plugin.md" >}})
 
 ## Go further
 
