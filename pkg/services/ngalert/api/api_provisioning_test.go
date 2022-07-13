@@ -8,6 +8,10 @@ import (
 	"testing"
 	"time"
 
+	prometheus "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/timeinterval"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	gfcore "github.com/grafana/grafana/pkg/models"
@@ -17,10 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	prometheus "github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/timeinterval"
-	"github.com/stretchr/testify/require"
 )
 
 func TestProvisioningApi(t *testing.T) {
@@ -295,8 +297,10 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 		})
 	sqlStore := sqlstore.InitTestDB(t)
 	store := store.DBstore{
-		SQLStore:     sqlStore,
-		BaseInterval: time.Second * 10,
+		SQLStore: sqlStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: time.Second * 10,
+		},
 	}
 	xact := &provisioning.NopTransactionManager{}
 	prov := &provisioning.MockProvisioningStore{}
