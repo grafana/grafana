@@ -93,7 +93,7 @@ export function getPanelMenu(
 
   if (!panel.isEditing) {
     const viewTextTranslation = t({
-      id: 'panel.header.menu.view',
+      id: 'panel.header-menu.view',
       message: `View`,
     });
     menu.push({
@@ -114,7 +114,7 @@ export function getPanelMenu(
   }
 
   const shareTextTranslation = t({
-    id: 'panel.header.menu.share',
+    id: 'panel.header-menu.share',
     message: `Share`,
   });
 
@@ -139,7 +139,7 @@ export function getPanelMenu(
   // Only show these inspect actions for data plugins
   if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
     const dataTextTranslation = t({
-      id: 'panel.header.menu.inspect.data',
+      id: 'panel.header-menu.inspect-data',
       message: `Data`,
     });
 
@@ -157,7 +157,7 @@ export function getPanelMenu(
   }
 
   const jsonTextTranslation = t({
-    id: 'panel.header.menu.inspect.json',
+    id: 'panel.header-menu.inspect-json',
     message: `Panel JSON`,
   });
 
@@ -167,7 +167,7 @@ export function getPanelMenu(
   });
 
   const inspectTextTranslation = t({
-    id: 'panel.header.menu.inspect',
+    id: 'panel.header-menu.inspect',
     message: `Inspect`,
   });
   menu.push({
@@ -231,7 +231,7 @@ export function getPanelMenu(
 
   if (!panel.isEditing && subMenu.length) {
     const moreTextTranslation = t({
-      id: 'panel.header.menu.more',
+      id: 'panel.header-menu.more',
       message: `More...`,
     });
     menu.push({
