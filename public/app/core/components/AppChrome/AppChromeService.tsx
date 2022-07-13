@@ -10,7 +10,7 @@ export interface AppChromeState {
   chromeless: boolean;
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
-  actions?: React.ReactNode[];
+  actions?: React.ReactNode;
 }
 
 const defaultSection: NavModelItem = { text: 'Grafana' };

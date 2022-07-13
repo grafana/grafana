@@ -280,11 +280,13 @@ export const DashNav = React.memo<Props>((props) => {
     return (
       <AppChromeUpdate
         pageNav={{ text: title }}
-        actions={[
-          ...renderLeftActions(),
-          <NavToolbarSeparator leftActionsSeparator key="left-sep" />,
-          ...renderRightActions(),
-        ]}
+        actions={
+          <>
+            {renderLeftActions()}
+            <NavToolbarSeparator leftActionsSeparator />
+            {renderRightActions()}
+          </>
+        }
       />
     );
   }
