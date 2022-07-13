@@ -126,7 +126,7 @@ export function isQueryWithParser(query: string): boolean {
   const tree = parser.parse(query);
   tree.iterate({
     enter: (type): false | void => {
-      if (type.name === 'LabelParser') {
+      if (type.name === 'LabelParser' || type.name === 'JsonExpression') {
         hasParser = true;
       }
     },

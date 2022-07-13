@@ -10,7 +10,7 @@ import (
 
 func exportSnapshots(helper *commitHelper, job *gitExportJob) error {
 	cmd := &dashboardsnapshots.GetDashboardSnapshotsQuery{
-		OrgId:        job.orgID,
+		OrgId:        helper.orgID,
 		Limit:        500000,
 		SignedInUser: nil,
 	}

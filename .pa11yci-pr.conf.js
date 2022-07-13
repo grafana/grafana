@@ -96,7 +96,7 @@ var config = {
       url: '${HOST}/org/apikeys',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 4,
     },
     {
       url: '${HOST}/dashboards',
