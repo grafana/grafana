@@ -26,6 +26,10 @@ export interface PostgresOptions extends DataSourceJsonData, SQLConnectionLimits
   timescaledb: boolean;
 }
 
+export interface SecureJsonData {
+  password: string;
+}
+
 export type ResultFormat = 'time_series' | 'table';
 export interface PostgresQuery extends DataQuery {
   alias?: string;

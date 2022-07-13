@@ -1,4 +1,4 @@
-import React, { SyntheticEvent } from 'react';
+import React, { SyntheticEvent, useState } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
@@ -12,9 +12,31 @@ import { Alert, InlineSwitch, FieldSet, InlineField, InlineFieldRow, Input, Sele
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 
-import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes } from '../types';
+import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes, SecureJsonData } from '../types';
 
-export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<PostgresOptions>) => {
+import { useAutoDetectFeatures } from './useAutoDetectFeatures';
+
+export const postgresVersions: Array<SelectableValue<number>> = [
+  { label: '9.0', value: 900 },
+  { label: '9.1', value: 901 },
+  { label: '9.2', value: 902 },
+  { label: '9.3', value: 903 },
+  { label: '9.4', value: 904 },
+  { label: '9.5', value: 905 },
+  { label: '9.6', value: 906 },
+  { label: '10', value: 1000 },
+  { label: '11', value: 1100 },
+  { label: '12', value: 1200 },
+  { label: '13', value: 1300 },
+  { label: '14', value: 1400 },
+  { label: '15', value: 1500 },
+];
+
+export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<PostgresOptions, SecureJsonData>) => {
+  const [versionOptions, setVersionOptions] = useState(postgresVersions);
+
+  useAutoDetectFeatures({ props, setVersionOptions });
+
   const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
 
@@ -32,16 +54,6 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
   const tlsMethods: Array<SelectableValue<PostgresTLSMethods>> = [
     { value: PostgresTLSMethods.filePath, label: 'File system path' },
     { value: PostgresTLSMethods.fileContent, label: 'Certificate content' },
-  ];
-
-  const postgresVersions: Array<SelectableValue<number>> = [
-    { label: '9.3', value: 903 },
-    { label: '9.4', value: 904 },
-    { label: '9.5', value: 905 },
-    { label: '9.6', value: 906 },
-    { label: '10', value: 1000 },
-    { label: '11', value: 1100 },
-    { label: '12+', value: 1200 },
   ];
 
   const onJSONDataOptionSelected = (property: keyof PostgresOptions) => {
@@ -93,7 +105,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           <InlineField label="Password">
             <SecretInput
               placeholder="Password"
-              isConfigured={options.secureJsonFields && options.secureJsonFields.password}
+              isConfigured={options.secureJsonFields?.password}
               onReset={onResetPassword}
               onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
             ></SecretInput>
@@ -218,7 +230,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
             value={jsonData.postgresVersion || 903}
             inputId="postgresVersion"
             onChange={onJSONDataOptionSelected('postgresVersion')}
-            options={postgresVersions}
+            options={versionOptions}
           ></Select>
         </InlineField>
         <InlineField
