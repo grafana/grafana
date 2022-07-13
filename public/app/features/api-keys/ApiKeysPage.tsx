@@ -6,7 +6,7 @@ import { rangeUtil } from '@grafana/data';
 import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -177,13 +177,8 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               const showTable = apiKeysCount > 0;
               return (
                 <>
-                  {/* TODO: remove feature flag check before GA */}
-                  {config.featureToggles.serviceAccounts && !apiKeysMigrated && (
-                    <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />
-                  )}
-                  {config.featureToggles.serviceAccounts && apiKeysMigrated && (
-                    <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />
-                  )}
+                  {!apiKeysMigrated && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
+                  {apiKeysMigrated && <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />}
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."

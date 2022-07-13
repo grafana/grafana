@@ -398,19 +398,19 @@ export class BackendSrv implements BackendService {
     return await this.request({ method: 'GET', url, params, requestId });
   }
 
-  async delete(url: string, data?: any) {
+  async delete<T = any>(url: string, data?: any): Promise<T> {
     return await this.request({ method: 'DELETE', url, data });
   }
 
-  async post(url: string, data?: any) {
+  async post<T = any>(url: string, data?: any): Promise<T> {
     return await this.request({ method: 'POST', url, data });
   }
 
-  async patch(url: string, data: any) {
+  async patch<T = any>(url: string, data: any): Promise<T> {
     return await this.request({ method: 'PATCH', url, data });
   }
 
-  async put(url: string, data: any) {
+  async put<T = any>(url: string, data: any): Promise<T> {
     return await this.request({ method: 'PUT', url, data });
   }
 
@@ -425,6 +425,7 @@ export class BackendSrv implements BackendService {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
+  /** @deprecated */
   search(query: any): Promise<DashboardSearchHit[]> {
     return this.get('/api/search', query);
   }
