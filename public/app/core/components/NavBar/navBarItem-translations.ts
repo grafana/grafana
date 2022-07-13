@@ -18,12 +18,12 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
   starred: defineMessage({ id: 'nav.starred', message: 'Starred' }),
   'starred-empty': defineMessage({ id: 'nav.starred-empty', message: 'Your starred dashboards will appear here' }),
   dashboards: defineMessage({ id: 'nav.dashboards', message: 'Dashboards' }),
-  'manage-dashboards': defineMessage({ id: 'nav.manage-dashboards', message: 'Browse' }),
-  playlists: defineMessage({ id: 'nav.playlists', message: 'Playlists' }),
-  snapshots: defineMessage({ id: 'nav.snapshots', message: 'Snapshots' }),
-  'library-panels': defineMessage({ id: 'nav.library-panels', message: 'Library panels' }),
-  'new-dashboard': defineMessage({ id: 'nav.new-dashboard', message: 'New dashboard' }),
-  'new-folder': defineMessage({ id: 'nav.new-folder', message: 'New folder' }),
+  'manage-dashboards': defineMessage({ id: 'nav.dashboards/browse', message: 'Browse' }),
+  playlists: defineMessage({ id: 'nav.dashboards/playlists', message: 'Playlists' }),
+  snapshots: defineMessage({ id: 'nav.dashboards/snapshots', message: 'Snapshots' }),
+  'library-panels': defineMessage({ id: 'nav.dashboards/library-panels', message: 'Library panels' }),
+  'new-dashboard': defineMessage({ id: 'nav.dashboards/new', message: 'New dashboard' }),
+  'new-folder': defineMessage({ id: 'nav.dashboards/folder/new', message: 'New folder' }),
 
   explore: defineMessage({ id: 'nav.explore', message: 'Explore' }),
 
