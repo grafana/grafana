@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Alert,
   Button,
@@ -12,7 +12,6 @@ import {
   HorizontalGroup,
   Icon,
   RadioButtonGroup,
-  Select,
   Tooltip,
   useStyles2,
   useTheme2,
@@ -45,16 +44,6 @@ export const ExternalAlertmanagers = () => {
 
   const externalAlertManagers = useExternalAmSelector();
   const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
-
-  const amDataSources = useSelector((state: StoreState) => state.dataSources.dataSources).filter(
-    (ds) => ds.type === 'alertmanager'
-  );
-  const availableExternalDsToPassAlerts = amDataSources
-    .filter((ds) => !ds.readOnly)
-    .map<SelectableValue<{}>>((ds) => ({
-      label: ds.name,
-      value: ds.uid,
-    }));
 
   const alertmanagersChoice = useSelector(
     (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagersChoice
@@ -138,7 +127,7 @@ export const ExternalAlertmanagers = () => {
     }
   };
 
-  const noAlertmanagers = externalAlertManagers?.length === 0;
+  const noAlertmanagers = externalAlertManagers?.length === 0 && externalDsAlertManagers.length === 0;
 
   return (
     <div>
