@@ -93,6 +93,7 @@ class SimpleStorage implements GrafanaStorage {
     const formData = new FormData();
     formData.append('folder', folder);
     formData.append('file', file);
+    formData.append('overwriteExistingFile', String(overwriteExistingFile));
     const res = await fetch('/api/storage/upload', {
       method: 'POST',
       body: formData,
