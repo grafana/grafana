@@ -63,7 +63,6 @@ export function addParserToQuery(query: string, parser: string): string {
  *
  * @param query
  */
-
 export function addNoPipelineErrorToQuery(query: string): string {
   const parserPositions = getParserPositions(query);
   if (!parserPositions.length) {
