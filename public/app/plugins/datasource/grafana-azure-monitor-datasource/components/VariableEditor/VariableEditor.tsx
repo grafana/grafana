@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -30,9 +31,12 @@ const VariableEditor = (props: Props) => {
   ];
   if (config.featureToggles.azTemplateVars) {
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery });
+    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery });
   }
 
   const [query, setQuery] = useState(defaultQuery);
+  const [requireSubscription, setRequireSubscription] = useState(false);
+  const [subscriptions, setSubscriptions] = useState<SelectableValue[]>([]);
 
   useEffect(() => {
     migrateStringQueriesToObjectQueries(props.query, { datasource: props.datasource }).then((migratedQuery) => {
@@ -40,11 +44,38 @@ const VariableEditor = (props: Props) => {
     });
   }, [props.query, props.datasource]);
 
+  useEffect(() => {
+    switch (query.queryType) {
+      case AzureQueryType.ResourceGroupsQuery:
+        setRequireSubscription(true);
+        break;
+      default:
+        setRequireSubscription(false);
+    }
+  }, [query.queryType]);
+
+  useEffectOnce(() => {
+    props.datasource.getSubscriptions().then((subs) => {
+      setSubscriptions(subs.map((s) => ({ label: s.text, value: s.value })));
+    });
+  });
+
   const onQueryTypeChange = (selectableValue: SelectableValue) => {
     if (selectableValue.value) {
       const newQuery = {
         ...query,
         queryType: selectableValue.value,
+      };
+      setQuery(newQuery);
+      props.onChange(newQuery);
+    }
+  };
+
+  const onChangeSubscription = (selectableValue: SelectableValue) => {
+    if (selectableValue.value) {
+      const newQuery = {
+        ...query,
+        subscription: selectableValue.value,
       };
       setQuery(newQuery);
       props.onChange(newQuery);
@@ -103,6 +134,17 @@ const VariableEditor = (props: Props) => {
       )}
       {query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
         <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={props.datasource} />
+      )}
+      {requireSubscription && (
+        <InlineField label="Select subscription" labelWidth={20}>
+          <Select
+            aria-label="select subscription"
+            onChange={onChangeSubscription}
+            options={subscriptions}
+            width={25}
+            value={query.subscription}
+          />
+        </InlineField>
       )}
     </>
   );

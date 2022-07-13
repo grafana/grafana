@@ -162,5 +162,30 @@ describe('VariableEditor:', () => {
       await waitFor(() => expect(screen.getByText('Subscriptions')).toBeInTheDocument());
       expect(onChange).toHaveBeenCalledWith({ queryType: AzureQueryType.SubscriptionsQuery, refId: 'A' });
     });
+
+    it('should run the query if requesting resource groups', async () => {
+      grafanaRuntime.config.featureToggles.azTemplateVars = true;
+      const ds = createMockDatasource({
+        getSubscriptions: jest.fn().mockResolvedValue([{ text: 'Primary Subscription', value: 'sub' }]),
+      });
+      const onChange = jest.fn();
+      render(<VariableEditor {...defaultProps} onChange={onChange} datasource={ds} />);
+      // wait for initial load
+      await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
+      // Select RGs variable
+      openMenu(screen.getByLabelText('select query type'));
+      screen.getByText('Resource Groups').click();
+      await waitFor(() => expect(screen.getByText('Select subscription')).toBeInTheDocument());
+      // Select a subscription
+      openMenu(screen.getByLabelText('select subscription'));
+      screen.getByText('Primary Subscription').click();
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryType: AzureQueryType.ResourceGroupsQuery,
+          subscription: 'sub',
+          refId: 'A',
+        })
+      );
+    });
   });
 });
