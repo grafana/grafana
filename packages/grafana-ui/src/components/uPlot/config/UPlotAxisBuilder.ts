@@ -27,7 +27,7 @@ export interface AxisProps {
   values?: Axis.Values;
   isTime?: boolean;
   timeZone?: TimeZone;
-  color?: string;
+  color?: uPlot.Axis.Stroke;
 }
 
 export const UPLOT_AXIS_FONT_SIZE = 12;

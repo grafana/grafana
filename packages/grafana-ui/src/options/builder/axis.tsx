@@ -7,7 +7,7 @@ import {
   SelectableValue,
   StandardEditorProps,
 } from '@grafana/data';
-import { AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
 import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
 
@@ -83,14 +83,15 @@ export function addAxisConfig(
       },
     })
     .addRadio({
-      path: 'axisColorFromSeries',
+      path: 'axisColor.mode',
       name: 'Color',
       category,
-      defaultValue: false,
+      defaultValue: AxisColorMode.Auto,
       settings: {
         options: [
-          { value: false, label: 'Auto' },
-          { value: true, label: 'From series' },
+          { value: AxisColorMode.Auto, label: 'Auto' },
+          { value: AxisColorMode.Series, label: 'From series' },
+          { value: AxisColorMode.Thresholds, label: 'From thresholds' },
         ],
       },
     });

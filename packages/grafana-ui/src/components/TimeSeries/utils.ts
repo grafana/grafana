@@ -15,6 +15,7 @@ import {
   getFieldDisplayName,
   getDisplayProcessor,
   FieldColorModeId,
+  FieldColorMode,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -26,10 +27,12 @@ import {
   ScaleOrientation,
   StackingMode,
   GraphTransform,
+  AxisColorMode,
 } from '@grafana/schema';
 
 import { buildScaleKey } from '../GraphNG/utils';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
+import { getScaleGradientFn } from '../uPlot/config/gradientFills';
 import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
@@ -203,7 +206,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             theme,
             grid: { show: customConfig.axisGridShow },
             show: customConfig.hideFrom?.viz === false,
-            color: customConfig.axisColorFromSeries ? seriesColor : undefined,
+            color:
+              customConfig.axisColor?.mode === AxisColorMode.Series
+                ? seriesColor
+                : customConfig.axisColor?.mode === AxisColorMode.Thresholds
+                ? getScaleGradientFn(
+                    1,
+                    theme,
+                    { id: FieldColorModeId.Thresholds, name: '', getCalculator: () => () => '' },
+                    field.config.thresholds
+                  )
+                : undefined,
           },
           field
         )
