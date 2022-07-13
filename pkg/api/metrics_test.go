@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/web/webtest"
 
 	"golang.org/x/oauth2"
@@ -80,10 +81,12 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
 	})
 	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, false)
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
 	})
 
 	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {

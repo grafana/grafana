@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -143,6 +144,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.folderService = folderService
 		hs.AccessControl = acmock.New()
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
 	})
 
 	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
