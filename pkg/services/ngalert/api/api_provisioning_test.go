@@ -418,12 +418,12 @@ func createInvalidMuteTiming() definitions.MuteTimeInterval {
 	}
 }
 
-func createInvalidAlertRule() definitions.AlertRule {
-	return definitions.AlertRule{}
+func createInvalidAlertRule() definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{}
 }
 
-func createTestAlertRule(title string, orgID int64) definitions.AlertRule {
-	return definitions.AlertRule{
+func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{
 		OrgID:     orgID,
 		Title:     title,
 		Condition: "A",
@@ -445,7 +445,7 @@ func createTestAlertRule(title string, orgID int64) definitions.AlertRule {
 	}
 }
 
-func insertRule(t *testing.T, srv ProvisioningSrv, rule definitions.AlertRule) {
+func insertRule(t *testing.T, srv ProvisioningSrv, rule definitions.ProvisionedAlertRule) {
 	t.Helper()
 
 	rc := createTestRequestCtx()
