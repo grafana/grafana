@@ -194,6 +194,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+      const thresholdColorGrad: uPlot.Axis.Stroke = getScaleGradientFn(
+        1,
+        theme,
+        { id: FieldColorModeId.Thresholds, name: '', getCalculator: () => () => '' },
+        field.config.thresholds
+      );
+
       builder.addAxis(
         tweakAxis(
           {
@@ -205,16 +212,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             theme,
             grid: { show: customConfig.axisGridShow },
             show: customConfig.hideFrom?.viz === false,
+            border: {
+              show: true,
+              width: 1,
+              stroke: customConfig.axisColor?.mode === AxisColorMode.Thresholds ? thresholdColorGrad : undefined,
+            },
+            ticks: {
+              stroke: customConfig.axisColor?.mode === AxisColorMode.Thresholds ? thresholdColorGrad : undefined,
+            },
             color:
               customConfig.axisColor?.mode === AxisColorMode.Series
                 ? seriesColor
                 : customConfig.axisColor?.mode === AxisColorMode.Thresholds
-                ? getScaleGradientFn(
-                    1,
-                    theme,
-                    { id: FieldColorModeId.Thresholds, name: '', getCalculator: () => () => '' },
-                    field.config.thresholds
-                  )
+                ? thresholdColorGrad
                 : undefined,
           },
           field
