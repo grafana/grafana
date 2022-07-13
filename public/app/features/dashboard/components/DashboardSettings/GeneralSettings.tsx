@@ -91,9 +91,6 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
 
   return (
     <div style={{ maxWidth: '600px' }}>
-      <h3 className="dashboard-settings__header" aria-label={selectors.pages.Dashboard.Settings.General.title}>
-        General
-      </h3>
       <div className="gf-form-group">
         <Field label="Name">
           <Input id="title-input" name="title" onBlur={onBlur} defaultValue={dashboard.title} />

@@ -2,12 +2,14 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
+import * as H from 'history';
 import React, { useCallback, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, locationUtil } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory, useForceUpdate } from '@grafana/ui';
+import { Button, IconName, PageToolbar, stylesFactory, useForceUpdate } from '@grafana/ui';
+import { Page } from 'app/core/components/PageNew/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
@@ -16,7 +18,7 @@ import { VariableEditorContainer } from '../../../variables/editor/VariableEdito
 import { DashboardModel } from '../../state/DashboardModel';
 import { AccessControlDashboardPermissions } from '../DashboardPermissions/AccessControlDashboardPermissions';
 import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
-import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
+// import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 import { GeneralSettings } from './GeneralSettings';
@@ -158,59 +160,48 @@ export function DashboardSettings({ dashboard, editview }: Props) {
   const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const canSave = dashboard.meta.canSave;
-  const styles = getStyles(config.theme2);
+  const location = useLocation();
+  const sectionNav = getSectionNav(dashboard, pages, currentPage, location);
 
   return (
-    <FocusScope contain autoFocus>
-      <div className="dashboard-settings" ref={ref} {...overlayProps} {...dialogProps}>
+    <>
+      {!config.featureToggles.topnav && (
         <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose} />
-        <CustomScrollbar>
-          <div className={styles.scrollInner}>
-            <div className={styles.settingsWrapper}>
-              <aside className="dashboard-settings__aside">
-                {pages.map((page) => (
-                  <Link
-                    onClick={() => reportInteraction(`Dashboard settings navigation to ${page.id}`)}
-                    to={(loc) => locationUtil.getUrlForPartial(loc, { editview: page.id })}
-                    className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
-                    key={page.id}
-                  >
-                    <Icon name={page.icon} style={{ marginRight: '4px' }} />
-                    {page.title}
-                  </Link>
-                ))}
-                <div className="dashboard-settings__aside-actions">
-                  {canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onPostSave} />}
-                  {canSaveAs && (
-                    <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onPostSave} variant="secondary" />
-                  )}
-                </div>
-              </aside>
-              <div className={styles.settingsContent}>{currentPage.component}</div>
-            </div>
-          </div>
-        </CustomScrollbar>
-      </div>
-    </FocusScope>
+      )}
+      <Page navModel={sectionNav} pageNav={{ text: currentPage.title }}>
+        {currentPage.component}
+      </Page>
+    </>
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  scrollInner: css`
-    min-width: 100%;
-    display: flex;
-  `,
-  settingsWrapper: css`
-    margin: ${theme.spacing(0, 2, 2)};
-    display: flex;
-    flex-grow: 1;
-  `,
-  settingsContent: css`
-    flex-grow: 1;
-    height: 100%;
-    padding: 32px;
-    border: 1px solid ${theme.colors.border.weak};
-    background: ${theme.colors.background.primary};
-    border-radius: ${theme.shape.borderRadius()};
-  `,
-}));
+function getSectionNav(
+  dashboard: DashboardModel,
+  pages: SettingsPage[],
+  currentPage: SettingsPage,
+  location: H.Location
+): NavModel {
+  const main: NavModelItem = { text: 'Settings', children: [], icon: 'apps' };
+
+  main.children = pages.map((page) => ({
+    text: page.title,
+    icon: page.icon,
+    id: page.id,
+    url: locationUtil.getUrlForPartial(location, { editview: page.id }),
+    active: page === currentPage,
+  }));
+
+  main.parentItem = {
+    text: dashboard.title,
+    url: locationUtil.getUrlForPartial(location, { editview: null }),
+    parentItem: {
+      text: 'Dashboards',
+      url: '/dashboards',
+    },
+  };
+
+  return {
+    main,
+    node: main,
+  };
+}

@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import classnames from 'classnames';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -331,9 +332,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     const inspectPanel = this.getInspectPanel();
-    const containerClassNames = classnames({ 'panel-in-fullscreen': viewPanel });
-
     const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
+
     const toolbar = kioskMode !== KioskMode.Full && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
         <DashNav
@@ -349,29 +349,31 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     );
 
     return (
-      <Page
-        navId="dashboards"
-        layout={PageLayoutType.Dashboard}
-        toolbar={toolbar}
-        className={containerClassNames}
-        scrollRef={this.setScrollRef}
-        scrollTop={updateScrollTop}
-      >
-        <DashboardPrompt dashboard={dashboard} />
+      <>
+        <Page
+          navId="dashboards"
+          layout={PageLayoutType.Dashboard}
+          toolbar={toolbar}
+          className={cx(viewPanel && 'panel-in-fullscreen', queryParams.editview && 'dashboard-content--hidden')}
+          scrollRef={this.setScrollRef}
+          scrollTop={updateScrollTop}
+        >
+          <DashboardPrompt dashboard={dashboard} />
 
-        {initError && <DashboardFailed />}
-        {showSubMenu && (
-          <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-            <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-          </section>
-        )}
+          {initError && <DashboardFailed />}
+          {showSubMenu && (
+            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+              <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+            </section>
+          )}
 
-        <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
+          <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-        {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
+          {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+          {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
+        </Page>
         {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}
-      </Page>
+      </>
     );
   }
 }
