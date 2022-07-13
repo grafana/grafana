@@ -156,6 +156,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     // in folder browse view we need the dashboard to reload on change
     if (match.path === '/g/:slug*' && prevProps.match.params.slug !== match.params.slug) {
+      if (!config.featureToggles.dashboardsFromStorage) {
+        return;
+      }
       this.initDashboard();
       return;
     }

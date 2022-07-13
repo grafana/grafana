@@ -112,6 +112,10 @@ class SimpleStorage implements GrafanaStorage {
 
   // Temporary shim that can be loaded into the existing dashboard page structure
   async getDashboard(path: string): Promise<DashboardDTO> {
+    if (!config.featureToggles.dashboardsFromStorage) {
+      return Promise.reject('Dashboards from storage is not enabled');
+    }
+
     if (path.endsWith('.json')) {
       const result = await backendSrv.get(`/api/storage/read/${path}`);
       result.uid = path;
@@ -150,16 +154,21 @@ class SimpleStorage implements GrafanaStorage {
   }
 
   async saveDashboard(options: SaveDashboardCommand): Promise<any> {
+    if (!config.featureToggles.dashboardsFromStorage) {
+      return Promise.reject('Dashboards from storage is not enabled');
+    }
+
     const blob = new Blob([JSON.stringify(options.dashboard)], {
       type: 'application/json',
     });
 
+    const uid = options.dashboard.uid;
     const formData = new FormData();
     if (options.message) {
       formData.append('message', options.message);
     }
     formData.append('overwriteExistingFile', options.overwrite === false ? 'false' : 'true');
-    formData.append('file.path', options.dashboard.uid);
+    formData.append('file.path', uid);
     formData.append('file', blob);
     const res = await fetch('/api/storage/upload', {
       method: 'POST',
@@ -172,12 +181,11 @@ class SimpleStorage implements GrafanaStorage {
       return Promise.reject({ message: body?.message ?? res.statusText });
     }
 
-    alert('TODO... save');
-
     return {
-      uid: 'xxx',
-      id: 123,
-      url: '',
+      uid,
+      url: `/g/${uid}`,
+      slug: uid,
+      status: 'success',
     };
   }
 }
