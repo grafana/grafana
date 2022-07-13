@@ -26,6 +26,7 @@ func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Servic
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
 	}
+	InitMetrics()
 	return store
 }
 

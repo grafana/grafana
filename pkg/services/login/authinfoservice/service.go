@@ -25,7 +25,13 @@ func ProvideAuthInfoService(userProtectionService login.UserProtectionService, a
 		authInfoStore:         authInfoStore,
 		logger:                log.New("login.authinfo"),
 	}
-	usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
+	// collect login stats
+	go func() {
+		err := authInfoStore.RunMetricsCollection(context.Background())
+		if err != nil {
+			s.logger.Info("error running metrics for authinfostore collection %s", err)
+		}
+	}()
 	return s
 }
 

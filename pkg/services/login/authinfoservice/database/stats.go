@@ -2,13 +2,72 @@ package database
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type loginStats struct {
 	DuplicateUserEntries int `xorm:"duplicate_user_entries"`
+}
+
+const (
+	ExporterName              = "grafana"
+	metricsCollectionInterval = time.Second * 60 * 4 // every 4 hours, indication of duplicate users
+)
+
+var (
+	// MStatDuplicateUserEntries is a indication metric gauge for number of users with duplicate emails or logins
+	MStatDuplicateUserEntries prometheus.Gauge
+
+	// MStatHasDuplicateEntries is a metric for if there is duplicate users
+	MStatHasDuplicateEntries prometheus.Gauge
+
+	once        sync.Once
+	Initialised bool = false
+)
+
+func InitMetrics() {
+	once.Do(func() {
+		MStatDuplicateUserEntries = prometheus.NewGauge(prometheus.GaugeOpts{
+			Name:      "stat_users_total_duplicate_user_entries",
+			Help:      "total number of duplicate user entries by email or login",
+			Namespace: ExporterName,
+		})
+
+		MStatHasDuplicateEntries = prometheus.NewGauge(prometheus.GaugeOpts{
+			Name:      "stat_users_has_duplicate_user_entries",
+			Help:      "instance has duplicate user entries by email or login",
+			Namespace: ExporterName,
+		})
+
+		prometheus.MustRegister(
+			MStatDuplicateUserEntries,
+			MStatHasDuplicateEntries,
+		)
+	})
+}
+
+func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
+	if _, err := s.GetLoginStats(ctx); err != nil {
+		s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
+	}
+	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
+	defer updateStatsTicker.Stop()
+
+	for {
+		select {
+		case <-updateStatsTicker.C:
+			if _, err := s.GetLoginStats(ctx); err != nil {
+				s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
+			}
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
 
 func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (loginStats, error) {
@@ -21,6 +80,15 @@ func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (loginStats, error) {
 	if outerErr != nil {
 		return stats, outerErr
 	}
+
+	// set prometheus metrics stats
+	MStatDuplicateUserEntries.Set(float64(stats.DuplicateUserEntries))
+	if stats.DuplicateUserEntries == 0 {
+		MStatHasDuplicateEntries.Set(float64(0))
+	} else {
+		MStatHasDuplicateEntries.Set(float64(1))
+	}
+
 	return stats, nil
 }
 

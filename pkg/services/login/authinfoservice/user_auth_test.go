@@ -383,7 +383,8 @@ func TestUserAuth(t *testing.T) {
 				}
 				_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
 				require.NoError(t, err)
-				// require metrics and statistics to be 2
+
+				// require stats to populate
 				m, err := srv.authInfoStore.CollectLoginStats(context.Background())
 				require.NoError(t, err)
 				require.Equal(t, 2, m["stats.users.duplicate_user_entries"])
