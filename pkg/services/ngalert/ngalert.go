@@ -155,7 +155,6 @@ func (ng *AlertNG) init() error {
 		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
 		InstanceStore: store,
 		RuleStore:     store,
-		OrgStore:      store,
 		Metrics:       ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:   alertsRouter,
 	}

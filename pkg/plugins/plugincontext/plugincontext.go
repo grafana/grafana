@@ -127,12 +127,8 @@ func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string,
 	return ps, nil
 }
 
-func (p *Provider) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) map[string]string {
-	return func(ds *datasources.DataSource) map[string]string {
-		decryptedJsonData, err := p.dataSourceService.DecryptedValues(ctx, ds)
-		if err != nil {
-			p.logger.Error("Failed to decrypt secure json data", "error", err)
-		}
-		return decryptedJsonData
+func (p *Provider) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
+	return func(ds *datasources.DataSource) (map[string]string, error) {
+		return p.dataSourceService.DecryptedValues(ctx, ds)
 	}
 }
