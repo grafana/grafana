@@ -17,7 +17,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 describe('VariableSupport', () => {
   describe('querying for grafana template variable fns', () => {
-    xit('can fetch subscriptions', (done) => {
+    it('can fetch subscriptions', (done) => {
       const fakeSubscriptions = ['subscriptionId'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -43,7 +43,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch resourceGroups with a default subscriptionId', (done) => {
+    it('can fetch resourceGroups with a default subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -72,7 +72,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch resourceGroups with a subscriptionId arg', (done) => {
+    it('can fetch resourceGroups with a subscriptionId arg', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -98,7 +98,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch metricDefinitions with a default subscriptionId', (done) => {
+    it('can fetch metricDefinitions with a default subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -127,7 +127,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch metricDefinitions with a subscriptionId', (done) => {
+    it('can fetch metricDefinitions with a subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -153,7 +153,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch resourceNames with a default subscriptionId', (done) => {
+    it('can fetch resourceNames with a default subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -182,7 +182,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch resourceNames with a subscriptionId', (done) => {
+    it('can fetch resourceNames with a subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -208,7 +208,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch a metricNamespace with a default subscriptionId', (done) => {
+    it('can fetch a metricNamespace with a default subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -239,7 +239,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch a metricNamespace with a subscriptionId', (done) => {
+    it('can fetch a metricNamespace with a subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -267,7 +267,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch metricNames with a default subscriptionId', (done) => {
+    it('can fetch metricNames with a default subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -298,7 +298,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch metricNames with a subscriptionId', (done) => {
+    it('can fetch metricNames with a subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -326,7 +326,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch workspaces with a default subscriptionId', (done) => {
+    it('can fetch workspaces with a default subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -354,7 +354,7 @@ describe('VariableSupport', () => {
         done();
       });
     });
-    xit('can fetch workspaces with a subscriptionId', (done) => {
+    it('can fetch workspaces with a subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -382,7 +382,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can handle legacy string queries', (done) => {
+    it('can handle legacy string queries', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
@@ -406,7 +406,7 @@ describe('VariableSupport', () => {
         done();
       });
     });
-    xit('returns an empty array for unknown queries', (done) => {
+    it('returns an empty array for unknown queries', (done) => {
       const variableSupport = new VariableSupport(createMockDatasource());
       const mockRequest = {
         targets: [
@@ -425,7 +425,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('should return None when there is no data', (done) => {
+    it('should return None when there is no data', (done) => {
       const variableSupport = new VariableSupport(
         createMockDatasource({
           azureLogAnalyticsDatasource: {
@@ -456,7 +456,7 @@ describe('VariableSupport', () => {
     });
   });
 
-  xit('passes on the query to the main datasource for all non-grafana template variable fns', (done) => {
+  it('passes on the query to the main datasource for all non-grafana template variable fns', (done) => {
     const expectedResults = ['test'];
     const variableSupport = new VariableSupport(
       createMockDatasource({
@@ -485,7 +485,7 @@ describe('VariableSupport', () => {
     });
   });
 
-  xit('should handle http error', (done) => {
+  it('should handle http error', (done) => {
     const error = invalidSubscriptionError();
     const variableSupport = new VariableSupport(
       createMockDatasource({
@@ -537,7 +537,7 @@ describe('VariableSupport', () => {
       });
     });
 
-    xit('can fetch resourceGroups', (done) => {
+    it('can fetch resourceGroups', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
