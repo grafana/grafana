@@ -17,13 +17,13 @@ func TestAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t)
 	t.Run("alert rule creation should return the created id", func(t *testing.T) {
 		var orgID int64 = 1
-		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", orgID), models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", orgID), models.ProvenanceNone, 0)
 		require.NoError(t, err)
 		require.NotEqual(t, 0, rule.ID, "expected to get the created id and not the zero value")
 	})
 	t.Run("alert rule creation should set the right provenance", func(t *testing.T) {
 		var orgID int64 = 1
-		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#2", orgID), models.ProvenanceAPI)
+		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#2", orgID), models.ProvenanceAPI, 0)
 		require.NoError(t, err)
 
 		_, provenance, err := ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
@@ -34,7 +34,7 @@ func TestAlertRuleService(t *testing.T) {
 		var orgID int64 = 1
 		rule := dummyRule("test#3", orgID)
 		rule.RuleGroup = "a"
-		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
@@ -50,7 +50,7 @@ func TestAlertRuleService(t *testing.T) {
 		var orgID int64 = 1
 		rule := dummyRule("test#4", orgID)
 		rule.RuleGroup = "b"
-		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
 		require.NoError(t, err)
 
 		var interval int64 = 120
@@ -59,7 +59,7 @@ func TestAlertRuleService(t *testing.T) {
 
 		rule = dummyRule("test#4-1", orgID)
 		rule.RuleGroup = "b"
-		rule, err = ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		rule, err = ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
@@ -75,7 +75,7 @@ func TestAlertRuleService(t *testing.T) {
 		rule.UID = ruleUID
 		rule.RuleGroup = ruleGroup
 		rule.NamespaceUID = namespaceUID
-		_, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		_, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
 		require.NoError(t, err)
 
 		rule, _, err = ruleService.GetAlertRule(context.Background(), orgID, ruleUID)
@@ -139,7 +139,7 @@ func TestAlertRuleService(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				var orgID int64 = 1
 				rule := dummyRule(t.Name(), orgID)
-				rule, err := ruleService.CreateAlertRule(context.Background(), rule, test.from)
+				rule, err := ruleService.CreateAlertRule(context.Background(), rule, test.from, 0)
 				require.NoError(t, err)
 
 				_, err = ruleService.UpdateAlertRule(context.Background(), rule, test.to)
