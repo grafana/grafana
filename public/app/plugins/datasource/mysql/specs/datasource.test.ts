@@ -30,6 +30,7 @@ describe('MySQLDatasource', () => {
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
     const ds = new MySqlDatasource(instanceSettings);
+    Reflect.set(ds, 'templateSrv', templateSrv);
 
     return { ds, variable, templateSrv, fetchMock };
   };
@@ -327,6 +328,7 @@ describe('MySQLDatasource', () => {
       grafana_metric
     WHERE
       $__timeFilter(createdAt) AND
+      foo = 'bar' AND
       measurement = 'logins.count' AND
       hostname IN($host)
     GROUP BY 1, 3
