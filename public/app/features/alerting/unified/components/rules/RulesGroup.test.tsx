@@ -13,8 +13,12 @@ import { disableRBAC, mockCombinedRule, mockDataSource } from '../../mocks';
 import { RulesGroup } from './RulesGroup';
 
 const hasRulerMock = jest.fn<boolean, any>();
+const rulerRulesLoadedMock = jest.fn<boolean, any>();
 jest.mock('../../hooks/useHasRuler', () => ({
-  useHasRuler: () => hasRulerMock,
+  useHasRuler: () => ({
+    hasRuler: hasRulerMock,
+    rulerRulesLoaded: rulerRulesLoadedMock,
+  }),
 }));
 
 beforeEach(() => {
