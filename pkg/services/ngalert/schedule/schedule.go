@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"time"
 
+	prometheusModel "github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -523,6 +525,10 @@ func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 
 func (sch *schedule) getRuleExtraLabels(ctx context.Context, alertRule *ngmodels.AlertRule) (map[string]string, error) {
 	extraLabels := make(map[string]string, 4)
+
+	extraLabels[ngmodels.NamespaceUIDLabel] = alertRule.NamespaceUID
+	extraLabels[prometheusModel.AlertNameLabel] = alertRule.Title
+	extraLabels[ngmodels.RuleUIDLabel] = alertRule.UID
 
 	user := &models.SignedInUser{
 		UserId:  0,

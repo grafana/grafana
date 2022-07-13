@@ -29,18 +29,16 @@ func Test_getOrCreate(t *testing.T) {
 	t.Run("should combine all labels", func(t *testing.T) {
 		rule := generateRule()
 
-		reservedLabels := make(data.Labels)
-		attachRuleLabels(reservedLabels, rule)
-
+		extraLabels := models.GenerateAlertLabels(5, "extra-")
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
 		}
-		state := c.getOrCreate(context.Background(), rule, result)
-		for key, expected := range reservedLabels {
+		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
+		for key, expected := range extraLabels {
 			require.Equal(t, expected, state.Labels[key])
 		}
-		assert.Len(t, state.Labels, len(reservedLabels)+len(rule.Labels)+len(result.Instance))
-		for key, expected := range reservedLabels {
+		assert.Len(t, state.Labels, len(extraLabels)+len(rule.Labels)+len(result.Instance))
+		for key, expected := range extraLabels {
 			assert.Equal(t, expected, state.Labels[key])
 		}
 		for key, expected := range rule.Labels {
@@ -50,26 +48,28 @@ func Test_getOrCreate(t *testing.T) {
 			assert.Equal(t, expected, state.Labels[key])
 		}
 	})
-	t.Run("reserved rule labels should take precedence over rule and result labels", func(t *testing.T) {
+	t.Run("extra labels should take precedence over rule and result labels", func(t *testing.T) {
 		rule := generateRule()
 
-		reservedLabels := make(data.Labels)
-		attachRuleLabels(reservedLabels, rule)
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
 
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
 		}
-		for key := range reservedLabels {
+		for key := range extraLabels {
 			rule.Labels[key] = "rule-" + util.GenerateShortUID()
 			result.Instance[key] = "result-" + util.GenerateShortUID()
 		}
-		state := c.getOrCreate(context.Background(), rule, result)
-		for key, expected := range reservedLabels {
+
+		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
+		for key, expected := range extraLabels {
 			require.Equal(t, expected, state.Labels[key])
 		}
 	})
 	t.Run("rule labels should take precedence over result labels", func(t *testing.T) {
 		rule := generateRule()
+
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
 
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
@@ -77,22 +77,21 @@ func Test_getOrCreate(t *testing.T) {
 		for key := range rule.Labels {
 			result.Instance[key] = "result-" + util.GenerateShortUID()
 		}
-		state := c.getOrCreate(context.Background(), rule, result)
+		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
 		for key, expected := range rule.Labels {
 			require.Equal(t, expected, state.Labels[key])
 		}
 	})
-	t.Run("rule labels should be able to be expanded with result and reserved labels", func(t *testing.T) {
+	t.Run("rule labels should be able to be expanded with result and extra labels", func(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
 		}
 		rule := generateRule()
 
-		reservedLabels := make(data.Labels)
-		attachRuleLabels(reservedLabels, rule)
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
 
 		labelTemplates := make(data.Labels)
-		for key := range reservedLabels {
+		for key := range extraLabels {
 			labelTemplates["rule-"+key] = fmt.Sprintf("{{ with (index .Labels \"%s\") }}{{.}}{{end}}", key)
 		}
 		for key := range result.Instance {
@@ -100,8 +99,8 @@ func Test_getOrCreate(t *testing.T) {
 		}
 		rule.Labels = labelTemplates
 
-		state := c.getOrCreate(context.Background(), rule, result)
-		for key, expected := range reservedLabels {
+		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
+		for key, expected := range extraLabels {
 			assert.Equal(t, expected, state.Labels["rule-"+key])
 		}
 		for key, expected := range result.Instance {
@@ -115,11 +114,10 @@ func Test_getOrCreate(t *testing.T) {
 
 		rule := generateRule()
 
-		reservedLabels := make(data.Labels)
-		attachRuleLabels(reservedLabels, rule)
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
 
 		annotationTemplates := make(data.Labels)
-		for key := range reservedLabels {
+		for key := range extraLabels {
 			annotationTemplates["rule-"+key] = fmt.Sprintf("{{ with (index .Labels \"%s\") }}{{.}}{{end}}", key)
 		}
 		for key := range result.Instance {
@@ -127,8 +125,8 @@ func Test_getOrCreate(t *testing.T) {
 		}
 		rule.Annotations = annotationTemplates
 
-		state := c.getOrCreate(context.Background(), rule, result)
-		for key, expected := range reservedLabels {
+		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
+		for key, expected := range extraLabels {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
 		for key, expected := range result.Instance {

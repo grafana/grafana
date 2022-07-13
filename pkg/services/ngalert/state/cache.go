@@ -9,8 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	prometheusModel "github.com/prometheus/common/model"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -38,10 +36,7 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
-	// clone the labels so we don't change eval.Result
-	labels := result.Instance.Copy()
-	attachRuleLabels(labels, alertRule)
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, alertRule, labels, result)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, alertRule, result, extraLabels)
 
 	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
 	dupes := make(data.Labels)
@@ -73,7 +68,6 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	if len(dupes) > 0 {
 		c.log.Warn("evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
-	attachRuleLabels(lbs, alertRule)
 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
@@ -122,17 +116,20 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	return newState
 }
 
-func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
-	m[ngModels.RuleUIDLabel] = alertRule.UID
-	m[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
-	m[prometheusModel.AlertNameLabel] = alertRule.Title
-}
+func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels) (data.Labels, data.Labels) {
+	// use labels from the result and extra labels to expand the labels and annotations declared by the rule
+	templateLabels := make(map[string]string, len(alertInstance.Instance)+len(extraLabels))
+	for key, val := range alertInstance.Instance {
+		templateLabels[key] = val
+	}
+	for key, val := range extraLabels {
+		templateLabels[key] = val
+	}
 
-func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *ngModels.AlertRule, labels map[string]string, alertInstance eval.Result) (map[string]string, map[string]string) {
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(ctx, alertRule.Title, v, labels, alertInstance, c.externalURL)
+			ev, err := expandTemplate(ctx, alertRule.Title, v, templateLabels, alertInstance, c.externalURL)
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
