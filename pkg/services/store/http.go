@@ -75,13 +75,14 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		})
 	}
 
-	folder, ok := c.Req.MultipartForm.Value["folder"]
-	if !ok || len(folder) != 1 {
+	folder, ok := getMultipartFormValue(c.Req, "folder")
+	if !ok || folder == "" {
 		return response.JSON(400, map[string]interface{}{
 			"message": "please specify the upload folder",
 			"err":     true,
 		})
 	}
+	overwriteExistingFile, _ := getMultipartFormValue(c.Req, "overwriteExistingFile")
 
 	fileHeader := files[0]
 	if fileHeader.Size > MAX_UPLOAD_SIZE {
@@ -107,7 +108,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		return errFileTooBig
 	}
 
-	path := folder[0] + "/" + fileHeader.Filename
+	path := folder + "/" + fileHeader.Filename
 
 	mimeType := http.DetectContentType(data)
 
@@ -116,7 +117,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		MimeType:              mimeType,
 		EntityType:            EntityTypeImage,
 		Path:                  path,
-		OverwriteExistingFile: true,
+		OverwriteExistingFile: overwriteExistingFile == "true",
 	})
 
 	if err != nil {
@@ -129,6 +130,14 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		"file":    fileHeader.Filename,
 		"err":     true,
 	})
+}
+
+func getMultipartFormValue(req *http.Request, key string) (string, bool) {
+	v, ok := req.MultipartForm.Value[key]
+	if !ok || len(v) != 1 {
+		return "", false
+	}
+	return v[0], ok
 }
 
 func (s *httpStorage) Read(c *models.ReqContext) response.Response {

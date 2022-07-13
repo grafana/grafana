@@ -146,4 +146,8 @@ describe('isQueryWithParser', () => {
   it('returns true if metric query with parser', () => {
     expect(isQueryWithParser('rate({job="grafana"} | json [5m])')).toBe(true);
   });
+
+  it('returns true if query with json parser with expressions', () => {
+    expect(isQueryWithParser('rate({job="grafana"} | json foo="bar", bar="baz" [5m])')).toBe(true);
+  });
 });

@@ -23,13 +23,14 @@ interface Props {
 export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
   const styles = useStyles2(getStyles);
 
+  const dsConfigs = useUnifiedAlertingSelector((state) => state.dataSources);
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
-    () => rulesDataSources.filter((ds) => rules[ds.name]?.loading),
-    [rules, rulesDataSources]
+    () => rulesDataSources.filter((ds) => rules[ds.name]?.loading || dsConfigs[ds.name]?.loading),
+    [rules, dsConfigs, rulesDataSources]
   );
 
   const { numberOfPages, onPageChange, page, pageItems } = usePagination(

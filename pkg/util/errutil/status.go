@@ -110,6 +110,10 @@ func (s CoreStatus) LogLevel() LogLevel {
 	}
 }
 
+func (s CoreStatus) String() string {
+	return string(s)
+}
+
 // ProxyStatus implies that an error originated from the data source
 // proxy.
 type ProxyStatus CoreStatus

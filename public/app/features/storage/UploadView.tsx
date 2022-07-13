@@ -3,14 +3,15 @@ import React, { useState } from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ButtonGroup, Field, FileDropzone, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ButtonGroup, Checkbox, Field, FileDropzone, useStyles2 } from '@grafana/ui';
 
-import { getGrafanaStorage } from './helper';
+import { filenameAlreadyExists, getGrafanaStorage } from './helper';
 import { UploadReponse } from './types';
 
 interface Props {
   folder: string;
   onUpload: (rsp: UploadReponse) => void;
+  fileNames: string[];
 }
 
 interface ErrorResponse {
@@ -27,12 +28,13 @@ const FileDropzoneCustomChildren = ({ secondaryText = 'Drag and drop here or bro
   );
 };
 
-export const UploadView = ({ folder, onUpload }: Props) => {
+export const UploadView = ({ folder, onUpload, fileNames }: Props) => {
   const [file, setFile] = useState<File | undefined>(undefined);
 
   const styles = useStyles2(getStyles);
 
   const [error, setError] = useState<ErrorResponse>({ message: '' });
+  const [overwriteExistingFile, setOverwriteExistingFile] = useState(false);
 
   const Preview = () => {
     if (!file) {
@@ -58,13 +60,16 @@ export const UploadView = ({ folder, onUpload }: Props) => {
       return;
     }
 
-    const rsp = await getGrafanaStorage().upload(folder, file);
+    const rsp = await getGrafanaStorage().upload(folder, file, overwriteExistingFile);
     if (rsp.status !== 200) {
       setError(rsp);
     } else {
       onUpload(rsp);
     }
   };
+
+  const filenameExists = file ? filenameAlreadyExists(file.name, fileNames) : false;
+  const isUploadDisabled = !file || (filenameExists && !overwriteExistingFile);
 
   return (
     <div>
@@ -84,8 +89,20 @@ export const UploadView = ({ folder, onUpload }: Props) => {
         {error.message !== '' ? <p>{error.message}</p> : Boolean(file) ? <Preview /> : <FileDropzoneCustomChildren />}
       </FileDropzone>
 
+      {file && filenameExists && (
+        <div className={styles.alert}>
+          <Alert title={`${file.name} already exists`} severity="error">
+            <Checkbox
+              value={overwriteExistingFile}
+              onChange={() => setOverwriteExistingFile(!overwriteExistingFile)}
+              label="Overwrite existing file"
+            />
+          </Alert>
+        </div>
+      )}
+
       <ButtonGroup>
-        <Button className={styles.button} variant={'primary'} disabled={!file} onClick={doUpload}>
+        <Button className={styles.button} variant={'primary'} disabled={isUploadDisabled} onClick={doUpload}>
           Upload
         </Button>
       </ButtonGroup>
@@ -132,5 +149,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   small: css`
     color: ${theme.colors.text.secondary};
     margin-bottom: ${theme.spacing(2)};
+  `,
+  alert: css`
+    padding-top: 10px;
   `,
 });
