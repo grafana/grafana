@@ -54,18 +54,6 @@ aliases:
   - /docs/grafana/latest/whatsnew/whats-new-in-v6-6/
   - /docs/grafana/latest/guides/whats-new-in-v6-7/
   - /docs/grafana/latest/whatsnew/whats-new-in-v6-7/
-  - /docs/grafana/latest/guides/whats-new-in-v7-0/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-0/
-  - /docs/grafana/latest/guides/whats-new-in-v7-1/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-1/
-  - /docs/grafana/latest/guides/whats-new-in-v7-2/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-2/
-  - /docs/grafana/latest/guides/whats-new-in-v7-3/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-3/
-  - /docs/grafana/latest/guides/whats-new-in-v7-4/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-4/
-  - /docs/grafana/latest/guides/whats-new-in-v7-5/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-5/
 title: What's new
 weight: 1
 ---
@@ -87,3 +75,12 @@ as info on deprecations, breaking changes and plugin development read the [relea
 - [What's new in 8.2]({{< relref "whats-new-in-v8-2/" >}})
 - [What's new in 8.1]({{< relref "whats-new-in-v8-1/" >}})
 - [What's new in 8.0]({{< relref "whats-new-in-v8-0/" >}})
+
+## Grafana 7
+
+- [What's new in 7.5]({{< relref "whats-new-in-v7-5/" >}})
+- [What's new in 7.4]({{< relref "whats-new-in-v7-4/" >}})
+- [What's new in 7.3]({{< relref "whats-new-in-v7-3/" >}})
+- [What's new in 7.2]({{< relref "whats-new-in-v7-2/" >}})
+- [What's new in 7.1]({{< relref "whats-new-in-v7-1/" >}})
+- [What's new in 7.0]({{< relref "whats-new-in-v7-0/" >}})
