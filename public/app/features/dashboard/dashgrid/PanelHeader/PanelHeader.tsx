@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { Trans } from '@lingui/macro';
 import React, { FC } from 'react';
 
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
@@ -59,7 +60,9 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                       size="sm"
                     />
                   ) : null}
-                  <h2 className={styles.titleText}>{title}</h2>
+                  <h2 className={styles.titleText}>
+                    <Trans id="panel.header.menu.title">{title}</Trans>
+                  </h2>
                   {!dashboard.meta.publicDashboardAccessToken && (
                     <div data-testid="panel-dropdown">
                       <Icon name="angle-down" className="panel-menu-toggle" />
