@@ -14,7 +14,10 @@ export interface GrafanaStorage {
   createFolder: (path: string) => Promise<{ error?: string }>;
   delete: (path: { isFolder: boolean; path: string }) => Promise<{ error?: string }>;
 
-  /** Temporary shim that will return a DashboardDTO shape for files in storage */
+  /**
+   * Temporary shim that will return a DashboardDTO shape for files in storage
+   * Longer term, this will call an "Entity API" that is eventually backed by storage
+   */
   getDashboard: (path: string) => Promise<DashboardDTO>;
   saveDashboard: (options: SaveDashboardCommand) => Promise<any>;
 }

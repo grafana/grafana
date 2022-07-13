@@ -138,19 +138,16 @@ export default function StoragePage(props: Props) {
       return <RootView root={frame} onPathChange={setPath} />;
     }
 
-    const isConfigurable = isFolder && !['public-static', 'resources'].includes(path);
     const opts = [{ what: StorageView.Data, text: 'Data' }];
 
     // Root folders have a config page
-    if (isConfigurable) {
+    if (path.indexOf('/') < 0) {
       opts.push({ what: StorageView.Config, text: 'Configure' });
     }
 
     // Lets only apply permissions to folders (for now)
     if (isFolder) {
-      if (isConfigurable) {
-        opts.push({ what: StorageView.Perms, text: 'Permissions' });
-      }
+      opts.push({ what: StorageView.Perms, text: 'Permissions' });
     } else {
       // TODO: only if the file exists in a storage engine with
       opts.push({ what: StorageView.History, text: 'History' });
