@@ -22,7 +22,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
   };
 
   // check if authLabels is longer than 0 otherwise false
-  const isExternalUser: boolean = (user && user.authLabels && user.authLabels.length > 0) ?? false;
+  const isExternalUser: boolean = (user && user.isExternal) ?? false;
   const authSource = isExternalUser && user && user.authLabels ? user.authLabels[0] : '';
   const lockMessage = authSource ? ` (Synced via ${authSource})` : '';
   const disabledEdit = disableLoginForm || isExternalUser;
