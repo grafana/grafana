@@ -131,7 +131,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     );
 
     const interpolatedQuery: SQLQuery = {
-      refId: 'tempvar',
+      refId: `tempvar-${Math.random()}`,
       datasource: this.getRef(),
       rawSql,
       format: QueryFormat.Table,
@@ -148,7 +148,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
   private runMetaQuery(request: Partial<SQLQuery>, options?: MetricFindQueryOptions): Promise<DataFrame> {
     const range = getTimeSrv().timeRange();
-    const refId = request.refId || 'meta';
+    const refId = request.refId || `meta-${Math.random()}`;
     const queries: DataQuery[] = [{ ...request, datasource: request.datasource || this.getRef(), refId }];
 
     return lastValueFrom(
