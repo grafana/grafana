@@ -30,8 +30,8 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tokenService models.UserTokenSer
 }
 
 // QuotaReached checks that quota is reached for a target. Runs CheckQuotaReached and take context and scope parameters from the request context
-func (qs *Service) QuotaReached(c *models.ReqContext, target string) (bool, error) {
-	if !qs.Cfg.Quota.Enabled {
+func (s *Service) QuotaReached(c *models.ReqContext, target string) (bool, error) {
+	if !s.Cfg.Quota.Enabled {
 		return false, nil
 	}
 	// No request context means this is a background service, like LDAP Background Sync
@@ -46,21 +46,21 @@ func (qs *Service) QuotaReached(c *models.ReqContext, target string) (bool, erro
 			UserID: c.UserId,
 		}
 	}
-	return qs.CheckQuotaReached(c.Req.Context(), target, params)
+	return s.CheckQuotaReached(c.Req.Context(), target, params)
 }
 
 // CheckQuotaReached check that quota is reached for a target. If ScopeParameters are not defined, only global scope is checked
-func (qs *Service) CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error) {
-	if !qs.Cfg.Quota.Enabled {
+func (s *Service) CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error) {
+	if !s.Cfg.Quota.Enabled {
 		return false, nil
 	}
 	// get the list of scopes that this target is valid for. Org, User, Global
-	scopes, err := qs.getQuotaScopes(target)
+	scopes, err := s.getQuotaScopes(target)
 	if err != nil {
 		return false, err
 	}
 	for _, scope := range scopes {
-		qs.Logger.Debug("Checking quota", "target", target, "scope", scope)
+		s.Logger.Debug("Checking quota", "target", target, "scope", scope)
 
 		switch scope.Name {
 		case "global":
@@ -71,20 +71,20 @@ func (qs *Service) CheckQuotaReached(ctx context.Context, target string, scopePa
 				return true, nil
 			}
 			if target == "session" {
-				usedSessions, err := qs.AuthTokenService.ActiveTokenCount(ctx)
+				usedSessions, err := s.AuthTokenService.ActiveTokenCount(ctx)
 				if err != nil {
 					return false, err
 				}
 
 				if usedSessions > scope.DefaultLimit {
-					qs.Logger.Debug("Sessions limit reached", "active", usedSessions, "limit", scope.DefaultLimit)
+					s.Logger.Debug("Sessions limit reached", "active", usedSessions, "limit", scope.DefaultLimit)
 					return true, nil
 				}
 				continue
 			}
-			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
+			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, UnifiedAlertingEnabled: s.Cfg.UnifiedAlerting.IsEnabled()}
 			// TODO : move GetGlobalQuotaByTarget to a global quota service
-			if err := qs.SQLStore.GetGlobalQuotaByTarget(ctx, &query); err != nil {
+			if err := s.SQLStore.GetGlobalQuotaByTarget(ctx, &query); err != nil {
 				return true, err
 			}
 			if query.Result.Used >= scope.DefaultLimit {
@@ -98,10 +98,10 @@ func (qs *Service) CheckQuotaReached(ctx context.Context, target string, scopePa
 				OrgId:                  scopeParams.OrgID,
 				Target:                 scope.Target,
 				Default:                scope.DefaultLimit,
-				UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled(),
+				UnifiedAlertingEnabled: s.Cfg.UnifiedAlerting.IsEnabled(),
 			}
 			// TODO: move GetOrgQuotaByTarget from sqlstore to quota store
-			if err := qs.SQLStore.GetOrgQuotaByTarget(ctx, &query); err != nil {
+			if err := s.SQLStore.GetOrgQuotaByTarget(ctx, &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {
@@ -118,9 +118,9 @@ func (qs *Service) CheckQuotaReached(ctx context.Context, target string, scopePa
 			if scopeParams == nil || scopeParams.UserID == 0 {
 				continue
 			}
-			query := models.GetUserQuotaByTargetQuery{UserId: scopeParams.UserID, Target: scope.Target, Default: scope.DefaultLimit, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
+			query := models.GetUserQuotaByTargetQuery{UserId: scopeParams.UserID, Target: scope.Target, Default: scope.DefaultLimit, UnifiedAlertingEnabled: s.Cfg.UnifiedAlerting.IsEnabled()}
 			// TODO: move GetUserQuotaByTarget from sqlstore to quota store
-			if err := qs.SQLStore.GetUserQuotaByTarget(ctx, &query); err != nil {
+			if err := s.SQLStore.GetUserQuotaByTarget(ctx, &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {
