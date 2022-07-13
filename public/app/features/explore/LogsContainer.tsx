@@ -44,10 +44,11 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   };
 
   getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
-    const { datasourceInstance } = this.props;
+    const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextSupport(datasourceInstance)) {
-      return datasourceInstance.getLogRowContext(row, options);
+      const query = (logsQueries ?? []).find((q) => q.refId === row.dataFrame.refId);
+      return datasourceInstance.getLogRowContext(row, options, query);
     }
 
     return [];

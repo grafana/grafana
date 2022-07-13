@@ -149,13 +149,14 @@ export enum LogsDedupDescription {
  * Data sources that allow showing context rows around the provided LowRowModel should implement this method.
  * This will enable "context" button in Logs Panel.
  */
-export interface DataSourceWithLogsContextSupport {
+export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = DataQuery> {
   /**
    * Retrieve context for a given log row
    */
   getLogRowContext: <TContextQueryOptions extends {}>(
     row: LogRowModel,
-    options?: TContextQueryOptions
+    options?: TContextQueryOptions,
+    query?: TQuery
   ) => Promise<DataQueryResponse>;
 
   /**
