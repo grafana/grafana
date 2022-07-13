@@ -63,7 +63,7 @@ export const Page: PageType = ({
       )}
       {layout === PageLayoutType.Dashboard && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.dashboardPage}>
+          <div className={styles.dashboardContent}>
             {toolbar}
             {children}
           </div>
@@ -112,10 +112,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flexGrow: 1,
     }),
-    dashboardPage: css({
-      flexGrow: 1,
+    dashboardContent: css({
       display: 'flex',
-      padding: '16px',
+      flexDirection: 'column',
+      padding: theme.spacing(2),
+      flexBasis: '100%',
+      flexGrow: 1,
     }),
   };
 };
