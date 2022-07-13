@@ -25,7 +25,6 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 
 import { isDataSource } from '../variables/guard';
-import { DataSourceVariableModel } from '../variables/types';
 
 import { importDataSourcePlugin } from './plugin_loader';
 
@@ -251,7 +250,7 @@ export class DatasourceSrv implements DataSourceService {
           continue;
         }
         const dsName = variable.current.value === 'default' ? this.defaultName : variable.current.value;
-        const dsSettings = Array.isArray(dsName) ? undefined : this.settingsMapByName[dsName];
+        const dsSettings = !Array.isArray(dsName) && this.settingsMapByName[dsName];
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;
