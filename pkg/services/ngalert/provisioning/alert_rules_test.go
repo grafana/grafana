@@ -160,9 +160,11 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		SQLStore:     sqlStore,
 		BaseInterval: time.Second * 10,
 	}
+	quotas := MockQuotaChecker{}
 	return AlertRuleService{
 		ruleStore:              store,
 		provenanceStore:        store,
+		quotas:                 &quotas,
 		xact:                   sqlStore,
 		log:                    log.New("testing"),
 		baseIntervalSeconds:    10,

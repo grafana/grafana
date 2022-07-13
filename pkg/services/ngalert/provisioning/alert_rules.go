@@ -18,12 +18,14 @@ type AlertRuleService struct {
 	baseIntervalSeconds    int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
+	quotas                 QuotaChecker
 	xact                   TransactionManager
 	log                    log.Logger
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
+	quotas QuotaChecker,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
 	baseIntervalSeconds int64,
@@ -33,6 +35,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		baseIntervalSeconds:    baseIntervalSeconds,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
+		quotas:                 quotas,
 		xact:                   xact,
 		log:                    log,
 	}
