@@ -25,6 +25,7 @@ import {
   VariableQueryEditorProps,
   VariableWithMultiSupport,
   VariableWithOptions,
+  DataSourceVariableModel,
 } from './types';
 
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
@@ -37,6 +38,10 @@ export const isAdHoc = (model: VariableModel): model is AdHocVariableModel => {
 
 export const isConstant = (model: VariableModel): model is ConstantVariableModel => {
   return model.type === 'constant';
+};
+
+export const isDataSource = (model: VariableModel): model is DataSourceVariableModel => {
+  return model.type === 'datasource';
 };
 
 export const isMulti = (model: VariableModel): model is VariableWithMultiSupport => {
