@@ -426,7 +426,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.Existing.UID,
-		})
+		}, rule.Existing.Version+1)
 	}
 
 	for _, rule := range finalChanges.Delete {

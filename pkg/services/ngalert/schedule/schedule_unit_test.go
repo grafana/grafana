@@ -371,7 +371,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan struct{}))
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersion))
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -495,7 +495,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
-				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evaluation), make(chan struct{}))
+				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evaluation), make(chan ruleVersion))
 				stoppedChan <- err
 			}()
 
@@ -517,7 +517,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan struct{}))
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersion))
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -569,7 +569,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan struct{}))
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersion))
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -612,7 +612,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		t.Run("should fetch the alert rule from database", func(t *testing.T) {
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
-			updateChan := make(chan struct{})
+			updateChan := make(chan ruleVersion)
 
 			sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
 
@@ -623,7 +623,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				t.Cleanup(cancel)
 				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, updateChan)
 			}()
-			updateChan <- struct{}{}
+			updateChan <- ruleVersion(rule.Version)
 
 			// wait for command to be executed
 			var queries []interface{}
@@ -655,7 +655,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		t.Run("should retry when database fails", func(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
-			updateChan := make(chan struct{})
+			updateChan := make(chan ruleVersion)
 
 			sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
 			sch.maxAttempts = rand.Int63n(4) + 1
@@ -674,7 +674,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				}
 				return errors.New("TEST")
 			}
-			updateChan <- struct{}{}
+			updateChan <- ruleVersion(rule.Version)
 
 			var queries []interface{}
 			require.Eventuallyf(t, func() bool {
@@ -707,7 +707,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
-			updateChan := make(chan struct{})
+			updateChan := make(chan ruleVersion)
 
 			ctx := context.Background()
 			sch, ruleStore, _, _, _, alertsRouter := createSchedule(evalAppliedChan)
@@ -759,14 +759,14 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				return nil
 			}
 
-			updateChan <- struct{}{}
+			updateChan <- ruleVersion(rule.Version)
 
 			wg.Wait()
 			newRule := rule
 			newRule.Version++
 			ruleStore.PutRule(ctx, &newRule)
 			wg.Add(1)
-			updateChan <- struct{}{}
+			updateChan <- ruleVersion(rule.Version)
 			wg.Wait()
 
 			require.Eventually(t, func() bool {
@@ -829,7 +829,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan struct{}))
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersion))
 			}()
 
 			evalChan <- &evaluation{
@@ -858,12 +858,14 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 			sch := setupSchedulerWithFakeStores(t)
 			key := generateRuleKey()
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
+			version := rand.Int63()
 			go func() {
-				sch.UpdateAlertRule(key)
+				sch.UpdateAlertRule(key, version)
 			}()
 
 			select {
-			case <-info.updateCh:
+			case v := <-info.updateCh:
+				require.Equal(t, ruleVersion(version), v)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on update channel")
 			}
@@ -873,14 +875,14 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 			key := generateRuleKey()
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			info.stop()
-			sch.UpdateAlertRule(key)
+			sch.UpdateAlertRule(key, rand.Int63())
 		})
 	})
 	t.Run("when rule does not exist", func(t *testing.T) {
 		t.Run("should exit", func(t *testing.T) {
 			sch := setupSchedulerWithFakeStores(t)
 			key := generateRuleKey()
-			sch.UpdateAlertRule(key)
+			sch.UpdateAlertRule(key, rand.Int63())
 		})
 	})
 }
@@ -892,7 +894,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 			key := generateRuleKey()
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			sch.DeleteAlertRule(key)
-			require.False(t, info.update())
+			require.False(t, info.update(ruleVersion(rand.Int63())))
 			success, dropped := info.eval(time.Now(), 1)
 			require.False(t, success)
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
@@ -904,7 +906,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			info.stop()
 			sch.DeleteAlertRule(key)
-			require.False(t, info.update())
+			require.False(t, info.update(ruleVersion(rand.Int63())))
 			success, dropped := info.eval(time.Now(), 1)
 			require.False(t, success)
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
