@@ -71,12 +71,14 @@ export function mapColumnTypeToIcon(type: string) {
     case 'TINYINT':
     case 'BYTEINT':
     case 'INT64':
-    case 'INT64':
     case 'NUMERIC':
     case 'DECIMAL':
       return 'calculator-alt';
+    case 'CHAR':
+    case 'VARCHAR':
     case 'STRING':
     case 'BYTES':
+    case 'TEXT':
       return 'text';
     case 'GEOGRAPHY':
       return 'map';
