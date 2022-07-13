@@ -9,6 +9,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 import mdx from './ColorPicker.mdx';
+import { ColorPickerInput } from './ColorPickerInput';
 import { ColorPickerProps } from './ColorPickerPopover';
 
 export default {
@@ -73,4 +74,8 @@ export const SeriesPicker: Story<ColorPickerProps> = ({ enableNamedColors }) => 
       }}
     </UseState>
   );
+};
+
+export const Input = () => {
+  return <ColorPickerInput value={'#FFF'} />;
 };
