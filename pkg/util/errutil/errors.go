@@ -140,6 +140,11 @@ func (e Error) Unwrap() error {
 // Is is used by errors.Is to allow for custom definitions of equality
 // between two errors.
 func (e Error) Is(other error) bool {
+	// Linter complains about type-switch for errors because errors.Is
+	// and errors.As are preferred. In this case, this is used by
+	// errors.Is which handles unwrapping, so we don't want to handle
+	// unwrapping in this method.
+	//nolint:errorlint
 	switch o := other.(type) {
 	case Error:
 		return o.Reason == e.Reason && o.MessageID == e.MessageID && o.Error() == e.Error()

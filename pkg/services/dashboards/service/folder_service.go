@@ -128,7 +128,7 @@ func (f *FolderServiceImpl) GetFolderByTitle(ctx context.Context, user *models.S
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, dashboards.ErrFolderAccessDenied.Errorf("user %d is not allowed to view folder with title '%s' in org %d", user, title, orgID)
+		return nil, dashboards.ErrFolderAccessDenied.Errorf("user %d is not allowed to view folder with title '%s' in org %d", user.UserId, title, orgID)
 	}
 
 	return dashFolder, nil
