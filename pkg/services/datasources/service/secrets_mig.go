@@ -9,9 +9,12 @@ import (
 )
 
 const (
-	secretMigrationStatusKey       = "secretMigrationStatus"
+	// Not set means migration has not happened
+	secretMigrationStatusKey = "secretMigrationStatus"
+	// Migration happened with disableSecretCompatibility set to false
 	compatibleSecretMigrationValue = "compatible"
-	completeSecretMigrationValue   = "complete"
+	// Migration happened with disableSecretCompatibility set to true
+	completeSecretMigrationValue = "complete"
 )
 
 type DataSourceSecretMigrationService struct {
@@ -38,8 +41,13 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 		return err
 	}
 
+	// If this flag is true, delete secrets from the legacy secrets store as they are migrated
 	disableSecretsCompatibility := s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility)
+	// If migration hasn't happened, migrate to unified secrets and keep copy in legacy
+	// If a complete migration happened and now backwards compatibility is enabled, copy secrets back to legacy
 	needCompatibility := migrationStatus != compatibleSecretMigrationValue && !disableSecretsCompatibility
+	// If migration hasn't happened, migrate to unified secrets and delete from legacy
+	// If a compatible migration happened and now compatibility is disabled, delete secrets from legacy
 	needMigration := migrationStatus != completeSecretMigrationValue && disableSecretsCompatibility
 
 	if needCompatibility || needMigration {
