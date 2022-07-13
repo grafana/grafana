@@ -15,7 +15,6 @@ import {
   getFieldDisplayName,
   getDisplayProcessor,
   FieldColorModeId,
-  FieldColorMode,
 } from '@grafana/data';
 import {
   AxisPlacement,
