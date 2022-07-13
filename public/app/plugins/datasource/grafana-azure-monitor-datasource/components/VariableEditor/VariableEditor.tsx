@@ -22,10 +22,7 @@ type Props = {
 };
 
 const VariableEditor = (props: Props) => {
-  const defaultQuery: AzureMonitorQuery = {
-    refId: 'A',
-    queryType: AzureQueryType.GrafanaTemplateVariableFn,
-  };
+  const { query, onChange, datasource } = props;
   const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
     { label: 'Grafana Query Function', value: AzureQueryType.GrafanaTemplateVariableFn },
     { label: 'Logs', value: AzureQueryType.LogAnalytics },
@@ -38,77 +35,72 @@ const VariableEditor = (props: Props) => {
     label: 'Template Variables',
     options: [],
   });
-  const [query, setQuery] = useState(defaultQuery);
   const [requireSubscription, setRequireSubscription] = useState(false);
   const [subscriptions, setSubscriptions] = useState<SelectableValue[]>([]);
+  const [errorMessage, setError] = useLastError();
+  const queryType = typeof query === 'string' ? '' : query.queryType;
 
   useEffect(() => {
-    migrateStringQueriesToObjectQueries(props.query, { datasource: props.datasource }).then((migratedQuery) => {
-      setQuery(migratedQuery);
+    migrateStringQueriesToObjectQueries(query, { datasource: datasource }).then((migratedQuery) => {
+      onChange(migratedQuery);
     });
-  }, [props.query, props.datasource]);
+  }, [query, datasource, onChange]);
 
   useEffect(() => {
-    switch (query.queryType) {
+    switch (queryType) {
       case AzureQueryType.ResourceGroupsQuery:
         setRequireSubscription(true);
         break;
       default:
         setRequireSubscription(false);
     }
-  }, [query.queryType]);
+  }, [queryType]);
 
   useEffect(() => {
     const options: AzureMonitorOption[] = [];
-    props.datasource.getVariablesRaw().forEach((v) => {
-      if (get(v, 'query.queryType') !== query.queryType) {
-        options.push({ label: v.label || v.name, value: v.name });
+    datasource.getVariablesRaw().forEach((v) => {
+      if (get(v, 'query.queryType') !== queryType) {
+        options.push({ label: v.label || v.name, value: `$${v.name}` });
       }
     });
     setVariableOptionGroup({
       label: 'Template Variables',
       options,
     });
-  }, [props.datasource, query.queryType]);
+  }, [datasource, queryType]);
 
   useEffectOnce(() => {
-    props.datasource.getSubscriptions().then((subs) => {
+    datasource.getSubscriptions().then((subs) => {
       setSubscriptions(subs.map((s) => ({ label: s.text, value: s.value })));
     });
   });
 
+  if (typeof query === 'string') {
+    // still migrating the query
+    return null;
+  }
+
   const onQueryTypeChange = (selectableValue: SelectableValue) => {
     if (selectableValue.value) {
-      const newQuery = {
+      onChange({
         ...query,
         queryType: selectableValue.value,
-      };
-      setQuery(newQuery);
-      props.onChange(newQuery);
+      });
     }
   };
 
   const onChangeSubscription = (selectableValue: SelectableValue) => {
     if (selectableValue.value) {
-      const newQuery = {
+      onChange({
         ...query,
         subscription: selectableValue.value,
-      };
-      setQuery(newQuery);
-      props.onChange(newQuery);
+      });
     }
   };
 
   const onLogsQueryChange = (queryChange: AzureMonitorQuery) => {
-    setQuery(queryChange);
-
-    // only hit backend if there's something to query (prevents error when selecting the resource before pinging a query)
-    if (queryChange.azureLogAnalytics?.query) {
-      props.onChange(queryChange);
-    }
+    onChange(queryChange);
   };
-
-  const [errorMessage, setError] = useLastError();
 
   return (
     <>
@@ -118,15 +110,15 @@ const VariableEditor = (props: Props) => {
           onChange={onQueryTypeChange}
           options={AZURE_QUERY_VARIABLE_TYPE_OPTIONS}
           width={25}
-          value={query.queryType}
+          value={queryType}
         />
       </InlineField>
-      {query.queryType === AzureQueryType.LogAnalytics && (
+      {typeof query === 'object' && query.queryType === AzureQueryType.LogAnalytics && (
         <>
           <LogsQueryEditor
             subscriptionId={query.subscription}
             query={query}
-            datasource={props.datasource}
+            datasource={datasource}
             onChange={onLogsQueryChange}
             variableOptionGroup={variableOptionGroup}
             setError={setError}
@@ -142,10 +134,10 @@ const VariableEditor = (props: Props) => {
           )}
         </>
       )}
-      {query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
-        <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={props.datasource} />
+      {typeof query === 'object' && query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
+        <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={datasource} />
       )}
-      {requireSubscription && (
+      {typeof query === 'object' && requireSubscription && (
         <InlineField label="Select subscription" labelWidth={20}>
           <Select
             aria-label="select subscription"
