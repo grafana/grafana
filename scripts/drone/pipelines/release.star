@@ -42,7 +42,7 @@ load(
     'validate_scuemata_step',
     'ensure_cuetsified_step',
     'publish_images_step',
-    'trigger_oss'
+    'trigger_oss',
 )
 
 load(
