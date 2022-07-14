@@ -120,7 +120,9 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 		return err
 	} else if err != nil {
 		prov.logger.Debug("creating rule", "uid", rule.UID, "org", rule.OrgID)
-		_, err = prov.ruleService.CreateAlertRule(ctx, rule, alert_models.ProvenanceFile)
+		// 0 is passed as userID as then the quota logic will only check for
+		// the organization quota, as we don't have any user scope here.
+		_, err = prov.ruleService.CreateAlertRule(ctx, rule, alert_models.ProvenanceFile, 0)
 	} else {
 		prov.logger.Debug("updating rule", "uid", rule.UID, "org", rule.OrgID)
 		_, err = prov.ruleService.UpdateAlertRule(ctx, rule, alert_models.ProvenanceFile)
