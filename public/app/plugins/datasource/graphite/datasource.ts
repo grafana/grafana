@@ -1,5 +1,5 @@
 import { each, indexOf, isArray, isString, map as _map } from 'lodash';
-import { lastValueFrom, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
@@ -27,6 +27,7 @@ import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
+import { prepareAnnotation } from './migrations';
 // Types
 import {
   GraphiteLokiMapping,
@@ -93,6 +94,12 @@ export class GraphiteDatasource
     this.funcDefs = null;
     this.funcDefsPromise = null;
     this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    this.annotations = {
+      // new annoations editor, using query editor default
+
+      // use this to migrate annotations from angular to react
+      prepareAnnotation,
+    };
   }
 
   getQueryOptionsInfo() {
@@ -178,40 +185,69 @@ export class GraphiteDatasource
   }
 
   query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
-    const graphOptions = {
-      from: this.translateTime(options.range.from, false, options.timezone),
-      until: this.translateTime(options.range.to, true, options.timezone),
-      targets: options.targets,
-      format: (options as any).format,
-      cacheTimeout: options.cacheTimeout || this.cacheTimeout,
-      maxDataPoints: options.maxDataPoints,
-    };
+    const streams: Array<Observable<DataQueryResponse>> = [];
 
-    const params = this.buildGraphiteParams(graphOptions, options.scopedVars);
-    if (params.length === 0) {
+    for (const target of options.targets) {
+      if (target.hide) {
+        continue;
+      } else if (target.queryType === 'events' && target.eventsQuery?.fromAnnotations) {
+        // handle the events that are annotations
+        streams.push(
+          new Observable((subscriber) => {
+            this.getEvents2(options, target)
+              .then((events) => {
+                return subscriber.next({ data: [toDataFrame(events)] });
+              })
+              .catch((ex) => {
+                return subscriber.error(new Error(ex));
+              })
+              .finally(() => subscriber.complete());
+          })
+        );
+      } else {
+        // handle the queries
+        const graphOptions = {
+          from: this.translateTime(options.range.raw.from, false, options.timezone),
+          until: this.translateTime(options.range.raw.to, true, options.timezone),
+          targets: options.targets,
+          format: (options as any).format,
+          cacheTimeout: options.cacheTimeout || this.cacheTimeout,
+          maxDataPoints: options.maxDataPoints,
+        };
+
+        const params = this.buildGraphiteParams(graphOptions, options.scopedVars);
+        if (params.length === 0) {
+          return of({ data: [] });
+        }
+
+        if (this.isMetricTank) {
+          params.push('meta=true');
+        }
+
+        const httpOptions: any = {
+          method: 'POST',
+          url: '/render',
+          data: params.join('&'),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        };
+
+        this.addTracingHeaders(httpOptions, options);
+
+        if (options.panelId) {
+          httpOptions.requestId = this.name + '.panelId.' + options.panelId;
+        }
+        // can these queries be pushed into a stream? How would this work?
+        return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
+      }
+    }
+
+    // Is there ever more than one annotation sent in a target?
+    if (streams.length === 0) {
       return of({ data: [] });
     }
-
-    if (this.isMetricTank) {
-      params.push('meta=true');
-    }
-
-    const httpOptions: any = {
-      method: 'POST',
-      url: '/render',
-      data: params.join('&'),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    };
-
-    this.addTracingHeaders(httpOptions, options);
-
-    if (options.panelId) {
-      httpOptions.requestId = this.name + '.panelId.' + options.panelId;
-    }
-
-    return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
+    return merge(...streams);
   }
 
   addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId?: number; panelId?: number }) {
@@ -326,13 +362,41 @@ export class GraphiteDatasource
     return expandedQueries;
   }
 
-  annotationQuery(options: any) {
-    // Graphite metric as annotation
-    if (options.annotation.target) {
-      const target = this.templateSrv.replace(options.annotation.target, {}, 'glob');
+  private getEvents2(options: DataQueryRequest<GraphiteQuery>, target: GraphiteQuery) {
+    if (target.eventsQuery?.tags) {
+      // Graphite event as annotation
+      const tags = this.templateSrv.replace(target.eventsQuery?.tags);
+      return this.events({ range: options.range, tags: tags }).then((results: any) => {
+        const list = [];
+        if (!isArray(results.data)) {
+          console.error(`Unable to get annotations from ${results.url}.`);
+          return [];
+        }
+        for (let i = 0; i < results.data.length; i++) {
+          const e = results.data[i];
+
+          let tags = e.tags;
+          if (isString(e.tags)) {
+            tags = this.parseTags(e.tags);
+          }
+
+          list.push({
+            annotation: target.eventsQuery,
+            time: e.when * 1000,
+            title: e.what,
+            tags: tags,
+            text: e.data,
+          });
+        }
+
+        return list;
+      });
+    } else {
+      // Graphite query as target as annotation
+      const targetAnnotation = this.templateSrv.replace(target.eventsQuery?.target, {}, 'glob');
       const graphiteQuery = {
         range: options.range,
-        targets: [{ target: target }],
+        targets: [{ target: targetAnnotation }],
         format: 'json',
         maxDataPoints: 100,
       } as unknown as DataQueryRequest<GraphiteQuery>;
@@ -354,7 +418,7 @@ export class GraphiteDatasource
                 }
 
                 list.push({
-                  annotation: options.annotation,
+                  annotation: target.eventsQuery,
                   time,
                   title: target.name,
                 });
@@ -365,34 +429,6 @@ export class GraphiteDatasource
           })
         )
       );
-    } else {
-      // Graphite event as annotation
-      const tags = this.templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.range, tags: tags }).then((results: any) => {
-        const list = [];
-        if (!isArray(results.data)) {
-          console.error(`Unable to get annotations from ${results.url}.`);
-          return [];
-        }
-        for (let i = 0; i < results.data.length; i++) {
-          const e = results.data[i];
-
-          let tags = e.tags;
-          if (isString(e.tags)) {
-            tags = this.parseTags(e.tags);
-          }
-
-          list.push({
-            annotation: options.annotation,
-            time: e.when * 1000,
-            title: e.what,
-            tags: tags,
-            text: e.data,
-          });
-        }
-
-        return list;
-      });
     }
   }
 

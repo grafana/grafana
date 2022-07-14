@@ -6,7 +6,14 @@ import { GraphiteDatasource } from './datasource';
 
 export interface GraphiteQuery extends DataQuery {
   target?: string;
+  eventsQuery?: GraphiteEventsQuery;
 }
+
+export type GraphiteEventsQuery = {
+  fromAnnotations?: boolean;
+  target: string;
+  tags: string;
+};
 
 export interface GraphiteOptions extends DataSourceJsonData {
   graphiteVersion: string;
