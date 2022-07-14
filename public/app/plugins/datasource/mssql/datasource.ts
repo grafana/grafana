@@ -2,17 +2,18 @@ import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import { DB, ResponseParser, SQLQuery, SQLSelectableValue, SQLOptions } from 'app/features/plugins/sql/types';
+import { DB, ResponseParser, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
 
 import { getSchema, showDatabases, showTables } from './MSSqlMetaQuery';
 import { MSSqlQueryModel } from './MSSqlQueryModel';
 import { MSSqlResponseParser } from './response_parser';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getIcon, getRAQBType, SCHEMA_NAME, toRawSql } from './sqlUtil';
+import { MssqlOptions } from './types';
 
-export class MssqlDatasource extends SqlDatasource {
+export class MssqlDatasource extends SqlDatasource<SQLQuery, MssqlOptions> {
   completionProvider: LanguageCompletionProvider | undefined = undefined;
-  constructor(instanceSettings: DataSourceInstanceSettings<SQLOptions>, templateSrv?: TemplateSrv) {
+  constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>, templateSrv?: TemplateSrv) {
     super(instanceSettings, templateSrv);
   }
 

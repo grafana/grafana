@@ -10,12 +10,13 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { SQLOptions, SQLQuery } from 'app/features/plugins/sql/types';
+import { SQLQuery } from 'app/features/plugins/sql/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 
 import { MssqlDatasource } from './datasource';
+import { MssqlOptions } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -28,7 +29,7 @@ const instanceSettings = {
   type: 'mssql',
   name: 'MSSQL',
   access: 'direct',
-} as DataSourceInstanceSettings<SQLOptions>;
+} as DataSourceInstanceSettings<MssqlOptions>;
 
 describe('MSSQLDatasource', () => {
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
