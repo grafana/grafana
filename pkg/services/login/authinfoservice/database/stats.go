@@ -12,6 +12,7 @@ import (
 
 type loginStats struct {
 	DuplicateUserEntries int `xorm:"duplicate_user_entries"`
+	MixedCasedUsers      int `xorm:"mixed_cased_users"`
 }
 
 const (
@@ -25,6 +26,9 @@ var (
 
 	// MStatHasDuplicateEntries is a metric for if there is duplicate users
 	MStatHasDuplicateEntries prometheus.Gauge
+
+	// MStatMixedCasedUsers is a metric for if there is duplicate users
+	MStatMixedCasedUsers prometheus.Gauge
 
 	once        sync.Once
 	Initialised bool = false
@@ -44,9 +48,16 @@ func InitMetrics() {
 			Namespace: ExporterName,
 		})
 
+		MStatMixedCasedUsers = prometheus.NewGauge(prometheus.GaugeOpts{
+			Name:      "stat_users_total_mixed_cased_users",
+			Help:      "total number of users with upper and lower case logins or emails",
+			Namespace: ExporterName,
+		})
+
 		prometheus.MustRegister(
 			MStatDuplicateUserEntries,
 			MStatHasDuplicateEntries,
+			MStatMixedCasedUsers,
 		)
 	})
 }
@@ -73,7 +84,10 @@ func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
 func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (loginStats, error) {
 	var stats loginStats
 	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		rawSQL := `SELECT COUNT(*) as duplicate_user_entries FROM (` + s.duplicateUserEntriesSQL(ctx) + `)`
+		rawSQL := `SELECT
+			(SELECT COUNT(*) FROM (` + s.duplicateUserEntriesSQL(ctx) + `)) as duplicate_user_entries,
+			(SELECT COUNT(*) FROM (` + s.mixedCasedUsers(ctx) + `)) as mixed_cased_users
+		`
 		_, err := dbSession.SQL(rawSQL).Get(&stats)
 		return err
 	})
@@ -89,6 +103,7 @@ func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (loginStats, error) {
 		MStatHasDuplicateEntries.Set(float64(1))
 	}
 
+	MStatMixedCasedUsers.Set(float64(stats.MixedCasedUsers))
 	return stats, nil
 }
 
@@ -107,6 +122,9 @@ func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]inter
 	} else {
 		m["stats.users.has_duplicate_user_entries"] = 0
 	}
+
+	m["stats.users.mixed_cased_users"] = loginStats.MixedCasedUsers
+
 	return m, nil
 }
 
@@ -114,12 +132,22 @@ func (s *AuthInfoStore) duplicateUserEntriesSQL(ctx context.Context) string {
 	userDialect := db.DB.GetDialect(s.sqlStore).Quote("user")
 	// this query counts how many users have the same login or email.
 	// which might be confusing, but gives a good indication
-	// we want this query to not require too much cpu
+	// why: one of the reasons we made it this way is
+	// to not require too much cpu
 	sqlQuery := `SELECT
 		(SELECT login from ` + userDialect + ` WHERE (LOWER(login) = LOWER(u.login)) AND (login != u.login)) AS dup_login,
 		(SELECT email from ` + userDialect + ` WHERE (LOWER(email) = LOWER(u.email)) AND (email != u.email)) AS dup_email
 	FROM ` + userDialect + ` AS u
 	WHERE (dup_login IS NOT NULL OR dup_email IS NOT NULL)
 	`
+	return sqlQuery
+}
+
+func (s *AuthInfoStore) mixedCasedUsers(ctx context.Context) string {
+	userDialect := db.DB.GetDialect(s.sqlStore).Quote("user")
+	// this query counts how many users have upper case and lower case login or emails.
+	// why
+	// users login via IDP or service providers get upper cased domains at times :shrug:
+	sqlQuery := `SELECT COUNT(*) FROM ` + userDialect + ` WHERE (LOWER(login) != login OR lower(email) != email)`
 	return sqlQuery
 }

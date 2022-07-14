@@ -389,6 +389,8 @@ func TestUserAuth(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 2, m["stats.users.duplicate_user_entries"])
 				require.Equal(t, 1, m["stats.users.has_duplicate_user_entries"])
+
+				require.Equal(t, 1, m["stats.users.mixed_cased_users"])
 			}
 		})
 	})
