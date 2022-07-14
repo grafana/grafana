@@ -50,8 +50,10 @@ type Scheduler struct {
 	EvalTotal                *prometheus.CounterVec
 	EvalFailures             *prometheus.CounterVec
 	EvalDuration             *prometheus.SummaryVec
-	GetAlertRulesDuration    prometheus.Histogram
 	SchedulePeriodicDuration prometheus.Histogram
+	AlertRules               prometheus.Gauge
+	AlertRulesHash           prometheus.Gauge
+	UpdateAlertRulesDuration prometheus.Histogram
 }
 
 type MultiOrgAlertmanager struct {
@@ -161,21 +163,36 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
-		GetAlertRulesDuration: promauto.With(r).NewHistogram(
-			prometheus.HistogramOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "get_alert_rules_duration_seconds",
-				Help:      "The time taken to get all alert rules.",
-				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
-			},
-		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "schedule_periodic_duration_seconds",
 				Help:      "The time taken to run the scheduler.",
+				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+			},
+		),
+		AlertRules: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules",
+				Help:      "The number of alert rules being considered for evaluation each tick.",
+			},
+		),
+		AlertRulesHash: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules_hash",
+				Help:      "A hash of the alert rules over time.",
+			}),
+		UpdateAlertRulesDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_query_alert_rules_duration_seconds",
+				Help:      "The time taken to fetch alert rules from the database.",
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
 		),

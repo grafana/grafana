@@ -312,6 +312,7 @@ describe('GraphNG utils', () => {
             "config": Object {},
             "name": "time",
             "state": Object {
+              "nullThresholdApplied": true,
               "origin": Object {
                 "fieldIndex": 0,
                 "frameIndex": 0,
