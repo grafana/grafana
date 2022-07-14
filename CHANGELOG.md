@@ -828,6 +828,12 @@ The meaning of the default data source has now changed from being a persisted pr
 
 <!-- 8.4.10 START -->
 
+# 8.4.10 (unreleased)
+
+### Bug fixes
+
+- **Security:** Fixes for CVE-2022-31107 and CVE-2022-31097. [#52218](https://github.com/grafana/grafana/pull/52218), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
 <!-- 8.4.10 END -->
 
 <!-- 8.4.7 START -->
