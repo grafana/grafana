@@ -12,6 +12,14 @@ describe('getHighlighterExpressionsFromQuery', () => {
     expect(getHighlighterExpressionsFromQuery('')).toEqual([]);
   });
 
+  it('returns no expression for query with empty filter ', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= ``')).toEqual(['']);
+  });
+
+  it('returns no expression for query with empty filter and parser', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= `` | json count="counter" | __error__=``')).toEqual(['']);
+  });
+
   it('returns an expression for query with filter using quotes', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x"')).toEqual(['x']);
   });

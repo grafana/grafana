@@ -32,8 +32,8 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
     if (skip) {
       continue;
     }
-    // Check if there is more chained
-    const filterEnd = expression.search(/\|=|\|~|!=|!~/);
+    // Check if there is more chained, by just looking for the next pipe-operator
+    const filterEnd = expression.search(/\|/);
     let filterTerm;
     if (filterEnd === -1) {
       filterTerm = expression.trim();
