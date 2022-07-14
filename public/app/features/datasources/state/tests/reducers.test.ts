@@ -52,7 +52,7 @@ describe('dataSourcesReducer', () => {
 
   describe('when dataSourceLoaded is dispatched', () => {
     it('then state should be correct', () => {
-      const dataSource = getMockDataSource();
+      const dataSource = getMockDataSource<{}>();
 
       reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
