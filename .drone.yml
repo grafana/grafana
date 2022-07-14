@@ -11,7 +11,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -62,7 +62,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -114,7 +113,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -130,7 +129,7 @@ steps:
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
+    --variants linux-x64,linux-x64-musl,osx64,win64,armv6
   depends_on:
   - initialize
   environment: {}
@@ -153,7 +152,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
   - initialize
   environment: null
@@ -166,21 +165,29 @@ steps:
   image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
+    --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64,armv6
   depends_on:
   - build-plugins
   - build-backend
@@ -209,7 +216,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -218,7 +225,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -227,7 +234,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -236,40 +243,8 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-- commands:
-  - apt-get update
-  - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
-  - gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
-  - 'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA}
-    -H "Authorization: token $${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
-    \"description\": \"Click on the details to download e2e recording videos\", \"context\":
-    \"e2e_artifacts\"}"'
-  depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  environment:
-    E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
-    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_upload_artifacts_key
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: google/cloud-sdk:367.0.0
-  name: e2e-tests-artifacts-upload
-  when:
-    status:
-    - success
-    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -356,10 +331,20 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - yarn install --immutable
+  image: grafana/build-container:1.5.3
+  name: initialize
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -420,7 +405,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -503,7 +488,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -565,8 +550,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -585,7 +568,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -636,7 +619,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -668,8 +650,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -688,7 +668,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -702,36 +682,11 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.5.3
   name: initialize
-- commands:
-  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    --depth=1
-  - cd grafana-enterprise
-  - git fetch origin "refs/tags/*:refs/tags/*"
-  - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
-    && git push origin $${TEST_TAG}
-  - cd -
-  - git fetch origin "refs/tags/*:refs/tags/*"
-  - git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git
-  - git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} &&
-    git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet
-  environment:
-    DOWNSTREAM_REPO:
-      from_secret: downstream
-    GITHUB_TOKEN:
-      from_secret: github_token
-    TEST_TAG: v0.0.0-test
-  failure: ignore
-  image: grafana/build-container:1.5.3
-  name: trigger-test-release
-  when:
-    paths:
-      include:
-      - .drone.yml
 - image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
     params:
-    - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
+    - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     - SOURCE_COMMIT=${DRONE_COMMIT}
     repositories:
     - grafana/grafana-enterprise@main
@@ -762,7 +717,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
   depends_on:
   - initialize
   environment:
@@ -777,14 +732,22 @@ steps:
   image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.5.3
@@ -829,7 +792,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -838,7 +801,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -847,7 +810,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -856,40 +819,8 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-- commands:
-  - apt-get update
-  - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
-  - gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
-  - 'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA}
-    -H "Authorization: token $${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
-    \"description\": \"Click on the details to download e2e recording videos\", \"context\":
-    \"e2e_artifacts\"}"'
-  depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  environment:
-    E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
-    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_upload_artifacts_key
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: google/cloud-sdk:367.0.0
-  name: e2e-tests-artifacts-upload
-  when:
-    status:
-    - success
-    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -1015,8 +946,8 @@ steps:
   - end-to-end-tests-smoke-tests-suite
   - end-to-end-tests-various-suite
   environment:
-    NPM_TOKEN:
-      from_secret: npm_token
+    GITHUB_PACKAGE_TOKEN:
+      from_secret: github_package_token
   image: grafana/build-container:1.5.3
   name: release-canary-npm-packages
 - commands:
@@ -1048,8 +979,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1094,10 +1023,20 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - yarn install --immutable
+  image: grafana/build-container:1.5.3
+  name: initialize
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -1132,8 +1071,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1164,7 +1101,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -1197,41 +1134,11 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
----
-depends_on: []
-kind: pipeline
-name: notify-drone-changes
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: slack-webhooks-test
-    template: "`.drone.yml` and `starlark` files have been changed on the OSS repo,
-      by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name
-      }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{
-      truncate build.commit 8 }}>"
-    webhook:
-      from_secret: drone-changes-webhook
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - exclude
-    include:
-    - .drone.yml
-type: docker
 ---
 depends_on:
 - main-test
@@ -1249,7 +1156,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1283,8 +1190,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1317,15 +1222,13 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
   status:
   - failure
 type: docker
 ---
 depends_on: []
 kind: pipeline
-name: oss-build-e2e-publish-release
+name: oss-build-publish-e2e-release
 node:
   type: no-parallel
 platform:
@@ -1335,7 +1238,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1379,7 +1282,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
   depends_on:
   - initialize
   environment:
@@ -1394,14 +1297,22 @@ steps:
   image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.5.3
@@ -1478,7 +1389,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -1487,7 +1398,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -1496,7 +1407,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -1505,40 +1416,8 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-- commands:
-  - apt-get update
-  - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
-  - gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
-  - 'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA}
-    -H "Authorization: token $${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
-    \"description\": \"Click on the details to download e2e recording videos\", \"context\":
-    \"e2e_artifacts\"}"'
-  depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  environment:
-    E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
-    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_upload_artifacts_key
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: google/cloud-sdk:367.0.0
-  name: e2e-tests-artifacts-upload
-  when:
-    status:
-    - success
-    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -1643,7 +1522,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1689,7 +1568,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -1764,7 +1642,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1831,7 +1709,7 @@ volumes:
     medium: memory
 ---
 depends_on:
-- oss-build-e2e-publish-release
+- oss-build-publish-e2e-release
 - oss-test-release
 - oss-integration-tests-release
 kind: pipeline
@@ -1848,7 +1726,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -1907,7 +1785,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1973,7 +1851,8 @@ steps:
   image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
+    --signing-admin
   depends_on:
   - initialize
   environment:
@@ -1988,14 +1867,22 @@ steps:
   image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.5.3
@@ -2084,7 +1971,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -2093,7 +1980,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -2102,7 +1989,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -2111,40 +1998,8 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-- commands:
-  - apt-get update
-  - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
-  - gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
-  - 'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA}
-    -H "Authorization: token $${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
-    \"description\": \"Click on the details to download e2e recording videos\", \"context\":
-    \"e2e_artifacts\"}"'
-  depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  environment:
-    E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
-    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_upload_artifacts_key
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: google/cloud-sdk:367.0.0
-  name: e2e-tests-artifacts-upload
-  when:
-    status:
-    - success
-    - failure
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --src-bucket "$${PRERELEASE_BUCKET}"
     --src-dir artifacts/static-assets
@@ -2250,7 +2105,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2318,7 +2173,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -2423,7 +2277,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2551,7 +2405,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2626,7 +2480,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2704,7 +2558,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2765,7 +2619,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2844,7 +2698,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2906,7 +2760,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2942,7 +2796,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2989,7 +2843,7 @@ steps:
   name: initialize
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3037,7 +2891,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3090,7 +2944,7 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: oss-build-e2e-publish-release-branch
+name: oss-build-publish-e2e-release-branch
 node:
   type: no-parallel
 platform:
@@ -3100,7 +2954,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3138,7 +2992,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
   depends_on:
   - initialize
   environment:
@@ -3153,14 +3007,22 @@ steps:
   image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.5.3
@@ -3236,7 +3098,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -3245,7 +3107,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -3254,7 +3116,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -3263,40 +3125,8 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-- commands:
-  - apt-get update
-  - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
-  - gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
-  - 'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA}
-    -H "Authorization: token $${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
-    \"description\": \"Click on the details to download e2e recording videos\", \"context\":
-    \"e2e_artifacts\"}"'
-  depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  environment:
-    E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
-    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_upload_artifacts_key
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: google/cloud-sdk:367.0.0
-  name: e2e-tests-artifacts-upload
-  when:
-    status:
-    - success
-    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -3335,8 +3165,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3361,7 +3189,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3406,7 +3234,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -3437,8 +3264,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3477,7 +3302,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3524,8 +3349,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3539,7 +3362,7 @@ volumes:
     medium: memory
 ---
 depends_on:
-- oss-build-e2e-publish-release-branch
+- oss-build-publish-e2e-release-branch
 - oss-test-release-branch
 - oss-integration-tests-release-branch
 kind: pipeline
@@ -3556,7 +3379,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -3582,8 +3405,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3606,7 +3427,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3664,7 +3485,8 @@ steps:
   image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
+    --signing-admin
   depends_on:
   - initialize
   environment:
@@ -3679,21 +3501,29 @@ steps:
   image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
   - '# It is required that the generated Typescript be in sync with the input CUE
     files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
   depends_on:
   - validate-scuemata
   image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64
+    --variants linux-x64
   depends_on:
   - initialize
   environment: {}
@@ -3773,7 +3603,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -3782,7 +3612,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -3791,7 +3621,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -3800,40 +3630,8 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-- commands:
-  - apt-get update
-  - apt-get install -yq zip
-  - ls -lah ./e2e
-  - find ./e2e -type f -name "*.mp4"
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
-  - gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
-  - 'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA}
-    -H "Authorization: token $${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
-    \"description\": \"Click on the details to download e2e recording videos\", \"context\":
-    \"e2e_artifacts\"}"'
-  depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  environment:
-    E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
-    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_upload_artifacts_key
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: google/cloud-sdk:367.0.0
-  name: e2e-tests-artifacts-upload
-  when:
-    status:
-    - success
-    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -3868,7 +3666,7 @@ steps:
   name: upload-packages
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64 --sign
+    --variants linux-x64 --sign
   depends_on:
   - build-plugins
   - build-backend
@@ -3913,8 +3711,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3943,7 +3739,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4007,7 +3803,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -4058,8 +3853,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4108,7 +3901,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4192,8 +3985,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4228,7 +4019,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -4274,8 +4065,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4283,110 +4072,31 @@ volumes:
   name: docker
 ---
 kind: pipeline
-name: scan-grafana/grafana:latest-image
+name: scan-docker-images
 platform:
   arch: amd64
   os: linux
+services: []
 steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
-  image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+  image: aquasec/trivy:0.18.3
+  name: scan-docker-images-unkown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
-  image: aquasec/trivy:0.21.0
-  name: scan-high-critical-vulnerabilities
-- image: plugins/slack
-  name: slack-notify-failure
-  settings:
-    channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for grafana/grafana:latest failed: {{build.link}}'
-    webhook:
-      from_secret: slack_webhook_backend
-  when:
-    status: failure
-trigger:
-  cron: nightly
-  event: cron
-type: docker
----
-kind: pipeline
-name: scan-grafana/grafana:main-image
-platform:
-  arch: amd64
-  os: linux
-steps:
-- commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
-  image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
-- commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
-  image: aquasec/trivy:0.21.0
-  name: scan-high-critical-vulnerabilities
-- image: plugins/slack
-  name: slack-notify-failure
-  settings:
-    channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for grafana/grafana:main failed: {{build.link}}'
-    webhook:
-      from_secret: slack_webhook_backend
-  when:
-    status: failure
-trigger:
-  cron: nightly
-  event: cron
-type: docker
----
-kind: pipeline
-name: scan-grafana/grafana:latest-ubuntu-image
-platform:
-  arch: amd64
-  os: linux
-steps:
-- commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
-  image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
-- commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
-  image: aquasec/trivy:0.21.0
-  name: scan-high-critical-vulnerabilities
-- image: plugins/slack
-  name: slack-notify-failure
-  settings:
-    channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for grafana/grafana:latest-ubuntu failed:
-      {{build.link}}'
-    webhook:
-      from_secret: slack_webhook_backend
-  when:
-    status: failure
-trigger:
-  cron: nightly
-  event: cron
-type: docker
----
-kind: pipeline
-name: scan-grafana/grafana:main-ubuntu-image
-platform:
-  arch: amd64
-  os: linux
-steps:
-- commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
-  image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
-- commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
-  image: aquasec/trivy:0.21.0
-  name: scan-high-critical-vulnerabilities
+  image: aquasec/trivy:0.18.3
+  name: scan-docker-images-high-critical-vulnerabilities
 - image: plugins/slack
   name: slack-notify-failure
   settings:
     channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for grafana/grafana:main-ubuntu failed:
-      {{build.link}}'
+    template: 'Nightly docker image scan job for {{repo.name}} failed: {{build.link}}'
     webhook:
       from_secret: slack_webhook_backend
   when:
@@ -4420,13 +4130,7 @@ get:
 kind: secret
 name: prerelease_bucket
 ---
-get:
-  name: credentials.json
-  path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
-kind: secret
-name: gcp_upload_artifacts_key
----
 kind: signature
-hmac: 34da09de18d4295faf119f924982bb0f0df454d0976d1354a09da4aa1192a733
+hmac: cae9208a4fe916e04ae0c910937a71deb29a8a860a08893762c7624cfb0bcecc
 
 ...
