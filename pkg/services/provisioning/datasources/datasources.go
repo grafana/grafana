@@ -86,7 +86,6 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 					})
 				}
 			}
-
 		} else {
 			updateCmd := createUpdateCommand(ds, cmd.Result.Id)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.Uid)

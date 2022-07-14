@@ -63,7 +63,6 @@ func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event
 			SourceUID: event.UID,
 		}); err != nil {
 			return err
-
 		}
 
 		if err := s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
