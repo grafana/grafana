@@ -108,6 +108,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
+	if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
+		r.Get("/g/*", reqSignedIn, hs.Index)
+	}
+
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), hs.Index)
 	}

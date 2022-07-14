@@ -87,6 +87,10 @@ async function fetchDashboard(
       case DashboardRoutes.New: {
         return getNewDashboardModelData(args.urlFolderId, args.panelType);
       }
+      case DashboardRoutes.Path: {
+        const path = args.urlSlug ?? '';
+        return await dashboardLoaderSrv.loadDashboard(DashboardRoutes.Path, path, path);
+      }
       default:
         throw { message: 'Unknown route ' + args.routeName };
     }
