@@ -58,7 +58,7 @@ import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { isLegacyGraphHoverEvent } from './utils';
 
-const LegendWithThemeProvider = provideTheme(Legend);
+const LegendWithThemeProvider = provideTheme(Legend, config.theme2);
 
 class GraphElement {
   ctrl: GraphCtrl;

@@ -1,14 +1,12 @@
 import { cx } from '@emotion/css';
-import classnames from 'classnames';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { TimeRange } from '@grafana/data';
+import { locationUtil, NavModelItem, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { Branding } from 'app/core/components/Branding/Branding';
 import { Page } from 'app/core/components/Page/Page';
 import { PageLayoutType } from 'app/core/components/Page/types';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -94,6 +92,7 @@ export interface State {
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
+  pageNav?: NavModelItem;
 
   getCleanState(): State {
     return {
@@ -150,9 +149,27 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    // if we just got dashboard update title
-    if (prevProps.dashboard !== dashboard) {
-      document.title = dashboard.title + ' - ' + Branding.AppTitle;
+    // Update page nav
+    if (!this.pageNav || dashboard.title !== this.pageNav.text) {
+      this.pageNav = {
+        text: dashboard.title,
+        url: locationUtil.getUrlForPartial(this.props.history.location, {
+          editview: null,
+          editPanel: null,
+          viewPanel: null,
+        }),
+      };
+    }
+
+    // Check if folder changed
+    if (
+      dashboard.meta.folderTitle &&
+      (!this.pageNav.parentItem || this.pageNav.parentItem.text !== dashboard.meta.folderTitle)
+    ) {
+      this.pageNav.parentItem = {
+        text: dashboard.meta.folderTitle,
+        url: `/dashboards/f/${dashboard.meta.folderUid}`,
+      };
     }
 
     if (
@@ -334,7 +351,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const inspectPanel = this.getInspectPanel();
     const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
 
-    const toolbar = kioskMode !== KioskMode.Full && (
+    const toolbar = (kioskMode !== KioskMode.Full || queryParams.editview) && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
         <DashNav
           dashboard={dashboard}
@@ -352,6 +369,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       <>
         <Page
           navId="dashboards"
+          pageNav={this.pageNav}
           layout={PageLayoutType.Dashboard}
           toolbar={toolbar}
           className={cx(viewPanel && 'panel-in-fullscreen', queryParams.editview && 'dashboard-content--hidden')}

@@ -9,6 +9,7 @@ import { useLocation } from 'react-router-dom';
 import { GrafanaTheme2, locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, IconName, PageToolbar, stylesFactory, useForceUpdate } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/PageNew/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -78,7 +79,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
 
     if (dashboard.meta.canEdit) {
       pages.push({
-        title: 'General',
+        title: 'Settings',
         id: 'settings',
         icon: 'sliders-v-alt',
         component: <GeneralSettings dashboard={dashboard} />,
@@ -181,7 +182,12 @@ function getSectionNav(
   currentPage: SettingsPage,
   location: H.Location
 ): NavModel {
-  const main: NavModelItem = { text: 'Settings', children: [], icon: 'apps' };
+  const main: NavModelItem = {
+    text: 'Dashboard',
+    children: [],
+    icon: 'apps',
+    hideFromBreadcrumbs: true,
+  };
 
   main.children = pages.map((page) => ({
     text: page.title,

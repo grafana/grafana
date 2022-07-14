@@ -24,7 +24,9 @@ export function Breadcrumbs({ sectionNav, pageNav }: Props) {
       addCrumbs(node.parentItem);
     }
 
-    crumbs.push({ text: node.text, href: node.url });
+    if (!node.hideFromBreadcrumbs) {
+      crumbs.push({ text: node.text, href: node.url });
+    }
   }
 
   addCrumbs(sectionNav);
@@ -60,6 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     breadcrumbs: css({
       display: 'flex',
       alignItems: 'center',
+      flexWrap: 'nowrap',
       fontWeight: theme.typography.fontWeightMedium,
     }),
     breadcrumb: css({
@@ -72,6 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     breadcrumbLink: css({
       color: theme.colors.text.primary,
+      whiteSpace: 'nowrap',
       '&:hover': {
         textDecoration: 'underline',
       },

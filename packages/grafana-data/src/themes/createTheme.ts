@@ -55,6 +55,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
     zIndex: {
       ...zIndex,
     },
+    flags: {},
   };
 
   return {

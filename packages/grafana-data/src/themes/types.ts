@@ -30,6 +30,8 @@ export interface GrafanaTheme2 {
   visualization: ThemeVisualizationColors;
   transitions: ThemeTransitions;
   v1: GrafanaTheme;
+  /** feature flags that might impact component looks */
+  flags: { topnav?: boolean };
 }
 
 /** @alpha */
