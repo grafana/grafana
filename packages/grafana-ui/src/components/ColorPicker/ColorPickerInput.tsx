@@ -14,10 +14,12 @@ import ColorInput from './ColorInput';
 export interface ColorPickerInputProps extends Omit<InputProps, 'value' | 'onChange'> {
   value?: string;
   onChange: (color: string) => void;
+  /** Format for returning the color in onChange callback, defaults to 'rgb' */
+  returnColorAs?: 'rgb' | 'hex';
 }
 
 export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputProps>(
-  ({ value = '', onChange, ...inputProps }, ref) => {
+  ({ value = '', onChange, returnColorAs = 'rgb', ...inputProps }, ref) => {
     const [currentColor, setColor] = useState(value);
     const [isOpen, setIsOpen] = useState(false);
     const theme = useTheme2();
@@ -25,7 +27,12 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
 
     useThrottleFn(
       (c) => {
-        onChange(colorManipulator.asHexString(theme.visualization.getColorByName(c)));
+        const color = theme.visualization.getColorByName(c);
+        if (returnColorAs === 'rgb') {
+          onChange(colorManipulator.asRgbString(color));
+        } else {
+          onChange(colorManipulator.asHexString(color));
+        }
       },
       500,
       [currentColor]
