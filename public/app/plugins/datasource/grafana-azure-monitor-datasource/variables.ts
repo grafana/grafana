@@ -36,6 +36,13 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             return {
               data: res?.length ? [toDataFrame(res)] : [],
             };
+          case AzureQueryType.ResourceGroupsQuery:
+            if (queryObj.subscription) {
+              const rgs = await this.datasource.getResourceGroups(queryObj.subscription);
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
           case AzureQueryType.GrafanaTemplateVariableFn:
             if (queryObj.grafanaTemplateVariableFn) {
               const templateVariablesResults = await this.callGrafanaTemplateVariableFn(

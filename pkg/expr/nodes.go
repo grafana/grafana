@@ -237,7 +237,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		}
 
 		dataSource := dn.datasource.Type
-		if isAllFrameVectors(dataSource, qr.Frames) {
+		if isAllFrameVectors(dataSource, qr.Frames) { // Prometheus Specific Handling
 			vals, err = framesToNumbers(qr.Frames)
 			if err != nil {
 				return mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
@@ -247,6 +247,12 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
+			// Handle Untyped NoData
+			if len(frame.Fields) == 0 {
+				return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
+			}
+
+			// Handle Numeric Table
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
 				logger.Debug("expression datasource query (numberSet)", "query", refID)
 				numberSet, err := extractNumberSet(frame)

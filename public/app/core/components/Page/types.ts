@@ -1,4 +1,4 @@
-import { FC, HTMLAttributes } from 'react';
+import { FC, HTMLAttributes, RefCallback } from 'react';
 
 import { NavModel, NavModelItem } from '@grafana/data';
 
@@ -11,6 +11,18 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   navId?: string;
   navModel?: NavModel;
   pageNav?: NavModelItem;
+  layout?: PageLayoutType;
+  /** Something we can remove when we remove the old nav. */
+  toolbar?: React.ReactNode;
+  /** Can be used to get the scroll container element to access scroll position */
+  scrollRef?: RefCallback<HTMLDivElement>;
+  /** Can be used to update the current scroll position */
+  scrollTop?: number;
+}
+
+export enum PageLayoutType {
+  Default,
+  Dashboard,
 }
 
 export interface PageType extends FC<PageProps> {

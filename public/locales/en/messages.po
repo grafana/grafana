@@ -75,10 +75,6 @@ msgid "nav.api-keys"
 msgstr "API keys"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
-msgid "nav.change-password"
-msgstr "Change password"
-
-#: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.config"
 msgstr "Configuration"
 
@@ -114,10 +110,6 @@ msgstr "Data sources"
 msgid "nav.explore"
 msgstr "Explore"
 
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.folder"
-#~ msgstr "New folder"
-
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.help"
 msgstr "Help"
@@ -125,10 +117,6 @@ msgstr "Help"
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.home"
 msgstr "Home"
-
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.import"
-#~ msgstr "Import"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.library-panels"
@@ -175,7 +163,11 @@ msgid "nav.plugins"
 msgstr "Plugins"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
-msgid "nav.profile-settings"
+msgid "nav.profile/password"
+msgstr "Change password"
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.profile/settings"
 msgstr "Preferences"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
@@ -205,6 +197,34 @@ msgstr "Teams"
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.users"
 msgstr "Users"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect"
+msgstr "Inspect"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-data"
+msgstr "Data"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-json"
+msgstr "Panel JSON"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.more"
+msgstr "More..."
+
+#: public/app/plugins/panel/graph/module.ts
+msgid "panel.header-menu.more-toggle"
+msgstr "Toggle legend"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.share"
+msgstr "Share"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.view"
+msgstr "View"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"
