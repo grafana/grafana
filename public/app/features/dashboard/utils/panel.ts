@@ -102,7 +102,7 @@ export const refreshPanel = (panel: PanelModel) => {
 };
 
 export const toggleLegend = (panel: PanelModel) => {
-  const newOptions = {...panel.options};
+  const newOptions = { ...panel.options };
   newOptions.legend.showLegend === 'visible'
     ? (newOptions.legend.showLegend = 'hidden')
     : (newOptions.legend.showLegend = 'visible');

@@ -27,7 +27,6 @@ import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
 import { toggleTheme } from './toggleTheme';
 import { withFocusedPanel } from './withFocusedPanelId';
 
-
 export class KeybindingSrv {
   reset() {
     Mousetrap.reset();
@@ -235,12 +234,11 @@ export class KeybindingSrv {
       const panel = dashboard.getPanelById(panelId)!;
       //keyboard shortcut function
 
-      const newOptions = {...panel.options};
+      const newOptions = { ...panel.options };
 
       newOptions.legend.showLegend === 'visible'
-      ? (newOptions.legend.showLegend = 'hidden')
-      : (newOptions.legend.showLegend = 'visible');
-  
+        ? (newOptions.legend.showLegend = 'hidden')
+        : (newOptions.legend.showLegend = 'visible');
 
       panel.updateOptions(newOptions);
     });

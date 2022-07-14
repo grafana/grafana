@@ -1,3 +1,4 @@
+import React from 'react';
 import { t } from '@lingui/macro';
 
 import { PanelMenuItem } from '@grafana/data';
@@ -144,8 +145,8 @@ export function getPanelMenu(
     text: 'Toggle legend',
     iconClassName: '',
     onClick: onToggleLegend,
-    shortcut: 'p l'
-  })
+    shortcut: 'p l',
+  });
 
   const inspectMenu: PanelMenuItem[] = [];
 
