@@ -8,7 +8,7 @@ keywords:
   - secretsmanager
   - aws
   - backend
-title: AWS Secrets Manager Plugin
+title: AWS Secrets Manager Integration
 weight: 2000
 ---
 
