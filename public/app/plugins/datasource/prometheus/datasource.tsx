@@ -212,7 +212,7 @@ export class PrometheusDatasource
   }
 
   // Use this for tab completion features, wont publish response to other components
-  async metadataRequest<T = any>(url: string, params = {}) {
+  async metadataRequest<T = any>(url: string, params = {}, showErrorAlert = true) {
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
@@ -237,6 +237,7 @@ export class PrometheusDatasource
       this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
         method: 'GET',
         hideFromInspector: true,
+        showErrorAlert: showErrorAlert,
       })
     ); // toPromise until we change getTagValues, getTagKeys to Observable
   }
@@ -1002,7 +1003,7 @@ export class PrometheusDatasource
 
   async loadRules() {
     try {
-      const res = await this.metadataRequest('/api/v1/rules');
+      const res = await this.metadataRequest('/api/v1/rules', {}, false);
       const groups = res.data?.data?.groups;
 
       if (groups) {

@@ -127,6 +127,12 @@ describe('PrometheusDatasource', () => {
       expect(fetchMock.mock.calls[0][0].url).not.toContain('bar=baz%20baz&foo=foo');
       expect(fetchMock.mock.calls[0][0].data).toEqual({ bar: 'baz baz', foo: 'foo' });
     });
+    it('should perform a GET request and showErrorAlert is false', () => {
+      ds.metadataRequest('/foo', { bar: 'baz baz', foo: 'foo' }, false);
+      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].method).toBe('GET');
+      expect(fetchMock.mock.calls[0][0].url).toContain('bar=baz%20baz&foo=foo');
+    });
   });
 
   describe('customQueryParams', () => {
