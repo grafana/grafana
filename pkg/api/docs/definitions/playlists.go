@@ -2,7 +2,7 @@ package definitions
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 // swagger:route GET /playlists playlists searchPlaylists
@@ -121,7 +121,7 @@ type DeletePlaylistParams struct {
 type UpdatePlaylistParams struct {
 	// in:body
 	// required:true
-	Body models.UpdatePlaylistCommand
+	Body playlist.UpdatePlaylistCommand
 	// in:path
 	// required:true
 	UID string `json:"uid"`
@@ -131,28 +131,28 @@ type UpdatePlaylistParams struct {
 type CreatePlaylistParams struct {
 	// in:body
 	// required:true
-	Body models.CreatePlaylistCommand
+	Body playlist.CreatePlaylistCommand
 }
 
 // swagger:response searchPlaylistsResponse
 type SearchPlaylistsResponse struct {
 	// The response message
 	// in: body
-	Body models.Playlists `json:"body"`
+	Body playlist.Playlists `json:"body"`
 }
 
 // swagger:response getPlaylistResponse
 type GetPlaylistResponse struct {
 	// The response message
 	// in: body
-	Body *models.PlaylistDTO `json:"body"`
+	Body *playlist.PlaylistDTO `json:"body"`
 }
 
 // swagger:response getPlaylistItemsResponse
 type GetPlaylistItemsResponse struct {
 	// The response message
 	// in: body
-	Body []models.PlaylistItemDTO `json:"body"`
+	Body []playlist.PlaylistItemDTO `json:"body"`
 }
 
 // swagger:response getPlaylistDashboardsResponse
@@ -166,12 +166,12 @@ type GetPlaylistDashboardsResponse struct {
 type UpdatePlaylistResponseResponse struct {
 	// The response message
 	// in: body
-	Body *models.PlaylistDTO `json:"body"`
+	Body *playlist.PlaylistDTO `json:"body"`
 }
 
 // swagger:response createPlaylistResponse
 type CreatePlaylistResponse struct {
 	// The response message
 	// in: body
-	Body *models.Playlist `json:"body"`
+	Body *playlist.Playlist `json:"body"`
 }

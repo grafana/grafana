@@ -9380,7 +9380,7 @@
           "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "type": "string"
+          "$ref": "#/definitions/State"
         },
         "templateVars": {
           "type": "object"
@@ -9398,9 +9398,6 @@
     "CreatePlaylistCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/Playlist"
-        },
         "interval": {
           "type": "string"
         },
@@ -12676,9 +12673,6 @@
     "UpdatePlaylistCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/PlaylistDTO"
-        },
         "interval": {
           "type": "string"
         },
