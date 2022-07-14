@@ -195,6 +195,6 @@ func (s *Service) getQuotaScopes(target string) ([]models.QuotaScope, error) {
 	}
 }
 
-func (s *Service) DeleteUser(ctx context.Context, userID int64) error {
-	return s.store.DeleteUser(ctx, userID)
+func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
+	return s.store.DeleteByUser(ctx, userID)
 }

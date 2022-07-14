@@ -8,14 +8,14 @@ import (
 )
 
 type store interface {
-	DeleteUser(context.Context, int64) error
+	DeleteByUser(context.Context, int64) error
 }
 
 type sqlStore struct {
 	db db.DB
 }
 
-func (ss *sqlStore) DeleteUser(ctx context.Context, userID int64) error {
+func (ss *sqlStore) DeleteByUser(ctx context.Context, userID int64) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var rawSQL = "DELETE FROM quota WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)

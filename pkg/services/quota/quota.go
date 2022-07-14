@@ -9,5 +9,5 @@ import (
 type Service interface {
 	QuotaReached(c *models.ReqContext, target string) (bool, error)
 	CheckQuotaReached(ctx context.Context, target string, scopeParams *ScopeParameters) (bool, error)
-	DeleteUser(context.Context, int64) error
+	DeleteByUser(context.Context, int64) error
 }

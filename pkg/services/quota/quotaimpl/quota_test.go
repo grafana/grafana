@@ -14,7 +14,7 @@ func TestQuotaService(t *testing.T) {
 	}
 
 	t.Run("delete quota", func(t *testing.T) {
-		err := quotaService.DeleteUser(context.Background(), 1)
+		err := quotaService.DeleteByUser(context.Background(), 1)
 		require.NoError(t, err)
 	})
 }
@@ -23,6 +23,6 @@ type FakeQuotaStore struct {
 	ExpectedError error
 }
 
-func (f *FakeQuotaStore) DeleteUser(ctx context.Context, userID int64) error {
+func (f *FakeQuotaStore) DeleteByUser(ctx context.Context, userID int64) error {
 	return f.ExpectedError
 }

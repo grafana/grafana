@@ -19,7 +19,7 @@ func TestIntegrationQuotaDataAccess(t *testing.T) {
 	}
 
 	t.Run("quota deleted", func(t *testing.T) {
-		err := quotaStore.DeleteUser(context.Background(), 1)
+		err := quotaStore.DeleteByUser(context.Background(), 1)
 		require.NoError(t, err)
 	})
 }

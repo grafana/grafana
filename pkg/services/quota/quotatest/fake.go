@@ -24,6 +24,6 @@ func (f *FakeQuotaService) CheckQuotaReached(c context.Context, target string, p
 	return f.reached, f.err
 }
 
-func (f *FakeQuotaService) DeleteUser(c context.Context, userID int64) error {
+func (f *FakeQuotaService) DeleteByUser(c context.Context, userID int64) error {
 	return f.err
 }
