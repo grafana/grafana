@@ -39,10 +39,6 @@ type RulerSrv struct {
 	ac              accesscontrol.AccessControl
 }
 
-var (
-	errQuotaReached = errors.New("quota has been exceeded")
-)
-
 // RouteDeleteAlertRules deletes all alert rules user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace
 func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle string, group string) response.Response {
@@ -453,7 +449,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 				return fmt.Errorf("failed to get alert rules quota: %w", err)
 			}
 			if limitReached {
-				return errQuotaReached
+				return ngmodels.ErrQuotaReached
 			}
 		}
 		return nil
@@ -464,7 +460,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) {
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
-		} else if errors.Is(err, errQuotaReached) {
+		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
 		} else if errors.Is(err, ErrAuthorization) {
 			return ErrResp(http.StatusUnauthorized, err, "")

@@ -76,7 +76,7 @@ func TestBrowserScreenshotService(t *testing.T) {
 
 	d := dashboards.FakeDashboardService{}
 	r := rendering.NewMockService(c)
-	s := NewBrowserScreenshotService(&d, r)
+	s := NewRemoteRenderScreenshotService(&d, r)
 
 	// a non-existent dashboard should return error
 	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(models.ErrDashboardNotFound).Once()

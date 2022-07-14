@@ -38,7 +38,7 @@
     "regenerator-runtime": "0.13.9",
     "rxjs": "7.5.5",
     "tslib": "2.4.0",
-    "uplot": "1.6.21",
+    "uplot": "1.6.22",
     "xss": "1.0.11"
   },
   "devDependencies": {

@@ -15,7 +15,7 @@ title: What's new in Grafana v8.0
 weight: -33
 ---
 
-# What’s new in Grafana v8.0
+# What's new in Grafana v8.0
 
 This topic includes the release notes for Grafana v8.0. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -35,7 +35,7 @@ To learn more about the differences between new alerts and the legacy alerts, re
 
 ### Library panels
 
-Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../panels/library-panels/" >}}).
+Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../dashboards/manage-library-panels/" >}}).
 
 ### Real-time streaming
 
