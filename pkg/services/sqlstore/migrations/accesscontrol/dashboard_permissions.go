@@ -396,6 +396,10 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 
 const managedFolderAlertActionsRepeatMigratorID = "managed folder permissions alert actions repeated migration"
 
+/*
+AddManagedFolderAlertActionsMigration has to be run after AddDashboardPermissionsMigrator, as it is only effective if dashboard permissions have already been migrated.
+AddManagedFolderAlertActionsRepeatMigrator ensures that alerting permissions that have already been added won't get added twice. 
+*/
 func AddManagedFolderAlertActionsRepeatMigration(mg *migrator.Migrator) {
 	mg.AddMigration(managedFolderAlertActionsRepeatMigratorID, &managedFolderAlertActionsRepeatMigrator{})
 }
