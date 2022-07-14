@@ -6,16 +6,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
+
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (s *CorrelationsService) registerAPIEndpoints() {
-	// TODO: Add accesscontrol here. permissions should match the ones for the source datasource
+	uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
+	authorize := ac.Middleware(s.AccessControl)
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
-		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(s.createHandler))
+		entities.Post("/", authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
 	})
 }
 

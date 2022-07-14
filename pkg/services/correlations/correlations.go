@@ -6,17 +6,20 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister, datasourceService datasources.DataSourceService, bus bus.Bus) *CorrelationsService {
+func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus) *CorrelationsService {
 	s := &CorrelationsService{
 		SQLStore:          sqlStore,
 		RouteRegister:     routeRegister,
 		log:               log.New("correlations"),
-		datasourceService: datasourceService,
+		DataSourceService: ds,
+		AccessControl:     ac,
 	}
 
 	s.registerAPIEndpoints()
@@ -35,7 +38,8 @@ type CorrelationsService struct {
 	SQLStore          *sqlstore.SQLStore
 	RouteRegister     routing.RouteRegister
 	log               log.Logger
-	datasourceService datasources.DataSourceService
+	DataSourceService datasources.DataSourceService
+	AccessControl     accesscontrol.AccessControl
 }
 
 func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (CorrelationDTO, error) {

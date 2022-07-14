@@ -25,7 +25,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			OrgId: cmd.OrgId,
 			Uid:   cmd.SourceUID,
 		}
-		if err = s.datasourceService.GetDataSource(ctx, query); err != nil {
+		if err = s.DataSourceService.GetDataSource(ctx, query); err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
@@ -33,7 +33,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			return ErrSourceDataSourceReadOnly
 		}
 
-		if err = s.datasourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+		if err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 			OrgId: cmd.OrgId,
 			Uid:   cmd.TargetUID,
 		}); err != nil {
