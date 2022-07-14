@@ -139,7 +139,8 @@ export class CanvasPanel extends Component<Props, State> {
       this.scene.updateSize(nextProps.width, nextProps.height);
       changed = true;
     }
-    if (data !== nextProps.data) {
+
+    if (data !== nextProps.data && !this.scene.ignoreDataUpdate) {
       this.scene.updateData(nextProps.data);
       changed = true;
     }
