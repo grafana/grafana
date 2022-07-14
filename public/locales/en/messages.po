@@ -106,6 +106,38 @@ msgstr "Table data is displayed with transformations defined in the panel Transf
 msgid "dashboard.inspect-data.transformations-label"
 msgstr "Apply panel transformations"
 
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.dataframe-description"
+msgstr "JSON formatted DataFrames"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.dataframe-label"
+msgstr "DataFrame JSON"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-data-description"
+msgstr "The raw model passed to the panel visualization"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-data-label"
+msgstr "Panel data"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-json-description"
+msgstr "The model saved in the dashboard JSON that configures how everything works."
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-json-label"
+msgstr "Panel JSON"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.select-source"
+msgstr "Select source"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.unknown"
+msgstr "Unknown Object: {show}"
+
 #: public/app/features/inspector/InspectStatsTab.tsx
 msgid "dashboard.inspect-stats.data-title"
 msgstr "Data source stats"

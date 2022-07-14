@@ -106,6 +106,38 @@ msgstr ""
 msgid "dashboard.inspect-data.transformations-label"
 msgstr ""
 
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.dataframe-description"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.dataframe-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-data-description"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-data-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-json-description"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-json-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.select-source"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.unknown"
+msgstr ""
+
 #: public/app/features/inspector/InspectStatsTab.tsx
 msgid "dashboard.inspect-stats.data-title"
 msgstr ""
