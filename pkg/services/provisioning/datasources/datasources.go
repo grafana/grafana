@@ -95,9 +95,11 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 			}
 
 			if len(ds.Correlations) > 0 {
-				dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
+				if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 					SourceUID: cmd.Result.Uid,
-				})
+				}); err != nil {
+					return err
+				}
 			}
 
 			for _, correlation := range ds.Correlations {
@@ -116,7 +118,9 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 	}
 
 	for _, createCorrelationCmd := range correlationsToInsert {
-		dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd)
+		if _, err := dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd); err != nil {
+			return err
+		}
 	}
 
 	return nil
