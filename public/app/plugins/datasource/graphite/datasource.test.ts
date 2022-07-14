@@ -2,7 +2,7 @@ import { isArray } from 'lodash';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { AbstractLabelMatcher, AbstractLabelOperator, getFrameDisplayName } from '@grafana/data';
+import { AbstractLabelMatcher, AbstractLabelOperator, getFrameDisplayName, dateTime } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
