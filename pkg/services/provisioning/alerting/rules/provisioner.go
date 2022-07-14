@@ -22,7 +22,7 @@ func NewAlertRuleProvisioner(
 	dashboardService dashboards.DashboardService,
 	dashboardProvService dashboards.DashboardProvisioningService,
 	ruleService provisioning.AlertRuleService) AlertRuleProvisioner {
-	return &DefaultAlertRuleProvisioner{
+	return &defaultAlertRuleProvisioner{
 		logger:               logger,
 		cfgReader:            newRulesConfigReader(logger),
 		dashboardService:     dashboardService,
@@ -31,7 +31,7 @@ func NewAlertRuleProvisioner(
 	}
 }
 
-type DefaultAlertRuleProvisioner struct {
+type defaultAlertRuleProvisioner struct {
 	logger               log.Logger
 	cfgReader            rulesConfigReader
 	dashboardService     dashboards.DashboardService
@@ -55,7 +55,7 @@ func Provision(
 	return ruleProvisioner.Provision(ctx, path)
 }
 
-func (prov *DefaultAlertRuleProvisioner) Provision(ctx context.Context,
+func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 	path string) error {
 	prov.logger.Info("starting to provision the alert rules")
 	ruleFiles, err := prov.cfgReader.readConfig(ctx, path)
@@ -71,7 +71,7 @@ func (prov *DefaultAlertRuleProvisioner) Provision(ctx context.Context,
 	return nil
 }
 
-func (prov *DefaultAlertRuleProvisioner) provsionRuleFiles(ctx context.Context,
+func (prov *defaultAlertRuleProvisioner) provsionRuleFiles(ctx context.Context,
 	ruleFiles []*RuleFile) error {
 	for _, file := range ruleFiles {
 		for _, group := range file.Groups {
@@ -108,7 +108,7 @@ func (prov *DefaultAlertRuleProvisioner) provsionRuleFiles(ctx context.Context,
 	return nil
 }
 
-func (prov *DefaultAlertRuleProvisioner) provisionRule(
+func (prov *defaultAlertRuleProvisioner) provisionRule(
 	ctx context.Context,
 	orgID int64,
 	rule alert_models.AlertRule,
@@ -128,7 +128,7 @@ func (prov *DefaultAlertRuleProvisioner) provisionRule(
 	return err
 }
 
-func (prov *DefaultAlertRuleProvisioner) getOrCreateFolderUID(
+func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	ctx context.Context, folderName string, orgID int64) (string, error) {
 	cmd := &models.GetDashboardQuery{
 		Slug:  models.SlugifyTitle(folderName),
