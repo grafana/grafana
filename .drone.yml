@@ -488,6 +488,18 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    ACCEPT_EULA: Y
+    MSSQL_SA_PASSWORD: Password!
+    MSSQL_PID: Express
+    MSSQL_DATABASE: grafanatest
+    MSSQL_USER: grafana
+    MSSQL_PASSWORD: Password!
+  image: mcr.microsoft.com/mssql/server:2019-CU8-ubuntu-18.04
+  name: mssql
+  volumes:
+  - name: mssql
+    path: /var/opt/mssql
 steps:
 - commands:
   - mkdir -p bin
@@ -546,6 +558,27 @@ steps:
     MYSQL_HOST: mysql
   image: grafana/build-container:1.5.7
   name: mysql-integration-tests
+- commands:
+  - curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+  - curl https://packages.microsoft.com/config/debian/stretch/multiarch//prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+  - apt-get update
+  - apt-get install -yq mssql-tools unixodbc-dev
+  - dockerize -wait tcp://mssql:1433 -timeout 120s
+  - sh devenv/docker/blocks/mssql/build/setup.sh
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mssql
+    SQLCMDSERVER: mssql
+    MSSQL_DATABASE: grafanatest
+    MSSQL_USER: grafana
+    MSSQL_PASSWORD: Password!
+    MSSQL_SA_PASSWORD: Password!
+  image: grafana/build-container:1.5.7
+  name: mssql-integration-tests
 trigger:
   event:
   - pull_request
@@ -563,6 +596,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mssql
   temp:
     medium: memory
 ---
@@ -1893,6 +1929,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mssql
+  temp:
+    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -2042,6 +2081,18 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    ACCEPT_EULA: Y
+    MSSQL_SA_PASSWORD: Password!
+    MSSQL_PID: Express
+    MSSQL_DATABASE: grafanatest
+    MSSQL_USER: grafana
+    MSSQL_PASSWORD: Password!
+  image: mcr.microsoft.com/mssql/server:2019-CU8-ubuntu-18.04
+  name: mssql
+  volumes:
+  - name: mssql
+    path: /var/opt/mssql
 steps:
 - commands:
   - mkdir -p bin
@@ -2100,6 +2151,27 @@ steps:
     MYSQL_HOST: mysql
   image: grafana/build-container:1.5.7
   name: mysql-integration-tests
+- commands:
+  - curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+  - curl https://packages.microsoft.com/config/debian/stretch/multiarch//prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+  - apt-get update
+  - apt-get install -yq mssql-tools unixodbc-dev
+  - dockerize -wait tcp://mssql:1433 -timeout 120s
+  - sh devenv/docker/blocks/mssql/build/setup.sh
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mssql
+    SQLCMDSERVER: mssql
+    MSSQL_DATABASE: grafanatest
+    MSSQL_USER: grafana
+    MSSQL_PASSWORD: Password!
+    MSSQL_SA_PASSWORD: Password!
+  image: grafana/build-container:1.5.7
+  name: mssql-integration-tests
 trigger:
   event:
     exclude:
@@ -2118,6 +2190,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mssql
   temp:
     medium: memory
 ---
@@ -2527,6 +2602,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mssql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -2718,6 +2796,18 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    ACCEPT_EULA: Y
+    MSSQL_SA_PASSWORD: Password!
+    MSSQL_PID: Express
+    MSSQL_DATABASE: grafanatest
+    MSSQL_USER: grafana
+    MSSQL_PASSWORD: Password!
+  image: mcr.microsoft.com/mssql/server:2019-CU8-ubuntu-18.04
+  name: mssql
+  volumes:
+  - name: mssql
+    path: /var/opt/mssql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -2809,6 +2899,27 @@ steps:
   image: grafana/build-container:1.5.7
   name: mysql-integration-tests
 - commands:
+  - curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+  - curl https://packages.microsoft.com/config/debian/stretch/multiarch//prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+  - apt-get update
+  - apt-get install -yq mssql-tools unixodbc-dev
+  - dockerize -wait tcp://mssql:1433 -timeout 120s
+  - sh devenv/docker/blocks/mssql/build/setup.sh
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mssql
+    SQLCMDSERVER: mssql
+    MSSQL_DATABASE: grafanatest
+    MSSQL_USER: grafana
+    MSSQL_PASSWORD: Password!
+    MSSQL_SA_PASSWORD: Password!
+  image: grafana/build-container:1.5.7
+  name: mssql-integration-tests
+- commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
@@ -2844,6 +2955,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mssql
   temp:
     medium: memory
 ---
@@ -3748,6 +3862,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mssql
+  temp:
+    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -3891,6 +4008,18 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    ACCEPT_EULA: Y
+    MSSQL_SA_PASSWORD: Password!
+    MSSQL_PID: Express
+    MSSQL_DATABASE: grafanatest
+    MSSQL_USER: grafana
+    MSSQL_PASSWORD: Password!
+  image: mcr.microsoft.com/mssql/server:2019-CU8-ubuntu-18.04
+  name: mssql
+  volumes:
+  - name: mssql
+    path: /var/opt/mssql
 steps:
 - commands:
   - mkdir -p bin
@@ -3949,6 +4078,27 @@ steps:
     MYSQL_HOST: mysql
   image: grafana/build-container:1.5.7
   name: mysql-integration-tests
+- commands:
+  - curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+  - curl https://packages.microsoft.com/config/debian/stretch/multiarch//prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+  - apt-get update
+  - apt-get install -yq mssql-tools unixodbc-dev
+  - dockerize -wait tcp://mssql:1433 -timeout 120s
+  - sh devenv/docker/blocks/mssql/build/setup.sh
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mssql
+    SQLCMDSERVER: mssql
+    MSSQL_DATABASE: grafanatest
+    MSSQL_USER: grafana
+    MSSQL_PASSWORD: Password!
+    MSSQL_SA_PASSWORD: Password!
+  image: grafana/build-container:1.5.7
+  name: mssql-integration-tests
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -3961,6 +4111,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mssql
   temp:
     medium: memory
 ---
@@ -4359,6 +4512,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mssql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -4629,6 +4785,27 @@ steps:
   image: grafana/build-container:1.5.7
   name: mysql-integration-tests
 - commands:
+  - curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+  - curl https://packages.microsoft.com/config/debian/stretch/multiarch//prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+  - apt-get update
+  - apt-get install -yq mssql-tools unixodbc-dev
+  - dockerize -wait tcp://mssql:1433 -timeout 120s
+  - sh devenv/docker/blocks/mssql/build/setup.sh
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mssql
+    SQLCMDSERVER: mssql
+    MSSQL_DATABASE: grafanatest
+    MSSQL_USER: grafana
+    MSSQL_PASSWORD: Password!
+    MSSQL_SA_PASSWORD: Password!
+  image: grafana/build-container:1.5.7
+  name: mssql-integration-tests
+- commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
@@ -4658,6 +4835,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mssql
   temp:
     medium: memory
 ---
