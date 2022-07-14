@@ -146,7 +146,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
       <CollapsableSection label="Panel options" isOpen={true}>
         <Field
           label="Graph tooltip"
-          description="Controls tooltip and hover highlight behavior across different panels"
+          description="Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect"
         >
           <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={dashboard.graphTooltip} />
         </Field>
