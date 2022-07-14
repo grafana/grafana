@@ -165,8 +165,6 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
       }
     }
 
-    allValues = allValues.filter((v) => v != null);
-
     allValues.sort((a, b) => a - b);
 
     let smallestDelta = Infinity;
@@ -203,9 +201,6 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   }
 
   const getBucket = (v: number) => incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset;
-
-  // guess number of decimals
-  let bucketDecimals = (('' + bucketSize).match(/\.\d+$/) ?? ['.'])[0].length - 1;
 
   let histograms: AlignedData[] = [];
   let counts: Field[] = [];
@@ -254,13 +249,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
     state: undefined,
-    config:
-      bucketDecimals === 0
-        ? config ?? {}
-        : {
-            ...config,
-            decimals: bucketDecimals,
-          },
+    config: config ?? {},
   };
   const bucketMax = {
     ...bucketMin,

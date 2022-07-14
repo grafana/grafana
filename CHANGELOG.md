@@ -1,14 +1,3 @@
-<!-- 8.5.6 START -->
-
-# 8.5.6 (2022-06-14)
-
-### Bug fixes
-
-- **Dashboard:** Fixes random scrolling on time range change. [#50379](https://github.com/grafana/grafana/pull/50379), [@torkelo](https://github.com/torkelo)
-- **Security:** Fixes minor code scanning security warnings in old vendored javascript libs. [#50382](https://github.com/grafana/grafana/pull/50382), [@torkelo](https://github.com/torkelo)
-
-<!-- 8.5.6 END -->
-
 <!-- 8.5.5 START -->
 
 # 8.5.5 (2022-06-06)

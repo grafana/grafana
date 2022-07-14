@@ -162,7 +162,7 @@ export class ContextSrv {
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 
-  hasAccess(action: string, fallBack: boolean): boolean {
+  hasAccess(action: string, fallBack: boolean) {
     if (!this.accessControlEnabled()) {
       return fallBack;
     }

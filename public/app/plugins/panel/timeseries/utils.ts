@@ -6,20 +6,13 @@ import {
   getDisplayProcessor,
   GrafanaTheme2,
   isBooleanUnit,
-  TimeRange,
 } from '@grafana/data';
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
-import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 
 /**
  * Returns null if there are no graphable fields
  */
-export function prepareGraphableFields(
-  series: DataFrame[],
-  theme: GrafanaTheme2,
-  timeRange?: TimeRange
-): DataFrame[] | null {
+export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2): DataFrame[] | null {
   if (!series?.length) {
     return null;
   }
@@ -34,13 +27,7 @@ export function prepareGraphableFields(
     let hasTimeField = false;
     let hasValueField = false;
 
-    let nulledFrame = applyNullInsertThreshold({
-      frame,
-      refFieldPseudoMin: timeRange?.from.valueOf(),
-      refFieldPseudoMax: timeRange?.to.valueOf(),
-    });
-
-    for (const field of nullToValue(nulledFrame).fields) {
+    for (const field of frame.fields) {
       switch (field.type) {
         case FieldType.time:
           hasTimeField = true;
@@ -104,7 +91,6 @@ export function prepareGraphableFields(
     if (hasTimeField && hasValueField) {
       frames.push({
         ...frame,
-        length: nulledFrame.length,
         fields,
       });
     }

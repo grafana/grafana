@@ -191,18 +191,18 @@ func shouldForceLogin(c *models.ReqContext) bool {
 	return forceLogin
 }
 
-func OrgAdminDashOrFolderAdminOrTeamAdmin(ss sqlstore.Store) func(c *models.ReqContext) {
+func OrgAdminFolderAdminOrTeamAdmin(ss sqlstore.Store) func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
 		if c.OrgRole == models.ROLE_ADMIN {
 			return
 		}
 
-		hasAdminPermissionInDashOrFoldersQuery := models.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
-		if err := ss.HasAdminPermissionInDashboardsOrFolders(c.Req.Context(), &hasAdminPermissionInDashOrFoldersQuery); err != nil {
+		hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+		if err := ss.HasAdminPermissionInFolders(c.Req.Context(), &hasAdminPermissionInFoldersQuery); err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
 		}
 
-		if hasAdminPermissionInDashOrFoldersQuery.Result {
+		if hasAdminPermissionInFoldersQuery.Result {
 			return
 		}
 

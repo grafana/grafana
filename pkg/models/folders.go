@@ -109,7 +109,7 @@ type HasEditPermissionInFoldersQuery struct {
 	Result       bool
 }
 
-type HasAdminPermissionInDashboardsOrFoldersQuery struct {
+type HasAdminPermissionInFoldersQuery struct {
 	SignedInUser *SignedInUser
 	Result       bool
 }

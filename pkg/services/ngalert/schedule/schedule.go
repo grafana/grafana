@@ -56,7 +56,7 @@ type schedule struct {
 	baseInterval time.Duration
 
 	// each alert rule gets its own channel and routine
-	registry alertRuleInfoRegistry
+	registry alertRuleRegistry
 
 	maxAttempts int64
 
@@ -99,12 +99,6 @@ type schedule struct {
 	adminConfigPollInterval time.Duration
 	disabledOrgs            map[int64]struct{}
 	minRuleInterval         time.Duration
-
-	// alertRules contains the alert rules that are considered for
-	// evaluation in the current tick. The evaluation of an alert rule in the
-	// current tick depends on its evaluation interval and when it was
-	// last evaluated.
-	alertRules alertRulesRegistry
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -132,7 +126,7 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 
 	sch := schedule{
-		registry:                alertRuleInfoRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
+		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:             cfg.MaxAttempts,
 		clock:                   cfg.C,
 		baseInterval:            cfg.BaseInterval,
@@ -156,7 +150,6 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
 		disabledOrgs:            cfg.DisabledOrgs,
 		minRuleInterval:         cfg.MinRuleInterval,
-		alertRules:              alertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.AlertRule)},
 	}
 	return &sch
 }
@@ -341,17 +334,9 @@ func (sch *schedule) UpdateAlertRule(key models.AlertRuleKey) {
 
 // DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
 func (sch *schedule) DeleteAlertRule(key models.AlertRuleKey) {
-	// It can happen that the scheduler has deleted the alert rule before the
-	// Ruler API has called DeleteAlertRule. This can happen as requests to
-	// the Ruler API do not hold an exclusive lock over all scheduler operations.
-	if _, ok := sch.alertRules.del(key); !ok {
-		sch.log.Info("alert rule cannot be removed from the scheduler as it is not scheduled", "uid", key.UID, "org_id", key.OrgID)
-	}
-
-	// Delete the rule routine
 	ruleInfo, ok := sch.registry.del(key)
 	if !ok {
-		sch.log.Info("alert rule cannot be stopped as it is not running", "uid", key.UID, "org_id", key.OrgID)
+		sch.log.Info("unable to delete alert rule routine information by key", "uid", key.UID, "org_id", key.OrgID)
 		return
 	}
 	// stop rule evaluation
@@ -397,11 +382,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				disabledOrgs = append(disabledOrgs, disabledOrg)
 			}
 
-			if err := sch.updateAlertRules(ctx, disabledOrgs); err != nil {
-				sch.log.Error("scheduler failed to update alert rules", "err", err)
-			}
-			alertRules := sch.alertRules.all()
-
+			alertRules := sch.getAlertRules(ctx, disabledOrgs)
 			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
@@ -686,14 +667,14 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 	}
 }
 
-type alertRuleInfoRegistry struct {
+type alertRuleRegistry struct {
 	mu            sync.Mutex
 	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
 }
 
 // getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -707,7 +688,7 @@ func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key mod
 
 // get returns the channel for the specific alert rule
 // if the key does not exist returns an error
-func (r *alertRuleInfoRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
+func (r *alertRuleRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -718,7 +699,7 @@ func (r *alertRuleInfoRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, er
 	return info, nil
 }
 
-func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
+func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -729,7 +710,7 @@ func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
 // del removes pair that has specific key from alertRuleInfo.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
-func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	info, ok := r.alertRuleInfo[key]
@@ -739,7 +720,7 @@ func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bo
 	return info, ok
 }
 
-func (r *alertRuleInfoRegistry) iter() <-chan models.AlertRuleKey {
+func (r *alertRuleRegistry) iter() <-chan models.AlertRuleKey {
 	c := make(chan models.AlertRuleKey)
 
 	f := func() {
@@ -756,7 +737,7 @@ func (r *alertRuleInfoRegistry) iter() <-chan models.AlertRuleKey {
 	return c
 }
 
-func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
+func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	definitionsIDs := make(map[models.AlertRuleKey]struct{})
 	for k := range r.iter() {
 		definitionsIDs[k] = struct{}{}
@@ -829,56 +810,4 @@ func (sch *schedule) stopApplied(alertDefKey models.AlertRuleKey) {
 	}
 
 	sch.stopAppliedFunc(alertDefKey)
-}
-
-type alertRulesRegistry struct {
-	rules map[models.AlertRuleKey]*models.AlertRule
-	mu    sync.Mutex
-}
-
-// all returns all rules in the registry.
-func (r *alertRulesRegistry) all() []*models.AlertRule {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	result := make([]*models.AlertRule, 0, len(r.rules))
-	for _, rule := range r.rules {
-		result = append(result, rule)
-	}
-	return result
-}
-
-func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.rules[k]
-}
-
-// set replaces all rules in the registry.
-func (r *alertRulesRegistry) set(rules []*models.AlertRule) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.rules = make(map[models.AlertRuleKey]*models.AlertRule)
-	for _, rule := range rules {
-		r.rules[rule.GetKey()] = rule
-	}
-}
-
-// update inserts or replaces a rule in the registry.
-func (r *alertRulesRegistry) update(rule *models.AlertRule) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.rules[rule.GetKey()] = rule
-}
-
-// del removes pair that has specific key from alertRulesRegistry.
-// Returns 2-tuple where the first element is value of the removed pair
-// and the second element indicates whether element with the specified key existed.
-func (r *alertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	rule, ok := r.rules[k]
-	if ok {
-		delete(r.rules, k)
-	}
-	return rule, ok
 }

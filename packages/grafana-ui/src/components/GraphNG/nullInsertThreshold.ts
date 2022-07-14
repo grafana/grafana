@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType, incrRoundDn } from '@grafana/data';
+import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
 
@@ -37,11 +37,6 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
   if (refField == null) {
     return frame;
   }
-
-  refField.state = {
-    ...refField.state,
-    nullThresholdApplied: true,
-  };
 
   const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls ?? refField.config.interval ?? null);
 
@@ -106,25 +101,24 @@ function nullInsertThreshold(
   thorough: boolean
 ) {
   const len = refValues.length;
+  let prevValue: number = refValues[0];
   const refValuesNew: number[] = [];
 
-  // Continiuously subtract the threshold from the first data
-  // point filling in insert values accordingly
-  if (refFieldPseudoMin != null && refFieldPseudoMin < refValues[0]) {
-    // this will be 0 or 1 threshold increment left of visible range
-    let prevSlot = incrRoundDn(refFieldPseudoMin, threshold);
+  // Continiuously add the threshold to the minimum value
+  // While this is less than "prevValue" which is the lowest
+  // time value in the sequence add in time frames
+  if (refFieldPseudoMin != null) {
+    let minValue = refFieldPseudoMin - threshold;
 
-    while (prevSlot < refValues[0]) {
-      // (prevSlot - threshold) is used to simulate the previous 'real' data point, as getInsertValue expects
-      refValuesNew.push(getInsertValue(prevSlot - threshold, prevSlot, threshold));
-      prevSlot += threshold;
+    while (minValue < prevValue - threshold) {
+      let nextValue = minValue + threshold;
+      refValuesNew.push(getInsertValue(minValue, nextValue, threshold));
+      minValue = nextValue;
     }
   }
 
   // Insert initial value
-  refValuesNew.push(refValues[0]);
-
-  let prevValue: number = refValues[0];
+  refValuesNew.push(prevValue);
 
   // Fill nulls when a value is greater than
   // the threshold value
@@ -147,8 +141,8 @@ function nullInsertThreshold(
   }
 
   // At the end of the sequence
-  if (refFieldPseudoMax != null && refFieldPseudoMax > prevValue) {
-    while (prevValue + threshold < refFieldPseudoMax) {
+  if (refFieldPseudoMax != null) {
+    while (prevValue + threshold <= refFieldPseudoMax) {
       refValuesNew.push(getInsertValue(prevValue, refFieldPseudoMax, threshold));
       prevValue += threshold;
     }

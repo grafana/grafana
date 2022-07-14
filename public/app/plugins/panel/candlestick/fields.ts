@@ -6,7 +6,6 @@ import {
   getFieldDisplayName,
   GrafanaTheme2,
   outerJoinDataFrames,
-  TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { findField } from 'app/features/dimensions';
@@ -98,8 +97,7 @@ function findFieldOrAuto(frame: DataFrame, info: FieldPickerInfo, options: Candl
 export function prepareCandlestickFields(
   series: DataFrame[] | undefined,
   options: CandlestickOptions,
-  theme: GrafanaTheme2,
-  timeRange?: TimeRange
+  theme: GrafanaTheme2
 ): CandlestickData | null {
   if (!series?.length) {
     return null;
@@ -121,7 +119,7 @@ export function prepareCandlestickFields(
   const data: CandlestickData = { aligned, frame: aligned, names: {} };
 
   // Apply same filter as everythign else in timeseries
-  const timeSeriesFrames = prepareGraphableFields([aligned], theme, timeRange);
+  const timeSeriesFrames = prepareGraphableFields([aligned], theme);
   if (!timeSeriesFrames) {
     return null;
   }

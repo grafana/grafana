@@ -45,10 +45,9 @@ const pageTitle = 'Alerting / View rule';
 
 export function RuleViewer({ match }: RuleViewerProps) {
   const styles = useStyles2(getStyles);
-  const { id } = match.params;
+  const { id, sourceName } = match.params;
   const identifier = ruleId.tryParse(id, true);
-
-  const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
+  const { loading, error, result: rule } = useCombinedRule(identifier, sourceName);
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
   const queries2 = useMemo(() => alertRuleToQueries(rule), [rule]);
@@ -87,7 +86,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
     );
   }, []);
 
-  if (!identifier?.ruleSourceName) {
+  if (!sourceName) {
     return (
       <RuleViewerLayout title={pageTitle}>
         <Alert title={errorTitle}>
@@ -97,7 +96,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
     );
   }
 
-  const rulesSource = getRulesSourceByName(identifier.ruleSourceName);
+  const rulesSource = getRulesSourceByName(sourceName);
 
   if (loading) {
     return (

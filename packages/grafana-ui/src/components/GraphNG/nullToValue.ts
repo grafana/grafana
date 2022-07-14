@@ -1,27 +1,17 @@
-import { ArrayVector, DataFrame } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 
 export function nullToValue(frame: DataFrame) {
-  return {
-    ...frame,
-    fields: frame.fields.map((field) => {
-      const noValue = +field.config?.noValue!;
-
-      if (!Number.isNaN(noValue)) {
-        const transformedVals = field.values.toArray().slice();
-
-        for (let i = 0; i < transformedVals.length; i++) {
-          if (transformedVals[i] === null) {
-            transformedVals[i] = noValue;
-          }
+  frame.fields.forEach((f) => {
+    const noValue = +f.config?.noValue!;
+    if (!Number.isNaN(noValue)) {
+      const values = f.values.toArray();
+      for (let i = 0; i < values.length; i++) {
+        if (values[i] === null) {
+          values[i] = noValue;
         }
-
-        return {
-          ...field,
-          values: new ArrayVector(transformedVals),
-        };
-      } else {
-        return field;
       }
-    }),
-  };
+    }
+  });
+
+  return frame;
 }
