@@ -45,5 +45,5 @@ func (hs *HTTPServer) AdminProvisioningReloadAlertRules(c *models.ReqContext) re
 	if err != nil {
 		return response.Error(500, "", err)
 	}
-	return response.Success("Alert rules config reloaded")
+	return response.Success("Alerting config reloaded")
 }

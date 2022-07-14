@@ -136,30 +136,30 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			exit:         true,
 		},
 		{
-			desc:         "should fail for alert rules with no permission",
+			desc:         "should fail for alerting with no permission",
 			expectedCode: http.StatusForbidden,
-			url:          "/api/admin/provisioning/alert-rules/reload",
+			url:          "/api/admin/provisioning/alerting/reload",
 			exit:         true,
 		},
 		{
 			desc:         "should work for alert rules with specific scope",
 			expectedCode: http.StatusOK,
-			expectedBody: `{"message":"Alert rules config reloaded"}`,
+			expectedBody: `{"message":"Alerting config reloaded"}`,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
 					Scope:  ScopeProvisionersAlertRules,
 				},
 			},
-			url: "/api/admin/provisioning/alert-rules/reload",
+			url: "/api/admin/provisioning/alerting/reload",
 			checkCall: func(mock provisioning.ProvisioningServiceMock) {
 				assert.Len(t, mock.Calls.ProvisionAlertRules, 1)
 			},
 		},
 		{
-			desc:         "should fail for alert rules with no permission",
+			desc:         "should fail for alerting with no permission",
 			expectedCode: http.StatusForbidden,
-			url:          "/api/admin/provisioning/alert-rules/reload",
+			url:          "/api/admin/provisioning/alerting/reload",
 			exit:         true,
 		},
 	}
