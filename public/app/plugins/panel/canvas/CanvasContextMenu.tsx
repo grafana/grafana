@@ -91,20 +91,22 @@ export const CanvasContextMenu = ({ scene }: Props) => {
           }}
           className={styles.menuItem}
         />
-        <MenuItem
-          label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
-          onClick={() => {
-            if (scene.inlineEditingCallback) {
-              if (inlineEditorOpen) {
-                activePanel.panel.inlineEditButtonClose();
-              } else {
-                scene.inlineEditingCallback();
+        {!scene.isPanelEditing && (
+          <MenuItem
+            label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
+            onClick={() => {
+              if (scene.inlineEditingCallback) {
+                if (inlineEditorOpen) {
+                  activePanel.panel.inlineEditButtonClose();
+                } else {
+                  scene.inlineEditingCallback();
+                }
               }
-            }
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+        )}
       </>
     );
   };

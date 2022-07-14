@@ -230,23 +230,22 @@ export const ServiceAccountsListPageUnconnected = ({
           </>
         )}
 
-        <>
-          <div className={cx(styles.table, 'admin-list-table')}>
-            <table className="filter-table filter-table--hover">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Account</th>
-                  <th>ID</th>
-                  <th>Roles</th>
-                  <th>Tokens</th>
-                  <th style={{ width: '34px' }} />
-                </tr>
-              </thead>
-              <tbody>
-                {!isLoading &&
-                  serviceAccounts.length !== 0 &&
-                  serviceAccounts.map((serviceAccount: ServiceAccountDTO) => (
+        {!isLoading && serviceAccounts.length !== 0 && (
+          <>
+            <div className={cx(styles.table, 'admin-list-table')}>
+              <table className="filter-table filter-table--hover">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Account</th>
+                    <th>ID</th>
+                    <th>Roles</th>
+                    <th>Tokens</th>
+                    <th style={{ width: '34px' }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {serviceAccounts.map((serviceAccount: ServiceAccountDTO) => (
                     <ServiceAccountListItem
                       serviceAccount={serviceAccount}
                       key={serviceAccount.id}
@@ -259,10 +258,11 @@ export const ServiceAccountsListPageUnconnected = ({
                       onAddTokenClick={onTokenAdd}
                     />
                   ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
         {currentServiceAccount && (
           <>
             <ConfirmModal

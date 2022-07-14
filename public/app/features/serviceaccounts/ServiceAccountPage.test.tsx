@@ -11,6 +11,7 @@ jest.mock('app/core/core', () => ({
     licensedAccessControlEnabled: () => false,
     hasPermission: () => true,
     hasPermissionInMetadata: () => true,
+    hasAccessInMetadata: () => false,
   },
 }));
 

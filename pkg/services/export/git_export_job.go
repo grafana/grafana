@@ -2,6 +2,7 @@ package export
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"sync"
@@ -22,7 +23,6 @@ type gitExportJob struct {
 	logger                    log.Logger
 	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
-	orgID                     int64
 	rootDir                   string
 
 	statusMu    sync.Mutex
@@ -32,15 +32,12 @@ type gitExportJob struct {
 	helper      *commitHelper
 }
 
-type simpleExporter = func(helper *commitHelper, job *gitExportJob) error
-
 func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64, broadcaster statusBroadcaster) (Job, error) {
 	job := &gitExportJob{
 		logger:                    log.New("git_export_job"),
 		cfg:                       cfg,
 		sql:                       sql,
 		dashboardsnapshotsService: dashboardsnapshotsService,
-		orgID:                     orgID,
 		rootDir:                   rootDir,
 		broadcaster:               broadcaster,
 		status: ExportStatus{
@@ -153,7 +150,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 			return err
 		}
 
-		err = e.doOrgExportWithHistory(e.helper)
+		err := e.process(exporters)
 		if err != nil {
 			return err
 		}
@@ -170,46 +167,38 @@ func (e *gitExportJob) doExportWithHistory() error {
 	return err
 }
 
-func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
-	include := e.cfg.Include
-
-	exporters := []simpleExporter{}
-	if include.Dash {
-		exporters = append(exporters, exportDashboards)
-	}
-
-	if include.DS {
-		exporters = append(exporters, exportDataSources)
-	}
-
-	if include.Auth {
-		exporters = append(exporters, dumpAuthTables)
-	}
-
-	if include.Services {
-		exporters = append(exporters, exportFiles,
-			exportSystemPreferences,
-			exportSystemStars,
-			exportSystemPlaylists,
-			exportKVStore,
-			exportLive)
-	}
-
-	if include.Anno {
-		exporters = append(exporters, exportAnnotations)
-	}
-
-	if include.Snapshots {
-		exporters = append(exporters, exportSnapshots)
-	}
-
-	for _, fn := range exporters {
-		err := fn(helper, e)
+func (e *gitExportJob) process(exporters []Exporter) error {
+	if false { // NEEDS a real user ID first
+		err := exportSnapshots(e.helper, e)
 		if err != nil {
 			return err
 		}
 	}
+
+	for _, exp := range exporters {
+		if e.cfg.Exclude[exp.Key] {
+			continue
+		}
+
+		if exp.process != nil {
+			e.status.Target = exp.Key
+			e.helper.exporter = exp.Key
+			err := exp.process(e.helper, e)
+			if err != nil {
+				return err
+			}
+		}
+
+		if exp.Exporters != nil {
+			return e.process(exp.Exporters)
+		}
+	}
 	return nil
+}
+
+func prettyJSON(v interface{}) []byte {
+	b, _ := json.MarshalIndent(v, "", "  ")
+	return b
 }
 
 /**

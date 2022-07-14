@@ -134,6 +134,10 @@ export class GeomapPanel extends Component<Props, State> {
     if (this.map && (this.props.height !== prevProps.height || this.props.width !== prevProps.width)) {
       this.map.updateSize();
     }
+    // Check for a difference between previous data and component data
+    if (this.map && this.props.data !== prevProps.data) {
+      this.dataChanged(this.props.data);
+    }
   }
 
   /** This function will actually update the JSON model */
@@ -259,8 +263,11 @@ export class GeomapPanel extends Component<Props, State> {
    * Called when PanelData changes (query results etc)
    */
   dataChanged(data: PanelData) {
-    for (const state of this.layers) {
-      this.applyLayerFilter(state.handler, state.options);
+    // Only update if panel data matches component data
+    if (data === this.props.data) {
+      for (const state of this.layers) {
+        this.applyLayerFilter(state.handler, state.options);
+      }
     }
   }
 

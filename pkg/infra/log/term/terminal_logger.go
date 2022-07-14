@@ -11,11 +11,11 @@ import (
 	"time"
 
 	gokitlog "github.com/go-kit/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/go-kit/log/level"
 )
 
 var (
-	timeFormat     = "2006-01-02T15:04:05-0700"
+	timeFormat     = time.RFC3339Nano
 	termTimeFormat = "01-02|15:04:05"
 )
 
@@ -24,10 +24,6 @@ const (
 	termMsgJust = 40
 	errorKey    = "LOG15_ERROR"
 )
-
-func SetTimeFormatGokitLog() {
-	timeFormat = time.RFC3339Nano
-}
 
 type terminalLogger struct {
 	w io.Writer
@@ -96,7 +92,6 @@ func getRecord(keyvals ...interface{}) *record {
 	if len(keyvals)%2 == 1 {
 		keyvals = append(keyvals, nil)
 	}
-
 	for i := 0; i < len(keyvals); i += 2 {
 		k, v := keyvals[i], keyvals[i+1]
 

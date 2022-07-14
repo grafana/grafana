@@ -21,6 +21,7 @@ import { AccessControlAction } from 'app/types';
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
+import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -363,7 +364,7 @@ describe('AmRoutes', () => {
         receivers: [{ name: 'default' }],
         route: {
           continue: false,
-          group_by: ['severity', 'namespace'],
+          group_by: defaultGroupBy.concat(['severity', 'namespace']),
           receiver: 'default',
           routes: [],
           mute_time_intervals: [],
