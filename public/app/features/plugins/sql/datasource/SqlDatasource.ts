@@ -133,8 +133,8 @@ export abstract class SqlDatasource<
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
-  async runSql<T>(query: string, options?: MetricFindQueryOptions) {
-    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table }, options);
+  async runSql<T>(query: string, options?: RunSQLOptions) {
+    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, options);
     return new DataFrameView<T>(frame);
   }
 
@@ -204,6 +204,9 @@ export abstract class SqlDatasource<
   }
 }
 
+interface RunSQLOptions extends MetricFindQueryOptions {
+  refId?: string;
+}
 interface MetricFindQueryOptions extends SearchFilterOptions {
   range?: TimeRange;
 }

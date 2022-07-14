@@ -4,7 +4,7 @@ export function showDatabases() {
 }
 
 export function showTables(dataset?: string) {
-  return `SELECT TABLE_NAME
+  return `SELECT TABLE_NAME as name
     FROM [${dataset}].INFORMATION_SCHEMA.TABLES
     WHERE TABLE_TYPE = 'BASE TABLE'`;
 }

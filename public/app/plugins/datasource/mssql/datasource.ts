@@ -26,17 +26,17 @@ export class MssqlDatasource extends SqlDatasource<SQLQuery, MssqlOptions> {
   }
 
   async fetchDatasets(): Promise<string[]> {
-    const datasets = await this.metricFindQuery(showDatabases(), {});
-    return datasets.map((t) => t.text);
+    const datasets = await this.runSql<{ name: string[] }>(showDatabases(), { refId: 'datasets' });
+    return datasets.fields.name.values.toArray().flat();
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
-    const tables = await this.metricFindQuery(showTables(dataset), {});
-    return tables.map((t) => t.text);
+    const tables = await this.runSql<{ name: string[] }>(showTables(dataset), { refId: 'tables' });
+    return tables.fields.name.values.toArray().flat();
   }
 
   async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
-    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table));
+    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table), { refId: 'columns' });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
       const column = schema.fields.column.values.get(i);
@@ -64,7 +64,12 @@ export class MssqlDatasource extends SqlDatasource<SQLQuery, MssqlOptions> {
       datasets: () => this.fetchDatasets(),
       tables: (dataset?: string) => this.fetchTables(dataset),
       getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
-      fields: (query: SQLQuery) => this.fetchFields(query),
+      fields: async (query: SQLQuery) => {
+        if (!query?.dataset && !query?.table) {
+          return [];
+        }
+        return this.fetchFields(query);
+      },
       validateQuery: (query) =>
         Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
       dsID: () => this.id,
