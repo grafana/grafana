@@ -136,6 +136,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	)
 	httpServer := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
 	})
 
 	t.Run("Status code is 500 and a secrets plugin error is returned if there is a problem getting secrets from the remote plugin", func(t *testing.T) {
