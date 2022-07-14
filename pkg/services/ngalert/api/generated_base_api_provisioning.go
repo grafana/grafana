@@ -46,153 +46,140 @@ type ProvisioningApi interface {
 func (f *ProvisioningApiHandler) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
-
 	return f.handleRouteDeleteAlertRule(ctx, uIDParam)
 }
 func (f *ProvisioningApiHandler) RouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
-
 	return f.handleRouteDeleteContactpoints(ctx, uIDParam)
 }
 func (f *ProvisioningApiHandler) RouteDeleteMuteTiming(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
-
 	return f.handleRouteDeleteMuteTiming(ctx, nameParam)
 }
 func (f *ProvisioningApiHandler) RouteDeleteTemplate(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
-
 	return f.handleRouteDeleteTemplate(ctx, nameParam)
 }
 func (f *ProvisioningApiHandler) RouteGetAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
-
 	return f.handleRouteGetAlertRule(ctx, uIDParam)
 }
 func (f *ProvisioningApiHandler) RouteGetAlertRuleGroup(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
 	groupParam := web.Params(ctx.Req)[":Group"]
-
 	return f.handleRouteGetAlertRuleGroup(ctx, folderUIDParam, groupParam)
 }
 func (f *ProvisioningApiHandler) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
-
 	return f.handleRouteGetContactpoints(ctx)
 }
 func (f *ProvisioningApiHandler) RouteGetMuteTiming(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
-
 	return f.handleRouteGetMuteTiming(ctx, nameParam)
 }
 func (f *ProvisioningApiHandler) RouteGetMuteTimings(ctx *models.ReqContext) response.Response {
-
 	return f.handleRouteGetMuteTimings(ctx)
 }
 func (f *ProvisioningApiHandler) RouteGetPolicyTree(ctx *models.ReqContext) response.Response {
-
 	return f.handleRouteGetPolicyTree(ctx)
 }
 func (f *ProvisioningApiHandler) RouteGetTemplate(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
-
 	return f.handleRouteGetTemplate(ctx, nameParam)
 }
 func (f *ProvisioningApiHandler) RouteGetTemplates(ctx *models.ReqContext) response.Response {
-
 	return f.handleRouteGetTemplates(ctx)
 }
 func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRoutePostAlertRule(ctx, conf)
 }
 func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRoutePostContactpoints(ctx, conf)
 }
 func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.MuteTimeInterval{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRoutePostMuteTiming(ctx, conf)
 }
 func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
+	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRoutePutAlertRule(ctx, conf, uIDParam)
 }
 func (f *ProvisioningApiHandler) RoutePutAlertRuleGroup(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
 	groupParam := web.Params(ctx.Req)[":Group"]
+	// Parse Request Body
 	conf := apimodels.AlertRuleGroupMetadata{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRoutePutAlertRuleGroup(ctx, conf, folderUIDParam, groupParam)
 }
 func (f *ProvisioningApiHandler) RoutePutContactpoint(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
+	// Parse Request Body
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRoutePutContactpoint(ctx, conf, uIDParam)
 }
 func (f *ProvisioningApiHandler) RoutePutMuteTiming(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
+	// Parse Request Body
 	conf := apimodels.MuteTimeInterval{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRoutePutMuteTiming(ctx, conf, nameParam)
 }
 func (f *ProvisioningApiHandler) RoutePutPolicyTree(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.Route{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRoutePutPolicyTree(ctx, conf)
 }
 func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
+	// Parse Request Body
 	conf := apimodels.MessageTemplateContent{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRoutePutTemplate(ctx, conf, nameParam)
 }
 func (f *ProvisioningApiHandler) RouteResetPolicyTree(ctx *models.ReqContext) response.Response {
-
 	return f.handleRouteResetPolicyTree(ctx)
 }
 

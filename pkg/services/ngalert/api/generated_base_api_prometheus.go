@@ -27,21 +27,17 @@ type PrometheusApi interface {
 func (f *PrometheusApiHandler) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
-
 	return f.handleRouteGetAlertStatuses(ctx, datasourceUIDParam)
 }
 func (f *PrometheusApiHandler) RouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
-
 	return f.handleRouteGetGrafanaAlertStatuses(ctx)
 }
 func (f *PrometheusApiHandler) RouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
-
 	return f.handleRouteGetGrafanaRuleStatuses(ctx)
 }
 func (f *PrometheusApiHandler) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
-
 	return f.handleRouteGetRuleStatuses(ctx, datasourceUIDParam)
 }
 

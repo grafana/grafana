@@ -25,29 +25,29 @@ type TestingApi interface {
 }
 
 func (f *TestingApiHandler) RouteEvalQueries(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.EvalQueriesPayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRouteEvalQueries(ctx, conf)
 }
 func (f *TestingApiHandler) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
 }
 func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	return f.handleRouteTestRuleGrafanaConfig(ctx, conf)
 }
 
