@@ -578,7 +578,7 @@ The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-r
 
 <!-- 8.5.9 START -->
 
-# 8.5.9 (unreleased)
+# 8.5.9 (2022-07-14)
 
 ### Bug fixes
 
@@ -828,7 +828,7 @@ The meaning of the default data source has now changed from being a persisted pr
 
 <!-- 8.4.10 START -->
 
-# 8.4.10 (unreleased)
+# 8.4.10 (2022-07-14)
 
 ### Bug fixes
 
