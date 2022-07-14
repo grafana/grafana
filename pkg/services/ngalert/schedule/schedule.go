@@ -79,7 +79,6 @@ type schedule struct {
 
 	ruleStore     store.RuleStore
 	instanceStore store.InstanceStore
-	orgStore      store.OrgStore
 
 	stateManager *state.Manager
 
@@ -111,7 +110,6 @@ type SchedulerCfg struct {
 	StopAppliedFunc func(ngmodels.AlertRuleKey)
 	Evaluator       eval.Evaluator
 	RuleStore       store.RuleStore
-	OrgStore        store.OrgStore
 	InstanceStore   store.InstanceStore
 	Metrics         *metrics.Scheduler
 	AlertSender     AlertsSender
@@ -133,7 +131,6 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		evaluator:             cfg.Evaluator,
 		ruleStore:             cfg.RuleStore,
 		instanceStore:         cfg.InstanceStore,
-		orgStore:              cfg.OrgStore,
 		metrics:               cfg.Metrics,
 		appURL:                appURL,
 		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
@@ -388,32 +385,25 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		return q.Result, nil
 	}
 
-	evaluate := func(ctx context.Context, r *ngmodels.AlertRule, attempt int64, e *evaluation) error {
+	evaluate := func(ctx context.Context, r *ngmodels.AlertRule, attempt int64, e *evaluation) {
 		logger := logger.New("version", r.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
-		condition := ngmodels.Condition{
-			Condition: r.Condition,
-			OrgID:     r.OrgID,
-			Data:      r.Data,
-		}
-		results, err := sch.evaluator.ConditionEval(&condition, e.scheduledAt)
+		results := sch.evaluator.ConditionEval(ctx, r.GetEvalCondition(), e.scheduledAt)
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
-		if err != nil {
+		if results.HasErrors() {
 			evalTotalFailures.Inc()
-			// consider saving alert instance on error
-			logger.Error("failed to evaluate alert rule", "duration", dur, "err", err)
-			return err
+			logger.Error("failed to evaluate alert rule", "results", results, "duration", dur)
+		} else {
+			logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 		}
-		logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results)
 		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		sch.alertsSender.Send(key, alerts)
-		return nil
 	}
 
 	retryIfError := func(f func(attempt int64) error) error {
@@ -475,7 +465,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						currentRule = newRule
 						logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
 					}
-					return evaluate(grafanaCtx, currentRule, attempt, ctx)
+					evaluate(grafanaCtx, currentRule, attempt, ctx)
+					return nil
 				})
 				if err != nil {
 					logger.Error("evaluation failed after all retries", "err", err)

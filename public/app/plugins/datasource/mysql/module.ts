@@ -1,25 +1,9 @@
 import { DataSourcePlugin } from '@grafana/data';
-import {
-  createChangeHandler,
-  createResetHandler,
-  PasswordFieldEnum,
-} from 'app/features/datasources/utils/passwordHandlers';
-import { SqlQueryEditor } from 'app/features/plugins/sql/components/QueryEditor';
-import { SQLQuery } from 'app/features/plugins/sql/types';
 
-import { MySqlDatasource } from './MySqlDatasource';
-
-class MysqlConfigCtrl {
-  static templateUrl = 'partials/config.html';
-  current: any;
-  onPasswordReset: ReturnType<typeof createResetHandler>;
-  onPasswordChange: ReturnType<typeof createChangeHandler>;
-
-  constructor() {
-    this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
-    this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);
-  }
-}
+import { ConfigurationEditor } from './configuration/ConfigurationEditor';
+import { MysqlDatasource } from './datasource';
+import { MysqlQueryCtrl } from './query_ctrl';
+import { MySQLQuery } from './types';
 
 const defaultQuery = `SELECT
     UNIX_TIMESTAMP(<time_column>) as time_sec,
@@ -44,13 +28,13 @@ class MysqlAnnotationsQueryCtrl {
 }
 
 export {
-  MySqlDatasource,
-  MySqlDatasource as Datasource,
-  MysqlConfigCtrl as ConfigCtrl,
+  MysqlDatasource,
+  MysqlDatasource as Datasource,
+  MysqlQueryCtrl as QueryCtrl,
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
 
-export const plugin = new DataSourcePlugin<MySqlDatasource, SQLQuery>(MySqlDatasource)
-  .setQueryEditor(SqlQueryEditor)
-  .setConfigCtrl(MysqlConfigCtrl)
+export const plugin = new DataSourcePlugin<MysqlDatasource, MySQLQuery>(MysqlDatasource)
+  .setQueryCtrl(MysqlQueryCtrl)
+  .setConfigEditor(ConfigurationEditor)
   .setAnnotationQueryCtrl(MysqlAnnotationsQueryCtrl);

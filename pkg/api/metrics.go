@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -24,7 +25,13 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return response.Error(http.StatusNotFound, "Data source not found", err)
 	}
-	var badQuery *query.ErrBadQuery
+
+	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
+	if errors.As(err, &secretsPlugin) {
+		return response.Error(http.StatusInternalServerError, fmt.Sprint("Secrets Plugin error: ", err.Error()), err)
+	}
+
+	var badQuery query.ErrBadQuery
 	if errors.As(err, &badQuery) {
 		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
 	}
