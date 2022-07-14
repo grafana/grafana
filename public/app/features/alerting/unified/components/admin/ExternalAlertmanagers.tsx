@@ -127,11 +127,43 @@ export const ExternalAlertmanagers = () => {
     }
   };
 
-  const noAlertmanagers = externalAlertManagers?.length === 0 && externalDsAlertManagers.length === 0;
+  const noAlertmanagers = externalAlertManagers?.length === 0;
+  const noDsAlertmanagers = externalDsAlertManagers?.length === 0;
+  const hasExternalAlertmanagers = !(noAlertmanagers && noDsAlertmanagers);
 
   return (
     <div>
       <h4>External Alertmanagers</h4>
+
+      <h5>Alert managers data sources</h5>
+      <div className={styles.muted}>
+        During the Alert manager data source configuration you can choose to send Grafana managed alerts to that Alert
+        manager. <br />
+        Here you can see the list of all Alert manager data sources which receive Grafana managed alerts.
+      </div>
+      <div className={styles.externalDs}>
+        {externalDsAlertManagers.map((ds) => (
+          <Card key={ds.uid}>
+            <Card.Heading>{ds.name}</Card.Heading>
+            <Card.Figure>
+              <img
+                src="public/app/plugins/datasource/alertmanager/img/logo.svg"
+                alt=""
+                height="40px"
+                width="40px"
+                style={{ objectFit: 'contain' }}
+              />
+            </Card.Figure>
+          </Card>
+        ))}
+      </div>
+
+      <h5>URL-based external alert managers [deprecated]</h5>
+      <Alert severity="warning" title="Deprecation notice">
+        The URL-based configuration method is deprecated and will be removed in the future versions of Grafana <br />
+        Please use Alertmanager data sources to configure external alert managers.
+      </Alert>
+
       <div className={styles.muted}>
         You can have your Grafana managed alerts be delivered to one or many external Alertmanager(s) in addition to the
         internal Alertmanager by specifying their URLs below.
@@ -144,10 +176,6 @@ export const ExternalAlertmanagers = () => {
         )}
       </div>
 
-      <Alert severity="warning" title="Deprecation notice">
-        The URL-based configuration method is deprecated and will be removed in the future versions of Grafana <br />
-        Please use Alertmanager data sources to configure external alert managers.
-      </Alert>
       {noAlertmanagers ? (
         <EmptyListCTA
           title="You have not added any external alertmanagers"
@@ -200,38 +228,22 @@ export const ExternalAlertmanagers = () => {
               })}
             </tbody>
           </table>
-
-          <h5>Alert manager data sources</h5>
-          <div className={styles.externalDs}>
-            {externalDsAlertManagers.map((ds) => (
-              <Card key={ds.uid}>
-                <Card.Heading>{ds.name}</Card.Heading>
-                <Card.Figure>
-                  <img
-                    src="public/app/plugins/datasource/alertmanager/img/logo.svg"
-                    alt=""
-                    height="40px"
-                    width="40px"
-                    style={{ objectFit: 'contain' }}
-                  />
-                </Card.Figure>
-              </Card>
-            ))}
-          </div>
-
-          <div>
-            <Field
-              label="Send alerts to"
-              description="Sets which Alertmanager will handle your alerts. Internal (Grafana built in Alertmanager), External (All Alertmanagers configured above), or both."
-            >
-              <RadioButtonGroup
-                options={alertmanagerChoices}
-                value={alertmanagersChoice}
-                onChange={(value) => onChangeAlertmanagerChoice(value!)}
-              />
-            </Field>
-          </div>
         </>
+      )}
+
+      {hasExternalAlertmanagers && (
+        <div className={styles.amChoice}>
+          <Field
+            label="Send alerts to"
+            description="Sets which Alertmanager will handle your alerts. Internal (Grafana built in Alertmanager), External (All Alertmanagers configured above), or both."
+          >
+            <RadioButtonGroup
+              options={alertmanagerChoices}
+              value={alertmanagersChoice}
+              onChange={(value) => onChangeAlertmanagerChoice(value!)}
+            />
+          </Field>
+        </div>
       )}
 
       <ConfirmModal
@@ -268,10 +280,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   table: css`
     margin-bottom: ${theme.spacing(2)};
   `,
+  amChoice: css`
+    margin: ${theme.spacing(2, 0)};
+  `,
   externalDs: css`
     display: grid;
     gap: ${theme.spacing(1)};
-    padding-bottom: ${theme.spacing(2)};
+    padding: ${theme.spacing(2, 0)};
   `,
   externalDsAddRow: css`
     display: flex;
