@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -32,7 +33,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("when some values missing should apply default on insert", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{ExpectedOrg: &models.Org{Id: 1}}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), withoutDefaults)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -50,7 +52,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 			items: []*datasources.DataSource{{Name: "My datasource name", OrgId: 1, Id: 1, Uid: util.GenerateShortUID()}},
 		}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), withoutDefaults)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -65,7 +68,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("no datasource in database", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -79,7 +83,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("One datasource in database with same name should update one datasource", func(t *testing.T) {
 		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}}}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -93,7 +98,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Two datasources with is_default should raise error", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), doubleDatasourcesConfig)
 		require.Equal(t, err, ErrInvalidConfigToManyDefault)
 	})
@@ -101,7 +107,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Multiple datasources in different organizations with isDefault in each organization should not raise error", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), multipleOrgsWithDefault)
 		require.NoError(t, err)
 		require.Equal(t, len(store.inserted), 4)
@@ -114,7 +121,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Remove one datasource should have removed old datasource", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), deleteOneDatasource)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -130,7 +138,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Two configured datasource and purge others", func(t *testing.T) {
 		store := &spyStore{items: []*datasources.DataSource{{Name: "old-graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfigPurgeOthers)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -144,7 +153,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Two configured datasource and purge others = false", func(t *testing.T) {
 		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -270,6 +280,20 @@ type mockOrgStore struct{ ExpectedOrg *models.Org }
 
 func (m *mockOrgStore) GetOrgById(c context.Context, cmd *models.GetOrgByIdQuery) error {
 	cmd.Result = m.ExpectedOrg
+	return nil
+}
+
+type mockCorrelationsStore struct{}
+
+func (m *mockCorrelationsStore) CreateCorrelation(c context.Context, cmd correlations.CreateCorrelationCommand) (correlations.CorrelationDTO, error) {
+	return correlations.CorrelationDTO{}, nil
+}
+
+func (m *mockCorrelationsStore) DeleteCorrelationsBySourceUID(c context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error {
+	return nil
+}
+
+func (m *mockCorrelationsStore) DeleteCorrelationsByTargetUID(c context.Context, cmd correlations.DeleteCorrelationsByTargetUIDCommand) error {
 	return nil
 }
 

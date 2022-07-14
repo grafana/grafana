@@ -27,7 +27,7 @@ type CreateCorrelationParams struct {
 }
 
 //swagger:response createCorrelationResponse
-type createCorrelationResponse struct {
+type CreateCorrelationResponse struct {
 	// in: body
 	Body correlations.CreateCorrelationResponse `json:"body"`
 }

@@ -65,18 +65,14 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
-			_, err := session.Delete(&Correlation{SourceUID: cmd.SourceUID})
-			return err
-		})
+		_, err := session.Delete(&Correlation{SourceUID: cmd.SourceUID})
+		return err
 	})
 }
 
 func (s CorrelationsService) deleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
-			_, err := session.Delete(&Correlation{TargetUID: cmd.TargetUID})
-			return err
-		})
+		_, err := session.Delete(&Correlation{TargetUID: cmd.TargetUID})
+		return err
 	})
 }
