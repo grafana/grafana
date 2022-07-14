@@ -88,8 +88,8 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		}
 
 		limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{
-			OrgId:  rule.OrgID,
-			UserId: userID,
+			OrgID:  rule.OrgID,
+			UserID: userID,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to check alert rule quota: %w", err)
