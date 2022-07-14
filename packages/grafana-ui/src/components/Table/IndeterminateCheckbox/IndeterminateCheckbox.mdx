@@ -1,0 +1,30 @@
+import { Meta, Props } from '@storybook/addon-docs/blocks';
+import { IndeterminateCheckbox } from './IndeterminateCheckbox';
+
+<Meta title="MDX|IndeterminateCheckbox" component={IndeterminateCheckbox} />
+
+# IndeterminateCheckbox for React Table
+
+This Indeterminate Checkbox component has three states: unchecked, checked, and indeterminate.
+In this indeterminate state, the checkbox appears as a box with a horizontal dash through it.
+The indeterminate state is used on a select-all checkbox to indicate that one or more selectable
+items in a table have been selected. This component is directly connected to React Table, which
+will soon be implemented in Core. Used in combination with React Table's useRowSelect hook.
+
+- https://react-table.tanstack.com/docs/api/useRowSelect. But it can be tweaked for use in
+- non-React Table contexts by modifying the `useCheckboxes` hook.
+
+# Usage
+
+```jsx
+export function ReactTable({ columns, data }: { columns: Column[]; data: any }) {
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
+    {
+      columns,
+      data,
+    },
+    useRowSelect,
+    useCheckboxes
+  );
+  ...
+```
