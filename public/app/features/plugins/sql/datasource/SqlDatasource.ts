@@ -27,10 +27,10 @@ import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variable
 import { MACRO_NAMES } from '../constants';
 import { DB, SQLQuery, SQLOptions, ResponseParser, SqlQueryModel, QueryFormat } from '../types';
 
-export abstract class SqlDatasource<
-  TSQLQuery extends SQLQuery,
-  TSQLOptions extends SQLOptions
-> extends DataSourceWithBackend<TSQLQuery, TSQLOptions> {
+export abstract class SqlDatasource<TSQLOptions extends SQLOptions> extends DataSourceWithBackend<
+  SQLQuery,
+  TSQLOptions
+> {
   id: number;
   name: string;
   interval: string;
@@ -77,7 +77,7 @@ export abstract class SqlDatasource<
     return value;
   };
 
-  interpolateVariablesInQueries(queries: TSQLQuery[], scopedVars: ScopedVars): TSQLQuery[] {
+  interpolateVariablesInQueries(queries: SQLQuery[], scopedVars: ScopedVars): SQLQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map((query) => {

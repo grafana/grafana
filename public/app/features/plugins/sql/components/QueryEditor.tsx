@@ -13,9 +13,15 @@ import { QueryHeader } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
-type Props = QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions>;
+export type Props<TSQLOptions extends SQLOptions> = QueryEditorProps<SqlDatasource<TSQLOptions>, SQLQuery, TSQLOptions>;
 
-export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range }: Props) {
+export function SqlQueryEditor<TSQLOptions extends SQLOptions>({
+  datasource,
+  query,
+  onChange,
+  onRunQuery,
+  range,
+}: Props<TSQLOptions>) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
   const { loading, error } = useAsync(async () => {

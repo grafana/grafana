@@ -2,20 +2,23 @@ import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data
 import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import { DB, ResponseParser, SQLOptions, SQLQuery } from 'app/features/plugins/sql/types';
+import { DB, ResponseParser, SQLQuery } from 'app/features/plugins/sql/types';
 
 import MySQLQueryModel from './MySqlQueryModel';
 import MySqlResponseParser from './MySqlResponseParser';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
-import { MySQLQuery } from './types';
+import { MySQLOptions } from './types';
 
-export class MySqlDatasource extends SqlDatasource<MySQLQuery, SQLOptions> {
+export class MySqlDatasource extends SqlDatasource<MySQLOptions> {
+  // This enables default annotation support for 7.2+
+  annotations = {};
+
   responseParser: MySqlResponseParser;
   completionProvider: LanguageCompletionProvider | undefined;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<SQLOptions>) {
+  constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
     this.responseParser = new MySqlResponseParser();
     this.completionProvider = undefined;
@@ -35,7 +38,7 @@ export class MySqlDatasource extends SqlDatasource<MySQLQuery, SQLOptions> {
     }
 
     const args = {
-      getColumns: { current: (query: MySQLQuery) => fetchColumns(db, query) },
+      getColumns: { current: (query: SQLQuery) => fetchColumns(db, query) },
       getTables: { current: (dataset?: string) => fetchTables(db, { dataset }) },
       fetchMeta: { current: (path?: string) => this.fetchMeta(path) },
     };

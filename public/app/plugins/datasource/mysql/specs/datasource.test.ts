@@ -9,11 +9,12 @@ import {
 } from '@grafana/data';
 import { FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { SQLOptions, SQLQuery } from 'app/features/plugins/sql/types';
+import { SQLQuery } from 'app/features/plugins/sql/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
 
 import { MySqlDatasource } from '../MySqlDatasource';
+import { MySQLOptions } from '../types';
 
 describe('MySQLDatasource', () => {
   const setupTextContext = (response: any) => {
@@ -24,7 +25,7 @@ describe('MySQLDatasource', () => {
       jsonData: {
         defaultProject: 'testproject',
       },
-    } as unknown as DataSourceInstanceSettings<SQLOptions>;
+    } as unknown as DataSourceInstanceSettings<MySQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
