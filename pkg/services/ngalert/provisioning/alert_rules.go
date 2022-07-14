@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -18,12 +19,14 @@ type AlertRuleService struct {
 	baseIntervalSeconds    int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
+	quotas                 QuotaChecker
 	xact                   TransactionManager
 	log                    log.Logger
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
+	quotas QuotaChecker,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
 	baseIntervalSeconds int64,
@@ -33,6 +36,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		baseIntervalSeconds:    baseIntervalSeconds,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
+		quotas:                 quotas,
 		xact:                   xact,
 		log:                    log,
 	}
@@ -57,7 +61,7 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 // CreateAlertRule creates a new alert rule. This function will ignore any
 // interval that is set in the rule struct and use the already existing group
 // interval or the default one.
-func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
+func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance, userID int64) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
 	}
@@ -82,6 +86,18 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		} else {
 			return errors.New("couldn't find newly created id")
 		}
+
+		limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{
+			OrgId:  rule.OrgID,
+			UserId: userID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to check alert rule quota: %w", err)
+		}
+		if limitReached {
+			return models.ErrQuotaReached
+		}
+
 		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
 	})
 	if err != nil {
