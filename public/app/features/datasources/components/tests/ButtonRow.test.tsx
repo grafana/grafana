@@ -5,14 +5,6 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { ButtonRow, Props } from '../ButtonRow';
 
-jest.mock('app/core/core', () => {
-  return {
-    contextSrv: {
-      hasPermission: () => true,
-    },
-  };
-});
-
 const setup = (propOverrides?: object) => {
   const props: Props = {
     canSave: false,

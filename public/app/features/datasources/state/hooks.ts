@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { DataSourcePluginMeta, DataSourceSettings, urlUtil } from '@grafana/data';
 import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 

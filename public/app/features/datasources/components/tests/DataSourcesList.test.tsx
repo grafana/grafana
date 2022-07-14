@@ -7,13 +7,6 @@ import { configureStore } from 'app/store/configureStore';
 import { getMockDataSources } from '../../__mocks__/dataSourcesMocks';
 import { DataSourcesListView } from '../DataSourcesList';
 
-jest.mock('app/core/core', () => ({
-  contextSrv: {
-    hasPermission: () => true,
-    hasPermissionInMetadata: () => true,
-  },
-}));
-
 const setup = () => {
   const store = configureStore();
 
