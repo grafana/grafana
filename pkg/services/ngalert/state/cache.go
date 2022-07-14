@@ -118,13 +118,7 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 
 func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels) (data.Labels, data.Labels) {
 	// use labels from the result and extra labels to expand the labels and annotations declared by the rule
-	templateLabels := make(map[string]string, len(alertInstance.Instance)+len(extraLabels))
-	for key, val := range alertInstance.Instance {
-		templateLabels[key] = val
-	}
-	for key, val := range extraLabels {
-		templateLabels[key] = val
-	}
+	templateLabels := mergeLabels(extraLabels, alertInstance.Instance)
 
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
@@ -226,6 +220,20 @@ func (c *cache) recordMetrics() {
 	for k, n := range ct {
 		c.metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
 	}
+}
+
+// if duplicate labels exist, keep the value from the first set
+func mergeLabels(a, b data.Labels) data.Labels {
+	newLbs := make(data.Labels, len(a)+len(b))
+	for k, v := range a {
+		newLbs[k] = v
+	}
+	for k, v := range b {
+		if _, ok := newLbs[k]; !ok {
+			newLbs[k] = v
+		}
+	}
+	return newLbs
 }
 
 func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {

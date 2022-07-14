@@ -134,3 +134,36 @@ func Test_getOrCreate(t *testing.T) {
 		}
 	})
 }
+
+func Test_mergeLabels(t *testing.T) {
+	t.Run("merges two maps", func(t *testing.T) {
+		a := models.GenerateAlertLabels(5, "set1-")
+		b := models.GenerateAlertLabels(5, "set2-")
+
+		result := mergeLabels(a, b)
+		require.Len(t, result, len(a)+len(b))
+		for key, val := range a {
+			require.Equal(t, val, result[key])
+		}
+		for key, val := range b {
+			require.Equal(t, val, result[key])
+		}
+	})
+	t.Run("first set take precedence if conflict", func(t *testing.T) {
+		a := models.GenerateAlertLabels(5, "set1-")
+		b := models.GenerateAlertLabels(5, "set2-")
+		c := b.Copy()
+		for key, val := range a {
+			c[key] = "set2-" + val
+		}
+
+		result := mergeLabels(a, c)
+		require.Len(t, result, len(a)+len(b))
+		for key, val := range a {
+			require.Equal(t, val, result[key])
+		}
+		for key, val := range b {
+			require.Equal(t, val, result[key])
+		}
+	})
+}
