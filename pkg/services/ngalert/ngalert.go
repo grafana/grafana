@@ -151,7 +151,7 @@ func (ng *AlertNG) init() error {
 		Cfg:           ng.Cfg.UnifiedAlerting,
 		C:             clk,
 		Logger:        ng.Log,
-		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
+		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, eval.NewLastSeenDatasourceCache(ng.DataSourceCache, ng.Log), ng.SecretsService, ng.ExpressionService),
 		InstanceStore: store,
 		RuleStore:     store,
 		Metrics:       ng.Metrics.GetSchedulerMetrics(),
