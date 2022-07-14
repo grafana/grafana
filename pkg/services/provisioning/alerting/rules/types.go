@@ -23,7 +23,7 @@ type RuleFile struct {
 
 type RuleFileV1 struct {
 	configVersion
-	Groups      []AlertRuleGroupV1 `json:"groups" yaml:"groups"`
+	Groups      []AlertRuleGroupV1 `json:"ruleGroups" yaml:"ruleGroups"`
 	DeleteRules []RuleDeleteV1     `json:"deleteRules" yaml:"deleteRules"`
 }
 
