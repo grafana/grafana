@@ -79,7 +79,6 @@ type schedule struct {
 
 	ruleStore     store.RuleStore
 	instanceStore store.InstanceStore
-	orgStore      store.OrgStore
 
 	stateManager *state.Manager
 
@@ -111,7 +110,6 @@ type SchedulerCfg struct {
 	StopAppliedFunc func(ngmodels.AlertRuleKey)
 	Evaluator       eval.Evaluator
 	RuleStore       store.RuleStore
-	OrgStore        store.OrgStore
 	InstanceStore   store.InstanceStore
 	Metrics         *metrics.Scheduler
 	AlertSender     AlertsSender
@@ -133,7 +131,6 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		evaluator:             cfg.Evaluator,
 		ruleStore:             cfg.RuleStore,
 		instanceStore:         cfg.InstanceStore,
-		orgStore:              cfg.OrgStore,
 		metrics:               cfg.Metrics,
 		appURL:                appURL,
 		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
@@ -392,7 +389,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		logger := logger.New("version", r.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
-		results := sch.evaluator.ConditionEval(r.GetEvalCondition(), e.scheduledAt)
+		results := sch.evaluator.ConditionEval(ctx, r.GetEvalCondition(), e.scheduledAt)
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
