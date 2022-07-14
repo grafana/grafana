@@ -1,6 +1,8 @@
+import { css, cx } from '@emotion/css';
 import React, { FC } from 'react';
 
-import { toDuration } from '@grafana/data';
+import { toDuration, GrafanaTheme2 } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
 
 export interface TimeProps {
   timeInMs: number;
@@ -9,7 +11,9 @@ export interface TimeProps {
 }
 
 export const Time: FC<TimeProps> = ({ timeInMs, className, humanize }) => {
-  return <span className={`elapsed-time ${className}`}>{formatTime(timeInMs, humanize)}</span>;
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+  return <span className={cx(styles.elapsedTime, className)}>{formatTime(timeInMs, humanize)}</span>;
 };
 
 const formatTime = (timeInMs: number, humanize = false): string => {
@@ -34,3 +38,14 @@ const formatTime = (timeInMs: number, humanize = false): string => {
 
   return `${seconds}s`;
 };
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    elapsedTime: css`
+      //text-align: center;
+    `,
+  };
+};
+
+// ${theme.typography.bodySmall.fontSize};
+// ${theme.spacing(1)}
