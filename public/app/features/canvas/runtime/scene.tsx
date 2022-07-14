@@ -311,6 +311,7 @@ export class Scene {
       container: this.div,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
+      selectFromInside: false,
     });
 
     this.moveable = new Moveable(this.div!, {
