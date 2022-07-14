@@ -31,7 +31,7 @@ type ScheduleService interface {
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
 	// UpdateAlertRule notifies scheduler that a rule has been changed
-	UpdateAlertRule(key ngmodels.AlertRuleKey, version int64)
+	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64)
 	// UpdateAlertRulesByNamespaceUID notifies scheduler that all rules in a namespace should be updated.
 	UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error
 	// DeleteAlertRule notifies scheduler that a rule has been changed
@@ -157,12 +157,12 @@ func (sch *schedule) Run(ctx context.Context) error {
 }
 
 // UpdateAlertRule looks for the active rule evaluation and commands it to update the rule
-func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, version int64) {
+func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64) {
 	ruleInfo, err := sch.registry.get(key)
 	if err != nil {
 		return
 	}
-	ruleInfo.update(ruleVersion(version))
+	ruleInfo.update(ruleVersion(lastVersion))
 }
 
 // UpdateAlertRulesByNamespaceUID looks for the active rule evaluation for every rule in the given namespace and commands it to update the rule.
@@ -429,7 +429,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
 			// therefore, at the time when message from updateCh is processed the current rule will have
 			// at least the same version (or greater) and the state created for the new version of the rule.
-			if currentRule != nil && int64(version) <= currentRule.Version {
+			if currentRule != nil && int64(version) <= currentRule.Version || version < 1 {
 				logger.Info("skip updating rule because its current version is actual", "current_version", currentRule.Version, "new_version", version)
 				continue
 			}

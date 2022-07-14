@@ -112,9 +112,9 @@ func (a *alertRuleInfo) eval(t time.Time, version int64) (bool, *evaluation) {
 }
 
 // update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
-func (a *alertRuleInfo) update(version ruleVersion) bool {
+func (a *alertRuleInfo) update(lastVersion ruleVersion) bool {
 	// check if the channel is not empty.
-	msg := version
+	msg := lastVersion
 	select {
 	case v := <-a.updateCh:
 		// if it has a version pick the greatest one.
