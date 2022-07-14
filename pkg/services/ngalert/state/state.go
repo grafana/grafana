@@ -117,6 +117,12 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 
 	switch a.State {
 	case eval.Alerting, eval.Error:
+		// We must set the state here as the state can change both from Alerting
+		// to Error and from Error to Alerting. This can happen when the datasource
+		// is unavailable or queries against the datasource returns errors, and is
+		// then resolved as soon as the datasource is available and queries return
+		// without error
+		a.State = execErrState
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
 		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
