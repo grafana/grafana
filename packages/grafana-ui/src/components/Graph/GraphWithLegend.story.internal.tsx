@@ -120,7 +120,7 @@ export const WithLegend: Story<StoryProps> = ({ rightAxisSeries, displayMode, le
   return (
     <GraphWithLegend
       legendDisplayMode={
-        displayMode === 'hidden'
+        showLegend === 'hidden'
           ? LegendVisibility.Hidden
           : displayMode === 'table'
           ? LegendDisplayMode.Table
