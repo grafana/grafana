@@ -1,4 +1,6 @@
 {
+  "__inputs": [],
+  "__elements": [],
   "__requires": [
     {
       "type": "panel",
@@ -10,19 +12,13 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "7.4.3"
+      "version": "9.0.1"
     },
     {
       "type": "datasource",
       "id": "grafana-azure-monitor-datasource",
       "name": "Azure Monitor",
-      "version": "0.3.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": ""
+      "version": "1.0.0"
     },
     {
       "type": "panel",
@@ -43,24 +39,23 @@
       "version": ""
     }
   ],
-  "annotations": {
-    "list": []
-  },
+  "description": "A dashboard that provides a unified view of Azure Storage services performance, capacity, and availability metrics.",
   "editable": true,
-  "gnetId": null,
-  "graphTooltip": 0,
   "id": null,
-  "iteration": 1620257813794,
+  "iteration": null,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "percentage",
@@ -82,7 +77,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 1
+        "y": 0
       },
       "id": 7,
       "options": {
@@ -96,19 +91,9 @@
         "showThresholdMarkers": false,
         "text": {}
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -130,11 +115,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -176,30 +161,30 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Availability",
       "transparent": true,
       "type": "gauge"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "blue",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -217,7 +202,7 @@
         "h": 4,
         "w": 3,
         "x": 3,
-        "y": 1
+        "y": 0
       },
       "id": 6,
       "options": {
@@ -233,19 +218,9 @@
         "text": {},
         "textMode": "value_and_name"
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -270,11 +245,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "PT5M",
             "timeGrains": [
               {
@@ -316,28 +291,29 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "purple",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -355,7 +331,7 @@
         "h": 4,
         "w": 3,
         "x": 6,
-        "y": 1
+        "y": 0
       },
       "id": 8,
       "options": {
@@ -371,19 +347,9 @@
         "text": {},
         "textMode": "value_and_name"
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -404,11 +370,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "SuccessE2ELatency",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -450,28 +416,29 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "purple",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -489,7 +456,7 @@
         "h": 4,
         "w": 3,
         "x": 9,
-        "y": 1
+        "y": 0
       },
       "id": 9,
       "options": {
@@ -505,19 +472,9 @@
         "text": {},
         "textMode": "value_and_name"
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -538,11 +495,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "SuccessServerLatency",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -584,28 +541,29 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "blue",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -623,7 +581,7 @@
         "h": 4,
         "w": 3,
         "x": 12,
-        "y": 1
+        "y": 0
       },
       "id": 10,
       "options": {
@@ -639,19 +597,9 @@
         "text": {},
         "textMode": "value_and_name"
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total", "Average", "Minimum", "Maximum"],
             "aggregation": "Total",
@@ -672,11 +620,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "Ingress",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -718,28 +666,29 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "blue",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -757,7 +706,7 @@
         "h": 4,
         "w": 3,
         "x": 15,
-        "y": 1
+        "y": 0
       },
       "id": 11,
       "options": {
@@ -773,19 +722,9 @@
         "text": {},
         "textMode": "value_and_name"
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total", "Average", "Minimum", "Maximum"],
             "aggregation": "Total",
@@ -806,11 +745,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "Egress",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -852,83 +791,95 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 4
       },
-      "hiddenSeries": false,
       "id": 2,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null as zero",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -954,11 +905,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/tableServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1000,25 +951,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -1044,11 +985,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1090,26 +1031,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -1139,11 +1070,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1185,26 +1116,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -1230,11 +1151,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/queueServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/queueservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/queueServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1276,124 +1197,97 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "D",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Transactions by storage type",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
       "transformations": [],
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 4
       },
-      "hiddenSeries": false,
       "id": 14,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -1403,7 +1297,7 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -1425,11 +1319,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1471,59 +1365,24 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Transactions by API Name",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
       "transformations": [],
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1539,7 +1398,8 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 1,
@@ -1548,7 +1408,14 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -1572,46 +1439,37 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 14
+        "y": 13
       },
       "id": 13,
       "options": {
+        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltipOptions": {
-          "mode": "multi"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
         }
       },
-      "pluginVersion": "7.4.3",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
-            "aggregation": "",
+            "aggregation": "Average",
             "alias": "Table capacity",
             "allowedTimeGrainsMs": [3600000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "select",
-            "metricName": "select",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricName": "TableCapacity",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "select",
             "resourceName": "select",
-            "timeGrain": "",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
+            "timeGrain": "auto",
             "timeGrains": [
               {
                 "text": "auto",
@@ -1624,25 +1482,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -1660,11 +1508,11 @@
                 "value": "Tier"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "BlobCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1678,26 +1526,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -1711,11 +1549,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "FileCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1729,26 +1567,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -1757,11 +1585,11 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "$ns/queueServices",
             "metricName": "QueueCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/queueservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/queueServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1775,24 +1603,25 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "D",
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Capacity by storage type",
       "transformations": [],
       "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1808,7 +1637,8 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineStyle": {
@@ -1820,7 +1650,14 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -1840,32 +1677,23 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 14
+        "y": 13
       },
       "id": 12,
       "options": {
+        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltipOptions": {
-          "mode": "single"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
-      "pluginVersion": "7.4.3",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -1887,11 +1715,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/tableServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1933,25 +1761,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -1973,11 +1791,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -2019,26 +1837,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -2064,11 +1872,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -2110,26 +1918,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -2151,11 +1949,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/queueServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/queueservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/queueServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -2197,44 +1995,54 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "D",
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Availability by storage type",
       "transformations": [],
       "type": "timeseries"
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "${ds}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 22
       },
       "id": 52,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${ds}"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Failures",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -2284,7 +2092,7 @@
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 24
+        "y": 23
       },
       "id": 16,
       "options": {
@@ -2300,19 +2108,9 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -2321,7 +2119,7 @@
             "dimensionFilters": [
               {
                 "dimension": "ResponseType",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -2343,11 +2141,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -2389,22 +2187,22 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "",
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2421,7 +2219,8 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 1,
@@ -2430,7 +2229,14 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -2466,32 +2272,23 @@
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 24
+        "y": 23
       },
       "id": 18,
       "options": {
+        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltipOptions": {
-          "mode": "single"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
-      "pluginVersion": "7.4.3",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -2501,7 +2298,7 @@
             "dimensionFilters": [
               {
                 "dimension": "ResponseType",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -2523,11 +2320,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -2569,30 +2366,31 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "",
       "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "displayMode": "auto",
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -2624,25 +2422,20 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 29
       },
       "id": 20,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -2652,12 +2445,12 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               },
               {
                 "dimension": "ResponseType",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -2679,11 +2472,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -2725,9 +2518,9 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -2746,15 +2539,19 @@
       "type": "table"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "displayMode": "auto",
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -2786,25 +2583,20 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 29
       },
       "id": 22,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -2814,12 +2606,12 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               },
               {
                 "dimension": "ResponseType",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -2845,11 +2637,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -2891,9 +2683,9 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -2912,15 +2704,19 @@
       "type": "table"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "displayMode": "auto",
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -2952,25 +2748,20 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 37
       },
       "id": 24,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -2980,12 +2771,12 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               },
               {
                 "dimension": "ResponseType",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -3007,11 +2798,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/tableServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -3053,9 +2844,9 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -3074,15 +2865,19 @@
       "type": "table"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "displayMode": "auto",
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -3114,25 +2909,20 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 37
       },
       "id": 26,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Total"],
             "aggregation": "Total",
@@ -3142,12 +2932,12 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               },
               {
                 "dimension": "ResponseType",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -3169,11 +2959,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/queueServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/queueservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/queueServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -3215,9 +3005,9 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -3237,26 +3027,38 @@
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "${ds}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 45
       },
       "id": 50,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${ds}"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Performance",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -3290,7 +3092,7 @@
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 47
+        "y": 46
       },
       "id": 28,
       "options": {
@@ -3306,19 +3108,9 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -3339,11 +3131,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "SuccessE2ELatency",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -3385,25 +3177,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -3424,11 +3206,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "SuccessServerLatency",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -3470,21 +3252,23 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3500,7 +3284,8 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 1,
@@ -3509,7 +3294,14 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -3544,7 +3336,7 @@
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 47
+        "y": 46
       },
       "id": 30,
       "options": {
@@ -3553,23 +3345,13 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltipOptions": {
-          "mode": "single"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
-      "pluginVersion": "7.4.3",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -3590,11 +3372,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "SuccessE2ELatency",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -3636,25 +3418,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -3675,11 +3447,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "SuccessServerLatency",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -3721,29 +3493,32 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "displayMode": "auto",
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -3832,25 +3607,20 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 52
       },
       "id": 32,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -3859,7 +3629,7 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -3877,11 +3647,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "SuccessE2ELatency",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -3923,25 +3693,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -3950,7 +3710,7 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -3968,11 +3728,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "SuccessServerLatency",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4014,17 +3774,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transformations": [
         {
           "id": "reduce",
@@ -4051,27 +3810,39 @@
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "${ds}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 64
+        "y": 63
       },
       "id": 48,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${ds}"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Availability",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "description": "The data comes from Storage metrics. It measures the availability of requests on Storage accounts.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "percentage",
@@ -4093,7 +3864,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 64
       },
       "id": 34,
       "options": {
@@ -4107,19 +3878,9 @@
         "showThresholdMarkers": false,
         "text": {}
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -4141,11 +3902,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4187,25 +3948,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -4227,11 +3978,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4273,26 +4024,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -4314,11 +4055,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/tableServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4360,26 +4101,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -4405,11 +4136,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4451,26 +4182,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "D",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -4492,11 +4213,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/queueServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/queueservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/queueServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4538,29 +4259,32 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "E",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "type": "gauge"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "displayMode": "auto",
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -4597,26 +4321,21 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 73
+        "y": 72
       },
       "id": 36,
       "maxDataPoints": 1,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -4626,7 +4345,7 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -4644,11 +4363,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4690,25 +4409,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -4718,7 +4427,7 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -4736,11 +4445,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/tableServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4782,26 +4491,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -4811,7 +4510,7 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -4833,11 +4532,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4879,26 +4578,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -4908,7 +4597,7 @@
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
-                "filter": "",
+                "filters": [],
                 "operator": "eq"
               }
             ],
@@ -4926,11 +4615,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/queueServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/queueservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/queueServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -4972,18 +4661,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "D",
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Availability by API name",
       "transformations": [
         {
@@ -4998,69 +4685,82 @@
       "type": "table"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "percent"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 73
+        "y": 72
       },
-      "hiddenSeries": false,
       "id": 38,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -5082,11 +4782,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5128,25 +4828,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -5168,11 +4858,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/tableServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5214,26 +4904,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -5259,11 +4939,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5305,26 +4985,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average", "Minimum", "Maximum"],
             "aggregation": "Average",
@@ -5346,11 +5016,11 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "$ns/queueServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/queueservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/queueServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5392,80 +5062,54 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "D",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Availability Trend",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
       "transformations": [],
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "percent",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "${ds}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 80
       },
       "id": 46,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${ds}"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Capacity",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -5483,7 +5127,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 82
+        "y": 81
       },
       "id": 40,
       "options": {
@@ -5499,19 +5143,9 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -5520,11 +5154,11 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "$ns",
             "metricName": "UsedCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricNamespace": "microsoft.storage/storageaccounts",
             "resourceGroup": "$rg",
             "resourceName": "$resource",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5538,25 +5172,15 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -5574,11 +5198,11 @@
                 "value": "Tier"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "BlobCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5592,26 +5216,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -5620,11 +5234,11 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "$ns/tableServices",
             "metricName": "TableCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5638,26 +5252,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -5671,11 +5275,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "FileCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5689,26 +5293,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "D",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -5717,11 +5311,11 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "$ns/queueServices",
             "metricName": "QueueCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/queueservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/queueServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5735,83 +5329,95 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "E",
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "type": "stat"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "decbytes"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 90
+        "y": 89
       },
-      "hiddenSeries": false,
       "id": 42,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 1,
-      "points": true,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "9.0.1",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -5829,11 +5435,11 @@
                 "value": "Tier"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "BlobCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5847,26 +5453,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -5875,11 +5471,11 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "$ns/tableServices",
             "metricName": "TableCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5893,26 +5489,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -5926,11 +5512,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "FileCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5944,26 +5530,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "D",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -5972,11 +5548,11 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "$ns/queueServices",
             "metricName": "QueueCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/queueservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/queueServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5990,59 +5566,24 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "E",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Storage capacity",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "decbytes",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6058,7 +5599,8 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 1,
@@ -6067,7 +5609,14 @@
               "type": "linear"
             },
             "showPoints": "always",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -6091,32 +5640,23 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 90
+        "y": 89
       },
       "id": 44,
       "options": {
+        "graph": {},
         "legend": {
           "calcs": ["mean"],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltipOptions": {
-          "mode": "single"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
-      "pluginVersion": "7.4.3",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -6134,11 +5674,11 @@
                 "value": "Tier"
               }
             ],
-            "metricDefinition": "$ns/blobServices",
             "metricName": "BlobCount",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/blobservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/blobServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -6152,26 +5692,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -6180,11 +5710,11 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "$ns/tableServices",
             "metricName": "TableCount",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/tableservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/tableServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -6198,26 +5728,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -6231,11 +5751,11 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "$ns/fileServices",
             "metricName": "FileCount",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -6249,26 +5769,16 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "D",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "00000000-0000-0000-0000-000000000000"
-          },
           "azureMonitor": {
             "aggOptions": ["Average"],
             "aggregation": "Average",
@@ -6277,11 +5787,11 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "$ns/queueServices",
-            "metricName": "QueueCount",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricName": "FileCount",
+            "metricNamespace": "microsoft.storage/storageaccounts/fileservices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$resource/fileServices/default",
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -6295,35 +5805,35 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "E",
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Storage count",
       "type": "timeseries"
     }
   ],
   "refresh": false,
-  "schemaVersion": 27,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
-        "current": {},
-        "description": null,
-        "error": null,
+        "current": {
+          "selected": false,
+          "text": "Azure Monitor",
+          "value": "Azure Monitor"
+        },
         "hide": 0,
         "includeAll": false,
-        "label": "Data Source",
+        "label": "Datasource",
         "multi": false,
         "name": "ds",
         "options": [],
@@ -6335,12 +5845,12 @@
         "type": "datasource"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
         "definition": "subscriptions()",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Subscription",
@@ -6353,14 +5863,11 @@
         "skipUrlSync": false,
         "sort": 0,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
       {
-        "description": null,
-        "error": null,
         "hide": 2,
         "label": "Namespace",
         "name": "ns",
@@ -6369,12 +5876,12 @@
         "type": "constant"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
         "definition": "ResourceGroups($sub)",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Resource Group",
@@ -6387,18 +5894,17 @@
         "skipUrlSync": false,
         "sort": 0,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
         "definition": "ResourceNames($sub, $rg, $ns)",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Resource",
@@ -6411,7 +5917,6 @@
         "skipUrlSync": false,
         "sort": 0,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
@@ -6422,7 +5927,6 @@
     "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {},
   "timezone": "",
   "title": "Azure / Insights / Storage Accounts",
   "uid": "3n2E8CrGk",
