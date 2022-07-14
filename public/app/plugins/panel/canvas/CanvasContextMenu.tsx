@@ -32,7 +32,8 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   const handleContextMenu = useCallback(
     (event) => {
       event.preventDefault();
-      if (event.currentTarget) {
+      const shouldSelectElement = event.currentTarget !== scene.div;
+      if (shouldSelectElement) {
         scene.select({ targets: [event.currentTarget as HTMLElement | SVGElement] });
       }
       setAnchorPoint({ x: event.pageX, y: event.pageY });
@@ -48,67 +49,75 @@ export const CanvasContextMenu = ({ scene }: Props) => {
     }
   }, [selectedElements, handleContextMenu]);
 
-  if (!selectedElements) {
-    return <></>;
-  }
+  useEffect(() => {
+    if (scene.div) {
+      scene.div.addEventListener('contextmenu', handleContextMenu);
+    }
+  }, [handleContextMenu, scene.div]);
 
   const closeContextMenu = () => {
     setIsMenuVisible(false);
   };
 
   const renderMenuItems = () => {
-    return (
-      <>
-        <MenuItem
-          label="Delete"
-          onClick={() => {
-            contextMenuAction(LayerActionID.Delete);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        <MenuItem
-          label="Duplicate"
-          onClick={() => {
-            contextMenuAction(LayerActionID.Duplicate);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        <MenuItem
-          label="Bring to front"
-          onClick={() => {
-            contextMenuAction(LayerActionID.MoveTop);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        <MenuItem
-          label="Send to back"
-          onClick={() => {
-            contextMenuAction(LayerActionID.MoveBottom);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        {!scene.isPanelEditing && (
+    const openCloseEditorMenuItem = (
+      <MenuItem
+        label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
+        onClick={() => {
+          if (scene.inlineEditingCallback) {
+            if (inlineEditorOpen) {
+              activePanel.panel.inlineEditButtonClose();
+            } else {
+              scene.inlineEditingCallback();
+            }
+          }
+          closeContextMenu();
+        }}
+        className={styles.menuItem}
+      />
+    );
+
+    if (selectedElements && selectedElements.length >= 1) {
+      return (
+        <>
           <MenuItem
-            label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
+            label="Delete"
             onClick={() => {
-              if (scene.inlineEditingCallback) {
-                if (inlineEditorOpen) {
-                  activePanel.panel.inlineEditButtonClose();
-                } else {
-                  scene.inlineEditingCallback();
-                }
-              }
+              contextMenuAction(LayerActionID.Delete);
               closeContextMenu();
             }}
             className={styles.menuItem}
           />
-        )}
-      </>
-    );
+          <MenuItem
+            label="Duplicate"
+            onClick={() => {
+              contextMenuAction(LayerActionID.Duplicate);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          <MenuItem
+            label="Bring to front"
+            onClick={() => {
+              contextMenuAction(LayerActionID.MoveTop);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          <MenuItem
+            label="Send to back"
+            onClick={() => {
+              contextMenuAction(LayerActionID.MoveBottom);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          {!scene.isPanelEditing && openCloseEditorMenuItem}
+        </>
+      );
+    } else {
+      return openCloseEditorMenuItem;
+    }
   };
 
   const contextMenuAction = (actionType: string) => {
