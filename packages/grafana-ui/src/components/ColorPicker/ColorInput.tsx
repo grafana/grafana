@@ -1,6 +1,6 @@
 import { cx, css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { forwardRef, useState, useEffect } from 'react';
+import React, { forwardRef, useState, useEffect, useMemo } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -15,7 +15,8 @@ interface ColorInputProps extends ColorPickerProps, Omit<InputProps, 'color' | '
 const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(({ color, onChange, ...inputProps }, ref) => {
   const [value, setValue] = useState(color);
   const [previousColor, setPreviousColor] = useState(color);
-  const updateColor = debounce(onChange, 100);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const updateColor = useMemo(() => debounce(onChange, 100), []);
 
   useEffect(() => {
     const newColor = tinycolor(color);
