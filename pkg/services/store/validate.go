@@ -13,6 +13,7 @@ var (
 	allowedImageExtensions = map[string]bool{
 		".jpg":  true,
 		".jpeg": true,
+		".svg":  true,
 		".gif":  true,
 		".png":  true,
 		".webp": true,
@@ -23,6 +24,7 @@ var (
 		".gif":  {"image/gif": true},
 		".png":  {"image/png": true},
 		".webp": {"image/webp": true},
+		".svg":  {"text/xml; charset=utf-8": true, "text/plain; charset=utf-8": true, "image/svg+xml": true},
 	}
 )
 
@@ -68,19 +70,19 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 	// TODO: validateProperties
 
 	if err := filestorage.ValidatePath(storagePath); err != nil {
-		return fail("path validation failed: " + err.Error())
+		return fail("path validation failed. error:" + err.Error() + ". path: " + storagePath)
 	}
 
 	switch req.EntityType {
+	case EntityTypeJSON:
+		fallthrough
 	case EntityTypeFolder:
 		fallthrough
 	case EntityTypeDashboard:
 		// TODO: add proper validation
-		var something interface{}
-		if err := json.Unmarshal(req.Contents, &something); err != nil {
-			return fail(err.Error())
+		if !json.Valid(req.Contents) {
+			return fail("invalid json")
 		}
-
 		return success()
 	case EntityTypeImage:
 		return s.validateImage(ctx, user, req)

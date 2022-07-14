@@ -40,6 +40,7 @@ type ProvisioningApi interface {
 	RoutePutMuteTiming(*models.ReqContext) response.Response
 	RoutePutPolicyTree(*models.ReqContext) response.Response
 	RoutePutTemplate(*models.ReqContext) response.Response
+	RouteResetPolicyTree(*models.ReqContext) response.Response
 }
 
 func (f *ProvisioningApiHandler) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
@@ -108,7 +109,7 @@ func (f *ProvisioningApiHandler) RouteGetTemplates(ctx *models.ReqContext) respo
 	return f.handleRouteGetTemplates(ctx)
 }
 func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *models.ReqContext) response.Response {
-	conf := apimodels.AlertRule{}
+	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -134,7 +135,7 @@ func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *models.ReqContext) res
 func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
-	conf := apimodels.AlertRule{}
+	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -189,6 +190,10 @@ func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *models.ReqContext) respon
 	}
 
 	return f.handleRoutePutTemplate(ctx, conf, nameParam)
+}
+func (f *ProvisioningApiHandler) RouteResetPolicyTree(ctx *models.ReqContext) response.Response {
+
+	return f.handleRouteResetPolicyTree(ctx)
 }
 
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics.API) {
@@ -400,6 +405,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodPut,
 				"/api/v1/provisioning/templates/{name}",
 				srv.RoutePutTemplate,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/v1/provisioning/policies"),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/policies"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/v1/provisioning/policies",
+				srv.RouteResetPolicyTree,
 				m,
 			),
 		)

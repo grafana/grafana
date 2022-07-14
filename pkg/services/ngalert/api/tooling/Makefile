@@ -30,6 +30,12 @@ post.json: spec.json
 api.json: spec-stable.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
+validate-stable: spec-stable.json $(SWAGGER)
+	$(SWAGGER) validate $(<)
+
+validate: spec.json $(SWAGGER)
+	$(SWAGGER) validate $(<)
+
 swagger-codegen-api:
 	docker run --rm -v $$(pwd):/local --user $$(id -u):$$(id -g) parsertongue/swagger-codegen-cli:3.0.32 generate \
 	-i /local/post.json \

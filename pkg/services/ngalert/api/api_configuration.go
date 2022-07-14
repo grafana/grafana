@@ -16,7 +16,7 @@ import (
 )
 
 type ConfigSrv struct {
-	scheduler Scheduler
+	alertmanagerProvider ExternalAlertmanagerProvider
 	store     store.AdminConfigurationStore
 	log       log.Logger
 }

@@ -513,4 +513,28 @@ describe('VariableSupport', () => {
       done();
     });
   });
+
+  describe('querying for subscriptions', () => {
+    it('can fetch subscriptions', (done) => {
+      const fakeSubscriptions = ['subscriptionId'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getSubscriptions: jest.fn().mockResolvedValueOnce(fakeSubscriptions),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.SubscriptionsQuery,
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(fakeSubscriptions);
+        done();
+      });
+    });
+  });
 });

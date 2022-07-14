@@ -8,17 +8,26 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
+import { useHasRuler } from '../../hooks/useHasRuler';
 import { disableRBAC, mockCombinedRule, mockDataSource } from '../../mocks';
 
 import { RulesGroup } from './RulesGroup';
 
-const hasRulerMock = jest.fn<boolean, any>();
-jest.mock('../../hooks/useHasRuler', () => ({
-  useHasRuler: () => hasRulerMock,
-}));
+jest.mock('../../hooks/useHasRuler');
+
+const mocks = {
+  useHasRuler: jest.mocked(useHasRuler),
+};
+
+function mockUseHasRuler(hasRuler: boolean, rulerRulesLoaded: boolean) {
+  mocks.useHasRuler.mockReturnValue({
+    hasRuler: () => hasRuler,
+    rulerRulesLoaded: () => rulerRulesLoaded,
+  });
+}
 
 beforeEach(() => {
-  hasRulerMock.mockReset();
+  mocks.useHasRuler.mockReset();
 });
 
 const ui = {
@@ -55,6 +64,7 @@ describe('Rules group tests', () => {
 
     it('Should hide delete and edit group buttons', () => {
       // Act
+      mockUseHasRuler(true, true);
       renderRulesGroup(namespace, group);
 
       // Assert
@@ -83,33 +93,33 @@ describe('Rules group tests', () => {
 
     it('When ruler enabled should display delete and edit group buttons', () => {
       // Arrange
-      hasRulerMock.mockReturnValue(true);
+      mockUseHasRuler(true, true);
 
       // Act
       renderRulesGroup(namespace, group);
 
       // Assert
-      expect(hasRulerMock).toHaveBeenCalled();
+      expect(mocks.useHasRuler).toHaveBeenCalled();
       expect(ui.deleteGroupButton.get()).toBeInTheDocument();
       expect(ui.editGroupButton.get()).toBeInTheDocument();
     });
 
     it('When ruler disabled should hide delete and edit group buttons', () => {
       // Arrange
-      hasRulerMock.mockReturnValue(false);
+      mockUseHasRuler(false, false);
 
       // Act
       renderRulesGroup(namespace, group);
 
       // Assert
-      expect(hasRulerMock).toHaveBeenCalled();
+      expect(mocks.useHasRuler).toHaveBeenCalled();
       expect(ui.deleteGroupButton.query()).not.toBeInTheDocument();
       expect(ui.editGroupButton.query()).not.toBeInTheDocument();
     });
 
     it('Delete button click should display confirmation modal', async () => {
       // Arrange
-      hasRulerMock.mockReturnValue(true);
+      mockUseHasRuler(true, true);
 
       // Act
       renderRulesGroup(namespace, group);

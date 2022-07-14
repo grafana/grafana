@@ -6,35 +6,27 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 )
 
-type dsLookup func(ref *extract.DataSourceRef) *extract.DataSourceRef
-
-func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error) {
+func exportDataSources(helper *commitHelper, job *gitExportJob) error {
 	cmd := &datasources.GetDataSourcesQuery{
-		OrgId: job.orgID,
+		OrgId: helper.orgID,
 	}
 	err := job.sql.GetDataSources(helper.ctx, cmd)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	sort.SliceStable(cmd.Result, func(i, j int) bool {
 		return cmd.Result[i].Created.After(cmd.Result[j].Created)
 	})
 
-	byUID := make(map[string]*extract.DataSourceRef, len(cmd.Result))
-	byName := make(map[string]*extract.DataSourceRef, len(cmd.Result))
 	for _, ds := range cmd.Result {
-		ref := &extract.DataSourceRef{
-			UID:  ds.Uid,
-			Type: ds.Type,
-		}
-		byUID[ds.Uid] = ref
-		byName[ds.Name] = ref
 		ds.OrgId = 0
 		ds.Version = 0
+		ds.SecureJsonData = map[string][]byte{
+			"TODO": []byte("XXX"),
+		}
 
 		err := helper.add(commitOptions{
 			body: []commitBody{
@@ -47,26 +39,9 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error
 			comment: fmt.Sprintf("Add datasource: %s", ds.Name),
 		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	// Return the lookup function
-	return func(ref *extract.DataSourceRef) *extract.DataSourceRef {
-		if ref == nil || ref.UID == "" {
-			return &extract.DataSourceRef{
-				UID:  "default.uid",
-				Type: "default.type",
-			}
-		}
-		v, ok := byUID[ref.UID]
-		if ok {
-			return v
-		}
-		v, ok = byName[ref.UID]
-		if ok {
-			return v
-		}
-		return nil
-	}, nil
+	return nil
 }

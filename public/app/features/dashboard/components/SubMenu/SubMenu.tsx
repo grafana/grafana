@@ -61,7 +61,6 @@ class SubMenuUnConnected extends PureComponent<Props> {
         />
         <div className="gf-form gf-form--grow" />
         {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
-        <div className="clearfix" />
       </div>
     );
   }

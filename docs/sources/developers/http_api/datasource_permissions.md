@@ -14,14 +14,14 @@ keywords:
   - permissions
   - acl
   - enterprise
-title: 'Datasource Permissions HTTP API '
+title: 'Datasource Permissions HTTP API'
 ---
 
 # Data Source Permissions API
 
 > The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 This API can be used to enable, disable, list, add and remove permissions for a data source.
 

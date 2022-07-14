@@ -11,7 +11,7 @@ import (
 
 type nestedTree struct {
 	rootsByOrgId map[int64][]storageRuntime
-	lookup       map[int64]map[string]filestorage.FileStorage
+	lookup       map[int64]map[string]storageRuntime
 
 	orgInitMutex          sync.Mutex
 	initializeOrgStorages func(orgId int64) []storageRuntime
@@ -21,10 +21,10 @@ var (
 	_ storageTree = (*nestedTree)(nil)
 )
 
-func asNameToFileStorageMap(storages []storageRuntime) map[string]filestorage.FileStorage {
-	lookup := make(map[string]filestorage.FileStorage)
+func asNameToFileStorageMap(storages []storageRuntime) map[string]storageRuntime {
+	lookup := make(map[string]storageRuntime)
 	for _, storage := range storages {
-		lookup[storage.Meta().Config.Prefix] = storage.Store()
+		lookup[storage.Meta().Config.Prefix] = storage
 	}
 	return lookup
 }
@@ -33,7 +33,7 @@ func (t *nestedTree) init() {
 	t.orgInitMutex.Lock()
 	defer t.orgInitMutex.Unlock()
 
-	t.lookup = make(map[int64]map[string]filestorage.FileStorage, len(t.rootsByOrgId))
+	t.lookup = make(map[int64]map[string]storageRuntime, len(t.rootsByOrgId))
 
 	for orgId, storages := range t.rootsByOrgId {
 		t.lookup[orgId] = asNameToFileStorageMap(storages)
@@ -50,7 +50,7 @@ func (t *nestedTree) assureOrgIsInitialized(orgId int64) {
 	}
 }
 
-func (t *nestedTree) getRoot(orgId int64, path string) (filestorage.FileStorage, string) {
+func (t *nestedTree) getRoot(orgId int64, path string) (storageRuntime, string) {
 	t.assureOrgIsInitialized(orgId)
 
 	if path == "" {
@@ -82,10 +82,10 @@ func (t *nestedTree) GetFile(ctx context.Context, orgId int64, path string) (*fi
 	if root == nil {
 		return nil, nil // not found (or not ready)
 	}
-	return root.Get(ctx, path)
+	return root.Store().Get(ctx, path)
 }
 
-func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (*data.Frame, error) {
+func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (*StorageListFrame, error) {
 	if path == "" || path == "/" {
 		t.assureOrgIsInitialized(orgId)
 
@@ -102,13 +102,13 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 		readOnly := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		builtIn := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		title.Name = "title"
-		names.Name = "name"
-		descr.Name = "description"
-		mtype.Name = "mediaType"
-		types.Name = "storageType"
-		readOnly.Name = "readOnly"
-		builtIn.Name = "builtIn"
+		title.Name = titleListFrameField
+		names.Name = nameListFrameField
+		descr.Name = descriptionListFrameField
+		mtype.Name = mediaTypeListFrameField
+		types.Name = storageTypeListFrameField
+		readOnly.Name = readOnlyListFrameField
+		builtIn.Name = builtInListFrameField
 		for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
 			meta := f.Meta()
 			names.Set(idx, meta.Config.Prefix)
@@ -138,7 +138,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})
-		return frame, nil
+		return &StorageListFrame{frame}, nil
 	}
 
 	root, path := t.getRoot(orgId, path)
@@ -146,7 +146,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 		return nil, nil // not found (or not ready)
 	}
 
-	listResponse, err := root.List(ctx, path, nil, &filestorage.ListOptions{
+	listResponse, err := root.Store().List(ctx, path, nil, &filestorage.ListOptions{
 		Recursive:   false,
 		WithFolders: true,
 		WithFiles:   true,
@@ -160,9 +160,9 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
-	names.Name = "name"
-	mtype.Name = "mediaType"
-	fsize.Name = "size"
+	names.Name = nameListFrameField
+	mtype.Name = mediaTypeListFrameField
+	fsize.Name = sizeListFrameField
 	fsize.Config = &data.FieldConfig{
 		Unit: "bytes",
 	}
@@ -178,5 +178,5 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 			"HasMore": listResponse.HasMore,
 		},
 	})
-	return frame, nil
+	return &StorageListFrame{frame}, nil
 }
