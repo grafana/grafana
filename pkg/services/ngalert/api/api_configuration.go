@@ -17,13 +17,13 @@ import (
 
 type ConfigSrv struct {
 	alertmanagerProvider ExternalAlertmanagerProvider
-	store     store.AdminConfigurationStore
-	log       log.Logger
+	store                store.AdminConfigurationStore
+	log                  log.Logger
 }
 
 func (srv ConfigSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Response {
-	urls := srv.scheduler.AlertmanagersFor(c.OrgId)
-	droppedURLs := srv.scheduler.DroppedAlertmanagersFor(c.OrgId)
+	urls := srv.alertmanagerProvider.AlertmanagersFor(c.OrgId)
+	droppedURLs := srv.alertmanagerProvider.DroppedAlertmanagersFor(c.OrgId)
 	ams := v1.AlertManagersResult{Active: make([]v1.AlertManager, len(urls)), Dropped: make([]v1.AlertManager, len(droppedURLs))}
 	for i, url := range urls {
 		ams.Active[i].URL = url.String()

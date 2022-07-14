@@ -128,8 +128,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			accessControl:   api.AccessControl,
 			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService, api.ExpressionService),
 		}), m)
-	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
-		&AdminSrv{
+	api.RegisterConfigurationApiEndpoints(NewConfiguration(
+		&ConfigSrv{
 			store:                api.AdminConfigStore,
 			log:                  logger,
 			alertmanagerProvider: api.AlertsRouter,
