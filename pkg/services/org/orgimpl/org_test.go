@@ -48,7 +48,7 @@ func TestOrgService(t *testing.T) {
 	setting.AutoAssignOrgId = 0
 
 	t.Run("delete org by user", func(t *testing.T) {
-		err := orgService.DeleteOrgUser(context.Background(), 1)
+		err := orgService.DeleteUserFromAll(context.Background(), 1)
 		require.NoError(t, err)
 	})
 }
@@ -76,6 +76,6 @@ func (f *FakeOrgStore) InsertOrgUser(ctx context.Context, org *org.OrgUser) (int
 	return f.ExpectedUserID, f.ExpectedError
 }
 
-func (f *FakeOrgStore) DeleteOrgUser(ctx context.Context, userID int64) error {
+func (f *FakeOrgStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
 	return f.ExpectedError
 }

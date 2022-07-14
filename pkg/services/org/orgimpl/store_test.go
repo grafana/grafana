@@ -50,7 +50,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("delete by user", func(t *testing.T) {
-		err := orgStore.DeleteOrgUser(context.Background(), 1)
+		err := orgStore.DeleteUserFromAll(context.Background(), 1)
 		require.NoError(t, err)
 	})
 }

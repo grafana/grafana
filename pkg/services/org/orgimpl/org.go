@@ -77,6 +77,6 @@ func (s *Service) InsertOrgUser(ctx context.Context, orguser *org.OrgUser) (int6
 	return s.store.InsertOrgUser(ctx, orguser)
 }
 
-func (s *Service) DeleteOrgUser(ctx context.Context, userID int64) error {
-	return s.store.DeleteOrgUser(ctx, userID)
+func (s *Service) DeleteUserFromAll(ctx context.Context, userID int64) error {
+	return s.store.DeleteUserFromAll(ctx, userID)
 }
