@@ -77,5 +77,11 @@ export const SeriesPicker: Story<ColorPickerProps> = ({ enableNamedColors }) => 
 };
 
 export const Input = () => {
-  return <ColorPickerInput value={'#FFF'} />;
+  return (
+    <UseState initialState="#ffffff">
+      {(value, onChange) => {
+        return <ColorPickerInput value={value} onChange={onChange} />;
+      }}
+    </UseState>
+  );
 };
