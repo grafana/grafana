@@ -115,7 +115,11 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	}
 
 	for _, root := range settings.Roots {
-		s, err := newStorage(root)
+		if root.Prefix == "" {
+			grafanaStorageLogger.Warn("Invalid root configuration", "cfg", root)
+			continue
+		}
+		s, err := newStorage(root, filepath.Join(cfg.DataPath, "storage", "cache", root.Prefix))
 		if err != nil {
 			grafanaStorageLogger.Warn("error loading storage config", "error", err)
 		}

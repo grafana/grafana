@@ -25,25 +25,25 @@ type rootStorageGit struct {
 	settings *StorageGitConfig
 	repo     *git.Repository
 	root     string // repostitory root
-	hash     string
 
 	github *githubHelper
 }
 
-func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGitConfig) *rootStorageGit {
+func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGit {
+	cfg := scfg.Git
 	if cfg == nil {
 		cfg = &StorageGitConfig{}
 	}
+	scfg.Type = rootStorageTypeDisk
+	scfg.GCS = nil
+	scfg.Git = nil
+	scfg.SQL = nil
+	scfg.S3 = nil
 
 	meta := RootStorageMeta{
-		Config: RootStorageConfig{
-			Type:   rootStorageTypeGit,
-			Prefix: prefix,
-			Name:   name,
-			Git:    cfg,
-		},
+		Config: scfg,
 	}
-	if prefix == "" {
+	if scfg.Prefix == "" {
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
 			Text:     "Missing prefix",
@@ -55,12 +55,13 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 			Text:     "Missing remote path configuration",
 		})
 	}
-	if len(localRoot) < 2 {
+
+	if len(localWorkCache) < 2 {
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
 			Text:     "Invalid local root folder",
 		})
-	} else if _, err := os.Stat(localRoot); os.IsNotExist(err) {
+	} else if _, err := os.Stat(localWorkCache); os.IsNotExist(err) {
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
 			Text:     "Local root does not exist",
@@ -68,12 +69,20 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 	}
 
 	s := &rootStorageGit{}
+	if meta.Notice == nil {
+		err := os.MkdirAll(localWorkCache, 0750)
+		if err != nil {
+			meta.Notice = append(meta.Notice, data.Notice{
+				Severity: data.NoticeSeverityError,
+				Text:     err.Error(),
+			})
+		}
+	}
 
 	if meta.Notice == nil {
-		dir := filepath.Join(localRoot, prefix)
-		repo, err := git.PlainOpen(dir)
+		repo, err := git.PlainOpen(localWorkCache)
 		if err == git.ErrRepositoryNotExists {
-			repo, err = git.PlainClone(dir, false, &git.CloneOptions{
+			repo, err = git.PlainClone(localWorkCache, false, &git.CloneOptions{
 				URL:      cfg.Remote,
 				Progress: os.Stdout,
 				//Depth:    1,
@@ -89,7 +98,7 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 		}
 
 		if err == nil {
-			p := dir
+			p := localWorkCache
 			if cfg.Root != "" {
 				p = filepath.Join(p, cfg.Root)
 			}
@@ -97,7 +106,7 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 			path := fmt.Sprintf("file://%s", p)
 			bucket, err := blob.OpenBucket(context.Background(), path)
 			if err != nil {
-				grafanaStorageLogger.Warn("error loading storage", "prefix", prefix, "err", err)
+				grafanaStorageLogger.Warn("error loading storage", "prefix", scfg.Prefix, "err", err)
 				meta.Notice = append(meta.Notice, data.Notice{
 					Severity: data.NoticeSeverityError,
 					Text:     "Failed to initialize storage",
@@ -108,7 +117,7 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 					bucket, "", nil)
 
 				meta.Ready = true // exists!
-				s.root = dir
+				s.root = p
 
 				token := cfg.AccessToken
 				if strings.HasPrefix(token, "$") {
