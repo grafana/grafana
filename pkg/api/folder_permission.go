@@ -113,7 +113,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 				return response.Error(400, err.Error(), err)
 			}
 
-			return response.Error(500, "Error while checking folder permissions", err)
+			return response.ErrOrFallback(500, "Error while checking folder permissions", err)
 		}
 
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)

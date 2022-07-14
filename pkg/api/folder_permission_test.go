@@ -49,7 +49,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	}
 
 	t.Run("Given folder not exists", func(t *testing.T) {
-		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, dashboards.ErrFolderNotFound).Twice()
+		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, dashboards.ErrFolderNotFound.Errorf("mockmockmockmockmock")).Twice()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)

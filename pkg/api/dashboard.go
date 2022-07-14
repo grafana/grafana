@@ -145,10 +145,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
 		if err := hs.DashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
-			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return response.Error(404, "Folder not found", err)
-			}
-			return response.Error(500, "Dashboard folder could not be read", err)
+			return response.ErrOrFallback(http.StatusInternalServerError, "Dashboard folder could not be read", err)
 		}
 		meta.FolderUid = query.Result.Uid
 		meta.FolderTitle = query.Result.Title
@@ -333,10 +330,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	if cmd.FolderUid != "" {
 		folder, err := hs.folderService.GetFolderByUID(ctx, c.SignedInUser, c.OrgId, cmd.FolderUid)
 		if err != nil {
-			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return response.Error(400, "Folder not found", err)
-			}
-			return response.Error(500, "Error while checking folder ID", err)
+			return response.ErrOrFallback(http.StatusInternalServerError, "Error while checking folder ID", err)
 		}
 		cmd.FolderId = folder.Id
 	}
