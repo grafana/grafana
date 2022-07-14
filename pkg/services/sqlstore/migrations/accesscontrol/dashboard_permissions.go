@@ -398,7 +398,7 @@ const managedFolderAlertActionsRepeatMigratorID = "managed folder permissions al
 
 /*
 AddManagedFolderAlertActionsMigration has to be run after AddDashboardPermissionsMigrator, as it is only effective if dashboard permissions have already been migrated.
-AddManagedFolderAlertActionsRepeatMigrator ensures that alerting permissions that have already been added won't get added twice. 
+AddManagedFolderAlertActionsRepeatMigrator ensures that alerting permissions that have already been added won't get added twice.
 */
 func AddManagedFolderAlertActionsRepeatMigration(mg *migrator.Migrator) {
 	mg.AddMigration(managedFolderAlertActionsRepeatMigratorID, &managedFolderAlertActionsRepeatMigrator{})
