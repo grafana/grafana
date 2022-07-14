@@ -106,6 +106,30 @@ msgstr ""
 msgid "dashboard.inspect-data.transformations-label"
 msgstr ""
 
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.data-title"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.processing-time"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.queries"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.request-time"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.rows"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.table-title"
+msgstr ""
+
 #: public/app/features/dashboard/components/Inspector/hooks.ts
 msgid "dashboard.inspect.actions-tab"
 msgstr ""
