@@ -384,7 +384,7 @@ func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.List
 	f.RecordedOps = append(f.RecordedOps, *q)
 	return nil
 }
-func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveAlertInstanceCommand) error {
+func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveAlertInstancesCommand) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)

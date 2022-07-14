@@ -46,7 +46,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	require.Equal(t, orgID, alertRule4.OrgID)
 
 	t.Run("can save and read new alert instance", func(t *testing.T) {
-		saveCmd := &models.SaveAlertInstanceCommand{
+		saveCmd := &models.SaveAlertInstancesCommand{
 			RuleOrgID:   alertRule1.OrgID,
 			RuleUID:     alertRule1.UID,
 			State:       models.InstanceStateFiring,
@@ -72,7 +72,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	})
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
-		saveCmd := &models.SaveAlertInstanceCommand{
+		saveCmd := &models.SaveAlertInstancesCommand{
 			RuleOrgID: alertRule2.OrgID,
 			RuleUID:   alertRule2.UID,
 			State:     models.InstanceStateNormal,
@@ -95,7 +95,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	})
 
 	t.Run("can save two instances with same org_id, uid and different labels", func(t *testing.T) {
-		saveCmdOne := &models.SaveAlertInstanceCommand{
+		saveCmdOne := &models.SaveAlertInstancesCommand{
 			RuleOrgID: alertRule3.OrgID,
 			RuleUID:   alertRule3.UID,
 			State:     models.InstanceStateFiring,
@@ -105,7 +105,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		err := dbstore.SaveAlertInstance(ctx, saveCmdOne)
 		require.NoError(t, err)
 
-		saveCmdTwo := &models.SaveAlertInstanceCommand{
+		saveCmdTwo := &models.SaveAlertInstancesCommand{
 			RuleOrgID: saveCmdOne.RuleOrgID,
 			RuleUID:   saveCmdOne.RuleUID,
 			State:     models.InstanceStateFiring,
@@ -149,7 +149,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	})
 
 	t.Run("update instance with same org_id, uid and different labels", func(t *testing.T) {
-		saveCmdOne := &models.SaveAlertInstanceCommand{
+		saveCmdOne := &models.SaveAlertInstancesCommand{
 			RuleOrgID: alertRule4.OrgID,
 			RuleUID:   alertRule4.UID,
 			State:     models.InstanceStateFiring,
@@ -159,7 +159,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		err := dbstore.SaveAlertInstance(ctx, saveCmdOne)
 		require.NoError(t, err)
 
-		saveCmdTwo := &models.SaveAlertInstanceCommand{
+		saveCmdTwo := &models.SaveAlertInstancesCommand{
 			RuleOrgID: saveCmdOne.RuleOrgID,
 			RuleUID:   saveCmdOne.RuleUID,
 			State:     models.InstanceStateNormal,
