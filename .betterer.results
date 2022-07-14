@@ -3002,6 +3002,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/core/components/NavBar/utils.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "public/app/core/components/OptionsUI/DashboardPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -7284,9 +7287,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "47"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "48"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "49"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "50"],
+      [0, 0, 0, "Do not use any type assertions.", "50"],
       [0, 0, 0, "Do not use any type assertions.", "51"],
-      [0, 0, 0, "Do not use any type assertions.", "52"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "52"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "53"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "54"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "55"],
@@ -7297,8 +7300,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "60"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "61"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "62"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "63"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "64"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "63"]
     ],
     "public/app/plugins/datasource/graphite/datasource_integration.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7357,6 +7359,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+    ],
+    "public/app/plugins/datasource/graphite/migrations.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/graphite/parser.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7795,10 +7801,35 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/plugins/datasource/mssql/query_ctrl.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+    ],
     "public/app/plugins/datasource/mssql/response_parser.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
+    "public/app/plugins/datasource/mssql/specs/datasource.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+    ],
+    "public/app/plugins/datasource/mssql/types.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/app/plugins/datasource/mysql/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
