@@ -30,7 +30,17 @@ jest.mock('../language_provider', () => {
   });
 });
 
-const mockQuery = {
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: jest.fn(),
+    containsTemplate: (val: string): boolean => {
+      return val.includes('$');
+    },
+  }),
+}));
+
+let mockQuery = {
   refId: 'A',
   queryType: 'nativeSearch',
   key: 'Q-595a9bbc-2a25-49a7-9249-a52a0a475d83-0',
@@ -117,7 +127,38 @@ describe('NativeSearch', () => {
     expect(option).toBeDefined();
 
     await user.type(select, 'a');
-    option = await screen.findByText('No options found');
+    option = await screen.findByText('Hit enter to add');
     expect(option).toBeDefined();
+  });
+
+  it('should add variable to select menu options', async () => {
+    mockQuery = {
+      ...mockQuery,
+      refId: '121314',
+      serviceName: '$service',
+      spanName: '$span',
+    };
+
+    render(
+      <NativeSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
+    );
+
+    const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
+    expect(asyncServiceSelect).toBeInTheDocument();
+    await user.click(asyncServiceSelect);
+    jest.advanceTimersByTime(3000);
+
+    await user.type(asyncServiceSelect, '$');
+    var serviceOption = await screen.findByText('$service');
+    expect(serviceOption).toBeDefined();
+
+    const asyncSpanSelect = screen.getByRole('combobox', { name: 'select-span-name' });
+    expect(asyncSpanSelect).toBeInTheDocument();
+    await user.click(asyncSpanSelect);
+    jest.advanceTimersByTime(3000);
+
+    await user.type(asyncSpanSelect, '$');
+    var operationOption = await screen.findByText('$span');
+    expect(operationOption).toBeDefined();
   });
 });
