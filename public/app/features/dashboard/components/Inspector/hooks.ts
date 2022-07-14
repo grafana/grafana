@@ -1,3 +1,4 @@
+import { t } from '@lingui/macro';
 import { useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
@@ -47,29 +48,32 @@ export const useInspectTabs = (
   return useMemo(() => {
     const tabs = [];
     if (supportsDataQuery(plugin)) {
-      tabs.push({ label: 'Data', value: InspectTab.Data });
-      tabs.push({ label: 'Stats', value: InspectTab.Stats });
+      tabs.push({ label: t({ id: 'dashboard.inspect.data-tab', message: 'Data' }), value: InspectTab.Data });
+      tabs.push({ label: t({ id: 'dashboard.inspect.stats-tab', message: 'Stats' }), value: InspectTab.Stats });
     }
 
     if (metaDs) {
-      tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
+      tabs.push({ label: t({ id: 'dashboard.inspect.meta-tab', message: 'Meta Data' }), value: InspectTab.Meta });
     }
 
-    tabs.push({ label: 'JSON', value: InspectTab.JSON });
+    tabs.push({ label: t({ id: 'dashboard.inspect.json-tab', message: 'JSON' }), value: InspectTab.JSON });
 
     if (error && error.message) {
-      tabs.push({ label: 'Error', value: InspectTab.Error });
+      tabs.push({ label: t({ id: 'dashboard.inspect.error-tab', message: 'Error' }), value: InspectTab.Error });
     }
 
     // This is a quick internal hack to allow custom actions in inspect
     // For 8.1, something like this should be exposed through grafana/runtime
     const supplier = (window as any).grafanaPanelInspectActionSupplier as PanelInspectActionSupplier;
     if (supplier && supplier.getActions(panel)) {
-      tabs.push({ label: 'Actions', value: InspectTab.Actions });
+      tabs.push({
+        label: t({ id: 'dashboard.inspect.actions-tab', message: 'Actions' }),
+        value: InspectTab.Actions,
+      });
     }
 
     if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
-      tabs.push({ label: 'Query', value: InspectTab.Query });
+      tabs.push({ label: t({ id: 'dashboard.inspect.query-tab', message: 'Query' }), value: InspectTab.Query });
     }
     return tabs;
   }, [panel, plugin, metaDs, dashboard, error]);
