@@ -527,8 +527,24 @@ export class GraphiteDatasource
       range,
     };
     const data = await lastValueFrom(this.query(queryReq));
-    console.log(data);
-    return Promise.resolve([]);
+    let result: MetricFindValue[] = [];
+    if (queryObject.queryType === GraphiteQueryType.Value) {
+      result = data.data[0].fields[1].values
+        .filter((f?: number) => !!f)
+        .map((v: number) => ({
+          text: v.toString(),
+          value: v,
+          expandable: false,
+        }));
+    }
+    if (queryObject.queryType === GraphiteQueryType.MetricName) {
+      result = data.data.map((d) => ({
+        value: d.name,
+        text: d.name,
+        expandable: false,
+      }));
+    }
+    return Promise.resolve(result);
   }
 
   /**
