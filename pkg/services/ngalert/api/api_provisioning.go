@@ -258,6 +258,9 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
+	if errors.Is(err, alerting_models.ErrQuotaReached) {
+		return ErrResp(http.StatusForbidden, err, "")
+	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
