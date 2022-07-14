@@ -2,9 +2,11 @@ package pluginproxy
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -268,6 +270,151 @@ func TestPluginProxy(t *testing.T) {
 
 		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
 	})
+}
+
+func TestPluginProxyRoutes(t *testing.T) {
+	routes := []*plugins.Route{
+		{
+			Path:   "",
+			Method: "GET",
+			URL:    "http://localhost",
+		},
+		{
+			Path:   "some-api",
+			Method: "GET",
+			URL:    "http://localhost/api",
+		},
+		{
+			Path:   "some-api/instances",
+			Method: "GET",
+			URL:    "http://localhost/api/instances/",
+		},
+		{
+			Path:   "some-api/*",
+			Method: "GET",
+			URL:    "http://localhost/api",
+		},
+		{
+			Path:   "some-api/instances/*",
+			Method: "GET",
+			URL:    "http://localhost/api/instances",
+		},
+		{
+			Path:   "some-other-api/*",
+			Method: "GET",
+			URL:    "http://localhost/api/v2",
+		},
+		{
+			Path:   "some-other-api/instances/*",
+			Method: "GET",
+			URL:    "http://localhost/api/v2/instances",
+		},
+	}
+
+	tcs := []struct {
+		proxyPath       string
+		expectedURLPath string
+		expectedStatus  int
+	}{
+		{
+			proxyPath:      "/notexists",
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			proxyPath:       "/",
+			expectedURLPath: "/",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/some-api",
+			expectedURLPath: "/api",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/some-api/instances",
+			expectedURLPath: "/api/instances/",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/some-api/some/thing",
+			expectedURLPath: "/api/some/thing",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/some-api/instances/instance-one",
+			expectedURLPath: "/api/instances/instance-one",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/some-other-api/some/thing",
+			expectedURLPath: "/api/v2/some/thing",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/some-other-api/instances/instance-one",
+			expectedURLPath: "/api/v2/instances/instance-one",
+			expectedStatus:  http.StatusOK,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("When proxying path %q should call expected URL", tc.proxyPath), func(t *testing.T) {
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			requestHandled := false
+			requestURL := ""
+			backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requestURL = r.URL.RequestURI()
+				w.WriteHeader(200)
+				_, _ = w.Write([]byte("I am the backend"))
+				requestHandled = true
+			}))
+			t.Cleanup(backendServer.Close)
+
+			backendURL, err := url.Parse(backendServer.URL)
+			require.NoError(t, err)
+
+			testRoutes := make([]*plugins.Route, len(routes))
+			for i, r := range routes {
+				u, err := url.Parse(r.URL)
+				require.NoError(t, err)
+				u.Scheme = backendURL.Scheme
+				u.Host = backendURL.Host
+				testRoute := *r
+				testRoute.URL = u.String()
+				testRoutes[i] = &testRoute
+			}
+
+			responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
+
+			ctx := &models.ReqContext{
+				SignedInUser: &models.SignedInUser{},
+				Context: &web.Context{
+					Req:  httptest.NewRequest("GET", tc.proxyPath, nil),
+					Resp: responseWriter,
+				},
+			}
+			ps := &pluginsettings.DTO{
+				SecureJSONData: map[string][]byte{},
+			}
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, &setting.Cfg{}, secretsService, tracing.InitializeTracerForTest(), &http.Transport{})
+			require.NoError(t, err)
+			proxy.HandleRequest()
+
+			for {
+				if requestHandled || ctx.Resp.Written() {
+					break
+				}
+			}
+
+			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
+
+			if tc.expectedStatus == http.StatusNotFound {
+				return
+			}
+
+			require.Equal(t, tc.expectedURLPath, requestURL)
+		})
+	}
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.

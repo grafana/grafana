@@ -72,6 +72,8 @@ func (proxy *PluginProxy) HandleRequest() {
 
 		if path, exists := params["*"]; exists {
 			proxy.proxyPath = path
+		} else {
+			proxy.proxyPath = ""
 		}
 
 		proxy.matchedRoute = route
