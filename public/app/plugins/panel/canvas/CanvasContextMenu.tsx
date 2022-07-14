@@ -67,7 +67,7 @@ export const CanvasContextMenu = ({ scene }: Props) => {
         onClick={() => {
           if (scene.inlineEditingCallback) {
             if (inlineEditorOpen) {
-              activePanel.panel.inlineEditButtonClose();
+              activePanel.panel.closeInlineEdit();
             } else {
               scene.inlineEditingCallback();
             }
