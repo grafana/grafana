@@ -145,11 +145,11 @@ export class ShareLink extends PureComponent<Props, State> {
           <Field label="Theme">
             <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
           </Field>
-          <Field label="Shorten URL">
+          <Field label={shortenURLTranslation}>
             <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
           </Field>
 
-          <Field label="Link URL">
+          <Field label={linkURLTranslation}>
             <Input
               id="link-url-input"
               value={shareUrl}
@@ -169,14 +169,17 @@ export class ShareLink extends PureComponent<Props, State> {
             {isDashboardSaved && (
               <div className="gf-form">
                 <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
-                  <Icon name="camera" /> Direct link rendered image
+                  <Icon name="camera" />
+                  <Trans id="share-modal.link.rendered-image">Direct link rendered image</Trans>
                 </a>
               </div>
             )}
 
             {!isDashboardSaved && (
               <Alert severity="info" title="Dashboard is not saved" bottomSpacing={0}>
-                To render a panel image, you must save the dashboard first.
+                <Trans id="share-modal.link.save-dashboard">
+                  To render a panel image, you must save the dashboard first.
+                </Trans>
               </Alert>
             )}
           </>
@@ -184,16 +187,19 @@ export class ShareLink extends PureComponent<Props, State> {
 
         {panel && !config.rendererAvailable && (
           <Alert severity="info" title="Image renderer plugin not installed" bottomSpacing={0}>
-            <>To render a panel image, you must install the </>
+            <Trans id="share-modal.link.must-install">To render a panel image, you must install the</Trans>
+            &nbsp;
             <a
               href="https://grafana.com/grafana/plugins/grafana-image-renderer"
               target="_blank"
               rel="noopener noreferrer"
               className="external-link"
             >
-              Grafana image renderer plugin
+              <Trans id="share-modal.link.grafana-plugin">Grafana image renderer plugin</Trans>
             </a>
-            . Please contact your Grafana administrator to install the plugin.
+            <Trans id="share-modal.link.contact-administrator">
+              . Please contact your Grafana administrator to install the plugin.
+            </Trans>
           </Alert>
         )}
       </>
