@@ -72,6 +72,10 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [ENHANCEMENT] Scheduler: ticker to support stopping #48142
 - [ENHANCEMENT] Migration: Don't stop the migration when failing to parse alert rule tags #51253
 
+## 8.5.9
+
+- [ENHANCEMENT] Scheduler: Adds new metrics to track rules that might be scheduled.
+
 ## 8.5.5
 
 - [BUGFIX] Alerting: Remove double quotes from double quoted matchers #50038
