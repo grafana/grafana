@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { keyBy } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -41,6 +42,13 @@ export const ExternalAlertmanagers = () => {
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({ open: false, payload: [{ url: '' }] });
   const [deleteModalState, setDeleteModalState] = useState({ open: false, index: 0 });
+
+  const alertmanagerDatasources = useSelector((state: StoreState) =>
+    keyBy(
+      state.dataSources.dataSources.filter((ds) => ds.type === 'alertmanager'),
+      (ds) => ds.uid
+    )
+  );
 
   const externalAlertManagers = useExternalAmSelector();
   const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
@@ -154,6 +162,7 @@ export const ExternalAlertmanagers = () => {
                 style={{ objectFit: 'contain' }}
               />
             </Card.Figure>
+            {alertmanagerDatasources[ds.uid] && <Card.Meta>{alertmanagerDatasources[ds.uid].url}</Card.Meta>}
           </Card>
         ))}
       </div>
