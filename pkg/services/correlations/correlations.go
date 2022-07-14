@@ -51,6 +51,13 @@ func (s CorrelationsService) DeleteCorrelationsBySourceUID(ctx context.Context, 
 }
 
 func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
+	// DeleteDatasource emits events even when datasources are not actually deleted (see https://github.com/grafana/grafana/pull/51630#issuecomment-1182975633
+	// and pkg/services/sqlstore/datasource.go staring at line 134).
+	// If that happens we ignore the event.
+	if event.UID == "" {
+		return nil
+	}
+
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		if err := s.deleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{
 			SourceUID: event.UID,
