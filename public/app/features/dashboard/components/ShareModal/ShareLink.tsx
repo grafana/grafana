@@ -1,3 +1,4 @@
+import { Trans, t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
@@ -10,10 +11,25 @@ import { appEvents } from 'app/core/core';
 import { ShareModalTabProps } from './types';
 import { buildImageUrl, buildShareUrl } from './utils';
 
+const currentThemeTranstation = t({
+  id: 'share-modal.link.theme-current',
+  message: `Current`,
+});
+
+const darkThemeTranstation = t({
+  id: 'share-modal.link.theme-dark',
+  message: `Dark`,
+});
+
+const lightThemeTranstation = t({
+  id: 'share-modal.link.theme-light',
+  message: `Light`,
+});
+
 const themeOptions: Array<SelectableValue<string>> = [
-  { label: 'Current', value: 'current' },
-  { label: 'Dark', value: 'dark' },
-  { label: 'Light', value: 'light' },
+  { label: currentThemeTranstation, value: 'current' },
+  { label: darkThemeTranstation, value: 'dark' },
+  { label: lightThemeTranstation, value: 'light' },
 ];
 
 export interface Props extends ShareModalTabProps {}
@@ -91,16 +107,35 @@ export class ShareLink extends PureComponent<Props, State> {
     const selectors = e2eSelectors.pages.SharePanelModal;
     const isDashboardSaved = Boolean(dashboard.id);
 
+    const timeRangeLabelTranslation = t({
+      id: 'share-modal.link.time-range-label',
+      message: `Lock time range`,
+    });
+
+    const timeRangeDescriptionTranslation = t({
+      id: 'share-modal.link.time-range-description',
+      message: `Transforms the current relative time range to an absolute time range`,
+    });
+
+    const shortenURLTranslation = t({
+      id: 'share-modal.link.shorten-url',
+      message: `Shorten URL`,
+    });
+
+    const linkURLTranslation = t({
+      id: 'share-modal.link.link-url',
+      message: `Link URL`,
+    });
+
     return (
       <>
         <p className="share-modal-info-text">
-          Create a direct link to this dashboard or panel, customized with the options below.
+          <Trans id="share-modal.link.info-text">
+            Create a direct link to this dashboard or panel, customized with the options below.
+          </Trans>
         </p>
         <FieldSet>
-          <Field
-            label="Lock time range"
-            description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}
-          >
+          <Field label={timeRangeLabelTranslation} description={isRelativeTime ? timeRangeDescriptionTranslation : ''}>
             <Switch
               id="share-current-time-range"
               value={useCurrentTimeRange}
@@ -121,7 +156,8 @@ export class ShareLink extends PureComponent<Props, State> {
               readOnly
               addonAfter={
                 <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
-                  <Icon name="copy" /> Copy
+                  <Icon name="copy" />
+                  <Trans id="share-modal.link.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }
             />
