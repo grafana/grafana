@@ -60,6 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     breadcrumbs: css({
       display: 'flex',
       alignItems: 'center',
+      flexWrap: 'nowrap',
       fontWeight: theme.typography.fontWeightMedium,
     }),
     breadcrumb: css({
@@ -72,6 +73,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     breadcrumbLink: css({
       color: theme.colors.text.primary,
+      whiteSpace: 'nowrap',
       '&:hover': {
         textDecoration: 'underline',
       },
