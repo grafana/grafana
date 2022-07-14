@@ -9,22 +9,22 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-type PrometheusApi struct {
+type PrometheusApiHandler struct {
 	ProxySvc        *LotexProm
 	GrafanaSvc      *PrometheusSrv
 	DatasourceCache datasources.CacheService
 }
 
 // NewForkingProm implements a set of routes that proxy to various Prometheus-compatible backends.
-func NewForkingProm(datasourceCache datasources.CacheService, proxy *LotexProm, grafana *PrometheusSrv) *PrometheusApi {
-	return &PrometheusApi{
+func NewForkingProm(datasourceCache datasources.CacheService, proxy *LotexProm, grafana *PrometheusSrv) *PrometheusApiHandler {
+	return &PrometheusApiHandler{
 		ProxySvc:        proxy,
 		GrafanaSvc:      grafana,
 		DatasourceCache: datasourceCache,
 	}
 }
 
-func (f *PrometheusApi) handleRouteGetAlertStatuses(ctx *models.ReqContext, dsUID string) response.Response {
+func (f *PrometheusApiHandler) handleRouteGetAlertStatuses(ctx *models.ReqContext, dsUID string) response.Response {
 	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -38,7 +38,7 @@ func (f *PrometheusApi) handleRouteGetAlertStatuses(ctx *models.ReqContext, dsUI
 	}
 }
 
-func (f *PrometheusApi) handleRouteGetRuleStatuses(ctx *models.ReqContext, dsUID string) response.Response {
+func (f *PrometheusApiHandler) handleRouteGetRuleStatuses(ctx *models.ReqContext, dsUID string) response.Response {
 	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -52,10 +52,10 @@ func (f *PrometheusApi) handleRouteGetRuleStatuses(ctx *models.ReqContext, dsUID
 	}
 }
 
-func (f *PrometheusApi) handleRouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
+func (f *PrometheusApiHandler) handleRouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
 	return f.GrafanaSvc.RouteGetAlertStatuses(ctx)
 }
 
-func (f *PrometheusApi) handleRouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
+func (f *PrometheusApiHandler) handleRouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
 	return f.GrafanaSvc.RouteGetRuleStatuses(ctx)
 }

@@ -6,25 +6,25 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-// TestingApi always forwards requests to grafana backend
-type TestingApi struct {
+// TestingApiHandler always forwards requests to grafana backend
+type TestingApiHandler struct {
 	svc *TestingApiSrv
 }
 
-func NewTestingApi(svc *TestingApiSrv) *TestingApi {
-	return &TestingApi{
+func NewTestingApi(svc *TestingApiSrv) *TestingApiHandler {
+	return &TestingApiHandler{
 		svc: svc,
 	}
 }
 
-func (f *TestingApi) handleRouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload, dsUID string) response.Response {
+func (f *TestingApiHandler) handleRouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload, dsUID string) response.Response {
 	return f.svc.RouteTestRuleConfig(c, body, dsUID)
 }
 
-func (f *TestingApi) handleRouteTestRuleGrafanaConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+func (f *TestingApiHandler) handleRouteTestRuleGrafanaConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
 	return f.svc.RouteTestGrafanaRuleConfig(c, body)
 }
 
-func (f *TestingApi) handleRouteEvalQueries(c *models.ReqContext, body apimodels.EvalQueriesPayload) response.Response {
+func (f *TestingApiHandler) handleRouteEvalQueries(c *models.ReqContext, body apimodels.EvalQueriesPayload) response.Response {
 	return f.svc.RouteEvalQueries(c, body)
 }

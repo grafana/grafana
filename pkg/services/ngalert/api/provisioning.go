@@ -6,96 +6,96 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-type ProvisioningApi struct {
+type ProvisioningApiHandler struct {
 	svc *ProvisioningSrv
 }
 
-func NewProvisioningApi(svc *ProvisioningSrv) *ProvisioningApi {
-	return &ProvisioningApi{
+func NewProvisioningApi(svc *ProvisioningSrv) *ProvisioningApiHandler {
+	return &ProvisioningApiHandler{
 		svc: svc,
 	}
 }
 
-func (f *ProvisioningApi) handleRouteGetPolicyTree(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) handleRouteGetPolicyTree(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteGetPolicyTree(ctx)
 }
 
-func (f *ProvisioningApi) handleRoutePutPolicyTree(ctx *models.ReqContext, route apimodels.Route) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutPolicyTree(ctx *models.ReqContext, route apimodels.Route) response.Response {
 	return f.svc.RoutePutPolicyTree(ctx, route)
 }
 
-func (f *ProvisioningApi) handleRouteGetContactpoints(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) handleRouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteGetContactPoints(ctx)
 }
 
-func (f *ProvisioningApi) handleRoutePostContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePostContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	return f.svc.RoutePostContactPoint(ctx, cp)
 }
 
-func (f *ProvisioningApi) handleRoutePutContactpoint(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint, UID string) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutContactpoint(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint, UID string) response.Response {
 	return f.svc.RoutePutContactPoint(ctx, cp, UID)
 }
 
-func (f *ProvisioningApi) handleRouteDeleteContactpoints(ctx *models.ReqContext, UID string) response.Response {
+func (f *ProvisioningApiHandler) handleRouteDeleteContactpoints(ctx *models.ReqContext, UID string) response.Response {
 	return f.svc.RouteDeleteContactPoint(ctx, UID)
 }
 
-func (f *ProvisioningApi) handleRouteGetTemplates(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) handleRouteGetTemplates(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteGetTemplates(ctx)
 }
 
-func (f *ProvisioningApi) handleRouteGetTemplate(ctx *models.ReqContext, name string) response.Response {
+func (f *ProvisioningApiHandler) handleRouteGetTemplate(ctx *models.ReqContext, name string) response.Response {
 	return f.svc.RouteGetTemplate(ctx, name)
 }
 
-func (f *ProvisioningApi) handleRoutePutTemplate(ctx *models.ReqContext, body apimodels.MessageTemplateContent, name string) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutTemplate(ctx *models.ReqContext, body apimodels.MessageTemplateContent, name string) response.Response {
 	return f.svc.RoutePutTemplate(ctx, body, name)
 }
 
-func (f *ProvisioningApi) handleRouteDeleteTemplate(ctx *models.ReqContext, name string) response.Response {
+func (f *ProvisioningApiHandler) handleRouteDeleteTemplate(ctx *models.ReqContext, name string) response.Response {
 	return f.svc.RouteDeleteTemplate(ctx, name)
 }
 
-func (f *ProvisioningApi) handleRouteGetMuteTiming(ctx *models.ReqContext, name string) response.Response {
+func (f *ProvisioningApiHandler) handleRouteGetMuteTiming(ctx *models.ReqContext, name string) response.Response {
 	return f.svc.RouteGetMuteTiming(ctx, name)
 }
 
-func (f *ProvisioningApi) handleRouteGetMuteTimings(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) handleRouteGetMuteTimings(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteGetMuteTimings(ctx)
 }
 
-func (f *ProvisioningApi) handleRoutePostMuteTiming(ctx *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePostMuteTiming(ctx *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
 	return f.svc.RoutePostMuteTiming(ctx, mt)
 }
 
-func (f *ProvisioningApi) handleRoutePutMuteTiming(ctx *models.ReqContext, mt apimodels.MuteTimeInterval, name string) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutMuteTiming(ctx *models.ReqContext, mt apimodels.MuteTimeInterval, name string) response.Response {
 	return f.svc.RoutePutMuteTiming(ctx, mt, name)
 }
 
-func (f *ProvisioningApi) handleRouteDeleteMuteTiming(ctx *models.ReqContext, name string) response.Response {
+func (f *ProvisioningApiHandler) handleRouteDeleteMuteTiming(ctx *models.ReqContext, name string) response.Response {
 	return f.svc.RouteDeleteMuteTiming(ctx, name)
 }
 
-func (f *ProvisioningApi) handleRouteGetAlertRule(ctx *models.ReqContext, UID string) response.Response {
+func (f *ProvisioningApiHandler) handleRouteGetAlertRule(ctx *models.ReqContext, UID string) response.Response {
 	return f.svc.RouteRouteGetAlertRule(ctx, UID)
 }
 
-func (f *ProvisioningApi) handleRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule) response.Response {
 	return f.svc.RoutePostAlertRule(ctx, ar)
 }
 
-func (f *ProvisioningApi) handleRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule, UID string) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule, UID string) response.Response {
 	return f.svc.RoutePutAlertRule(ctx, ar, UID)
 }
 
-func (f *ProvisioningApi) handleRouteDeleteAlertRule(ctx *models.ReqContext, UID string) response.Response {
+func (f *ProvisioningApiHandler) handleRouteDeleteAlertRule(ctx *models.ReqContext, UID string) response.Response {
 	return f.svc.RouteDeleteAlertRule(ctx, UID)
 }
 
-func (f *ProvisioningApi) handleRouteGetAlertRuleGroup(ctx *models.ReqContext, folder, group string) response.Response {
+func (f *ProvisioningApiHandler) handleRouteGetAlertRuleGroup(ctx *models.ReqContext, folder, group string) response.Response {
 	return f.svc.RouteGetAlertRuleGroup(ctx, folder, group)
 }
 
-func (f *ProvisioningApi) handleRoutePutAlertRuleGroup(ctx *models.ReqContext, ag apimodels.AlertRuleGroupMetadata, folder, group string) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutAlertRuleGroup(ctx *models.ReqContext, ag apimodels.AlertRuleGroupMetadata, folder, group string) response.Response {
 	return f.svc.RoutePutAlertRuleGroup(ctx, ag, folder, group)
 }

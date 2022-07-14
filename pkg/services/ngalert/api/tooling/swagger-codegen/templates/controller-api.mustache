@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 )
 
-type {{classname}}Handler interface { {{#operation}}
+type {{classname}} interface { {{#operation}}
 	{{nickname}}(*models.ReqContext) response.Response{{/operation}}
 }
 
 {{#operations}}{{#operation}}
-func (f *{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
+func (f *{{classname}}Handler) {{nickname}}(ctx *models.ReqContext) response.Response {
   {{#hasPathParams}}	
 	// Parse Path Parameters
 	{{/hasPathParams}}
@@ -36,7 +36,7 @@ func (f *{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
 }
 {{/operation}}{{/operations}}
 
-func (api *API) Register{{classname}}Endpoints(srv {{classname}}Handler, m *metrics.API) {
+func (api *API) Register{{classname}}Endpoints(srv {{classname}}, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 	group.{{httpMethod}}(
 		toMacaronPath("{{{path}}}"),

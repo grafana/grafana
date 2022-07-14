@@ -127,7 +127,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService, api.ExpressionService),
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
-		&AdminSrv{
+		&ConfigSrv{
 			store:     api.AdminConfigStore,
 			log:       logger,
 			scheduler: api.Schedule,

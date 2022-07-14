@@ -59,4 +59,6 @@ serve: post.json
 serve-stable: api.json
 	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
 
-all: post.json api.json swagger-codegen-api fix copy-files clean
+gen: swagger-codegen-api fix copy-files clean
+
+all: post.json api.json gen

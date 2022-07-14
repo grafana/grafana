@@ -18,13 +18,13 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type TestingApiHandler interface {
+type TestingApi interface {
 	RouteEvalQueries(*models.ReqContext) response.Response
 	RouteTestRuleConfig(*models.ReqContext) response.Response
 	RouteTestRuleGrafanaConfig(*models.ReqContext) response.Response
 }
 
-func (f *TestingApi) RouteEvalQueries(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteEvalQueries(ctx *models.ReqContext) response.Response {
 	conf := apimodels.EvalQueriesPayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -32,7 +32,7 @@ func (f *TestingApi) RouteEvalQueries(ctx *models.ReqContext) response.Response 
 
 	return f.handleRouteEvalQueries(ctx, conf)
 }
-func (f *TestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	conf := apimodels.TestRulePayload{}
@@ -42,7 +42,7 @@ func (f *TestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.Respon
 
 	return f.handleRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
 }
-func (f *TestingApi) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -51,7 +51,7 @@ func (f *TestingApi) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response
 	return f.handleRouteTestRuleGrafanaConfig(ctx, conf)
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiHandler, m *metrics.API) {
+func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/v1/eval"),
