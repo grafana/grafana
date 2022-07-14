@@ -55,6 +55,9 @@ const VariableEditor = (props: Props) => {
   }, [query, datasource, onChange]);
 
   useEffect(() => {
+    setRequireSubscription(false);
+    setHasResourceGroup(false);
+    setHasNamespace(false);
     switch (queryType) {
       case AzureQueryType.ResourceGroupsQuery:
         setRequireSubscription(true);
@@ -68,8 +71,6 @@ const VariableEditor = (props: Props) => {
         setHasResourceGroup(true);
         setHasNamespace(true);
         break;
-      default:
-        setRequireSubscription(false);
     }
   }, [queryType]);
 
