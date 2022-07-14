@@ -80,8 +80,8 @@ export function DataSourcesListView({
       <ul className={styles.list}>
         {dataSources.map((dataSource) => {
           return (
-            <li key={dataSource.id}>
-              <Card href={`datasources/edit/${dataSource.id}`}>
+            <li key={dataSource.uid}>
+              <Card href={`datasources/edit/${dataSource.uid}`}>
                 <Card.Heading>{dataSource.name}</Card.Heading>
                 <Card.Figure>
                   <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
