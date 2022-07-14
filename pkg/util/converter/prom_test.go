@@ -1,45 +1,42 @@
 package converter
 
 import (
-	"os"
-	"path"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
+// FIXME:
+// commented out due to flaky tests
+/*
 const update = true
 
-// func TestReadPromFrames(t *testing.T) {
-// 	files := []string{
-// 		"prom-labels",
-// 		"prom-matrix",
-// 		"prom-matrix-with-nans",
-// 		"prom-matrix-histogram-no-labels",
-// 		"prom-matrix-histogram-partitioned",
-// 		"prom-vector-histogram-no-labels",
-// 		"prom-vector",
-// 		"prom-string",
-// 		"prom-scalar",
-// 		"prom-series",
-// 		"prom-warnings",
-// 		"prom-error",
-// 		"prom-exemplars",
-// 		"loki-streams-a",
-// 		"loki-streams-b",
-// 		"loki-streams-c",
-// 	}
+func TestReadPromFrames(t *testing.T) {
+	files := []string{
+		"prom-labels",
+		"prom-matrix",
+		"prom-matrix-with-nans",
+		"prom-matrix-histogram-no-labels",
+		"prom-matrix-histogram-partitioned",
+		"prom-vector-histogram-no-labels",
+		"prom-vector",
+		"prom-string",
+		"prom-scalar",
+		"prom-series",
+		"prom-warnings",
+		"prom-error",
+		"prom-exemplars",
+		"loki-streams-a",
+		"loki-streams-b",
+		"loki-streams-c",
+	}
 
-// 	for _, name := range files {
-// 		t.Run(name, runScenario(name, Options{}))
-// 		t.Run(name, runScenario(name, Options{MatrixWideSeries: true, VectorWideSeries: true}))
-// 	}
-// }
+	for _, name := range files {
+		t.Run(name, runScenario(name, Options{}))
+		t.Run(name, runScenario(name, Options{MatrixWideSeries: true, VectorWideSeries: true}))
+	}
+}
 
 func runScenario(name string, opts Options) func(t *testing.T) {
 	return func(t *testing.T) {
@@ -64,6 +61,7 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, update)
 	}
 }
+*/
 
 func TestTimeConversions(t *testing.T) {
 	// include millisecond precision
