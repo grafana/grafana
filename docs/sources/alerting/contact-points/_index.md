@@ -20,7 +20,7 @@ Use contact points to define how your contacts are notified when an alert fires.
 
 You can configure Grafana managed contact points as well as contact points for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager/" >}}). For more information, see [Alertmanager]({{< relref "../fundamentals/alertmanager/" >}}).
 
-Before you begin, see [About Grafana Alerting]({{< relref "../about-alerting/" >}}) which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana Alerting.
+Before you begin, see [Grafana Alerting]({{< relref "../../alerting/" >}}) which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana Alerting.
 
 - [Create contact point]({{< relref "create-contact-point/" >}})
 - [Edit contact point]({{< relref "edit-contact-point/" >}})
