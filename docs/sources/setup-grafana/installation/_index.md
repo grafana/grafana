@@ -52,6 +52,7 @@ Grafana supports the following databases:
 - SQLite
 - MySQL
 - PostgreSQL
+- Microsoft SQL Server
 
 By default, Grafana installs with and uses SQLite, which is an embedded database stored in the Grafana installation location.
 

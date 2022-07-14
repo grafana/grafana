@@ -285,11 +285,11 @@ embedded database (included in the main Grafana binary).
 
 ### type
 
-Either `mysql`, `postgres` or `sqlite3`, it's your choice.
+Either `mysql`, `postgres`, `mssql` or `sqlite3`, it's your choice.
 
 ### host
 
-Only applicable to MySQL or Postgres. Includes IP or hostname and port or in case of Unix sockets the path to it.
+Only applicable to MySQL, MSSQL or Postgres. Includes IP or hostname and port or in case of Unix sockets the path to it.
 For example, for MySQL running on the same host as Grafana: `host = 127.0.0.1:3306` or with Unix sockets: `host = /var/run/mysqld/mysqld.sock`
 
 ### name
