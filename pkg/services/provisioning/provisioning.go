@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,6 +44,7 @@ func ProvideService(
 	alertingService *alerting.AlertNotificationService,
 	pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,
+	quotaService *quota.QuotaService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -61,6 +63,7 @@ func ProvideService(
 		alertingService:              alertingService,
 		pluginsSettings:              pluginSettings,
 		searchService:                searchService,
+		quotaService:                 quotaService,
 		log:                          log.New("provisioning"),
 	}
 	return s, nil
@@ -129,6 +132,7 @@ type ProvisioningServiceImpl struct {
 	alertingService              *alerting.AlertNotificationService
 	pluginsSettings              pluginsettings.Service
 	searchService                searchV2.SearchService
+	quotaService                 quota.Service
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -254,6 +258,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlertRules(ctx context.Context) erro
 	ruleService := provisioning.NewAlertRuleService(
 		st,
 		st,
+		ps.quotaService,
 		ps.SQLStore,
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
