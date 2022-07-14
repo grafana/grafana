@@ -1,18 +1,24 @@
 package converter
 
 import (
+	"os"
+	"path"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// FIXME:
-// commented out due to flaky tests
-/*
 const update = true
 
 func TestReadPromFrames(t *testing.T) {
+	// FIXME:
+	// skipping test due to flaky behavior
+	t.Skip()
 	files := []string{
 		"prom-labels",
 		"prom-matrix",
@@ -61,7 +67,6 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, update)
 	}
 }
-*/
 
 func TestTimeConversions(t *testing.T) {
 	// include millisecond precision
