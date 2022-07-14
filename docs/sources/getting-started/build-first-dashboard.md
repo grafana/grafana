@@ -58,6 +58,6 @@ The following topics are of interest to Grafana server admin users:
 
 - [Grafana configuration]({{< relref "../setup-grafana/configure-grafana/" >}})
 - [Authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}})
-- [User permissions and roles]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions/" >}})
+- [User permissions and roles]({{< relref "../administration/roles-and-permissions/" >}})
 - [Provisioning]({{< relref "../administration/provisioning/" >}})
-- [Grafana CLI]({{< relref "../administration/cli/" >}})
+- [Grafana CLI]({{< relref "../cli/" >}})
