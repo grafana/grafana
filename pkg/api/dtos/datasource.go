@@ -64,3 +64,28 @@ func (slice DataSourceList) Less(i, j int) bool {
 func (slice DataSourceList) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
+
+//LOGZ.IO GRAFANA CHANGE :: Create endpoints to return summary of datasources
+type DataSourceSummaryListItemDTO struct {
+	Id       int64  `json:"id"`
+	UID      string `json:"uid"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Database string `json:"database"`
+}
+
+type DataSourceSummaryList []DataSourceSummaryListItemDTO
+
+func (slice DataSourceSummaryList) Len() int {
+	return len(slice)
+}
+
+func (slice DataSourceSummaryList) Less(i, j int) bool {
+	return strings.ToLower(slice[i].Name) < strings.ToLower(slice[j].Name)
+}
+
+func (slice DataSourceSummaryList) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
+//LOGZ.IO GRAFANA CHANGE :: end
