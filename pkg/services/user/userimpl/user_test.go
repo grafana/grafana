@@ -39,3 +39,11 @@ func (f *FakeUserStore) Get(ctx context.Context, query *user.User) (*user.User, 
 func (f *FakeUserStore) Insert(ctx context.Context, query *user.User) (int64, error) {
 	return 0, f.ExpectedError
 }
+
+func (f *FakeUserStore) Delete(ctx context.Context, userID int64) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) ExistNotServiceAccount(ctx context.Context, userID int64) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
