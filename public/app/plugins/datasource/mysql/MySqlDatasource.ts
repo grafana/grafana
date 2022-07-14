@@ -11,7 +11,7 @@ import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQue
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { MySQLOptions } from './types';
 
-export class MySqlDatasource extends SqlDatasource<MySQLOptions> {
+export class MySqlDatasource extends SqlDatasource {
   // This enables default annotation support for 7.2+
   annotations = {};
 

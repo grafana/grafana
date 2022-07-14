@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { CompletionItemKind, EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
 
+import { SQLConnectionLimits } from './components/configuration/types';
 import { QueryWithDefaults } from './defaults';
 import {
   QueryEditorFunctionExpression,
@@ -27,9 +28,15 @@ export interface SqlQueryForInterpolation {
   hide?: boolean;
 }
 
-export interface SQLOptions extends DataSourceJsonData {
-  timeInterval: string;
+export interface SQLOptions extends SQLConnectionLimits, DataSourceJsonData {
+  tlsAuth: boolean;
+  tlsAuthWithCACert: boolean;
+  timezone: string;
+  tlsSkipVerify: boolean;
+  user: string;
   database: string;
+  url: string;
+  timeInterval: string;
 }
 
 export enum QueryFormat {

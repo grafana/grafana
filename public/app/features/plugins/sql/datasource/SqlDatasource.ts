@@ -27,10 +27,7 @@ import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variable
 import { MACRO_NAMES } from '../constants';
 import { DB, SQLQuery, SQLOptions, ResponseParser, SqlQueryModel, QueryFormat } from '../types';
 
-export abstract class SqlDatasource<TSQLOptions extends SQLOptions> extends DataSourceWithBackend<
-  SQLQuery,
-  TSQLOptions
-> {
+export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
   name: string;
   interval: string;
@@ -38,7 +35,7 @@ export abstract class SqlDatasource<TSQLOptions extends SQLOptions> extends Data
   annotations = {};
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<TSQLOptions>,
+    instanceSettings: DataSourceInstanceSettings<SQLOptions>,
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
