@@ -47,7 +47,7 @@ func Provision(
 	ruleService provisioning.AlertRuleService,
 ) error {
 	ruleProvisioner := NewAlertRuleProvisioner(
-		log.New("provisioning"),
+		log.New("provisioning.alerting"),
 		dashboardService,
 		dashboardProvisioningService,
 		ruleService,
