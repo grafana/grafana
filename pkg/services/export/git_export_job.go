@@ -32,8 +32,6 @@ type gitExportJob struct {
 	helper      *commitHelper
 }
 
-type simpleExporter = func(helper *commitHelper, job *gitExportJob) error
-
 func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64, broadcaster statusBroadcaster) (Job, error) {
 	job := &gitExportJob{
 		logger:                    log.New("git_export_job"),
@@ -152,7 +150,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 			return err
 		}
 
-		err = e.doOrgExportWithHistory(e.helper)
+		err := e.process(exporters)
 		if err != nil {
 			return err
 		}
@@ -169,56 +167,30 @@ func (e *gitExportJob) doExportWithHistory() error {
 	return err
 }
 
-func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
-	include := e.cfg.Include
-
-	exporters := []simpleExporter{}
-	if include.Dash {
-		exporters = append(exporters, exportDashboards)
-
-		if include.DashThumbs {
-			exporters = append(exporters, exportDashboardThumbnails)
+func (e *gitExportJob) process(exporters []Exporter) error {
+	if false { // NEEDS a real user ID first
+		err := exportSnapshots(e.helper, e)
+		if err != nil {
+			return err
 		}
 	}
 
-	if include.Alerts {
-		exporters = append(exporters, exportAlerts)
-	}
+	for _, exp := range exporters {
+		if e.cfg.Exclude[exp.Key] {
+			continue
+		}
 
-	if include.DS {
-		exporters = append(exporters, exportDataSources)
-	}
+		if exp.process != nil {
+			e.status.Target = exp.Key
+			e.helper.exporter = exp.Key
+			err := exp.process(e.helper, e)
+			if err != nil {
+				return err
+			}
+		}
 
-	if include.Auth {
-		exporters = append(exporters, dumpAuthTables)
-	}
-
-	if include.Usage {
-		exporters = append(exporters, exportUsage)
-	}
-
-	if include.Services {
-		exporters = append(exporters, exportFiles,
-			exportSystemPreferences,
-			exportSystemStars,
-			exportSystemPlaylists,
-			exportKVStore,
-			exportSystemShortURL,
-			exportLive)
-	}
-
-	if include.Anno {
-		exporters = append(exporters, exportAnnotations)
-	}
-
-	if include.Snapshots {
-		exporters = append(exporters, exportSnapshots)
-	}
-
-	for _, fn := range exporters {
-		err := fn(helper, e)
-		if err != nil {
-			return err
+		if exp.Exporters != nil {
+			return e.process(exp.Exporters)
 		}
 	}
 	return nil
