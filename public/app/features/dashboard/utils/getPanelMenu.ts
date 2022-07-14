@@ -142,7 +142,7 @@ export function getPanelMenu(
 
   menu.push({
     text: 'Toggle legend',
-    iconClassName: '',
+    iconClassName: 'exchange-alt',
     onClick: onToggleLegend,
     shortcut: 'p l',
   });

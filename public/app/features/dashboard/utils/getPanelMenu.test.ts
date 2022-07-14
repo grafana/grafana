@@ -46,7 +46,7 @@ describe('getPanelMenu', () => {
           "text": "Explore",
         },
         Object {
-          "iconClassName": "",
+          "iconClassName": "exchange-alt",
           "onClick": [Function],
           "shortcut": "p l",
           "text": "Toggle legend",
@@ -136,7 +136,7 @@ describe('getPanelMenu', () => {
             "text": "Explore",
           },
           Object {
-            "iconClassName": "",
+            "iconClassName": "exchange-alt",
             "onClick": [Function],
             "shortcut": "p l",
             "text": "Toggle legend",

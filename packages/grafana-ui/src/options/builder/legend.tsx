@@ -11,7 +11,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
   builder
     .addRadio({
       path: 'legend.displayMode',
-      name: 'Legend mode',
+      name: 'Mode',
       category: ['Legend'],
       description: '',
       defaultValue: LegendDisplayMode.List,
@@ -24,7 +24,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
     })
     .addRadio({
       path: 'legend.showLegend',
-      name: 'Show legend',
+      name: 'Visibility',
       category: ['Legend'],
       description: '',
       defaultValue: LegendVisibility.Visible,
@@ -37,7 +37,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
     })
     .addRadio({
       path: 'legend.placement',
-      name: 'Legend placement',
+      name: 'Placement',
       category: ['Legend'],
       description: '',
       defaultValue: 'bottom',
@@ -63,7 +63,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
     builder.addCustomEditor<StatsPickerConfigSettings, string[]>({
       id: 'legend.calcs',
       path: 'legend.calcs',
-      name: 'Legend values',
+      name: 'Values',
       category: ['Legend'],
       description: 'Select values or calculations to show in legend',
       editor: standardEditorsRegistry.get('stats-picker').editor as any,
