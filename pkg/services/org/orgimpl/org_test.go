@@ -72,10 +72,10 @@ func (f *FakeOrgStore) Insert(ctx context.Context, org *org.Org) (int64, error) 
 	return f.ExpectedOrgID, f.ExpectedError
 }
 
-func (f *FakeOrgStore) InsertUser(ctx context.Context, org *org.OrgUser) (int64, error) {
+func (f *FakeOrgStore) InsertOrgUser(ctx context.Context, org *org.OrgUser) (int64, error) {
 	return f.ExpectedUserID, f.ExpectedError
 }
 
-func (f *FakeOrgStore) DeleteUser(ctx context.Context, userID int64) error {
+func (f *FakeOrgStore) DeleteOrgUser(ctx context.Context, userID int64) error {
 	return f.ExpectedError
 }

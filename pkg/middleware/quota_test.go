@@ -254,6 +254,6 @@ func (m *mockQuotaService) CheckQuotaReached(c context.Context, target string, p
 	return m.reached, m.err
 }
 
-func (m *mockQuotaService) DeleteUser(c context.Context, userID int64) error {
+func (m *mockQuotaService) DeleteByUser(c context.Context, userID int64) error {
 	return m.err
 }
