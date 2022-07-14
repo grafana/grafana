@@ -61,9 +61,7 @@ export interface DashboardQuery {
   query: string;
   tag: string[];
   starred: boolean;
-  skipRecent: boolean;
-  skipStarred: boolean;
-  folderIds: number[];
+  explain?: boolean; // adds debug info
   datasource?: string;
   sort: SelectableValue | null;
   // Save sorting data between layouts

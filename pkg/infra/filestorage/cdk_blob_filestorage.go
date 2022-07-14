@@ -9,10 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"gocloud.dev/blob"
-	"gocloud.dev/gcerrors"
-
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
+	"gocloud.dev/gcerrors"
 )
 
 const (
@@ -215,20 +214,62 @@ func (c cdkBlobStorage) CreateFolder(ctx context.Context, path string) error {
 	return nil
 }
 
-func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string) error {
-	directoryMarkerPath := fmt.Sprintf("%s%s%s", folderPath, Delimiter, directoryMarker)
-	exists, err := c.bucket.Exists(ctx, strings.ToLower(directoryMarkerPath))
-
-	if err != nil {
-		return err
+func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string, options *DeleteFolderOptions) error {
+	folderPrefix := strings.ToLower(c.convertFolderPathToPrefix(folderPath))
+	directoryMarkerPath := folderPrefix + directoryMarker
+	if !options.Force {
+		return c.bucket.Delete(ctx, directoryMarkerPath)
 	}
 
-	if !exists {
-		return nil
+	iterators := []*blob.ListIterator{c.bucket.List(&blob.ListOptions{
+		Prefix:    folderPrefix,
+		Delimiter: Delimiter,
+	})}
+
+	var pathsToDelete []string
+
+	for len(iterators) > 0 {
+		obj, err := iterators[0].Next(ctx)
+		if errors.Is(err, io.EOF) {
+			iterators = iterators[1:]
+			continue
+		}
+
+		if err != nil {
+			c.log.Error("force folder delete: failed to retrieve next object", "err", err)
+			return err
+		}
+
+		path := obj.Key
+		lowerPath := strings.ToLower(path)
+		if obj.IsDir {
+			iterators = append([]*blob.ListIterator{c.bucket.List(&blob.ListOptions{
+				Prefix:    lowerPath,
+				Delimiter: Delimiter,
+			})}, iterators...)
+			continue
+		}
+
+		pathsToDelete = append(pathsToDelete, lowerPath)
 	}
 
-	err = c.bucket.Delete(ctx, strings.ToLower(directoryMarkerPath))
-	return err
+	for _, path := range pathsToDelete {
+		if !options.AccessFilter.IsAllowed(path) {
+			c.log.Error("force folder delete: unauthorized access", "path", path)
+			return fmt.Errorf("force folder delete error, unauthorized access to %s", path)
+		}
+	}
+
+	var lastErr error
+	for _, path := range pathsToDelete {
+		if err := c.bucket.Delete(ctx, path); err != nil {
+			c.log.Error("force folder delete: failed while deleting a file", "err", err, "path", path)
+			lastErr = err
+			// keep going and delete remaining files
+		}
+	}
+
+	return lastErr
 }
 
 //nolint: gocyclo

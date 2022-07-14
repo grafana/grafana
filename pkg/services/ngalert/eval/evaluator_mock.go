@@ -3,6 +3,8 @@
 package eval
 
 import (
+	"context"
+
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	mock "github.com/stretchr/testify/mock"
 
@@ -25,11 +27,11 @@ func (_m *FakeEvaluator) EXPECT() *FakeEvaluator_Expecter {
 }
 
 // ConditionEval provides a mock function with given fields: condition, now
-func (_m *FakeEvaluator) ConditionEval(condition *models.Condition, now time.Time) (Results, error) {
+func (_m *FakeEvaluator) ConditionEval(ctx context.Context, condition models.Condition, now time.Time) Results {
 	ret := _m.Called(condition, now)
 
 	var r0 Results
-	if rf, ok := ret.Get(0).(func(*models.Condition, time.Time) Results); ok {
+	if rf, ok := ret.Get(0).(func(models.Condition, time.Time) Results); ok {
 		r0 = rf(condition, now)
 	} else {
 		if ret.Get(0) != nil {
@@ -37,14 +39,7 @@ func (_m *FakeEvaluator) ConditionEval(condition *models.Condition, now time.Tim
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*models.Condition, time.Time) error); ok {
-		r1 = rf(condition, now)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // FakeEvaluator_ConditionEval_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConditionEval'
@@ -53,26 +48,26 @@ type FakeEvaluator_ConditionEval_Call struct {
 }
 
 // ConditionEval is a helper method to define mock.On call
-//  - condition *models.Condition
+//  - condition models.Condition
 //  - now time.Time
 func (_e *FakeEvaluator_Expecter) ConditionEval(condition interface{}, now interface{}) *FakeEvaluator_ConditionEval_Call {
 	return &FakeEvaluator_ConditionEval_Call{Call: _e.mock.On("ConditionEval", condition, now)}
 }
 
-func (_c *FakeEvaluator_ConditionEval_Call) Run(run func(condition *models.Condition, now time.Time)) *FakeEvaluator_ConditionEval_Call {
+func (_c *FakeEvaluator_ConditionEval_Call) Run(run func(condition models.Condition, now time.Time)) *FakeEvaluator_ConditionEval_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*models.Condition), args[1].(time.Time))
+		run(args[0].(models.Condition), args[1].(time.Time))
 	})
 	return _c
 }
 
-func (_c *FakeEvaluator_ConditionEval_Call) Return(_a0 Results, _a1 error) *FakeEvaluator_ConditionEval_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *FakeEvaluator_ConditionEval_Call) Return(_a0 Results) *FakeEvaluator_ConditionEval_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
 // QueriesAndExpressionsEval provides a mock function with given fields: orgID, data, now
-func (_m *FakeEvaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
+func (_m *FakeEvaluator) QueriesAndExpressionsEval(ctx context.Context, orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
 	ret := _m.Called(orgID, data, now)
 
 	var r0 *backend.QueryDataResponse

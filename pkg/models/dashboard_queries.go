@@ -10,10 +10,23 @@ func GetUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 
 	for _, panelObj := range dashboard.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
-		uid := panel.Get("datasource").Get("uid").MustString()
-		if _, ok := exists[uid]; !ok {
-			datasourceUids = append(datasourceUids, uid)
-			exists[uid] = true
+		uid := GetDataSourceUidFromJson(panel)
+
+		// if uid is for a mixed datasource, get the datasource uids from the targets
+		if uid == "-- Mixed --" {
+			for _, target := range panel.Get("targets").MustArray() {
+				target := simplejson.NewFromAny(target)
+				datasourceUid := target.Get("datasource").Get("uid").MustString()
+				if _, ok := exists[datasourceUid]; !ok {
+					datasourceUids = append(datasourceUids, datasourceUid)
+					exists[datasourceUid] = true
+				}
+			}
+		} else {
+			if _, ok := exists[uid]; !ok {
+				datasourceUids = append(datasourceUids, uid)
+				exists[uid] = true
+			}
 		}
 	}
 
@@ -31,8 +44,11 @@ func GroupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
+			// if query target has no datasource, set it to have the datasource on the panel
 			if _, ok := query.CheckGet("datasource"); !ok {
-				query.Set("datasource", panel.Get("datasource"))
+				uid := GetDataSourceUidFromJson(panel)
+				datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
+				query.Set("datasource", datasource)
 			}
 
 			panelQueries = append(panelQueries, query)
@@ -48,13 +64,8 @@ func GroupQueriesByDataSource(queries []*simplejson.Json) (result [][]*simplejso
 	byDataSource := make(map[string][]*simplejson.Json)
 
 	for _, query := range queries {
-		dataSourceUid, err := query.GetPath("datasource", "uid").String()
-
-		if err != nil {
-			continue
-		}
-
-		byDataSource[dataSourceUid] = append(byDataSource[dataSourceUid], query)
+		uid := GetDataSourceUidFromJson(query)
+		byDataSource[uid] = append(byDataSource[uid], query)
 	}
 
 	for _, queries := range byDataSource {
@@ -62,4 +73,15 @@ func GroupQueriesByDataSource(queries []*simplejson.Json) (result [][]*simplejso
 	}
 
 	return
+}
+
+func GetDataSourceUidFromJson(query *simplejson.Json) string {
+	uid := query.Get("datasource").Get("uid").MustString()
+
+	// before 8.3 special types could be sent as datasource (expr)
+	if uid == "" {
+		uid = query.Get("datasource").MustString()
+	}
+
+	return uid
 }
