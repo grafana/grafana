@@ -77,28 +77,36 @@ func TestWarmStateCache(t *testing.T) {
 		},
 	}
 
-	saveCmd1 := &models.SaveAlertInstanceCommand{
-		RuleOrgID:         rule.OrgID,
-		RuleUID:           rule.UID,
-		Labels:            models.InstanceLabels{"test1": "testValue1"},
-		State:             models.InstanceStateNormal,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+	saveCmd1 := &models.SaveAlertInstancesCommand{
+		Instances: []models.SaveAlertInstanceCommandFields{
+			{
+				RuleOrgID:         rule.OrgID,
+				RuleUID:           rule.UID,
+				Labels:            models.InstanceLabels{"test1": "testValue1"},
+				State:             models.InstanceStateNormal,
+				LastEvalTime:      evaluationTime,
+				CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+				CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+			},
+		},
 	}
 
-	_ = dbstore.SaveAlertInstance(ctx, saveCmd1)
+	_ = dbstore.SaveAlertInstances(ctx, saveCmd1)
 
-	saveCmd2 := &models.SaveAlertInstanceCommand{
-		RuleOrgID:         rule.OrgID,
-		RuleUID:           rule.UID,
-		Labels:            models.InstanceLabels{"test2": "testValue2"},
-		State:             models.InstanceStateFiring,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+	saveCmd2 := &models.SaveAlertInstancesCommand{
+		Instances: []models.SaveAlertInstanceCommandFields{
+			{
+				RuleOrgID:         rule.OrgID,
+				RuleUID:           rule.UID,
+				Labels:            models.InstanceLabels{"test2": "testValue2"},
+				State:             models.InstanceStateFiring,
+				LastEvalTime:      evaluationTime,
+				CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+				CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+			},
+		},
 	}
-	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
+	_ = dbstore.SaveAlertInstances(ctx, saveCmd2)
 
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval:            time.Second,

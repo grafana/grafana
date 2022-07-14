@@ -169,7 +169,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-	st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	st.cleanupStaleResults(ctx, evaluatedAt, alertRule, processedResults)
 	return states
 }
 
@@ -370,11 +370,18 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) {
+func (st *Manager) cleanupStaleResults(
+	ctx context.Context,
+	evaluatedAt time.Time,
+	alertRule *ngModels.AlertRule,
+	newStates map[string]*State,
+) {
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	toDelete := make([]store.InstanceKey, 0)
+
 	for _, s := range allStates {
-		_, ok := states[s.CacheId]
-		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
+		// Is the cached state in our recently processed results? If not, is it stale?
+		if _, ok := newStates[s.CacheId]; !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
 			ilbs := ngModels.InstanceLabels(s.Labels)
@@ -383,9 +390,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				st.log.Error("unable to get labelsHash", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
 			}
 
-			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
-				st.log.Error("unable to delete stale instance from database", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
-			}
+			toDelete = append(toDelete, store.InstanceKey{OrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
 				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
@@ -393,6 +398,11 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 					InstanceStateAndReason{State: s.State, Reason: s.StateReason})
 			}
 		}
+	}
+
+	if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
+		st.log.Error("unable to delete stale instances from database", "err", err.Error(),
+			"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
 	}
 }
 

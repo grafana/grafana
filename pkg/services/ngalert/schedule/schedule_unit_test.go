@@ -335,6 +335,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	}, 10*time.Second, 200*time.Millisecond)
 }
 
+// TODO: Update test to account for saving multiple instances
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
@@ -425,10 +426,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Len(t, states, 1)
 				s := states[0]
 
-				var cmd *models.SaveAlertInstanceCommand
+				var cmd *models.SaveAlertInstancesCommand
 				for _, op := range instanceStore.RecordedOps {
 					switch q := op.(type) {
-					case models.SaveAlertInstanceCommand:
+					case models.SaveAlertInstancesCommand:
 						cmd = &q
 					}
 					if cmd != nil {
@@ -437,12 +438,12 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				}
 
 				require.NotNil(t, cmd)
-				t.Logf("Saved alert instance: %v", cmd)
-				require.Equal(t, rule.OrgID, cmd.RuleOrgID)
-				require.Equal(t, expectedTime, cmd.LastEvalTime)
-				require.Equal(t, cmd.RuleUID, cmd.RuleUID)
-				require.Equal(t, evalState.String(), string(cmd.State))
-				require.Equal(t, s.Labels, data.Labels(cmd.Labels))
+				t.Logf("Saved alert instances: %v", cmd)
+				require.Equal(t, rule.OrgID, cmd.Instances[0].RuleOrgID)
+				require.Equal(t, expectedTime, cmd.Instances[0].LastEvalTime)
+				require.Equal(t, rule.UID, cmd.Instances[0].RuleUID)
+				require.Equal(t, evalState.String(), string(cmd.Instances[0].State))
+				require.Equal(t, s.Labels, data.Labels(cmd.Instances[0].Labels))
 			})
 			t.Run("it reports metrics", func(t *testing.T) {
 				// duration metric has 0 values because of mocked clock that do not advance

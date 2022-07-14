@@ -2029,28 +2029,31 @@ func TestStaleResultsHandler(t *testing.T) {
 	const mainOrgID int64 = 1
 	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
 	lastEval := evaluationTime.Add(-2 * interval)
-	saveCmd1 := &models.SaveAlertInstanceCommand{
-		RuleOrgID:         rule.OrgID,
-		RuleUID:           rule.UID,
-		Labels:            models.InstanceLabels{"test1": "testValue1"},
-		State:             models.InstanceStateNormal,
-		LastEvalTime:      lastEval,
-		CurrentStateSince: lastEval,
-		CurrentStateEnd:   lastEval.Add(3 * interval),
+
+	saveCmd := &models.SaveAlertInstancesCommand{
+		Instances: []models.SaveAlertInstanceCommandFields{
+			{
+				RuleOrgID:         rule.OrgID,
+				RuleUID:           rule.UID,
+				Labels:            models.InstanceLabels{"test1": "testValue1"},
+				State:             models.InstanceStateNormal,
+				LastEvalTime:      lastEval,
+				CurrentStateSince: lastEval,
+				CurrentStateEnd:   lastEval.Add(3 * interval),
+			},
+			{
+				RuleOrgID:         rule.OrgID,
+				RuleUID:           rule.UID,
+				Labels:            models.InstanceLabels{"test2": "testValue2"},
+				State:             models.InstanceStateFiring,
+				LastEvalTime:      lastEval,
+				CurrentStateSince: lastEval,
+				CurrentStateEnd:   lastEval.Add(3 * interval),
+			},
+		},
 	}
 
-	_ = dbstore.SaveAlertInstance(ctx, saveCmd1)
-
-	saveCmd2 := &models.SaveAlertInstanceCommand{
-		RuleOrgID:         rule.OrgID,
-		RuleUID:           rule.UID,
-		Labels:            models.InstanceLabels{"test2": "testValue2"},
-		State:             models.InstanceStateFiring,
-		LastEvalTime:      lastEval,
-		CurrentStateSince: lastEval,
-		CurrentStateEnd:   lastEval.Add(3 * interval),
-	}
-	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
+	_ = dbstore.SaveAlertInstances(ctx, saveCmd)
 
 	testCases := []struct {
 		desc               string

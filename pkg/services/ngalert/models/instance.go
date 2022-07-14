@@ -44,8 +44,12 @@ func (i InstanceStateType) IsValid() bool {
 		i == InstanceStateError
 }
 
+type SaveAlertInstancesCommand struct {
+	Instances []SaveAlertInstanceCommandFields
+}
+
 // SaveAlertInstanceCommand is the query for saving a new alert instance.
-type SaveAlertInstanceCommand struct {
+type SaveAlertInstanceCommandFields struct {
 	RuleOrgID         int64
 	RuleUID           string
 	Labels            InstanceLabels
