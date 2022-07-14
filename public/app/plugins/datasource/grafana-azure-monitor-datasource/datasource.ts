@@ -190,6 +190,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   getVariables() {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
+
+  getVariablesRaw() {
+    return this.templateSrv.getVariables();
+  }
 }
 
 function hasQueryForType(query: AzureMonitorQuery): boolean {

@@ -1,6 +1,6 @@
 import { Location } from 'history';
 
-import { locationUtil, NavModelItem } from '@grafana/data';
+import { GrafanaConfig, locationUtil, NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import { updateConfig } from '../../config';
@@ -199,7 +199,7 @@ describe('getActiveItem', () => {
   ];
   beforeEach(() => {
     locationUtil.initialize({
-      config: { appSubUrl: '/subUrl' } as any,
+      config: { appSubUrl: '/subUrl' } as GrafanaConfig,
       getVariablesUrlParams: () => ({}),
       getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
     });

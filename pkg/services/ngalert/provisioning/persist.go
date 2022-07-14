@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 // AMStore is a store of Alertmanager configurations.
@@ -36,4 +37,10 @@ type RuleStore interface {
 	InsertAlertRules(ctx context.Context, rule []models.AlertRule) (map[string]int64, error)
 	UpdateAlertRules(ctx context.Context, rule []store.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
+}
+
+// QuotaChecker represents the ability to evaluate whether quotas are met.
+//go:generate mockery --name QuotaChecker --structname MockQuotaChecker --inpackage --filename quota_checker_mock.go --with-expecter
+type QuotaChecker interface {
+	CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error)
 }

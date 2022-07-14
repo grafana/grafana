@@ -2,11 +2,12 @@ package definitions
 
 import (
 	"fmt"
-	"html/template"
+	tmplhtml "html/template"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 )
@@ -64,7 +65,9 @@ func (t *MessageTemplate) Validate() error {
 		return fmt.Errorf("template must have content")
 	}
 
-	_, err := template.New("").Parse(t.Template)
+	tmpl := tmplhtml.New("").Option("missingkey=zero")
+	tmpl.Funcs(tmplhtml.FuncMap(template.DefaultFuncs))
+	_, err := tmpl.Parse(t.Template)
 	if err != nil {
 		return fmt.Errorf("invalid template: %w", err)
 	}
