@@ -110,7 +110,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 				orgUser.Role = org.RoleType(setting.AutoAssignOrgRole)
 			}
 		}
-		_, err = s.orgService.InsertUser(ctx, &orgUser)
+		_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
 		if err != nil {
 			//  HERE ADD DELETE USER
 			return usr, err
