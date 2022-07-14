@@ -152,10 +152,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
-    return this.getResource(
-      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.listByResourceGroupApiVersion}`
-    )
+  getMetricDefinitions(subscriptionId: string, resourceGroup?: string) {
+    let url = `${this.resourcePath}/subscriptions/${subscriptionId}`;
+    if (resourceGroup) {
+      url += `/resourceGroups/${resourceGroup}`;
+    }
+    url += `/resources?api-version=${this.listByResourceGroupApiVersion}`;
+    return this.getResource(url)
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
@@ -204,14 +207,18 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, skipToken?: string) {
+  getResourceNames(subscriptionId: string, resourceGroup?: string, metricDefinition?: string, skipToken?: string) {
     const validMetricDefinition = startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')
       ? 'Microsoft.Storage/storageAccounts'
       : metricDefinition;
-    let url =
-      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/resources?` +
-      `$filter=resourceType eq '${validMetricDefinition}'&` +
-      `api-version=${this.listByResourceGroupApiVersion}`;
+    let url = `${this.resourcePath}/subscriptions/${subscriptionId}`;
+    if (resourceGroup) {
+      url += `/resourceGroups/${resourceGroup}`;
+    }
+    url += `/resources?api-version=${this.listByResourceGroupApiVersion}`;
+    if (validMetricDefinition) {
+      url += `&$filter=resourceType eq '${validMetricDefinition}'`;
+    }
     if (skipToken) {
       url += `&$skiptoken=${skipToken}`;
     }

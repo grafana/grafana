@@ -21,6 +21,8 @@ type Props = {
   datasource: DataSource;
 };
 
+const removeOption: SelectableValue = { label: '-', value: '' };
+
 const VariableEditor = (props: Props) => {
   const { query, onChange, datasource } = props;
   const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
@@ -30,13 +32,19 @@ const VariableEditor = (props: Props) => {
   if (config.featureToggles.azTemplateVars) {
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery });
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery });
+    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Namespaces', value: AzureQueryType.NamespacesQuery });
+    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Names', value: AzureQueryType.ResourceNamesQuery });
   }
   const [variableOptionGroup, setVariableOptionGroup] = useState<{ label: string; options: AzureMonitorOption[] }>({
     label: 'Template Variables',
     options: [],
   });
   const [requireSubscription, setRequireSubscription] = useState(false);
+  const [hasResourceGroup, setHasResourceGroup] = useState(false);
+  const [hasNamespace, setHasNamespace] = useState(false);
   const [subscriptions, setSubscriptions] = useState<SelectableValue[]>([]);
+  const [resourceGroups, setResourceGroups] = useState<SelectableValue[]>([]);
+  const [namespaces, setNamespaces] = useState<SelectableValue[]>([]);
   const [errorMessage, setError] = useLastError();
   const queryType = typeof query === 'string' ? '' : query.queryType;
 
@@ -50,6 +58,15 @@ const VariableEditor = (props: Props) => {
     switch (queryType) {
       case AzureQueryType.ResourceGroupsQuery:
         setRequireSubscription(true);
+        break;
+      case AzureQueryType.NamespacesQuery:
+        setRequireSubscription(true);
+        setHasResourceGroup(true);
+        break;
+      case AzureQueryType.ResourceNamesQuery:
+        setRequireSubscription(true);
+        setHasResourceGroup(true);
+        setHasNamespace(true);
         break;
       default:
         setRequireSubscription(false);
@@ -75,6 +92,24 @@ const VariableEditor = (props: Props) => {
     });
   });
 
+  const subscription = typeof query === 'object' && query.subscription;
+  useEffect(() => {
+    if (subscription) {
+      datasource.getResourceGroups(subscription).then((rgs) => {
+        setResourceGroups(rgs.map((s) => ({ label: s.text, value: s.value })));
+      });
+    }
+  }, [datasource, subscription]);
+
+  const resourceGroup = (typeof query === 'object' && query.resourceGroup) || '';
+  useEffect(() => {
+    if (subscription) {
+      datasource.getMetricDefinitions(subscription, resourceGroup).then((rgs) => {
+        setNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
+      });
+    }
+  }, [datasource, subscription, resourceGroup]);
+
   if (typeof query === 'string') {
     // still migrating the query
     return null;
@@ -98,6 +133,20 @@ const VariableEditor = (props: Props) => {
     }
   };
 
+  const onChangeResourceGroup = (selectableValue: SelectableValue) => {
+    onChange({
+      ...query,
+      resourceGroup: selectableValue.value,
+    });
+  };
+
+  const onChangeNamespace = (selectableValue: SelectableValue) => {
+    onChange({
+      ...query,
+      namespace: selectableValue.value,
+    });
+  };
+
   const onLogsQueryChange = (queryChange: AzureMonitorQuery) => {
     onChange(queryChange);
   };
@@ -113,7 +162,7 @@ const VariableEditor = (props: Props) => {
           value={queryType}
         />
       </InlineField>
-      {typeof query === 'object' && query.queryType === AzureQueryType.LogAnalytics && (
+      {query.queryType === AzureQueryType.LogAnalytics && (
         <>
           <LogsQueryEditor
             subscriptionId={query.subscription}
@@ -134,10 +183,10 @@ const VariableEditor = (props: Props) => {
           )}
         </>
       )}
-      {typeof query === 'object' && query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
+      {query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
         <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={datasource} />
       )}
-      {typeof query === 'object' && requireSubscription && (
+      {requireSubscription && (
         <InlineField label="Select subscription" labelWidth={20}>
           <Select
             aria-label="select subscription"
@@ -145,6 +194,30 @@ const VariableEditor = (props: Props) => {
             options={subscriptions.concat(variableOptionGroup)}
             width={25}
             value={query.subscription}
+          />
+        </InlineField>
+      )}
+      {hasResourceGroup && (
+        <InlineField label="Select Resource Group" labelWidth={20}>
+          <Select
+            aria-label="select resource group"
+            onChange={onChangeResourceGroup}
+            options={resourceGroups.concat(variableOptionGroup, removeOption)}
+            width={25}
+            value={query.resourceGroup}
+            placeholder="Optional"
+          />
+        </InlineField>
+      )}
+      {hasNamespace && (
+        <InlineField label="Select Namespace" labelWidth={20}>
+          <Select
+            aria-label="select namespace"
+            onChange={onChangeNamespace}
+            options={namespaces.concat(variableOptionGroup, removeOption)}
+            width={25}
+            value={query.namespace}
+            placeholder="Optional"
           />
         </InlineField>
       )}
