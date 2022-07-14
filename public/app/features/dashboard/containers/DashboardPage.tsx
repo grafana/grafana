@@ -351,7 +351,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const inspectPanel = this.getInspectPanel();
     const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
 
-    const toolbar = (kioskMode !== KioskMode.Full || queryParams.editview) && (
+    const toolbar = kioskMode !== KioskMode.Full && !queryParams.editview && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
         <DashNav
           dashboard={dashboard}
@@ -390,7 +390,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
           {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
         </Page>
-        {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}
+        {queryParams.editview && (
+          <DashboardSettings dashboard={dashboard} editview={queryParams.editview} pageNav={this.pageNav!} />
+        )}
       </>
     );
   }

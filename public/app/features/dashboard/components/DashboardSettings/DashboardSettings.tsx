@@ -1,14 +1,12 @@
-import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
-import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import * as H from 'history';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, locationUtil, NavModel, NavModelItem } from '@grafana/data';
+import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Button, IconName, PageToolbar, stylesFactory, useForceUpdate } from '@grafana/ui';
+import { Button, IconName, PageToolbar, useForceUpdate } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/PageNew/Page';
 import config from 'app/core/config';
@@ -19,7 +17,7 @@ import { VariableEditorContainer } from '../../../variables/editor/VariableEdito
 import { DashboardModel } from '../../state/DashboardModel';
 import { AccessControlDashboardPermissions } from '../DashboardPermissions/AccessControlDashboardPermissions';
 import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
-// import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
+import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 import { GeneralSettings } from './GeneralSettings';
@@ -29,6 +27,7 @@ import { VersionsSettings } from './VersionsSettings';
 
 export interface Props {
   dashboard: DashboardModel;
+  pageNav: NavModelItem;
   editview: string;
 }
 
@@ -50,21 +49,7 @@ const MakeEditable = (props: { onMakeEditable: () => any }) => (
   </div>
 );
 
-export function DashboardSettings({ dashboard, editview }: Props) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { overlayProps } = useOverlay(
-    {
-      isOpen: true,
-      onClose,
-    },
-    ref
-  );
-  const { dialogProps } = useDialog(
-    {
-      'aria-label': 'Dashboard settings',
-    },
-    ref
-  );
+export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
   const forceUpdate = useForceUpdate();
   const onMakeEditable = useCallback(() => {
     dashboard.editable = true;
@@ -162,12 +147,20 @@ export function DashboardSettings({ dashboard, editview }: Props) {
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const canSave = dashboard.meta.canSave;
   const location = useLocation();
-  const sectionNav = getSectionNav(dashboard, pages, currentPage, location);
+  const sectionNav = getSectionNav(pageNav, pages, currentPage, location);
+  const actions = [
+    canSaveAs && <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onPostSave} variant="secondary" />,
+    canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onPostSave} />,
+  ];
 
   return (
     <>
-      {!config.featureToggles.topnav && (
-        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose} />
+      {!config.featureToggles.topnav ? (
+        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose}>
+          {actions}
+        </PageToolbar>
+      ) : (
+        <AppChromeUpdate actions={actions} />
       )}
       <Page navModel={sectionNav} pageNav={{ text: currentPage.title }}>
         {currentPage.component}
@@ -177,7 +170,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
 }
 
 function getSectionNav(
-  dashboard: DashboardModel,
+  pageNav: NavModelItem,
   pages: SettingsPage[],
   currentPage: SettingsPage,
   location: H.Location
@@ -197,14 +190,7 @@ function getSectionNav(
     active: page === currentPage,
   }));
 
-  main.parentItem = {
-    text: dashboard.title,
-    url: locationUtil.getUrlForPartial(location, { editview: null }),
-    parentItem: {
-      text: 'Dashboards',
-      url: '/dashboards',
-    },
-  };
+  main.parentItem = pageNav;
 
   return {
     main,
