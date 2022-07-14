@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,9 +13,6 @@ import (
 // For now this file is stored in $GRAFANA_HOME/conf/storage.json and updated from the UI
 type GlobalStorageConfig struct {
 	filepath string // Local file path
-
-	// Adds an org scoped "resource" path
-	AllowResourceUploads bool `json:"allowResourceUploads"`
 
 	// Add dev environment
 	AddDevEnv bool `json:"addDevEnv"`
@@ -29,11 +27,11 @@ func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
 	if _, err := os.Stat(fpath); err == nil {
 		body, err := ioutil.ReadFile(fpath)
 		if err != nil {
-			return nil, err
+			return g, err
 		}
 		err = json.Unmarshal(body, g)
 		if err != nil {
-			return nil, err
+			return g, err
 		}
 	}
 	g.filepath = fpath
@@ -96,4 +94,13 @@ type StorageGCSConfig struct {
 	Folder string `json:"folder"`
 
 	CredentialsFile string `json:"credentialsFile"`
+}
+
+func newStorage(cfg RootStorageConfig) (storageRuntime, error) {
+	switch cfg.Type {
+	case rootStorageTypeDisk:
+		return newDiskStorage(cfg), nil
+	}
+
+	return nil, fmt.Errorf("unsupported store: " + cfg.Type)
 }

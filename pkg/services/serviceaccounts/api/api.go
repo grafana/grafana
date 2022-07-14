@@ -20,12 +20,13 @@ import (
 )
 
 type ServiceAccountsAPI struct {
-	cfg            *setting.Cfg
-	service        serviceaccounts.Service
-	accesscontrol  accesscontrol.AccessControl
-	RouterRegister routing.RouteRegister
-	store          serviceaccounts.Store
-	log            log.Logger
+	cfg               *setting.Cfg
+	service           serviceaccounts.Service
+	accesscontrol     accesscontrol.AccessControl
+	RouterRegister    routing.RouteRegister
+	store             serviceaccounts.Store
+	log               log.Logger
+	permissionService accesscontrol.ServiceAccountPermissionsService
 }
 
 func NewServiceAccountsAPI(
@@ -34,14 +35,16 @@ func NewServiceAccountsAPI(
 	accesscontrol accesscontrol.AccessControl,
 	routerRegister routing.RouteRegister,
 	store serviceaccounts.Store,
+	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
-		cfg:            cfg,
-		service:        service,
-		accesscontrol:  accesscontrol,
-		RouterRegister: routerRegister,
-		store:          store,
-		log:            log.New("serviceaccounts.api"),
+		cfg:               cfg,
+		service:           service,
+		accesscontrol:     accesscontrol,
+		RouterRegister:    routerRegister,
+		store:             store,
+		log:               log.New("serviceaccounts.api"),
+		permissionService: permissionService,
 	}
 }
 
@@ -101,6 +104,14 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
+	}
+
+	if !api.accesscontrol.IsDisabled() {
+		if c.SignedInUser.IsRealUser() {
+			if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgId, accesscontrol.User{ID: c.SignedInUser.UserId}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
+			}
+		}
 	}
 
 	return response.JSON(http.StatusCreated, serviceAccount)

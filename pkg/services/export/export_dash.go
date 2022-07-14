@@ -151,7 +151,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		if job.cfg.KeepHistory {
 			sess.Table("dashboard_version").
 				Join("INNER", "dashboard", "dashboard.id = dashboard_version.dashboard_id").
-				Where("org_id = ?", job.orgID).
+				Where("org_id = ?", helper.orgID).
 				Cols("dashboard.id",
 					"dashboard_version.version",
 					"dashboard_version.created",
@@ -161,7 +161,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 				Asc("dashboard_version.created")
 		} else {
 			sess.Table("dashboard").
-				Where("org_id = ?", job.orgID).
+				Where("org_id = ?", helper.orgID).
 				Cols("id",
 					"version",
 					"created",

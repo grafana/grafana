@@ -18,20 +18,21 @@ type rootStorageDisk struct {
 	settings *StorageLocalDiskConfig
 }
 
-func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *rootStorageDisk {
+func newDiskStorage(scfg RootStorageConfig) *rootStorageDisk {
+	cfg := scfg.Disk
 	if cfg == nil {
 		cfg = &StorageLocalDiskConfig{}
 	}
+	scfg.Type = rootStorageTypeDisk
+	scfg.GCS = nil
+	scfg.Git = nil
+	scfg.SQL = nil
+	scfg.S3 = nil
 
 	meta := RootStorageMeta{
-		Config: RootStorageConfig{
-			Type:   rootStorageTypeDisk,
-			Prefix: prefix,
-			Name:   name,
-			Disk:   cfg,
-		},
+		Config: scfg,
 	}
-	if prefix == "" {
+	if scfg.Prefix == "" {
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
 			Text:     "Missing prefix",
@@ -49,7 +50,7 @@ func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *ro
 		path := fmt.Sprintf("file://%s", cfg.Path)
 		bucket, err := blob.OpenBucket(context.Background(), path)
 		if err != nil {
-			grafanaStorageLogger.Warn("error loading storage", "prefix", prefix, "err", err)
+			grafanaStorageLogger.Warn("error loading storage", "prefix", scfg.Prefix, "err", err)
 			meta.Notice = append(meta.Notice, data.Notice{
 				Severity: data.NoticeSeverityError,
 				Text:     "Failed to initialize storage",

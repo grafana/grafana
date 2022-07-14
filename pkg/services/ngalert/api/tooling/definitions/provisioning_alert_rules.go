@@ -11,7 +11,7 @@ import (
 // Get a specific alert rule by UID.
 //
 //     Responses:
-//       200: AlertRule
+//       200: ProvisionedAlertRule
 //       404: description: Not found.
 
 // swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
@@ -22,7 +22,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       201: AlertRule
+//       201: ProvisionedAlertRule
 //       400: ValidationError
 
 // swagger:route PUT /api/v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
@@ -33,7 +33,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       200: AlertRule
+//       200: ProvisionedAlertRule
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
@@ -53,10 +53,10 @@ type AlertRuleUIDReference struct {
 // swagger:parameters RoutePostAlertRule RoutePutAlertRule
 type AlertRulePayload struct {
 	// in:body
-	Body AlertRule
+	Body ProvisionedAlertRule
 }
 
-type AlertRule struct {
+type ProvisionedAlertRule struct {
 	ID  int64  `json:"id"`
 	UID string `json:"uid"`
 	// required: true
@@ -96,7 +96,7 @@ type AlertRule struct {
 	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
-func (a *AlertRule) UpstreamModel() models.AlertRule {
+func (a *ProvisionedAlertRule) UpstreamModel() models.AlertRule {
 	return models.AlertRule{
 		ID:           a.ID,
 		UID:          a.UID,
@@ -115,8 +115,8 @@ func (a *AlertRule) UpstreamModel() models.AlertRule {
 	}
 }
 
-func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule {
-	return AlertRule{
+func NewAlertRule(rule models.AlertRule, provenance models.Provenance) ProvisionedAlertRule {
+	return ProvisionedAlertRule{
 		ID:           rule.ID,
 		UID:          rule.UID,
 		OrgID:        rule.OrgID,
@@ -172,10 +172,12 @@ type AlertRuleGroupPayload struct {
 	Body AlertRuleGroupMetadata
 }
 
+// swagger:model
 type AlertRuleGroupMetadata struct {
 	Interval int64 `json:"interval"`
 }
 
+// swagger:model
 type AlertRuleGroup struct {
 	Title     string             `json:"title"`
 	FolderUID string             `json:"folderUid"`

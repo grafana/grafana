@@ -28,17 +28,18 @@ func getDbStoragePathPrefix(orgId int64, storageName string) string {
 	return filestorage.Join(fmt.Sprintf("%d", orgId), storageName+filestorage.Delimiter)
 }
 
-func newSQLStorage(prefix string, name string, cfg *StorageSQLConfig, sql *sqlstore.SQLStore, orgId int64) *rootStorageSQL {
+func newSQLStorage(prefix string, name string, descr string, cfg *StorageSQLConfig, sql *sqlstore.SQLStore, orgId int64) *rootStorageSQL {
 	if cfg == nil {
 		cfg = &StorageSQLConfig{}
 	}
 
 	meta := RootStorageMeta{
 		Config: RootStorageConfig{
-			Type:   rootStorageTypeSQL,
-			Prefix: prefix,
-			Name:   name,
-			SQL:    cfg,
+			Type:        rootStorageTypeSQL,
+			Prefix:      prefix,
+			Name:        name,
+			Description: descr,
+			SQL:         cfg,
 		},
 	}
 

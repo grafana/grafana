@@ -4,14 +4,12 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,15 +20,15 @@ type ServiceAccountsService struct {
 
 func ProvideServiceAccountsService(
 	cfg *setting.Cfg,
-	store *sqlstore.SQLStore,
-	kvStore kvstore.KVStore,
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
 	usageStats usagestats.Service,
+	serviceAccountsStore serviceaccounts.Store,
+	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) (*ServiceAccountsService, error) {
 	database.InitMetrics()
 	s := &ServiceAccountsService{
-		store: database.NewServiceAccountsStore(store, kvStore),
+		store: serviceAccountsStore,
 		log:   log.New("serviceaccounts"),
 	}
 
@@ -40,7 +38,7 @@ func ProvideServiceAccountsService(
 
 	usageStats.RegisterMetricsFunc(s.store.GetUsageMetrics)
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, permissionService)
 	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	return s, nil
