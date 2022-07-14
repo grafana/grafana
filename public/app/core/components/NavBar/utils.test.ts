@@ -1,9 +1,9 @@
 import { Location } from 'history';
 
-import { NavModelItem } from '@grafana/data';
+import { GrafanaConfig, locationUtil, NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { getConfig, updateConfig } from '../../config';
+import { updateConfig } from '../../config';
 
 import { enrichConfigItems, getActiveItem, getForcedLoginUrl, isMatchOrChildMatch, isSearchActive } from './utils';
 
@@ -167,6 +167,10 @@ describe('getActiveItem', () => {
       url: '/itemWithQueryParam?foo=bar',
     },
     {
+      text: 'Item after subpath',
+      url: '/subUrl/itemAfterSubpath',
+    },
+    {
       text: 'Item with children',
       url: '/itemWithChildren',
       children: [
@@ -193,12 +197,27 @@ describe('getActiveItem', () => {
       url: '/d/moreSpecificDashboard',
     },
   ];
+  beforeEach(() => {
+    locationUtil.initialize({
+      config: { appSubUrl: '/subUrl' } as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
+    });
+  });
 
   it('returns an exact match at the top level', () => {
     const mockPathName = '/item';
     expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
       text: 'Item',
       url: '/item',
+    });
+  });
+
+  it('returns an exact match ignoring root subpath', () => {
+    const mockPathName = '/itemAfterSubpath';
+    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
+      text: 'Item after subpath',
+      url: '/subUrl/itemAfterSubpath',
     });
   });
 
@@ -226,57 +245,19 @@ describe('getActiveItem', () => {
     });
   });
 
-  describe('when the newNavigation feature toggle is disabled', () => {
-    beforeEach(() => {
-      updateConfig({
-        featureToggles: {
-          ...getConfig().featureToggles,
-          newNavigation: false,
-        },
-      });
-    });
-
-    it('returns the base route link if the pathname starts with /d/', () => {
-      const mockPathName = '/d/foo';
-      expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-        text: 'Base',
-        url: '/',
-      });
-    });
-
-    it('returns a more specific link if one exists', () => {
-      const mockPathName = '/d/moreSpecificDashboard';
-      expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-        text: 'More specific dashboard',
-        url: '/d/moreSpecificDashboard',
-      });
+  it('returns the dashboards route link if the pathname starts with /d/', () => {
+    const mockPathName = '/d/foo';
+    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
+      text: 'Dashboards',
+      url: '/dashboards',
     });
   });
 
-  describe('when the newNavigation feature toggle is enabled', () => {
-    beforeEach(() => {
-      updateConfig({
-        featureToggles: {
-          ...getConfig().featureToggles,
-          newNavigation: true,
-        },
-      });
-    });
-
-    it('returns the dashboards route link if the pathname starts with /d/', () => {
-      const mockPathName = '/d/foo';
-      expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-        text: 'Dashboards',
-        url: '/dashboards',
-      });
-    });
-
-    it('returns a more specific link if one exists', () => {
-      const mockPathName = '/d/moreSpecificDashboard';
-      expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-        text: 'More specific dashboard',
-        url: '/d/moreSpecificDashboard',
-      });
+  it('returns a more specific link if one exists', () => {
+    const mockPathName = '/d/moreSpecificDashboard';
+    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
+      text: 'More specific dashboard',
+      url: '/d/moreSpecificDashboard',
     });
   });
 });

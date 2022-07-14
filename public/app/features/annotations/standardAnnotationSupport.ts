@@ -235,12 +235,20 @@ export function getAnnotationsFromData(
  * Opt out of using the default mapping functionality on frontend.
  */
 export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
-  return datasource.type !== 'prometheus';
+  return (
+    datasource.type !== 'prometheus' &&
+    datasource.type !== 'grafana-opensearch-datasource' &&
+    datasource.type !== 'grafana-splunk-datasource'
+  );
 }
 
 /**
  * Use legacy runner. Used only as an escape hatch for easier transition to React based annotation editor.
  */
 export function shouldUseLegacyRunner(datasource: DataSourceApi): boolean {
-  return datasource.type === 'prometheus';
+  return (
+    datasource.type === 'prometheus' ||
+    datasource.type === 'grafana-opensearch-datasource' ||
+    datasource.type === 'grafana-splunk-datasource'
+  );
 }

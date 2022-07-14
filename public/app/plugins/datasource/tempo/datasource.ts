@@ -18,6 +18,7 @@ import {
   BackendSrvRequest,
   DataSourceWithBackend,
   getBackendSrv,
+  reportInteraction,
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
@@ -125,6 +126,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     // Run search queries on linked datasource
     if (logsDatasourceUid && targets.search?.length > 0) {
+      reportInteraction('grafana_traces_loki_search_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        linkedQueryExpr: targets.search[0].linkedQuery?.expr ?? '',
+      });
+
       const dsSrv = getDatasourceSrv();
       subQueries.push(
         from(dsSrv.get(logsDatasourceUid)).pipe(
@@ -159,6 +166,15 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.nativeSearch?.length) {
       try {
+        reportInteraction('grafana_traces_search_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+          serviceName: targets.nativeSearch[0].serviceName ?? '',
+          spanName: targets.nativeSearch[0].spanName ?? '',
+          resultLimit: targets.nativeSearch[0].limit ?? '',
+          search: targets.nativeSearch[0].search ?? '',
+        });
+
         const timeRange = config.featureToggles.tempoBackendSearch
           ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
           : undefined;
@@ -183,6 +199,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.upload?.length) {
       if (this.uploadedJson) {
+        reportInteraction('grafana_traces_json_file_uploaded', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+        });
+
         const otelTraceData = JSON.parse(this.uploadedJson as string);
         if (!otelTraceData.batches) {
           subQueries.push(of({ error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] }));
@@ -195,10 +216,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
+      reportInteraction('grafana_traces_service_graph_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        serviceMapQuery: targets.serviceMap[0].serviceMapQuery ?? '',
+      });
       subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
     }
 
     if (targets.traceId?.length > 0) {
+      reportInteraction('grafana_traces_traceID_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        query: targets.traceId[0].query ?? '',
+      });
+
       subQueries.push(this.handleTraceIdQuery(options, targets.traceId));
     }
 

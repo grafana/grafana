@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -99,7 +98,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			sqlStore := InitTestDB(t)
 
 			var created *events.DataSourceCreated
-			bus.AddEventListener(func(ctx context.Context, e *events.DataSourceCreated) error {
+			sqlStore.bus.AddEventListener(func(ctx context.Context, e *events.DataSourceCreated) error {
 				created = e
 				return nil
 			})
@@ -245,7 +244,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		ds := initDatasource(sqlStore)
 
 		var deleted *events.DataSourceDeleted
-		bus.AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {
+		sqlStore.bus.AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {
 			deleted = e
 			return nil
 		})

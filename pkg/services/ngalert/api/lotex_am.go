@@ -25,6 +25,14 @@ var endpoints = map[string]map[string]string{
 		"alerts":   "/alertmanager/api/v2/alerts",
 		"config":   "/api/v1/alerts",
 	},
+	"mimir": {
+		"silences": "/alertmanager/api/v2/silences",
+		"silence":  "/alertmanager/api/v2/silence/%s",
+		"status":   "/alertmanager/api/v2/status",
+		"groups":   "/alertmanager/api/v2/alerts/groups",
+		"alerts":   "/alertmanager/api/v2/alerts",
+		"config":   "/api/v1/alerts",
+	},
 	"prometheus": {
 		"silences": "/api/v2/silences",
 		"silence":  "/api/v2/silence/%s",
@@ -140,12 +148,12 @@ func (am *LotexAM) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Re
 	)
 }
 
-func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
+func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext, silenceID string) response.Response {
 	return am.withAMReq(
 		ctx,
 		http.MethodDelete,
 		"silence",
-		[]string{web.Params(ctx.Req)[":SilenceId"]},
+		[]string{silenceID},
 		nil,
 		messageExtractor,
 		nil,
@@ -188,12 +196,12 @@ func (am *LotexAM) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
 	)
 }
 
-func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext) response.Response {
+func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext, silenceID string) response.Response {
 	return am.withAMReq(
 		ctx,
 		http.MethodGet,
 		"silence",
-		[]string{web.Params(ctx.Req)[":SilenceId"]},
+		[]string{silenceID},
 		nil,
 		jsonExtractor(&apimodels.GettableSilence{}),
 		nil,

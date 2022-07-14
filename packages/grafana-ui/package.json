@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/ui",
-  "version": "9.0.0-beta.3",
+  "version": "9.0.2",
   "description": "Grafana Components Library",
   "keywords": [
     "grafana",
@@ -33,9 +33,9 @@
     "@emotion/css": "11.9.0",
     "@emotion/react": "11.9.0",
     "@grafana/aws-sdk": "0.0.36",
-    "@grafana/data": "9.0.0-beta.3",
-    "@grafana/e2e-selectors": "9.0.0-beta.3",
-    "@grafana/schema": "9.0.0-beta.3",
+    "@grafana/data": "9.0.2",
+    "@grafana/e2e-selectors": "9.0.2",
+    "@grafana/schema": "9.0.2",
     "@grafana/slate-react": "0.22.10-grafana",
     "@monaco-editor/react": "4.3.1",
     "@popperjs/core": "2.11.5",
@@ -90,7 +90,7 @@
     "slate-plain-serializer": "0.7.10",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.0",
-    "uplot": "1.6.21",
+    "uplot": "1.6.22",
     "uuid": "8.3.2"
   },
   "devDependencies": {

@@ -972,7 +972,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	ProfileEnabled = profile.Key("enabled").MustBool(true)
 
 	queryHistory := iniFile.Section("query_history")
-	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(false)
+	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
@@ -1434,6 +1434,12 @@ func readAlertingSettings(iniFile *ini.File) error {
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
 	return nil
+}
+
+// IsLegacyAlertingEnabled returns whether the legacy alerting is enabled or not.
+// It's safe to be used only after readAlertingSettings() and ReadUnifiedAlertingSettings() are executed.
+func IsLegacyAlertingEnabled() bool {
+	return AlertingEnabled != nil && *AlertingEnabled
 }
 
 func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {

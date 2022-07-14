@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -30,6 +31,7 @@ type SearchViewProps = {
   onQueryTextChange: (newQueryText: string) => void;
   includePanels: boolean;
   setIncludePanels: (v: boolean) => void;
+  keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
 export const SearchView = ({
@@ -40,6 +42,7 @@ export const SearchView = ({
   onQueryTextChange,
   includePanels,
   setIncludePanels,
+  keyboardEvents,
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
@@ -189,6 +192,7 @@ export const SearchView = ({
               width: width,
               height: height,
               onTagSelected: onTagAdd,
+              keyboardEvents,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
             };
 

@@ -45,6 +45,14 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 
 ## Grafana Alerting - main / unreleased
 
+- [CHANGE] Rule API to reject request to update rules that affects provisioned rules #50835
+- [FEATURE] Add first Grafana reserved label, grafana_folder is created during runtime and stores an alert's folder/namespace title #50262
+- [FEATURE] use optimistic lock by version field when updating alert rules #50274
+- [BUGFIX] State manager to use tick time to determine stale states #50991
+- [ENHANCEMENT] Scheduler: Drop ticks if rule evaluation is too slow and adds a metric grafana_alerting_schedule_rule_evaluations_missed_total to track missed evaluations per rule #48885
+- [ENHANCEMENT] Ticker to tick at predictable time #50197
+- [ENHANCEMENT] Migration: Don't stop the migration when failing to parse alert rule tags #51253
+
 ## 9.0.0
 
 - [ENHANCEMENT] Scheduler: Ticker expose new metrics. In legacy, metrics are prefixed with `legacy_` #47828, #48190
@@ -54,6 +62,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [ENHANCEMENT] Create folder 'General Alerting' when Grafana starts from the scratch #48866
 - [ENHANCEMENT] Rule changes authorization logic to use UID folder scope instead of ID scope #48970
 - [ENHANCEMENT] Scheduler: ticker to support stopping #48142
+- [ENHANCEMENT] Optional custom title and description for OpsGenie #50131
 - [ENHANCEMENT] Scheduler: Adds new metrics to track rules that might be scheduled #49874
   - `grafana_alerting_schedule_alert_rules `
   - `grafana_alerting_schedule_alert_rules_hash `

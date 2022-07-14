@@ -2,11 +2,12 @@ package definitions
 
 import (
 	"fmt"
-	"html/template"
+	tmplhtml "html/template"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 )
@@ -64,7 +65,9 @@ func (t *MessageTemplate) Validate() error {
 		return fmt.Errorf("template must have content")
 	}
 
-	_, err := template.New("").Parse(t.Template)
+	tmpl := tmplhtml.New("").Option("missingkey=zero")
+	tmpl.Funcs(tmplhtml.FuncMap(template.DefaultFuncs))
+	_, err := tmpl.Parse(t.Template)
 	if err != nil {
 		return fmt.Errorf("invalid template: %w", err)
 	}
@@ -99,6 +102,34 @@ func (r *Route) Validate() error {
 		return fmt.Errorf("root route must not have any mute time intervals")
 	}
 	return r.validateChild()
+}
+
+func (r *Route) ValidateReceivers(receivers map[string]struct{}) error {
+	if _, exists := receivers[r.Receiver]; !exists {
+		return fmt.Errorf("receiver '%s' does not exist", r.Receiver)
+	}
+	for _, children := range r.Routes {
+		err := children.ValidateReceivers(receivers)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *Route) ValidateMuteTimes(muteTimes map[string]struct{}) error {
+	for _, name := range r.MuteTimeIntervals {
+		if _, exists := muteTimes[name]; !exists {
+			return fmt.Errorf("mute time interval '%s' does not exist", name)
+		}
+	}
+	for _, child := range r.Routes {
+		err := child.ValidateMuteTimes(muteTimes)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (mt *MuteTimeInterval) Validate() error {
