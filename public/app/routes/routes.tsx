@@ -477,7 +477,7 @@ export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/g/:slug*',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "BrowseRouter" */ '../features/storage/StorageFolderPage')
+        () => import(/* webpackChunkName: "StorageFolderPage" */ '../features/storage/StorageFolderPage')
       ),
     },
   ];
