@@ -1858,15 +1858,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "packages/grafana-ui/src/components/Portal/Portal.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
     "packages/grafana-ui/src/components/QueryField/QueryField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -1882,16 +1873,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/SecretInput/SecretInput.story.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Segment/Segment.story.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentAsync.story.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3862,6 +3843,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/features/alerting/TestRuleResult.test.tsx:2358420489": [
+      [28, 30, 36, "Do not use any type assertions.", "702850259"]
+    ],
     "public/app/features/alerting/TestRuleResult.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -3957,6 +3941,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
+    "public/app/features/alerting/unified/Receivers.test.tsx:3742116867": [
+      [143, 34, 29, "Do not use any type assertions.", "2249960884"]
+    ],
     "public/app/features/alerting/unified/RedirectToRuleViewer.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -3974,9 +3961,23 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/RuleViewer.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/alerting/unified/Silences.test.tsx:1255403007": [
+      [108, 32, 29, "Do not use any type assertions.", "2249960884"],
+      [195, 34, 29, "Do not use any type assertions.", "2249960884"]
+    ],
     "public/app/features/alerting/unified/api/alertmanager.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/features/alerting/unified/api/annotations.test.ts:2579323536": [
+      [32, 10, 52, "Do not use any type assertions.", "3449840057"],
+      [33, 10, 52, "Do not use any type assertions.", "3512032697"],
+      [34, 10, 52, "Do not use any type assertions.", "3809885851"],
+      [35, 10, 42, "Do not use any type assertions.", "3760318175"],
+      [49, 10, 52, "Do not use any type assertions.", "3449840057"],
+      [50, 10, 52, "Do not use any type assertions.", "865105467"],
+      [51, 10, 52, "Do not use any type assertions.", "2729874170"],
+      [52, 10, 52, "Do not use any type assertions.", "3718693118"]
     ],
     "public/app/features/alerting/unified/api/buildInfo.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4058,6 +4059,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rule-editor/AnnotationsField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/alerting/unified/components/rule-editor/ConditionField.test.tsx:3255434476": [
+      [17, 25, 255, "Do not use any type assertions.", "445528897"]
+    ],
     "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -4069,6 +4073,19 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rule-editor/SelectWIthAdd.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/AlertType.test.tsx:2143187355": [
+      [41, 10, 29, "Do not use any type assertions.", "2249960884"],
+      [54, 72, 29, "Do not use any type assertions.", "2249960884"],
+      [66, 65, 29, "Do not use any type assertions.", "2249960884"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/util.test.ts:115971189": [
+      [101, 25, 42, "Do not use any type assertions.", "3490778927"],
+      [114, 25, 42, "Do not use any type assertions.", "3490778927"],
+      [123, 25, 42, "Do not use any type assertions.", "3490778927"],
+      [131, 25, 42, "Do not use any type assertions.", "3490778927"],
+      [139, 13, 42, "Do not use any type assertions.", "3490778927"],
+      [140, 13, 42, "Do not use any type assertions.", "3394454764"]
     ],
     "public/app/features/alerting/unified/components/rules/RuleDetailsActionButtons.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -4086,6 +4103,13 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/silences/SilencesFilter.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/alerting/unified/hooks/useCombinedRuleNamespaces.test.ts:3536006768": [
+      [7, 28, 87, "Do not use any type assertions.", "3058961128"],
+      [12, 28, 97, "Do not use any type assertions.", "4219061192"],
+      [18, 19, 105, "Do not use any type assertions.", "3168271890"],
+      [23, 19, 105, "Do not use any type assertions.", "1620836241"],
+      [40, 18, 51, "Do not use any type assertions.", "107010128"]
+    ],
     "public/app/features/alerting/unified/hooks/useControlledFieldArray.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -4097,6 +4121,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
+    "public/app/features/alerting/unified/hooks/useIsRuleEditable.test.tsx:4024141754": [
+      [150, 64, 29, "Do not use any type assertions.", "2249960884"]
     ],
     "public/app/features/alerting/unified/mocks.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4111,6 +4138,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Do not use any type assertions.", "11"]
+    ],
+    "public/app/features/alerting/unified/state/AlertingQueryRunner.test.ts:838848248": [
+      [219, 9, 81, "Do not use any type assertions.", "1125692145"],
+      [219, 9, 67, "Do not use any type assertions.", "4033275024"],
+      [226, 9, 78, "Do not use any type assertions.", "3342662942"],
+      [226, 9, 61, "Do not use any type assertions.", "291326006"],
+      [234, 6, 172, "Do not use any type assertions.", "1154786841"],
+      [242, 6, 177, "Do not use any type assertions.", "3855113404"]
     ],
     "public/app/features/alerting/unified/state/actions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4133,6 +4168,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "public/app/features/alerting/unified/utils/query.test.ts:4173083967": [
+      [55, 16, 16, "Do not use any type assertions.", "1747412709"],
+      [56, 20, 24, "Do not use any type assertions.", "3254438164"]
     ],
     "public/app/features/alerting/unified/utils/receiver-form.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4164,6 +4203,20 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"]
+    ],
+    "public/app/features/alerting/unified/utils/timeRange.test.ts:960501818": [
+      [15, 17, 248, "Do not use any type assertions.", "1101398068"],
+      [32, 41, 40, "Do not use any type assertions.", "4073243510"],
+      [43, 17, 342, "Do not use any type assertions.", "2705074487"],
+      [70, 41, 40, "Do not use any type assertions.", "4073243510"],
+      [83, 15, 191, "Do not use any type assertions.", "676893829"],
+      [100, 39, 40, "Do not use any type assertions.", "4073243510"],
+      [108, 15, 207, "Do not use any type assertions.", "3256955732"],
+      [134, 34, 40, "Do not use any type assertions.", "4073243510"],
+      [145, 15, 214, "Do not use any type assertions.", "2540635293"],
+      [165, 39, 40, "Do not use any type assertions.", "4073243510"],
+      [178, 15, 221, "Do not use any type assertions.", "1204635877"],
+      [198, 39, 40, "Do not use any type assertions.", "4073243510"]
     ],
     "public/app/features/annotations/components/AnnotationResultMapper.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -4295,15 +4348,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Do not use any type assertions.", "11"],
-      [0, 0, 0, "Do not use any type assertions.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Do not use any type assertions.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Do not use any type assertions.", "9"],
+      [0, 0, 0, "Do not use any type assertions.", "10"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
     "public/app/features/dashboard/components/DashNav/DashNav.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4439,6 +4490,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
     ],
+    "public/app/features/dashboard/components/PanelEditor/state/selectors.test.ts:314488950": [
+      [20, 41, 48, "Do not use any type assertions.", "1149044184"],
+      [24, 43, 49, "Do not use any type assertions.", "2553364371"],
+      [51, 51, 82, "Do not use any type assertions.", "1958885332"],
+      [62, 51, 82, "Do not use any type assertions.", "531303526"],
+      [80, 51, 82, "Do not use any type assertions.", "1958885332"],
+      [99, 51, 82, "Do not use any type assertions.", "1958885332"],
+      [112, 51, 82, "Do not use any type assertions.", "1958885332"]
+    ],
     "public/app/features/dashboard/components/PanelEditor/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -4527,8 +4587,18 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/features/dashboard/components/ShareModal/SharePublicDashboardUtils.test.tsx:3549968113": [
+      [24, 18, 46, "Do not use any type assertions.", "2293567025"],
+      [31, 18, 38, "Do not use any type assertions.", "1524369398"],
+      [36, 18, 30, "Do not use any type assertions.", "387012726"],
+      [38, 14, 21, "Do not use any type assertions.", "3316176532"]
+    ],
     "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/dashboard/components/ShareModal/utils.test.ts:3192556439": [
+      [34, 31, 115, "Do not use any type assertions.", "3780428905"],
+      [34, 31, 102, "Do not use any type assertions.", "1055478161"]
     ],
     "public/app/features/dashboard/components/ShareModal/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4586,6 +4656,10 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/VersionHistory/useDashboardRestore.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/features/dashboard/components/VersionHistory/utils.test.ts:3825537265": [
+      [127, 25, 23, "Do not use any type assertions.", "926140717"],
+      [127, 25, 15, "Do not use any type assertions.", "1238655602"]
     ],
     "public/app/features/dashboard/components/VersionHistory/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5274,6 +5348,10 @@ exports[`better eslint`] = {
     "public/app/features/expressions/guards.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
+      [13, 14, 14, "Do not use any type assertions.", "3112983303"],
+      [36, 19, 40, "Do not use any type assertions.", "2693764194"]
+    ],
     "public/app/features/folders/state/actions.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -5310,11 +5388,24 @@ exports[`better eslint`] = {
     "public/app/features/geo/utils/frameVectorSource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/geo/utils/location.test.ts:3751297173": [
+      [30, 61, 10, "Do not use any type assertions.", "525921067"],
+      [56, 53, 10, "Do not use any type assertions.", "525921067"]
+    ],
     "public/app/features/inspector/InspectDataOptions.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
+    ],
+    "public/app/features/inspector/InspectDataTab.test.tsx:4201756100": [
+      [41, 9, 83, "Do not use any type assertions.", "1478605180"],
+      [70, 27, 465, "Do not use any type assertions.", "1173398047"],
+      [70, 27, 450, "Do not use any type assertions.", "1966040902"],
+      [92, 29, 2029, "Do not use any type assertions.", "1162974715"],
+      [92, 29, 2014, "Do not use any type assertions.", "701279586"],
+      [150, 23, 339, "Do not use any type assertions.", "1654092041"],
+      [150, 23, 324, "Do not use any type assertions.", "1057375888"]
     ],
     "public/app/features/inspector/InspectDataTab.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -5486,6 +5577,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
+    "public/app/features/org/OrgDetailsPage.test.tsx:351096404": [
+      [41, 18, 18, "Do not use any type assertions.", "1715686858"],
+      [42, 14, 125, "Do not use any type assertions.", "795479886"]
+    ],
     "public/app/features/org/state/actions.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -5561,6 +5656,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
+    "public/app/features/playlist/PlaylistForm.test.tsx:2574850033": [
+      [16, 19, 53, "Do not use any type assertions.", "778424295"],
+      [16, 19, 41, "Do not use any type assertions.", "3698800435"]
+    ],
     "public/app/features/playlist/PlaylistNewPage.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -5568,6 +5667,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+    ],
+    "public/app/features/playlist/PlaylistPage.test.tsx:1746955973": [
+      [12, 6, 59, "Do not use any type assertions.", "3685154675"],
+      [12, 6, 49, "Do not use any type assertions.", "1184085652"]
     ],
     "public/app/features/playlist/PlaylistSrv.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5629,6 +5732,16 @@ exports[`better eslint`] = {
     ],
     "public/app/features/plugins/admin/guards.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/plugins/admin/helpers.test.ts:2922381373": [
+      [114, 37, 80, "Do not use any type assertions.", "1510435013"],
+      [116, 35, 82, "Do not use any type assertions.", "3449275506"],
+      [118, 35, 83, "Do not use any type assertions.", "514649711"],
+      [126, 31, 57, "Do not use any type assertions.", "472410664"],
+      [127, 34, 54, "Do not use any type assertions.", "683862165"],
+      [134, 25, 51, "Do not use any type assertions.", "2457260600"],
+      [135, 28, 52, "Do not use any type assertions.", "963107955"],
+      [177, 42, 56, "Do not use any type assertions.", "2128061450"]
     ],
     "public/app/features/plugins/admin/helpers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -5744,6 +5857,11 @@ exports[`better eslint`] = {
     ],
     "public/app/features/profile/state/reducers.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/query/components/QueryEditorRow.test.ts:4201471442": [
+      [7, 9, 60, "Do not use any type assertions.", "155833034"],
+      [50, 22, 101, "Do not use any type assertions.", "3734235969"],
+      [50, 22, 88, "Do not use any type assertions.", "3757401717"]
     ],
     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5911,6 +6029,12 @@ exports[`better eslint`] = {
     "public/app/features/search/hooks/useDashboardSearch.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/search/hooks/useManageDashboards.test.ts:3293235715": [
+      [31, 45, 41, "Do not use any type assertions.", "3856094708"],
+      [31, 45, 15, "Do not use any type assertions.", "363922340"],
+      [33, 43, 31, "Do not use any type assertions.", "2087413285"],
+      [33, 43, 13, "Do not use any type assertions.", "2146830713"]
+    ],
     "public/app/features/search/hooks/useSearchKeyboardSelection.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -6040,12 +6164,29 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
+    "public/app/features/teams/CreateTeam.test.tsx:136903941": [
+      [30, 14, 34, "Do not use any type assertions.", "463003776"]
+    ],
+    "public/app/features/teams/TeamGroupSync.test.tsx:2647720693": [
+      [12, 12, 17, "Do not use any type assertions.", "2242876437"]
+    ],
     "public/app/features/teams/TeamGroupSync.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/features/teams/TeamList.test.tsx:2054736348": [
+      [22, 14, 123, "Do not use any type assertions.", "695951401"],
+      [30, 11, 12, "Do not use any type assertions.", "1079483306"],
+      [40, 18, 59, "Do not use any type assertions.", "25768610"],
+      [67, 24, 77, "Do not use any type assertions.", "361803129"],
+      [84, 24, 77, "Do not use any type assertions.", "1295202722"]
+    ],
     "public/app/features/teams/TeamMemberRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/teams/TeamMembers.test.tsx:1775840321": [
+      [31, 13, 18, "Do not use any type assertions.", "2776323642"],
+      [37, 18, 101, "Do not use any type assertions.", "3599690898"]
     ],
     "public/app/features/teams/TeamMembers.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6063,6 +6204,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
+    "public/app/features/teams/state/selectors.test.ts:4215831928": [
+      [49, 14, 10, "Do not use any type assertions.", "1584692172"],
+      [52, 16, 17, "Do not use any type assertions.", "2242876437"],
+      [67, 18, 101, "Do not use any type assertions.", "3599690898"],
+      [92, 22, 116, "Do not use any type assertions.", "591810489"],
+      [107, 22, 116, "Do not use any type assertions.", "2211298791"],
+      [123, 22, 117, "Do not use any type assertions.", "1169409170"],
+      [138, 22, 117, "Do not use any type assertions.", "1169409170"]
     ],
     "public/app/features/teams/state/selectors.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6139,6 +6289,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
+    "public/app/features/transformers/configFromQuery/ConfigFromQueryTransformerEditor.test.tsx:1060905279": [
+      [44, 29, 21, "Do not use any type assertions.", "1548027068"]
+    ],
     "public/app/features/transformers/configFromQuery/ConfigFromQueryTransformerEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -6180,6 +6333,11 @@ exports[`better eslint`] = {
     "public/app/features/transformers/extractFields/fieldExtractors.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/transformers/fieldToConfigMapping/FieldToConfigMappingEditor.test.tsx:1072197618": [
+      [50, 29, 21, "Do not use any type assertions.", "1548027068"],
+      [59, 41, 21, "Do not use any type assertions.", "1548027068"],
+      [85, 29, 22, "Do not use any type assertions.", "3205041286"]
+    ],
     "public/app/features/transformers/fieldToConfigMapping/FieldToConfigMappingEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -6210,6 +6368,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/features/transformers/rowsToFields/RowsToFieldsTransformerEditor.test.tsx:2876920155": [
+      [41, 29, 21, "Do not use any type assertions.", "1548027068"],
+      [55, 29, 21, "Do not use any type assertions.", "1548027068"]
+    ],
     "public/app/features/transformers/spatial/SpatialTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -6235,6 +6397,14 @@ exports[`better eslint`] = {
     "public/app/features/users/UsersActionBar.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/users/UsersListPage.test.tsx:4284943401": [
+      [27, 14, 119, "Do not use any type assertions.", "1781051572"],
+      [35, 11, 15, "Do not use any type assertions.", "2789568508"],
+      [36, 14, 15, "Do not use any type assertions.", "3505843099"]
+    ],
+    "public/app/features/users/UsersTable.test.tsx:2179189208": [
+      [19, 11, 15, "Do not use any type assertions.", "2789568508"]
+    ],
     "public/app/features/users/__mocks__/userMocks.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -6247,6 +6417,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "public/app/features/variables/adhoc/actions.test.ts:3228657148": [
+      [194, 52, 14, "Do not use any type assertions.", "3854427458"],
+      [330, 52, 14, "Do not use any type assertions.", "3854427458"],
+      [360, 52, 14, "Do not use any type assertions.", "3854427458"],
+      [509, 9, 160, "Do not use any type assertions.", "3244710120"],
+      [511, 10, 57, "Do not use any type assertions.", "3447995104"]
     ],
     "public/app/features/variables/adhoc/actions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -6268,18 +6445,67 @@ exports[`better eslint`] = {
     "public/app/features/variables/adhoc/picker/AdHocFilterRenderer.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/variables/adhoc/reducer.test.ts:531962865": [
+      [25, 16, 147, "Do not use any type assertions.", "2892790792"],
+      [45, 16, 246, "Do not use any type assertions.", "3920845434"],
+      [69, 16, 147, "Do not use any type assertions.", "2892790792"],
+      [90, 16, 147, "Do not use any type assertions.", "771746056"],
+      [110, 16, 118, "Do not use any type assertions.", "2442568355"],
+      [112, 21, 27, "Do not use any type assertions.", "37558224"],
+      [132, 16, 248, "Do not use any type assertions.", "2892427802"],
+      [157, 16, 248, "Do not use any type assertions.", "3562752889"],
+      [180, 16, 250, "Do not use any type assertions.", "601750330"],
+      [202, 16, 250, "Do not use any type assertions.", "601750330"]
+    ],
+    "public/app/features/variables/adhoc/urlParser.test.ts:2987452506": [
+      [65, 16, 141, "Do not use any type assertions.", "2769250046"],
+      [65, 16, 118, "Do not use any type assertions.", "510137579"],
+      [83, 16, 130, "Do not use any type assertions.", "1366946792"],
+      [83, 16, 107, "Do not use any type assertions.", "2936397373"],
+      [101, 16, 131, "Do not use any type assertions.", "144318462"],
+      [101, 16, 108, "Do not use any type assertions.", "3807309291"]
+    ],
     "public/app/features/variables/adhoc/urlParser.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/features/variables/constant/reducer.test.ts:3405783846": [
+      [25, 16, 234, "Do not use any type assertions.", "2319981266"],
+      [50, 16, 248, "Do not use any type assertions.", "1014063058"]
+    ],
     "public/app/features/variables/constant/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/variables/custom/reducer.test.ts:134441915": [
+      [26, 16, 591, "Do not use any type assertions.", "3370154250"],
+      [66, 16, 595, "Do not use any type assertions.", "269111563"],
+      [106, 16, 591, "Do not use any type assertions.", "3370154250"],
+      [146, 16, 591, "Do not use any type assertions.", "3370154250"],
+      [186, 16, 675, "Do not use any type assertions.", "4190996907"],
+      [226, 16, 643, "Do not use any type assertions.", "1621992171"],
+      [266, 16, 741, "Do not use any type assertions.", "4040164424"]
     ],
     "public/app/features/variables/custom/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/variables/datasource/actions.test.ts:1988531225": [
+      [73, 25, 30, "Do not use any type assertions.", "3368833770"],
+      [73, 25, 20, "Do not use any type assertions.", "3781735909"]
+    ],
     "public/app/features/variables/datasource/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/variables/datasource/reducer.test.ts:3810268406": [
+      [42, 19, 122, "Do not use any type assertions.", "1128427296"],
+      [42, 19, 95, "Do not use any type assertions.", "1445464854"],
+      [68, 17, 289, "Do not use any type assertions.", "1163370834"],
+      [68, 17, 262, "Do not use any type assertions.", "1371708324"],
+      [96, 17, 164, "Do not use any type assertions.", "2083564038"],
+      [96, 17, 137, "Do not use any type assertions.", "1045964400"],
+      [121, 17, 190, "Do not use any type assertions.", "862727142"],
+      [121, 17, 163, "Do not use any type assertions.", "2642551696"],
+      [146, 17, 289, "Do not use any type assertions.", "1163370834"],
+      [146, 17, 262, "Do not use any type assertions.", "1371708324"]
     ],
     "public/app/features/variables/datasource/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -6318,6 +6544,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/variables/editor/reducer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/variables/editor/selectors.test.ts:3899398841": [
+      [31, 14, 30, "Do not use any type assertions.", "2442266942"],
+      [31, 14, 13, "Do not use any type assertions.", "2146830713"]
     ],
     "public/app/features/variables/editor/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6405,6 +6635,24 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Do not use any type assertions.", "13"],
       [0, 0, 0, "Do not use any type assertions.", "14"]
+    ],
+    "public/app/features/variables/interval/actions.test.ts:4248380429": [
+      [61, 26, 264, "Do not use any type assertions.", "131381399"],
+      [61, 26, 253, "Do not use any type assertions.", "3294972071"],
+      [153, 19, 294, "Do not use any type assertions.", "2131058214"],
+      [153, 19, 283, "Do not use any type assertions.", "1881118838"],
+      [164, 23, 82, "Do not use any type assertions.", "1627890605"],
+      [164, 23, 67, "Do not use any type assertions.", "1552916760"],
+      [205, 19, 77, "Do not use any type assertions.", "4249574421"],
+      [205, 19, 66, "Do not use any type assertions.", "3164490597"],
+      [209, 23, 95, "Do not use any type assertions.", "3057227568"],
+      [209, 23, 80, "Do not use any type assertions.", "3466408677"]
+    ],
+    "public/app/features/variables/interval/reducer.test.ts:1904364691": [
+      [26, 17, 452, "Do not use any type assertions.", "1039353885"],
+      [54, 17, 531, "Do not use any type assertions.", "90477989"],
+      [83, 17, 383, "Do not use any type assertions.", "2247774352"],
+      [109, 17, 383, "Do not use any type assertions.", "2360119824"]
     ],
     "public/app/features/variables/interval/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -6502,6 +6750,34 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/features/variables/query/reducer.test.ts:2683949100": [
+      [33, 15, 297, "Do not use any type assertions.", "870412809"],
+      [33, 15, 275, "Do not use any type assertions.", "2289094168"],
+      [57, 15, 232, "Do not use any type assertions.", "856245141"],
+      [57, 15, 210, "Do not use any type assertions.", "730423940"],
+      [71, 32, 23, "Do not use any type assertions.", "3708401277"],
+      [79, 15, 152, "Do not use any type assertions.", "3814787877"],
+      [79, 15, 130, "Do not use any type assertions.", "847409396"],
+      [90, 32, 23, "Do not use any type assertions.", "3708401277"],
+      [98, 15, 161, "Do not use any type assertions.", "2826271963"],
+      [98, 15, 139, "Do not use any type assertions.", "3023155146"],
+      [119, 15, 239, "Do not use any type assertions.", "3216676945"],
+      [119, 15, 217, "Do not use any type assertions.", "218790208"],
+      [143, 15, 145, "Do not use any type assertions.", "2045537569"],
+      [143, 15, 123, "Do not use any type assertions.", "1230177264"],
+      [164, 15, 154, "Do not use any type assertions.", "2729983415"],
+      [164, 15, 132, "Do not use any type assertions.", "3717778278"],
+      [183, 15, 154, "Do not use any type assertions.", "2729983415"],
+      [183, 15, 132, "Do not use any type assertions.", "3717778278"],
+      [202, 15, 155, "Do not use any type assertions.", "1202875329"],
+      [202, 15, 133, "Do not use any type assertions.", "2833874128"],
+      [221, 15, 153, "Do not use any type assertions.", "3540111265"],
+      [221, 15, 131, "Do not use any type assertions.", "1593542256"],
+      [240, 15, 157, "Do not use any type assertions.", "1514620833"],
+      [240, 15, 135, "Do not use any type assertions.", "630652528"],
+      [259, 15, 161, "Do not use any type assertions.", "2826271963"],
+      [259, 15, 139, "Do not use any type assertions.", "3023155146"]
+    ],
     "public/app/features/variables/query/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -6569,6 +6845,20 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/features/variables/state/migrateVariablesDatasourceNameToRef.test.ts:1577481970": [
+      [33, 25, 35, "Do not use any type assertions.", "1540321028"],
+      [33, 25, 18, "Do not use any type assertions.", "2747901642"],
+      [69, 25, 35, "Do not use any type assertions.", "1540321028"],
+      [69, 25, 18, "Do not use any type assertions.", "2747901642"]
+    ],
+    "public/app/features/variables/state/onTimeRangeUpdated.test.ts:1138086757": [
+      [60, 26, 66, "Do not use any type assertions.", "2505932284"],
+      [60, 26, 51, "Do not use any type assertions.", "1748196521"],
+      [66, 25, 65, "Do not use any type assertions.", "1670117745"],
+      [66, 25, 47, "Do not use any type assertions.", "3235618000"],
+      [76, 25, 114, "Do not use any type assertions.", "1953052055"],
+      [76, 25, 95, "Do not use any type assertions.", "4074295433"]
+    ],
     "public/app/features/variables/state/processVariable.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -6592,6 +6882,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+    ],
+    "public/app/features/variables/state/templateVarsChangedInUrl.test.ts:1110987658": [
+      [106, 25, 30, "Do not use any type assertions.", "2475764786"],
+      [106, 25, 16, "Do not use any type assertions.", "4025864488"]
     ],
     "public/app/features/variables/state/transactionReducer.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6619,6 +6913,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+    ],
+    "public/app/features/variables/textbox/reducer.test.ts:261547066": [
+      [25, 16, 357, "Do not use any type assertions.", "587262851"],
+      [55, 16, 385, "Do not use any type assertions.", "1609241603"]
     ],
     "public/app/features/variables/textbox/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -6819,6 +7117,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
+    "public/app/plugins/datasource/cloudwatch/cloudwatch-sql/completion/statementPosition.test.ts:2861609538": [
+      [23, 6, 42, "Do not use any type assertions.", "3363057790"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/cloudwatch-sql/completion/tokenUtils.test.ts:3421494994": [
+      [27, 4, 42, "Do not use any type assertions.", "3363057790"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/AnnotationQueryEditor.test.tsx:3945737102": [
+      [55, 47, 66, "Do not use any type assertions.", "257719288"],
+      [62, 5, 40, "Do not use any type assertions.", "589617352"]
+    ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -6914,6 +7222,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "27"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "28"]
     ],
+    "public/app/plugins/datasource/cloudwatch/dynamic-labels/CompletionItemProvider.test.ts:2308040365": [
+      [13, 17, 20, "Do not use any type assertions.", "3987315101"],
+      [16, 4, 49, "Do not use any type assertions.", "657683743"]
+    ],
     "public/app/plugins/datasource/cloudwatch/guards.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -6938,6 +7250,22 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/cloudwatch/metric-math/completion/CompletionItemProvider.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/metric-math/completion/statementPosition.test.ts:28138160": [
+      [18, 6, 42, "Do not use any type assertions.", "3363057790"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/migrations/dashboardMigrations.test.ts:3779106092": [
+      [22, 56, 40, "Do not use any type assertions.", "3305965890"],
+      [23, 29, 38, "Do not use any type assertions.", "2308925956"],
+      [47, 27, 82, "Do not use any type assertions.", "4227293635"],
+      [57, 56, 40, "Do not use any type assertions.", "3305965890"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/monarch/linkedTokenBuilder.test.ts:2059201503": [
+      [20, 8, 42, "Do not use any type assertions.", "3363057790"],
+      [34, 8, 42, "Do not use any type assertions.", "3363057790"],
+      [54, 8, 42, "Do not use any type assertions.", "3363057790"],
+      [67, 8, 42, "Do not use any type assertions.", "3363057790"],
+      [80, 8, 42, "Do not use any type assertions.", "3363057790"]
     ],
     "public/app/plugins/datasource/cloudwatch/specs/datasource.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6979,10 +7307,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/plugins/datasource/dashboard/DashboardQueryEditor.test.tsx:4070687403": [
+      [14, 6, 58, "Do not use any type assertions.", "2751778796"],
+      [14, 6, 48, "Do not use any type assertions.", "1905604299"]
+    ],
     "public/app/plugins/datasource/dashboard/DashboardQueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
+    "public/app/plugins/datasource/dashboard/runSharedRequest.test.ts:2672788153": [
+      [9, 34, 28, "Do not use any type assertions.", "152590796"],
+      [9, 34, 20, "Do not use any type assertions.", "3781735909"],
+      [12, 15, 80, "Do not use any type assertions.", "930836956"]
     ],
     "public/app/plugins/datasource/dashboard/runSharedRequest.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -7013,8 +7350,17 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/elasticsearch/components/QueryEditor/BucketAggregationsEditor/state/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/plugins/datasource/elasticsearch/components/QueryEditor/ElasticsearchQueryContext.test.tsx:1034090678": [
+      [20, 23, 47, "Do not use any type assertions.", "1006213347"],
+      [57, 22, 23, "Do not use any type assertions.", "1688867449"]
+    ],
     "public/app/plugins/datasource/elasticsearch/components/QueryEditor/ElasticsearchQueryContext.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/MetricEditor.test.tsx:883637991": [
+      [32, 20, 34, "Do not use any type assertions.", "537625310"],
+      [68, 20, 34, "Do not use any type assertions.", "537625310"],
+      [101, 22, 52, "Do not use any type assertions.", "2399718003"]
     ],
     "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/MetricEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -7022,6 +7368,11 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/SettingsEditor/SettingField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/SettingsEditor/index.test.tsx:1095480782": [
+      [36, 22, 23, "Do not use any type assertions.", "1688867449"],
+      [71, 22, 23, "Do not use any type assertions.", "1688867449"],
+      [109, 22, 23, "Do not use any type assertions.", "1688867449"]
     ],
     "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/aggregations.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -7033,6 +7384,15 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/state/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/components/QueryEditor/index.test.tsx:3374077294": [
+      [9, 23, 47, "Do not use any type assertions.", "4096689189"],
+      [34, 23, 50, "Do not use any type assertions.", "3587418721"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/components/hooks/useCreatableSelectPersistedBehaviour.test.tsx:2538768775": [
+      [24, 18, 50, "Do not use any type assertions.", "1393827441"],
+      [65, 18, 50, "Do not use any type assertions.", "1393827441"],
+      [106, 18, 50, "Do not use any type assertions.", "1393827441"]
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/DataLinks.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7138,6 +7498,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "45"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "46"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "47"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/hooks/useFields.test.tsx:2288057911": [
+      [31, 20, 34, "Do not use any type assertions.", "537625310"]
     ],
     "public/app/plugins/datasource/elasticsearch/hooks/useNextId.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -7310,6 +7673,10 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/grafana-azure-monitor-datasource/components/ResourcePicker/ResourcePicker.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/plugins/datasource/grafana-azure-monitor-datasource/components/VariableEditor/VariableEditor.test.tsx:804735513": [
+      [108, 15, 275, "Do not use any type assertions.", "3095409356"],
+      [128, 15, 273, "Do not use any type assertions.", "2697731533"]
+    ],
     "public/app/plugins/datasource/grafana-azure-monitor-datasource/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -7338,6 +7705,47 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/grafana-azure-monitor-datasource/utils/useAsyncState.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/plugins/datasource/grafana-azure-monitor-datasource/variables.test.ts:1331364170": [
+      [10, 6, 59, "Do not use any type assertions.", "3685154675"],
+      [10, 6, 49, "Do not use any type assertions.", "1184085652"],
+      [26, 26, 354, "Do not use any type assertions.", "1354393999"],
+      [28, 10, 264, "Do not use any type assertions.", "297413427"],
+      [55, 26, 356, "Do not use any type assertions.", "2571179215"],
+      [57, 10, 266, "Do not use any type assertions.", "2917322995"],
+      [81, 26, 359, "Do not use any type assertions.", "2300363979"],
+      [83, 10, 269, "Do not use any type assertions.", "3832005239"],
+      [110, 26, 368, "Do not use any type assertions.", "752258440"],
+      [112, 10, 278, "Do not use any type assertions.", "3555784980"],
+      [136, 26, 384, "Do not use any type assertions.", "2278570570"],
+      [138, 10, 294, "Do not use any type assertions.", "3016568982"],
+      [165, 26, 385, "Do not use any type assertions.", "2272659527"],
+      [167, 10, 295, "Do not use any type assertions.", "3629245051"],
+      [191, 26, 401, "Do not use any type assertions.", "1343203141"],
+      [193, 10, 311, "Do not use any type assertions.", "128920633"],
+      [222, 26, 403, "Do not use any type assertions.", "1142769670"],
+      [224, 10, 313, "Do not use any type assertions.", "1484700762"],
+      [250, 26, 419, "Do not use any type assertions.", "2535472964"],
+      [252, 10, 329, "Do not use any type assertions.", "3679831256"],
+      [281, 26, 412, "Do not use any type assertions.", "2392166925"],
+      [283, 10, 322, "Do not use any type assertions.", "3950546289"],
+      [309, 26, 426, "Do not use any type assertions.", "3130099458"],
+      [311, 10, 336, "Do not use any type assertions.", "2465267934"],
+      [338, 26, 348, "Do not use any type assertions.", "553271343"],
+      [340, 10, 258, "Do not use any type assertions.", "1814519763"],
+      [365, 26, 362, "Do not use any type assertions.", "2434888097"],
+      [367, 10, 272, "Do not use any type assertions.", "1101004957"],
+      [399, 26, 144, "Do not use any type assertions.", "3556681124"],
+      [400, 18, 75, "Do not use any type assertions.", "1992896756"],
+      [400, 18, 54, "Do not use any type assertions.", "2666540601"],
+      [410, 26, 281, "Do not use any type assertions.", "3539142992"],
+      [412, 10, 191, "Do not use any type assertions.", "762876748"],
+      [438, 26, 412, "Do not use any type assertions.", "2392166925"],
+      [440, 10, 322, "Do not use any type assertions.", "3950546289"],
+      [470, 24, 245, "Do not use any type assertions.", "2341848736"],
+      [472, 8, 163, "Do not use any type assertions.", "1154794300"],
+      [497, 24, 334, "Do not use any type assertions.", "994281039"],
+      [499, 8, 252, "Do not use any type assertions.", "207432947"]
     ],
     "public/app/plugins/datasource/grafana/components/AnnotationQueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -7553,6 +7961,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
+    "public/app/plugins/datasource/graphite/specs/gfunc.test.ts:2185945634": [
+      [90, 23, 30, "Do not use any type assertions.", "2243881570"],
+      [90, 23, 20, "Do not use any type assertions.", "3781735909"]
+    ],
     "public/app/plugins/datasource/graphite/specs/graphite_query.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -7594,6 +8006,18 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/influxdb/components/InfluxCheatSheet.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/VisualInfluxQLEditor/Editor.tags.test.tsx:2172472189": [
+      [36, 3, 55, "Do not use any type assertions.", "601103896"],
+      [90, 41, 88, "Do not use any type assertions.", "1575686587"],
+      [90, 41, 68, "Do not use any type assertions.", "1096390308"],
+      [104, 12, 55, "Do not use any type assertions.", "601103896"],
+      [111, 12, 36, "Do not use any type assertions.", "3525546751"],
+      [118, 12, 49, "Do not use any type assertions.", "2352161943"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/VisualInfluxQLEditor/Editor.test.tsx:1091402403": [
+      [40, 39, 84, "Do not use any type assertions.", "2017206331"],
+      [40, 39, 64, "Do not use any type assertions.", "3281675556"]
     ],
     "public/app/plugins/datasource/influxdb/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
