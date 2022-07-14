@@ -27,6 +27,7 @@ import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
 import { toggleTheme } from './toggleTheme';
 import { withFocusedPanel } from './withFocusedPanelId';
 
+
 export class KeybindingSrv {
   reset() {
     Mousetrap.reset();
@@ -229,6 +230,21 @@ export class KeybindingSrv {
       locationService.partial({ viewPanel: isViewing ? null : panelId });
     });
 
+    //toggle legend
+    this.bindWithPanelId('p l', (panelId) => {
+      const panel = dashboard.getPanelById(panelId)!;
+      //keyboard shortcut function
+
+      const newOptions = {...panel.options};
+
+      newOptions.legend.showLegend === 'visible'
+      ? (newOptions.legend.showLegend = 'hidden')
+      : (newOptions.legend.showLegend = 'visible');
+  
+
+      panel.updateOptions(newOptions);
+    });
+
     this.bindWithPanelId('i', (panelId) => {
       locationService.partial({ inspect: panelId });
     });
@@ -283,14 +299,14 @@ export class KeybindingSrv {
     });
 
     // toggle panel legend
-    this.bindWithPanelId('p l', (panelId) => {
-      const panelInfo = dashboard.getPanelInfoById(panelId)!;
+    // this.bindWithPanelId('p l', (panelId) => {
+    //   const panelInfo = dashboard.getPanelInfoById(panelId)!;
 
-      if (panelInfo.panel.legend) {
-        panelInfo.panel.legend.show = !panelInfo.panel.legend.show;
-        panelInfo.panel.render();
-      }
-    });
+    //   if (panelInfo.panel.legend) {
+    //     panelInfo.panel.legend.show = !panelInfo.panel.legend.show;
+    //     panelInfo.panel.render();
+    //   }
+    // });
 
     // toggle all panel legends
     this.bind('d l', () => {

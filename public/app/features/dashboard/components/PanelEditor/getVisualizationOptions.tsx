@@ -133,7 +133,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom)
             );
           };
-
+          
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} />;
         },
       })

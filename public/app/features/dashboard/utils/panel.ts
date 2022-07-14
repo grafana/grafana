@@ -102,10 +102,11 @@ export const refreshPanel = (panel: PanelModel) => {
 };
 
 export const toggleLegend = (panel: PanelModel) => {
-  panel.options.legend.showLegend === 'visible'
-    ? (panel.options.legend.showLegend = 'hidden')
-    : (panel.options.legend.showLegend = 'visible');
-  refreshPanel(panel);
+  const newOptions = {...panel.options};
+  newOptions.legend.showLegend === 'visible'
+    ? (newOptions.legend.showLegend = 'hidden')
+    : (newOptions.legend.showLegend = 'visible');
+  panel.updateOptions(newOptions);
 };
 
 export interface TimeOverrideResult {

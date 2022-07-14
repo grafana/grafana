@@ -22,15 +22,16 @@ export class OptionsPaneCategoryDescriptor {
   items: OptionsPaneItemDescriptor[] = [];
   categories: OptionsPaneCategoryDescriptor[] = [];
   parent?: OptionsPaneCategoryDescriptor;
-
+  
   constructor(public props: OptionsPaneCategoryDescriptorProps) {}
-
+  
   addItem(item: OptionsPaneItemDescriptor) {
     item.parent = this;
     this.items.push(item);
+    // console.log(this.items)
     return this;
   }
-
+  
   addCategory(category: OptionsPaneCategoryDescriptor) {
     category.props.isNested = true;
     category.parent = this;
