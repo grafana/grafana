@@ -11,13 +11,13 @@ import { Props as InputProps } from '../Input/Input';
 
 import ColorInput from './ColorInput';
 
-export interface ColorPickerInputProps extends Omit<InputProps, 'color' | 'onChange'> {
-  value: string;
+export interface ColorPickerInputProps extends Omit<InputProps, 'value' | 'onChange'> {
+  value?: string;
   onChange: (color: string) => void;
 }
 
 export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputProps>(
-  ({ value, onChange, ...inputProps }, ref) => {
+  ({ value = '', onChange, ...inputProps }, ref) => {
     const [currentColor, setColor] = useState(value);
     const [isOpen, setIsOpen] = useState(false);
     const theme = useTheme2();
