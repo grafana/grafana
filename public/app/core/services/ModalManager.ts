@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import { textUtil } from '@grafana/data';
-import { CopyPanelEvent } from '@grafana/runtime';
+import { config, CopyPanelEvent } from '@grafana/runtime';
 import { ConfirmModal, ConfirmModalProps } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { copyPanel } from 'app/features/dashboard/utils/panel';
@@ -32,7 +32,7 @@ export class ModalManager {
       },
     };
 
-    const elem = React.createElement(provideTheme(AngularModalProxy), modalProps);
+    const elem = React.createElement(provideTheme(AngularModalProxy, config.theme2), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
     ReactDOM.render(elem, this.reactModalNode);
   }
@@ -83,7 +83,7 @@ export class ModalManager {
       props,
     };
 
-    const elem = React.createElement(provideTheme(AngularModalProxy), modalProps);
+    const elem = React.createElement(provideTheme(AngularModalProxy, config.theme2), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
     ReactDOM.render(elem, this.reactModalNode);
   }

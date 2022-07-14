@@ -3,7 +3,11 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"io/ioutil"
+	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -12,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 func TestTeamsNotifier(t *testing.T) {
@@ -25,6 +30,7 @@ func TestTeamsNotifier(t *testing.T) {
 		name         string
 		settings     string
 		alerts       []*types.Alert
+		response     *mockResponse
 		expMsg       map[string]interface{}
 		expInitError string
 		expMsgError  error
@@ -196,6 +202,24 @@ func TestTeamsNotifier(t *testing.T) {
 			settings:     `{}`,
 			expInitError: `could not find url property in settings`,
 		},
+		{
+			name:     "webhook returns error message in body with 200",
+			settings: `{"url": "http://localhost"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			response: &mockResponse{
+				status: 200,
+				body:   "some error message",
+				error:  nil,
+			},
+			expMsgError: errors.New("send notification to Teams: webhook failed validation: some error message"),
+		},
 	}
 
 	for _, c := range cases {
@@ -209,7 +233,15 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			webhookSender := mockNotificationService()
+			webhookSender := CreateNotificationService(t)
+
+			originalClient := notifications.NetClient
+			defer func() {
+				notifications.SetWebhookClient(*originalClient)
+			}()
+			clientStub := newMockClient(c.response)
+			notifications.SetWebhookClient(clientStub)
+
 			cfg, err := NewTeamsConfig(m)
 			if c.expInitError != "" {
 				require.Error(t, err)
@@ -231,12 +263,54 @@ func TestTeamsNotifier(t *testing.T) {
 			require.True(t, ok)
 			require.NoError(t, err)
 
-			require.NotEmpty(t, webhookSender.Webhook.Url)
+			require.NotEmpty(t, clientStub.lastRequest.URL.String())
 
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
+			body, err := ioutil.ReadAll(clientStub.lastRequest.Body)
+			require.NoError(t, err)
+			require.JSONEq(t, string(expBody), string(body))
 		})
+	}
+}
+
+type mockClient struct {
+	response    mockResponse
+	lastRequest *http.Request
+}
+
+type mockResponse struct {
+	status int
+	body   string
+	error  error
+}
+
+func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
+	// Do Nothing
+	c.lastRequest = req
+	return makeResponse(c.response.status, c.response.body), c.response.error
+}
+
+func newMockClient(resp *mockResponse) *mockClient {
+	client := &mockClient{}
+
+	if resp != nil {
+		client.response = *resp
+	} else {
+		client.response = mockResponse{
+			status: 200,
+			body:   "1",
+			error:  nil,
+		}
+	}
+
+	return client
+}
+
+func makeResponse(status int, body string) *http.Response {
+	return &http.Response{
+		StatusCode: status,
+		Body:       ioutil.NopCloser(strings.NewReader(body)),
 	}
 }

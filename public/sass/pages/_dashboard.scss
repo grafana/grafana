@@ -46,6 +46,7 @@
   padding: $panel-padding;
   width: 100%;
   flex-grow: 1;
+  contain: strict;
   height: calc(100% - #{$panel-header-height});
 
   &--no-padding {

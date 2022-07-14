@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -38,7 +37,7 @@ type Sender struct {
 	sdManager *discovery.Manager
 }
 
-func New(_ *metrics.Scheduler) (*Sender, error) {
+func New() (*Sender, error) {
 	l := log.New("sender")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &Sender{
