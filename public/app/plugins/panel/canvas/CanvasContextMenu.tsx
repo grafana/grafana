@@ -43,11 +43,12 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   );
 
   useEffect(() => {
-    if (selectedElements && selectedElements.length === 1) {
-      const element = selectedElements[0];
-      element.addEventListener('contextmenu', handleContextMenu);
+    if (scene.selecto) {
+      scene.selecto.getSelectableElements().forEach((element) => {
+        element.addEventListener('contextmenu', handleContextMenu);
+      });
     }
-  }, [selectedElements, handleContextMenu]);
+  }, [handleContextMenu, scene.selecto]);
 
   useEffect(() => {
     if (scene.div) {
@@ -60,7 +61,7 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   };
 
   const renderMenuItems = () => {
-    const openCloseEditorMenuItem = (
+    const openCloseEditorMenuItem = !scene.isPanelEditing && (
       <MenuItem
         label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
         onClick={() => {
@@ -112,7 +113,7 @@ export const CanvasContextMenu = ({ scene }: Props) => {
             }}
             className={styles.menuItem}
           />
-          {!scene.isPanelEditing && openCloseEditorMenuItem}
+          {openCloseEditorMenuItem}
         </>
       );
     } else {
