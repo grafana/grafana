@@ -112,7 +112,7 @@ export const toggleLegend = (panel: PanelModel) => {
 export interface TimeOverrideResult {
   timeRange: TimeRange;
   timeInfo: string;
-};
+}
 
 export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange): TimeOverrideResult {
   const newTimeData = {
