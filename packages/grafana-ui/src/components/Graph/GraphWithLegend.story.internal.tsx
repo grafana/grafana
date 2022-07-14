@@ -2,7 +2,7 @@ import { Story } from '@storybook/react';
 import React from 'react';
 
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
-import { LegendDisplayMode, LegendVisibility } from '@grafana/schema';
+import { LegendDisplayMode } from '@grafana/schema';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
