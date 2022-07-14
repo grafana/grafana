@@ -11,7 +11,7 @@ import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQue
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { MySQLQuery } from './types';
 
-export class MySqlDatasource extends SqlDatasource {
+export class MySqlDatasource extends SqlDatasource<MySQLQuery, SQLOptions> {
   responseParser: MySqlResponseParser;
   completionProvider: LanguageCompletionProvider | undefined;
 
@@ -44,13 +44,13 @@ export class MySqlDatasource extends SqlDatasource {
   }
 
   async fetchDatasets(): Promise<string[]> {
-    const datasets = await this.metricFindQuery(showDatabases(), {});
-    return datasets.map((t) => t.text);
+    const datasets = await this.runSql<string[]>(showDatabases(), { refId: 'datasets' });
+    return datasets.map((t) => t[0]);
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
-    const tables = await this.metricFindQuery(buildTableQuery(dataset), {});
-    return tables.map((t) => t.text);
+    const tables = await this.runSql<string[]>(buildTableQuery(dataset), { refId: 'tables' });
+    return tables.map((t) => t[0]);
   }
 
   async fetchFields(query: Partial<SQLQuery>) {
@@ -58,7 +58,7 @@ export class MySqlDatasource extends SqlDatasource {
       return [];
     }
     const queryString = buildColumnQuery(this.getQueryModel(query), query.table!);
-    const frame = await this.runSql<string[]>(queryString);
+    const frame = await this.runSql<string[]>(queryString, { refId: 'fields' });
     const fields = frame.map((f) => ({ name: f[0], text: f[0], value: f[0], type: f[1], label: f[0] }));
     return mapFieldsToTypes(fields);
   }
