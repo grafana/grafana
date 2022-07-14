@@ -35,11 +35,7 @@ This section describes the areas of the Grafana panel editor.
    - **Transform tab -** Apply data transformations. For more information, refer to [Transform data]({{< relref "../panels/transform-data/" >}}).
    - **Alert tab -** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../alerting/" >}}).
 
-1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization, including:
-
-   - [Apply color to series and fields]({{< relref "../panels/working-with-panels/apply-color-to-series/" >}})
-   - [Format a standard field]({{< relref "../panels/working-with-panels/format-standard-fields/" >}})
-   - [Add a title and description to a panel]({{< relref "../panels/working-with-panels/add-title-and-description/" >}})
+1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization.
 
 > Not all options are available for each visualization.
 
@@ -101,7 +97,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    - [Visualization-specific options]({{< relref "../visualizations/" >}})
    - [Override field values]({{< relref "../panels/override-field-values/about-field-overrides/" >}})
    - [Configure thresholds]({{< relref "../panels/configure-thresholds/" >}})
-   - [Apply color to series and fields]({{< relref "../panels/working-with-panels/apply-color-to-series/" >}})
+   - [Configure standard options]({{< relref "../panels/configure-standard-options/" >}})
 
 1. Add a note to describe the visualization (or describe your changes) and then click **Save** in the upper-right corner of the page.
 

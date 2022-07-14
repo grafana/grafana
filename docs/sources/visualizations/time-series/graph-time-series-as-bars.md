@@ -83,7 +83,7 @@ Fill opacity set to 95:
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. For more information, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series/" >}}).
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}).
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
@@ -107,7 +107,7 @@ Gradient color is generated based on the hue of the line color.
 
 #### Scheme
 
-In this mode the whole bar will use a color gradient defined by your Color scheme. For more information, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series/" >}}). There is more information on this option in [Graph and color scheme]({{< relref "graph-color-scheme/" >}}).
+In this mode the whole bar will use a color gradient defined by your color scheme. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}). There is more information on this option in [Graph and color scheme]({{< relref "graph-color-scheme/" >}}).
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Gradient color scheme mode" >}}
 

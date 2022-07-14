@@ -50,7 +50,7 @@ Controls the fill opacity bars.
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../panels/working-with-panels/apply-color-to-series/" >}}) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../panels/configure-standard-options/#color-scheme" >}}) field option.
 
 Gradient display is influenced by the **Fill opacity** setting.
 
