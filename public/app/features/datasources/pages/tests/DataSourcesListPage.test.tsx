@@ -6,9 +6,8 @@ import { DataSourceSettings, LayoutModes } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { DataSourcesState } from 'app/types';
 
-import { getMockDataSources } from '../../__mocks__/dataSourcesMocks';
-import { navIndex } from '../../__mocks__/store.navIndex.mock';
-import { initialState } from '../../state/reducers';
+import { navIndex, getMockDataSources } from '../../__mocks__';
+import { initialState } from '../../state';
 import { DataSourcesListPage } from '../DataSourcesListPage';
 
 jest.mock('app/core/services/backend_srv', () => ({

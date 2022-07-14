@@ -10,7 +10,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { navIndex, getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../../__mocks__';
 import * as api from '../../api';
-import { initialState } from '../../state/reducers';
+import { initialState } from '../../state';
 import { EditDataSourcePage } from '../EditDataSourcePage';
 
 jest.mock('../../api');

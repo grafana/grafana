@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockDataSources } from '../../__mocks__/dataSourcesMocks';
+import { getMockDataSources } from '../../__mocks__';
 import { DataSourcesListView } from '../DataSourcesList';
 
 const setup = () => {

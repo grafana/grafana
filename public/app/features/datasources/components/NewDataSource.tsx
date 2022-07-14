@@ -10,9 +10,12 @@ import { DataSourcePluginCategory, StoreState } from 'app/types';
 
 import { DataSourceCategories } from '../components/DataSourceCategories';
 import { DataSourceTypeCardList } from '../components/DataSourceTypeCardList';
-import { useAddDatasource, useLoadDataSourcePlugins } from '../state';
-import { setDataSourceTypeSearchQuery } from '../state/reducers';
-import { getFilteredDataSourcePlugins } from '../state/selectors';
+import {
+  useAddDatasource,
+  useLoadDataSourcePlugins,
+  getFilteredDataSourcePlugins,
+  setDataSourceTypeSearchQuery,
+} from '../state';
 
 export function NewDataSource(): React.ReactElement {
   useLoadDataSourcePlugins();

@@ -6,8 +6,7 @@ import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, StoreState } from 'app/types';
 
-import { setDataSourcesSearchQuery } from '../state/reducers';
-import { getDataSourcesSearchQuery } from '../state/selectors';
+import { getDataSourcesSearchQuery, setDataSourcesSearchQuery } from '../state';
 
 export function DataSourcesListHeader(): React.ReactElement {
   const dispatch = useDispatch();

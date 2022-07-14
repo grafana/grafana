@@ -9,8 +9,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction } from 'app/types';
 
-import { loadDataSources } from '../state/actions';
-import { getDataSources, getDataSourcesCount } from '../state/selectors';
+import { loadDataSources, getDataSources, getDataSourcesCount } from '../state';
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 

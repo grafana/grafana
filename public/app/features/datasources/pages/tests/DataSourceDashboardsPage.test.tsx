@@ -7,10 +7,9 @@ import { setAngularLoader } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockDataSource } from '../../__mocks__';
-import { navIndex } from '../../__mocks__/store.navIndex.mock';
+import { navIndex, getMockDataSource } from '../../__mocks__';
 import * as api from '../../api';
-import { initialState as dataSourcesInitialState } from '../../state/reducers';
+import { initialState as dataSourcesInitialState } from '../../state';
 import DataSourceDashboardsPage from '../DataSourceDashboardsPage';
 
 jest.mock('../../api');
