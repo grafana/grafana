@@ -3,7 +3,7 @@ import { EditorMode } from '@grafana/experimental';
 import { QueryFormat, SQLQuery } from './types';
 import { createFunctionField, setGroupByField } from './utils/sql.utils';
 
-export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
+export function applyQueryDefaults<T extends SQLQuery>(q: T): T {
   let editorMode = q?.editorMode || EditorMode.Builder;
 
   // Switching to code editor if the query was created before visual query builder was introduced.
@@ -11,7 +11,7 @@ export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
     editorMode = EditorMode.Code;
   }
 
-  const result: SQLQuery = {
+  const result: T = {
     ...q,
     refId: q?.refId || 'A',
     format: q?.format !== undefined ? q.format : QueryFormat.Table,
@@ -26,5 +26,3 @@ export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
 
   return result;
 }
-
-export type QueryWithDefaults = ReturnType<typeof applyQueryDefaults>;

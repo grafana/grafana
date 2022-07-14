@@ -4,18 +4,18 @@ import { DB, SQLExpression, SQLQuery } from '../types';
 
 import { defaultToRawSql } from './sql.utils';
 
-interface UseSqlChange {
+interface UseSqlChange<T extends SQLQuery> {
   db: DB;
-  query: SQLQuery;
-  onQueryChange: (query: SQLQuery) => void;
+  query: T;
+  onQueryChange: (query: T) => void;
 }
 
-export function useSqlChange({ query, onQueryChange, db }: UseSqlChange) {
+export function useSqlChange<T extends SQLQuery>({ query, onQueryChange, db }: UseSqlChange<T>) {
   const onSqlChange = useCallback(
     (sql: SQLExpression) => {
       const toRawSql = db.toRawSql || defaultToRawSql;
       const rawSql = toRawSql({ sql, dataset: query.dataset, table: query.table, refId: query.refId });
-      const newQuery: SQLQuery = { ...query, sql, rawSql };
+      const newQuery: T = { ...query, sql, rawSql };
       onQueryChange(newQuery);
     },
     [db, onQueryChange, query]

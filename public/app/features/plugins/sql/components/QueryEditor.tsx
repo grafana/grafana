@@ -13,9 +13,19 @@ import { QueryHeader } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
-type Props = QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions>;
+type Props<TSQLQuery extends SQLQuery, TSQLOptions extends SQLOptions> = QueryEditorProps<
+  SqlDatasource<TSQLQuery, TSQLOptions>,
+  TSQLQuery,
+  TSQLOptions
+>;
 
-export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range }: Props) {
+export function SqlQueryEditor<TSQLQuery extends SQLQuery, TSQLOptions extends SQLOptions>({
+  datasource,
+  query,
+  onChange,
+  onRunQuery,
+  range,
+}: Props<TSQLQuery, TSQLOptions>) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
   const { loading, error } = useAsync(async () => {
@@ -52,7 +62,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range 
     [onRunQuery]
   );
 
-  const onQueryChange = (q: SQLQuery, process = true) => {
+  const onQueryChange = (q: TSQLQuery, process = true) => {
     setQueryToValidate(q);
     onChange(q);
 
@@ -65,7 +75,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range 
     }
   };
 
-  const onQueryHeaderChange = (q: SQLQuery) => {
+  const onQueryHeaderChange = (q: TSQLQuery) => {
     setQueryToValidate(q);
     onChange(q);
   };
@@ -76,7 +86,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range 
 
   return (
     <>
-      <QueryHeader
+      <QueryHeader<TSQLQuery>
         db={db}
         onChange={onQueryHeaderChange}
         onRunQuery={onRunQuery}
@@ -92,7 +102,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range 
         <VisualEditor
           db={db}
           query={queryWithDefaults}
-          onChange={(q: SQLQuery) => onQueryChange(q, false)}
+          onChange={(q: TSQLQuery) => onQueryChange(q, false)}
           queryRowFilter={queryRowFilter}
           onValidate={setIsQueryRunnable}
           range={range}

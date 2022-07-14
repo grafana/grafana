@@ -11,21 +11,11 @@ import {
 } from '@grafana/data';
 import { CompletionItemKind, EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
 
-import { QueryWithDefaults } from './defaults';
 import {
   QueryEditorFunctionExpression,
   QueryEditorGroupByExpression,
   QueryEditorPropertyExpression,
 } from './expressions';
-
-export interface SqlQueryForInterpolation {
-  dataset?: string;
-  alias?: string;
-  format?: QueryFormat;
-  rawSql?: string;
-  refId: string;
-  hide?: boolean;
-}
 
 export interface SQLOptions extends DataSourceJsonData {
   timeInterval: string;
@@ -122,10 +112,10 @@ export interface DB {
   toRawSql?: (query: SQLQuery) => string;
 }
 
-export interface QueryEditorProps {
+export interface QueryEditorProps<T extends SQLQuery> {
   db: DB;
-  query: QueryWithDefaults;
-  onChange: (query: SQLQuery) => void;
+  query: T;
+  onChange: (query: T) => void;
   range?: TimeRange;
 }
 

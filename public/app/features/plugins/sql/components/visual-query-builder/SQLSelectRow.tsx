@@ -2,21 +2,20 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { QueryWithDefaults } from '../../defaults';
 import { DB, SQLQuery } from '../../types';
 import { useSqlChange } from '../../utils/useSqlChange';
 
 import { SelectRow } from './SelectRow';
 
-interface SQLSelectRowProps {
+interface SQLSelectRowProps<T extends SQLQuery> {
   fields: SelectableValue[];
-  query: QueryWithDefaults;
-  onQueryChange: (query: SQLQuery) => void;
+  query: T;
+  onQueryChange: (query: T) => void;
   db: DB;
 }
 
-export function SQLSelectRow({ fields, query, onQueryChange, db }: SQLSelectRowProps) {
+export function SQLSelectRow<T extends SQLQuery>({ fields, query, onQueryChange, db }: SQLSelectRowProps<T>) {
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
 
-  return <SelectRow columns={fields} sql={query.sql!} onSqlChange={onSqlChange} />;
+  return <SelectRow columns={fields} sql={query.sql || {}} onSqlChange={onSqlChange} />;
 }
