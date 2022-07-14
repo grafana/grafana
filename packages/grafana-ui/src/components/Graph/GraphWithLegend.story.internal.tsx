@@ -2,7 +2,7 @@ import { Story } from '@storybook/react';
 import React from 'react';
 
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, LegendVisibility } from '@grafana/schema';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
@@ -121,7 +121,7 @@ export const WithLegend: Story<StoryProps> = ({ rightAxisSeries, displayMode, le
     <GraphWithLegend
       legendDisplayMode={
         displayMode === 'hidden'
-          ? LegendDisplayMode.Hidden
+          ? LegendVisibility.Hidden
           : displayMode === 'table'
           ? LegendDisplayMode.Table
           : LegendDisplayMode.List
