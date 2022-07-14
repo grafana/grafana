@@ -89,7 +89,7 @@ func (f *ForkedProvisioningApi) RouteGetTemplates(ctx *models.ReqContext) respon
 	return f.forkRouteGetTemplates(ctx)
 }
 func (f *ForkedProvisioningApi) RoutePostAlertRule(ctx *models.ReqContext) response.Response {
-	conf := apimodels.AlertRule{}
+	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -111,7 +111,7 @@ func (f *ForkedProvisioningApi) RoutePostMuteTiming(ctx *models.ReqContext) resp
 }
 func (f *ForkedProvisioningApi) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
 	uIDParam := web.Params(ctx.Req)[":UID"]
-	conf := apimodels.AlertRule{}
+	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

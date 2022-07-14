@@ -15,7 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/web"
 	prometheus "github.com/prometheus/alertmanager/config"
@@ -259,6 +260,20 @@ func TestProvisioningApi(t *testing.T) {
 
 			require.Equal(t, 404, response.Status())
 		})
+
+		t.Run("have reached the rule quota, POST returns 403", func(t *testing.T) {
+			env := createTestEnv(t)
+			quotas := provisioning.MockQuotaChecker{}
+			quotas.EXPECT().LimitExceeded()
+			env.quotas = &quotas
+			sut := createProvisioningSrvSutFromEnv(t, &env)
+			rule := createTestAlertRule("rule", 1)
+			rc := createTestRequestCtx()
+
+			response := sut.RoutePostAlertRule(&rc, rule)
+
+			require.Equal(t, 403, response.Status())
+		})
 	})
 
 	t.Run("alert rule groups", func(t *testing.T) {
@@ -284,9 +299,21 @@ func TestProvisioningApi(t *testing.T) {
 	})
 }
 
-func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
+// testEnvironment binds together common dependencies for testing alerting APIs.
+type testEnvironment struct {
+	secrets secrets.Service
+	log     log.Logger
+	store   store.DBstore
+	configs provisioning.AMConfigStore
+	xact    provisioning.TransactionManager
+	quotas  provisioning.QuotaChecker
+	prov    provisioning.ProvisioningStore
+}
+
+func createTestEnv(t *testing.T) testEnvironment {
 	t.Helper()
-	secrets := secrets.NewFakeSecretsService()
+
+	secrets := secrets_fakes.NewFakeSecretsService()
 	log := log.NewNopLogger()
 	configs := &provisioning.MockAMConfigStore{}
 	configs.EXPECT().
@@ -298,18 +325,41 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 		SQLStore:     sqlStore,
 		BaseInterval: time.Second * 10,
 	}
+	quotas := &provisioning.MockQuotaChecker{}
+	quotas.EXPECT().LimitOK()
 	xact := &provisioning.NopTransactionManager{}
 	prov := &provisioning.MockProvisioningStore{}
 	prov.EXPECT().SaveSucceeds()
 	prov.EXPECT().GetReturns(models.ProvenanceNone)
 
+	return testEnvironment{
+		secrets: secrets,
+		log:     log,
+		configs: configs,
+		store:   store,
+		xact:    xact,
+		prov:    prov,
+		quotas:  quotas,
+	}
+}
+
+func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
+	t.Helper()
+
+	env := createTestEnv(t)
+	return createProvisioningSrvSutFromEnv(t, &env)
+}
+
+func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
+	t.Helper()
+
 	return ProvisioningSrv{
-		log:                 log,
+		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(configs, secrets, prov, xact, log),
-		templates:           provisioning.NewTemplateService(configs, prov, xact, log),
-		muteTimings:         provisioning.NewMuteTimingService(configs, prov, xact, log),
-		alertRules:          provisioning.NewAlertRuleService(store, prov, xact, 60, 10, log),
+		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log),
+		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
+		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.quotas, env.xact, 60, 10, env.log),
 	}
 }
 
@@ -418,12 +468,12 @@ func createInvalidMuteTiming() definitions.MuteTimeInterval {
 	}
 }
 
-func createInvalidAlertRule() definitions.AlertRule {
-	return definitions.AlertRule{}
+func createInvalidAlertRule() definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{}
 }
 
-func createTestAlertRule(title string, orgID int64) definitions.AlertRule {
-	return definitions.AlertRule{
+func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{
 		OrgID:     orgID,
 		Title:     title,
 		Condition: "A",
@@ -445,7 +495,7 @@ func createTestAlertRule(title string, orgID int64) definitions.AlertRule {
 	}
 }
 
-func insertRule(t *testing.T, srv ProvisioningSrv, rule definitions.AlertRule) {
+func insertRule(t *testing.T, srv ProvisioningSrv, rule definitions.ProvisionedAlertRule) {
 	t.Helper()
 
 	rc := createTestRequestCtx()

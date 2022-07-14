@@ -513,4 +513,51 @@ describe('VariableSupport', () => {
       done();
     });
   });
+
+  describe('predefined functions', () => {
+    it('can fetch subscriptions', (done) => {
+      const fakeSubscriptions = ['subscriptionId'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getSubscriptions: jest.fn().mockResolvedValueOnce(fakeSubscriptions),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.SubscriptionsQuery,
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(fakeSubscriptions);
+        done();
+      });
+    });
+
+    it('can fetch resourceGroups', (done) => {
+      const expectedResults = ['test'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getResourceGroups: jest.fn().mockResolvedValueOnce(expectedResults),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.ResourceGroupsQuery,
+            subscription: 'sub',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(expectedResults);
+        done();
+      });
+    });
+  });
 });

@@ -3,6 +3,7 @@ package adapters
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -11,15 +12,19 @@ import (
 )
 
 // ModelToInstanceSettings converts a datasources.DataSource to a backend.DataSourceInstanceSettings.
-func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *datasources.DataSource) map[string]string,
+func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *datasources.DataSource) (map[string]string, error),
 ) (*backend.DataSourceInstanceSettings, error) {
 	var jsonDataBytes json.RawMessage
 	if ds.JsonData != nil {
 		var err error
 		jsonDataBytes, err = ds.JsonData.MarshalJSON()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to convert data source to instance settings: %w", err)
 		}
+	}
+	decrypted, err := decryptFn(ds)
+	if err != nil {
+		return nil, err
 	}
 
 	return &backend.DataSourceInstanceSettings{
@@ -32,9 +37,9 @@ func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *data
 		BasicAuthEnabled:        ds.BasicAuth,
 		BasicAuthUser:           ds.BasicAuthUser,
 		JSONData:                jsonDataBytes,
-		DecryptedSecureJSONData: decryptFn(ds),
+		DecryptedSecureJSONData: decrypted,
 		Updated:                 ds.Updated,
-	}, nil
+	}, err
 }
 
 // BackendUserFromSignedInUser converts Grafana's SignedInUser model
