@@ -81,9 +81,11 @@ var supportedDialects = map[string]dialectFunc{
 	MySQL:                  NewMysqlDialect,
 	SQLite:                 NewSQLite3Dialect,
 	Postgres:               NewPostgresDialect,
+	MSSQL:                  NewMssqlDialect,
 	MySQL + "WithHooks":    NewMysqlDialect,
 	SQLite + "WithHooks":   NewSQLite3Dialect,
 	Postgres + "WithHooks": NewPostgresDialect,
+	MSSQL + "WithHooks":    NewMssqlDialect,
 }
 
 func NewDialect(engine *xorm.Engine) Dialect {

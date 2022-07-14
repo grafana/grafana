@@ -292,6 +292,8 @@ func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
 		return sqlutil.MySQLTestDB()
 	case "postgres":
 		return sqlutil.PostgresTestDB()
+	case "mssql":
+		return sqlutil.MSSQLTestDB()
 	default:
 		f, err := os.CreateTemp(".", "grafana-test-db-")
 		require.NoError(t, err)

@@ -43,11 +43,3 @@ func writeSortSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStore, 
 		builder.Write(" ORDER BY created_at DESC ")
 	}
 }
-
-func writeLimitSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
-	builder.Write(" LIMIT ? ", query.Limit)
-}
-
-func writeOffsetSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
-	builder.Write(" OFFSET ? ", query.Limit*(query.Page-1))
-}

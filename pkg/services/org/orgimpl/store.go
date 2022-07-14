@@ -44,7 +44,13 @@ func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	var orgID int64
 	var err error
-	err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if org.ID != 0 {
+			if err := ss.dialect.PreInsertId("org", sess.Session); err != nil {
+				return err
+			}
+		}
+
 		if orgID, err = sess.InsertOne(org); err != nil {
 			return err
 		}

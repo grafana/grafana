@@ -187,7 +187,8 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("Update uid column values in alert_notification", new(RawSQLMigration).
 		SQLite("UPDATE alert_notification SET uid=printf('%09d',id) WHERE uid IS NULL;").
 		Postgres("UPDATE alert_notification SET uid=lpad('' || id::text,9,'0') WHERE uid IS NULL;").
-		Mysql("UPDATE alert_notification SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
+		Mysql("UPDATE alert_notification SET uid=lpad(id,9,'0') WHERE uid IS NULL;").
+		Mssql("UPDATE alert_notification SET uid=format(id,'000000000') WHERE uid IS NULL;"))
 
 	mg.AddMigration("Add unique index alert_notification_org_id_uid", NewAddIndexMigration(alert_notification, &Index{
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,

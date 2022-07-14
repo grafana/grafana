@@ -78,8 +78,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.Sig
 		writeStarredSQL(query, s.SQLStore, &dtosBuilder)
 		writeFiltersSQL(query, user, s.SQLStore, &dtosBuilder)
 		writeSortSQL(query, s.SQLStore, &dtosBuilder)
-		writeLimitSQL(query, s.SQLStore, &dtosBuilder)
-		writeOffsetSQL(query, s.SQLStore, &dtosBuilder)
+		dtosBuilder.Write(s.SQLStore.Dialect.LimitOffset(int64(query.Limit), int64(query.Limit*(query.Page-1))))
 
 		err := session.SQL(dtosBuilder.GetSQLString(), dtosBuilder.GetParams()...).Find(&dtos)
 		if err != nil {
@@ -345,7 +344,7 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 					WHERE query_history_star.query_uid IS NULL
 					AND query_history.created_at <= ?
 					ORDER BY query_history.id ASC
-					LIMIT 10000
+					` + s.SQLStore.Dialect.Limit(10000) + `
 				) AS q
 			)`
 

@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"xorm.io/xorm"
@@ -293,6 +294,16 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
 		cnnstr += ss.buildExtraConnectionString('&')
+	case migrator.MSSQL:
+		cnnstr = fmt.Sprintf("odbc:server=%s;user id={%s}", ss.dbCfg.Host, ss.dbCfg.User)
+		if ss.dbCfg.Pwd != "" {
+			cnnstr += fmt.Sprintf(";password={%s}", ss.dbCfg.Pwd)
+		}
+		if ss.dbCfg.Name != "" {
+			cnnstr += fmt.Sprintf(";database={%s}", ss.dbCfg.Name)
+		}
+
+		cnnstr += ss.buildExtraConnectionString(';')
 	default:
 		return "", fmt.Errorf("unknown database type: %s", ss.dbCfg.Type)
 	}
@@ -518,6 +529,10 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			}
 		case "postgres":
 			if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
+				return nil, err
+			}
+		case "mssql":
+			if _, err := sec.NewKey("connection_string", sqlutil.MSSQLTestDB().ConnStr); err != nil {
 				return nil, err
 			}
 		default:

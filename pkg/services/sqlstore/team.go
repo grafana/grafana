@@ -577,7 +577,7 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 			sess.Where("team_member.user_id=?", query.UserId)
 		}
 		if query.External {
-			sess.Where("team_member.external=?", ss.Dialect.BooleanStr(true))
+			sess.Where(fmt.Sprintf("team_member.%s=?", ss.Dialect.Quote("external")), ss.Dialect.BooleanStr(true))
 		}
 		sess.Cols(
 			"team_member.org_id",

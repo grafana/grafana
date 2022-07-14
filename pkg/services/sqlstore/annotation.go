@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
@@ -229,7 +230,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 		}
 
 		if !ac.IsDisabled(r.sql.Cfg) {
-			acFilter, acArgs, err := getAccessControlFilter(query.SignedInUser)
+			acFilter, acArgs, err := getAccessControlFilter(query.SignedInUser, dialect)
 			if err != nil {
 				return err
 			}
@@ -255,7 +256,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func getAccessControlFilter(user *models.SignedInUser) (string, []interface{}, error) {
+func getAccessControlFilter(user *models.SignedInUser, dialect migrator.Dialect) (string, []interface{}, error) {
 	if user == nil || user.Permissions[user.OrgId] == nil {
 		return "", nil, errors.New("missing permissions")
 	}
@@ -277,7 +278,7 @@ func getAccessControlFilter(user *models.SignedInUser) (string, []interface{}, e
 		}
 		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
 		if t == annotations.Dashboard.String() {
-			dashboardFilter, dashboardParams := permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard).Where()
+			dashboardFilter, dashboardParams := permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard, dialect).Where()
 			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
 			filters = append(filters, filter)
 			params = dashboardParams

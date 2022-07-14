@@ -103,10 +103,10 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, models.PanelElement)
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, models.VariableElement)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = ` + dialect.BooleanStr(true) + `) AS active_data_keys,`)
 
 		// TODO: table name will change and filter should check only for is_enabled = true
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `WHERE is_enabled = true) AS public_dashboards,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `WHERE is_enabled = ` + dialect.BooleanStr(true) + `) AS public_dashboards,`)
 
 		sb.Write(ss.roleCounterSQL(ctx))
 
@@ -272,7 +272,7 @@ var (
 func (ss *SQLStore) updateUserRoleCounts(ctx context.Context) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		query := `
-SELECT role AS bitrole, active, COUNT(role) AS count FROM
+SELECT role AS bitrole, active, COUNT(role) AS ` + dialect.Quote("count") + ` FROM
   (SELECT last_seen_at>? AS active, last_seen_at>? AS daily_active, SUM(role) AS role
    FROM (SELECT
       u.id,

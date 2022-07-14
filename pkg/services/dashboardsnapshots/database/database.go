@@ -35,8 +35,16 @@ func (d *DashboardSnapshotStore) DeleteExpiredSnapshots(ctx context.Context, cmd
 			return nil
 		}
 
+		expireDate := time.Now()
+
+		if d.store.GetDialect().DriverName() == "mssql" {
+			_, diff := expireDate.Zone()
+
+			expireDate = expireDate.Add(time.Second * time.Duration(diff)).UTC()
+		}
+
 		deleteExpiredSQL := "DELETE FROM dashboard_snapshot WHERE expires < ?"
-		expiredResponse, err := sess.Exec(deleteExpiredSQL, time.Now())
+		expiredResponse, err := sess.Exec(deleteExpiredSQL, expireDate)
 		if err != nil {
 			return err
 		}

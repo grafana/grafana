@@ -79,12 +79,13 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 
 type AccessControlDashboardPermissionFilter struct {
 	User             *models.SignedInUser
+	Dialect          migrator.Dialect
 	dashboardActions []string
 	folderActions    []string
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the models.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
+func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permissionLevel models.PermissionType, queryType string, dialect migrator.Dialect) AccessControlDashboardPermissionFilter {
 	needEdit := permissionLevel > models.PERMISSION_VIEW
 	folderActions := []string{dashboards.ActionFoldersRead}
 	var dashboardActions []string
@@ -100,7 +101,7 @@ func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permis
 			dashboardActions = append(dashboardActions, dashboards.ActionDashboardsWrite)
 		}
 	}
-	return AccessControlDashboardPermissionFilter{User: user, folderActions: folderActions, dashboardActions: dashboardActions}
+	return AccessControlDashboardPermissionFilter{User: user, folderActions: folderActions, dashboardActions: dashboardActions, Dialect: dialect}
 }
 
 func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {
@@ -119,7 +120,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 		dashFolderFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeFoldersPrefix, f.dashboardActions...)
 
 		builder.WriteString(dashFolderFilter.Where)
-		builder.WriteString(")) AND NOT dashboard.is_folder)")
+		builder.WriteString(")) AND dashboard.is_folder = " + f.Dialect.BooleanStr(false) + ")")
 		args = append(args, dashFolderFilter.Args...)
 	}
 
@@ -130,7 +131,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 		builder.WriteString("(")
 		folderFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeFoldersPrefix, f.folderActions...)
 		builder.WriteString(folderFilter.Where)
-		builder.WriteString(" AND dashboard.is_folder)")
+		builder.WriteString(" AND dashboard.is_folder = " + f.Dialect.BooleanStr(true) + ")")
 		args = append(args, folderFilter.Args...)
 	}
 	builder.WriteString(")")

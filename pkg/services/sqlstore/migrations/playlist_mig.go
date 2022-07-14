@@ -45,7 +45,8 @@ func addPlaylistUIDMigration(mg *Migrator) {
 	mg.AddMigration("Update uid column values in playlist", NewRawSQLMigration("").
 		SQLite("UPDATE playlist SET uid=printf('%d',id);").
 		Postgres("UPDATE playlist SET uid=id::text;").
-		Mysql("UPDATE playlist SET uid=id;"))
+		Mysql("UPDATE playlist SET uid=id;").
+		Mssql("UPDATE playlist SET uid=format(id, '');"))
 
 	mg.AddMigration("Add index for uid in playlist", NewAddIndexMigration(playlistV2(), &Index{
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,

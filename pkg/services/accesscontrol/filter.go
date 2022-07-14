@@ -17,6 +17,7 @@ var sqlIDAcceptList = map[string]struct{}{
 	"u.id":             {},
 	"\"user\".\"id\"":  {}, // For Postgres
 	"`user`.`id`":      {}, // For MySQL and SQLite
+	"[user].[id]":      {}, // For MsSQL
 	"dashboard.uid":    {},
 }
 

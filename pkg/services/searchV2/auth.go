@@ -40,7 +40,7 @@ func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *models.SignedIn
 		}
 	}
 
-	return permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard)
+	return permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard, a.sql.Dialect)
 }
 
 func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error) {

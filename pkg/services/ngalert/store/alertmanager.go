@@ -129,7 +129,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 // Rel: https://github.com/grafana/grafana/issues/51356
 func getInsertQuery(driver string) string {
 	switch driver {
-	case core.MYSQL:
+	case core.MYSQL, core.MSSQL:
 		return `
 		INSERT INTO alert_configuration
 		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
