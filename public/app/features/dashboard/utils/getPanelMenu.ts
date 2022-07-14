@@ -141,7 +141,7 @@ export function getPanelMenu(
   }
 
   menu.push({
-    text: 'Toggle legend',
+    text: panel.options.legend?.showLegend === "visible" ? "Hide legend" : "Show legend",
     iconClassName: 'exchange-alt',
     onClick: onToggleLegend,
     shortcut: 'p l',
