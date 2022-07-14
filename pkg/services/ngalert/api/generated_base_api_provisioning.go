@@ -30,7 +30,7 @@ type ProvisioningApiForkingService interface {
 	RoutePostPolicyTree(*models.ReqContext) response.Response
 	RoutePutAlertRule(*models.ReqContext) response.Response
 	RoutePutAlertRuleGroup(*models.ReqContext) response.Response
-	RoutePutContactpoints(*models.ReqContext) response.Response
+	RoutePutContactpoint(*models.ReqContext) response.Response
 }
 
 func (f *ForkedProvisioningApi) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
@@ -97,12 +97,13 @@ func (f *ForkedProvisioningApi) RoutePutAlertRuleGroup(ctx *models.ReqContext) r
 	return f.forkRoutePutAlertRuleGroup(ctx, conf, folderUIDParam, groupParam)
 }
 
-func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) response.Response {
+func (f *ForkedProvisioningApi) RoutePutContactpoint(ctx *models.ReqContext) response.Response {
+	uIDParam := web.Params(ctx.Req)[":UID"]
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutContactpoints(ctx, conf)
+	return f.forkRoutePutContactpoint(ctx, conf, uIDParam)
 }
 
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
@@ -118,11 +119,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/provisioning/contact-points/{ID}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/contact-points/{ID}"),
+			toMacaronPath("/api/v1/provisioning/contact-points/{ID}"),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/contact-points/{ID}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/contact-points/{ID}",
+				"/api/v1/provisioning/contact-points/{ID}",
 				srv.RouteDeleteContactpoints,
 				m,
 			),
@@ -138,11 +139,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/contact-points"),
-			api.authorize(http.MethodGet, "/api/provisioning/contact-points"),
+			toMacaronPath("/api/v1/provisioning/contact-points"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/contact-points",
+				"/api/v1/provisioning/contact-points",
 				srv.RouteGetContactpoints,
 				m,
 			),
@@ -152,7 +153,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			api.authorize(http.MethodGet, "/api/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/policies",
+				"/api/v1/provisioning/policies",
 				srv.RouteGetPolicyTree,
 				m,
 			),
@@ -168,11 +169,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/provisioning/contact-points"),
-			api.authorize(http.MethodPost, "/api/provisioning/contact-points"),
+			toMacaronPath("/api/v1/provisioning/contact-points"),
+			api.authorize(http.MethodPost, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/provisioning/contact-points",
+				"/api/v1/provisioning/contact-points",
 				srv.RoutePostContactpoints,
 				m,
 			),
@@ -208,12 +209,12 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/contact-points"),
-			api.authorize(http.MethodPut, "/api/provisioning/contact-points"),
+			toMacaronPath("/api/v1/provisioning/contact-points/{UID}"),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/contact-points",
-				srv.RoutePutContactpoints,
+				"/api/v1/provisioning/contact-points/{UID}",
+				srv.RoutePutContactpoint,
 				m,
 			),
 		)

@@ -3,6 +3,8 @@ package channels
 import (
 	"context"
 	"errors"
+	"fmt"
+	urlutils "net/url"
 	"strings"
 	"time"
 
@@ -47,6 +49,15 @@ func NewVictorOpsConfig(config *NotificationChannelConfig) (*VictorOpsConfig, er
 	if url == "" {
 		return nil, errors.New("could not find victorops url property in settings")
 	}
+	//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Validate URL of contact points
+	victoropsUrl, err := urlutils.Parse(url)
+	if err != nil {
+		return nil, fmt.Errorf("invalid format of victorops URL %q", url)
+	}
+	if validationErr := ValidateNotificationChannelUrl(victoropsUrl); validationErr != nil {
+		return nil, fmt.Errorf("invalid victorops URL %q: %q", url, validationErr.Error())
+	}
+	//LOGZ.IO GRAFANA CHANGE :: end
 	return &VictorOpsConfig{
 		NotificationChannelConfig: config,
 		URL:                       url,

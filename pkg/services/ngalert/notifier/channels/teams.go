@@ -3,6 +3,8 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	urlutils "net/url"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/template"
@@ -46,6 +48,18 @@ func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
 	if URL == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
+	//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Validate URL of contact points
+	apiUrl := config.Settings.Get("url").MustString()
+	if apiUrl != "" {
+		parsedApiUrl, err := urlutils.Parse(apiUrl)
+		if err != nil {
+			return nil, fmt.Errorf("invalid format of teams endpoint URL %q", parsedApiUrl)
+		}
+		if validationErr := ValidateNotificationChannelUrl(parsedApiUrl); validationErr != nil {
+			return nil, fmt.Errorf("invalid teams URL %q: %q", parsedApiUrl, validationErr.Error())
+		}
+	}
+	//LOGZ.IO GRAFANA CHANGE :: end
 	return &TeamsConfig{
 		NotificationChannelConfig: config,
 		URL:                       URL,

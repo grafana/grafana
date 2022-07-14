@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -81,13 +82,23 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *models.ReqContext, cp defin
 	// TODO: provenance is hardcoded for now, change it later to make it more flexible
 	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
+		if errors.Is(err, provisioning.ErrValidation) {
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusAccepted, contactPoint)
 }
 
-func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
+func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp definitions.EmbeddedContactPoint, UID string) response.Response {
+	cp.UID = UID
 	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
+	if errors.Is(err, provisioning.ErrValidation) {
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
+	}
+	if errors.Is(err, provisioning.ErrNotFound) {
+		return response.Error(http.StatusNotFound, err.Error(), nil)
+	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

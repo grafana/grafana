@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	urlutils "net/url"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -54,6 +56,15 @@ func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 	if url == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
+	//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Validate URL of contact points
+	webhookUrl, err := urlutils.Parse(url)
+	if err != nil {
+		return nil, fmt.Errorf("invalid format of webhook URL %q", url)
+	}
+	if validationErr := ValidateNotificationChannelUrl(webhookUrl); validationErr != nil {
+		return nil, fmt.Errorf("invalid webhook URL %q: %q", url, validationErr.Error())
+	}
+	//LOGZ.IO GRAFANA CHANGE :: end
 	return &WebhookConfig{
 		NotificationChannelConfig: config,
 		URL:                       url,

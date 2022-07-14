@@ -79,6 +79,14 @@ func NewSlackConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedV
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL %q", slackURL)
 	}
+	//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Validate URL of contact points
+	if err != nil {
+		return nil, fmt.Errorf("invalid format of slack URL %q", apiURL)
+	}
+	if validationErr := ValidateNotificationChannelUrl(apiURL); validationErr != nil {
+		return nil, fmt.Errorf("invalid slack URL %q: %q", apiURL, validationErr.Error())
+	}
+	//LOGZ.IO GRAFANA CHANGE :: end
 	recipient := strings.TrimSpace(config.Settings.Get("recipient").MustString())
 	if recipient == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, errors.New("recipient must be specified when using the Slack chat API")

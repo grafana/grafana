@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	urlutils "net/url"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -73,6 +74,18 @@ func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecrypt
 		sendTagsAs != OpsgenieSendBoth {
 		return nil, fmt.Errorf("invalid value for sendTagsAs: %q", sendTagsAs)
 	}
+	//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Validate URL of contact points
+	apiUrl := config.Settings.Get("apiUrl").MustString()
+	if apiUrl != "" {
+		parsedApiUrl, err := urlutils.Parse(apiUrl)
+		if err != nil {
+			return nil, fmt.Errorf("invalid format of opsgenie URL %q", parsedApiUrl)
+		}
+		if validationErr := ValidateNotificationChannelUrl(parsedApiUrl); validationErr != nil {
+			return nil, fmt.Errorf("invalid opsgenie URL %q: %q", parsedApiUrl, validationErr.Error())
+		}
+	}
+	//LOGZ.IO GRAFANA CHANGE :: end
 	return &OpsgenieConfig{
 		NotificationChannelConfig: config,
 		APIKey:                    apiKey,
