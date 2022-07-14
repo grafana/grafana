@@ -61,7 +61,7 @@ func main() {
 		}
 	}
 	sort.Slice(lins, func(i, j int) bool {
-		return lins[i].Lineage().Name() < lins[j].Lineage().Name()
+		return lins[i].Lineage.Name() < lins[j].Lineage.Name()
 	})
 
 	wd := gcgen.NewWriteDiffer()
