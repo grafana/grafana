@@ -303,8 +303,8 @@ func TestSecretsKVStoreSQL(t *testing.T) {
 			for _, tc := range testCases {
 				if *s.OrgId == tc.OrgId &&
 					*s.Namespace == tc.Namespace &&
-					*s.Type == tc.Type &&
-					s.Value == tc.Value() {
+					*s.Type == tc.Type {
+					require.Equal(t, tc.Value(), s.Value, "secret found but value is not equals")
 					found++
 					break
 				}
