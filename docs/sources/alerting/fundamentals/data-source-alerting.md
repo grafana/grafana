@@ -19,7 +19,7 @@ These are the data sources that are compatible with and supported by Grafana Ale
 - [AWS CloudWatch]({{< relref "../../datasources/aws-cloudwatch/" >}})
 - [Azure Monitor]({{< relref "../../datasources/azuremonitor/" >}})
 - [Elasticsearch]({{< relref "../../datasources/elasticsearch/" >}})
-- [Google Cloud Monitoring]({{< relref "../../google-cloud-monitoring/" >}})
+- [Google Cloud Monitoring]({{< relref "../../datasources/google-cloud-monitoring/" >}})
 - [Graphite]({{< relref "../../datasources/graphite/" >}})
 - [InfluxDB]({{< relref "influxdb/" >}})
 - [Loki]({{< relref "../../datasources/loki/" >}})
