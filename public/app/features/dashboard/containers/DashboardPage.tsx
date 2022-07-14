@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { locationUtil, NavModelItem, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
@@ -170,15 +170,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         text: dashboard.meta.folderTitle,
         url: `/dashboards/f/${dashboard.meta.folderUid}`,
       };
-    }
-
-    // in folder browse view we need the dashboard to reload on change
-    if (match.path === '/g/:slug*' && prevProps.match.params.slug !== match.params.slug) {
-      if (!config.featureToggles.dashboardsFromStorage) {
-        return;
-      }
-      this.initDashboard();
-      return;
     }
 
     if (

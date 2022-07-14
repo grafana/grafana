@@ -97,7 +97,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
-	r.Get("/g/*", reqSignedIn, hs.Index) // dashboard based on path
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
 	r.Get("/dashboard/new", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
@@ -108,6 +107,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+
+	if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
+		r.Get("/g/*", reqSignedIn, hs.Index)
+	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), hs.Index)
