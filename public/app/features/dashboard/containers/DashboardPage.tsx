@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { locationUtil, NavModelItem, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
@@ -14,7 +14,6 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { FolderDashboard } from 'app/features/storage/FolderDashboard';
 import { KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
@@ -356,10 +355,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     if (!dashboard) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
-    }
-
-    if (dashboard.meta.isFolder && config.featureToggles.dashboardsFromStorage) {
-      return <FolderDashboard dash={dashboard} />;
     }
 
     const inspectPanel = this.getInspectPanel();

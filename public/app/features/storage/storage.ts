@@ -120,40 +120,22 @@ class SimpleStorage implements GrafanaStorage {
       return Promise.reject('Dashboards from storage is not enabled');
     }
 
-    if (path.endsWith('.json')) {
-      const result = await backendSrv.get(`/api/storage/read/${path}`);
-      result.uid = path;
-      delete result.id; // Saved with the dev dashboards!
-
-      return {
-        meta: {
-          uid: path,
-          slug: path,
-          canEdit: true,
-          canSave: true,
-          canStar: false, // needs id
-        },
-        dashboard: result,
-      };
+    if (!path.endsWith('.json')) {
+      path += '.json';
     }
+    const result = await backendSrv.get(`/api/storage/read/${path}`);
+    result.uid = path;
+    delete result.id; // Saved with the dev dashboards!
 
-    // Assume it is a folder
     return {
       meta: {
         uid: path,
         slug: path,
-        isFolder: true,
-        canEdit: false,
-        canSave: false,
+        canEdit: true,
+        canSave: true,
         canStar: false, // needs id
       },
-      dashboard: {
-        uid: path,
-        title: path,
-        templating: {
-          list: [],
-        },
-      },
+      dashboard: result,
     };
   }
 
