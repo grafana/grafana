@@ -40,7 +40,7 @@ export const ControlledReactTable = () => {
 };
 
 // React Table comopnent, to demonstrate functionality only
-export function ReactTable({ columns, data }: { columns: Column[]; data: FakeData[] }) {
+function ReactTable({ columns, data }: { columns: Column[]; data: FakeData[] }) {
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
     {
       columns,
@@ -100,7 +100,7 @@ const newPerson = (counter: number) => {
   };
 };
 
-export function makeData(...lens: number[]) {
+function makeData(...lens: number[]) {
   const depth = 0;
   const len = lens[depth];
   let count = 0;

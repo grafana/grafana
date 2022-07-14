@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { forwardRef, useEffect, useState, useRef } from 'react';
-import { CellProps, Column, HeaderProps, Hooks, TableToggleAllRowsSelectedProps } from 'react-table';
+import { TableToggleCommonProps, Column, HeaderProps, Hooks, TableToggleAllRowsSelectedProps } from 'react-table';
 
 import { useStyles2 } from '../../../themes';
 import { Checkbox } from '../../Forms/Checkbox';
@@ -28,7 +28,9 @@ export const useCheckboxes = (hooks: Hooks) => {
       Header: ({ getToggleAllRowsSelectedProps }: HeaderProps<{}>) => (
         <IndeterminateCheckbox {...getToggleAllRowsSelectedProps()} />
       ),
-      Cell: ({ row }: CellProps<{}>) => <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />,
+      Cell: ({ row }: { row: { getToggleRowSelectedProps: () => TableToggleCommonProps } }) => (
+        <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />
+      ),
     },
     ...columns,
   ]);
