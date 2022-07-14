@@ -250,14 +250,14 @@ func (kv *secretsKVStoreSQL) GetAll(ctx context.Context) ([]Item, error) {
 		decodedValue, err := b64.DecodeString(items[i].Value)
 		if err != nil {
 			kv.log.Debug("error decoding secret value", "orgId", items[i].OrgId, "type", items[i].Type, "namespace", items[i].Namespace, "err", err)
-			items[i].Value = ""
+			items[i].Value = string(decryptedValue)
 			continue
 		}
 
 		decryptedValue, err = kv.secretsService.Decrypt(ctx, decodedValue)
 		if err != nil {
 			kv.log.Debug("error decrypting secret value", "orgId", items[i].OrgId, "type", items[i].Type, "namespace", items[i].Namespace, "err", err)
-			items[i].Value = ""
+			items[i].Value = string(decryptedValue)
 			continue
 		}
 
