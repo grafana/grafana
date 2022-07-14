@@ -4820,18 +4820,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:^0.0.13":
-  version: 0.0.13
-  resolution: "@grafana/lezer-logql@npm:0.0.13"
+"@grafana/lezer-logql@npm:^0.0.14":
+  version: 0.0.14
+  resolution: "@grafana/lezer-logql@npm:0.0.14"
   dependencies:
     lezer: ^0.13.5
   peerDependencies:
     "@lezer/lr": ^0.15.8
-  checksum: 417ab91c4fa8317789435bafbadd0bc24a6b9d8494a87614f14dc8cbe5f05bf94f529eadc0b2643ff71a3a3fee45cbf588538d8224abe2f4134ff5cc2c2b0055
+  checksum: 4e35f455b6b7c286dfca9f3770df0d4c325057352dc8241665b667d798db09de54e1c14f7bfd34d4ae5bbef782d28994ceaf5c517fc18cff46ae3a47527e1990
   languageName: node
   linkType: hard
 
-"@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@9.1.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
@@ -5275,6 +5275,7 @@ __metadata:
     "@emotion/css": 11.9.0
     "@grafana/data": 9.1.0-pre
     "@grafana/e2e-selectors": 9.1.0-pre
+    "@grafana/runtime": 9.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 9.1.0-pre
     "@testing-library/jest-dom": 5.16.4
@@ -11382,6 +11383,15 @@ __metadata:
     "@types/react": "*"
     moment: ^2.19.4
   checksum: 26d43beb8c5fdbd1932996bee63d3f854ca8e931915463106cbb382d98efcc81a1140f7fda004b6652ca12e87b211b1b70302b854c5ce41e3f87e68537181c06
+  languageName: node
+  linkType: hard
+
+"@types/rc-tree@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@types/rc-tree@npm:3.0.0"
+  dependencies:
+    rc-tree: "*"
+  checksum: bf8e599c5a62c8f8d91fbecdc210119c4c2ad07bdfb8adecb4d1cce9cb967fd6856ad2940431b8fdc9993cd261f127c33588f2988bfc7bc6438993de1c6eeff3
   languageName: node
   linkType: hard
 
@@ -20973,7 +20983,7 @@ __metadata:
     "@grafana/eslint-config": 4.0.0
     "@grafana/experimental": ^0.0.2-canary.32
     "@grafana/google-sdk": 0.0.3
-    "@grafana/lezer-logql": ^0.0.13
+    "@grafana/lezer-logql": ^0.0.14
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
@@ -21050,6 +21060,7 @@ __metadata:
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
     "@types/rc-time-picker": 3.4.1
+    "@types/rc-tree": ^3.0.0
     "@types/react": 17.0.42
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-dom": 17.0.14
@@ -21191,6 +21202,7 @@ __metadata:
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: 3.7.3
+    rc-tree: ^5.6.5
     re-resizable: 6.9.9
     react: 17.0.2
     react-awesome-query-builder: ^5.1.2
@@ -30487,7 +30499,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:~5.6.3":
+"rc-tree@npm:*, rc-tree@npm:^5.6.5, rc-tree@npm:~5.6.3":
   version: 5.6.5
   resolution: "rc-tree@npm:5.6.5"
   dependencies:

@@ -28,6 +28,7 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
 
     getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce([]),
 
+    getSubscriptions: jest.fn().mockResolvedValue([]),
     getResourceGroups: jest.fn().mockResolvedValueOnce([]),
     getMetricDefinitions: jest.fn().mockResolvedValueOnce([]),
     getResourceNames: jest.fn().mockResolvedValueOnce([]),
@@ -43,6 +44,7 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
       getResourceURIFromWorkspace: jest.fn().mockReturnValue(''),
       getResourceURIDisplayProperties: jest.fn().mockResolvedValue({}),
     },
+    getVariablesRaw: jest.fn().mockReturnValue([]),
     ...overrides,
   };
 

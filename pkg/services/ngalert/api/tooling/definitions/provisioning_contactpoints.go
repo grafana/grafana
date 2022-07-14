@@ -53,6 +53,14 @@ type ContactPointUIDReference struct {
 	UID string
 }
 
+// swagger:parameters RouteGetContactpoints
+type ContactPointParams struct {
+	// Filter by name
+	// in: query
+	// required: false
+	Name string `json:"name"`
+}
+
 // swagger:parameters RoutePostContactpoints RoutePutContactpoint
 type ContactPointPayload struct {
 	// in:body

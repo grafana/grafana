@@ -59,6 +59,7 @@ export interface FeatureToggles {
   scenes?: boolean;
   useLegacyHeatmapPanel?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
+  disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   internationalization?: boolean;
