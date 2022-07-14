@@ -23,29 +23,47 @@ type Correlation struct {
 }
 
 type CorrelationDTO struct {
-	UID         string `json:"uid" xorm:"uid"`
-	SourceUID   string `json:"sourceUid"`
-	TargetUID   string `json:"targetUid"`
-	Label       string `json:"label"`
+	// Unique identifier of the correlation
+	// example: 50xhMlg9k
+	UID string `json:"uid" xorm:"uid"`
+	// UID of the data source the correlation originates from
+	// example:d0oxYRg4z
+	SourceUID string `json:"sourceUid"`
+	// UID of the data source the correlation points to
+	// example:PE1C5CBDA0504A6A3
+	TargetUID string `json:"targetUid"`
+	// Label identifying the correlation
+	// example: My Label
+	Label string `json:"label"`
+	// Description of the correlation
+	// example: Logs to Traces
 	Description string `json:"description"`
 }
 
 // CreateCorrelationResponse is a response struct for CorrelationDTO
+// swagger:model
 type CreateCorrelationResponse struct {
 	Result CorrelationDTO `json:"result"`
+	// example: Correlation created
+	Message string `json:"message"`
 }
 
 // CreateCorrelationCommand is the command for creating a correlation
 // swagger:model
 type CreateCorrelationCommand struct {
 	// UID of the data source for which correlation is created.
-	// example: PE1C5CBDA0504A6A3
-	SourceUID         string
-	OrgId             int64
-	TargetUID         string `json:"targetUid" binding:"Required"`
-	Label             string `json:"label"`
-	Description       string `json:"description"`
-	SkipReadOnlyCheck bool
+	SourceUID         string `json:"-"`
+	OrgId             int64  `json:"-"`
+	SkipReadOnlyCheck bool   `json:"-"`
+	// Target data source UID to which the correlation is created
+	// example:PE1C5CBDA0504A6A3
+	TargetUID string `json:"targetUid" binding:"Required"`
+	// Optional label identifying the correlation
+	// example: My label
+	Label string `json:"label"`
+	// Optional description of the correlation
+	// example: Logs to Traces
+	Description string `json:"description"`
 }
 
 type DeleteCorrelationsBySourceUIDCommand struct {

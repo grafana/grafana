@@ -28,7 +28,7 @@ func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Respo
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
 	cmd.OrgId = c.OrgId
 
-	query, err := s.CreateCorrelation(c.Req.Context(), cmd)
+	correlation, err := s.CreateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.Is(err, ErrSourceDataSourceDoesNotExists) || errors.Is(err, ErrTargetDataSourceDoesNotExists) {
 			return response.Error(http.StatusNotFound, "Data source not found", err)
@@ -41,5 +41,5 @@ func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
 	}
 
-	return response.JSON(http.StatusOK, CreateCorrelationResponse{Result: query})
+	return response.JSON(http.StatusOK, CreateCorrelationResponse{Result: correlation, Message: "Correlation created"})
 }

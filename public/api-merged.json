@@ -3639,6 +3639,49 @@
         }
       }
     },
+    "/datasources/uid/{uid}/correlations": {
+      "post": {
+        "tags": ["correlations"],
+        "summary": "Add correlation.",
+        "operationId": "createCorrelation",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateCorrelationCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createCorrelationResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}/health": {
       "get": {
         "tags": ["datasources"],
@@ -4032,52 +4075,6 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{uid}/correlations": {
-      "post": {
-        "tags": ["correlations"],
-        "summary": "Creates a correlation.",
-        "operationId": "createCorrelation",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/CreateCorrelationCommand"
-            }
-          },
-          {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createCorrelationResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "409": {
-            "$ref": "#/responses/conflictError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -9939,24 +9936,32 @@
       }
     },
     "CorrelationDTO": {
-      "description": "CorrelationDTO extends Correlation by adding `Version`, which is persisted and read from the `version` column\nin the data_source table. It's not part of the Correlation model but needed when editing correlations to handle\nconcurrent edits.",
       "type": "object",
       "properties": {
         "description": {
-          "type": "string"
+          "description": "Description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
         },
         "label": {
-          "type": "string"
+          "description": "Label identifying the correlation",
+          "type": "string",
+          "example": "My Label"
         },
-        "target": {
-          "type": "string"
+        "sourceUid": {
+          "description": "UID of the data source the correlation originates from",
+          "type": "string",
+          "example": "d0oxYRg4z"
+        },
+        "targetUid": {
+          "description": "UID of the data source the correlation points to",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
         },
         "uid": {
-          "type": "string"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
+          "description": "Unique identifier of the correlation",
+          "type": "string",
+          "example": "50xhMlg9k"
         }
       }
     },
@@ -9996,21 +10001,36 @@
       }
     },
     "CreateCorrelationCommand": {
-      "description": "CreateCorrelationCommand adds a correlation",
+      "description": "CreateCorrelationCommand is the command for creating a correlation",
       "type": "object",
       "properties": {
         "description": {
-          "type": "string"
+          "description": "Optional description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
         },
         "label": {
-          "type": "string"
+          "description": "Optional label identifying the correlation",
+          "type": "string",
+          "example": "My label"
         },
         "targetUid": {
-          "type": "string"
+          "description": "Target data source UID to which the correlation is created",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        }
+      }
+    },
+    "CreateCorrelationResponse": {
+      "description": "CreateCorrelationResponse is a response struct for CorrelationDTO",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation created"
         },
-        "version": {
-          "type": "integer",
-          "format": "int64"
+        "result": {
+          "$ref": "#/definitions/CorrelationDTO"
         }
       }
     },
@@ -16396,18 +16416,7 @@
     "createCorrelationResponse": {
       "description": "",
       "schema": {
-        "type": "object",
-        "required": ["correlation", "message"],
-        "properties": {
-          "correlation": {
-            "$ref": "#/definitions/CorrelationDTO"
-          },
-          "message": {
-            "description": "Message Message of the created correlation.",
-            "type": "string",
-            "example": "Correlation created"
-          }
-        }
+        "$ref": "#/definitions/CreateCorrelationResponse"
       }
     },
     "createOrUpdateDatasourceResponse": {

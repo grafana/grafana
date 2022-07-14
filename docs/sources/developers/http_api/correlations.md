@@ -19,22 +19,21 @@ This API can be used to define correlations between data sources.
 
 ## Create correlations
 
-`POST /api/datasources/:sourceUid/correlations`
+`POST /api/datasources/uid/:sourceUid/correlations`
 
 Creates a correlation between two data sources - the source data source indicated by the path UID, and the target data source which is specified in the body.
 
 **Example request:**
 
 ```http
-POST /api/datasources/uyBf2637k/correlations HTTP/1.1
+POST /api/datasources/uid/uyBf2637k/correlations HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
 	"targetUid": "PDDA8E780A17E7EF1",
-	"label": "A label",
-	"description": "A long description",
-	"version": 10
+	"label": "My Label",
+	"description": "Logs to Traces",
 }
 ```
 
@@ -43,7 +42,6 @@ JSON body schema:
 - **targetUid** – Target data source uid.
 - **label** – A label for the correlation.
 - **description** – A description for the correlation.
-- **version** – The source data source version as returned by [Get a single data source by uid](/docs/grafana/latest/http_api/datasource/#get-a-single-data-source-by-uid). If provided Grafana will ensure no concurrent edits are made to the data source.
 
 **Example response:**
 
@@ -51,13 +49,14 @@ JSON body schema:
 HTTP/1.1 200
 Content-Type: application/json
 {
-  "correlation": {
-    "target": "PDDA8E780A17E7EF1",
-    "label": "A label",
-    "description": "A long description",
-    "version": 11
-  },
-  "message": "Correlation created"
+  "message": "Correlation created",
+  "result": {
+    "description": "Logs to Traces",
+    "label": "My Label",
+    "sourceUid": "uyBf2637k",
+    "targetUid": "PDDA8E780A17E7EF1",
+    "uid": "50xhMlg9k"
+  }
 }
 ```
 
