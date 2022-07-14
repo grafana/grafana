@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
@@ -1116,4 +1117,55 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSec
 
 	t.Logf("alert definition: %v with interval: %d created", rule.GetKey(), rule.IntervalSeconds)
 	return rule
+}
+
+func TestSchedulableAlertRulesRegistry(t *testing.T) {
+	r := alertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.AlertRule)}
+	assert.Len(t, r.all(), 0)
+
+	// replace all rules in the registry with foo
+	r.set([]*models.AlertRule{{OrgID: 1, UID: "foo", Version: 1}})
+	assert.Len(t, r.all(), 1)
+	foo := r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"})
+	require.NotNil(t, foo)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "foo", Version: 1}, *foo)
+
+	// update foo to a newer version
+	r.update(&models.AlertRule{OrgID: 1, UID: "foo", Version: 2})
+	assert.Len(t, r.all(), 1)
+	foo = r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"})
+	require.NotNil(t, foo)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "foo", Version: 2}, *foo)
+
+	// update bar which does not exist in the registry
+	r.update(&models.AlertRule{OrgID: 1, UID: "bar", Version: 1})
+	assert.Len(t, r.all(), 2)
+	foo = r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"})
+	require.NotNil(t, foo)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "foo", Version: 2}, *foo)
+	bar := r.get(models.AlertRuleKey{OrgID: 1, UID: "bar"})
+	require.NotNil(t, foo)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "bar", Version: 1}, *bar)
+
+	// replace all rules in the registry with baz
+	r.set([]*models.AlertRule{{OrgID: 1, UID: "baz", Version: 1}})
+	assert.Len(t, r.all(), 1)
+	baz := r.get(models.AlertRuleKey{OrgID: 1, UID: "baz"})
+	require.NotNil(t, baz)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "baz", Version: 1}, *baz)
+	assert.Nil(t, r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"}))
+	assert.Nil(t, r.get(models.AlertRuleKey{OrgID: 1, UID: "bar"}))
+
+	// delete baz
+	deleted, ok := r.del(models.AlertRuleKey{OrgID: 1, UID: "baz"})
+	assert.True(t, ok)
+	require.NotNil(t, deleted)
+	assert.Equal(t, *deleted, *baz)
+	assert.Len(t, r.all(), 0)
+	assert.Nil(t, r.get(models.AlertRuleKey{OrgID: 1, UID: "baz"}))
+
+	// baz cannot be deleted twice
+	deleted, ok = r.del(models.AlertRuleKey{OrgID: 1, UID: "baz"})
+	assert.False(t, ok)
+	assert.Nil(t, deleted)
 }
