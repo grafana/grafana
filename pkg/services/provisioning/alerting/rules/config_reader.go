@@ -24,22 +24,20 @@ func newRulesConfigReader(logger log.Logger) rulesConfigReader {
 
 func (cr *rulesConfigReader) readConfig(ctx context.Context, path string) ([]*RuleFile, error) {
 	var alertRulesFiles []*RuleFile
-	cr.log.Debug("Looking for alert rules provisioning files", "path", path)
+	cr.log.Debug("looking for alert rules provisioning files", "path", path)
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		cr.log.Error("Can't read alert rules provisioning files from directory", "path", path, "error", err)
+		cr.log.Error("can't read alert rules provisioning files from directory", "path", path, "error", err)
 		return alertRulesFiles, nil
 	}
 
 	for _, file := range files {
-		var ruleFileV1 *RuleFileV1
-		cr.log.Debug("Parsing alert rules provisioning file", "path", path, "file.Name", file.Name())
-		if cr.isYAML(file.Name()) || cr.isJSON(file.Name()) {
-			ruleFileV1, err = cr.parseConfig(path, file)
-		} else {
+		cr.log.Debug("parsing alert rules provisioning file", "path", path, "file.Name", file.Name())
+		if !cr.isYAML(file.Name()) && !cr.isJSON(file.Name()) {
 			return nil, fmt.Errorf("file has invalid suffix '%s' (.yaml,.yml,.json accepted)", file.Name())
 		}
+		ruleFileV1, err := cr.parseConfig(path, file)
 		if err != nil {
 			return nil, err
 		}
