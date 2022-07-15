@@ -37,9 +37,9 @@ func (_m *FakeScheduleService) Run(_a0 context.Context) error {
 	return r0
 }
 
-// UpdateAlertRule provides a mock function with given fields: key
-func (_m *FakeScheduleService) UpdateAlertRule(key models.AlertRuleKey) {
-	_m.Called(key)
+// UpdateAlertRule provides a mock function with given fields: key, lastVersion
+func (_m *FakeScheduleService) UpdateAlertRule(key models.AlertRuleKey, lastVersion int64) {
+	_m.Called(key, lastVersion)
 }
 
 // UpdateAlertRulesByNamespaceUID provides a mock function with given fields: ctx, orgID, uid

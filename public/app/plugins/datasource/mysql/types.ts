@@ -1,4 +1,5 @@
 import { SQLOptions, SQLQuery } from 'app/features/plugins/sql/types';
+
 export interface MysqlQueryForInterpolation {
   alias?: any;
   format?: any;

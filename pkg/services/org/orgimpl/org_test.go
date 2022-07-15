@@ -46,6 +46,11 @@ func TestOrgService(t *testing.T) {
 
 	setting.AutoAssignOrg = false
 	setting.AutoAssignOrgId = 0
+
+	t.Run("delete user from all orgs", func(t *testing.T) {
+		err := orgService.DeleteUserFromAll(context.Background(), 1)
+		require.NoError(t, err)
+	})
 }
 
 type FakeOrgStore struct {
@@ -67,6 +72,10 @@ func (f *FakeOrgStore) Insert(ctx context.Context, org *org.Org) (int64, error) 
 	return f.ExpectedOrgID, f.ExpectedError
 }
 
-func (f *FakeOrgStore) InsertUser(ctx context.Context, org *org.OrgUser) (int64, error) {
+func (f *FakeOrgStore) InsertOrgUser(ctx context.Context, org *org.OrgUser) (int64, error) {
 	return f.ExpectedUserID, f.ExpectedError
+}
+
+func (f *FakeOrgStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
+	return f.ExpectedError
 }

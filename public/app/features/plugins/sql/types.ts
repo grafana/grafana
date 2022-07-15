@@ -11,7 +11,6 @@ import {
 } from '@grafana/data';
 import { CompletionItemKind, EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
 
-import { SQLConnectionLimits } from './components/configuration/types';
 import { QueryWithDefaults } from './defaults';
 import {
   QueryEditorFunctionExpression,
@@ -26,6 +25,12 @@ export interface SqlQueryForInterpolation {
   rawSql?: string;
   refId: string;
   hide?: boolean;
+}
+
+export interface SQLConnectionLimits {
+  maxOpenConns: number;
+  maxIdleConns: number;
+  connMaxLifetime: number;
 }
 
 export interface SQLOptions extends SQLConnectionLimits, DataSourceJsonData {
