@@ -6,8 +6,6 @@ import { MySqlDatasource } from './MySqlDatasource';
 import { ConfigurationEditor } from './configuration/ConfigurationEditor';
 import { MySQLOptions } from './types';
 
-export { MySqlDatasource, MySqlDatasource as Datasource };
-
 export const plugin = new DataSourcePlugin<MySqlDatasource, SQLQuery, MySQLOptions>(MySqlDatasource)
   .setQueryEditor(SqlQueryEditor)
   .setConfigEditor(ConfigurationEditor);
