@@ -422,7 +422,7 @@ export class Scene {
       targets = event.selected;
       this.updateSelection({ targets });
 
-      // @TODO Figure out click-drag functionality without fantom mouseup issue
+      // @TODO Figure out click-drag functionality without phantom mouseup issue
       // https://github.com/daybrush/moveable/issues/481
 
       // if (event.isDragStart) {
