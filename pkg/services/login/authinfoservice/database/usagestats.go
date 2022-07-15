@@ -14,7 +14,7 @@ type loginStats struct {
 func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (loginStats, error) {
 	var stats loginStats
 	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		rawSQL := `SELECT COUNT(*) as duplicate_user_entries FROM (` + s.duplicateUserEntriesSQL(ctx) + `)`
+		rawSQL := `SELECT COUNT(*) as duplicate_user_entries FROM (` + s.DuplicateUserEntriesSQL(ctx) + `)`
 		_, err := dbSession.SQL(rawSQL).Get(&stats)
 		return err
 	})
@@ -42,7 +42,7 @@ func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]inter
 	return m, nil
 }
 
-func (s *AuthInfoStore) duplicateUserEntriesSQL(ctx context.Context) string {
+func (s *AuthInfoStore) DuplicateUserEntriesSQL(ctx context.Context) string {
 	userDialect := db.DB.GetDialect(s.sqlStore).Quote("user")
 	// this query counts how many users have the same login or email.
 	// which might be confusing, but gives a good indication
