@@ -952,6 +952,27 @@ export class ElasticDatasource
 
     return false;
   }
+
+  modifyQuery(query: ElasticsearchQuery, action: { type: string; key: string; value: string }): ElasticsearchQuery {
+    let expression = query.query ?? '';
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        if (expression.length > 0) {
+          expression += ' AND ';
+        }
+        expression += `${action.key}:"${action.value}"`;
+        break;
+      }
+      case 'ADD_FILTER_OUT': {
+        if (expression.length > 0) {
+          expression += ' AND ';
+        }
+        expression += `-${action.key}:"${action.value}"`;
+        break;
+      }
+    }
+    return { ...query, query: expression };
+  }
 }
 
 /**
