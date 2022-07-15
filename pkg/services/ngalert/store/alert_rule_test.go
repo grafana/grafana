@@ -12,18 +12,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestUpdateAlertRules(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	store := DBstore{
-		SQLStore:     sqlStore,
-		BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
+		SQLStore: sqlStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
+		},
 	}
 	createRule := func(t *testing.T) *models.AlertRule {
 		t.Helper()
-		rule := models.AlertRuleGen(withIntervalMatching(store.BaseInterval))()
+		rule := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))()
 		err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
 			if err != nil {
