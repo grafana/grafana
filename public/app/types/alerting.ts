@@ -164,7 +164,7 @@ export interface ReceiversState {
 
 export interface ContactPointsState {
   receivers: ReceiversState[];
-  errorCount: Number;
+  errorCount: number;
 }
 
 export interface ContactPointStateDTO {

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import pluralize from 'pluralize';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
@@ -118,7 +119,18 @@ const Receivers: FC = () => {
           dataSources={alertManagers}
         />
         {integrationsErrorCount > 0 && (
-          <NotificationError>{'Some alert notifications might be not delivered'}</NotificationError>
+          <NotificationError>
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+              `}
+            >
+              <div>{`${integrationsErrorCount} ${pluralize('error', integrationsErrorCount)} with contact points`}</div>
+              <div>{'Some alert notifications might not be delivered'}</div>
+            </div>
+          </NotificationError>
         )}
       </div>
       {error && !loading && (
