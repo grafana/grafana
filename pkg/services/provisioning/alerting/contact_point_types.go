@@ -1,4 +1,4 @@
-package contactpoints
+package alerting
 
 import (
 	"encoding/json"
@@ -11,29 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
-type ContactPointFileV1 struct {
-	ContactPoints       []ContactPointV1       `json:"contactPoints" yaml:"contactPoints"`
-	DeleteContactPoints []DeleteContactPointV1 `json:"deleteContactPoints" yaml:"deleteContactPoints"`
-}
-
-func (v1 *ContactPointFileV1) MapToModel() (ContactPointFile, error) {
-	contactPointFile := ContactPointFile{}
-	contactPointFile.DeleteContactPoints = v1.DeleteContactPoints
-	for _, contactPointV1 := range v1.ContactPoints {
-		contactPoint, err := contactPointV1.mapToModel()
-		if err != nil {
-			return ContactPointFile{}, err
-		}
-		contactPointFile.ContactPoints = append(contactPointFile.ContactPoints, contactPoint)
-	}
-	return contactPointFile, nil
-}
-
-type ContactPointFile struct {
-	ContactPoints       []ContactPoint
-	DeleteContactPoints []DeleteContactPointV1
-}
-
 type DeleteContactPointV1 struct {
 	UID values.StringValue `json:"uid" yaml:"uid"`
 }
@@ -44,7 +21,7 @@ type ContactPointV1 struct {
 	Receivers []ReceiverV1       `json:"receivers" yaml:"receivers"`
 }
 
-func (cpV1 *ContactPointV1) mapToModel() (ContactPoint, error) {
+func (cpV1 *ContactPointV1) MapToModel() (ContactPoint, error) {
 	contactPoint := ContactPoint{}
 	orgID := cpV1.OrgID.Value()
 	if orgID < 1 {

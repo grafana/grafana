@@ -1,4 +1,4 @@
-package rules
+package alerting
 
 import (
 	"context"
@@ -9,14 +9,14 @@ import (
 )
 
 const (
-	testFileBrokenYAML               = "./testdata/broken-yaml"
-	testFileCorrectProperties        = "./testdata/correct-properties"
-	testFileCorrectPropertiesWithOrg = "./testdata/correct-properties-with-org"
-	testFileEmptyFile                = "./testdata/empty-file"
-	testFileEmptyFolder              = "./testdata/empty-folder"
-	testFileMultipleRules            = "./testdata/multiple-rules"
-	testFileMultipleFiles            = "./testdata/multiple-files"
-	testFileSupportedFiletypes       = "./testdata/supported-filetypes"
+	testFileBrokenYAML               = "./testdata/common/broken-yaml"
+	testFileEmptyFile                = "./testdata/common/empty-file"
+	testFileEmptyFolder              = "./testdata/common/empty-folder"
+	testFileSupportedFiletypes       = "./testdata/common/supported-filetypes"
+	testFileCorrectProperties        = "./testdata/alert_rules/correct-properties"
+	testFileCorrectPropertiesWithOrg = "./testdata/alert_rules/correct-properties-with-org"
+	testFileMultipleRules            = "./testdata/alert_rules/multiple-rules"
+	testFileMultipleFiles            = "./testdata/alert_rules/multiple-files"
 )
 
 func TestConfigReader(t *testing.T) {

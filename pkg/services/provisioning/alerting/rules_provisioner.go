@@ -1,4 +1,4 @@
-package rules
+package alerting
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 )
 
 type AlertRuleProvisioner interface {
-	Provision(ctx context.Context, path string) error
+	Provision(ctx context.Context, files []*AlertingFile) error
 }
 
 func NewAlertRuleProvisioner(
@@ -24,7 +24,6 @@ func NewAlertRuleProvisioner(
 	ruleService provisioning.AlertRuleService) AlertRuleProvisioner {
 	return &defaultAlertRuleProvisioner{
 		logger:               logger,
-		cfgReader:            newRulesConfigReader(logger),
 		dashboardService:     dashboardService,
 		dashboardProvService: dashboardProvService,
 		ruleService:          ruleService,
@@ -33,47 +32,14 @@ func NewAlertRuleProvisioner(
 
 type defaultAlertRuleProvisioner struct {
 	logger               log.Logger
-	cfgReader            rulesConfigReader
 	dashboardService     dashboards.DashboardService
 	dashboardProvService dashboards.DashboardProvisioningService
 	ruleService          provisioning.AlertRuleService
 }
 
-func Provision(
-	ctx context.Context,
-	path string,
-	dashboardService dashboards.DashboardService,
-	dashboardProvisioningService dashboards.DashboardProvisioningService,
-	ruleService provisioning.AlertRuleService,
-) error {
-	ruleProvisioner := NewAlertRuleProvisioner(
-		log.New("provisioning.alerting"),
-		dashboardService,
-		dashboardProvisioningService,
-		ruleService,
-	)
-	return ruleProvisioner.Provision(ctx, path)
-}
-
 func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
-	path string) error {
-	prov.logger.Info("starting to provision the alert rules")
-	ruleFiles, err := prov.cfgReader.readConfig(ctx, path)
-	if err != nil {
-		return fmt.Errorf("failed to read alert rules files: %w", err)
-	}
-	prov.logger.Debug("read all alert rules files", "file_count", len(ruleFiles))
-	err = prov.provsionRuleFiles(ctx, ruleFiles)
-	if err != nil {
-		return fmt.Errorf("failed to provision alert rules: %w", err)
-	}
-	prov.logger.Info("finished to provision the alert rules")
-	return nil
-}
-
-func (prov *defaultAlertRuleProvisioner) provsionRuleFiles(ctx context.Context,
-	ruleFiles []*RuleFile) error {
-	for _, file := range ruleFiles {
+	files []*AlertingFile) error {
+	for _, file := range files {
 		for _, group := range file.Groups {
 			folderUID, err := prov.getOrCreateFolderUID(ctx, group.Folder, group.OrgID)
 			if err != nil {
