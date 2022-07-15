@@ -182,12 +182,12 @@ func getOrgId(user *models.SignedInUser) int64 {
 }
 
 func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error) {
-	guardian := s.authService.newGuardian(ctx, user, path)
+	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
 	return s.tree.ListFolder(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error) {
-	guardian := s.authService.newGuardian(ctx, user, path)
+	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
 	if !guardian.canView(path) {
 		return nil, ErrAccessDenied
 	}
