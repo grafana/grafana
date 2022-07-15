@@ -8,14 +8,14 @@ import (
 
 func TestUpsertMultiple(t *testing.T) {
 	tests := []struct {
-		name          string
-		keyCols       []string
-		updateCols    []string
-		count         int
-		expectedErr   bool
+		name                  string
+		keyCols               []string
+		updateCols            []string
+		count                 int
+		expectedErr           bool
 		expectedPostgresQuery string
-		expectedMySQLQuery string
-		expectedSQLiteQuery string
+		expectedMySQLQuery    string
+		expectedSQLiteQuery   string
 	}{
 		{
 			"upsert one",
@@ -24,7 +24,7 @@ func TestUpsertMultiple(t *testing.T) {
 			1,
 			false,
 			"INSERT INTO test_table (\"key1\", \"key2\", \"val1\", \"val2\") VALUES (?, ?, ?, ?) ON CONFLICT(\"key1\", \"key2\") DO UPDATE SET \"key1\"=excluded.\"key1\", \"key2\"=excluded.\"key2\", \"val1\"=excluded.\"val1\", \"val2\"=excluded.\"val2\"",
- "INSERT INTO test_table (`key1`, `key2`, `val1`, `val2`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `key1`=VALUES(`key1`), `key2`=VALUES(`key2`), `val1`=VALUES(`val1`), `val2`=VALUES(`val2`)",
+			"INSERT INTO test_table (`key1`, `key2`, `val1`, `val2`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `key1`=VALUES(`key1`), `key2`=VALUES(`key2`), `val1`=VALUES(`val1`), `val2`=VALUES(`val2`)",
 			"INSERT INTO test_table (`key1`, `key2`, `val1`, `val2`) VALUES (?, ?, ?, ?) ON CONFLICT(`key1`, `key2`) DO UPDATE SET `key1`=excluded.`key1`, `key2`=excluded.`key2`, `val1`=excluded.`val1`, `val2`=excluded.`val2`",
 		},
 		{
@@ -34,7 +34,7 @@ func TestUpsertMultiple(t *testing.T) {
 			2,
 			false,
 			"INSERT INTO test_table (\"key1\", \"key2\", \"val1\", \"val2\") VALUES (?, ?, ?, ?), (?, ?, ?, ?) ON CONFLICT(\"key1\", \"key2\") DO UPDATE SET \"key1\"=excluded.\"key1\", \"key2\"=excluded.\"key2\", \"val1\"=excluded.\"val1\", \"val2\"=excluded.\"val2\"",
- "INSERT INTO test_table (`key1`, `key2`, `val1`, `val2`) VALUES (?, ?, ?, ?), (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `key1`=VALUES(`key1`), `key2`=VALUES(`key2`), `val1`=VALUES(`val1`), `val2`=VALUES(`val2`)",
+			"INSERT INTO test_table (`key1`, `key2`, `val1`, `val2`) VALUES (?, ?, ?, ?), (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `key1`=VALUES(`key1`), `key2`=VALUES(`key2`), `val1`=VALUES(`val1`), `val2`=VALUES(`val2`)",
 			"INSERT INTO test_table (`key1`, `key2`, `val1`, `val2`) VALUES (?, ?, ?, ?), (?, ?, ?, ?) ON CONFLICT(`key1`, `key2`) DO UPDATE SET `key1`=excluded.`key1`, `key2`=excluded.`key2`, `val1`=excluded.`val1`, `val2`=excluded.`val2`",
 		},
 		{
