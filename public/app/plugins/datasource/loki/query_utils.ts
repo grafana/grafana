@@ -50,14 +50,20 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
       const unwrappedFilterTerm = term[1];
       const regexOperator = filterOperator === '|~';
 
+      let resultTerm = '';
+
       // Only filter expressions with |~ operator are treated as regular expressions
       if (regexOperator) {
         // When using backticks, Loki doesn't require to escape special characters and we can just push regular expression to highlights array
         // When using quotes, we have extra backslash escaping and we need to replace \\ with \
-        results.push(backtickedTerm ? unwrappedFilterTerm : unwrappedFilterTerm.replace(/\\\\/g, '\\'));
+        resultTerm = backtickedTerm ? unwrappedFilterTerm : unwrappedFilterTerm.replace(/\\\\/g, '\\');
       } else {
         // We need to escape this string so it is not matched as regular expression
-        results.push(escapeRegExp(unwrappedFilterTerm));
+        resultTerm = escapeRegExp(unwrappedFilterTerm);
+      }
+
+      if (resultTerm) {
+        results.push(resultTerm);
       }
     } else {
       return results;
