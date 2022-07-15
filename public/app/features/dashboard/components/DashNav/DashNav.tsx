@@ -161,7 +161,7 @@ export const DashNav = React.memo<Props>((props) => {
         <ModalsController key="button-dashboard-comments">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip={t({ id: 'dashboard.toolbar.comments', message: 'Show dashboard comments' })}
+              tooltip={t({ id: 'dashboard.toolbar.comments-show', message: 'Show dashboard comments' })}
               icon="comment-alt-message"
               iconSize="lg"
               onClick={() => {

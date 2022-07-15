@@ -138,8 +138,7 @@ export function intervalsToOptions({
   intervals = defaultIntervals,
   offOption = RefreshPicker.offOption,
 }: { intervals?: string[]; offOption?: SelectableValue<string> } = {}): Array<SelectableValue<string>> {
-  const intervalsOrDefault = intervals || defaultIntervals;
-  const options: Array<SelectableValue<string>> = intervalsOrDefault.map((interval) => {
+  const options: Array<SelectableValue<string>> = intervals.map((interval) => {
     const duration = parseDuration(interval);
     const ariaLabel = formatDuration(duration);
 
