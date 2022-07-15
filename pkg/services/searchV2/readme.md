@@ -14,8 +14,8 @@ On Grafana start we check whether search index backup exists.
 Backup directory is configurable, inside backup directory structure looks like this:
 
 ```
-gf_index
-├── event_id.txt
+gf_index_backup
+├── meta.json
 ├── org_1
 │   └── dashboard
 │       ├── 0000000004a7.seg
@@ -25,8 +25,28 @@ gf_index
 └── org_2
 ```
 
-`event_id.txt` contains the last event ID applied to the index version in the backup. Since we make backups periodically we may need to apply some missing updates from `entity_event` table to catch up the state. 
+or
+
+```
+gf_index_backup
+├── dashboard
+|   ├-- meta.json
+│   ├── org1
+│   │   ├── 0000000004a7.seg
+│   │   ├── 0000000004a8.seg
+│   │   ├── 0000000004a9.seg
+│   │   └── 000000000893.snp
+│   └── org2
+```
+
+Think that second option is better since it allows making isolated indexes, each consuming entity events separately.
+
+`meta.json` contains:
+
+* the last event ID applied to the index version in the backup. Since we make backups periodically we may need to apply some missing updates from `entity_event` table to catch up the state. 
 
 At this moment we still need to re-index periodically since not all changes come to `entity_event` table. Though we may try to apply some checks to avoid full-reindexing if we know that database state match state in index (i.e. no updates were missed).
 
 We can also save/load backup to remote storage, but need to preserve the structure.
+
+Also, in HA scenario we can theoretically only have one node that does re-indexing, then share backup to all nodes.
