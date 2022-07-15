@@ -405,24 +405,15 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
 			// therefore, at the time when message from updateCh is processed the current rule will have
 			// at least the same version (or greater) and the state created for the new version of the rule.
-			if currentRule != nil && int64(version) <= currentRule.Version {
+			if currentRule == nil {
+				continue
+			}
+			if currentRule.Version >= int64(version) {
 				logger.Info("skip updating rule because its current version is actual", "current_version", currentRule.Version, "new_version", version)
 				continue
 			}
-			logger.Info("fetching new version of the rule")
-			err := retryIfError(func(attempt int64) error {
-				newRule, newExtraLabels, err := updateRule(grafanaCtx, currentRule)
-				if err != nil {
-					return err
-				}
-				logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
-				currentRule = newRule
-				extraLabels = newExtraLabels
-				return nil
-			})
-			if err != nil {
-				logger.Error("updating rule failed after all retries", "err", err)
-			}
+			logger.Info("clearing the state of the rule because version has changed", "current_version", currentRule.Version, "new_version", version)
+			clearState()
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
