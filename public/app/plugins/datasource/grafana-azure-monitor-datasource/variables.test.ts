@@ -564,7 +564,7 @@ describe('VariableSupport', () => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
-          getMetricDefinitions: jest.fn().mockResolvedValueOnce(expectedResults),
+          getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
         })
       );
       const mockRequest = {

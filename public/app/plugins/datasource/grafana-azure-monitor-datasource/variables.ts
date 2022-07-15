@@ -45,7 +45,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             }
           case AzureQueryType.NamespacesQuery:
             if (queryObj.subscription) {
-              const rgs = await this.datasource.getMetricDefinitions(queryObj.subscription, queryObj.resourceGroup);
+              const rgs = await this.datasource.getMetricNamespaces(queryObj.subscription, queryObj.resourceGroup);
               return {
                 data: rgs?.length ? [toDataFrame(rgs)] : [],
               };

@@ -32,7 +32,7 @@ const defaultProps = {
   datasource: createMockDatasource({
     getSubscriptions: jest.fn().mockResolvedValue([{ text: 'Primary Subscription', value: 'sub' }]),
     getResourceGroups: jest.fn().mockResolvedValue([{ text: 'rg', value: 'rg' }]),
-    getMetricDefinitions: jest.fn().mockResolvedValue([{ text: 'foo/bar', value: 'foo/bar' }]),
+    getMetricNamespaces: jest.fn().mockResolvedValue([{ text: 'foo/bar', value: 'foo/bar' }]),
     getVariablesRaw: jest.fn().mockReturnValue([
       { label: 'query0', name: 'sub0' },
       { label: 'query1', name: 'rg', query: { queryType: AzureQueryType.ResourceGroupsQuery } },

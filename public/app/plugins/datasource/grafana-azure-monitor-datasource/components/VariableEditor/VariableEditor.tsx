@@ -105,7 +105,7 @@ const VariableEditor = (props: Props) => {
   const resourceGroup = (typeof query === 'object' && query.resourceGroup) || '';
   useEffect(() => {
     if (subscription) {
-      datasource.getMetricDefinitions(subscription, resourceGroup).then((rgs) => {
+      datasource.getMetricNamespaces(subscription, resourceGroup).then((rgs) => {
         setNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
       });
     }

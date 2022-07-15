@@ -152,13 +152,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  getMetricDefinitions(subscriptionId: string, resourceGroup?: string) {
-    let url = `${this.resourcePath}/subscriptions/${subscriptionId}`;
-    if (resourceGroup) {
-      url += `/resourceGroups/${resourceGroup}`;
-    }
-    url += `/resources?api-version=${this.listByResourceGroupApiVersion}`;
-    return this.getResource(url)
+  getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
+    return this.getResource(
+      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.listByResourceGroupApiVersion}`
+    )
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
@@ -258,7 +255,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     );
     return this.getResource(url)
       .then((result: AzureMonitorMetricNamespacesResponse) => {
-        return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
+        return ResponseParser.parseResponseValues(
+          result,
+          'properties.metricNamespaceName',
+          'properties.metricNamespaceName'
+        );
       })
       .then((result) => {
         if (url.includes('Microsoft.Storage/storageAccounts')) {
