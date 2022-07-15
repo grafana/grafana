@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -28,7 +29,7 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-type Scheduler interface {
+type ExternalAlertmanagerProvider interface {
 	AlertmanagersFor(orgID int64) []*url.URL
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 }
@@ -81,6 +82,7 @@ type API struct {
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
 	AlertRules           *provisioning.AlertRuleService
+	AlertsRouter         *sender.AlertsRouter
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -128,9 +130,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
 		&AdminSrv{
-			store:     api.AdminConfigStore,
-			log:       logger,
-			scheduler: api.Schedule,
+			store:                api.AdminConfigStore,
+			log:                  logger,
+			alertmanagerProvider: api.AlertsRouter,
 		},
 	), m)
 

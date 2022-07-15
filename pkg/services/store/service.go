@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
+	"os"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,15 +20,23 @@ import (
 var grafanaStorageLogger = log.New("grafanaStorageLogger")
 
 var ErrUploadFeatureDisabled = errors.New("upload feature is disabled")
-var ErrUnsupportedStorage = errors.New("storage does not support upload operation")
+var ErrUnsupportedStorage = errors.New("storage does not support this operation")
 var ErrUploadInternalError = errors.New("upload internal error")
 var ErrValidationFailed = errors.New("request validation failed")
 var ErrFileAlreadyExists = errors.New("file exists")
 
 const RootPublicStatic = "public-static"
-const RootResources = "resources"
 
-const MAX_UPLOAD_SIZE = 3 * 1024 * 1024 // 3MB
+const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
+
+type DeleteFolderCmd struct {
+	Path  string `json:"path"`
+	Force bool   `json:"force"`
+}
+
+type CreateFolderCmd struct {
+	Path string `json:"path"`
+}
 
 type StorageService interface {
 	registry.BackgroundService
@@ -41,6 +50,10 @@ type StorageService interface {
 	Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error
 
 	Delete(ctx context.Context, user *models.SignedInUser, path string) error
+
+	DeleteFolder(ctx context.Context, user *models.SignedInUser, cmd *DeleteFolderCmd) error
+
+	CreateFolder(ctx context.Context, user *models.SignedInUser, cmd *CreateFolderCmd) error
 
 	validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) validationResult
 
@@ -72,11 +85,26 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			setDescription("Access files from the static public files"),
 	}
 
+	// Development dashboards
+	if setting.Env != setting.Prod {
+		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
+		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
+			// path/to/whatever exists
+			s := newDiskStorage("devenv", "Development Environment", &StorageLocalDiskConfig{
+				Path: devenv,
+				Roots: []string{
+					"/dev-dashboards/",
+				},
+			}).setReadOnly(false).setDescription("Explore files within the developer environment directly")
+			globalRoots = append(globalRoots, s)
+		}
+	}
+
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0)
 		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
 			storages = append(storages,
-				newSQLStorage(RootResources,
+				newSQLStorage("resources",
 					"Resources",
 					&StorageSQLConfig{orgId: orgId}, sql).
 					setBuiltin(true).
@@ -86,15 +114,10 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		return storages
 	}
 
-	s := newStandardStorageService(globalRoots, initializeOrgStorages)
-	s.sql = sql
-	s.cfg = storageServiceConfig{
-		allowUnsanitizedSvgUpload: false,
-	}
-	return s
+	return newStandardStorageService(sql, globalRoots, initializeOrgStorages)
 }
 
-func newStandardStorageService(globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime) *standardStorageService {
+func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime) *standardStorageService {
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
 
@@ -104,7 +127,11 @@ func newStandardStorageService(globalRoots []storageRuntime, initializeOrgStorag
 	}
 	res.init()
 	return &standardStorageService{
+		sql:  sql,
 		tree: res,
+		cfg: storageServiceConfig{
+			allowUnsanitizedSvgUpload: false,
+		},
 	}
 }
 
@@ -144,16 +171,15 @@ type UploadRequest struct {
 }
 
 func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error {
-	upload, _ := s.tree.getRoot(getOrgId(user), RootResources)
+	upload, storagePath := s.tree.getRoot(getOrgId(user), req.Path)
 	if upload == nil {
 		return ErrUploadFeatureDisabled
 	}
 
-	if !strings.HasPrefix(req.Path, RootResources+"/") {
+	if upload.Meta().ReadOnly {
 		return ErrUnsupportedStorage
 	}
 
-	storagePath := strings.TrimPrefix(req.Path, RootResources)
 	validationResult := s.validateUploadRequest(ctx, user, req, storagePath)
 	if !validationResult.ok {
 		grafanaStorageLogger.Warn("file upload validation failed", "filetype", req.MimeType, "path", req.Path, "reason", validationResult.reason)
@@ -169,7 +195,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 	grafanaStorageLogger.Info("uploading a file", "filetype", req.MimeType, "path", req.Path)
 
 	if !req.OverwriteExistingFile {
-		file, err := upload.Get(ctx, storagePath)
+		file, err := upload.Store().Get(ctx, storagePath)
 		if err != nil {
 			grafanaStorageLogger.Error("failed while checking file existence", "err", err, "path", req.Path)
 			return ErrUploadInternalError
@@ -180,7 +206,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		}
 	}
 
-	if err := upload.Upsert(ctx, upsertCommand); err != nil {
+	if err := upload.Store().Upsert(ctx, upsertCommand); err != nil {
 		grafanaStorageLogger.Error("failed while uploading the file", "err", err, "path", req.Path)
 		return ErrUploadInternalError
 	}
@@ -188,12 +214,50 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 	return nil
 }
 
-func (s *standardStorageService) Delete(ctx context.Context, user *models.SignedInUser, path string) error {
-	upload, _ := s.tree.getRoot(getOrgId(user), RootResources)
-	if upload == nil {
-		return fmt.Errorf("upload feature is not enabled")
+func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.SignedInUser, cmd *DeleteFolderCmd) error {
+	root, storagePath := s.tree.getRoot(getOrgId(user), cmd.Path)
+	if root == nil {
+		return fmt.Errorf("resources storage is not enabled")
 	}
-	err := upload.Delete(ctx, path)
+
+	if root.Meta().ReadOnly {
+		return ErrUnsupportedStorage
+	}
+
+	if storagePath == "" {
+		storagePath = filestorage.Delimiter
+	}
+	return root.Store().DeleteFolder(ctx, storagePath, &filestorage.DeleteFolderOptions{Force: true})
+}
+
+func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.SignedInUser, cmd *CreateFolderCmd) error {
+	root, storagePath := s.tree.getRoot(getOrgId(user), cmd.Path)
+	if root == nil {
+		return fmt.Errorf("resources storage is not enabled")
+	}
+
+	if root.Meta().ReadOnly {
+		return ErrUnsupportedStorage
+	}
+
+	err := root.Store().CreateFolder(ctx, storagePath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *standardStorageService) Delete(ctx context.Context, user *models.SignedInUser, path string) error {
+	root, storagePath := s.tree.getRoot(getOrgId(user), path)
+	if root == nil {
+		return fmt.Errorf("resources storage is not enabled")
+	}
+
+	if root.Meta().ReadOnly {
+		return ErrUnsupportedStorage
+	}
+
+	err := root.Store().Delete(ctx, storagePath)
 	if err != nil {
 		return err
 	}
