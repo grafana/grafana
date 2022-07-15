@@ -131,21 +131,13 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 		}
 
 		// Publish data source deletion event
-		if ds != nil {
+		if cmd.DeletedDatasourcesCount > 0 {
 			sess.publishAfterCommit(&events.DataSourceDeleted{
 				Timestamp: time.Now(),
 				Name:      ds.Name,
 				ID:        ds.Id,
 				UID:       ds.Uid,
 				OrgID:     ds.OrgId,
-			})
-		} else {
-			sess.publishAfterCommit(&events.DataSourceDeleted{
-				Timestamp: time.Now(),
-				Name:      cmd.Name,
-				ID:        cmd.ID,
-				UID:       cmd.UID,
-				OrgID:     cmd.OrgID,
 			})
 		}
 
