@@ -50,8 +50,9 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 
 			getQuery := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: 1}
 			p, err := playlistStore.Get(context.Background(), &getQuery)
-			require.NoError(t, err)
+			require.Error(t, err)
 			require.Equal(t, uid, p.UID, "playlist should've been removed")
+			require.ErrorIs(t, err, playlist.ErrPlaylistNotFound)
 		})
 	})
 
