@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { locationUtil, textUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
+import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate, Tag } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import config from 'app/core/config';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
@@ -153,6 +153,10 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
+    if (dashboard.meta.hasPublicDashboard) {
+      buttons.push(<Tag name="Public" colorIndex={5}></Tag>);
+    }
+
     if (dashboard.uid && config.featureToggles.dashboardComments) {
       buttons.push(
         <ModalsController key="button-dashboard-comments">
@@ -284,6 +288,7 @@ export const DashNav = React.memo<Props>((props) => {
     );
   }
 
+  console.log(props.dashboard);
   return (
     <PageToolbar
       pageIcon={isFullscreen ? undefined : 'apps'}
