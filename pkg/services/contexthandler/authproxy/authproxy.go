@@ -247,6 +247,11 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
 		ReqContext:    auth.ctx,
 		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
+		UserLookupParams: models.UserLookupParams{
+			Login:  &extUser.Login,
+			Email:  &extUser.Email,
+			UserID: nil,
+		},
 	}
 	if err := bus.Dispatch(upsert); err != nil {
 		return 0, err
@@ -303,6 +308,11 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		ReqContext:    auth.ctx,
 		SignupAllowed: auth.cfg.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
+		UserLookupParams: models.UserLookupParams{
+			UserID: nil,
+			Login:  &extUser.Login,
+			Email:  &extUser.Email,
+		},
 	}
 
 	err := bus.Dispatch(upsert)

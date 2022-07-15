@@ -85,11 +85,12 @@ func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (boo
 			}
 
 			// if user id was specified and doesn't match the user_auth entry, remove it
-			if query.UserId != 0 && query.UserId != authQuery.Result.UserId {
-				err := s.DeleteAuthInfo(&models.DeleteAuthInfoCommand{
+			if query.UserLookupParams.UserID != nil &&
+				*query.UserLookupParams.UserID != 0 &&
+				*query.UserLookupParams.UserID != authQuery.Result.UserId {
+				if err := s.DeleteAuthInfo(&models.DeleteAuthInfoCommand{
 					UserAuth: authQuery.Result,
-				})
-				if err != nil {
+				}); err != nil {
 					s.logger.Error("Error removing user_auth entry", "error", err)
 				}
 
@@ -120,42 +121,42 @@ func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (boo
 	return false, nil, nil, models.ErrUserNotFound
 }
 
-func (s *Implementation) LookupByOneOf(userId int64, email string, login string) (bool, *models.User, error) {
-	foundUser := false
+func (s *Implementation) LookupByOneOf(params *models.UserLookupParams) (*models.User, error) {
 	var user *models.User
 	var err error
+	foundUser := false
 
 	// If not found, try to find the user by id
-	if userId != 0 {
-		foundUser, user, err = s.getUserById(userId)
+	if params.UserID != nil && *params.UserID != 0 {
+		foundUser, user, err = s.getUserById(*params.UserID)
 		if err != nil {
-			return false, nil, err
+			return nil, err
 		}
 	}
 
 	// If not found, try to find the user by email address
-	if !foundUser && email != "" {
-		user = &models.User{Email: email}
+	if !foundUser && params.Email != nil && *params.Email != "" {
+		user = &models.User{Email: *params.Email}
 		foundUser, err = s.getUser(user)
 		if err != nil {
-			return false, nil, err
+			return nil, err
 		}
 	}
 
 	// If not found, try to find the user by login
-	if !foundUser && login != "" {
-		user = &models.User{Login: login}
+	if !foundUser && params.Login != nil && *params.Login != "" {
+		user = &models.User{Login: *params.Login}
 		foundUser, err = s.getUser(user)
 		if err != nil {
-			return false, nil, err
+			return nil, err
 		}
 	}
 
 	if !foundUser {
-		return false, nil, models.ErrUserNotFound
+		return nil, models.ErrUserNotFound
 	}
 
-	return foundUser, user, nil
+	return user, nil
 }
 
 func (s *Implementation) GenericOAuthLookup(authModule string, authId string, userID int64) (*models.UserAuth, error) {
@@ -184,7 +185,7 @@ func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (
 
 	// 2. FindByUserDetails
 	if !foundUser {
-		_, user, err = s.LookupByOneOf(query.UserId, query.Email, query.Login)
+		user, err = s.LookupByOneOf(&query.UserLookupParams)
 		if err != nil {
 			return nil, err
 		}
