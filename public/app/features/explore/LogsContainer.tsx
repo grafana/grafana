@@ -47,8 +47,12 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextSupport(datasourceInstance)) {
-      const query = (logsQueries ?? []).find((q) => q.refId === row.dataFrame.refId);
-      return datasourceInstance.getLogRowContext(row, { ...options, query });
+      // we need to find the query, and we need to be very sure that
+      // it's a query from this datasource
+      const query = (logsQueries ?? []).find(
+        (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasourceInstance.type
+      );
+      return datasourceInstance.getLogRowContext(row, options, query);
     }
 
     return [];

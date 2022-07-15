@@ -89,7 +89,7 @@ const displayCustomError = (title: string, message: string) =>
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport
+  implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
 {
   proxyUrl: any;
   defaultRegion: any;
@@ -488,7 +488,8 @@ export class CloudWatchDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    { limit = 10, direction = 'BACKWARD', query }: CloudWatchRowContextOptions = {}
+    { limit = 10, direction = 'BACKWARD' }: CloudWatchRowContextOptions = {},
+    query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
     let logStreamField = null;
     let logField = null;
