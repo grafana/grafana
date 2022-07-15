@@ -12,9 +12,6 @@ import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlComple
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
-  // This enables default annotation support for 7.2+
-  annotations = {};
-
   responseParser: MySqlResponseParser;
   completionProvider: LanguageCompletionProvider | undefined;
 
@@ -85,6 +82,9 @@ export class MySqlDatasource extends SqlDatasource {
         return tables.map((t) => ({ name: t, completion: t, kind: CompletionItemKind.Class }));
       } else if (parts.length === 1 && defaultDB) {
         const fields = await this.fetchFields({ dataset: defaultDB, table: parts[0] });
+        return fields.map((t) => ({ name: t.value, completion: t.value, kind: CompletionItemKind.Field }));
+      } else if (parts.length === 2 && !defaultDB) {
+        const fields = await this.fetchFields({ dataset: parts[0], table: parts[1] });
         return fields.map((t) => ({ name: t.value, completion: t.value, kind: CompletionItemKind.Field }));
       } else {
         return [];

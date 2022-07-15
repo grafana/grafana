@@ -111,7 +111,11 @@ export const customSuggestionKinds: (
       id: 'metaAfterSelect',
       applyTo: [StatementPosition.AfterSelectKeyword],
       suggestionsResolver: async (ctx) => {
-        const path = ctx.currentToken?.value || '';
+        let path = ctx.currentToken?.value || '';
+        const fromValue = keywordValue(ctx.currentToken, Keyword.From);
+        if (fromValue) {
+          path = fromValue;
+        }
         const t = await fetchMeta.current(path);
         return t.map((meta) => {
           const completion = meta.kind === CompletionItemKind.Class ? `${meta.completion}.` : meta.completion;
@@ -171,6 +175,30 @@ function isAfterWhere(token: LinkedToken | null) {
 
 function isAfter(token: LinkedToken | null, keyword: string) {
   return token?.is(TokenType.Whitespace) && token?.previous?.is(TokenType.Keyword, keyword);
+}
+
+function keywordValue(token: LinkedToken | null, keyword: Keyword) {
+  let next = token;
+  while (next) {
+    if (next.is(TokenType.Keyword, keyword)) {
+      return tokenValue(next);
+    }
+    next = next.next;
+  }
+  return false;
+}
+
+function tokenValue(token: LinkedToken | null): string | undefined {
+  const ws = token?.next;
+  if (ws?.isWhiteSpace()) {
+    const v = ws.next;
+    const delim = v?.next;
+    if (!delim?.is(TokenType.Delimiter)) {
+      return v?.value;
+    }
+    return `${v?.value}${delim?.value}${delim.next?.value}`;
+  }
+  return undefined;
 }
 
 export async function fetchColumns(db: DB, q: SQLQuery) {
