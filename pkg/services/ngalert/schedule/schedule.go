@@ -243,13 +243,12 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				key      ngmodels.AlertRuleKey
 				ruleName string
 				ruleInfo *alertRuleInfo
-				version  int64
+				rule     *ngmodels.AlertRule
 			}
 
 			readyToRun := make([]readyToRunItem, 0)
 			for _, item := range alertRules {
 				key := item.GetKey()
-				itemVersion := item.Version
 				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
 
 				// enforce minimum evaluation interval
@@ -275,7 +274,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleName: item.Title, ruleInfo: ruleInfo, version: itemVersion})
+					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleName: item.Title, ruleInfo: ruleInfo, rule: item})
 				}
 
 				// remove the alert rule from the registered alert rules
@@ -291,7 +290,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					success, dropped := item.ruleInfo.eval(tick, item.version)
+					success, dropped := item.ruleInfo.eval(tick, item.rule)
 					if !success {
 						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
 						return
