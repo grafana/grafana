@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"net/http"
 	"testing"
 
@@ -30,12 +31,25 @@ func TestProvisioningApi(t *testing.T) {
 		rc := createTestRequestCtx()
 		tree := apimodels.Route{}
 
-		response := sut.RoutePostPolicyTree(&rc, tree)
+		response := sut.RoutePutPolicyTree(&rc, tree)
 
 		require.Equal(t, 202, response.Status())
 	})
 
-	// TODO: we have not lifted out validation yet. Test that we are returning errors properly once validation has been lifted.
+	t.Run("when new policy tree is invalid", func(t *testing.T) {
+		t.Run("POST policies returns 400", func(t *testing.T) {
+			sut := createProvisioningSrvSut()
+			sut.policies = &fakeRejectingNotificationPolicyService{}
+			rc := createTestRequestCtx()
+			tree := apimodels.Route{}
+
+			response := sut.RoutePutPolicyTree(&rc, tree)
+
+			require.Equal(t, 400, response.Status())
+			expBody := `{"error":"invalid object specification: invalid policy tree","message":"invalid object specification: invalid policy tree"}`
+			require.Equal(t, expBody, string(response.Body()))
+		})
+	})
 
 	t.Run("when org has no AM config", func(t *testing.T) {
 		t.Run("GET policies returns 404", func(t *testing.T) {
@@ -78,7 +92,7 @@ func TestProvisioningApi(t *testing.T) {
 			rc := createTestRequestCtx()
 			tree := apimodels.Route{}
 
-			response := sut.RoutePostPolicyTree(&rc, tree)
+			response := sut.RoutePutPolicyTree(&rc, tree)
 
 			require.Equal(t, 500, response.Status())
 			require.NotEmpty(t, response.Body())
@@ -137,6 +151,11 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	return nil
 }
 
+func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
+	f.tree = apimodels.Route{} // TODO
+	return f.tree, nil
+}
+
 type fakeFailingNotificationPolicyService struct{}
 
 func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
@@ -145,4 +164,22 @@ func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context
 
 func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
 	return fmt.Errorf("something went wrong")
+}
+
+func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
+	return apimodels.Route{}, fmt.Errorf("something went wrong")
+}
+
+type fakeRejectingNotificationPolicyService struct{}
+
+func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
+	return apimodels.Route{}, nil
+}
+
+func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
+	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
+}
+
+func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
+	return apimodels.Route{}, nil
 }

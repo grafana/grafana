@@ -26,13 +26,13 @@ const (
 	alertmanagerDefaultConfiguration = `{
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email"
+			"receiver": "default-email"
 		},
 		"receivers": [{
-			"name": "grafana-default-email",
+			"name": "default-email",
 			"grafana_managed_receiver_configs": [{
 				"uid": "",
-				"name": "grafana-default-email",
+				"name": "default-email",
 				"type": "email",
 				"isDefault": true,
 				"settings": {

@@ -181,18 +181,20 @@ func (api *API) authorize(method, path string) web.Handler {
 		return middleware.ReqOrgAdmin
 
 	// Grafana-only Provisioning Read Paths
-	case http.MethodGet + "/api/provisioning/policies",
+	case http.MethodGet + "/api/v1/provisioning/policies",
 		http.MethodGet + "/api/v1/provisioning/contact-points",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}":
 		return middleware.ReqSignedIn
 
-	case http.MethodPost + "/api/provisioning/policies",
+	case http.MethodPost + "/api/v1/provisioning/policies",
 		http.MethodPost + "/api/v1/provisioning/contact-points",
 		http.MethodPut + "/api/v1/provisioning/contact-points/{UID}",
 		http.MethodDelete + "/api/v1/provisioning/contact-points/{ID}",
 		http.MethodPost + "/api/v1/provisioning/alert-rules",
 		http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
+		http.MethodDelete + "/api/v1/provisioning/policies",
+		http.MethodPut + "/api/v1/provisioning/policies",
 		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		return middleware.ReqEditorRole
 
