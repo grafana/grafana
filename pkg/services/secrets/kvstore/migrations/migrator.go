@@ -28,14 +28,15 @@ func ProvideSecretMigrationService(
 	dataSourceSecretMigrationService *datasources.DataSourceSecretMigrationService,
 	pluginSecretMigrationService *kvstore.PluginSecretMigrationService,
 ) *SecretMigrationServiceImpl {
+
+	services := make([]SecretMigrationService, 0)
+	services = append(services, dataSourceSecretMigrationService)
+	// pluginMigrationService should always be the last one
+	services = append(services, pluginSecretMigrationService)
+
 	return &SecretMigrationServiceImpl{
 		ServerLockService: serverLockService,
-		Services: []SecretMigrationService{
-			dataSourceSecretMigrationService,
-			// migration from unified secrets to plugin secrets, if enabled.
-			// pluginMigrationService should always be the last one
-			pluginSecretMigrationService,
-		},
+		Services:          services,
 	}
 }
 
