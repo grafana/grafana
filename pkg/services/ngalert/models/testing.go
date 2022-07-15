@@ -185,7 +185,15 @@ func GenerateAlertRules(count int, f func() *AlertRule) []*AlertRule {
 	return result
 }
 
-// GenerateGroupKey generates many random alert rules. Does not guarantee that rules are unique (by UID)
+// GenerateRuleKey generates random alert rule key
+func GenerateRuleKey(orgID int64) AlertRuleKey {
+	return AlertRuleKey{
+		OrgID: orgID,
+		UID:   util.GenerateShortUID(),
+	}
+}
+
+// GenerateGroupKey generates random group key
 func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
 	return AlertRuleGroupKey{
 		OrgID:        orgID,
