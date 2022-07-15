@@ -631,5 +631,28 @@ describe('VariableSupport', () => {
         done();
       });
     });
+
+    it('can fetch workspaces', (done) => {
+      const expectedResults = ['test'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce(expectedResults),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.WorkspacesQuery,
+            subscription: 'sub',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(expectedResults);
+        done();
+      });
+    });
   });
 });

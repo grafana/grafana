@@ -11,6 +11,7 @@ export enum AzureQueryType {
   NamespacesQuery = 'Azure Namespaces',
   ResourceNamesQuery = 'Azure Resource Names',
   MetricNamesQuery = 'Azure Metric Names',
+  WorkspacesQuery = 'Azure Workspaces',
   /** Deprecated */
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
 }

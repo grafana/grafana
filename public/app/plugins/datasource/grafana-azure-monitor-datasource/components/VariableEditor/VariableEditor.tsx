@@ -35,6 +35,7 @@ const VariableEditor = (props: Props) => {
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Namespaces', value: AzureQueryType.NamespacesQuery });
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Names', value: AzureQueryType.ResourceNamesQuery });
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Metric Names', value: AzureQueryType.MetricNamesQuery });
+    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Workspaces', value: AzureQueryType.WorkspacesQuery });
   }
   const [variableOptionGroup, setVariableOptionGroup] = useState<{ label: string; options: AzureMonitorOption[] }>({
     label: 'Template Variables',
@@ -68,6 +69,7 @@ const VariableEditor = (props: Props) => {
     setRequireResource(false);
     switch (queryType) {
       case AzureQueryType.ResourceGroupsQuery:
+      case AzureQueryType.WorkspacesQuery:
         setRequireSubscription(true);
         break;
       case AzureQueryType.NamespacesQuery:

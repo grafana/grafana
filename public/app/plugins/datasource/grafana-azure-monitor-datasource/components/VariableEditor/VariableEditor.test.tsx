@@ -270,5 +270,21 @@ describe('VariableEditor:', () => {
         })
       );
     });
+
+    it('should run the query if requesting workspaces', async () => {
+      const onChange = jest.fn();
+      const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
+      // wait for initial load
+      await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
+      await selectAndRerender('select query type', 'Workspaces', onChange, rerender);
+      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryType: AzureQueryType.WorkspacesQuery,
+          subscription: 'sub',
+          refId: 'A',
+        })
+      );
+    });
   });
 });
