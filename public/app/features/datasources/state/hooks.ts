@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { DataSourcePluginMeta, DataSourceSettings, urlUtil } from '@grafana/data';
+import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -27,8 +28,16 @@ export const useInitDataSourceSettings = (id: string) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(initDataSourceSettings(id));
-  }, [id, dispatch]);
+    dispatch(initDataSourceSettings(uid));
+
+    return function cleanUp() {
+      dispatch(
+        cleanUpAction({
+          stateSelector: (state) => state.dataSourceSettings,
+        })
+      );
+    };
+  }, [uid, dispatch]);
 };
 
 export const useTestDataSource = (id: string) => {

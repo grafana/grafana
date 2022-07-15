@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { DataSourceSettings } from '@grafana/data';
 import { Card, Tag, useStyles } from '@grafana/ui';
@@ -9,22 +9,17 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction } from 'app/types';
 
-import { loadDataSources, getDataSources, getDataSourcesCount } from '../state';
+import { getDataSources, getDataSourcesCount, useLoadDataSources } from '../state';
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 
 export function DataSourcesList(): React.ReactElement {
-  const dispatch = useDispatch();
+  useLoadDataSources();
+
   const dataSources = useSelector((state: StoreState) => getDataSources(state.dataSources));
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
   const hasFetched = useSelector(({ dataSources }: StoreState) => dataSources.hasFetched);
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
-
-  useEffect(() => {
-    if (!hasFetched) {
-      dispatch(loadDataSources());
-    }
-  }, [dispatch, hasFetched]);
 
   return (
     <DataSourcesListView
