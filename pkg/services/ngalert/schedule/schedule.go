@@ -137,7 +137,7 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.Cfg.MinInterval,
-		schedulableAlertRules: schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.SchedulableAlertRule)},
+		schedulableAlertRules: schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
 		bus:                   bus,
 		alertsSender:          cfg.AlertSender,
 	}
