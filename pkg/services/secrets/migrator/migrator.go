@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -17,6 +18,7 @@ type SecretsMigrator struct {
 	secretsSrv    *manager.SecretsService
 	sqlStore      *sqlstore.SQLStore
 	settings      setting.Provider
+	features      featuremgmt.FeatureToggles
 }
 
 func ProvideSecretsMigrator(
@@ -24,16 +26,23 @@ func ProvideSecretsMigrator(
 	service *manager.SecretsService,
 	sqlStore *sqlstore.SQLStore,
 	settings setting.Provider,
+	features featuremgmt.FeatureToggles,
 ) *SecretsMigrator {
 	return &SecretsMigrator{
 		encryptionSrv: encryptionSrv,
 		secretsSrv:    service,
 		sqlStore:      sqlStore,
 		settings:      settings,
+		features:      features,
 	}
 }
 
 func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) error {
+	err := m.initProvidersIfNeeded()
+	if err != nil {
+		return err
+	}
+
 	toReencrypt := []interface {
 		reencrypt(context.Context, *manager.SecretsService, *sqlstore.SQLStore)
 	}{
@@ -54,7 +63,25 @@ func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) error {
 	return nil
 }
 
+func (m *SecretsMigrator) initProvidersIfNeeded() error {
+	if m.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
+		logger.Info("Envelope encryption is not enabled but trying to init providers anyway...")
+
+		if err := m.secretsSrv.InitProviders(); err != nil {
+			logger.Error("Envelope encryption providers initialization failed", "error", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) error {
+	err := m.initProvidersIfNeeded()
+	if err != nil {
+		return err
+	}
+
 	toRollback := []interface {
 		rollback(context.Context, *manager.SecretsService, encryption.Internal, *sqlstore.SQLStore, string) bool
 	}{
