@@ -305,3 +305,8 @@ type GetDashboardRefByIdQuery struct {
 	Id     int64
 	Result *DashboardRef
 }
+
+type HasActivePublicDashboardQuery struct {
+	DashboardUid string
+	Result       bool
+}
