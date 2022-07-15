@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 
-import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2 } from '@grafana/ui';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -16,9 +18,26 @@ import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTe
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from './state/actions';
+import {
+  fetchAlertManagerConfigAction,
+  fetchContactPointsStateAction,
+  fetchGrafanaNotifiersAction,
+} from './state/actions';
+import { CONTACT_POINTS_STATE_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
+
+export const NotificationError: FC = ({ children }) => {
+  const styles = useStyles2(getStyles);
+
+  return <span className={styles.warning}>{children}</span>;
+};
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  warning: css`
+    color: ${theme.colors.warning.text};
+  `,
+});
 
 const Receivers: FC = () => {
   const alertManagers = useAlertManagersByPermission('notification');
@@ -54,6 +73,19 @@ const Receivers: FC = () => {
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
 
+  useEffect(() => {
+    function fetchContactPointStates() {
+      alertManagerSourceName && dispatch(fetchContactPointsStateAction(alertManagerSourceName));
+    }
+    fetchContactPointStates();
+    const interval = setInterval(fetchContactPointStates, CONTACT_POINTS_STATE_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [alertManagerSourceName, dispatch]);
+
+  const integrationsError = false;
+
   const disableAmSelect = !isRoot;
 
   if (!alertManagerSourceName) {
@@ -68,12 +100,22 @@ const Receivers: FC = () => {
 
   return (
     <AlertingPageWrapper pageId="receivers">
-      <AlertManagerPicker
-        current={alertManagerSourceName}
-        disabled={disableAmSelect}
-        onChange={setAlertManagerSourceName}
-        dataSources={alertManagers}
-      />
+      <div
+        className={css`
+          display: flex;
+          justify-content: space-between;
+        `}
+      >
+        <AlertManagerPicker
+          current={alertManagerSourceName}
+          disabled={disableAmSelect}
+          onChange={setAlertManagerSourceName}
+          dataSources={alertManagers}
+        />
+        {integrationsError && (
+          <NotificationError>{'Some alert notifications might be not delivered'}</NotificationError>
+        )}
+      </div>
       {error && !loading && (
         <Alert severity="error" title="Error loading Alertmanager config">
           {error.message || 'Unknown error.'}
