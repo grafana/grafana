@@ -429,7 +429,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
 			// therefore, at the time when message from updateCh is processed the current rule will have
 			// at least the same version (or greater) and the state created for the new version of the rule.
-			if currentRule != nil && int64(version) <= currentRule.Version || version < 1 {
+			if currentRule != nil && int64(version) <= currentRule.Version {
 				logger.Info("skip updating rule because its current version is actual", "current_version", currentRule.Version, "new_version", version)
 				continue
 			}

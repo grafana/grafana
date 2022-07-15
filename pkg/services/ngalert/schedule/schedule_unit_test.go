@@ -766,7 +766,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			newRule.Version++
 			ruleStore.PutRule(ctx, &newRule)
 			wg.Add(1)
-			updateChan <- ruleVersion(rule.Version)
+			updateChan <- ruleVersion(newRule.Version)
 			wg.Wait()
 
 			require.Eventually(t, func() bool {
