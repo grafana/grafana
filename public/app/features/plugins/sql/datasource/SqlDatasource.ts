@@ -2,15 +2,14 @@ import { lastValueFrom, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
-  AnnotationEvent,
   DataFrame,
   DataFrameView,
-  DataQueryRequest,
-  DataQueryResponse,
+  DataQuery,
   DataSourceInstanceSettings,
   DataSourceRef,
   MetricFindValue,
   ScopedVars,
+  TimeRange,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -20,10 +19,12 @@ import {
   getTemplateSrv,
   TemplateSrv,
 } from '@grafana/runtime';
-import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
+import { toDataQueryResponse, toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { VariableWithMultiSupport } from '../../../variables/types';
-import { getSearchFilterScopedVar } from '../../../variables/utils';
+import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
+import { MACRO_NAMES } from '../constants';
 import {
   DB,
   SQLQuery,
@@ -39,6 +40,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   name: string;
   interval: string;
   db: DB;
+  annotations = {};
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -121,20 +123,33 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return value.replace(/''/g, "'");
   }
 
-  // eslint-ignore @typescript-eslint/no-explicit-any
-  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
-    if (!options.annotation.rawQuery) {
-      return Promise.reject({
-        message: 'Query missing in annotation definition',
-      });
-    }
+  async metricFindQuery(query: string, optionalOptions?: MetricFindQueryOptions): Promise<MetricFindValue[]> {
+    const rawSql = this.templateSrv.replace(
+      query,
+      getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
+      this.interpolateVariable
+    );
 
-    const query = {
-      refId: options.annotation.name,
+    const interpolatedQuery: SQLQuery = {
+      refId: 'tempvar',
       datasource: this.getRef(),
-      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
-      format: 'table',
+      rawSql,
+      format: QueryFormat.Table,
     };
+
+    const response = await this.runMetaQuery(interpolatedQuery, optionalOptions);
+    return this.getResponseParser().transformMetricFindResponse(response);
+  }
+
+  async runSql<T>(query: string, options?: MetricFindQueryOptions) {
+    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table }, options);
+    return new DataFrameView<T>(frame);
+  }
+
+  private runMetaQuery(request: Partial<SQLQuery>, options?: MetricFindQueryOptions): Promise<DataFrame> {
+    const range = getTimeSrv().timeRange();
+    const refId = request.refId || 'meta';
+    const queries: DataQuery[] = [{ ...request, datasource: request.datasource || this.getRef(), refId }];
 
     return lastValueFrom(
       getBackendSrv()
@@ -142,57 +157,22 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           url: '/api/ds/query',
           method: 'POST',
           data: {
-            from: options.range.from.valueOf().toString(),
-            to: options.range.to.valueOf().toString(),
-            queries: [query],
+            from: options?.range?.from.valueOf().toString() || range.from.valueOf().toString(),
+            to: options?.range?.to.valueOf().toString() || range.to.valueOf().toString(),
+            queries,
           },
-          requestId: options.annotation.name,
+          requestId: refId,
         })
         .pipe(
-          map(
-            async (res: FetchResponse<BackendDataSourceResponse>) =>
-              await this.getResponseParser().transformAnnotationResponse(options, res.data)
-          )
+          map((res: FetchResponse<BackendDataSourceResponse>) => {
+            const rsp = toDataQueryResponse(res, queries);
+            return rsp.data[0];
+          })
         )
     );
   }
 
-  async metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
-    const rawSql = this.templateSrv.replace(
-      query,
-      getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
-      this.interpolateVariable
-    );
-
-    const interpolatedQuery = {
-      datasourceId: this.id,
-      datasource: this.getRef(),
-      rawSql,
-      format: QueryFormat.Table,
-    };
-
-    const response = await this.runQuery(interpolatedQuery, optionalOptions);
-    return this.getResponseParser().transformMetricFindResponse(response);
-  }
-
-  async runSql<T = any>(query: string) {
-    const frame = await this.runQuery({ rawSql: query, format: QueryFormat.Table }, {});
-    return new DataFrameView<T>(frame);
-  }
-
-  private runQuery(request: Partial<SQLQuery>, options?: any): Promise<DataFrame> {
-    return new Promise((resolve) => {
-      const req = {
-        targets: [{ ...request, refId: String(Math.random()) }],
-        range: options?.range,
-      } as DataQueryRequest<SQLQuery>;
-      this.query(req).subscribe((res: DataQueryResponse) => {
-        resolve(res.data[0] || { fields: [] });
-      });
-    });
-  }
-
-  testDatasource(): Promise<any> {
+  testDatasource(): Promise<{ status: string; message: string }> {
     return lastValueFrom(
       getBackendSrv()
         .fetch({
@@ -223,7 +203,15 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     );
   }
 
-  targetContainsTemplate(target: any) {
-    return this.templateSrv.containsTemplate(target.rawSql);
+  targetContainsTemplate(target: SQLQuery) {
+    let queryWithoutMacros = target.rawSql;
+    MACRO_NAMES.forEach((value) => {
+      queryWithoutMacros = queryWithoutMacros?.replace(value, '') || '';
+    });
+    return this.templateSrv.containsTemplate(queryWithoutMacros);
   }
+}
+
+interface MetricFindQueryOptions extends SearchFilterOptions {
+  range?: TimeRange;
 }

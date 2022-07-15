@@ -55,6 +55,14 @@ type DataSourceDeleted struct {
 	OrgID     int64     `json:"org_id"`
 }
 
+type DataSourceSecretDeleted struct {
+	Timestamp time.Time `json:"timestamp"`
+	Name      string    `json:"name"`
+	ID        int64     `json:"id"`
+	UID       string    `json:"uid"`
+	OrgID     int64     `json:"org_id"`
+}
+
 type DataSourceCreated struct {
 	Timestamp time.Time `json:"timestamp"`
 	Name      string    `json:"name"`

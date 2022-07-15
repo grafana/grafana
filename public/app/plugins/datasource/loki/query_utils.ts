@@ -121,15 +121,35 @@ export function isLogsQuery(query: string): boolean {
   return isLogsQuery;
 }
 
-export function isQueryWithParser(query: string): boolean {
-  let hasParser = false;
+export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
+  let parserCount = 0;
   const tree = parser.parse(query);
   tree.iterate({
     enter: (type): false | void => {
-      if (type.name === 'LabelParser') {
-        hasParser = true;
+      if (type.name === 'LabelParser' || type.name === 'JsonExpressionParser') {
+        parserCount++;
       }
     },
   });
-  return hasParser;
+  return { queryWithParser: parserCount > 0, parserCount };
+}
+
+export function isQueryPipelineErrorFiltering(query: string): boolean {
+  let isQueryPipelineErrorFiltering = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'LabelFilter') {
+        const label = get().getChild('Matcher')?.getChild('Identifier');
+        if (label) {
+          const labelName = query.substring(label.from, label.to);
+          if (labelName === '__error__') {
+            isQueryPipelineErrorFiltering = true;
+          }
+        }
+      }
+    },
+  });
+
+  return isQueryPipelineErrorFiltering;
 }

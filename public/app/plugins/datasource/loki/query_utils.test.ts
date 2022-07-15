@@ -137,13 +137,23 @@ describe('isLogsQuery', () => {
 
 describe('isQueryWithParser', () => {
   it('returns false if query without parser', () => {
-    expect(isQueryWithParser('rate({job="grafana" |= "error" }[5m])')).toBe(false);
+    expect(isQueryWithParser('rate({job="grafana" |= "error" }[5m])')).toEqual({
+      parserCount: 0,
+      queryWithParser: false,
+    });
   });
   it('returns true if log query with parser', () => {
-    expect(isQueryWithParser('{job="grafana"} | json')).toBe(true);
+    expect(isQueryWithParser('{job="grafana"} | json')).toEqual({ parserCount: 1, queryWithParser: true });
   });
 
   it('returns true if metric query with parser', () => {
-    expect(isQueryWithParser('rate({job="grafana"} | json [5m])')).toBe(true);
+    expect(isQueryWithParser('rate({job="grafana"} | json [5m])')).toEqual({ parserCount: 1, queryWithParser: true });
+  });
+
+  it('returns true if query with json parser with expressions', () => {
+    expect(isQueryWithParser('rate({job="grafana"} | json foo="bar", bar="baz" [5m])')).toEqual({
+      parserCount: 1,
+      queryWithParser: true,
+    });
   });
 });
