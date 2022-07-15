@@ -128,9 +128,9 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   return (
     <Draggable draggableId={`mapping-${index}`} index={index}>
       {(provided) => (
-        <tr ref={provided.innerRef} {...provided.draggableProps}>
+        <tr ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
           <td>
-            <div {...provided.dragHandleProps} className={styles.dragHandle}>
+            <div className={styles.dragHandle}>
               <Icon name="draggabledots" size="lg" />
             </div>
           </td>
