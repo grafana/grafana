@@ -195,7 +195,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, starService star.Service, coremodelRegistry *coremodel.Registry,
-	csrf *csrf.Service,
+	csrf csrf.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -275,7 +275,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardPermissionsService:  dashboardPermissionsService,
 		starService:                  starService,
 		CoremodelRegistry:            coremodelRegistry,
-		Csrf:                         *csrf,
+		Csrf:                         csrf,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
