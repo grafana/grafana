@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, DateTime } from '@grafana/data';
 
 export interface AlertRuleDTO {
   id: number;
@@ -140,6 +140,36 @@ export interface NotificationChannelState {
   notificationChannelTypes: NotificationChannelType[];
   notifiers: NotifierDTO[];
   notificationChannel: any;
+}
+
+export interface IntegrationError {
+  lastError: string;
+  lastNotify: DateTime;
+  lastNotifyDuration: number;
+  name: string;
+}
+
+export interface IntegrationState {
+  [key: string]: IntegrationError;
+}
+
+export interface ReceiverState {
+  active: boolean;
+  integrations: IntegrationState[];
+}
+
+export interface ReceiversState {
+  [key: string]: ReceiverState;
+}
+
+export interface ContactPointsState {
+  receivers: ReceiversState[];
+  errorCount: Number;
+}
+
+export interface ContactPointStateDTO {
+  active: boolean;
+  integrations: IntegrationError[];
 }
 
 export interface AlertRulesState {
