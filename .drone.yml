@@ -129,7 +129,6 @@ steps:
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-x64,linux-x64-musl,osx64,win64,armv6
   depends_on:
   - initialize
   environment: {}
@@ -187,7 +186,7 @@ steps:
   name: ensure-cuetsified
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64,armv6
+    --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - build-plugins
   - build-backend
@@ -4131,6 +4130,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: cae9208a4fe916e04ae0c910937a71deb29a8a860a08893762c7624cfb0bcecc
+hmac: 269c5ba0967ad88138b1346e45f3905ccb99d1c437f3e0afd014d0802b0f1f10
 
 ...

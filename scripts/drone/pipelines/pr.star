@@ -54,7 +54,6 @@ ver_mode = 'pr'
 def pr_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
-    variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     test_steps = [
         lint_drone_step(),
@@ -67,7 +66,7 @@ def pr_pipelines(edition):
         test_frontend_step(),
     ]
     build_steps = [
-        build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
+        build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
@@ -94,7 +93,7 @@ def pr_pipelines(edition):
 
     # Insert remaining build_steps
     build_steps.extend([
-        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=variants),
+        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
         grafana_server_step(edition=edition),
         e2e_tests_step('dashboards-suite', edition=edition),
         e2e_tests_step('smoke-tests-suite', edition=edition),
