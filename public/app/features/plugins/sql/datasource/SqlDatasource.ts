@@ -25,12 +25,17 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { VariableWithMultiSupport } from '../../../variables/types';
 import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, ResponseParser, SqlQueryModel, QueryFormat } from '../types';
+import {
+  DB,
+  SQLQuery,
+  SQLOptions,
+  SqlQueryForInterpolation,
+  ResponseParser,
+  SqlQueryModel,
+  QueryFormat,
+} from '../types';
 
-export abstract class SqlDatasource<
-  TSQLQuery extends SQLQuery,
-  TSQLOptions extends SQLOptions
-> extends DataSourceWithBackend<TSQLQuery, TSQLOptions> {
+export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
   name: string;
   interval: string;
@@ -38,7 +43,7 @@ export abstract class SqlDatasource<
   annotations = {};
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<TSQLOptions>,
+    instanceSettings: DataSourceInstanceSettings<SQLOptions>,
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
@@ -77,7 +82,10 @@ export abstract class SqlDatasource<
     return value;
   };
 
-  interpolateVariablesInQueries(queries: TSQLQuery[], scopedVars: ScopedVars): TSQLQuery[] {
+  interpolateVariablesInQueries(
+    queries: SqlQueryForInterpolation[],
+    scopedVars: ScopedVars
+  ): SqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map((query) => {

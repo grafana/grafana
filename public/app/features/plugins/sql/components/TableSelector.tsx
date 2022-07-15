@@ -4,12 +4,13 @@ import { useAsync } from 'react-use';
 import { SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { DB, ResourceSelectorProps, SQLQuery } from '../types';
+import { QueryWithDefaults } from '../defaults';
+import { DB, ResourceSelectorProps } from '../types';
 
 interface TableSelectorProps extends ResourceSelectorProps {
   db: DB;
   value: string | null;
-  query: SQLQuery;
+  query: QueryWithDefaults;
   onChange: (v: SelectableValue) => void;
 }
 

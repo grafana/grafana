@@ -2,19 +2,20 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
+import { QueryWithDefaults } from '../../defaults';
 import { DB, SQLQuery } from '../../types';
 import { useSqlChange } from '../../utils/useSqlChange';
 
 import { OrderByRow } from './OrderByRow';
 
-type SQLOrderByRowProps<T extends SQLQuery> = {
+type SQLOrderByRowProps = {
   fields: SelectableValue[];
-  query: T;
-  onQueryChange: (query: T) => void;
+  query: QueryWithDefaults;
+  onQueryChange: (query: SQLQuery) => void;
   db: DB;
 };
 
-export function SQLOrderByRow<T extends SQLQuery>({ fields, query, onQueryChange, db }: SQLOrderByRowProps<T>) {
+export function SQLOrderByRow({ fields, query, onQueryChange, db }: SQLOrderByRowProps) {
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
   let columnsWithIndices: SelectableValue[] = [];
 
@@ -35,5 +36,5 @@ export function SQLOrderByRow<T extends SQLQuery>({ fields, query, onQueryChange
     ];
   }
 
-  return <OrderByRow sql={query.sql || {}} onSqlChange={onSqlChange} columns={columnsWithIndices} />;
+  return <OrderByRow sql={query.sql!} onSqlChange={onSqlChange} columns={columnsWithIndices} />;
 }

@@ -5,25 +5,18 @@ import { LanguageCompletionProvider, SQLEditor } from '@grafana/experimental';
 import { SQLQuery } from '../../types';
 import { formatSQL } from '../../utils/formatSQL';
 
-type Props<T extends SQLQuery> = {
-  query: T;
-  onChange: (value: T, processQuery: boolean) => void;
+type Props = {
+  query: SQLQuery;
+  onChange: (value: SQLQuery, processQuery: boolean) => void;
   children?: (props: { formatQuery: () => void }) => React.ReactNode;
   width?: number;
   height?: number;
   completionProvider: LanguageCompletionProvider;
 };
 
-export function QueryEditorRaw<T extends SQLQuery>({
-  children,
-  onChange,
-  query,
-  width,
-  height,
-  completionProvider,
-}: Props<T>) {
+export function QueryEditorRaw({ children, onChange, query, width, height, completionProvider }: Props) {
   // We need to pass query via ref to SQLEditor as onChange is executed via monacoEditor.onDidChangeModelContent callback, not onChange property
-  const queryRef = useRef<T>(query);
+  const queryRef = useRef<SQLQuery>(query);
   useEffect(() => {
     queryRef.current = query;
   }, [query]);

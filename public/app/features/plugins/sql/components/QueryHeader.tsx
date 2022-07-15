@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, InlineField, InlineSwitch, RadioButtonGroup, Select, Tooltip } from '@grafana/ui';
 
+import { QueryWithDefaults } from '../defaults';
 import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB } from '../types';
 import { defaultToRawSql } from '../utils/sql.utils';
 
@@ -13,10 +14,10 @@ import { DatasetSelector } from './DatasetSelector';
 import { ErrorBoundary } from './ErrorBoundary';
 import { TableSelector } from './TableSelector';
 
-interface QueryHeaderProps<T extends SQLQuery> {
+interface QueryHeaderProps {
   db: DB;
-  query: T;
-  onChange: (query: T) => void;
+  query: QueryWithDefaults;
+  onChange: (query: SQLQuery) => void;
   onRunQuery: () => void;
   onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
   queryRowFilter: QueryRowFilter;
@@ -28,7 +29,7 @@ const editorModes = [
   { label: 'Code', value: EditorMode.Code },
 ];
 
-export function QueryHeader<T extends SQLQuery>({
+export function QueryHeader({
   db,
   query,
   queryRowFilter,
@@ -36,7 +37,7 @@ export function QueryHeader<T extends SQLQuery>({
   onRunQuery,
   onQueryRowChange,
   isQueryRunnable,
-}: QueryHeaderProps<T>) {
+}: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
@@ -79,7 +80,7 @@ export function QueryHeader<T extends SQLQuery>({
       return;
     }
 
-    const next = {
+    const next: SQLQuery = {
       ...query,
       table: e.value,
       sql: undefined,

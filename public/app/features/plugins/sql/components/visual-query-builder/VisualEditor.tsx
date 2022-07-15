@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { EditorField, EditorRow, EditorRows } from '@grafana/experimental';
 
-import { DB, QueryEditorProps, QueryRowFilter, SQLQuery } from '../../types';
+import { DB, QueryEditorProps, QueryRowFilter } from '../../types';
 import { QueryToolbox } from '../query-editor-raw/QueryToolbox';
 
 import { Preview } from './Preview';
@@ -12,20 +12,20 @@ import { SQLOrderByRow } from './SQLOrderByRow';
 import { SQLSelectRow } from './SQLSelectRow';
 import { SQLWhereRow } from './SQLWhereRow';
 
-interface VisualEditorProps<T extends SQLQuery> extends QueryEditorProps<T> {
+interface VisualEditorProps extends QueryEditorProps {
   db: DB;
   queryRowFilter: QueryRowFilter;
   onValidate: (isValid: boolean) => void;
 }
 
-export function VisualEditor<T extends SQLQuery>({
+export const VisualEditor: React.FC<VisualEditorProps> = ({
   query,
   db,
   queryRowFilter,
   onChange,
   onValidate,
   range,
-}: VisualEditorProps<T>) {
+}) => {
   const state = useAsync(async () => {
     const fields = await db.fields(query);
     return fields;
@@ -65,4 +65,4 @@ export function VisualEditor<T extends SQLQuery>({
       <QueryToolbox db={db} query={query} onValidate={onValidate} range={range} />
     </>
   );
-}
+};

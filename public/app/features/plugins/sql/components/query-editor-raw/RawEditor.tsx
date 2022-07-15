@@ -11,22 +11,14 @@ import { SQLQuery, QueryEditorProps } from '../../types';
 import { QueryEditorRaw } from './QueryEditorRaw';
 import { QueryToolbox } from './QueryToolbox';
 
-interface RawEditorProps<T extends SQLQuery> extends Omit<QueryEditorProps<T>, 'onChange'> {
+interface RawEditorProps extends Omit<QueryEditorProps, 'onChange'> {
   onRunQuery: () => void;
-  onChange: (q: T, processQuery: boolean) => void;
+  onChange: (q: SQLQuery, processQuery: boolean) => void;
   onValidate: (isValid: boolean) => void;
-  queryToValidate: T;
+  queryToValidate: SQLQuery;
 }
 
-export function RawEditor<T extends SQLQuery>({
-  db,
-  query,
-  onChange,
-  onRunQuery,
-  onValidate,
-  queryToValidate,
-  range,
-}: RawEditorProps<T>) {
+export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryToValidate, range }: RawEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const [isExpanded, setIsExpanded] = useState(false);
