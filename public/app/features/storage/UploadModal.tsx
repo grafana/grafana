@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 import { FileRejection } from 'react-dropzone';
 
-import { Checkbox, FileDropzone, Modal } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Checkbox, FileDropzone, Modal, useStyles2 } from '@grafana/ui';
 
 interface Props {
   onFileUpload: (acceptedFiles: File[], rejectedFiles: FileRejection[], overwriteExistingFile: boolean) => void;
@@ -11,6 +13,8 @@ interface Props {
 export function UploadModal({ onDismiss, onFileUpload }: Props) {
   const [overwriteExistingFile, setOverwriteExistingFile] = useState(false);
 
+  const styles = useStyles2(getStyles);
+
   return (
     <Modal onDismiss={onDismiss} isOpen={true} title="Upload File">
       <div>
@@ -18,6 +22,7 @@ export function UploadModal({ onDismiss, onFileUpload }: Props) {
           value={overwriteExistingFile}
           onChange={() => setOverwriteExistingFile(!overwriteExistingFile)}
           label="Overwrite existing file"
+          className={styles.overwriteCheckbox}
         />
 
         <FileDropzone
@@ -31,8 +36,14 @@ export function UploadModal({ onDismiss, onFileUpload }: Props) {
               onDismiss();
             },
           }}
-        ></FileDropzone>
+        />
       </div>
     </Modal>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  overwriteCheckbox: css`
+    padding: 10px 0px;
+  `,
+});
