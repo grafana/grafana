@@ -228,8 +228,6 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			}
 			alertRules := sch.schedulableAlertRules.all()
 
-			sch.log.Debug("alert rules fetched", "count", len(alertRules))
-
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle
 			// each alert rule found also in this cycle is removed
