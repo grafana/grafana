@@ -5,8 +5,9 @@ import (
 )
 
 type Service interface {
-	Add(ctx context.Context, cmd *StarDashboardCommand) error
-	Delete(ctx context.Context, cmd *UnstarDashboardCommand) error
-	IsStarredByUser(ctx context.Context, query *IsStarredByUserQuery) (bool, error)
-	GetByUser(ctx context.Context, cmd *GetUserStarsQuery) (*GetUserStarsResult, error)
+	Add(context.Context, *StarDashboardCommand) error
+	Delete(context.Context, *UnstarDashboardCommand) error
+	DeleteByUser(context.Context, int64) error
+	IsStarredByUser(context.Context, *IsStarredByUserQuery) (bool, error)
+	GetByUser(context.Context, *GetUserStarsQuery) (*GetUserStarsResult, error)
 }

@@ -44,7 +44,7 @@ func ProvideService(
 	alertingService *alerting.AlertNotificationService,
 	pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,
-	quotaService *quota.QuotaService,
+	quotaService quota.Service,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,

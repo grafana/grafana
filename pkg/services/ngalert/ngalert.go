@@ -37,7 +37,7 @@ import (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
+	quotaService quota.Service, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
 	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
 	bus bus.Bus) (*AlertNG, error) {
 	ng := &AlertNG{
@@ -80,7 +80,7 @@ type AlertNG struct {
 	KVStore             kvstore.KVStore
 	ExpressionService   *expr.Service
 	DataProxy           *datasourceproxy.DataSourceProxyService
-	QuotaService        *quota.QuotaService
+	QuotaService        quota.Service
 	SecretsService      secrets.Service
 	Metrics             *metrics.NGAlert
 	NotificationService notifications.Service
