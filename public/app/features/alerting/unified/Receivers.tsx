@@ -48,12 +48,17 @@ const Receivers: FC = () => {
   const isRoot = location.pathname.endsWith('/alerting/notifications');
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
+  const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
 
   const {
     result: config,
     loading,
     error,
   } = (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
+
+  const { result: contactPointsState } =
+    (alertManagerSourceName && contactPointsStateRequest) || initialAsyncRequestState;
+
   const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
   const shouldLoadConfig = isRoot || !config;
@@ -84,7 +89,7 @@ const Receivers: FC = () => {
     };
   }, [alertManagerSourceName, dispatch]);
 
-  const integrationsError = false;
+  const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 
   const disableAmSelect = !isRoot;
 
@@ -112,7 +117,7 @@ const Receivers: FC = () => {
           onChange={setAlertManagerSourceName}
           dataSources={alertManagers}
         />
-        {integrationsError && (
+        {integrationsErrorCount > 0 && (
           <NotificationError>{'Some alert notifications might be not delivered'}</NotificationError>
         )}
       </div>

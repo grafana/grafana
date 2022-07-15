@@ -14,7 +14,7 @@ import {
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
-import { ContactPointStateDTO, FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
+import { ContactPointsState, FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
 import {
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -429,7 +429,7 @@ export const fetchGrafanaNotifiersAction = createAsyncThunk(
 
 export const fetchContactPointsStateAction = createAsyncThunk(
   'unifiedalerting/fetchContactPointsState',
-  (alertManagerSourceName: String): Promise<ContactPointStateDTO[]> =>
+  (alertManagerSourceName: String): Promise<ContactPointsState> =>
     withSerializedError(fetchContactPointsState(alertManagerSourceName))
 );
 
