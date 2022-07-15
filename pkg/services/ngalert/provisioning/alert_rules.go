@@ -133,8 +133,8 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, 
 }
 
 // UpdateRuleGroup will update the interval for all rules in the group.
-func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
-	if err := models.ValidateRuleGroupInterval(interval, service.baseIntervalSeconds); err != nil {
+func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, intervalSeconds int64) error {
+	if err := models.ValidateRuleGroupInterval(intervalSeconds, service.baseIntervalSeconds); err != nil {
 		return err
 	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -149,11 +149,11 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 		}
 		updateRules := make([]store.UpdateRule, 0, len(query.Result))
 		for _, rule := range query.Result {
-			if rule.IntervalSeconds == interval {
+			if rule.IntervalSeconds == intervalSeconds {
 				continue
 			}
 			newRule := *rule
-			newRule.IntervalSeconds = interval
+			newRule.IntervalSeconds = intervalSeconds
 			updateRules = append(updateRules, store.UpdateRule{
 				Existing: rule,
 				New:      newRule,
@@ -180,7 +180,6 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	service.log.Info("update rule", "ID", storedRule.ID, "labels", fmt.Sprintf("%+v", rule.Labels))
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
 			{

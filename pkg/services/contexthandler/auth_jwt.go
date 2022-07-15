@@ -66,6 +66,11 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 			ReqContext:    ctx,
 			SignupAllowed: h.Cfg.JWTAuthAutoSignUp,
 			ExternalUser:  extUser,
+			UserLookupParams: models.UserLookupParams{
+				UserID: nil,
+				Login:  &query.Login,
+				Email:  &query.Email,
+			},
 		}
 		if err := h.loginService.UpsertUser(ctx.Req.Context(), upsert); err != nil {
 			ctx.Logger.Error("Failed to upsert JWT user", "error", err)
