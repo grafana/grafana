@@ -398,19 +398,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Equal(t, rule.OrgID, queries[0].OrgID)
 			})
 			t.Run("it should get rule folder title from database and attach as label", func(t *testing.T) {
-				queries := make([]store.GenericRecordedQuery, 0)
-				for _, op := range ruleStore.RecordedOps {
-					switch q := op.(type) {
-					case store.GenericRecordedQuery:
-						queries = append(queries, q)
-					}
+				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				for _, s := range states {
+					require.NotEmptyf(t, s.Labels[models.FolderTitleLabel], "Expected a non-empty title in label %s", models.FolderTitleLabel)
+					require.Equal(t, s.Labels[models.FolderTitleLabel], ruleStore.Folders[rule.OrgID][0].Title)
 				}
-				require.NotEmptyf(t, queries, "Expected a %T request to rule store but nothing was recorded", store.GenericRecordedQuery{})
-				require.Len(t, queries, 1, "Expected exactly one request of %T but got %d", store.GenericRecordedQuery{}, len(queries))
-				require.Equal(t, rule.NamespaceUID, queries[0].Params[1])
-				require.Equal(t, rule.OrgID, queries[0].Params[0])
-				require.NotEmptyf(t, rule.Labels[models.FolderTitleLabel], "Expected a non-empty title in label %s", models.FolderTitleLabel)
-				require.Equal(t, rule.Labels[models.FolderTitleLabel], ruleStore.Folders[rule.OrgID][0].Title)
 			})
 			t.Run("it should process evaluation results via state manager", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager

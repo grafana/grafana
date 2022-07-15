@@ -70,6 +70,7 @@ type Store interface {
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error)
+	DeleteACLByUser(context.Context, int64) error
 
 	FolderStore
 }
