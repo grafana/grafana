@@ -7243,7 +7243,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "30"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "30"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "31"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "32"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "33"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "34"]
     ],
     "public/app/plugins/datasource/graphite/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
