@@ -8,7 +8,7 @@ weight: 8
 
 ## Public dashboards
 
-> **Note:** This alpha-based feature is opt-in.
+> **Note:** This is an opt-in alpha feature.
 
 > **Caution:** Making your dashboard public could result in a large number of queries to the datasources used by your dashboard.
 > This can be mitigated by utilizing the enterprise [caching](https://grafana.com/docs/grafana/latest/enterprise/query-caching/) and/or rate limiting features.
