@@ -138,6 +138,10 @@ msgstr ""
 msgid "dashboard.inspect-json.unknown"
 msgstr ""
 
+#: public/app/features/inspector/InspectMetadataTab.tsx
+msgid "dashboard.inspect-meta.no-inspector"
+msgstr ""
+
 #: public/app/features/inspector/InspectStatsTab.tsx
 msgid "dashboard.inspect-stats.data-title"
 msgstr ""
