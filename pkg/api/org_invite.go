@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -50,7 +52,25 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 			return response.Error(500, "Failed to query db for existing user check", err)
 		}
 	} else {
+		// Evaluate permissions for adding an existing user to the organization
+		userIDScope := ac.Scope("users", "id", strconv.Itoa(int(userQuery.Result.ID)))
+		hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionOrgUsersAdd, userIDScope))
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
+		}
+		if !hasAccess {
+			return response.Error(http.StatusForbidden, "Permission denied: not permitted to add an existing user to this organisation", err)
+		}
 		return hs.inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
+	}
+
+	// Evaluate permissions for inviting a new user to Grafana
+	hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionUsersCreate))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
+	}
+	if !hasAccess {
+		return response.Error(http.StatusForbidden, "Permission denied: not permitted to create a new user", err)
 	}
 
 	if setting.DisableLoginForm {
@@ -63,7 +83,6 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	cmd.Name = inviteDto.Name
 	cmd.Status = models.TmpUserInvitePending
 	cmd.InvitedByUserId = c.UserId
-	var err error
 	cmd.Code, err = util.GetRandomString(30)
 	if err != nil {
 		return response.Error(500, "Could not generate random string", err)

@@ -479,5 +479,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return err
 	}
 
+	if alertRule.For < 0 {
+		return fmt.Errorf("%w: field `for` cannot be negative", ngmodels.ErrAlertRuleFailedValidation)
+	}
 	return nil
 }

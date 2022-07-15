@@ -16,12 +16,6 @@ For a complete list of field formatting options, refer to [Standard field defini
 
 > You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
 
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "add-panel/" >}}).
-
-**To format a standard field**:
-
 1. Open a dashboard, click the panel title, and click **Edit**.
 
 1. In the panel display options pane, locate the **Standard options** section.

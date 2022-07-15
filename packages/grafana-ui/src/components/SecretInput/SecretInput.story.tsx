@@ -4,12 +4,16 @@ import React, { useState, ChangeEvent } from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { SecretInput, Props } from './SecretInput';
+import mdx from './SecretInput.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Forms/SecretInput',
   component: SecretInput,
   decorators: [withCenteredStory],
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: [
         'prefix',
@@ -32,7 +36,9 @@ export default {
   argTypes: {
     width: { control: { type: 'range', min: 10, max: 200, step: 10 } },
   },
-} as Meta;
+};
+
+export default meta;
 
 const Template: Story<Props> = (args) => {
   const [secret, setSecret] = useState('');

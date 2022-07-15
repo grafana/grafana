@@ -747,6 +747,280 @@ Content-Type: application/json; charset=UTF-8
 | 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
+## Create and remove service account role assignments
+
+### List roles assigned to a service account
+
+`GET /api/access-control/users/:serviceAccountId/roles`
+
+Lists the roles that have been directly assigned to a given service account. The list does not include basic roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.
+
+Query Parameters:
+
+- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
+
+#### Required permissions
+
+| Action           | Scope                           |
+| ---------------- | ------------------------------- |
+| users.roles:read | users:id:`<service account ID>` |
+
+#### Example request
+
+```http
+GET /api/access-control/users/1/roles
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+[
+    {
+        "version": 4,
+        "uid": "6dNwJq57z",
+        "name": "fixed:reports:writer",
+        "displayName": "Report writer",
+        "description": "Create, read, update, or delete all reports and shared report settings.",
+        "group": "Reports",
+        "updated": "2021-11-19T10:48:00+01:00",
+        "created": "2021-11-19T10:48:00+01:00",
+        "global": false
+    }
+]
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Set of assigned roles is returned.                                   |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+### List permissions assigned to a service account
+
+`GET /api/access-control/users/:serviceAccountId/permissions`
+
+Lists the permissions that a given service account has.
+
+#### Required permissions
+
+| Action                 | Scope                           |
+| ---------------------- | ------------------------------- |
+| users.permissions:read | users:id:`<service account ID>` |
+
+#### Example request
+
+```http
+GET /api/access-control/users/1/permissions
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+[
+    {
+        "action": "ldap.status:read",
+        "scope": ""
+    },
+    {
+        "action": "ldap.user:read",
+        "scope": ""
+    }
+]
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Set of assigned permissions is returned.                             |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+### Add a service account role assignment
+
+`POST /api/access-control/users/:serviceAccountId/roles`
+
+Assign a role to a specific service account.
+
+For bulk updates consider
+[Set service account role assignments]({{< ref "#set-service-account-role-assignments" >}}).
+
+#### Required permissions
+
+`permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.
+
+| Action          | Scope                     |
+| --------------- | ------------------------- |
+| users.roles:add | permissions:type:delegate |
+
+#### Example request
+
+```http
+POST /api/access-control/users/1/roles
+Accept: application/json
+Content-Type: application/json
+
+{
+    "global": false,
+    "roleUid": "XvHQJq57z"
+}
+```
+
+#### JSON body schema
+
+| Field Name | Data Type | Required | Description                                                                                                                                                                                  |
+| ---------- | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| roleUid    | string    | Yes      | UID of the role.                                                                                                                                                                             |
+| global     | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to create organization local assignment. |
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "message": "Role added to the user."
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Role is assigned to a user.                                          |
+| 403  | Access denied.                                                       |
+| 404  | Role not found.                                                      |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+## Remove a service account role assignment
+
+`DELETE /api/access-control/users/:serviceAccountId/roles/:roleUID`
+
+Revoke a role from a service account.
+
+For bulk updates consider
+[Set service account role assignments]({{< ref "#set-service-account-role-assignments" >}}).
+
+#### Required permissions
+
+`permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.
+
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| users.roles:remove | permissions:type:delegate |
+
+#### Query parameters
+
+| Param  | Type    | Required | Description                                                                                                                                                               |
+| ------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| global | boolean | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to remove assignment. |
+
+#### Example request
+
+```http
+DELETE /api/access-control/users/1/roles/AFUXBHKnk
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "message": "Role removed from user."
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Role is unassigned.                                                  |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+### Set service account role assignments
+
+`PUT /api/access-control/users/:serviceAccountId/roles`
+
+Update the service accounts's role assignments to match the provided set of UIDs.
+This will remove any assigned roles that aren't in the request and add
+roles that are in the set but are not already assigned to the service account.
+
+If you want to add or remove a single role, consider using
+[Add a service account role assignment]({{< ref "#add-a-service-account-role-assignment" >}}) or
+[Remove a service account role assignment]({{< ref "#remove-a-service-account-role-assignment" >}})
+instead.
+
+#### Required permissions
+
+`permissions:type:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.
+
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| users.roles:add    | permissions:type:delegate |
+| users.roles:remove | permissions:type:delegate |
+
+#### Example request
+
+```http
+PUT /api/access-control/users/1/roles
+Accept: application/json
+Content-Type: application/json
+
+{
+    "global": false,
+    "roleUids": [
+        "ZiHQJq5nk",
+        "GzNQ1357k"
+    ]
+}
+```
+
+#### JSON body schema
+
+| Field Name    | Date Type | Required | Description                                                                                                                                          |
+| ------------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| global        | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request. |
+| roleUids      | list      | Yes      | List of role UIDs.                                                                                                                                   |
+| includeHidden | boolean   | No       | Specify whether the hidden role assignments should be updated.                                                                                       |
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "message": "User roles have been updated."
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Roles have been assigned.                                            |
+| 403  | Access denied.                                                       |
+| 404  | Role not found.                                                      |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
 ## Create and remove team role assignments
 
 ### List roles assigned to a team

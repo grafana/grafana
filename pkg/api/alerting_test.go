@@ -145,7 +145,9 @@ func postAlertScenario(t *testing.T, hs *HTTPServer, desc string, url string, ro
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return hs.PauseAlert(c)
+			legacyAlertingEnabled := new(bool)
+			*legacyAlertingEnabled = true
+			return hs.PauseAlert(legacyAlertingEnabled)(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)

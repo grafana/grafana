@@ -106,7 +106,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
-  const hasRuler = useHasRuler();
+  const { hasRuler, rulerRulesLoaded } = useHasRuler();
 
   return useMemo((): RuleTableColumnProps[] => {
     const columns: RuleTableColumnProps[] = [
@@ -118,8 +118,8 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
           const { namespace } = rule;
           const { rulesSource } = namespace;
           const { promRule, rulerRule } = rule;
-          const isDeleting = !!(hasRuler(rulesSource) && promRule && !rulerRule);
-          const isCreating = !!(hasRuler(rulesSource) && rulerRule && !promRule);
+          const isDeleting = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
+          const isCreating = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
           return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />;
         },
         size: '165px',
@@ -188,5 +188,5 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
       });
     }
     return columns;
-  }, [hasRuler, showSummaryColumn, showGroupColumn]);
+  }, [hasRuler, rulerRulesLoaded, showSummaryColumn, showGroupColumn]);
 }

@@ -1,68 +1,19 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { get } from 'lodash';
+import React, { useEffect, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { Alert, InlineField, Input, Select } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Alert, InlineField, Select } from '@grafana/ui';
 
 import DataSource from '../../datasource';
 import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import useLastError from '../../utils/useLastError';
 import LogsQueryEditor from '../LogsQueryEditor';
 import { Space } from '../Space';
 
-const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
-  { label: 'Grafana Query Function', value: AzureQueryType.GrafanaTemplateVariableFn },
-  { label: 'Logs', value: AzureQueryType.LogAnalytics },
-];
-
-const GrafanaTemplateVariableFnInput = ({
-  query,
-  updateQuery,
-  datasource,
-}: {
-  query: AzureMonitorQuery;
-  updateQuery: (val: AzureMonitorQuery) => void;
-  datasource: DataSource;
-}) => {
-  const [inputVal, setInputVal] = useState('');
-  useEffect(() => {
-    setInputVal(query.grafanaTemplateVariableFn?.rawQuery || '');
-  }, [query.grafanaTemplateVariableFn?.rawQuery]);
-
-  const onRunQuery = useCallback(
-    (newQuery: string) => {
-      migrateStringQueriesToObjectQueries(newQuery, { datasource }).then((updatedQuery) => {
-        if (updatedQuery.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
-          updateQuery(updatedQuery);
-        } else {
-          updateQuery({
-            ...query,
-            grafanaTemplateVariableFn: {
-              kind: 'UnknownQuery',
-              rawQuery: newQuery,
-            },
-          });
-        }
-      });
-    },
-    [datasource, query, updateQuery]
-  );
-
-  const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setInputVal(event.target.value);
-  };
-
-  return (
-    <InlineField label="Grafana template variable function">
-      <Input
-        placeholder={'type a grafana template variable function, ex: Subscriptions()'}
-        value={inputVal}
-        onChange={onChange}
-        onBlur={() => onRunQuery(inputVal)}
-      />
-    </InlineField>
-  );
-};
+import GrafanaTemplateVariableFnInput from './GrafanaTemplateVariableFn';
 
 type Props = {
   query: AzureMonitorQuery | string;
@@ -71,61 +22,103 @@ type Props = {
 };
 
 const VariableEditor = (props: Props) => {
-  const defaultQuery: AzureMonitorQuery = {
-    refId: 'A',
-    queryType: AzureQueryType.GrafanaTemplateVariableFn,
-  };
-  const [query, setQuery] = useState(defaultQuery);
+  const { query, onChange, datasource } = props;
+  const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
+    { label: 'Grafana Query Function', value: AzureQueryType.GrafanaTemplateVariableFn },
+    { label: 'Logs', value: AzureQueryType.LogAnalytics },
+  ];
+  if (config.featureToggles.azTemplateVars) {
+    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery });
+    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery });
+  }
+  const [variableOptionGroup, setVariableOptionGroup] = useState<{ label: string; options: AzureMonitorOption[] }>({
+    label: 'Template Variables',
+    options: [],
+  });
+  const [requireSubscription, setRequireSubscription] = useState(false);
+  const [subscriptions, setSubscriptions] = useState<SelectableValue[]>([]);
+  const [errorMessage, setError] = useLastError();
+  const queryType = typeof query === 'string' ? '' : query.queryType;
 
   useEffect(() => {
-    migrateStringQueriesToObjectQueries(props.query, { datasource: props.datasource }).then((migratedQuery) => {
-      setQuery(migratedQuery);
+    migrateStringQueriesToObjectQueries(query, { datasource: datasource }).then((migratedQuery) => {
+      onChange(migratedQuery);
     });
-  }, [props.query, props.datasource]);
+  }, [query, datasource, onChange]);
+
+  useEffect(() => {
+    switch (queryType) {
+      case AzureQueryType.ResourceGroupsQuery:
+        setRequireSubscription(true);
+        break;
+      default:
+        setRequireSubscription(false);
+    }
+  }, [queryType]);
+
+  useEffect(() => {
+    const options: AzureMonitorOption[] = [];
+    datasource.getVariablesRaw().forEach((v) => {
+      if (get(v, 'query.queryType') !== queryType) {
+        options.push({ label: v.label || v.name, value: `$${v.name}` });
+      }
+    });
+    setVariableOptionGroup({
+      label: 'Template Variables',
+      options,
+    });
+  }, [datasource, queryType]);
+
+  useEffectOnce(() => {
+    datasource.getSubscriptions().then((subs) => {
+      setSubscriptions(subs.map((s) => ({ label: s.text, value: s.value })));
+    });
+  });
+
+  if (typeof query === 'string') {
+    // still migrating the query
+    return null;
+  }
 
   const onQueryTypeChange = (selectableValue: SelectableValue) => {
     if (selectableValue.value) {
-      setQuery({
+      onChange({
         ...query,
         queryType: selectableValue.value,
       });
     }
   };
-  const onLogsQueryChange = (queryChange: AzureMonitorQuery) => {
-    setQuery(queryChange);
 
-    // only hit backend if there's something to query (prevents error when selecting the resource before pinging a query)
-    if (queryChange.azureLogAnalytics?.query) {
-      props.onChange(queryChange);
+  const onChangeSubscription = (selectableValue: SelectableValue) => {
+    if (selectableValue.value) {
+      onChange({
+        ...query,
+        subscription: selectableValue.value,
+      });
     }
   };
 
-  const [errorMessage, setError] = useLastError();
-
-  const variableOptionGroup = {
-    label: 'Template Variables',
-    // TODO: figure out a way to filter out the current variable from the variables list
-    // options: props.datasource.getVariables().map((v) => ({ label: v, value: v })),
-    options: [],
+  const onLogsQueryChange = (queryChange: AzureMonitorQuery) => {
+    onChange(queryChange);
   };
 
   return (
     <>
-      <InlineField label="Select query type">
+      <InlineField label="Select query type" labelWidth={20}>
         <Select
           aria-label="select query type"
           onChange={onQueryTypeChange}
           options={AZURE_QUERY_VARIABLE_TYPE_OPTIONS}
           width={25}
-          value={query.queryType}
+          value={queryType}
         />
       </InlineField>
-      {query.queryType === AzureQueryType.LogAnalytics && (
+      {typeof query === 'object' && query.queryType === AzureQueryType.LogAnalytics && (
         <>
           <LogsQueryEditor
             subscriptionId={query.subscription}
             query={query}
-            datasource={props.datasource}
+            datasource={datasource}
             onChange={onLogsQueryChange}
             variableOptionGroup={variableOptionGroup}
             setError={setError}
@@ -141,8 +134,19 @@ const VariableEditor = (props: Props) => {
           )}
         </>
       )}
-      {query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
-        <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={props.datasource} />
+      {typeof query === 'object' && query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
+        <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={datasource} />
+      )}
+      {typeof query === 'object' && requireSubscription && (
+        <InlineField label="Select subscription" labelWidth={20}>
+          <Select
+            aria-label="select subscription"
+            onChange={onChangeSubscription}
+            options={subscriptions.concat(variableOptionGroup)}
+            width={25}
+            value={query.subscription}
+          />
+        </InlineField>
       )}
     </>
   );

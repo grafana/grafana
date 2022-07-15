@@ -22,7 +22,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 import { CustomVariableModel } from '../../../features/variables/types';
 
-import { isMetricsQuery, LokiDatasource } from './datasource';
+import { LokiDatasource } from './datasource';
 import { makeMockLokiDatasource } from './mocks';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -799,23 +799,6 @@ describe('LokiDatasource', () => {
       ]);
       expect(queries[0].expr).toBe('{foo="bar"}');
     });
-  });
-});
-
-describe('isMetricsQuery', () => {
-  it('should return true for metrics query', () => {
-    const query = 'rate({label=value}[1m])';
-    expect(isMetricsQuery(query)).toBeTruthy();
-  });
-
-  it('should return false for logs query', () => {
-    const query = '{label=value}';
-    expect(isMetricsQuery(query)).toBeFalsy();
-  });
-
-  it('should not blow up on empty query', () => {
-    const query = '';
-    expect(isMetricsQuery(query)).toBeFalsy();
   });
 });
 

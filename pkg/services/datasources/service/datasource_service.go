@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,6 +33,7 @@ type Service struct {
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.DatasourcePermissionsService
 	ac                 accesscontrol.AccessControl
+	logger             log.Logger
 
 	ptc proxyTransportCache
 }
@@ -61,6 +63,7 @@ func ProvideService(
 		features:           features,
 		permissionsService: datasourcePermissionsService,
 		ac:                 ac,
+		logger:             log.New("datasources"),
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -136,6 +139,10 @@ func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetData
 	return s.SQLStore.GetDataSources(ctx, query)
 }
 
+func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
+	return s.SQLStore.GetAllDataSources(ctx, query)
+}
+
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
@@ -143,18 +150,21 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
-		// this is here for backwards compatibility
-		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
-		if err != nil {
-			return err
-		}
 
-		secret, err := json.Marshal(cmd.SecureJsonData)
-		if err != nil {
-			return err
+		cmd.EncryptedSecureJsonData = make(map[string][]byte)
+		if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+			cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+			if err != nil {
+				return err
+			}
 		}
 
 		cmd.UpdateSecretFn = func() error {
+			secret, err := json.Marshal(cmd.SecureJsonData)
+			if err != nil {
+				return err
+			}
+
 			return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
 		}
 
@@ -212,21 +222,22 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			return err
 		}
 
-		secret, err := json.Marshal(cmd.SecureJsonData)
-		if err != nil {
-			return err
-		}
+		if cmd.OrgId > 0 && cmd.Name != "" {
+			cmd.UpdateSecretFn = func() error {
+				secret, err := json.Marshal(cmd.SecureJsonData)
+				if err != nil {
+					return err
+				}
 
-		cmd.UpdateSecretFn = func() error {
-			var secretsErr error
-			if query.Result.Name != cmd.Name {
-				secretsErr = s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
-			}
-			if secretsErr != nil {
-				return secretsErr
-			}
+				if query.Result.Name != cmd.Name {
+					err := s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+					if err != nil {
+						return err
+					}
+				}
 
-			return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+				return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+			}
 		}
 
 		return s.SQLStore.UpdateDataSource(ctx, cmd)
@@ -295,10 +306,13 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 
 	if exist {
 		err = json.Unmarshal([]byte(secret), &decryptedValues)
+		if err != nil {
+			s.logger.Debug("failed to unmarshal secret value, using legacy secrets", "err", err)
+		}
 	}
 
-	if (!exist || err != nil) && len(ds.SecureJsonData) > 0 {
-		decryptedValues, err = s.MigrateSecrets(ctx, ds)
+	if !exist || err != nil {
+		decryptedValues, err = s.decryptLegacySecrets(ctx, ds)
 		if err != nil {
 			return nil, err
 		}
@@ -307,7 +321,7 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 	return decryptedValues, nil
 }
 
-func (s *Service) MigrateSecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+func (s *Service) decryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	secureJsonData := make(map[string]string)
 	for k, v := range ds.SecureJsonData {
 		decrypted, err := s.SecretsService.Decrypt(ctx, v)
@@ -316,14 +330,7 @@ func (s *Service) MigrateSecrets(ctx context.Context, ds *datasources.DataSource
 		}
 		secureJsonData[k] = string(decrypted)
 	}
-
-	jsonData, err := json.Marshal(secureJsonData)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.SecretsStore.Set(ctx, ds.OrgId, ds.Name, secretType, string(jsonData))
-	return secureJsonData, err
+	return secureJsonData, nil
 }
 
 func (s *Service) DecryptedValue(ctx context.Context, ds *datasources.DataSource, key string) (string, bool, error) {
@@ -564,10 +571,12 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 		}
 	}
 
-	// this is here for backwards compatibility
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
-	if err != nil {
-		return err
+	cmd.EncryptedSecureJsonData = make(map[string][]byte)
+	if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

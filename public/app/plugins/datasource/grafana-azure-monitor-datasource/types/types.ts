@@ -85,7 +85,7 @@ export interface AzureDataSourceSecureJsonData {
 
 // Represents an errors that come back from frontend requests.
 // Not totally sure how accurate this type is.
-export type AzureMonitorErrorish = Error;
+export type AzureMonitorErrorish = Error | string | React.ReactElement;
 
 // Azure Monitor API Types
 export interface AzureMonitorMetricsMetadataResponse {

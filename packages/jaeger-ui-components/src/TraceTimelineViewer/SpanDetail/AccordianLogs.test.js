@@ -56,7 +56,7 @@ describe('AccordianLogs tests', () => {
   it('shows the number of log entries', () => {
     setup();
 
-    expect(screen.getByRole('switch', { name: 'Logs (2)' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Events (2)' })).toBeInTheDocument();
   });
 
   it('hides log entries when not expanded', () => {

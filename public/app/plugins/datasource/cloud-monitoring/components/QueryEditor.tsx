@@ -12,6 +12,7 @@ import { CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery, Clo
 
 import { MetricQueryEditor as ExperimentalMetricQueryEditor } from './Experimental/MetricQueryEditor';
 import { QueryHeader } from './Experimental/QueryHeader';
+import { SLOQueryEditor as ExperimentalSLOQueryEditor } from './Experimental/SLOQueryEditor';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
 
@@ -82,7 +83,7 @@ export class QueryEditor extends PureComponent<Props> {
         )}
 
         {queryType === QueryType.SLO && (
-          <SLOQueryEditor
+          <ExperimentalSLOQueryEditor
             refId={query.refId}
             variableOptionGroup={variableOptionGroup}
             customMetaData={customMetaData}

@@ -22,7 +22,9 @@ import (
 // - go tool pprof -http=localhost:6061 memprofile.out
 func BenchmarkJson(b *testing.B) {
 	body, q := createJsonTestData(1642000000, 1, 300, 400)
-	tCtx := setup(true)
+	tCtx, err := setup(true)
+	require.NoError(b, err)
+
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		res := http.Response{

@@ -343,7 +343,7 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = store
-		hs.dashboardService = dashSvc
+		hs.DashboardService = dashSvc
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -428,7 +428,7 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = store
-		hs.dashboardService = dashSvc
+		hs.DashboardService = dashSvc
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {

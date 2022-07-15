@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { createTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config, GrafanaBootConfig, ThemeChangedEvent } from '@grafana/runtime';
 import { ThemeContext } from '@grafana/ui';
 
@@ -16,8 +16,8 @@ export const provideConfig = (component: React.ComponentType<any>) => {
   return ConfigProvider;
 };
 
-export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = useState(getCurrentUserTheme());
+export const ThemeProvider = ({ children, value }: { children: React.ReactNode; value: GrafanaTheme2 }) => {
+  const [theme, setTheme] = useState(value);
 
   useEffect(() => {
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
@@ -31,14 +31,8 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 };
 
-function getCurrentUserTheme() {
-  return createTheme({
-    colors: {
-      mode: config.bootData.user.lightTheme ? 'light' : 'dark',
-    },
-  });
-}
-
-export const provideTheme = (component: React.ComponentType<any>) => {
-  return provideConfig((props: any) => <ThemeProvider>{React.createElement(component, { ...props })}</ThemeProvider>);
+export const provideTheme = (component: React.ComponentType<any>, theme: GrafanaTheme2) => {
+  return provideConfig((props: any) => (
+    <ThemeProvider value={theme}>{React.createElement(component, { ...props })}</ThemeProvider>
+  ));
 };
