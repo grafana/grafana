@@ -32,9 +32,13 @@ describe('LokiQueryBuilderContainer', () => {
       onRunQuery: () => {},
       showRawQuery: true,
     };
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+
     render(<LokiQueryBuilderContainer {...props} />);
-    expect(screen.getByText('testjob')).toBeInTheDocument();
+    const selector = await screen.findByLabelText('selector');
+    expect(selector.textContent).toBe('{job="testjob"}');
     await addOperation('Range functions', 'Rate');
+    expect(await screen.findByText('Rate')).toBeInTheDocument();
     expect(props.onChange).toBeCalledWith({
       expr: 'rate({job="testjob"} [$__interval])',
       refId: 'A',

@@ -1,5 +1,6 @@
 import path from 'path';
 
+import { assertRootUrlIsValid } from '../../config/utils/pluginValidation';
 import { buildManifest, signManifest, saveManifest } from '../../plugins/manifest';
 
 import { getToolkitVersion } from './plugin.utils';
@@ -22,6 +23,7 @@ const pluginSignRunner: TaskRunner<PluginSignOptions> = async ({ signatureType, 
       manifest.signatureType = signatureType;
     }
     if (rootUrls) {
+      rootUrls.forEach(assertRootUrlIsValid);
       manifest.rootUrls = rootUrls;
     }
 

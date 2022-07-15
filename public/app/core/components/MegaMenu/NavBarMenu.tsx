@@ -9,9 +9,9 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useTheme2 } from '@grafana/ui';
 
+import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
 import { NavItem } from '../NavBar/NavBarMenu';
 import { NavBarToggle } from '../NavBar/NavBarToggle';
-import { TOP_BAR_LEVEL_HEIGHT } from '../TopNav/types';
 
 const MENU_WIDTH = '350px';
 

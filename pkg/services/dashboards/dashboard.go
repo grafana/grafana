@@ -3,14 +3,12 @@ package dashboards
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 //go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
-	BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *models.PublicDashboard, panelId int64) (dtos.MetricRequest, error)
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
@@ -19,14 +17,11 @@ type DashboardService interface {
 	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
-	GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error)
-	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
 	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
-	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*models.PublicDashboard, error)
 	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 }
@@ -65,18 +60,13 @@ type Store interface {
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
-	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
-	GetPublicDashboard(ctx context.Context, accessToken string) (*models.PublicDashboard, *models.Dashboard, error)
-	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
 	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
 	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
-	SavePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error
-	UpdatePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error)

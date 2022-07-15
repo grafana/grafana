@@ -1,5 +1,9 @@
 import { escapeRegExp } from 'lodash';
 
+import { parser } from '@grafana/lezer-logql';
+
+import { ErrorName } from '../prometheus/querybuilder/shared/parsingUtils';
+
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {
@@ -89,4 +93,63 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
   // otherwise it is range
   const { instant, range, ...rest } = query;
   return { ...rest, queryType: LokiQueryType.Range };
+}
+
+export function isValidQuery(query: string): boolean {
+  let isValid = true;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type): false | void => {
+      if (type.name === ErrorName) {
+        isValid = false;
+      }
+    },
+  });
+  return isValid;
+}
+
+export function isLogsQuery(query: string): boolean {
+  let isLogsQuery = true;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type): false | void => {
+      if (type.name === 'MetricExpr') {
+        isLogsQuery = false;
+      }
+    },
+  });
+  return isLogsQuery;
+}
+
+export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
+  let parserCount = 0;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type): false | void => {
+      if (type.name === 'LabelParser' || type.name === 'JsonExpressionParser') {
+        parserCount++;
+      }
+    },
+  });
+  return { queryWithParser: parserCount > 0, parserCount };
+}
+
+export function isQueryPipelineErrorFiltering(query: string): boolean {
+  let isQueryPipelineErrorFiltering = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'LabelFilter') {
+        const label = get().getChild('Matcher')?.getChild('Identifier');
+        if (label) {
+          const labelName = query.substring(label.from, label.to);
+          if (labelName === '__error__') {
+            isQueryPipelineErrorFiltering = true;
+          }
+        }
+      }
+    },
+  });
+
+  return isQueryPipelineErrorFiltering;
 }

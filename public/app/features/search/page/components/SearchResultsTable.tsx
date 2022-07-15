@@ -282,6 +282,11 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       text-align: right;
       padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
     `,
+    explainItem: css`
+      text-align: right;
+      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
+      cursor: pointer;
+    `,
     locationCellStyle: css`
       padding-top: ${theme.spacing(1)};
       padding-right: ${theme.spacing(1)};

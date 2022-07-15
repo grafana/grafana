@@ -2,6 +2,7 @@ package export
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"sync"
@@ -22,16 +23,14 @@ type gitExportJob struct {
 	logger                    log.Logger
 	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
-	orgID                     int64
 	rootDir                   string
 
 	statusMu    sync.Mutex
 	status      ExportStatus
 	cfg         ExportConfig
 	broadcaster statusBroadcaster
+	helper      *commitHelper
 }
-
-type simpleExporter = func(helper *commitHelper, job *gitExportJob) error
 
 func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64, broadcaster statusBroadcaster) (Job, error) {
 	job := &gitExportJob{
@@ -39,7 +38,6 @@ func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapsh
 		cfg:                       cfg,
 		sql:                       sql,
 		dashboardsnapshotsService: dashboardsnapshotsService,
-		orgID:                     orgID,
 		rootDir:                   rootDir,
 		broadcaster:               broadcaster,
 		status: ExportStatus{
@@ -67,6 +65,10 @@ func (e *gitExportJob) getConfig() ExportConfig {
 	defer e.statusMu.Unlock()
 
 	return e.cfg
+}
+
+func (e *gitExportJob) requestStop() {
+	e.helper.stopRequested = true // will error on the next write
 }
 
 // Utility function to export dashboards
@@ -119,16 +121,21 @@ func (e *gitExportJob) doExportWithHistory() error {
 	if err != nil {
 		return err
 	}
-	helper := &commitHelper{
+	e.helper = &commitHelper{
 		repo:    r,
 		work:    w,
 		ctx:     context.Background(),
 		workDir: e.rootDir,
 		orgDir:  e.rootDir,
+		broadcast: func(p string) {
+			e.status.Last = p[len(e.rootDir):]
+			e.status.Changed = time.Now().UnixMilli()
+			e.broadcaster(e.status)
+		},
 	}
 
 	cmd := &models.SearchOrgsQuery{}
-	err = e.sql.SearchOrgs(helper.ctx, cmd)
+	err = e.sql.SearchOrgs(e.helper.ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -136,14 +143,14 @@ func (e *gitExportJob) doExportWithHistory() error {
 	// Export each org
 	for _, org := range cmd.Result {
 		if len(cmd.Result) > 1 {
-			helper.orgDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.Id))
+			e.helper.orgDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.Id))
 		}
-		err = helper.initOrg(e.sql, org.Id)
+		err = e.helper.initOrg(e.sql, org.Id)
 		if err != nil {
 			return err
 		}
 
-		err = e.doOrgExportWithHistory(helper)
+		err := e.process(exporters)
 		if err != nil {
 			return err
 		}
@@ -160,40 +167,38 @@ func (e *gitExportJob) doExportWithHistory() error {
 	return err
 }
 
-func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
-	lookup, err := exportDataSources(helper, e)
-	if err != nil {
-		return err
-	}
-
-	if true {
-		err = exportDashboards(helper, e, lookup)
+func (e *gitExportJob) process(exporters []Exporter) error {
+	if false { // NEEDS a real user ID first
+		err := exportSnapshots(e.helper, e)
 		if err != nil {
 			return err
 		}
 	}
 
-	// Run all the simple exporters
-	exporters := []simpleExporter{
-		dumpAuthTables,
-		exportSystemPreferences,
-		exportSystemStars,
-		exportSystemPlaylists,
-		exportAnnotations,
-	}
+	for _, exp := range exporters {
+		if e.cfg.Exclude[exp.Key] {
+			continue
+		}
 
-	// This needs a real admin user to use the interfaces (and decrypt)
-	if false {
-		exporters = append(exporters, exportSnapshots)
-	}
+		if exp.process != nil {
+			e.status.Target = exp.Key
+			e.helper.exporter = exp.Key
+			err := exp.process(e.helper, e)
+			if err != nil {
+				return err
+			}
+		}
 
-	for _, fn := range exporters {
-		err = fn(helper, e)
-		if err != nil {
-			return err
+		if exp.Exporters != nil {
+			return e.process(exp.Exporters)
 		}
 	}
-	return err
+	return nil
+}
+
+func prettyJSON(v interface{}) []byte {
+	b, _ := json.MarshalIndent(v, "", "  ")
+	return b
 }
 
 /**

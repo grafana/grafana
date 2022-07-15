@@ -27,7 +27,7 @@ To change this setting, type a number in the field and then click outside the fi
 
 Lets you control the URL to which a value or visualization link.
 
-For more information and instructions, refer to [Data links]({{< relref "../linking/data-links/" >}}).
+For more information and instructions, refer to [Data links]({{< relref "./configure-data-links/#data-links" >}}).
 
 ## Display name
 

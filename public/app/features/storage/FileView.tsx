@@ -8,7 +8,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { CodeEditor, useStyles2 } from '@grafana/ui';
 
-import { getGrafanaStorage } from './helper';
+import { getGrafanaStorage } from './storage';
 import { StorageView } from './types';
 
 interface FileDisplayInfo {

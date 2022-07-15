@@ -40,7 +40,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 		q.Result = &models.Dashboard{Uid: "home", Id: 1}
 	}).Return(nil)
 
-	sc.hs.dashboardService = dashSvc
+	sc.hs.DashboardService = dashSvc
 
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
@@ -169,7 +169,7 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 		q := args.Get(1).(*models.GetDashboardQuery)
 		q.Result = &models.Dashboard{Uid: "home", Id: 1}
 	}).Return(nil)
-	sc.hs.dashboardService = dashSvc
+	sc.hs.DashboardService = dashSvc
 	t.Run("Returns 200 on success", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPatch, patchUserPreferencesUrl, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)

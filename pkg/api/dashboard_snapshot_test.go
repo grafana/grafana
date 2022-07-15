@@ -65,11 +65,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	t.Run("When user has editor role and is not in the ACL", func(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "Should not be able to delete snapshot when calling DELETE on",
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				var externalRequest *http.Request
-				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-					externalRequest = req
-				})
-				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, 0, ts.URL)}
+				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, 0, "")}
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
 
 				dashSvc := dashboards.NewFakeDashboardService(t)
@@ -79,7 +75,6 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 403, sc.resp.Code)
-				require.Nil(t, externalRequest)
 			}, sqlmock)
 	})
 

@@ -29,7 +29,11 @@ type AuthInfoServiceFake struct {
 }
 
 func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error) {
-	a.LatestUserID = query.UserId
+	if query.UserLookupParams.UserID != nil {
+		a.LatestUserID = *query.UserLookupParams.UserID
+	} else {
+		a.LatestUserID = 0
+	}
 	return a.ExpectedUser, a.ExpectedError
 }
 

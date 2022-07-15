@@ -136,6 +136,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     // Run search queries on linked datasource
     if (logsDatasourceUid && targets.search?.length > 0) {
+      reportInteraction('grafana_traces_loki_search_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        linkedQueryExpr: targets.search[0].linkedQuery?.expr ?? '',
+      });
+
       const dsSrv = getDatasourceSrv();
       subQueries.push(
         from(dsSrv.get(logsDatasourceUid)).pipe(
@@ -175,7 +181,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           app: options.app ?? '',
           serviceName: targets.nativeSearch[0].serviceName ?? '',
           spanName: targets.nativeSearch[0].spanName ?? '',
-          limit: targets.nativeSearch[0].limit ?? '',
+          resultLimit: targets.nativeSearch[0].limit ?? '',
           search: targets.nativeSearch[0].search ?? '',
         });
 
@@ -201,6 +207,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.upload?.length) {
       if (this.uploadedJson) {
+        reportInteraction('grafana_traces_json_file_uploaded', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+        });
+
         const jsonData = JSON.parse(this.uploadedJson as string);
         const isTraceData = jsonData.batches;
         const isServiceGraphData =
@@ -219,6 +230,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
+      reportInteraction('grafana_traces_service_graph_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        serviceMapQuery: targets.serviceMap[0].serviceMapQuery ?? '',
+      });
+
       const dsId = this.serviceMap.datasourceUid;
       if (config.featureToggles.tempoApmTable) {
         subQueries.push(

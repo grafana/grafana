@@ -75,10 +75,6 @@ msgid "nav.api-keys"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
-msgid "nav.change-password"
-msgstr ""
-
-#: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.config"
 msgstr ""
 
@@ -114,10 +110,6 @@ msgstr ""
 msgid "nav.explore"
 msgstr ""
 
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.folder"
-#~ msgstr ""
-
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.help"
 msgstr ""
@@ -125,10 +117,6 @@ msgstr ""
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.home"
 msgstr ""
-
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.import"
-#~ msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.library-panels"
@@ -175,7 +163,11 @@ msgid "nav.plugins"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
-msgid "nav.profile-settings"
+msgid "nav.profile/password"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.profile/settings"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
@@ -204,6 +196,34 @@ msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.users"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-data"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-json"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.more"
+msgstr ""
+
+#: public/app/plugins/panel/graph/module.ts
+msgid "panel.header-menu.more-toggle"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.share"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.view"
 msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx

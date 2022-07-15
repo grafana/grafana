@@ -10,7 +10,7 @@ import (
 
 func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
 	cmd := &models.GetPlaylistsQuery{
-		OrgId: job.orgID,
+		OrgId: helper.orgID,
 		Limit: 500000,
 	}
 	err := job.sql.SearchPlaylists(helper.ctx, cmd)
