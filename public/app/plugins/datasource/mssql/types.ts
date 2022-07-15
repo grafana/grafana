@@ -1,5 +1,4 @@
-import { DataSourceJsonData } from '@grafana/data';
-import { SQLConnectionLimits } from 'app/features/plugins/sql/components/configuration/types';
+import { SQLOptions } from 'app/features/plugins/sql/types';
 
 export enum MSSQLAuthenticationType {
   sqlAuth = 'SQL Server Authentication',
@@ -11,14 +10,9 @@ export enum MSSQLEncryptOptions {
   false = 'false',
   true = 'true',
 }
-export interface MssqlOptions extends DataSourceJsonData, SQLConnectionLimits {
-  authenticationType: MSSQLAuthenticationType;
-  encrypt: MSSQLEncryptOptions;
-  serverName: string;
-  sslRootCertFile: string;
-  tlsSkipVerify: boolean;
-  url: string;
-  database: string;
-  timeInterval: string;
-  user: string;
+export interface MssqlOptions extends SQLOptions {
+  authenticationType?: MSSQLAuthenticationType;
+  encrypt?: MSSQLEncryptOptions;
+  sslRootCertFile?: string;
+  serverName?: string;
 }

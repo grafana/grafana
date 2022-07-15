@@ -11,7 +11,7 @@ import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlComple
 import { getIcon, getRAQBType, SCHEMA_NAME, toRawSql } from './sqlUtil';
 import { MssqlOptions } from './types';
 
-export class MssqlDatasource extends SqlDatasource<SQLQuery, MssqlOptions> {
+export class MssqlDatasource extends SqlDatasource {
   completionProvider: LanguageCompletionProvider | undefined = undefined;
   constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>, templateSrv?: TemplateSrv) {
     super(instanceSettings, templateSrv);
