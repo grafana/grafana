@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -77,36 +78,97 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response
 	return response.JSON(http.StatusOK, cps)
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+func (srv *ProvisioningSrv) RouteInternalGetContactPoints(c *models.ReqContext) response.Response {
+	ctx := context.WithValue(c.Req.Context(), provisioning.SkipLogzioContactPointGuardsCtxKey, true)
+	cps, err := srv.contactPointService.GetContactPoints(ctx, c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusOK, cps)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *models.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
 	// TODO: provenance is hardcoded for now, change it later to make it more flexible
 	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
+		if errors.Is(err, provisioning.ErrValidation) {
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusAccepted, contactPoint)
 }
 
-func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
+func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp definitions.EmbeddedContactPoint, UID string) response.Response {
+	cp.UID = UID
 	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
+	if errors.Is(err, provisioning.ErrValidation) {
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
+	}
+	if errors.Is(err, provisioning.ErrNotFound) {
+		return response.Error(http.StatusNotFound, err.Error(), nil)
+	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint updated"})
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+func (srv *ProvisioningSrv) RouteInternalPutContactPoint(c *models.ReqContext, cp definitions.EmbeddedContactPoint, UID string) response.Response {
+	cp.UID = UID
+	ctx := context.WithValue(c.Req.Context(), provisioning.SkipLogzioContactPointGuardsCtxKey, true)
+	err := srv.contactPointService.UpdateContactPoint(ctx, c.OrgId, cp, alerting_models.ProvenanceAPI)
+	if errors.Is(err, provisioning.ErrValidation) {
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
+	}
+	if errors.Is(err, provisioning.ErrNotFound) {
+		return response.Error(http.StatusNotFound, err.Error(), nil)
+	}
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint updated"})
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *models.ReqContext) response.Response {
 	cpID := web.Params(c.Req)[":ID"]
 	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.OrgId, cpID)
 	if err != nil {
+		if errors.Is(err, provisioning.ErrValidation) {
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint deleted"})
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+func (srv *ProvisioningSrv) RouteInternalDeleteContactPoint(c *models.ReqContext) response.Response {
+	cpID := web.Params(c.Req)[":ID"]
+
+	ctx := context.WithValue(c.Req.Context(), provisioning.SkipLogzioContactPointGuardsCtxKey, true)
+	err := srv.contactPointService.DeleteContactPoint(ctx, c.OrgId, cpID)
+	if err != nil {
+		if errors.Is(err, provisioning.ErrValidation) {
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint deleted"})
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext, UID string) response.Response {
 	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgId, UID)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
-		return ErrResp(http.StatusNotFound, err, "")
+		return response.Error(http.StatusNotFound, err.Error(), nil)
 	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -120,7 +182,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
 	//LOGZ.IO GRAFANA CHANGE :: END
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
-		return ErrResp(http.StatusBadRequest, err, "")
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -138,10 +200,10 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
 	//LOGZ.IO GRAFANA CHANGE :: END
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
-		return ErrResp(http.StatusNotFound, err, "")
+		return response.Error(http.StatusNotFound, err.Error(), nil)
 	}
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
-		return ErrResp(http.StatusBadRequest, err, "")
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")

@@ -12,7 +12,8 @@ type FactoryConfig struct {
 	Config              *NotificationChannelConfig
 	NotificationService notifications.Service
 	DecryptFunc         GetDecryptedValueFn
-	Template            *template.Template
+	// Used to retrieve image URLs for messages, or data for uploads.
+	Template *template.Template
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,
@@ -25,6 +26,7 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService not
 	if config.SecureSettings == nil {
 		config.SecureSettings = map[string][]byte{}
 	}
+
 	return FactoryConfig{
 		Config:              config,
 		NotificationService: notificationService,
@@ -33,26 +35,29 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService not
 	}, nil
 }
 
+//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove upsupported contact points
 var receiverFactories = map[string]func(FactoryConfig) (NotificationChannel, error){
-	"prometheus-alertmanager": AlertmanagerFactory,
-	"dingding":                DingDingFactory,
-	"discord":                 DiscrodFactory,
-	"email":                   EmailFactory,
-	"googlechat":              GoogleChatFactory,
-	"kafka":                   KafkaFactory,
-	"line":                    LineFactory,
-	"opsgenie":                OpsgenieFactory,
-	"pagerduty":               PagerdutyFactory,
-	"pushover":                PushoverFactory,
-	"sensugo":                 SensuGoFactory,
-	"slack":                   SlackFactory,
-	"teams":                   TeamsFactory,
-	"telegram":                TelegramFactory,
-	"threema":                 ThreemaFactory,
-	"victorops":               VictorOpsFactory,
-	"webhook":                 WebHookFactory,
-	"wecom":                   WeComFactory,
+	//"prometheus-alertmanager": AlertmanagerFactory,
+	//"dingding":                DingDingFactory,
+	//"discord":    DiscordFactory,
+	"email": EmailFactory,
+	//"googlechat": GoogleChatFactory,
+	//"kafka":      KafkaFactory,
+	//"line":       LineFactory,
+	"opsgenie":  OpsgenieFactory,
+	"pagerduty": PagerdutyFactory,
+	//"pushover":   PushoverFactory,
+	//"sensugo":    SensuGoFactory,
+	"slack": SlackFactory,
+	"teams": TeamsFactory,
+	//"telegram":   TelegramFactory,
+	//"threema":    ThreemaFactory,
+	"victorops": VictorOpsFactory,
+	"webhook":   WebHookFactory,
+	//"wecom":      WeComFactory,
 }
+
+//LOGZ.IO GRAFANA CHANGE :: end
 
 func Factory(receiverType string) (func(FactoryConfig) (NotificationChannel, error), bool) {
 	receiverType = strings.ToLower(receiverType)

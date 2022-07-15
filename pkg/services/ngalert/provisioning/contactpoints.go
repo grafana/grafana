@@ -5,16 +5,26 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/alertmanager/config"
 )
+
+//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove internal settings keys
+const (
+	LogzioSettingsPrefix               = "logzio_"
+	IsPlatformWideSettingsKey          = "logzio_is_system_wide"
+	SkipLogzioContactPointGuardsCtxKey = "skip_logzio_cp_guards"
+)
+
+//LOGZ.IO GRAFANA CHANGE :: end
 
 type ContactPointService struct {
 	amStore           AMConfigStore
@@ -24,7 +34,7 @@ type ContactPointService struct {
 	log               log.Logger
 }
 
-func NewContactPointService(store store.AlertingStore, encryptionService secrets.Service,
+func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
 	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger) *ContactPointService {
 	return &ContactPointService{
 		amStore:           store,
@@ -36,7 +46,7 @@ func NewContactPointService(store store.AlertingStore, encryptionService secrets
 }
 
 func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error) {
-	cfg, _, err := ecp.getCurrentConfig(ctx, orgID)
+	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
 	if err != nil {
 		return nil, err
 	}
@@ -45,13 +55,13 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 		return nil, err
 	}
 	contactPoints := []apimodels.EmbeddedContactPoint{}
-	for _, contactPoint := range cfg.GetGrafanaReceiverMap() {
+	for _, contactPoint := range revision.cfg.GetGrafanaReceiverMap() {
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   contactPoint.UID,
 			Type:                  contactPoint.Type,
 			Name:                  contactPoint.Name,
 			DisableResolveMessage: contactPoint.DisableResolveMessage,
-			Settings:              contactPoint.Settings,
+			Settings:              ecp.filterLogzioInternalSettingsKey(ctx, contactPoint.UID, contactPoint.Settings), //LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove internal settings keys
 		}
 		if val, exists := provenances[embeddedContactPoint.UID]; exists && val != "" {
 			embeddedContactPoint.Provenance = string(val)
@@ -75,13 +85,14 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 	return contactPoints, nil
 }
 
-// internal only
+// getContactPointDecrypted is an internal-only function that gets full contact point info, included encrypted fields.
+// nil is returned if no matching contact point exists.
 func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
-	cfg, _, err := ecp.getCurrentConfig(ctx, orgID)
+	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
-	for _, receiver := range cfg.GetGrafanaReceiverMap() {
+	for _, receiver := range revision.cfg.GetGrafanaReceiverMap() {
 		if receiver.UID != uid {
 			continue
 		}
@@ -105,16 +116,16 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		}
 		return embeddedContactPoint, nil
 	}
-	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point with uid '%s' not found", uid)
+	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
 }
 
 func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
 	contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) (apimodels.EmbeddedContactPoint, error) {
 	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
-		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid: %w", err)
+		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	cfg, fetchedHash, err := ecp.getCurrentConfig(ctx, orgID)
+	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -132,7 +143,9 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 		extractedSecrets[k] = encryptedValue
 	}
 
-	contactPoint.UID = util.GenerateShortUID()
+	if contactPoint.UID == "" {
+		contactPoint.UID = util.GenerateShortUID()
+	}
 	grafanaReceiver := &apimodels.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
@@ -143,7 +156,16 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 	}
 
 	receiverFound := false
-	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
+	for _, receiver := range revision.cfg.AlertmanagerConfig.Receivers {
+		// check if uid is already used in receiver
+		for _, rec := range receiver.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			if grafanaReceiver.UID == rec.UID {
+				return apimodels.EmbeddedContactPoint{}, fmt.Errorf(
+					"receiver configuration with UID '%s' already exist in contact point '%s'. Please use unique identifiers for receivers across all contact points",
+					rec.UID,
+					rec.Name)
+			}
+		}
 		if receiver.Name == contactPoint.Name {
 			receiver.PostableGrafanaReceivers.GrafanaManagedReceivers = append(receiver.PostableGrafanaReceivers.GrafanaManagedReceivers, grafanaReceiver)
 			receiverFound = true
@@ -151,7 +173,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 	}
 
 	if !receiverFound {
-		cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &apimodels.PostableApiReceiver{
+		revision.cfg.AlertmanagerConfig.Receivers = append(revision.cfg.AlertmanagerConfig.Receivers, &apimodels.PostableApiReceiver{
 			Receiver: config.Receiver{
 				Name: grafanaReceiver.Name,
 			},
@@ -161,7 +183,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 		})
 	}
 
-	data, err := json.Marshal(cfg)
+	data, err := json.Marshal(revision.cfg)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -169,8 +191,8 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err = ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
-			FetchedConfigurationHash:  fetchedHash,
-			ConfigurationVersion:      "v1",
+			FetchedConfigurationHash:  revision.concurrencyToken,
+			ConfigurationVersion:      revision.version,
 			Default:                   false,
 			OrgID:                     orgID,
 		})
@@ -195,13 +217,16 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 
 func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
 	// set all redacted values with the latest known value from the store
+	if contactPoint.Settings == nil {
+		return fmt.Errorf("%w: %s", ErrValidation, "settings should not be empty")
+	}
 	rawContactPoint, err := ecp.getContactPointDecrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
 		return err
 	}
 	secretKeys, err := contactPoint.SecretKeys()
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 	for _, secretKey := range secretKeys {
 		secretValue := contactPoint.Settings.Get(secretKey).MustString()
@@ -209,10 +234,12 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
 		}
 	}
+
 	// validate merged values
 	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
+
 	// check that provenance is not changed in a invalid way
 	storedProvenance, err := ecp.provenanceStore.GetProvenance(ctx, &contactPoint, orgID)
 	if err != nil {
@@ -242,34 +269,30 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		SecureSettings:        extractedSecrets,
 	}
 	// save to store
-	cfg, fetchedHash, err := ecp.getCurrentConfig(ctx, orgID)
+	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
 	if err != nil {
 		return err
 	}
-	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
-		if receiver.Name == contactPoint.Name {
-			receiverNotFound := true
-			for i, grafanaReceiver := range receiver.GrafanaManagedReceivers {
-				if grafanaReceiver.UID == mergedReceiver.UID {
-					receiverNotFound = false
-					receiver.GrafanaManagedReceivers[i] = mergedReceiver
-					break
-				}
-			}
-			if receiverNotFound {
-				return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
-			}
-		}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Guard platform wide contact point modification
+	if guardErr := guardPlatformWideContactPointModification(ctx, revision, contactPoint.UID); guardErr != nil {
+		return guardErr
 	}
-	data, err := json.Marshal(cfg)
+	// LOGZ.IO GRAFANA CHANGE :: end
+
+	configModified := stitchReceiver(revision.cfg, mergedReceiver)
+	if !configModified {
+		return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
+	}
+
+	data, err := json.Marshal(revision.cfg)
 	if err != nil {
 		return err
 	}
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err = ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
-			FetchedConfigurationHash:  fetchedHash,
-			ConfigurationVersion:      "v1",
+			FetchedConfigurationHash:  revision.concurrencyToken,
+			ConfigurationVersion:      revision.version,
 			Default:                   false,
 			OrgID:                     orgID,
 		})
@@ -286,10 +309,16 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 }
 
 func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, uid string) error {
-	cfg, fetchedHash, err := ecp.getCurrentConfig(ctx, orgID)
+	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
 	if err != nil {
 		return err
 	}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Guard platform wide contact point modification
+	if guardErr := guardPlatformWideContactPointModification(ctx, revision, uid); guardErr != nil {
+		return guardErr
+	}
+	// LOGZ.IO GRAFANA CHANGE :: end
+
 	// Indicates if the full contact point is removed or just one of the
 	// configurations, as a contactpoint can consist of any number of
 	// configurations.
@@ -297,7 +326,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	// Name of the contact point that will be removed, might be used if a
 	// full removal is done to check if it's referenced in any route.
 	name := ""
-	for i, receiver := range cfg.AlertmanagerConfig.Receivers {
+	for i, receiver := range revision.cfg.AlertmanagerConfig.Receivers {
 		for j, grafanaReceiver := range receiver.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == uid {
 				name = grafanaReceiver.Name
@@ -305,16 +334,21 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 				// if this was the last receiver we removed, we remove the whole receiver
 				if len(receiver.GrafanaManagedReceivers) == 0 {
 					fullRemoval = true
-					cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers[:i], cfg.AlertmanagerConfig.Receivers[i+1:]...)
+					//LOGZ.IO GRAFANA CHANGE :: Prevent removal of default autogenerated contact point
+					if name != receiver.Name {
+						name = receiver.Name
+					}
+					//LOGZ.IO GRAFANA CHANGE :: end
+					revision.cfg.AlertmanagerConfig.Receivers = append(revision.cfg.AlertmanagerConfig.Receivers[:i], revision.cfg.AlertmanagerConfig.Receivers[i+1:]...)
 				}
 				break
 			}
 		}
 	}
-	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{cfg.AlertmanagerConfig.Route}) {
-		return fmt.Errorf("contact point '%s' is currently used by a notification policy", name)
+	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{revision.cfg.AlertmanagerConfig.Route}) {
+		return fmt.Errorf("%w: contact point '%s' is currently used by a notification policy", ErrValidation, name)
 	}
-	data, err := json.Marshal(cfg)
+	data, err := json.Marshal(revision.cfg)
 	if err != nil {
 		return err
 	}
@@ -328,27 +362,12 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		}
 		return ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
-			FetchedConfigurationHash:  fetchedHash,
-			ConfigurationVersion:      "v1",
+			FetchedConfigurationHash:  revision.concurrencyToken,
+			ConfigurationVersion:      revision.version,
 			Default:                   false,
 			OrgID:                     orgID,
 		})
 	})
-}
-
-func (ecp *ContactPointService) getCurrentConfig(ctx context.Context, orgID int64) (*apimodels.PostableUserConfig, string, error) {
-	query := &models.GetLatestAlertmanagerConfigurationQuery{
-		OrgID: orgID,
-	}
-	err := ecp.amStore.GetLatestAlertmanagerConfiguration(ctx, query)
-	if err != nil {
-		return nil, "", err
-	}
-	cfg, err := DeserializeAlertmanagerConfig([]byte(query.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return nil, "", err
-	}
-	return cfg, query.Result.ConfigurationHash, nil
 }
 
 func isContactPointInUse(name string, routes []*apimodels.Route) bool {
@@ -365,6 +384,26 @@ func isContactPointInUse(name string, routes []*apimodels.Route) bool {
 	}
 	return false
 }
+
+// LOGZ.IO GRAFANA CHANGE :: rename receiver in policy when updating name
+func renameReceiverInPolicies(oldName string, newName string, routes []*apimodels.Route) bool {
+	if len(routes) == 0 {
+		return false
+	}
+	for _, route := range routes {
+		if route.Receiver == oldName {
+			route.Receiver = newName
+			return true
+		}
+		if renameReceiverInPolicies(oldName, newName, route.Routes) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 func (ecp *ContactPointService) decryptValue(value string) (string, error) {
 	decodeValue, err := base64.StdEncoding.DecodeString(value)
@@ -387,3 +426,138 @@ func (ecp *ContactPointService) encryptValue(value string) (string, error) {
 	}
 	return base64.StdEncoding.EncodeToString(encryptedData), nil
 }
+
+/// stitchReceiver modifies a receiver, target, in an alertmanager config. It modifies the given config in-place.
+// Returns true if the config was altered in any way, and false otherwise.
+func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) bool {
+	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
+	// All receivers in a given receiver group have the same name. We must maintain this across renames.
+	configModified := false
+groupLoop:
+	for _, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
+		// Does the current group contain the grafana receiver we're interested in?
+		for i, grafanaReceiver := range receiverGroup.GrafanaManagedReceivers {
+			if grafanaReceiver.UID == target.UID {
+				// If it's a basic field change, simply replace it. Done!
+				//
+				// NOTE:
+				// In a "normal" database, receiverGroup.Name should always == grafanaReceiver.Name.
+				// Check it regardless.
+				// If these values are out of sync due to some bug elsewhere in the code, let's fix it up.
+				// Our receiver group fixing logic below will handle it.
+				if grafanaReceiver.Name == target.Name && receiverGroup.Name == grafanaReceiver.Name {
+					receiverGroup.GrafanaManagedReceivers[i] = target
+					configModified = true
+					break groupLoop
+				}
+
+				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
+				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
+				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
+					// LOGZ.IO GRAFANA CHANGE :: rename receiver in policy when updating name
+					if receiverGroup.Name != target.Name {
+						renameReceiverInPolicies(receiverGroup.Name, target.Name, []*apimodels.Route{cfg.AlertmanagerConfig.Route})
+					}
+					// LOGZ.IO GRAFANA CHANGE :: end
+					receiverGroup.Name = target.Name
+					receiverGroup.GrafanaManagedReceivers[i] = target
+					configModified = true
+
+					break groupLoop
+				}
+
+				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
+				// Check to see whether a different group with the name we want already exists.
+				for i, candidateExistingGroup := range cfg.AlertmanagerConfig.Receivers {
+					// If so, put our modified receiver into that group. Done!
+					if candidateExistingGroup.Name == target.Name {
+						// Drop it from the old group...
+						receiverGroup.GrafanaManagedReceivers = append(receiverGroup.GrafanaManagedReceivers[:i], receiverGroup.GrafanaManagedReceivers[i+1:]...)
+						// Add the modified receiver to the new group...
+						candidateExistingGroup.GrafanaManagedReceivers = append(candidateExistingGroup.GrafanaManagedReceivers, target)
+						configModified = true
+						break groupLoop
+					}
+				}
+
+				// Doesn't exist? Create a new group just for the receiver.
+				newGroup := &apimodels.PostableApiReceiver{
+					Receiver: config.Receiver{
+						Name: target.Name,
+					},
+					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+							target,
+						},
+					},
+				}
+				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, newGroup)
+				// Drop it from the old spot.
+				receiverGroup.GrafanaManagedReceivers = append(receiverGroup.GrafanaManagedReceivers[:i], receiverGroup.GrafanaManagedReceivers[i+1:]...)
+				configModified = true
+				break groupLoop
+			}
+		}
+	}
+
+	return configModified
+}
+
+//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove internal settings keys & Guard logzio contact point modification
+
+/**
+We do not allow to modify (update or remove) contact points created as platform wide notification endpoints.
+There is a process which keeps them in sync and in such case we ignore this guard - there is another endpoint which
+is not exposed to user which ignores the check
+*/
+func guardPlatformWideContactPointModification(ctx context.Context, revision *cfgRevision, uidToModify string) error {
+	if shouldSkipGuard(ctx) {
+		return nil
+	}
+
+	for uid, contactPoint := range revision.cfg.GetGrafanaReceiverMap() {
+		if uid == uidToModify {
+			if isPlatformWide, ok := contactPoint.Settings.CheckGet(IsPlatformWideSettingsKey); ok {
+				if isPlatformWideValue, err := isPlatformWide.Bool(); err == nil && isPlatformWideValue {
+					return fmt.Errorf("%w: cannot modify platform wide contact point '%s'", ErrValidation, uidToModify)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+/**
+We hide logzio internal settings key for customers when getting contact points unless they are retrieved
+with internal API
+*/
+func (ecp *ContactPointService) filterLogzioInternalSettingsKey(ctx context.Context, uid string, settings *simplejson.Json) *simplejson.Json {
+	if shouldSkipGuard(ctx) {
+		return settings
+	}
+
+	settingsMap, err := settings.Map()
+
+	if err != nil {
+		ecp.log.Warn("Cannot parse settings for contact point", "uid", uid)
+	}
+
+	for k, v := range settingsMap {
+		if strings.HasPrefix(k, LogzioSettingsPrefix) {
+			settings.Del(k)
+		}
+		if k == IsPlatformWideSettingsKey && v == true {
+			settings.Set("platformWide", true)
+		}
+	}
+
+	return settings
+}
+
+func shouldSkipGuard(ctx context.Context) bool {
+	skipLogzioGuards, exist := ctx.Value(SkipLogzioContactPointGuardsCtxKey).(bool)
+	return exist && skipLogzioGuards
+}
+
+//LOGZ.IO GRAFANA CHANGE :: end

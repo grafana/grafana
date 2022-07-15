@@ -22,7 +22,7 @@ const defaultAlertmanagerConfigJSON = `
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
 				"uid": "",
-				"name": "email receiver",
+				"name": "grafana-default-email",
 				"type": "email",
 				"disableResolveMessage": false,
 				"settings": {

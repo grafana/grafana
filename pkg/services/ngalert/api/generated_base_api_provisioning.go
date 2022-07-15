@@ -22,15 +22,18 @@ import (
 type ProvisioningApiForkingService interface {
 	RouteDeleteAlertRule(*models.ReqContext) response.Response
 	RouteDeleteContactpoints(*models.ReqContext) response.Response
+	RouteInternalDeleteContactpoints(*models.ReqContext) response.Response // LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
 	RouteGetAlertRule(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
+	RouteInternalGetContactpoints(*models.ReqContext) response.Response // LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
 	RouteGetPolicyTree(*models.ReqContext) response.Response
 	RoutePostAlertRule(*models.ReqContext) response.Response
 	RoutePostContactpoints(*models.ReqContext) response.Response
 	RoutePostPolicyTree(*models.ReqContext) response.Response
 	RoutePutAlertRule(*models.ReqContext) response.Response
 	RoutePutAlertRuleGroup(*models.ReqContext) response.Response
-	RoutePutContactpoints(*models.ReqContext) response.Response
+	RoutePutContactpoint(*models.ReqContext) response.Response
+	RouteInternalPutContactpoint(*models.ReqContext) response.Response // LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
 }
 
 func (f *ForkedProvisioningApi) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
@@ -42,6 +45,13 @@ func (f *ForkedProvisioningApi) RouteDeleteContactpoints(ctx *models.ReqContext)
 	return f.forkRouteDeleteContactpoints(ctx)
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+func (f *ForkedProvisioningApi) RouteInternalDeleteContactpoints(ctx *models.ReqContext) response.Response {
+	return f.forkRouteInternalDeleteContactpoints(ctx)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func (f *ForkedProvisioningApi) RouteGetAlertRule(ctx *models.ReqContext) response.Response {
 	uIDParam := web.Params(ctx.Req)[":UID"]
 	return f.forkRouteGetAlertRule(ctx, uIDParam)
@@ -50,6 +60,13 @@ func (f *ForkedProvisioningApi) RouteGetAlertRule(ctx *models.ReqContext) respon
 func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetContactpoints(ctx)
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+func (f *ForkedProvisioningApi) RouteInternalGetContactpoints(ctx *models.ReqContext) response.Response {
+	return f.forkRouteInternalGetContactpoints(ctx)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 func (f *ForkedProvisioningApi) RouteGetPolicyTree(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetPolicyTree(ctx)
@@ -97,13 +114,26 @@ func (f *ForkedProvisioningApi) RoutePutAlertRuleGroup(ctx *models.ReqContext) r
 	return f.forkRoutePutAlertRuleGroup(ctx, conf, folderUIDParam, groupParam)
 }
 
-func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) response.Response {
+func (f *ForkedProvisioningApi) RoutePutContactpoint(ctx *models.ReqContext) response.Response {
+	uIDParam := web.Params(ctx.Req)[":UID"]
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutContactpoints(ctx, conf)
+	return f.forkRoutePutContactpoint(ctx, conf, uIDParam)
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+func (f *ForkedProvisioningApi) RouteInternalPutContactpoint(ctx *models.ReqContext) response.Response {
+	uIDParam := web.Params(ctx.Req)[":UID"]
+	conf := apimodels.EmbeddedContactPoint{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRouteInternalPutContactpoint(ctx, conf, uIDParam)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
@@ -118,15 +148,27 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/provisioning/contact-points/{ID}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/contact-points/{ID}"),
+			toMacaronPath("/api/v1/provisioning/contact-points/{ID}"),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/contact-points/{ID}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/contact-points/{ID}",
+				"/api/v1/provisioning/contact-points/{ID}",
 				srv.RouteDeleteContactpoints,
 				m,
 			),
 		)
+		// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+		group.Delete(
+			toMacaronPath("/api/internal/v1/provisioning/contact-points/{ID}"),
+			api.authorize(http.MethodDelete, "/api/internal/v1/provisioning/contact-points/{ID}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/internal/v1/provisioning/contact-points/{ID}",
+				srv.RouteInternalDeleteContactpoints,
+				m,
+			),
+		)
+		// LOGZ.IO GRAFANA CHANGE :: end
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/alert-rules/{UID}"),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules/{UID}"),
@@ -138,21 +180,33 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/contact-points"),
-			api.authorize(http.MethodGet, "/api/provisioning/contact-points"),
+			toMacaronPath("/api/v1/provisioning/contact-points"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/contact-points",
+				"/api/v1/provisioning/contact-points",
 				srv.RouteGetContactpoints,
 				m,
 			),
 		)
+		// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+		group.Get(
+			toMacaronPath("/api/internal/v1/provisioning/contact-points"),
+			api.authorize(http.MethodGet, "/api/internal/v1/provisioning/contact-points"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/internal/v1/provisioning/contact-points",
+				srv.RouteInternalGetContactpoints,
+				m,
+			),
+		)
+		// LOGZ.IO GRAFANA CHANGE :: end
 		group.Get(
 			toMacaronPath("/api/provisioning/policies"),
 			api.authorize(http.MethodGet, "/api/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/policies",
+				"/api/v1/provisioning/policies",
 				srv.RouteGetPolicyTree,
 				m,
 			),
@@ -168,11 +222,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/provisioning/contact-points"),
-			api.authorize(http.MethodPost, "/api/provisioning/contact-points"),
+			toMacaronPath("/api/v1/provisioning/contact-points"),
+			api.authorize(http.MethodPost, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/provisioning/contact-points",
+				"/api/v1/provisioning/contact-points",
 				srv.RoutePostContactpoints,
 				m,
 			),
@@ -208,14 +262,26 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/contact-points"),
-			api.authorize(http.MethodPut, "/api/provisioning/contact-points"),
+			toMacaronPath("/api/v1/provisioning/contact-points/{UID}"),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/contact-points",
-				srv.RoutePutContactpoints,
+				"/api/v1/provisioning/contact-points/{UID}",
+				srv.RoutePutContactpoint,
 				m,
 			),
 		)
+		// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+		group.Put(
+			toMacaronPath("/api/internal/v1/provisioning/contact-points/{UID}"),
+			api.authorize(http.MethodPut, "/api/internal/v1/provisioning/contact-points/{UID}"),
+			metrics.Instrument(
+				http.MethodPut,
+				"/api/internal/v1/provisioning/contact-points/{UID}",
+				srv.RouteInternalPutContactpoint,
+				m,
+			),
+		)
+		// LOGZ.IO GRAFANA CHANGE :: end
 	}, middleware.ReqSignedIn)
 }
