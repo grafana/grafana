@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
+import { FileRejection } from 'react-dropzone';
 import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton } from '@grafana/ui';
+import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton, Alert } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -18,8 +19,9 @@ import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
+import { UploadModal } from './UploadModal';
 import { getGrafanaStorage, filenameAlreadyExists } from './storage';
-import { StorageView } from './types';
+import { StorageView, UploadReponse } from './types';
 
 interface RouteParams {
   path: string;
@@ -57,6 +59,8 @@ export default function StoragePage(props: Props) {
   };
 
   const [isAddingNewFolder, setIsAddingNewFolder] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   const listing = useAsync((): Promise<DataFrame | undefined> => {
     return getGrafanaStorage()
@@ -86,6 +90,29 @@ export default function StoragePage(props: Props) {
         return frame;
       });
   }, [path]);
+
+  const onUpload = (rsp: UploadReponse) => {
+    console.log('Uploaded: ' + path);
+    if (rsp.path) {
+      setPath(rsp.path);
+    } else {
+      setPath(path); // back to data
+    }
+  };
+
+  const doUpload = async (acceptedFile: File, overwriteExistingFile: boolean) => {
+    if (!acceptedFile) {
+      setErrorMessages(['Please select a file.']);
+      return;
+    }
+
+    const rsp = await getGrafanaStorage().upload(path, acceptedFile, overwriteExistingFile);
+    if (rsp.status !== 200) {
+      setErrorMessages([rsp.message]);
+    } else {
+      onUpload(rsp);
+    }
+  };
 
   const isFolder = useMemo(() => {
     let isFolder = path?.indexOf('/') < 0;
@@ -153,17 +180,56 @@ export default function StoragePage(props: Props) {
       opts.push({ what: StorageView.History, text: 'History' });
     }
 
-    // Hardcode the uploadable folder :)
-    if (isFolder && path.startsWith('resources')) {
-      opts.push({
-        what: StorageView.Upload,
-        text: 'Upload',
-      });
-    }
     const canAddFolder = isFolder && path.startsWith('resources');
     const canDelete = path.startsWith('resources/');
     const canViewDashboard =
       path.startsWith('devenv/') && config.featureToggles.dashboardsFromStorage && (isFolder || path.endsWith('.json'));
+
+    const onFileUpload = (acceptedFiles: File[], rejectedFiles: FileRejection[], overwriteExistingFile: boolean) => {
+      const file = acceptedFiles[0];
+
+      if (rejectedFiles.length > 0) {
+        setErrors(rejectedFiles);
+        return;
+      }
+
+      const filenameExists = file ? filenameAlreadyExists(file.name, fileNames) : false;
+      if (file && filenameExists && !overwriteExistingFile) {
+        setErrorMessages([`${file.name} already exists`]);
+        return;
+      }
+
+      doUpload(file, overwriteExistingFile).then((r) => {});
+    };
+
+    const setErrors = (rejectedFiles: FileRejection[]) => {
+      let errors: string[] = [];
+      rejectedFiles.map((rejectedFile) => {
+        rejectedFile.errors.map((error: FileRejection) => {
+          if (errors.indexOf(error.message) === -1) {
+            errors.push(error.message);
+          }
+        });
+      });
+
+      setErrorMessages(errors);
+    };
+
+    const getErrorMessages = () => {
+      return (
+        <div className={styles.errorAlert}>
+          <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
+            {errorMessages.map((error) => {
+              return <div key={error}>{error}</div>;
+            })}
+          </Alert>
+        </div>
+      );
+    };
+
+    const clearAlert = () => {
+      setErrorMessages([]);
+    };
 
     return (
       <div className={styles.wrapper}>
@@ -175,6 +241,7 @@ export default function StoragePage(props: Props) {
                 Dashboard
               </LinkButton>
             )}
+            <Button onClick={() => setShowUploadModal(true)}>Upload</Button>
             {canAddFolder && <Button onClick={() => setIsAddingNewFolder(true)}>New Folder</Button>}
             {canDelete && (
               <Button
@@ -207,6 +274,8 @@ export default function StoragePage(props: Props) {
           </HorizontalGroup>
         </HorizontalGroup>
 
+        {errorMessages.length > 0 && getErrorMessages()}
+
         <TabsBar>
           {opts.map((opt) => (
             <Tab
@@ -222,6 +291,8 @@ export default function StoragePage(props: Props) {
         ) : (
           <FileView path={path} listing={frame} onPathChange={setPath} view={view} />
         )}
+
+        {showUploadModal && <UploadModal onDismiss={() => setShowUploadModal(false)} onFileUpload={onFileUpload} />}
 
         {isAddingNewFolder && (
           <CreateNewFolderModal
@@ -290,5 +361,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   border: css`
     border: 1px solid ${theme.colors.border.medium};
     padding: ${theme.spacing(2)};
+  `,
+  errorAlert: css`
+    padding-top: 20px;
   `,
 });
