@@ -16,8 +16,8 @@ export enum AxisPlacement {
 }
 
 export enum AxisColorMode {
-  Auto = 'auto',
   Series = 'series',
+  Text = 'text',
 }
 
 export enum VisibilityMode {
@@ -123,9 +123,7 @@ export interface ScaleDistributionConfig {
 }
 
 export interface AxisConfig {
-  axisColor?: {
-    mode: AxisColorMode;
-  };
+  axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;

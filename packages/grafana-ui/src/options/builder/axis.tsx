@@ -83,14 +83,14 @@ export function addAxisConfig(
       },
     })
     .addRadio({
-      path: 'axisColor.mode',
+      path: 'axisColorMode',
       name: 'Color',
       category,
-      defaultValue: AxisColorMode.Auto,
+      defaultValue: AxisColorMode.Text,
       settings: {
         options: [
-          { value: AxisColorMode.Auto, label: 'Auto' },
-          { value: AxisColorMode.Series, label: 'From series' },
+          { value: AxisColorMode.Text, label: 'Text' },
+          { value: AxisColorMode.Series, label: 'Series' },
         ],
       },
     });

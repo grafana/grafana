@@ -197,7 +197,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
       let axisColor: uPlot.Axis.Stroke | undefined;
 
-      if (customConfig.axisColor?.mode === AxisColorMode.Series) {
+      if (customConfig.axisColorMode === AxisColorMode.Series) {
         if (
           colorMode.isByValue &&
           field.config.custom?.gradientMode === GraphGradientMode.Scheme &&
@@ -228,7 +228,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             ticks: {
               stroke: axisColor,
             },
-            color: customConfig.axisColor?.mode === AxisColorMode.Series ? axisColor : undefined,
+            color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
           },
           field
         )
