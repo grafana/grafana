@@ -238,7 +238,7 @@
     "ts-jest": "28.0.3",
     "ts-loader": "9.2.6",
     "ts-node": "10.8.1",
-    "typescript": "4.6.4",
+    "typescript": "4.7.4",
     "wait-on": "6.0.1",
     "webpack": "5.73.0",
     "webpack-bundle-analyzer": "4.5.0",
