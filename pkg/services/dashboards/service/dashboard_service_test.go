@@ -229,7 +229,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 			dashboardStore:     &fakeStore,
 			dashAlertExtractor: &dummyDashAlertExtractor{},
 		}
-		err := service.DeleteAclByUser(context.Background(), 1)
+		err := service.DeleteACLByUser(context.Background(), 1)
 		require.NoError(t, err)
 	})
 }

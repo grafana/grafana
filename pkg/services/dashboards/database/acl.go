@@ -149,7 +149,7 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 	})
 }
 
-func (d *DashboardStore) DeleteAclByUser(ctx context.Context, userID int64) error {
+func (d *DashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var rawSQL = "DELETE FROM dashboard_acl WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)

@@ -594,6 +594,6 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *mod
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) DeleteAclByUser(ctx context.Context, userID int64) error {
-	return dr.dashboardStore.DeleteAclByUser(ctx, userID)
+func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int64) error {
+	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
 }

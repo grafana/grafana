@@ -48,11 +48,6 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		_, err = orgStore.Get(context.Background(), orgID)
 		require.NoError(t, err)
 	})
-
-	t.Run("delete by user", func(t *testing.T) {
-		err := orgStore.DeleteUserFromAll(context.Background(), 1)
-		require.NoError(t, err)
-	})
 }
 
 func TestIntegrationOrgUserDataAccess(t *testing.T) {
@@ -73,6 +68,11 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			Created: time.Now(),
 			Updated: time.Now(),
 		})
+		require.NoError(t, err)
+	})
+
+	t.Run("delete by user", func(t *testing.T) {
+		err := orgUserStore.DeleteUserFromAll(context.Background(), 1)
 		require.NoError(t, err)
 	})
 }

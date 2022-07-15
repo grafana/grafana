@@ -250,7 +250,7 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 
 	t.Run("Delete acl by user", func(t *testing.T) {
 		setup(t)
-		err := dashboardStore.DeleteAclByUser(context.Background(), currentUser.ID)
+		err := dashboardStore.DeleteACLByUser(context.Background(), currentUser.ID)
 		require.NoError(t, err)
 	})
 }
