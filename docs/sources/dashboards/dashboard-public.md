@@ -8,7 +8,7 @@ weight: 8
 
 ## Public dashboards
 
-> **Note:** This page describes a feature for Grafana 9.1 and is available as an opt-in alpha feature.
+> **Note:** This alpha-based feature is opt-in.
 
 > **Caution:** Making your dashboard public could result in a large number of queries to the datasources used by your dashboard.
 > This can be mitigated by utilizing the enterprise [caching](https://grafana.com/docs/grafana/latest/enterprise/query-caching/) and/or rate limiting features.
