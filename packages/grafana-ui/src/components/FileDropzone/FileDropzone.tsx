@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { isString, uniqueId } from 'lodash';
+import { uniqueId, isString } from 'lodash';
 import React, { ReactNode, useCallback, useState } from 'react';
-import { Accept, DropEvent, DropzoneOptions, FileRejection, useDropzone } from 'react-dropzone';
+import { DropEvent, DropzoneOptions, FileRejection, useDropzone, Accept } from 'react-dropzone';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
 import { FileListItem } from './FileListItem';
@@ -59,7 +58,6 @@ export interface DropzoneFile {
 
 export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
-  const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   const setFileProperty = useCallback(
     (customFile: DropzoneFile, action: (customFileToModify: DropzoneFile) => void) => {
@@ -84,8 +82,6 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
       } else {
         setFiles((oldFiles) => [...oldFiles, ...customFiles]);
       }
-
-      setErrors(rejectedFiles);
 
       if (options?.onDrop) {
         options.onDrop(acceptedFiles, rejectedFiles, event);
@@ -165,42 +161,12 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
     return <FileListItem key={file.id} file={file} removeFile={removeFile} />;
   });
 
-  const setErrors = (rejectedFiles: FileRejection[]) => {
-    let errors: string[] = [];
-    rejectedFiles.map((rejectedFile) => {
-      rejectedFile.errors.map((error) => {
-        if (errors.indexOf(error.message) === -1) {
-          errors.push(error.message);
-        }
-      });
-    });
-
-    setErrorMessages(errors);
-  };
-
-  const getErrorMessages = () => {
-    return (
-      <div className={styles.errorAlert}>
-        <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
-          {errorMessages.map((error) => {
-            return <div key={error}>{error}</div>;
-          })}
-        </Alert>
-      </div>
-    );
-  };
-
-  const clearAlert = () => {
-    setErrorMessages([]);
-  };
-
   return (
     <div className={styles.container}>
       <div data-testid="dropzone" {...getRootProps({ className: styles.dropzone })}>
         <input {...getInputProps()} />
         {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
-      {errorMessages.length > 0 && getErrorMessages()}
       {options?.accept && (
         <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options.accept)}</small>
       )}
@@ -309,9 +275,6 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
     `,
     small: css`
       color: ${theme.colors.text.secondary};
-    `,
-    errorAlert: css`
-      padding-top: 10px;
     `,
   };
 }
