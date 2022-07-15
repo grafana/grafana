@@ -343,23 +343,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		sch.alertsSender.Send(key, expiredAlerts)
 	}
 
-	updateRule := func(ctx context.Context, oldRule *ngmodels.AlertRule) (*ngmodels.AlertRule, map[string]string, error) {
-		q := ngmodels.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
-		err := sch.ruleStore.GetAlertRuleByUID(ctx, &q)
-		if err != nil {
-			logger.Error("failed to fetch alert rule", "err", err)
-			return nil, nil, err
-		}
-		if oldRule != nil && oldRule.Version < q.Result.Version {
-			clearState()
-		}
-		newLabels, err := sch.getRuleExtraLabels(ctx, q.Result)
-		if err != nil {
-			return nil, nil, err
-		}
-		return q.Result, newLabels, nil
-	}
-
 	evaluate := func(ctx context.Context, r *ngmodels.AlertRule, extraLabels map[string]string, attempt int64, e *evaluation) {
 		logger := logger.New("version", r.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
