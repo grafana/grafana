@@ -284,7 +284,7 @@ function getAggregationByRendererWithParameter(aggregation: string) {
     const restParams = model.params.slice(restParamIndex);
 
     return `${aggregation} by(${restParams.join(', ')}) (${params
-      .map((param, idx) => (def.params[idx].type === 'string' ? `\"${param}\"` : param))
+      .map((param, idx) => def.params[idx].type === 'string' ? `\"${param}\"` : param)
       .join(', ')}, ${innerExpr})`;
   };
 }
