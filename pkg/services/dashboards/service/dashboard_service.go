@@ -225,7 +225,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		},
 	}
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, true, false)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), false)
 	if err != nil {
 		return nil, err
 	}
@@ -243,14 +243,17 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		OrgID: dto.OrgId,
 	}
 
-	alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-	if err != nil {
-		return nil, err
-	}
+	// extract/save legacy alerts only if legacy alerting is enabled
+	if setting.IsLegacyAlertingEnabled() {
+		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
+		if err != nil {
+			return nil, err
+		}
 
-	err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
-	if err != nil {
-		return nil, err
+		err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if dto.Dashboard.Id == 0 {
@@ -284,14 +287,17 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 		OrgID: dto.OrgId,
 	}
 
-	alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-	if err != nil {
-		return nil, err
-	}
+	// extract/save legacy alerts only if legacy alerting is enabled
+	if setting.IsLegacyAlertingEnabled() {
+		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
+		if err != nil {
+			return nil, err
+		}
 
-	err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
-	if err != nil {
-		return nil, err
+		err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if dto.Dashboard.Id == 0 {
@@ -312,7 +318,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, true, !allowUiUpdate)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), !allowUiUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -328,14 +334,17 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		OrgID: dto.OrgId,
 	}
 
-	alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-	if err != nil {
-		return nil, err
-	}
+	// extract/save legacy alerts only if legacy alerting is enabled
+	if setting.IsLegacyAlertingEnabled() {
+		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
+		if err != nil {
+			return nil, err
+		}
 
-	err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
-	if err != nil {
-		return nil, err
+		err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// new dashboard created

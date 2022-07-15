@@ -1659,15 +1659,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           }
         ],
         "responses": {
           "201": {
-            "description": "AlertRule",
+            "description": "ProvisionedAlertRule",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           },
           "400": {
@@ -1698,9 +1698,9 @@
         ],
         "responses": {
           "200": {
-            "description": "AlertRule",
+            "description": "ProvisionedAlertRule",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           },
           "404": {
@@ -1730,15 +1730,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "AlertRule",
+            "description": "ProvisionedAlertRule",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           },
           "400": {
@@ -4205,6 +4205,149 @@
     },
     "Provenance": {
       "type": "string"
+    },
+    "ProvisionedAlertRule": {
+      "type": "object",
+      "required": [
+        "orgID",
+        "folderUID",
+        "ruleGroup",
+        "title",
+        "condition",
+        "data",
+        "noDataState",
+        "execErrState",
+        "for"
+      ],
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "runbook_url": "https://supercoolrunbook.com/page/13"
+          }
+        },
+        "condition": {
+          "type": "string",
+          "example": "A"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "example": [
+            {
+              "datasourceUid": "-100",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0,
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": []
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "avg"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "1 == 1",
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A",
+                "type": "math"
+              },
+              "queryType": "",
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              }
+            }
+          ]
+        },
+        "execErrState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "Error",
+            "OK"
+          ]
+        },
+        "folderUID": {
+          "type": "string",
+          "example": "project_x"
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "team": "sre-team-1"
+          }
+        },
+        "noDataState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "orgID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "ruleGroup": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "example": "eval_group_1"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "example": "Always firing"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
     },
     "PushoverConfig": {
       "type": "object",

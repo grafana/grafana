@@ -27,3 +27,13 @@ export function extractLogParserFromDataFrame(frame: DataFrame): { hasLogfmt: bo
 
   return { hasLogfmt, hasJSON };
 }
+
+export function extractHasErrorLabelFromDataFrame(frame: DataFrame): boolean {
+  const labelField = frame.fields.find((field) => field.name === 'labels' && field.type === FieldType.other);
+  if (labelField == null) {
+    return false;
+  }
+
+  const labels: Array<{ [key: string]: string }> = labelField.values.toArray();
+  return labels.some((label) => label['__error__']);
+}
