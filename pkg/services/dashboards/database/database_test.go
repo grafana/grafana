@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	publicDashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	publicDashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -30,14 +30,14 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
-	var publicDashboardStore *publicdashboardsStore.PublicDashboardStoreImpl
+	var publicDashboardStore *publicDashboardsStore.PublicDashboardStoreImpl
 	var starService star.Service
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
 		starService = starimpl.ProvideService(sqlStore)
 		dashboardStore = ProvideDashboardStore(sqlStore)
-		publicDashboardStore = publicdashboardsStore.ProvideStore(sqlStore)
+		publicDashboardStore = publicDashboardsStore.ProvideStore(sqlStore)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
