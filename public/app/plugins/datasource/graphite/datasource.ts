@@ -12,6 +12,7 @@ import {
   DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
+  dateTime,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
@@ -76,6 +77,7 @@ export class GraphiteDatasource
   funcDefs: FuncDefs | null = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
+  requestCounter = 100;
   private readonly metricMappings: GraphiteLokiMapping[];
 
   constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
@@ -459,7 +461,16 @@ export class GraphiteDatasource
 
     const queryObject = convertToGraphiteQueryObject(findQuery);
     if (queryObject.queryType !== GraphiteQueryType.Default) {
-      return this.requestMetricRender(queryObject, options.requestId, options.range);
+      const reqId = options.requestId ?? `Q${this.requestCounter++}`;
+      const timerange: TimeRange = options.range ?? {
+        from: dateTime().subtract(6, 'hour'),
+        to: dateTime(),
+        raw: {
+          from: 'now - 6h',
+          to: 'now',
+        },
+      };
+      return this.requestMetricRender(queryObject, reqId, timerange);
     }
 
     let query = queryObject.target ?? '';
@@ -510,6 +521,23 @@ export class GraphiteDatasource
     }
   }
 
+  /**
+   * Search for metrics matching giving pattern using /metrics/render endpoint.
+   * It will return all possible values and parse them based on queryType.
+   * For example:
+   *
+   * queryType: GraphiteQueryType.Value
+   * query: groupByNode(movingAverage(apps.country.IE.counters.requests.count, 10), 2, 'sum')
+   * result: 239.4, 233.4, 230.8, 230.4, 233.9, 238, 239.8, 236.8, 235.8
+   *
+   * queryType: GraphiteQueryType.MetricName
+   * query: apps.backend.*.counters.requests.count
+   * result:
+   *     apps.backend.backend_01.counters.requests.count
+   *     apps.backend.backend_02.counters.requests.count
+   *     apps.backend.backend_03.counters.requests.count
+   *     apps.backend.backend_04.counters.requests.count
+   */
   private async requestMetricRender(
     queryObject: GraphiteQuery,
     requestId: string,
