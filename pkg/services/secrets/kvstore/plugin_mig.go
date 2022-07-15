@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -13,7 +12,6 @@ import (
 // PluginSecretMigrationService This migrator will handle migration of datasource secrets (aka Unified secrets)
 // into the plugin secrets configured
 type PluginSecretMigrationService struct {
-	features       featuremgmt.FeatureToggles
 	secretsStore   SecretsKVStore
 	cfg            *setting.Cfg
 	logger         log.Logger
@@ -23,7 +21,6 @@ type PluginSecretMigrationService struct {
 }
 
 func ProvidePluginSecretMigrationService(
-	features featuremgmt.FeatureToggles,
 	secretsStore SecretsKVStore,
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
@@ -31,7 +28,6 @@ func ProvidePluginSecretMigrationService(
 	remoteCheck UseRemoteSecretsPluginCheck,
 ) *PluginSecretMigrationService {
 	return &PluginSecretMigrationService{
-		features:       features,
 		secretsStore:   secretsStore,
 		cfg:            cfg,
 		logger:         log.New("sec-plugin-mig"),
