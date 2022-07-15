@@ -58,7 +58,6 @@ export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
     datasourceUid?: string;
-    datasourceName?: string;
   };
   search?: {
     hide?: boolean;
@@ -101,7 +100,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
     datasourceUid?: string;
-    datasourceName?: string;
   };
   search?: {
     hide?: boolean;
