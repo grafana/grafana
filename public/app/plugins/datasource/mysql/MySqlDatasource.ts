@@ -8,7 +8,7 @@ import MySQLQueryModel from './MySqlQueryModel';
 import MySqlResponseParser from './MySqlResponseParser';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
-import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
+import { fetchColumns, fetchTables, getFunctions, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
@@ -38,6 +38,7 @@ export class MySqlDatasource extends SqlDatasource {
       getColumns: { current: (query: SQLQuery) => fetchColumns(db, query) },
       getTables: { current: (dataset?: string) => fetchTables(db, { dataset }) },
       fetchMeta: { current: (path?: string) => this.fetchMeta(path) },
+      getFunctions: { current: () => getFunctions() },
     };
     this.completionProvider = getSqlCompletionProvider(args);
     return this.completionProvider;
@@ -105,6 +106,9 @@ export class MySqlDatasource extends SqlDatasource {
       dsID: () => this.id,
       lookup: (path?: string) => this.fetchMeta(path),
       getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
+      functions: async () => {
+        return getFunctions();
+      },
     };
   }
 }

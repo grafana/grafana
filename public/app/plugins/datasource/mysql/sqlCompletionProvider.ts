@@ -12,19 +12,22 @@ import {
 } from '@grafana/experimental';
 import { PositionContext } from '@grafana/experimental/dist/sql-editor/types';
 import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
-import { DB, MetaDefinition, SQLQuery } from 'app/features/plugins/sql/types';
+import { Aggregate, DB, MetaDefinition, SQLQuery } from 'app/features/plugins/sql/types';
+
+import { FUNCTIONS } from './functions';
 
 interface CompletionProviderGetterArgs {
   getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;
   getTables: React.MutableRefObject<(d?: string) => Promise<TableDefinition[]>>;
   fetchMeta: React.MutableRefObject<(d?: string) => Promise<MetaDefinition[]>>;
+  getFunctions: React.MutableRefObject<(d?: string) => Aggregate[]>;
 }
 
 export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
-  ({ getColumns, getTables, fetchMeta }) =>
+  ({ getColumns, getTables, fetchMeta, getFunctions }) =>
   () => ({
     triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
-    supportedFunctions: () => AGGREGATE_FNS,
+    supportedFunctions: () => getFunctions.current(),
     supportedOperators: () => OPERATORS,
     customSuggestionKinds: customSuggestionKinds(getTables, getColumns, fetchMeta),
     customStatementPlacement,
@@ -215,4 +218,8 @@ export async function fetchColumns(db: DB, q: SQLQuery) {
 export async function fetchTables(db: DB, q: Partial<SQLQuery>) {
   const tables = await db.lookup(q.dataset);
   return tables;
+}
+
+export function getFunctions(): Aggregate[] {
+  return [...AGGREGATE_FNS, ...FUNCTIONS];
 }
