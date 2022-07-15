@@ -13,7 +13,7 @@ import { QueryHeader } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
-export type Props = QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions>;
+type Props = QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions>;
 
 export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range }: Props) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
