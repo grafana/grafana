@@ -593,3 +593,7 @@ func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, 
 func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }
+
+func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int64) error {
+	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
+}

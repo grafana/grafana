@@ -64,7 +64,7 @@ type API struct {
 	DatasourceCache      datasources.CacheService
 	RouteRegister        routing.RouteRegister
 	ExpressionService    *expr.Service
-	QuotaService         *quota.QuotaService
+	QuotaService         quota.Service
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore

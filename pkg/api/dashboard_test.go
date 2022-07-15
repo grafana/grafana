@@ -34,7 +34,7 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -1012,7 +1012,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			Cfg:                 cfg,
 			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                newTestLive(t, sqlstore.InitTestDB(t)),
-			QuotaService: &quota.QuotaService{
+			QuotaService: &quotaimpl.Service{
 				Cfg: cfg,
 			},
 			pluginStore:           &fakePluginStore{},
@@ -1048,7 +1048,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, sqlstore.InitTestDB(t)),
-			QuotaService:            &quota.QuotaService{Cfg: cfg},
+			QuotaService:            &quotaimpl.Service{Cfg: cfg},
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                sqlmock,
@@ -1085,7 +1085,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, sqlstore.InitTestDB(t)),
-			QuotaService:            &quota.QuotaService{Cfg: cfg},
+			QuotaService:            &quotaimpl.Service{Cfg: cfg},
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
 			DashboardService:        mock,
