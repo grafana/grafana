@@ -72,16 +72,18 @@ func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
+type ruleVersion int64
+
 type alertRuleInfo struct {
 	evalCh   chan *evaluation
-	updateCh chan struct{}
+	updateCh chan ruleVersion
 	ctx      context.Context
 	stop     context.CancelFunc
 }
 
 func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan struct{}), ctx: ctx, stop: cancel}
+	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan ruleVersion), ctx: ctx, stop: cancel}
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
@@ -109,10 +111,23 @@ func (a *alertRuleInfo) eval(t time.Time, version int64) (bool, *evaluation) {
 	}
 }
 
-// update signals the rule evaluation routine to update the internal state. Does nothing if the loop is stopped
-func (a *alertRuleInfo) update() bool {
+// update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
+func (a *alertRuleInfo) update(lastVersion ruleVersion) bool {
+	// check if the channel is not empty.
+	msg := lastVersion
 	select {
-	case a.updateCh <- struct{}{}:
+	case v := <-a.updateCh:
+		// if it has a version pick the greatest one.
+		if v > msg {
+			msg = v
+		}
+	case <-a.ctx.Done():
+		return false
+	default:
+	}
+
+	select {
+	case a.updateCh <- msg:
 		return true
 	case <-a.ctx.Done():
 		return false

@@ -1,5 +1,5 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
-import { SQLConnectionLimits } from 'app/features/plugins/sql/components/configuration/types';
+import { SQLConnectionLimits } from 'app/features/plugins/sql/types';
 
 export enum PostgresTLSModes {
   disable = 'disable',
