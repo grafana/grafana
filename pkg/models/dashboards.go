@@ -36,7 +36,7 @@ type Dashboard struct {
 	CreatedBy int64
 	FolderId  int64
 	IsFolder  bool
-	HasAcl    bool
+	HasACL    bool
 
 	Title string
 	Data  *simplejson.Json

@@ -24,7 +24,7 @@ type DashboardMeta struct {
 	UpdatedBy                  string                `json:"updatedBy"`
 	CreatedBy                  string                `json:"createdBy"`
 	Version                    int                   `json:"version"`
-	HasAcl                     bool                  `json:"hasAcl"`
+	HasACL                     bool                  `json:"hasACL"`
 	IsFolder                   bool                  `json:"isFolder"`
 	FolderId                   int64                 `json:"folderId"`
 	FolderUid                  string                `json:"folderUid"`
