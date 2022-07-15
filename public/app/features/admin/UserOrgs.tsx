@@ -163,7 +163,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
 
   onOrgRemove = async () => {
     const { org, user } = this.props;
-    user && (await updateUserRoles([], user.id, org.orgId));
+    contextSrv.licensedAccessControlEnabled() && user && (await updateUserRoles([], user.id, org.orgId));
     this.props.onOrgRemove(org.orgId);
   };
 
