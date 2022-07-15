@@ -12,7 +12,7 @@ import config from 'app/core/config';
 // Types
 import { PanelOptions, TextMode } from './models.gen';
 
-interface Props extends PanelProps<PanelOptions> {}
+export interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
   html: string;
@@ -90,7 +90,11 @@ export class TextPanel extends PureComponent<Props, State> {
     const styles = getStyles();
     return (
       <CustomScrollbar autoHeightMin="100%">
-        <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.content)} />
+        <DangerouslySetHtmlContent
+          html={html}
+          className={cx('markdown-html', styles.content)}
+          data-testid="TextPanel-converted-content"
+        />
       </CustomScrollbar>
     );
   }
