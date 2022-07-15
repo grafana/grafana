@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	AuthModuleLDAP = "ldap"
+	AuthModuleLDAP  = "ldap"
+	AuthModuleProxy = "authproxy"
 )
 
 type UserAuth struct {
