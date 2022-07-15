@@ -56,7 +56,7 @@ func (f FakeSecretsKVStore) Del(ctx context.Context, orgId int64, namespace stri
 
 func (f FakeSecretsKVStore) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
 	res := make([]Key, 0)
-	for k, _ := range f.store {
+	for k := range f.store {
 		if k.OrgId == orgId && k.Namespace == namespace && k.Type == typ {
 			res = append(res, k)
 		}
