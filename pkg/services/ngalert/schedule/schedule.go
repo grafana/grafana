@@ -3,6 +3,7 @@ package schedule
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"time"
 
@@ -343,11 +344,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		sch.alertsSender.Send(key, expiredAlerts)
 	}
 
-	evaluate := func(ctx context.Context, r *ngmodels.AlertRule, extraLabels map[string]string, attempt int64, e *evaluation) {
-		logger := logger.New("version", r.Version, "attempt", attempt, "now", e.scheduledAt)
+	evaluate := func(ctx context.Context, extraLabels map[string]string, attempt int64, e *evaluation) {
+		logger := logger.New("version", e.rule.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
-		results := sch.evaluator.ConditionEval(ctx, r.GetEvalCondition(), e.scheduledAt)
+		results := sch.evaluator.ConditionEval(ctx, e.rule.GetEvalCondition(), e.scheduledAt)
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
@@ -358,7 +359,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 		}
 
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results, extraLabels)
+		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, extraLabels)
 		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		sch.alertsSender.Send(key, alerts)
@@ -377,25 +378,23 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	}
 
 	evalRunning := false
-	var currentRule *ngmodels.AlertRule
+	var currentRuleVersion int64 = math.MinInt64
 	var extraLabels map[string]string
 	defer sch.stopApplied(key)
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
-		case version := <-updateCh:
+		case lastVersion := <-updateCh:
 			// sometimes it can happen when, for example, the rule evaluation took so long,
 			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
 			// therefore, at the time when message from updateCh is processed the current rule will have
 			// at least the same version (or greater) and the state created for the new version of the rule.
-			if currentRule == nil {
+			if currentRuleVersion >= int64(lastVersion) {
+				logger.Info("skip updating rule because its current version is actual", "version", currentRuleVersion, "new_version", lastVersion)
 				continue
 			}
-			if currentRule.Version >= int64(version) {
-				logger.Info("skip updating rule because its current version is actual", "current_version", currentRule.Version, "new_version", version)
-				continue
-			}
-			logger.Info("clearing the state of the rule because version has changed", "current_version", currentRule.Version, "new_version", version)
+			logger.Info("clearing the state of the rule because version has changed", "version", currentRuleVersion, "new_version", lastVersion)
+			// clear the state. So the next evaluation will start from the scratch.
 			clearState()
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
@@ -415,18 +414,21 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				}()
 
 				err := retryIfError(func(attempt int64) error {
+					newVersion := ctx.rule.Version
 					// fetch latest alert rule version
-					if currentRule == nil || currentRule.Version < ctx.rule.Version {
-						clearState()
+					if currentRuleVersion != newVersion {
+						if currentRuleVersion > math.MinInt64 { // do not clean up state if the eval loop has just started.
+							logger.Debug("got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "new_version", newVersion)
+							clearState()
+						}
 						newLabels, err := sch.getRuleExtraLabels(grafanaCtx, ctx.rule)
 						if err != nil {
 							return err
 						}
-						currentRule = ctx.rule
+						currentRuleVersion = newVersion
 						extraLabels = newLabels
-						logger.Debug("new alert rule version fetched", "title", currentRule.Title, "version", currentRule.Version)
 					}
-					evaluate(grafanaCtx, currentRule, extraLabels, attempt, ctx)
+					evaluate(grafanaCtx, extraLabels, attempt, ctx)
 					return nil
 				})
 				if err != nil {
