@@ -189,31 +189,32 @@ export class Graph {
     return edges;
   }
 
-  descendants(nodes: Node[] | string[]): Node[] {
+  descendants(nodes: Node[] | string[]): Set<Node> {
     if (!nodes.length) {
-      return [];
+      return new Set();
     }
 
-    if (isStringArray(nodes)) {
-      nodes = nodes.map((n) => this.nodes[n]).filter((n) => n !== undefined);
-    }
+    const initialNodes = new Set(
+      isStringArray(nodes) ? nodes.map((n) => this.nodes[n]).filter((n) => n !== undefined) : nodes
+    );
 
-    return this.descendantsRecursive(nodes);
+    return this.descendantsRecursive(initialNodes);
   }
 
-  private descendantsRecursive(nodes: Node[], descendants = new Set<Node>()): Node[] {
+  private descendantsRecursive(nodes: Set<Node>, descendants = new Set<Node>()): Set<Node> {
     for (const node of nodes) {
-      const newDescendants = node.inputEdges
-        .map((n) => n.inputNode!)
-        .filter((n) => n !== undefined && !descendants.has(n));
-      for (const n of newDescendants) {
-        descendants.add(n);
+      const newDescendants = new Set<Node>();
+      for (const { inputNode } of node.inputEdges) {
+        if (inputNode && !descendants.has(inputNode)) {
+          descendants.add(inputNode);
+          newDescendants.add(inputNode);
+        }
       }
 
       this.descendantsRecursive(newDescendants, descendants);
     }
 
-    return [...descendants];
+    return descendants;
   }
 
   createEdge(): Edge {

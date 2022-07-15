@@ -1,5 +1,6 @@
 import { DataLinkBuiltInVars } from '@grafana/data';
 import { Graph } from 'app/core/utils/dag';
+import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
@@ -261,7 +262,7 @@ export function getAllAffectedPanelIdsForVariableChange(
   variableGraph: Graph,
   panelsByVar: Record<string, Set<number>>
 ): Set<number> {
-  const allDependencies = new Set(variableGraph.descendants(variableIds).map((n) => n.name));
+  const allDependencies = mapSet(variableGraph.descendants(variableIds), (n) => n.name);
   allDependencies.add(DataLinkBuiltInVars.includeVars);
   for (const id of variableIds) {
     allDependencies.add(id);
