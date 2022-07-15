@@ -142,7 +142,8 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
         weekStart={dashboard.weekStart}
         liveNow={dashboard.liveNow}
       />
-
+      
+      { /* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
       <CollapsableSection label="Panel options" isOpen={true}>
         <Field
           label="Graph tooltip"
