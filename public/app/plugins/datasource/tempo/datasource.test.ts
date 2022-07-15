@@ -574,6 +574,14 @@ const backendSrvWithPrometheus = {
     }
     throw new Error('unexpected uid');
   },
+  getDataSourceSettingsByUid(uid: string) {
+    if (uid === 'prom') {
+      return { name: 'Prometheus' };
+    } else if (uid === 'gdev-tempo') {
+      return { name: 'Tempo' };
+    }
+    return '';
+  },
 };
 
 function setupBackendSrv(frame: DataFrame) {
@@ -594,7 +602,7 @@ function setupBackendSrv(frame: DataFrame) {
 
 const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
-  uid: '0',
+  uid: 'gdev-tempo',
   type: 'tracing',
   name: 'tempo',
   access: 'proxy',
@@ -773,7 +781,7 @@ const serviceGraphLinks = [
         queryType: 'nativeSearch',
         serviceName: '${__data.fields[0]}',
       } as TempoQuery,
-      datasourceUid: 'tempo',
+      datasourceUid: 'gdev-tempo',
       datasourceName: 'Tempo',
     },
   },
