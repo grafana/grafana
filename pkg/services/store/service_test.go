@@ -16,7 +16,14 @@ import (
 )
 
 var (
-	dummyUser = &models.SignedInUser{OrgId: 1}
+	dummyUser           = &models.SignedInUser{OrgId: 1}
+	allowAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
+		return map[string]filestorage.PathFilter{
+			ActionFilesDelete: allowAllPathFilter,
+			ActionFilesWrite:  allowAllPathFilter,
+			ActionFilesRead:   allowAllPathFilter,
+		}
+	})
 )
 
 func TestListFiles(t *testing.T) {
@@ -38,7 +45,7 @@ func TestListFiles(t *testing.T) {
 
 	store := newStandardStorageService(sqlstore.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	})
+	}, allowAllAuthService)
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
@@ -62,7 +69,7 @@ func setupUploadStore(t *testing.T) (StorageService, *filestorage.MockFileStorag
 
 	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	})
+	}, allowAllAuthService)
 
 	return store, mockStorage, storageName
 }
@@ -117,7 +124,7 @@ func TestShouldDelegateFolderCreation(t *testing.T) {
 func TestShouldDelegateFolderDeletion(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t)
 
-	mockStorage.On("DeleteFolder", mock.Anything, "/", &filestorage.DeleteFolderOptions{Force: true}).Return(nil)
+	mockStorage.On("DeleteFolder", mock.Anything, "/", mock.Anything).Return(nil)
 
 	err := service.DeleteFolder(context.Background(), dummyUser, &DeleteFolderCmd{
 		Path:  storageName,
