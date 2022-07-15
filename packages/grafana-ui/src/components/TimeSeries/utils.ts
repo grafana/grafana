@@ -209,6 +209,22 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         }
       }
 
+      let axisColorOpts = {};
+
+      if (axisColor) {
+        axisColorOpts = {
+          border: {
+            show: true,
+            width: 1,
+            stroke: axisColor,
+          },
+          ticks: {
+            stroke: axisColor,
+          },
+          color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
+        };
+      }
+
       builder.addAxis(
         tweakAxis(
           {
@@ -220,15 +236,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             theme,
             grid: { show: customConfig.axisGridShow },
             show: customConfig.hideFrom?.viz === false,
-            border: {
-              show: true,
-              width: 1,
-              stroke: axisColor,
-            },
-            ticks: {
-              stroke: axisColor,
-            },
-            color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
+            ...axisColorOpts,
           },
           field
         )
