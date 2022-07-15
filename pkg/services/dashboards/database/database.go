@@ -993,7 +993,7 @@ func (d *DashboardStore) GetDashboardTags(ctx context.Context, query *models.Get
 
 func (d *DashboardStore) HasActivePublicDashboard(ctx context.Context, query *models.HasActivePublicDashboardQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		sql := "SELECT COUNT(*) FROM dashboard_public WHERE dashboard_uid=? AND is_enabled=1"
+		sql := "SELECT COUNT(*) FROM dashboard_public WHERE dashboard_uid=? AND is_enabled=true"
 
 		result, err := dbSession.SQL(sql, query.DashboardUid).Count()
 		query.Result = result > 0
