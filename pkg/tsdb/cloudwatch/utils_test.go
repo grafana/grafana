@@ -21,20 +21,16 @@ import (
 type fakeCWLogsClient struct {
 	cloudwatchlogsiface.CloudWatchLogsAPI
 
-	startCalls logsStartQueryCalls
-	eventCalls logsGetEventsCalls
+	calls logsQueryCalls
 
 	logGroups      cloudwatchlogs.DescribeLogGroupsOutput
 	logGroupFields cloudwatchlogs.GetLogGroupFieldsOutput
 	queryResults   cloudwatchlogs.GetQueryResultsOutput
 }
 
-type logsStartQueryCalls struct {
+type logsQueryCalls struct {
 	startQueryWithContext []*cloudwatchlogs.StartQueryInput
-}
-
-type logsGetEventsCalls struct {
-	getEventsWithContext []*cloudwatchlogs.GetLogEventsInput
+	getEventsWithContext  []*cloudwatchlogs.GetLogEventsInput
 }
 
 func (m *fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
@@ -42,7 +38,7 @@ func (m *fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input
 }
 
 func (m *fakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
-	m.startCalls.startQueryWithContext = append(m.startCalls.startQueryWithContext, input)
+	m.calls.startQueryWithContext = append(m.calls.startQueryWithContext, input)
 
 	return &cloudwatchlogs.StartQueryOutput{
 		QueryId: aws.String("abcd-efgh-ijkl-mnop"),
@@ -64,7 +60,7 @@ func (m *fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, inp
 }
 
 func (m *fakeCWLogsClient) GetLogEventsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogEventsInput, option ...request.Option) (*cloudwatchlogs.GetLogEventsOutput, error) {
-	m.eventCalls.getEventsWithContext = append(m.eventCalls.getEventsWithContext, input)
+	m.calls.getEventsWithContext = append(m.calls.getEventsWithContext, input)
 
 	return &cloudwatchlogs.GetLogEventsOutput{
 		Events: []*cloudwatchlogs.OutputLogEvent{},

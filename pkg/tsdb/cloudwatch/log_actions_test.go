@@ -100,8 +100,8 @@ func TestQuery_GetLogEvents(t *testing.T) {
 			})
 
 			require.NoError(t, err)
-			require.Len(t, cli.eventCalls.getEventsWithContext, 1)
-			assert.Equal(t, test.expectedInput, cli.eventCalls.getEventsWithContext)
+			require.Len(t, cli.calls.getEventsWithContext, 1)
+			assert.Equal(t, test.expectedInput, cli.calls.getEventsWithContext)
 		})
 	}
 }
@@ -489,7 +489,7 @@ func Test_executeStartQuery(t *testing.T) {
 				QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
 				LogGroupNames: []*string{aws.String("some name"), aws.String("another name")},
 			},
-		}, cli.startCalls.startQueryWithContext)
+		}, cli.calls.startQueryWithContext)
 	})
 
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
@@ -514,8 +514,8 @@ func Test_executeStartQuery(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		require.Len(t, cli.startCalls.startQueryWithContext, 1)
-		assert.Nil(t, cli.startCalls.startQueryWithContext[0].Limit)
+		require.Len(t, cli.calls.startQueryWithContext, 1)
+		assert.Nil(t, cli.calls.startQueryWithContext[0].Limit)
 	})
 }
 
