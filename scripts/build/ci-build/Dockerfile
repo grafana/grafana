@@ -174,7 +174,7 @@ RUN cd /tmp && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
 
-RUN go install github.com/mgechev/revive@v1.0.2 && \
+RUN go install github.com/mgechev/revive@v1.2.1 && \
   mv ${GOPATH}/bin/revive /usr/local/bin/ && \
   go install github.com/google/go-jsonnet/cmd/jsonnetfmt@latest && \
   mv ${GOPATH}/bin/jsonnetfmt /usr/local/bin/ && \
