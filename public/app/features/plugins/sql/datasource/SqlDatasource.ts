@@ -204,6 +204,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 interface RunSQLOptions extends MetricFindQueryOptions {
   refId?: string;
 }
+
 interface MetricFindQueryOptions extends SearchFilterOptions {
   range?: TimeRange;
 }

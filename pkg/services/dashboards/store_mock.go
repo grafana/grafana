@@ -435,7 +435,7 @@ func (_m *FakeDashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dash
 	return r0, r1
 }
 
-func (_m *FakeDashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error{
+func (_m *FakeDashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
 	ret := _m.Called(ctx, userID)
 
 	var r0 error
