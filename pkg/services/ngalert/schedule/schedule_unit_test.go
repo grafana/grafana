@@ -39,7 +39,7 @@ import (
 )
 
 func TestSendingToExternalAlertmanager(t *testing.T) {
-	fakeAM := store.NewFakeExternalAlertmanager(t)
+	fakeAM := sender.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := store.NewFakeRuleStore(t)
 	fakeInstanceStore := &store.FakeInstanceStore{}
@@ -104,7 +104,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 }
 
 func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
-	fakeAM := store.NewFakeExternalAlertmanager(t)
+	fakeAM := sender.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := store.NewFakeRuleStore(t)
 	fakeInstanceStore := &store.FakeInstanceStore{}
@@ -174,7 +174,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// }, 20*time.Second, 200*time.Millisecond, "Alertmanager never received an '%s' from org 1 or '%s' from org 2, the alert count was: %d", alertRuleOrgOne.Title, alertRuleOrgTwo.Title, count)
 
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
-	fakeAM2 := store.NewFakeExternalAlertmanager(t)
+	fakeAM2 := sender.NewFakeExternalAlertmanager(t)
 	adminConfig2 = &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.Server.URL, fakeAM2.Server.URL}}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
@@ -245,7 +245,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 }
 
 func TestChangingAlertmanagersChoice(t *testing.T) {
-	fakeAM := store.NewFakeExternalAlertmanager(t)
+	fakeAM := sender.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := store.NewFakeRuleStore(t)
 	fakeInstanceStore := &store.FakeInstanceStore{}
@@ -681,7 +681,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 	t.Run("when rule version is updated", func(t *testing.T) {
 		t.Run("should clear the state and expire firing alerts", func(t *testing.T) {
-			fakeAM := store.NewFakeExternalAlertmanager(t)
+			fakeAM := sender.NewFakeExternalAlertmanager(t)
 			defer fakeAM.Close()
 
 			orgID := rand.Int63()
@@ -794,7 +794,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			t.Skip()
 		})
 		t.Run("it should send to external alertmanager if configured for organization", func(t *testing.T) {
-			fakeAM := store.NewFakeExternalAlertmanager(t)
+			fakeAM := sender.NewFakeExternalAlertmanager(t)
 			defer fakeAM.Close()
 
 			orgID := rand.Int63()
