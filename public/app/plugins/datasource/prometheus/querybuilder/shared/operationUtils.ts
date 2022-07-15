@@ -283,15 +283,8 @@ function getAggregationByRendererWithParameter(aggregation: string) {
     const params = model.params.slice(0, restParamIndex);
     const restParams = model.params.slice(restParamIndex);
 
-    function mapType(p: QueryBuilderOperationParamValue, type: string) {
-      if (type === 'string') {
-        return `\"${p}\"`;
-      }
-      return p;
-    }
-
     return `${aggregation} by(${restParams.join(', ')}) (${params
-      .map((param, idx) => mapType(param, def.params[idx].type))
+      .map((param, idx) => (def.params[idx].type === 'string' ? `\"${param}\"` : param))
       .join(', ')}, ${innerExpr})`;
   };
 }
