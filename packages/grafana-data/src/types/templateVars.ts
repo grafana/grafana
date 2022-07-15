@@ -1,7 +1,7 @@
 import { LoadingState } from './data';
 import { DataSourceRef } from './query';
 
-export type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system';
+export type VariableType = TypedVariableModel['type'];
 
 /** @deprecated Use TypedVariableModel instead */
 export interface VariableModel {
