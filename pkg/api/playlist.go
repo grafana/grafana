@@ -153,7 +153,6 @@ func (hs *HTTPServer) CreatePlaylist(c *models.ReqContext) response.Response {
 	p, err := hs.playlistService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(500, "Failed to create playlist", err)
-
 	}
 
 	return response.JSON(http.StatusOK, p)
