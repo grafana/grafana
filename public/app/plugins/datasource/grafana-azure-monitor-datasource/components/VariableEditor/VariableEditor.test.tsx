@@ -34,7 +34,6 @@ const defaultProps = {
     getResourceGroups: jest.fn().mockResolvedValue([{ text: 'rg', value: 'rg' }]),
     getMetricNamespaces: jest.fn().mockResolvedValue([{ text: 'foo/bar', value: 'foo/bar' }]),
     getResourceNames: jest.fn().mockResolvedValue([{ text: 'foobar', value: 'foobar' }]),
-    getMetricNames: jest.fn().mockResolvedValue([{ text: 'ff', value: 'ff' }]),
     getVariablesRaw: jest.fn().mockReturnValue([
       { label: 'query0', name: 'sub0' },
       { label: 'query1', name: 'rg', query: { queryType: AzureQueryType.ResourceGroupsQuery } },
