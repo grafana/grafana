@@ -18,6 +18,9 @@
 }
 
 .panel-in-fullscreen {
+  .react-grid-layout {
+    height: auto !important;
+  }
   .react-grid-item {
     display: none !important;
     transition-property: none !important;

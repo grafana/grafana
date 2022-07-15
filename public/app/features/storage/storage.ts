@@ -1,5 +1,8 @@
 import { DataFrame, dataFrameFromJSON, DataFrameJSON, getDisplayProcessor } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { DashboardDTO } from 'app/types';
 
 import { UploadReponse } from './types';
 
@@ -10,6 +13,13 @@ export interface GrafanaStorage {
   upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadReponse>;
   createFolder: (path: string) => Promise<{ error?: string }>;
   delete: (path: { isFolder: boolean; path: string }) => Promise<{ error?: string }>;
+
+  /**
+   * Temporary shim that will return a DashboardDTO shape for files in storage
+   * Longer term, this will call an "Entity API" that is eventually backed by storage
+   */
+  getDashboard: (path: string) => Promise<DashboardDTO>;
+  saveDashboard: (options: SaveDashboardCommand) => Promise<any>;
 }
 
 class SimpleStorage implements GrafanaStorage {
@@ -103,6 +113,75 @@ class SimpleStorage implements GrafanaStorage {
     }
     return body;
   }
+
+  // Temporary shim that can be loaded into the existing dashboard page structure
+  async getDashboard(path: string): Promise<DashboardDTO> {
+    if (!config.featureToggles.dashboardsFromStorage) {
+      return Promise.reject('Dashboards from storage is not enabled');
+    }
+
+    if (!path.endsWith('.json')) {
+      path += '.json';
+    }
+    const result = await backendSrv.get(`/api/storage/read/${path}`);
+    result.uid = path;
+    delete result.id; // Saved with the dev dashboards!
+
+    return {
+      meta: {
+        uid: path,
+        slug: path,
+        canEdit: true,
+        canSave: true,
+        canStar: false, // needs id
+      },
+      dashboard: result,
+    };
+  }
+
+  async saveDashboard(options: SaveDashboardCommand): Promise<any> {
+    if (!config.featureToggles.dashboardsFromStorage) {
+      return Promise.reject('Dashboards from storage is not enabled');
+    }
+
+    const blob = new Blob([JSON.stringify(options.dashboard)], {
+      type: 'application/json',
+    });
+
+    const uid = options.dashboard.uid;
+    const formData = new FormData();
+    if (options.message) {
+      formData.append('message', options.message);
+    }
+    formData.append('overwriteExistingFile', options.overwrite === false ? 'false' : 'true');
+    formData.append('file.path', uid);
+    formData.append('file', blob);
+    const res = await fetch('/api/storage/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    let body = (await res.json()) as UploadReponse;
+    if (res.status !== 200 && !body?.err) {
+      console.log('SAVE', options, body);
+      return Promise.reject({ message: body?.message ?? res.statusText });
+    }
+
+    return {
+      uid,
+      url: `/g/${uid}`,
+      slug: uid,
+      status: 'success',
+    };
+  }
+}
+
+export function filenameAlreadyExists(folderName: string, fileNames: string[]) {
+  const lowerCase = folderName.toLowerCase();
+  const trimmedLowerCase = lowerCase.trim();
+  const existingTrimmedLowerCaseNames = fileNames.map((f) => f.trim().toLowerCase());
+
+  return existingTrimmedLowerCaseNames.includes(trimmedLowerCase);
 }
 
 let storage: GrafanaStorage | undefined;
@@ -112,12 +191,4 @@ export function getGrafanaStorage() {
     storage = new SimpleStorage();
   }
   return storage;
-}
-
-export function filenameAlreadyExists(folderName: string, fileNames: string[]) {
-  const lowerCase = folderName.toLowerCase();
-  const trimmedLowerCase = lowerCase.trim();
-  const existingTrimmedLowerCaseNames = fileNames.map((f) => f.trim().toLowerCase());
-
-  return existingTrimmedLowerCaseNames.includes(trimmedLowerCase);
 }

@@ -394,6 +394,114 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 	return nil
 }
 
+const managedFolderAlertActionsRepeatMigratorID = "managed folder permissions alert actions repeated migration"
+
+/*
+AddManagedFolderAlertActionsMigration has to be run after AddDashboardPermissionsMigrator, as it is only effective if dashboard permissions have already been migrated.
+AddManagedFolderAlertActionsRepeatMigrator ensures that alerting permissions that have already been added won't get added twice.
+*/
+func AddManagedFolderAlertActionsRepeatMigration(mg *migrator.Migrator) {
+	mg.AddMigration(managedFolderAlertActionsRepeatMigratorID, &managedFolderAlertActionsRepeatMigrator{})
+}
+
+type managedFolderAlertActionsRepeatMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *managedFolderAlertActionsRepeatMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	var ids []interface{}
+	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
+		return err
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var permissions []ac.Permission
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
+		return err
+	}
+
+	mapped := make(map[int64]map[string][]ac.Permission, len(ids)-1)
+	for _, p := range permissions {
+		if mapped[p.RoleID] == nil {
+			mapped[p.RoleID] = make(map[string][]ac.Permission)
+		}
+		mapped[p.RoleID][p.Scope] = append(mapped[p.RoleID][p.Scope], p)
+	}
+
+	var toAdd []ac.Permission
+	now := time.Now()
+
+	for id, a := range mapped {
+		for scope, p := range a {
+			if hasFolderView(p) {
+				if !hasAction(ac.ActionAlertingRuleRead, permissions) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAlertingRuleRead,
+					})
+				}
+			}
+
+			if hasFolderAdmin(p) || hasFolderEdit(p) {
+				if !hasAction(ac.ActionAlertingRuleCreate, permissions) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAlertingRuleCreate,
+					})
+				}
+				if !hasAction(ac.ActionAlertingRuleDelete, permissions) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAlertingRuleDelete,
+					})
+				}
+				if !hasAction(ac.ActionAlertingRuleUpdate, permissions) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAlertingRuleUpdate,
+					})
+				}
+			}
+		}
+	}
+
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	err := batch(len(toAdd), batchSize, func(start, end int) error {
+		if _, err := sess.InsertMulti(toAdd[start:end]); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func hasFolderAdmin(permissions []ac.Permission) bool {
 	return hasActions(folderPermissionTranslation[models.PERMISSION_ADMIN], permissions)
 }
@@ -417,4 +525,8 @@ func hasActions(actions []string, permissions []ac.Permission) bool {
 		}
 	}
 	return contains >= len(actions)
+}
+
+func hasAction(action string, permissions []ac.Permission) bool {
+	return hasActions([]string{action}, permissions)
 }
