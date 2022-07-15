@@ -17,7 +17,14 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-const LogzioSettingsPrefix = "logzio_" //LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove internal settings keys
+//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove internal settings keys
+const (
+	LogzioSettingsPrefix               = "logzio_"
+	IsPlatformWideSettingsKey          = "logzio_is_system_wide"
+	SkipLogzioContactPointGuardsCtxKey = "skip_logzio_cp_guards"
+)
+
+//LOGZ.IO GRAFANA CHANGE :: end
 
 type ContactPointService struct {
 	amStore           AMConfigStore
@@ -54,7 +61,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 			Type:                  contactPoint.Type,
 			Name:                  contactPoint.Name,
 			DisableResolveMessage: contactPoint.DisableResolveMessage,
-			Settings:              ecp.filterLogzioInternalSettingsKey(contactPoint.UID, contactPoint.Settings), //LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove internal settings keys
+			Settings:              ecp.filterLogzioInternalSettingsKey(ctx, contactPoint.UID, contactPoint.Settings), //LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove internal settings keys
 		}
 		if val, exists := provenances[embeddedContactPoint.UID]; exists && val != "" {
 			embeddedContactPoint.Provenance = string(val)
@@ -266,6 +273,11 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Guard platform wide contact point modification
+	if guardErr := guardPlatformWideContactPointModification(ctx, revision, contactPoint.UID); guardErr != nil {
+		return guardErr
+	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 
 	configModified := stitchReceiver(revision.cfg, mergedReceiver)
 	if !configModified {
@@ -301,6 +313,12 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Guard platform wide contact point modification
+	if guardErr := guardPlatformWideContactPointModification(ctx, revision, uid); guardErr != nil {
+		return guardErr
+	}
+	// LOGZ.IO GRAFANA CHANGE :: end
+
 	// Indicates if the full contact point is removed or just one of the
 	// configurations, as a contactpoint can consist of any number of
 	// configurations.
@@ -328,7 +346,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		}
 	}
 	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{revision.cfg.AlertmanagerConfig.Route}) {
-		return fmt.Errorf("contact point '%s' is currently used by a notification policy", name)
+		return fmt.Errorf("%w: contact point '%s' is currently used by a notification policy", ErrValidation, name)
 	}
 	data, err := json.Marshal(revision.cfg)
 	if err != nil {
@@ -485,21 +503,61 @@ groupLoop:
 	return configModified
 }
 
-//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove internal settings keys
-func (ecp *ContactPointService) filterLogzioInternalSettingsKey(uid string, settings *simplejson.Json) *simplejson.Json {
+//LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Remove internal settings keys & Guard logzio contact point modification
+
+/**
+We do not allow to modify (update or remove) contact points created as platform wide notification endpoints.
+There is a process which keeps them in sync and in such case we ignore this guard - there is another endpoint which
+is not exposed to user which ignores the check
+*/
+func guardPlatformWideContactPointModification(ctx context.Context, revision *cfgRevision, uidToModify string) error {
+	if shouldSkipGuard(ctx) {
+		return nil
+	}
+
+	for uid, contactPoint := range revision.cfg.GetGrafanaReceiverMap() {
+		if uid == uidToModify {
+			if isPlatformWide, ok := contactPoint.Settings.CheckGet(IsPlatformWideSettingsKey); ok {
+				if isPlatformWideValue, err := isPlatformWide.Bool(); err == nil && isPlatformWideValue {
+					return fmt.Errorf("%w: cannot modify platform wide contact point '%s'", ErrValidation, uidToModify)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+/**
+We hide logzio internal settings key for customers when getting contact points unless they are retrieved
+with internal API
+*/
+func (ecp *ContactPointService) filterLogzioInternalSettingsKey(ctx context.Context, uid string, settings *simplejson.Json) *simplejson.Json {
+	if shouldSkipGuard(ctx) {
+		return settings
+	}
+
 	settingsMap, err := settings.Map()
 
 	if err != nil {
 		ecp.log.Warn("Cannot parse settings for contact point", "uid", uid)
 	}
 
-	for k, _ := range settingsMap {
+	for k, v := range settingsMap {
 		if strings.HasPrefix(k, LogzioSettingsPrefix) {
 			settings.Del(k)
+		}
+		if k == IsPlatformWideSettingsKey && v == true {
+			settings.Set("platformWide", true)
 		}
 	}
 
 	return settings
+}
+
+func shouldSkipGuard(ctx context.Context) bool {
+	skipLogzioGuards, exist := ctx.Value(SkipLogzioContactPointGuardsCtxKey).(bool)
+	return exist && skipLogzioGuards
 }
 
 //LOGZ.IO GRAFANA CHANGE :: end

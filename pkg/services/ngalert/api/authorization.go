@@ -195,7 +195,14 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		return middleware.ReqEditorRole
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Guard platform wide contact point modification
+	case http.MethodGet + "/api/internal/v1/provisioning/contact-points",
+		http.MethodDelete + "/api/internal/v1/provisioning/contact-points/{ID}",
+		http.MethodPut + "/api/internal/v1/provisioning/contact-points/{UID}":
+		return middleware.ReqGrafanaAdmin
 	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 
 	if eval != nil {
 		return authorize(fallback, eval)

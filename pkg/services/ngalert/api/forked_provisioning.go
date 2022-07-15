@@ -31,6 +31,13 @@ func (f *ForkedProvisioningApi) forkRouteGetContactpoints(ctx *models.ReqContext
 	return f.svc.RouteGetContactPoints(ctx)
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+func (f *ForkedProvisioningApi) forkRouteInternalGetContactpoints(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteInternalGetContactPoints(ctx)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func (f *ForkedProvisioningApi) forkRoutePostContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	return f.svc.RoutePostContactPoint(ctx, cp)
 }
@@ -39,9 +46,23 @@ func (f *ForkedProvisioningApi) forkRoutePutContactpoint(ctx *models.ReqContext,
 	return f.svc.RoutePutContactPoint(ctx, cp, UID)
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+func (f *ForkedProvisioningApi) forkRouteInternalPutContactpoint(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint, UID string) response.Response {
+	return f.svc.RouteInternalPutContactPoint(ctx, cp, UID)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func (f *ForkedProvisioningApi) forkRouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteDeleteContactPoint(ctx)
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+func (f *ForkedProvisioningApi) forkRouteInternalDeleteContactpoints(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteInternalDeleteContactPoint(ctx)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 func (f *ForkedProvisioningApi) forkRouteGetAlertRule(ctx *models.ReqContext, UID string) response.Response {
 	return f.svc.RouteRouteGetAlertRule(ctx, UID)
