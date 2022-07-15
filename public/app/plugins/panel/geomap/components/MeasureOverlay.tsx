@@ -6,24 +6,16 @@ import { Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource } from 'ol/source';
 import { getArea, getLength } from 'ol/sphere';
 import { Circle as CircleStyle, Fill, RegularShape, Stroke, Style, Text } from 'ol/style';
-import React, { PureComponent } from 'react';
+import React, { useState } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme } from '@grafana/data';
 import { IconButton, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
-interface Props {
+type Props = {
   map: Map;
-}
-
-interface State {
-  clearPrevious: boolean;
-  firstLoad: boolean;
-  menuActive: boolean;
-  showSegments: boolean;
-  typeSelect: string;
-}
+};
 
 // Open Layer styles
 const style = new Style({
@@ -252,61 +244,61 @@ function addInteraction(map: Map, typeSelect: string, showSegments: boolean, cle
   map.addInteraction(draw);
 }
 
-export class MeasureOverlay extends PureComponent<Props, State> {
-  style = getStyles(config.theme);
+export const MeasureOverlay = ({ map }: Props) => {
+  const measureStyle = getStyles(config.theme);
 
-  constructor(props: Props) {
-    super(props);
-    // TODO: refactor into functional component
-    // TODO: add clearPrevious and showSegments to control options
-    this.state = { ...this.state, clearPrevious: true, firstLoad: true, showSegments: false, typeSelect: 'LineString' };
-  }
+  // Menu State Management
+  const [firstLoad, setFirstLoad] = useState<boolean>(true);
+  const [menuActive, setMenuActive] = useState<boolean>(false);
 
-  render() {
-    return (
-      <div className={this.style.infoWrap} style={{ paddingBottom: '4px' }}>
-        {this.state.menuActive ? (
-          <RadioButtonGroup
-            value={this.state.typeSelect}
-            options={[
-              { label: 'Length', value: 'LineString' },
-              { label: 'Area', value: 'Polygon' },
-            ]}
-            size="sm"
-            onChange={(e) => {
-              this.props.map.removeInteraction(draw);
-              this.setState({ typeSelect: e });
-              addInteraction(this.props.map, e, this.state.showSegments, this.state.clearPrevious);
-            }}
-          />
-        ) : null}
-        <IconButton
-          name="ruler-combined"
-          style={{ marginLeft: '5px' }}
-          tooltip={`${this.state.menuActive ? 'hide' : 'show'} measure tools`}
-          tooltipPlacement="right"
-          onClick={() => {
-            this.setState({ ...this.state, menuActive: !this.state.menuActive });
-            if (this.state.menuActive) {
-              this.props.map.removeInteraction(draw);
-              vector.set('visible', false);
-            } else {
-              if (this.state.firstLoad) {
-                // Initialize on first load
-                this.setState({ ...this.state, firstLoad: false });
-                this.props.map.addLayer(vector);
-                this.props.map.addInteraction(modify);
-              }
-              vector.set('visible', true);
-              this.props.map.removeInteraction(draw); // Remove last interaction
-              addInteraction(this.props.map, this.state.typeSelect, this.state.showSegments, this.state.clearPrevious);
-            }
+  // Options State
+  const [typeSelect, setTypeSelect] = useState<string>('LineString');
+  const clearPrevious = true;
+  const showSegments = false;
+
+  return (
+    <div className={measureStyle.infoWrap} style={{ paddingBottom: '4px' }}>
+      {menuActive ? (
+        <RadioButtonGroup
+          value={typeSelect}
+          options={[
+            { label: 'Length', value: 'LineString' },
+            { label: 'Area', value: 'Polygon' },
+          ]}
+          size="sm"
+          onChange={(e) => {
+            map.removeInteraction(draw);
+            setTypeSelect(e);
+            addInteraction(map, e, showSegments, clearPrevious);
           }}
         />
-      </div>
-    );
-  }
-}
+      ) : null}
+      <IconButton
+        name="ruler-combined"
+        style={{ marginLeft: '5px' }}
+        tooltip={`${menuActive ? 'hide' : 'show'} measure tools`}
+        tooltipPlacement="right"
+        onClick={() => {
+          setMenuActive(!menuActive);
+          if (menuActive) {
+            map.removeInteraction(draw);
+            vector.set('visible', false);
+          } else {
+            if (firstLoad) {
+              // Initialize on first load
+              setFirstLoad(false);
+              map.addLayer(vector);
+              map.addInteraction(modify);
+            }
+            vector.set('visible', true);
+            map.removeInteraction(draw); // Remove last interaction
+            addInteraction(map, typeSelect, showSegments, clearPrevious);
+          }
+        }}
+      />
+    </div>
+  );
+};
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   infoWrap: css`
