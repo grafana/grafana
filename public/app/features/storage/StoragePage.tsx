@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
-import { FileRejection } from 'react-dropzone';
+import { FileError, FileRejection } from 'react-dropzone';
 import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
@@ -205,7 +205,7 @@ export default function StoragePage(props: Props) {
     const setErrors = (rejectedFiles: FileRejection[]) => {
       let errors: string[] = [];
       rejectedFiles.map((rejectedFile) => {
-        rejectedFile.errors.map((error: FileRejection) => {
+        rejectedFile.errors.map((error: FileError) => {
           if (errors.indexOf(error.message) === -1) {
             errors.push(error.message);
           }
