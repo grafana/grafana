@@ -124,7 +124,6 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       scale: scaleKey,
       show,
       stroke: color ?? theme.colors.text.primary,
-      border: border,
       side: getUPlotSideFromAxis(placement),
       font,
       size:
@@ -160,6 +159,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         }),
       filter,
     };
+
+    if (border != null) {
+      config.border = border;
+    }
 
     if (label != null && label.length > 0) {
       config.label = label;
