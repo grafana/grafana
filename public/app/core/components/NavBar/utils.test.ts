@@ -1,6 +1,6 @@
 import { Location } from 'history';
 
-import { NavModelItem } from '@grafana/data';
+import { GrafanaConfig, locationUtil, NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import { updateConfig } from '../../config';
@@ -167,6 +167,10 @@ describe('getActiveItem', () => {
       url: '/itemWithQueryParam?foo=bar',
     },
     {
+      text: 'Item after subpath',
+      url: '/subUrl/itemAfterSubpath',
+    },
+    {
       text: 'Item with children',
       url: '/itemWithChildren',
       children: [
@@ -193,12 +197,27 @@ describe('getActiveItem', () => {
       url: '/d/moreSpecificDashboard',
     },
   ];
+  beforeEach(() => {
+    locationUtil.initialize({
+      config: { appSubUrl: '/subUrl' } as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
+    });
+  });
 
   it('returns an exact match at the top level', () => {
     const mockPathName = '/item';
     expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
       text: 'Item',
       url: '/item',
+    });
+  });
+
+  it('returns an exact match ignoring root subpath', () => {
+    const mockPathName = '/itemAfterSubpath';
+    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
+      text: 'Item after subpath',
+      url: '/subUrl/itemAfterSubpath',
     });
   });
 

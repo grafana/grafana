@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	busmock "github.com/grafana/grafana/pkg/bus/mock"
@@ -153,6 +154,9 @@ func TestAlertingTicker(t *testing.T) {
 		},
 	}
 
+	notifier := &schedule.AlertsSenderMock{}
+	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return()
+
 	schedCfg := schedule.SchedulerCfg{
 		Cfg: cfg,
 		C:   mockedClock,
@@ -166,6 +170,7 @@ func TestAlertingTicker(t *testing.T) {
 		InstanceStore: dbstore,
 		Logger:        log.New("ngalert schedule test"),
 		Metrics:       testMetrics.GetSchedulerMetrics(),
+		AlertSender:   notifier,
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	appUrl := &url.URL{

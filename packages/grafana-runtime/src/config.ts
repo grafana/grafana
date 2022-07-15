@@ -169,6 +169,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     }
 
     overrideFeatureTogglesFromUrl(this);
+
+    // Special feature toggle that impact theme/component looks
+    this.theme2.flags.topnav = this.featureToggles.topnav;
   }
 }
 

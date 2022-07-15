@@ -120,3 +120,7 @@ func (s *inmemStore) Update(ctx context.Context, preference *pref.Preference) er
 	s.preference[key] = *preference
 	return nil
 }
+
+func (s *inmemStore) DeleteByUser(ctx context.Context, userID int64) error {
+	panic("not yet implemented")
+}

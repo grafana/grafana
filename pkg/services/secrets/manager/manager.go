@@ -145,7 +145,7 @@ func (s *SecretsService) providersInitialized() bool {
 	return len(s.providers) > 0
 }
 
-func (s *SecretsService) useEnvelopeEncryption(payload []byte) bool {
+func (s *SecretsService) encryptedWithEnvelopeEncryption(payload []byte) bool {
 	return len(payload) > 0 && payload[0] == keyIdDelimiter
 }
 
@@ -347,7 +347,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 
 	// If encrypted with envelope encryption, the feature is disabled and
 	// no provider is initialized, then we throw an error.
-	if s.useEnvelopeEncryption(payload) &&
+	if s.encryptedWithEnvelopeEncryption(payload) &&
 		s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) &&
 		!s.providersInitialized() {
 		err = fmt.Errorf("failed to decrypt a secret encrypted with envelope encryption: envelope encryption is disabled")
@@ -356,7 +356,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 
 	var dataKey []byte
 
-	if !s.useEnvelopeEncryption(payload) {
+	if !s.encryptedWithEnvelopeEncryption(payload) {
 		secretKey := s.settings.KeyValue("security", "secret_key").Value()
 		dataKey = []byte(secretKey)
 	} else {
