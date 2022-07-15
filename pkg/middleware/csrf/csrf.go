@@ -26,7 +26,7 @@ type CSRF struct {
 	SafeEndpoints  map[string]struct{}
 }
 
-func ProvideCSRFFilter(cfg *setting.Cfg) Service {
+func ProvideService(cfg *setting.Cfg) Service {
 	c := &CSRF{
 		Cfg:            cfg,
 		TrustedOrigins: map[string]struct{}{},

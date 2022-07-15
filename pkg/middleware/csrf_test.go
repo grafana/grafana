@@ -236,7 +236,7 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httpte
 	rr := httptest.NewRecorder()
 	cfg := setting.NewCfg()
 	cfg.LoginCookieName = cookieName
-	service := csrf.ProvideCSRFFilter(cfg)
+	service := csrf.ProvideService(cfg)
 	handler := service.Middleware()(testHandler)
 	handler.ServeHTTP(rr, req)
 	return rr
