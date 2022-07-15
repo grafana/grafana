@@ -127,7 +127,7 @@ describe('initDataSourceSettings', () => {
     it('then initDataSourceSettingsFailed should be dispatched', async () => {
       const dispatchedActions = await thunkTester({}).givenThunk(initDataSourceSettings).whenThunkIsDispatched('');
 
-      expect(dispatchedActions).toEqual([initDataSourceSettingsFailed(new Error('Invalid ID'))]);
+      expect(dispatchedActions).toEqual([initDataSourceSettingsFailed(new Error('Invalid UID'))]);
     });
   });
 

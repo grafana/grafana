@@ -14,6 +14,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
   return (
     <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">
+        {/* Name */}
         <div className="gf-form max-width-30">
           <InlineField
             label="Name"
@@ -33,6 +34,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
           </InlineField>
         </div>
 
+        {/* Is Default */}
         <InlineField label="Default" labelWidth={8}>
           <InlineSwitch
             id="basic-settings-default"

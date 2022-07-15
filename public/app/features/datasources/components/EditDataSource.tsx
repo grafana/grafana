@@ -35,25 +35,25 @@ import { DataSourceTestingStatus } from './DataSourceTestingStatus';
 
 export type Props = {
   // The ID of the data source
-  id: string;
+  uid: string;
   // The ID of the custom datasource setting page
   pageId?: string | null;
 };
 
-export function EditDataSource({ id, pageId }: Props): React.ReactElement {
-  useInitDataSourceSettings(id);
+export function EditDataSource({ uid, pageId }: Props): React.ReactElement {
+  useInitDataSourceSettings(uid);
 
   const dispatch = useDispatch();
-  const dataSource = useDataSource(id);
-  const dataSourceMeta = useDataSourceMeta(id);
-  const dataSourceSettings = useDataSourceSettings(id);
-  const dataSourceRights = useDataSourceRights(id);
-  const exploreUrl = useDataSourceExploreUrl(id);
+  const dataSource = useDataSource(uid);
+  const dataSourceMeta = useDataSourceMeta(uid);
+  const dataSourceSettings = useDataSourceSettings();
+  const dataSourceRights = useDataSourceRights(uid);
+  const exploreUrl = useDataSourceExploreUrl(uid);
   const onDelete = useDeleteLoadedDataSource();
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
   const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));
-  const onTest = useTestDataSource(id);
+  const onTest = useTestDataSource(uid);
   const onUpdate = (ds: DataSourceSettingsType) => updateDataSource({ ...ds });
 
   return (

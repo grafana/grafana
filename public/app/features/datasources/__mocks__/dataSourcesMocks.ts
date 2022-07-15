@@ -26,6 +26,7 @@ export const getMockDataSources = (amount: number, overrides?: Partial<DataSourc
     getMockDataSource({
       ...overrides,
       id: i,
+      uid: `uid-${i}`,
       database: overrides?.database ? `${overrides.database}-${i}` : `database-${i}`,
       name: overrides?.name ? `${overrides.name}-${i}` : `dataSource-${i}`,
     })

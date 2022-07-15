@@ -53,7 +53,7 @@ export interface TestDataSourceDependencies {
 }
 
 export const initDataSourceSettings = (
-  pageId: string,
+  uid: string,
   dependencies: InitDataSourceSettingDependencies = {
     loadDataSource,
     loadDataSourceMeta,
@@ -63,13 +63,13 @@ export const initDataSourceSettings = (
   }
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    if (!pageId) {
-      dispatch(initDataSourceSettingsFailed(new Error('Invalid ID')));
+    if (!uid) {
+      dispatch(initDataSourceSettingsFailed(new Error('Invalid UID')));
       return;
     }
 
     try {
-      const loadedDataSource = await dispatch(dependencies.loadDataSource(pageId));
+      const loadedDataSource = await dispatch(dependencies.loadDataSource(uid));
       await dispatch(dependencies.loadDataSourceMeta(loadedDataSource));
 
       // have we already loaded the plugin then we can skip the steps below?
@@ -77,7 +77,7 @@ export const initDataSourceSettings = (
         return;
       }
 
-      const dataSource = dependencies.getDataSource(getState().dataSources, pageId);
+      const dataSource = dependencies.getDataSource(getState().dataSources, uid);
       const dataSourceMeta = dependencies.getDataSourceMeta(getState().dataSources, dataSource!.type);
       const importedPlugin = await dependencies.importDataSourcePlugin(dataSourceMeta);
 

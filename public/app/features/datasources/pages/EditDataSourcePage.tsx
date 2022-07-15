@@ -9,15 +9,15 @@ import { useDataSourceSettingsNav } from '../state';
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 export function EditDataSourcePage(props: Props): React.ReactElement {
-  const dataSourceUid = props.match.params.uid;
+  const uid = props.match.params.uid;
   const params = new URLSearchParams(props.location.search);
   const pageId = params.get('page');
-  const nav = useDataSourceSettingsNav(dataSourceUid, pageId);
+  const nav = useDataSourceSettingsNav(uid, pageId);
 
   return (
     <Page navModel={nav}>
       <Page.Contents>
-        <EditDataSource id={dataSourceUid} pageId={pageId} />
+        <EditDataSource uid={uid} pageId={pageId} />
       </Page.Contents>
     </Page>
   );

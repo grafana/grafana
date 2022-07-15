@@ -24,7 +24,7 @@ import {
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from './navModel';
 import { getDataSource, getDataSourceMeta } from './selectors';
 
-export const useInitDataSourceSettings = (id: string) => {
+export const useInitDataSourceSettings = (uid: string) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -40,10 +40,10 @@ export const useInitDataSourceSettings = (id: string) => {
   }, [uid, dispatch]);
 };
 
-export const useTestDataSource = (id: string) => {
+export const useTestDataSource = (uid: string) => {
   const dispatch = useDispatch();
 
-  return () => dispatch(testDataSource(id));
+  return () => dispatch(testDataSource(uid));
 };
 
 export const useLoadDataSources = () => {
@@ -106,29 +106,29 @@ export const useDeleteLoadedDataSource = () => {
   };
 };
 
-export const useDataSource = (id: string) => {
-  return useSelector((state: StoreState) => getDataSource(state.dataSources, id));
+export const useDataSource = (uid: string) => {
+  return useSelector((state: StoreState) => getDataSource(state.dataSources, uid));
 };
 
-export const useDataSourceExploreUrl = (id: string) => {
-  const dataSource = useDataSource(id);
+export const useDataSourceExploreUrl = (uid: string) => {
+  const dataSource = useDataSource(uid);
   const exploreState = JSON.stringify({ datasource: dataSource.name, context: 'explore' });
   const exploreUrl = urlUtil.renderUrl('/explore', { left: exploreState });
 
   return exploreUrl;
 };
 
-export const useDataSourceMeta = (id: string): DataSourcePluginMeta => {
-  return useSelector((state: StoreState) => getDataSourceMeta(state.dataSources, id));
+export const useDataSourceMeta = (uid: string): DataSourcePluginMeta => {
+  return useSelector((state: StoreState) => getDataSourceMeta(state.dataSources, uid));
 };
 
-export const useDataSourceSettings = (id: string) => {
+export const useDataSourceSettings = () => {
   return useSelector((state: StoreState) => state.dataSourceSettings);
 };
 
 export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | null) => {
   const dataSource = useDataSource(dataSourceId);
-  const { plugin, loadError, loading } = useDataSourceSettings(dataSourceId);
+  const { plugin, loadError, loading } = useDataSourceSettings();
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navIndexId = pageId ? `datasource-page-${pageId}` : `datasource-settings-${dataSourceId}`;
 
@@ -152,8 +152,8 @@ export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | 
   return getNavModel(navIndex, navIndexId, getDataSourceNav(buildNavModel(dataSource, plugin), pageId || 'settings'));
 };
 
-export const useDataSourceRights = (id: string): DataSourceRights => {
-  const dataSource = useDataSource(id);
+export const useDataSourceRights = (uid: string): DataSourceRights => {
+  const dataSource = useDataSource(uid);
   const readOnly = dataSource.readOnly === true;
   const hasWriteRights = contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesWrite, dataSource);
   const hasDeleteRights = contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesDelete, dataSource);
