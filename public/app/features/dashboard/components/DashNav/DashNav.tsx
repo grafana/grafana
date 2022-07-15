@@ -288,7 +288,6 @@ export const DashNav = React.memo<Props>((props) => {
     );
   }
 
-  console.log(props.dashboard);
   return (
     <PageToolbar
       pageIcon={isFullscreen ? undefined : 'apps'}
