@@ -106,9 +106,7 @@ export class MySqlDatasource extends SqlDatasource {
       dsID: () => this.id,
       lookup: (path?: string) => this.fetchMeta(path),
       getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
-      functions: async () => {
-        return getFunctions();
-      },
+      functions: async () => getFunctions(),
     };
   }
 }

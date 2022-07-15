@@ -36,15 +36,22 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
 export enum CustomStatementPlacement {
   AfterDataset = 'afterDataset',
   AfterFrom = 'afterFrom',
+  AfterSelect = 'afterSelect',
 }
 
 export enum CustomSuggestionKind {
   TablesWithinDataset = 'tablesWithinDataset',
 }
 
+export enum Direction {
+  Next = 'next',
+  Previous = 'previous',
+}
+
 const TRIGGER_SUGGEST = 'editor.action.triggerSuggest';
 
 enum Keyword {
+  Select = 'SELECT',
   Where = 'WHERE',
   From = 'FROM',
 }
@@ -65,6 +72,15 @@ export const customStatementPlacement: StatementPlacementProvider = () => [
       return Boolean(isAfterFrom(currentToken));
     },
   },
+  {
+    id: CustomStatementPlacement.AfterSelect,
+    resolve: (token, previousKeyword) => {
+      const is =
+        isDirectlyAfter(token, Keyword.Select) ||
+        (isAfterSelect(token) && token?.previous?.is(TokenType.Delimiter, ','));
+      return Boolean(is);
+    },
+  },
 ];
 
 export const customSuggestionKinds: (
@@ -83,10 +99,10 @@ export const customSuggestionKinds: (
       },
     },
     {
-      id: `MYSQL${StatementPosition.WhereKeyword}`,
-      applyTo: [StatementPosition.WhereKeyword],
+      id: 'metaAfterSelect',
+      applyTo: [CustomStatementPlacement.AfterSelect],
       suggestionsResolver: async (ctx) => {
-        const path = ctx.currentToken?.value || '';
+        const path = getPath(ctx.currentToken, Direction.Next);
         const t = await fetchMeta.current(path);
         return t.map((meta) => {
           const completion = meta.kind === CompletionItemKind.Class ? `${meta.completion}.` : meta.completion;
@@ -95,30 +111,10 @@ export const customSuggestionKinds: (
       },
     },
     {
-      id: StatementPosition.WhereComparisonOperator,
-      applyTo: [StatementPosition.WhereComparisonOperator],
+      id: 'metaAfterSelectFuncArg',
+      applyTo: [StatementPosition.AfterSelectFuncFirstArgument],
       suggestionsResolver: async (ctx) => {
-        if (!isAfterWhere(ctx.currentToken)) {
-          return [];
-        }
-        const path = ctx.currentToken?.value || '';
-        const t = await fetchMeta.current(path);
-        const sugg = t.map((meta) => {
-          const completion = meta.kind === CompletionItemKind.Class ? `${meta.completion}.` : meta.completion;
-          return suggestion(meta.name, completion!, meta.kind, ctx);
-        });
-        return sugg;
-      },
-    },
-    {
-      id: 'metaAfterSelect',
-      applyTo: [StatementPosition.AfterSelectKeyword],
-      suggestionsResolver: async (ctx) => {
-        let path = ctx.currentToken?.value || '';
-        const fromValue = keywordValue(ctx.currentToken, Keyword.From);
-        if (fromValue) {
-          path = fromValue;
-        }
+        const path = getPath(ctx.currentToken, Direction.Next);
         const t = await fetchMeta.current(path);
         return t.map((meta) => {
           const completion = meta.kind === CompletionItemKind.Class ? `${meta.completion}.` : meta.completion;
@@ -139,7 +135,44 @@ export const customSuggestionKinds: (
         return t.map((meta) => suggestion(meta.name, meta.completion!, meta.kind, ctx));
       },
     },
+    {
+      id: `MYSQL${StatementPosition.WhereKeyword}`,
+      applyTo: [StatementPosition.WhereKeyword],
+      suggestionsResolver: async (ctx) => {
+        const path = getPath(ctx.currentToken, Direction.Previous);
+        const t = await fetchMeta.current(path);
+        return t.map((meta) => {
+          const completion = meta.kind === CompletionItemKind.Class ? `${meta.completion}.` : meta.completion;
+          return suggestion(meta.name, completion!, meta.kind, ctx);
+        });
+      },
+    },
+    {
+      id: StatementPosition.WhereComparisonOperator,
+      applyTo: [StatementPosition.WhereComparisonOperator],
+      suggestionsResolver: async (ctx) => {
+        if (!isAfterWhere(ctx.currentToken)) {
+          return [];
+        }
+        const path = getPath(ctx.currentToken, Direction.Previous);
+        const t = await fetchMeta.current(path);
+        const sugg = t.map((meta) => {
+          const completion = meta.kind === CompletionItemKind.Class ? `${meta.completion}.` : meta.completion;
+          return suggestion(meta.name, completion!, meta.kind, ctx);
+        });
+        return sugg;
+      },
+    },
   ];
+
+function getPath(token: LinkedToken | null, direction: Direction) {
+  let path = token?.value || '';
+  const fromValue = keywordValue(token, Keyword.From, direction);
+  if (fromValue) {
+    path = fromValue;
+  }
+  return path;
+}
 
 export function getTablePath(token: LinkedToken) {
   let processedToken = token;
@@ -168,25 +201,48 @@ function suggestion(label: string, completion: string, kind: CompletionItemKind,
   };
 }
 
+function isAfterSelect(token: LinkedToken | null) {
+  return isAfterKeyword(token, Keyword.Select);
+}
+
 function isAfterFrom(token: LinkedToken | null) {
-  return isAfter(token, Keyword.From);
+  return isDirectlyAfter(token, Keyword.From);
 }
 
 function isAfterWhere(token: LinkedToken | null) {
-  return isAfter(token, Keyword.Where);
+  return isAfterKeyword(token, Keyword.Where);
 }
 
-function isAfter(token: LinkedToken | null, keyword: string) {
+function isAfterKeyword(token: LinkedToken | null, keyword: string) {
+  if (!token?.is(TokenType.Keyword)) {
+    let curToken = token;
+    while (true) {
+      if (!curToken) {
+        return false;
+      }
+      if (curToken.is(TokenType.Keyword, keyword)) {
+        return true;
+      }
+      if (curToken.isKeyword()) {
+        return false;
+      }
+      curToken = curToken?.previous || null;
+    }
+  }
+  return false;
+}
+
+function isDirectlyAfter(token: LinkedToken | null, keyword: string) {
   return token?.is(TokenType.Whitespace) && token?.previous?.is(TokenType.Keyword, keyword);
 }
 
-function keywordValue(token: LinkedToken | null, keyword: Keyword) {
+function keywordValue(token: LinkedToken | null, keyword: Keyword, direction: Direction) {
   let next = token;
   while (next) {
     if (next.is(TokenType.Keyword, keyword)) {
       return tokenValue(next);
     }
-    next = next.next;
+    next = next[direction];
   }
   return false;
 }
