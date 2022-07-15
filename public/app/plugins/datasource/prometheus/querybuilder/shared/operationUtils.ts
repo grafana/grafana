@@ -279,15 +279,13 @@ function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without'
 
 function getAggregationByRendererWithParameter(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    function mapType(p: QueryBuilderOperationParamValue) {
-      if (typeof p === 'string') {
-        return `\"${p}\"`;
-      }
-      return p;
-    }
-    const params = model.params.slice(0, -1);
-    const restParams = model.params.slice(1);
-    return `${aggregation} by(${restParams.join(', ')}) (${params.map(mapType).join(', ')}, ${innerExpr})`;
+    const restParamIndex = def.params.findIndex((param) => param.restParam);
+    const params = model.params.slice(0, restParamIndex);
+    const restParams = model.params.slice(restParamIndex);
+
+    return `${aggregation} by(${restParams.join(', ')}) (${params
+      .map((param, idx) => (def.params[idx].type === 'string' ? `\"${param}\"` : param))
+      .join(', ')}, ${innerExpr})`;
   };
 }
 
