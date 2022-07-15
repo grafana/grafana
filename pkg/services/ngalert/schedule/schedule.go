@@ -433,14 +433,15 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 				err := retryIfError(func(attempt int64) error {
 					// fetch latest alert rule version
-					if currentRule == nil || currentRule.Version < ctx.version {
-						newRule, newExtraLabels, err := updateRule(grafanaCtx, currentRule)
+					if currentRule == nil || currentRule.Version < ctx.rule.Version {
+						clearState()
+						newLabels, err := sch.getRuleExtraLabels(grafanaCtx, ctx.rule)
 						if err != nil {
 							return err
 						}
-						currentRule = newRule
-						extraLabels = newExtraLabels
-						logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
+						currentRule = ctx.rule
+						extraLabels = newLabels
+						logger.Debug("new alert rule version fetched", "title", currentRule.Title, "version", currentRule.Version)
 					}
 					evaluate(grafanaCtx, currentRule, extraLabels, attempt, ctx)
 					return nil
