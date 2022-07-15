@@ -47,7 +47,7 @@ func TestOrgService(t *testing.T) {
 	setting.AutoAssignOrg = false
 	setting.AutoAssignOrgId = 0
 
-	t.Run("delete org by user", func(t *testing.T) {
+	t.Run("delete user from all orgs", func(t *testing.T) {
 		err := orgService.DeleteUserFromAll(context.Background(), 1)
 		require.NoError(t, err)
 	})
