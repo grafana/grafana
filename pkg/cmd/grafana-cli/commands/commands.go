@@ -192,6 +192,18 @@ var adminCommands = []*cli.Command{
 			},
 		},
 	},
+	{
+		Name:  "users-manager",
+		Usage: "Runs different helpful user commands",
+		Subcommands: []*cli.Command{
+			{
+				Name:   "list-duplicates",
+				Usage:  "list-duplicate-users returns a list of users with duplicate entries in the database. Safe to execute multiple times.",
+				Action: runDuplicateUsersCommand(),
+			},
+			// TODO: reset password for user
+		},
+	},
 }
 
 var Commands = []*cli.Command{
