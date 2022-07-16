@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Trans, t } from '@lingui/macro';
 import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -286,7 +287,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
               margin-bottom: 10px;
             `}
           >
-            Download CSV
+            <Trans id="dashboard.inspect-data.download-csv">Download CSV</Trans>
           </Button>
           {hasLogs && (
             <Button
@@ -297,7 +298,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 margin-left: 10px;
               `}
             >
-              Download logs
+              <Trans id="dashboard.inspect-data.download-logs">Download logs</Trans>
             </Button>
           )}
           {hasTraces && (
@@ -309,7 +310,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 margin-left: 10px;
               `}
             >
-              Download traces
+              <Trans id="dashboard.inspect-data.download-traces">Download traces</Trans>
             </Button>
           )}
           {hasServiceGraph && (
@@ -321,7 +322,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 margin-left: 10px;
               `}
             >
-              Download service graph
+              <Trans id="dashboard.inspect-data.download-service">Download service graph</Trans>
             </Button>
           )}
         </div>
@@ -349,7 +350,10 @@ function buildTransformationOptions() {
   const transformations: Array<SelectableValue<DataTransformerID>> = [
     {
       value: DataTransformerID.seriesToColumns,
-      label: 'Series joined by time',
+      label: t({
+        id: 'dashboard.inspect-data.transformation',
+        message: 'Series joined by time',
+      }),
       transformer: {
         id: DataTransformerID.seriesToColumns,
         options: { byField: 'Time' },

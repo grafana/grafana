@@ -247,6 +247,12 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 		require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
 		require.False(t, query.Result[1].Inherited)
 	})
+
+	t.Run("Delete acl by user", func(t *testing.T) {
+		setup(t)
+		err := dashboardStore.DeleteACLByUser(context.Background(), currentUser.ID)
+		require.NoError(t, err)
+	})
 }
 
 func createUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) user.User {
