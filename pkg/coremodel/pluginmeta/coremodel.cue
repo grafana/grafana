@@ -151,7 +151,7 @@ seqs: [
 
 						// Git hash of the commit the plugin was built from
 						hash?:   string
-						numberr?: number
+						"number"?: number
 
 						// GitHub pull request the plugin was built from
 						pr?: number
@@ -163,7 +163,6 @@ seqs: [
 
 					// Array of plugin keywords. Used for search on grafana.com.
 					keywords: [...string]
-
 					// should be this, but CUE to openapi converter screws this up
 					// by inserting a non-concrete default.
 					// keywords: [string, ...string]
