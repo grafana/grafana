@@ -180,9 +180,10 @@ func (e *gitExportJob) process(exporters []Exporter) error {
 			continue
 		}
 
+		e.status.Target = exp.Key
+		e.helper.exporter = exp.Key
+
 		if exp.process != nil {
-			e.status.Target = exp.Key
-			e.helper.exporter = exp.Key
 			err := exp.process(e.helper, e)
 			if err != nil {
 				return err
@@ -190,7 +191,10 @@ func (e *gitExportJob) process(exporters []Exporter) error {
 		}
 
 		if exp.Exporters != nil {
-			return e.process(exp.Exporters)
+			err := e.process(exp.Exporters)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
