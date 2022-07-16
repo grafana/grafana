@@ -34,7 +34,7 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -139,7 +139,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
 			Features:                featuremgmt.WithFeatures(),
-			dashboardService:        dashboardService,
+			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 		}
 		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
@@ -259,7 +259,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
-			dashboardService:        dashboardService,
+			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 		}
 		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
@@ -900,7 +900,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				dashboardProvisioningService: mockDashboardProvisioningService{},
 				SQLStore:                     mockSQLStore,
 				AccessControl:                accesscontrolmock.New(),
-				dashboardService:             dashboardService,
+				DashboardService:             dashboardService,
 			}
 			hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 			hs.callGetDashboard(sc)
@@ -954,7 +954,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 			cfg, dashboardStore, nil, features,
 			folderPermissions, dashboardPermissions, ac,
 		),
-		dashboardService: dashboardService,
+		DashboardService: dashboardService,
 	}
 	hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
@@ -986,7 +986,7 @@ func (hs *HTTPServer) callGetDashboardVersions(sc *scenarioContext) {
 
 func (hs *HTTPServer) callDeleteDashboardByUID(t *testing.T,
 	sc *scenarioContext, mockDashboard *dashboards.FakeDashboardService) {
-	hs.dashboardService = mockDashboard
+	hs.DashboardService = mockDashboard
 	sc.handlerFunc = hs.DeleteDashboardByUID
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
@@ -1012,13 +1012,13 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			Cfg:                 cfg,
 			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                newTestLive(t, sqlstore.InitTestDB(t)),
-			QuotaService: &quota.QuotaService{
+			QuotaService: &quotaimpl.Service{
 				Cfg: cfg,
 			},
 			pluginStore:           &fakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
-			dashboardService:      dashboardService,
+			DashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
 		}
@@ -1048,7 +1048,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, sqlstore.InitTestDB(t)),
-			QuotaService:            &quota.QuotaService{Cfg: cfg},
+			QuotaService:            &quotaimpl.Service{Cfg: cfg},
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                sqlmock,
@@ -1085,10 +1085,10 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, sqlstore.InitTestDB(t)),
-			QuotaService:            &quota.QuotaService{Cfg: cfg},
+			QuotaService:            &quotaimpl.Service{Cfg: cfg},
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
-			dashboardService:        mock,
+			DashboardService:        mock,
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,

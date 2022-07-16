@@ -1,11 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
 
-import { DataSourceSettings, NavModel, LayoutModes } from '@grafana/data';
+import { DataSourceSettings, LayoutModes } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
+import { DataSourcesState } from 'app/types';
 
-import { DataSourcesListPage, Props } from './DataSourcesListPage';
+import { DataSourcesListPage } from './DataSourcesListPage';
 import { getMockDataSources } from './__mocks__/dataSourcesMocks';
-import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
+import navIndex from './__mocks__/store.navIndex.mock';
+import { initialState } from './state/reducers';
 
 jest.mock('app/core/core', () => {
   return {
@@ -15,29 +19,30 @@ jest.mock('app/core/core', () => {
   };
 });
 
-const setup = (propOverrides?: object) => {
-  const props: Props = {
-    dataSources: [] as DataSourceSettings[],
-    layoutMode: LayoutModes.Grid,
-    loadDataSources: jest.fn(),
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Data Sources',
-      },
-    } as NavModel,
-    dataSourcesCount: 0,
-    searchQuery: '',
-    setDataSourcesSearchQuery,
-    setDataSourcesLayoutMode,
-    hasFetched: false,
-  };
+const getMock = jest.fn().mockResolvedValue([]);
 
-  Object.assign(props, propOverrides);
+jest.mock('app/core/services/backend_srv', () => ({
+  ...jest.requireActual('app/core/services/backend_srv'),
+  getBackendSrv: () => ({ get: getMock }),
+}));
 
-  return render(<DataSourcesListPage {...props} />);
+const setup = (stateOverride?: Partial<DataSourcesState>) => {
+  const store = configureStore({
+    dataSources: {
+      ...initialState,
+      dataSources: [] as DataSourceSettings[],
+      layoutMode: LayoutModes.Grid,
+      hasFetched: false,
+      ...stateOverride,
+    },
+    navIndex,
+  });
+
+  return render(
+    <Provider store={store}>
+      <DataSourcesListPage />
+    </Provider>
+  );
 };
 
 describe('Render', () => {

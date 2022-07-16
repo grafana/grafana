@@ -18,7 +18,7 @@ import (
 )
 
 func ProvideService(routeRegister routing.RouteRegister,
-	quotaService *quota.QuotaService,
+	quotaService quota.Service,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store,
 	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService,
 	ac accesscontrol.AccessControl,

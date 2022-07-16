@@ -1,31 +1,20 @@
 package secretsmigrations
 
 import (
-	"encoding/base64"
-	"time"
+	"context"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
-type simpleSecret struct {
-	tableName  string
-	columnName string
+func ReEncryptDEKS(_ utils.CommandLine, runner runner.Runner) error {
+	return runner.SecretsService.ReEncryptDataKeys(context.Background())
 }
 
-type b64Secret struct {
-	simpleSecret
-	hasUpdatedColumn bool
-	encoding         *base64.Encoding
+func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
+	return runner.SecretsMigrator.ReEncryptSecrets(context.Background())
 }
 
-type jsonSecret struct {
-	tableName string
+func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
+	return runner.SecretsMigrator.RollBackSecrets(context.Background())
 }
-
-type alertingSecret struct{}
-
-func nowInUTC() string {
-	return time.Now().UTC().Format("2006-01-02 15:04:05")
-}
-
-var logger = log.New("secrets.migrations")

@@ -220,7 +220,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   };
 };
 
-function NavItem({
+export function NavItem({
   link,
   activeItem,
   onClose,
@@ -458,7 +458,7 @@ function linkHasChildren(link: NavModelItem): link is NavModelItem & { children:
 }
 
 function getLinkIcon(link: NavModelItem) {
-  if (link.id === 'home') {
+  if (link.icon === 'grafana') {
     return <Branding.MenuLogo />;
   } else if (link.icon) {
     return <Icon name={link.icon as IconName} size="xl" />;

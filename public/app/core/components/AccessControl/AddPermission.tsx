@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { Button, Form, HorizontalGroup, Select } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { ServiceAccountPicker } from 'app/core/components/Select/ServiceAccountPicker';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { OrgRole } from 'app/types/acl';
@@ -28,6 +29,9 @@ export const AddPermission = ({ title = 'Add Permission For', permissions, assig
     if (assignments.users) {
       options.push({ value: PermissionTarget.User, label: 'User' });
     }
+    if (assignments.serviceAccounts) {
+      options.push({ value: PermissionTarget.ServiceAccount, label: 'Service Account' });
+    }
     if (assignments.teams) {
       options.push({ value: PermissionTarget.Team, label: 'Team' });
     }
@@ -46,6 +50,7 @@ export const AddPermission = ({ title = 'Add Permission For', permissions, assig
   const isValid = () =>
     (target === PermissionTarget.Team && teamId > 0) ||
     (target === PermissionTarget.User && userId > 0) ||
+    (target === PermissionTarget.ServiceAccount && userId > 0) ||
     (PermissionTarget.BuiltInRole && OrgRole.hasOwnProperty(builtInRole));
 
   return (
@@ -70,6 +75,10 @@ export const AddPermission = ({ title = 'Add Permission For', permissions, assig
 
             {target === PermissionTarget.User && (
               <UserPicker onSelected={(u) => setUserId(u.value || 0)} className={'width-20'} />
+            )}
+
+            {target === PermissionTarget.ServiceAccount && (
+              <ServiceAccountPicker onSelected={(s) => setUserId(s.value?.id || 0)} className={'width-20'} />
             )}
 
             {target === PermissionTarget.Team && (

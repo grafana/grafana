@@ -57,9 +57,12 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 
     const onToggle = useCallback(() => {
       manualClickTime.current = Date.now();
-      updateQueryParams({
-        [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
-      });
+      updateQueryParams(
+        {
+          [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
+        },
+        true
+      );
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
     }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);

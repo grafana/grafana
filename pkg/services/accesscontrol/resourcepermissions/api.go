@@ -40,7 +40,7 @@ func (a *api) registerEndpoints() {
 		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
 		r.Get("/:resourceID", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
-		if a.service.options.Assignments.Users {
+		if a.service.options.Assignments.Users || a.service.options.Assignments.ServiceAccounts {
 			r.Post("/:resourceID/users/:userID", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
 		}
 		if a.service.options.Assignments.Teams {
@@ -53,9 +53,10 @@ func (a *api) registerEndpoints() {
 }
 
 type Assignments struct {
-	Users        bool `json:"users"`
-	Teams        bool `json:"teams"`
-	BuiltInRoles bool `json:"builtInRoles"`
+	Users           bool `json:"users"`
+	Teams           bool `json:"teams"`
+	BuiltInRoles    bool `json:"builtInRoles"`
+	ServiceAccounts bool `json:"serviceAccounts"`
 }
 
 type Description struct {
@@ -71,18 +72,19 @@ func (a *api) getDescription(c *models.ReqContext) response.Response {
 }
 
 type resourcePermissionDTO struct {
-	ID            int64    `json:"id"`
-	RoleName      string   `json:"roleName"`
-	IsManaged     bool     `json:"isManaged"`
-	UserID        int64    `json:"userId,omitempty"`
-	UserLogin     string   `json:"userLogin,omitempty"`
-	UserAvatarUrl string   `json:"userAvatarUrl,omitempty"`
-	Team          string   `json:"team,omitempty"`
-	TeamID        int64    `json:"teamId,omitempty"`
-	TeamAvatarUrl string   `json:"teamAvatarUrl,omitempty"`
-	BuiltInRole   string   `json:"builtInRole,omitempty"`
-	Actions       []string `json:"actions"`
-	Permission    string   `json:"permission"`
+	ID                   int64    `json:"id"`
+	RoleName             string   `json:"roleName"`
+	IsManaged            bool     `json:"isManaged"`
+	UserID               int64    `json:"userId,omitempty"`
+	UserLogin            string   `json:"userLogin,omitempty"`
+	UserAvatarUrl        string   `json:"userAvatarUrl,omitempty"`
+	UserIsServiceAccount bool     `json:"userIsServiceAccount,omitempty"`
+	Team                 string   `json:"team,omitempty"`
+	TeamID               int64    `json:"teamId,omitempty"`
+	TeamAvatarUrl        string   `json:"teamAvatarUrl,omitempty"`
+	BuiltInRole          string   `json:"builtInRole,omitempty"`
+	Actions              []string `json:"actions"`
+	Permission           string   `json:"permission"`
 }
 
 func (a *api) getPermissions(c *models.ReqContext) response.Response {
@@ -110,18 +112,19 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 			}
 
 			dto = append(dto, resourcePermissionDTO{
-				ID:            p.ID,
-				RoleName:      p.RoleName,
-				UserID:        p.UserId,
-				UserLogin:     p.UserLogin,
-				UserAvatarUrl: dtos.GetGravatarUrl(p.UserEmail),
-				Team:          p.Team,
-				TeamID:        p.TeamId,
-				TeamAvatarUrl: teamAvatarUrl,
-				BuiltInRole:   p.BuiltInRole,
-				Actions:       p.Actions,
-				Permission:    permission,
-				IsManaged:     p.IsManaged,
+				ID:                   p.ID,
+				RoleName:             p.RoleName,
+				UserID:               p.UserId,
+				UserLogin:            p.UserLogin,
+				UserAvatarUrl:        dtos.GetGravatarUrl(p.UserEmail),
+				UserIsServiceAccount: p.UserIsServiceAccount,
+				Team:                 p.Team,
+				TeamID:               p.TeamId,
+				TeamAvatarUrl:        teamAvatarUrl,
+				BuiltInRole:          p.BuiltInRole,
+				Actions:              p.Actions,
+				Permission:           permission,
+				IsManaged:            p.IsManaged,
 			})
 		}
 	}

@@ -30,7 +30,7 @@ type WriteValueResponse struct {
 
 type storageTree interface {
 	GetFile(ctx context.Context, orgId int64, path string) (*filestorage.File, error)
-	ListFolder(ctx context.Context, orgId int64, path string) (*data.Frame, error)
+	ListFolder(ctx context.Context, orgId int64, path string) (*StorageListFrame, error)
 }
 
 //-------------------------------------------
@@ -82,6 +82,11 @@ func (t *baseStorageRuntime) setBuiltin(val bool) *baseStorageRuntime {
 	return t
 }
 
+func (t *baseStorageRuntime) setDescription(v string) *baseStorageRuntime {
+	t.meta.Config.Description = v
+	return t
+}
+
 type RootStorageMeta struct {
 	ReadOnly bool          `json:"editable,omitempty"`
 	Builtin  bool          `json:"builtin,omitempty"`
@@ -89,4 +94,39 @@ type RootStorageMeta struct {
 	Notice   []data.Notice `json:"notice,omitempty"`
 
 	Config RootStorageConfig `json:"config"`
+}
+
+type StorageListFrame struct {
+	*data.Frame
+}
+
+const (
+	titleListFrameField       = "title"
+	nameListFrameField        = "name"
+	descriptionListFrameField = "description"
+	mediaTypeListFrameField   = "mediaType"
+	storageTypeListFrameField = "storageType"
+	readOnlyListFrameField    = "readOnly"
+	builtInListFrameField     = "builtIn"
+	sizeListFrameField        = "size"
+)
+
+func (s *StorageListFrame) GetFileNames() []string {
+	var fileNames []string
+	if s == nil {
+		return fileNames
+	}
+
+	field, idx := s.FieldByName(nameListFrameField)
+	if field.Len() == 0 || idx == -1 {
+		return fileNames
+	}
+
+	for i := 0; i < field.Len(); i++ {
+		if stringValue, ok := field.At(i).(string); ok {
+			fileNames = append(fileNames, stringValue)
+		}
+	}
+
+	return fileNames
 }

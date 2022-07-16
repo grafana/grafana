@@ -1108,6 +1108,10 @@ export class DashboardModel implements TimeModel {
     }
   }
 
+  getDefaultTime() {
+    return this.originalTime;
+  }
+
   private getPanelRepeatVariable(panel: PanelModel) {
     return this.getVariablesFromState(this.uid).find((variable) => variable.name === panel.repeat);
   }

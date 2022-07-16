@@ -423,11 +423,12 @@ func (m SQLStoreMock) GetDataSource(ctx context.Context, query *datasources.GetD
 }
 
 func (m *SQLStoreMock) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
-	query.Result = m.ExpectedDatasources
+	query.Result = m.ExpectedDataSources
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+	query.Result = m.ExpectedDataSources
 	return m.ExpectedError
 }
 
@@ -580,7 +581,7 @@ func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQ
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+func (m *SQLStoreMock) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	return m.ExpectedError
 }
 

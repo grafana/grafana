@@ -5,7 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { DataSourcePluginMeta, GrafanaTheme2, NavModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Card, LinkButton, List, PluginSignatureBadge, FilterInput, useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 
 import { PluginsErrorsInfo } from '../plugins/components/PluginsErrorsInfo';

@@ -322,10 +322,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should have admin permission in folders", func(t *testing.T) {
-					query := &models.HasAdminPermissionInFoldersQuery{
+					query := &models.HasAdminPermissionInDashboardsOrFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
-					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -370,10 +370,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
-					query := &models.HasAdminPermissionInFoldersQuery{
+					query := &models.HasAdminPermissionInDashboardsOrFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
-					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})
@@ -418,10 +418,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
-					query := &models.HasAdminPermissionInFoldersQuery{
+					query := &models.HasAdminPermissionInDashboardsOrFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
-					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})

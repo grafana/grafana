@@ -53,7 +53,7 @@ How can you tell you are here?
 - Directed browsing cuts down on "guessing."
   - Template variables make it harder to “just browse” randomly or aimlessly.
   - Most dashboards should be linked to by alerts.
-  - Browsing is directed with links. For more information, refer to [Linking]({{< relref "../linking/" >}}).
+  - Browsing is directed with links. For more information, refer to [Manage dashboard links]({{< relref "../dashboards/manage-dashboard-links/" >}}).
 - Version-controlled dashboard JSON.
 
 ## High - optimized use
