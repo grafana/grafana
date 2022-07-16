@@ -142,6 +142,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "dashboardsFromStorage",
+			Description: "Load dashboards from the generic storage interface",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:            "export",
 			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
@@ -186,12 +191,6 @@ var (
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:         "azureMonitorExperimentalUI",
-			Description:  "Use grafana-experimental UI in Azure Monitor",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
 		},
 		{
 			Name:         "traceToMetrics",
@@ -243,6 +242,12 @@ var (
 			Description:  "Use grafana-experimental UI in Cloud Monitoring",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "disableSecretsCompatibility",
+			Description:     "Disable duplicated secret storage in legacy tables",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",

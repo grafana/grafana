@@ -19,7 +19,7 @@ export function SectionNav(props: Props) {
     <nav className={styles.nav}>
       <h2 className={styles.sectionName}>
         {main.icon && <Icon name={main.icon as IconName} size="lg" />}
-        {main.img && <img className="page-header__img" src={main.img} alt={`logo of ${main.text}`} />}
+        {main.img && <img className={styles.sectionImg} src={main.img} alt={`logo of ${main.text}`} />}
         {props.model.main.text}
       </h2>
       <div className={styles.items}>
@@ -75,6 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     sectionName: css({
       display: 'flex',
+      alignItems: 'center',
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0, 3, 0.25),
       fontSize: theme.typography.h4.fontSize,
@@ -82,6 +83,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     items: css({
       // paddingLeft: '9px',
+    }),
+    sectionImg: css({
+      height: 48,
     }),
     subSection: css({
       padding: theme.spacing(3, 0, 1, 1),

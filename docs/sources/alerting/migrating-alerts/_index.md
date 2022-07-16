@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/alerting/migrating-alerts/
   - /docs/grafana/latest/alerting/unified-alerting/
   - /docs/grafana/latest/alerting/unified-alerting/difference-old-new/
+  - /docs/grafana/latest/alerting/difference-old-new/
 description: Upgrade Grafana alerts
 title: Upgrade to Grafana Alerting
 weight: 101

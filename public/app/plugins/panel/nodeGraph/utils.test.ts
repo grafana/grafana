@@ -2,6 +2,8 @@ import { ArrayVector, createTheme, DataFrame, FieldType, MutableDataFrame } from
 
 import { NodeGraphOptions } from './types';
 import {
+  findConnectedNodesForEdge,
+  findConnectedNodesForNode,
   getEdgeFields,
   getNodeFields,
   getNodeGraphDataFrames,
@@ -357,5 +359,39 @@ describe('processNodes', () => {
     expect(edgesFrame).toBeDefined();
     expect(edgesFrame?.fields.find((f) => f.name === 'mainStat')?.config).toEqual({ unit: 'r/sec' });
     expect(edgesFrame?.fields.find((f) => f.name === 'secondaryStat')?.config).toEqual({ unit: 'ft^2' });
+  });
+});
+
+describe('finds connections', () => {
+  const theme = createTheme();
+
+  it('finds connected nodes given an edge id', () => {
+    const { nodes, edges } = processNodes(
+      makeNodesDataFrame(3),
+      makeEdgesDataFrame([
+        [0, 1],
+        [0, 2],
+        [1, 2],
+      ]),
+      theme
+    );
+
+    const linked = findConnectedNodesForEdge(nodes, edges, edges[0].id);
+    expect(linked).toEqual(['0', '1']);
+  });
+
+  it('finds connected nodes given a node id', () => {
+    const { nodes, edges } = processNodes(
+      makeNodesDataFrame(4),
+      makeEdgesDataFrame([
+        [0, 1],
+        [0, 2],
+        [1, 2],
+      ]),
+      theme
+    );
+
+    const linked = findConnectedNodesForNode(nodes, edges, nodes[0].id);
+    expect(linked).toEqual(['0', '1', '2']);
   });
 });

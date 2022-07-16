@@ -494,7 +494,7 @@ func (server *Server) AdminBind() error {
 	err := server.userBind(server.Config.BindDN, server.Config.BindPassword)
 	if err != nil {
 		server.log.Error(
-			"Cannot authenticate admin user in LDAP",
+			"Cannot authenticate admin user in LDAP. Verify bind configuration",
 			"error",
 			err,
 		)
