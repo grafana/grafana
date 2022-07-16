@@ -32,6 +32,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegi
 type Service interface {
 	CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (CorrelationDTO, error)
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error
+	DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error
 }
 
 type CorrelationsService struct {
@@ -48,6 +49,10 @@ func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCo
 
 func (s CorrelationsService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.deleteCorrelationsBySourceUID(ctx, cmd)
+}
+
+func (s CorrelationsService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
+	return s.deleteCorrelationsByTargetUID(ctx, cmd)
 }
 
 func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {

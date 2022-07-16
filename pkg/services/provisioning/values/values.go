@@ -192,8 +192,8 @@ func (val *StringMapValue) Value() map[string]string {
 // config that can be overridden by environment variables
 
 type JSONSliceValue struct {
-	value []interface{}
-	Raw   []interface{}
+	value []map[string]interface{}
+	Raw   []map[string]interface{}
 }
 
 // UnmarshalYAML converts YAML into an *JSONSliceValue
@@ -203,22 +203,29 @@ func (val *JSONSliceValue) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	if err != nil {
 		return err
 	}
+	interpolated := make([]map[string]interface{}, 0)
+	raw := make([]map[string]interface{}, 0)
 
 	for _, v := range unmarshaled {
-		interpolated, raw, err := transformInterface(v)
-		if err != nil {
-			return err
+		i := make(map[string]interface{})
+		r := make(map[string]interface{})
+		for key, val := range v.(map[interface{}]interface{}) {
+			i[key.(string)], r[key.(string)], err = transformInterface(val)
+			if err != nil {
+				return err
+			}
 		}
-
-		val.value = append(val.value, interpolated)
-		val.Raw = append(val.Raw, raw)
+		interpolated = append(interpolated, i)
+		raw = append(raw, r)
 	}
 
+	val.Raw = raw
+	val.value = interpolated
 	return err
 }
 
 // Value returns the wrapped []interface{} value
-func (val *JSONSliceValue) Value() []interface{} {
+func (val *JSONSliceValue) Value() []map[string]interface{} {
 	return val.value
 }
 

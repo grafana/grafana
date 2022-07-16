@@ -3,6 +3,7 @@ package datasources
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -18,6 +19,7 @@ type Store interface {
 }
 
 type CorrelationsStore interface {
+	DeleteCorrelationsByTargetUID(ctx context.Context, cmd correlations.DeleteCorrelationsByTargetUIDCommand) error
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error
 	CreateCorrelation(ctx context.Context, cmd correlations.CreateCorrelationCommand) (correlations.CorrelationDTO, error)
 }
@@ -75,15 +77,11 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 			}
 
 			for _, correlation := range ds.Correlations {
-				if field, ok := correlation.(map[string]interface{}); ok {
-					correlationsToInsert = append(correlationsToInsert, correlations.CreateCorrelationCommand{
-						SourceUID:         insertCmd.Result.Uid,
-						TargetUID:         field["targetUid"].(string),
-						Label:             field["label"].(string),
-						Description:       field["description"].(string),
-						OrgId:             insertCmd.OrgId,
-						SkipReadOnlyCheck: true,
-					})
+				if insertCorrelationCmd, err := makeCreateCorrelationCommand(correlation, insertCmd.Result.Uid, insertCmd.OrgId); err == nil {
+					correlationsToInsert = append(correlationsToInsert, insertCorrelationCmd)
+				} else {
+					dc.log.Error("failed to parse correlation", "correlation", correlation)
+					return err
 				}
 			}
 		} else {
@@ -102,15 +100,11 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 			}
 
 			for _, correlation := range ds.Correlations {
-				if field, ok := correlation.(map[string]interface{}); ok {
-					correlationsToInsert = append(correlationsToInsert, correlations.CreateCorrelationCommand{
-						SourceUID:         cmd.Result.Uid,
-						TargetUID:         field["targetUid"].(string),
-						Label:             field["label"].(string),
-						Description:       field["description"].(string),
-						OrgId:             updateCmd.OrgId,
-						SkipReadOnlyCheck: true,
-					})
+				if insertCorrelationCmd, err := makeCreateCorrelationCommand(correlation, cmd.Result.Uid, updateCmd.OrgId); err == nil {
+					correlationsToInsert = append(correlationsToInsert, insertCorrelationCmd)
+				} else {
+					dc.log.Error("failed to parse correlation", "correlation", correlation)
+					return err
 				}
 			}
 		}
@@ -118,7 +112,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 
 	for _, createCorrelationCmd := range correlationsToInsert {
 		if _, err := dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd); err != nil {
-			return err
+			return fmt.Errorf("err=%s source=%s", err.Error(), createCorrelationCmd.SourceUID)
 		}
 	}
 
@@ -140,14 +134,41 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	return nil
 }
 
+func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUid string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+	targetUid, ok := correlation["targetUid"].(string)
+	if !ok {
+		return correlations.CreateCorrelationCommand{}, fmt.Errorf("correlation missing targetUid")
+	}
+
+	return correlations.CreateCorrelationCommand{
+		SourceUID:         SourceUid,
+		TargetUID:         targetUid,
+		Label:             correlation["label"].(string),
+		Description:       correlation["description"].(string),
+		OrgId:             OrgId,
+		SkipReadOnlyCheck: true,
+	}, nil
+}
+
 func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig) error {
 	for _, ds := range dsToDelete {
 		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name}
+		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgId: ds.OrgID}
+		dc.store.GetDataSource(ctx, getDsQuery)
+
 		if err := dc.store.DeleteDataSource(ctx, cmd); err != nil {
 			return err
 		}
 
 		if cmd.DeletedDatasourcesCount > 0 {
+			dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
+				SourceUID: getDsQuery.Result.Uid,
+			})
+
+			dc.correlationsStore.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{
+				TargetUID: getDsQuery.Result.Uid,
+			})
+
 			dc.log.Info("deleted datasource based on configuration", "name", ds.Name)
 		}
 	}
