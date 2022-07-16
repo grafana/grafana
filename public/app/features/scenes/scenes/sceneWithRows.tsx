@@ -18,7 +18,6 @@ export function getSceneWithRows(): Scene {
       children: [
         new SceneRow({
           title: 'Overview',
-          titleSize: 'h3',
           layout: new SceneFlexLayout({
             direction: 'row',
             children: [
@@ -35,7 +34,6 @@ export function getSceneWithRows(): Scene {
         }),
         new SceneRow({
           title: 'More server details',
-          titleSize: 'h4',
           layout: new SceneFlexLayout({
             direction: 'row',
             children: [

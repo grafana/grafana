@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObject, SceneObjectState, SceneLayoutState, SceneComponentProps } from '../core/types';
