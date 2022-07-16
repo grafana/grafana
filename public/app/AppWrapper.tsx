@@ -116,7 +116,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
         <I18nProvider>
           <ErrorBoundaryAlert style="page">
             <GrafanaContext.Provider value={app.context}>
-              <ThemeProvider>
+              <ThemeProvider value={config.theme2}>
                 <KBarProvider
                   actions={[]}
                   options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}

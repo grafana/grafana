@@ -3,6 +3,8 @@
 package eval
 
 import (
+	"context"
+
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	mock "github.com/stretchr/testify/mock"
 
@@ -25,7 +27,7 @@ func (_m *FakeEvaluator) EXPECT() *FakeEvaluator_Expecter {
 }
 
 // ConditionEval provides a mock function with given fields: condition, now
-func (_m *FakeEvaluator) ConditionEval(condition models.Condition, now time.Time) Results {
+func (_m *FakeEvaluator) ConditionEval(ctx context.Context, condition models.Condition, now time.Time) Results {
 	ret := _m.Called(condition, now)
 
 	var r0 Results
@@ -65,7 +67,7 @@ func (_c *FakeEvaluator_ConditionEval_Call) Return(_a0 Results) *FakeEvaluator_C
 }
 
 // QueriesAndExpressionsEval provides a mock function with given fields: orgID, data, now
-func (_m *FakeEvaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
+func (_m *FakeEvaluator) QueriesAndExpressionsEval(ctx context.Context, orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
 	ret := _m.Called(orgID, data, now)
 
 	var r0 *backend.QueryDataResponse

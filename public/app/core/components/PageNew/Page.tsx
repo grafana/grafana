@@ -7,7 +7,7 @@ import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { useGrafanaInternal } from 'app/core/context/GrafanaContextInternal';
 
 import { Footer } from '../Footer/Footer';
-import { PageType } from '../Page/types';
+import { PageLayoutType, PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
 import { usePageTitle } from '../Page/usePageTitle';
 
@@ -16,7 +16,17 @@ import { PageHeader } from './PageHeader';
 import { PageTabs } from './PageTabs';
 import { SectionNav } from './SectionNav';
 
-export const Page: PageType = ({ navId, navModel: oldNavProp, pageNav, children, className, ...otherProps }) => {
+export const Page: PageType = ({
+  navId,
+  navModel: oldNavProp,
+  pageNav,
+  children,
+  className,
+  layout = PageLayoutType.Default,
+  toolbar,
+  scrollTop,
+  scrollRef,
+}) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafanaInternal();
@@ -26,26 +36,39 @@ export const Page: PageType = ({ navId, navModel: oldNavProp, pageNav, children,
   const pageHeaderNav = pageNav ?? navModel?.node;
 
   useEffect(() => {
-    if (navModel || pageNav) {
-      chrome.update({ sectionNav: navModel?.node, pageNav });
+    if (navModel) {
+      chrome.update({
+        sectionNav: navModel.node,
+        ...(pageNav && { pageNav }),
+      });
     }
   }, [navModel, pageNav, chrome]);
 
   return (
-    <div {...otherProps} className={cx(styles.wrapper, className)}>
-      <div className={styles.panes}>
-        {navModel && navModel.main.children && <SectionNav model={navModel} />}
-        <div className={styles.pageContent}>
-          <CustomScrollbar autoHeightMin={'100%'}>
-            <div className={styles.pageInner}>
-              {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
-              {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-              {children}
-            </div>
-            <Footer />
-          </CustomScrollbar>
+    <div className={cx(styles.wrapper, className)}>
+      {layout === PageLayoutType.Default && (
+        <div className={styles.panes}>
+          {navModel && navModel.main.children && <SectionNav model={navModel} />}
+          <div className={styles.pageContent}>
+            <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+              <div className={styles.pageInner}>
+                {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
+                {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
+                {children}
+              </div>
+              <Footer />
+            </CustomScrollbar>
+          </div>
         </div>
-      </div>
+      )}
+      {layout === PageLayoutType.Dashboard && (
+        <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+          <div className={styles.dashboardContent}>
+            {toolbar}
+            {children}
+          </div>
+        </CustomScrollbar>
+      )}
     </div>
   );
 };
@@ -87,6 +110,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: theme.spacing(2, 2, 2, 1),
       display: 'flex',
       flexDirection: 'column',
+      flexGrow: 1,
+    }),
+    dashboardContent: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(2),
+      flexBasis: '100%',
       flexGrow: 1,
     }),
   };

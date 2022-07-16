@@ -1,9 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { useLocalStorage } from 'react-use';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useAsync, useLocalStorage } from 'react-use';
 
-import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
+import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope, SelectableValue } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
-import { Button, CodeEditor, HorizontalGroup, LinkButton } from '@grafana/ui';
+import {
+  Button,
+  CodeEditor,
+  Collapse,
+  Field,
+  HorizontalGroup,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  Input,
+  LinkButton,
+  Select,
+  Switch,
+} from '@grafana/ui';
 
 import { StorageView } from './types';
 
@@ -21,62 +34,92 @@ interface ExportStatusMessage {
   status: string;
 }
 
-interface ExportInclude {
-  auth: boolean;
-  ds: boolean;
-  dash: boolean;
-  dash_thumbs: boolean;
-  alerts: boolean;
-  services: boolean;
-  usage: boolean;
-  anno: boolean;
-  snapshots: boolean;
-}
-
 interface ExportJob {
-  format: 'git';
+  format: string; // 'git';
   generalFolderPath: string;
   history: boolean;
-  include: ExportInclude;
+  exclude: Record<string, boolean>;
 
   git?: {};
 }
-
-const includAll: ExportInclude = {
-  auth: true,
-  ds: true,
-  dash: true,
-  dash_thumbs: true,
-  alerts: true,
-  services: true,
-  usage: true,
-  anno: true,
-  snapshots: false, // will fail until we have a real user
-};
 
 const defaultJob: ExportJob = {
   format: 'git',
   generalFolderPath: 'general',
   history: true,
-  include: includAll,
+  exclude: {},
   git: {},
 };
+
+interface ExporterInfo {
+  key: string;
+  name: string;
+  description: string;
+  children?: ExporterInfo[];
+}
+
+const formats: Array<SelectableValue<string>> = [
+  { label: 'GIT', value: 'git', description: 'Exports a fresh git repository' },
+];
 
 interface Props {
   onPathChange: (p: string, v?: StorageView) => void;
 }
 
+const labelWith = 18;
+
 export const ExportView = ({ onPathChange }: Props) => {
   const [status, setStatus] = useState<ExportStatusMessage>();
-  const [rawBody, setBody] = useLocalStorage<ExportJob>(EXPORT_LOCAL_STORAGE_KEY, defaultJob);
-  const body = { ...defaultJob, ...rawBody, include: { ...includAll, ...rawBody?.include } };
+  const [body, setBody] = useLocalStorage<ExportJob>(EXPORT_LOCAL_STORAGE_KEY, defaultJob);
+  const [details, setDetails] = useState(false);
+
+  const serverOptions = useAsync(() => {
+    return getBackendSrv().get<{ exporters: ExporterInfo[] }>('/api/admin/export/options');
+  }, []);
 
   const doStart = () => {
-    getBackendSrv().post('/api/admin/export', body);
+    getBackendSrv()
+      .post('/api/admin/export', body)
+      .then((v) => {
+        if (v.cfg && v.status.running) {
+          setBody(v.cfg); // saves the valid parsed body
+        }
+      });
   };
+
   const doStop = () => {
     getBackendSrv().post('/api/admin/export/stop');
   };
+
+  const setInclude = useCallback(
+    (k: string, v: boolean) => {
+      if (!serverOptions.value || !body) {
+        return;
+      }
+      const exclude: Record<string, boolean> = {};
+      if (k === '*') {
+        if (!v) {
+          for (let exp of serverOptions.value.exporters) {
+            exclude[exp.key] = true;
+          }
+        }
+        setBody({ ...body, exclude });
+        return;
+      }
+
+      for (let exp of serverOptions.value.exporters) {
+        let val = body.exclude?.[exp.key];
+        if (k === exp.key) {
+          val = !v;
+        }
+        if (val) {
+          exclude[exp.key] = val;
+        }
+      }
+      setBody({ ...body, exclude });
+    },
+    [body, setBody, serverOptions]
+  );
 
   useEffect(() => {
     const subscription = getGrafanaLiveSrv()
@@ -120,18 +163,53 @@ export const ExportView = ({ onPathChange }: Props) => {
       {!Boolean(status?.running) && (
         <div>
           <h3>Export grafana instance</h3>
-          <CodeEditor
-            height={275}
-            value={JSON.stringify(body, null, 2) ?? ''}
-            showLineNumbers={false}
-            readOnly={false}
-            language="json"
-            showMiniMap={false}
-            onBlur={(text: string) => {
-              setBody(JSON.parse(text)); // force JSON?
-            }}
-          />
-          <br />
+          <Field label="Format">
+            <Select
+              options={formats}
+              width={40}
+              value={formats.find((v) => v.value === body?.format)}
+              onChange={(v) => setBody({ ...body!, format: v.value! })}
+            />
+          </Field>
+          <Field label="Keep history">
+            <Switch value={body?.history} onChange={(v) => setBody({ ...body!, history: v.currentTarget.checked })} />
+          </Field>
+
+          <Field label="Include">
+            <>
+              <InlineFieldRow>
+                <InlineField label="Toggle all" labelWidth={labelWith}>
+                  <InlineSwitch
+                    value={Object.keys(body?.exclude ?? {}).length === 0}
+                    onChange={(v) => setInclude('*', v.currentTarget.checked)}
+                  />
+                </InlineField>
+              </InlineFieldRow>
+              {serverOptions.value && (
+                <div>
+                  {serverOptions.value.exporters.map((ex) => (
+                    <InlineFieldRow key={ex.key}>
+                      <InlineField label={ex.name} labelWidth={labelWith} tooltip={ex.description}>
+                        <InlineSwitch
+                          value={body?.exclude?.[ex.key] !== true}
+                          onChange={(v) => setInclude(ex.key, v.currentTarget.checked)}
+                        />
+                      </InlineField>
+                    </InlineFieldRow>
+                  ))}
+                </div>
+              )}
+            </>
+          </Field>
+
+          <Field label="General folder" description="Set the folder name for items without a real folder">
+            <Input
+              width={40}
+              value={body?.generalFolderPath ?? ''}
+              onChange={(v) => setBody({ ...body!, generalFolderPath: v.currentTarget.value })}
+              placeholder="root folder path"
+            />
+          </Field>
 
           <HorizontalGroup>
             <Button onClick={doStart} variant="primary">
@@ -143,6 +221,22 @@ export const ExportView = ({ onPathChange }: Props) => {
           </HorizontalGroup>
         </div>
       )}
+      <br />
+      <br />
+
+      <Collapse label="Request details" isOpen={details} onToggle={setDetails} collapsible={true}>
+        <CodeEditor
+          height={275}
+          value={JSON.stringify(body, null, 2) ?? ''}
+          showLineNumbers={false}
+          readOnly={false}
+          language="json"
+          showMiniMap={false}
+          onBlur={(text: string) => {
+            setBody(JSON.parse(text)); // force JSON?
+          }}
+        />
+      </Collapse>
     </div>
   );
 };

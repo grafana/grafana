@@ -87,11 +87,11 @@ func (f *ForkedProvisioningApi) forkRouteGetAlertRule(ctx *models.ReqContext, UI
 	return f.svc.RouteRouteGetAlertRule(ctx, UID)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule) response.Response {
+func (f *ForkedProvisioningApi) forkRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.ProvisionedAlertRule) response.Response {
 	return f.svc.RoutePostAlertRule(ctx, ar)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule, UID string) response.Response {
+func (f *ForkedProvisioningApi) forkRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.ProvisionedAlertRule, UID string) response.Response {
 	return f.svc.RoutePutAlertRule(ctx, ar, UID)
 }
 

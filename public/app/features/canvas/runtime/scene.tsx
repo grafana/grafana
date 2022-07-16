@@ -60,6 +60,7 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   skipNextSelectionBroadcast = false;
+  ignoreDataUpdate = false;
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
@@ -310,6 +311,8 @@ export class Scene {
       container: this.div,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
+      selectFromInside: false,
+      hitRate: 0,
     });
 
     this.moveable = new Moveable(this.div!, {
@@ -326,6 +329,12 @@ export class Scene {
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })
+      .on('dragStart', (event) => {
+        this.ignoreDataUpdate = true;
+      })
+      .on('dragGroupStart', (event) => {
+        this.ignoreDataUpdate = true;
+      })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyDrag(event);
@@ -336,6 +345,17 @@ export class Scene {
           targetedElement!.applyDrag(event);
         });
       })
+      .on('dragGroupEnd', (e) => {
+        e.events.forEach((event) => {
+          const targetedElement = this.findElementByTarget(event.target);
+          if (targetedElement) {
+            targetedElement.setPlacementFromConstraint();
+          }
+        });
+
+        this.moved.next(Date.now());
+        this.ignoreDataUpdate = false;
+      })
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
@@ -343,6 +363,7 @@ export class Scene {
         }
 
         this.moved.next(Date.now());
+        this.ignoreDataUpdate = false;
       })
       .on('resizeStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -401,12 +422,15 @@ export class Scene {
       targets = event.selected;
       this.updateSelection({ targets });
 
-      if (event.isDragStart) {
-        event.inputEvent.preventDefault();
-        setTimeout(() => {
-          this.moveable!.dragStart(event.inputEvent);
-        });
-      }
+      // @TODO Figure out click-drag functionality without phantom mouseup issue
+      // https://github.com/daybrush/moveable/issues/481
+
+      // if (event.isDragStart) {
+      //   event.inputEvent.preventDefault();
+      //   setTimeout(() => {
+      //     this.moveable!.dragStart(event.inputEvent);
+      //   });
+      // }
     });
   };
 
