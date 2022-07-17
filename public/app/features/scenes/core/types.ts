@@ -118,6 +118,8 @@ export function isSceneObjectWithUrlSync(obj: any): obj is SceneObjectWithUrlSyn
   return obj.getUrlState !== undefined;
 }
 
-export function isSceneLayoutObject(obj: SceneObject): obj is SceneObject<SceneLayoutState> {
-  return (obj.state as any).children !== undefined;
+export function isSceneLayoutObject(
+  obj: SceneObject<SceneObjectState | SceneLayoutState>
+): obj is SceneObject<SceneLayoutState> {
+  return 'children' in obj.state && obj.state.children !== undefined;
 }
