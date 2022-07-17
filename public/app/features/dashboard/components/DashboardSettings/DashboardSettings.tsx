@@ -1,12 +1,10 @@
-import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
 import * as H from 'history';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Button, IconName, PageToolbar, useForceUpdate } from '@grafana/ui';
+import { Button, PageToolbar } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/PageNew/Page';
 import config from 'app/core/config';
@@ -24,6 +22,7 @@ import { GeneralSettings } from './GeneralSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
+import { SettingsPage, SettingsPageProps } from './types';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -31,34 +30,9 @@ export interface Props {
   editview: string;
 }
 
-export interface SettingsPage {
-  id: string;
-  title: string;
-  icon: IconName;
-  component: React.ReactNode;
-}
-
-const onClose = () => locationService.partial({ editview: null });
-
-const MakeEditable = (props: { onMakeEditable: () => any }) => (
-  <div>
-    <div className="dashboard-settings__header">Dashboard not editable</div>
-    <Button type="submit" onClick={props.onMakeEditable}>
-      Make editable
-    </Button>
-  </div>
-);
+const onClose = () => locationService.partial({ editview: null, editIndex: null });
 
 export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
-  const forceUpdate = useForceUpdate();
-  const onMakeEditable = useCallback(() => {
-    dashboard.editable = true;
-    dashboard.meta.canMakeEditable = false;
-    dashboard.meta.canEdit = true;
-    dashboard.meta.canSave = true;
-    forceUpdate();
-  }, [dashboard, forceUpdate]);
-
   const pages = useMemo((): SettingsPage[] => {
     const pages: SettingsPage[] = [];
 
@@ -67,28 +41,28 @@ export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
         title: 'Settings',
         id: 'settings',
         icon: 'sliders-v-alt',
-        component: <GeneralSettings dashboard={dashboard} />,
+        component: GeneralSettings,
       });
 
       pages.push({
         title: 'Annotations',
         id: 'annotations',
         icon: 'comment-alt',
-        component: <AnnotationsSettings dashboard={dashboard} />,
+        component: AnnotationsSettings,
       });
 
       pages.push({
         title: 'Variables',
         id: 'templating',
         icon: 'calculator-alt',
-        component: <VariableEditorContainer dashboard={dashboard} />,
+        component: VariableEditorContainer,
       });
 
       pages.push({
         title: 'Links',
         id: 'links',
         icon: 'link',
-        component: <LinksSettings dashboard={dashboard} />,
+        component: LinksSettings,
       });
     }
 
@@ -97,7 +71,7 @@ export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
         title: 'General',
         icon: 'sliders-v-alt',
         id: 'settings',
-        component: <MakeEditable onMakeEditable={onMakeEditable} />,
+        component: MakeEditable,
       });
     }
 
@@ -106,7 +80,7 @@ export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
         title: 'Versions',
         id: 'versions',
         icon: 'history',
-        component: <VersionsSettings dashboard={dashboard} />,
+        component: VersionsSettings,
       });
     }
 
@@ -116,14 +90,14 @@ export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
           title: 'Permissions',
           id: 'permissions',
           icon: 'lock',
-          component: <DashboardPermissions dashboard={dashboard} />,
+          component: DashboardPermissions,
         });
       } else if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
         pages.push({
           title: 'Permissions',
           id: 'permissions',
           icon: 'lock',
-          component: <AccessControlDashboardPermissions dashboard={dashboard} />,
+          component: AccessControlDashboardPermissions,
         });
       }
     }
@@ -132,11 +106,11 @@ export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
       title: 'JSON Model',
       id: 'dashboard_json',
       icon: 'arrow',
-      component: <JsonEditorSettings dashboard={dashboard} />,
+      component: JsonEditorSettings,
     });
 
     return pages;
-  }, [dashboard, onMakeEditable]);
+  }, [dashboard]);
 
   const onPostSave = () => {
     dashboard.meta.hasUnsavedFolderChange = false;
@@ -147,7 +121,10 @@ export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const canSave = dashboard.meta.canSave;
   const location = useLocation();
+  const editIndex = getEditIndex(location);
   const sectionNav = getSectionNav(pageNav, pages, currentPage, location);
+  const subPageNav = getSubPageNav(dashboard, currentPage, editIndex, location);
+
   const actions = [
     canSaveAs && <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onPostSave} variant="secondary" />,
     canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onPostSave} />,
@@ -162,8 +139,8 @@ export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
       ) : (
         <AppChromeUpdate actions={actions} />
       )}
-      <Page navModel={sectionNav} pageNav={{ text: currentPage.title }}>
-        {currentPage.component}
+      <Page navModel={sectionNav} pageNav={subPageNav}>
+        <currentPage.component dashboard={dashboard} editIndex={editIndex} />
       </Page>
     </>
   );
@@ -196,4 +173,58 @@ function getSectionNav(
     main,
     node: main,
   };
+}
+
+function getSubPageNav(
+  dashboard: DashboardModel,
+  currentPage: SettingsPage,
+  editIndex: number | undefined,
+  location: H.Location
+): NavModelItem {
+  const listPage: NavModelItem = {
+    text: currentPage.title,
+    url: locationUtil.getUrlForPartial(location, { editview: currentPage.id, editIndex: null }),
+  };
+
+  if (editIndex != null) {
+    switch (currentPage.id) {
+      case 'annotations':
+        const editItem = dashboard.annotations.list[editIndex];
+        if (editItem) {
+          return {
+            text: editItem.name,
+            parentItem: listPage,
+          };
+        }
+    }
+  }
+
+  return listPage;
+}
+
+function MakeEditable({ dashboard }: SettingsPageProps) {
+  const onMakeEditable = () => {
+    dashboard.editable = true;
+    dashboard.meta.canMakeEditable = false;
+    dashboard.meta.canEdit = true;
+    dashboard.meta.canSave = true;
+    // TODO add some kind of reload
+  };
+
+  return (
+    <div>
+      <div className="dashboard-settings__header">Dashboard not editable</div>
+      <Button type="submit" onClick={onMakeEditable}>
+        Make editable
+      </Button>
+    </div>
+  );
+}
+
+function getEditIndex(location: H.Location): number | undefined {
+  const editIndex = new URLSearchParams(location.search).get('editIndex');
+  if (editIndex != null) {
+    return parseInt(editIndex, 10);
+  }
+  return undefined;
 }

@@ -157,6 +157,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           editview: null,
           editPanel: null,
           viewPanel: null,
+          editIndex: null,
         }),
       };
     }
