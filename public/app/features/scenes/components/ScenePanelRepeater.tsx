@@ -1,4 +1,5 @@
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { LoadingState, PanelData } from '@grafana/data';
 
@@ -32,7 +33,9 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
 
     for (const series of data.series) {
       const clone = firstChild.clone({
-        key: `${newChildren.length}`,
+        // Setting key to guid here will cause unmount / remount on every refresh
+        // To preserve children between refreshes we need to figure out how to instead update objects
+        key: uuidv4(),
         $data: new SceneDataNode({
           data: {
             ...data,
