@@ -136,8 +136,8 @@ func (st *Manager) Warm(ctx context.Context) {
 	}
 }
 
-func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
-	return st.cache.getOrCreate(ctx, alertRule, result)
+func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
+	return st.cache.getOrCreate(ctx, alertRule, result, extraLabels)
 }
 
 func (st *Manager) set(entry *State) {
@@ -158,12 +158,14 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results) []*State {
+// ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
+// if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
+func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
 	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
-		s := st.setNextState(ctx, alertRule, result)
+		s := st.setNextState(ctx, alertRule, result, extraLabels)
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
@@ -203,8 +205,8 @@ func (st *Manager) maybeTakeScreenshot(
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
-	currentState := st.getOrCreate(ctx, alertRule, result)
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
+	currentState := st.getOrCreate(ctx, alertRule, result, extraLabels)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
@@ -342,7 +344,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 
 		panelId, err := strconv.ParseInt(panelUid, 10, 64)
 		if err != nil {
-			st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+			st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "err", err.Error())
 			return
 		}
 

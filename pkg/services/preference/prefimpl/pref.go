@@ -236,3 +236,7 @@ func (s *Service) GetDefaults() *pref.Preference {
 
 	return defaults
 }
+
+func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
+	return s.store.DeleteByUser(ctx, userID)
+}

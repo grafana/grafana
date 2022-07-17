@@ -14,6 +14,14 @@ import (
 )
 
 func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
+	return setupTestService(tb, store, featuremgmt.WithFeatures())
+}
+
+func SetupDisabledTestService(tb testing.TB, store secrets.Store) *SecretsService {
+	return setupTestService(tb, store, featuremgmt.WithFeatures(featuremgmt.FlagDisableEnvelopeEncryption))
+}
+
+func setupTestService(tb testing.TB, store secrets.Store, features *featuremgmt.FeatureManager) *SecretsService {
 	tb.Helper()
 	defaultKey := "SdlklWklckeLS"
 	if len(setting.SecretKey) > 0 {
@@ -27,8 +35,6 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 		data_keys_cache_ttl = 5m
 		data_keys_cache_cleanup_interval = 1ns`))
 	require.NoError(tb, err)
-
-	features := featuremgmt.WithFeatures()
 
 	cfg := &setting.Cfg{Raw: raw}
 

@@ -58,6 +58,22 @@ export function addParserToQuery(query: string, parser: string): string {
 }
 
 /**
+ * Adds filtering for pipeline errors to existing query. Useful for query modification for hints.
+ * It uses LogQL parser to find parsers and adds pipeline errors filtering after them.
+ *
+ * @param query
+ */
+export function addNoPipelineErrorToQuery(query: string): string {
+  const parserPositions = getParserPositions(query);
+  if (!parserPositions.length) {
+    return query;
+  }
+
+  const filter = toLabelFilter('__error__', '', '=');
+  return addFilterAsLabelFilter(query, parserPositions, filter);
+}
+
+/**
  * Parse the string and get all Selector positions in the query together with parsed representation of the
  * selector.
  * @param query
@@ -85,7 +101,7 @@ export function getParserPositions(query: string): Position[] {
   const positions: Position[] = [];
   tree.iterate({
     enter: (type, from, to, get): false | void => {
-      if (type.name === 'LabelParser') {
+      if (type.name === 'LabelParser' || type.name === 'JsonExpressionParser') {
         positions.push({ from, to });
         return false;
       }

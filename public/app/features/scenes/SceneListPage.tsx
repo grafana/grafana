@@ -14,7 +14,7 @@ export const SceneListPage: FC<Props> = ({}) => {
   const scenes = getScenes();
 
   return (
-    <Page>
+    <Page navId="scenes">
       <Page.Contents>
         <Stack direction="column">
           {scenes.map((scene) => (
