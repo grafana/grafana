@@ -1,8 +1,8 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { NestedScene } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
 import { SceneFlexLayout } from '../components/SceneFlexLayout';
-import { SceneRow } from '../components/SceneRow';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
 import { SceneTimeRange } from '../core/SceneTimeRange';
@@ -16,8 +16,9 @@ export function getSceneWithRows(): Scene {
     layout: new SceneFlexLayout({
       direction: 'column',
       children: [
-        new SceneRow({
+        new NestedScene({
           title: 'Overview',
+          canCollapse: true,
           layout: new SceneFlexLayout({
             direction: 'row',
             children: [
@@ -32,8 +33,9 @@ export function getSceneWithRows(): Scene {
             ],
           }),
         }),
-        new SceneRow({
+        new NestedScene({
           title: 'More server details',
+          canCollapse: true,
           layout: new SceneFlexLayout({
             direction: 'row',
             children: [

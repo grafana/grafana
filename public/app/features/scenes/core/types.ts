@@ -117,3 +117,7 @@ export interface SceneObjectWithUrlSync extends SceneObject {
 export function isSceneObjectWithUrlSync(obj: any): obj is SceneObjectWithUrlSync {
   return obj.getUrlState !== undefined;
 }
+
+export function isSceneLayoutObject(obj: SceneObject): obj is SceneObject<SceneLayoutState> {
+  return (obj.state as any).children !== undefined;
+}
