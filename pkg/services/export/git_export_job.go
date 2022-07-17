@@ -44,7 +44,7 @@ func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapsh
 			Running: true,
 			Target:  "git export",
 			Started: time.Now().UnixMilli(),
-			Current: 0,
+			Count:   make(map[string]int, len(exporters)*2),
 		},
 	}
 
@@ -75,7 +75,6 @@ func (e *gitExportJob) requestStop() {
 func (e *gitExportJob) start() {
 	defer func() {
 		e.logger.Info("Finished git export job")
-
 		e.statusMu.Lock()
 		defer e.statusMu.Unlock()
 		s := e.status
@@ -128,6 +127,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 		workDir: e.rootDir,
 		orgDir:  e.rootDir,
 		broadcast: func(p string) {
+			e.status.Index++
 			e.status.Last = p[len(e.rootDir):]
 			e.status.Changed = time.Now().UnixMilli()
 			e.broadcaster(e.status)
@@ -144,6 +144,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 	for _, org := range cmd.Result {
 		if len(cmd.Result) > 1 {
 			e.helper.orgDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.Id))
+			e.status.Count["orgs"] = e.status.Count["orgs"] + 1
 		}
 		err = e.helper.initOrg(e.sql, org.Id)
 		if err != nil {
@@ -183,8 +184,10 @@ func (e *gitExportJob) process(exporters []Exporter) error {
 		e.status.Target = exp.Key
 		e.helper.exporter = exp.Key
 
+		before := e.helper.counter
 		if exp.process != nil {
 			err := exp.process(e.helper, e)
+
 			if err != nil {
 				return err
 			}
@@ -196,6 +199,11 @@ func (e *gitExportJob) process(exporters []Exporter) error {
 				return err
 			}
 		}
+
+		prev := e.status.Count[exp.Key]
+		e.status.Count[exp.Key] = prev + (e.helper.counter - before)
+
+		fmt.Printf("STATUS: %+v\n", e.status.Count)
 	}
 	return nil
 }
