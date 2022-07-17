@@ -151,6 +151,12 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				ActionFilesWrite:  allowAllPathFilter,
 				ActionFilesDelete: allowAllPathFilter,
 			}
+		case RootSystem:
+			return map[string]filestorage.PathFilter{
+				ActionFilesRead:   allowAllPathFilter,
+				ActionFilesWrite:  allowAllPathFilter,
+				ActionFilesDelete: allowAllPathFilter,
+			}
 		default:
 			return nil
 		}
