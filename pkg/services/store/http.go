@@ -37,7 +37,7 @@ func ProvideHTTPService(store StorageService) HTTPStorageService {
 
 func UploadErrorToStatusCode(err error) int {
 	switch {
-	case errors.Is(err, ErrUploadFeatureDisabled):
+	case errors.Is(err, ErrStorageNotFound):
 		return 404
 
 	case errors.Is(err, ErrUnsupportedStorage):
@@ -48,6 +48,9 @@ func UploadErrorToStatusCode(err error) int {
 
 	case errors.Is(err, ErrFileAlreadyExists):
 		return 400
+
+	case errors.Is(err, ErrAccessDenied):
+		return 403
 
 	default:
 		return 500
