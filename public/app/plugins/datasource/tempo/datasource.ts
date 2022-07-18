@@ -458,29 +458,18 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       }
 
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
-      nodes.fields[0].config = {
-        links: [
-          makePromLink(
-            'Request rate',
-            `sum by (client, server)(rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
-            datasourceUid,
-            false
-          ),
-          makePromLink(
-            'Request histogram',
-            `histogram_quantile(0.9, sum(rate(${histogramMetric}{server="\${__data.fields.id}"}[$__rate_interval])) by (le, client, server))`,
-            datasourceUid,
-            false
-          ),
-          makePromLink(
-            'Failed request rate',
-            `sum by (client, server)(rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
-            datasourceUid,
-            false
-          ),
-          makeTempoLink('View traces', `\${__data.fields[0]}`, '', tempoDatasourceUid),
-        ],
-      };
+      nodes.fields[0].config = getFieldConfig(
+        datasourceUid,
+        tempoDatasourceUid,
+        '__data.fields.id',
+        '__data.fields[0]'
+      );
+      edges.fields[0].config = getFieldConfig(
+        datasourceUid,
+        tempoDatasourceUid,
+        '__data.fields.target',
+        '__data.fields.target'
+      );
 
       return {
         data: [nodes, edges],
@@ -488,6 +477,32 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       };
     })
   );
+}
+
+function getFieldConfig(datasourceUid: string, tempoDatasourceUid: string, field: string, tempoField: string) {
+  return {
+    links: [
+      makePromLink(
+        'Request rate',
+        `sum by (client, server)(rate(${totalsMetric}{server="\${${field}}"}[$__rate_interval]))`,
+        datasourceUid,
+        false
+      ),
+      makePromLink(
+        'Request histogram',
+        `histogram_quantile(0.9, sum(rate(${histogramMetric}{server="\${${field}}"}[$__rate_interval])) by (le, client, server))`,
+        datasourceUid,
+        false
+      ),
+      makePromLink(
+        'Failed request rate',
+        `sum by (client, server)(rate(${failedMetric}{server="\${${field}}"}[$__rate_interval]))`,
+        datasourceUid,
+        false
+      ),
+      makeTempoLink('View traces', `\${${tempoField}}`, '', tempoDatasourceUid),
+    ],
+  };
 }
 
 function rateQuery(

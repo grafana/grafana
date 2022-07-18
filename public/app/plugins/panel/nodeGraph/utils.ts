@@ -62,6 +62,7 @@ export function getEdgeFields(edges: DataFrame) {
   const fieldsCache = new FieldCache(normalizedFrames);
   return {
     id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
+    title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title.toLowerCase()),
     source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase()),
     target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target.toLowerCase()),
     mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),

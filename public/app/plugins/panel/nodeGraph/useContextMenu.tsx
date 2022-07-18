@@ -174,6 +174,7 @@ function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const fields = getEdgeFields(props.edges);
   return (
     <div>
+      {fields.title && <Label field={fields.title} index={index} />}
       {fields.details.map((f) => (
         <Label key={f.name} field={f} index={index} />
       ))}
