@@ -28,7 +28,6 @@ export class OptionsPaneCategoryDescriptor {
   addItem(item: OptionsPaneItemDescriptor) {
     item.parent = this;
     this.items.push(item);
-    // console.log(this.items)
     return this;
   }
 
