@@ -7073,6 +7073,314 @@
         }
       }
     },
+    "/serviceaccounts": {
+      "post": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:*`\n\nRequires basic authentication and that the authenticated user is a Grafana Admin.",
+        "tags": ["service_accounts"],
+        "summary": "Create service account",
+        "operationId": "createServiceAccount",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CreateServiceAccountForm"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/createServiceAccountResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/serviceaccounts/search": {
+      "get": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:read` scope: `serviceaccounts:*`",
+        "tags": ["service_accounts"],
+        "summary": "Search service accounts with Paging",
+        "operationId": "searchOrgServiceAccountsWithPaging",
+        "parameters": [
+          {
+            "type": "boolean",
+            "name": "Disabled",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "expiredTokens",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "It will return results where the query value is contained in one of the name.\nQuery values with spaces need to be URL encoded.",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "The default value is 1000.",
+            "name": "perpage",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "The default value is 1.",
+            "name": "page",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchOrgServiceAccountsWithPagingResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/serviceaccounts/{serviceAccountId}": {
+      "get": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:read` scope: `serviceaccounts:id:1` (single service account)",
+        "tags": ["service_accounts"],
+        "summary": "Get single serviceaccount by Id",
+        "operationId": "retrieveServiceAccount",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/retrieveServiceAccountResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:delete` scope: `serviceaccounts:id:1` (single service account)",
+        "tags": ["service_accounts"],
+        "summary": "Delete service account",
+        "operationId": "deleteServiceAccount",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)",
+        "tags": ["service_accounts"],
+        "summary": "Update service account",
+        "operationId": "updateServiceAccount",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updateServiceAccountResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/serviceaccounts/{serviceAccountId}/tokens": {
+      "get": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:read` scope: `global:serviceaccounts:id:1` (single service account)\n\nRequires basic authentication and that the authenticated user is a Grafana Admin.",
+        "tags": ["service_accounts"],
+        "summary": "Get service account tokens",
+        "operationId": "listTokens",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listTokensResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)",
+        "tags": ["service_accounts"],
+        "summary": "Create service account tokens",
+        "operationId": "createToken",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createTokenResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/serviceaccounts/{serviceAccountId}/tokens/{tokenId}": {
+      "delete": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)\n\nRequires basic authentication and that the authenticated user is a Grafana Admin.",
+        "tags": ["service_accounts"],
+        "summary": "Delete service account tokens",
+        "operationId": "deleteToken",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "tokenId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/snapshot/shared-options": {
       "get": {
         "tags": ["snapshots"],
@@ -9460,6 +9768,24 @@
         }
       }
     },
+    "CreateServiceAccountForm": {
+      "type": "object",
+      "properties": {
+        "isDisabled": {
+          "description": "exmaple: false",
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string",
+          "example": "grafana"
+        },
+        "role": {
+          "description": "exmaple: Admin",
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
+        }
+      }
+    },
     "CreateTeamCommand": {
       "type": "object",
       "properties": {
@@ -11024,13 +11350,16 @@
       "properties": {
         "id": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "example": 1
         },
         "key": {
-          "type": "string"
+          "type": "string",
+          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "example": "grafana"
         }
       }
     },
@@ -11963,6 +12292,31 @@
         }
       }
     },
+    "SearchServiceAccountsResult": {
+      "description": "swagger: model",
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "serviceAccounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceAccountDTO"
+          }
+        },
+        "totalCount": {
+          "description": "It can be used for pagination of the user list\nE.g. if totalCount is equal to 100 users and\nthe perpage parameter is set to 10 then there are 10 pages of users.",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "SearchTeamQueryResult": {
       "type": "object",
       "properties": {
@@ -12006,6 +12360,119 @@
           "items": {
             "$ref": "#/definitions/UserSearchHitDTO"
           }
+        }
+      }
+    },
+    "ServiceAccountDTO": {
+      "description": "swagger: model",
+      "type": "object",
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "example": {
+            "serviceaccounts:delete": true,
+            "serviceaccounts:read": true,
+            "serviceaccounts:write": true
+          }
+        },
+        "avatarUrl": {
+          "type": "string",
+          "example": "/avatar/85ec38023d90823d3e5b43ef35646af9"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "login": {
+          "type": "string",
+          "example": "sa-grafana"
+        },
+        "name": {
+          "type": "string",
+          "example": "grafana"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "role": {
+          "type": "string",
+          "example": "Viewer"
+        },
+        "tokens": {
+          "type": "integer",
+          "format": "int64",
+          "example": 0
+        }
+      }
+    },
+    "ServiceAccountProfileDTO": {
+      "type": "object",
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "avatarUrl": {
+          "type": "string",
+          "example": "/avatar/8ea890a677d6a223c591a1beea6ea9d2"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-21T14:35:33Z"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 2
+        },
+        "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "login": {
+          "type": "string",
+          "example": "sa-grafana"
+        },
+        "name": {
+          "type": "string",
+          "example": "test"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "role": {
+          "type": "string",
+          "example": "Editor"
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "example": []
+        },
+        "tokens": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-21T14:35:33Z"
         }
       }
     },
@@ -12405,6 +12872,44 @@
         },
         "usage_billing": {
           "type": "boolean"
+        }
+      }
+    },
+    "TokenDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-23T10:31:02Z"
+        },
+        "expiration": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-23T10:31:02Z"
+        },
+        "hasExpired": {
+          "type": "boolean",
+          "example": false
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-23T10:31:02Z"
+        },
+        "name": {
+          "type": "string",
+          "example": "grafana"
+        },
+        "secondsUntilExpiration": {
+          "type": "number",
+          "format": "double",
+          "example": 0
         }
       }
     },
@@ -13167,6 +13672,12 @@
         "type": "object"
       }
     },
+    "createServiceAccountResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ServiceAccountDTO"
+      }
+    },
     "createSnapshotResponse": {
       "description": "",
       "schema": {
@@ -13207,6 +13718,12 @@
             "format": "int64"
           }
         }
+      }
+    },
+    "createTokenResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/NewApiKeyResult"
       }
     },
     "createUserResponse": {
@@ -13796,6 +14313,12 @@
         }
       }
     },
+    "listTokensResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/TokenDTO"
+      }
+    },
     "lookupAlertNotificationChannelsResponse": {
       "description": "",
       "schema": {
@@ -13946,6 +14469,12 @@
         "$ref": "#/definitions/ActiveUserStats"
       }
     },
+    "retrieveServiceAccountResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ServiceAccountDTO"
+      }
+    },
     "searchOrgResponse": {
       "description": "",
       "schema": {
@@ -13953,6 +14482,12 @@
         "items": {
           "$ref": "#/definitions/OrgDTO"
         }
+      }
+    },
+    "searchOrgServiceAccountsWithPagingResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchServiceAccountsResult"
       }
     },
     "searchPlaylistsResponse": {
@@ -14030,6 +14565,27 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/PlaylistDTO"
+      }
+    },
+    "updateServiceAccountResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serviceaccount": {
+            "$ref": "#/definitions/ServiceAccountProfileDTO"
+          }
+        }
       }
     },
     "userResponse": {
@@ -14141,6 +14697,10 @@
     {
       "description": "Grafana Alerting Prometheus-compatible endpoints",
       "name": "prometheus"
+    },
+    {
+      "description": "If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.",
+      "name": "service_accounts"
     }
   ]
 }
