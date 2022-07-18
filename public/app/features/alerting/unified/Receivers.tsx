@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon } from '@grafana/ui';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -28,22 +28,33 @@ import { CONTACT_POINTS_STATE_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
-export const NotificationError: FC = ({ children }) => {
+export interface NotificationErrorProps {
+  errorCount: number;
+}
+
+const NotificationError: FC<NotificationErrorProps> = ({ errorCount }: NotificationErrorProps) => {
   const styles = useStyles2(getStyles);
 
-  return <span className={styles.warning}>{children}</span>;
+  return (
+    <div className={styles.warning}>
+      <div className={styles.wrapper}>
+        <div className={styles.warningCount}>
+          <Icon name="exclamation-triangle" />
+          <div className={styles.countMessage}>
+            {`${errorCount} ${pluralize('error', errorCount)} with contact points`}
+          </div>
+        </div>
+        <div>{'Some alert notifications might not be delivered'}</div>
+      </div>
+    </div>
+  );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  warning: css`
-    color: ${theme.colors.warning.text};
-  `,
-});
 
 const Receivers: FC = () => {
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
 
   const location = useLocation();
   const isRoot = location.pathname.endsWith('/alerting/notifications');
@@ -106,32 +117,14 @@ const Receivers: FC = () => {
 
   return (
     <AlertingPageWrapper pageId="receivers">
-      <div
-        className={css`
-          display: flex;
-          justify-content: space-between;
-        `}
-      >
+      <div className={styles.headingContainer}>
         <AlertManagerPicker
           current={alertManagerSourceName}
           disabled={disableAmSelect}
           onChange={setAlertManagerSourceName}
           dataSources={alertManagers}
         />
-        {integrationsErrorCount > 0 && (
-          <NotificationError>
-            <div
-              className={css`
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end;
-              `}
-            >
-              <div>{`${integrationsErrorCount} ${pluralize('error', integrationsErrorCount)} with contact points`}</div>
-              <div>{'Some alert notifications might not be delivered'}</div>
-            </div>
-          </NotificationError>
-        )}
+        {integrationsErrorCount > 0 && <NotificationError errorCount={integrationsErrorCount} />}
       </div>
       {error && !loading && (
         <Alert severity="error" title="Error loading Alertmanager config">
@@ -182,3 +175,25 @@ const Receivers: FC = () => {
 };
 
 export default withErrorBoundary(Receivers, { style: 'page' });
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  warning: css`
+    color: ${theme.colors.warning.text};
+  `,
+  wrapper: css`
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+  `,
+  warningCount: css`
+    display: flex;
+    align-items: center;
+  `,
+  countMessage: css`
+    padding-left: 10px;
+  `,
+  headingContainer: css`
+    display: flex;
+    justify-content: space-between;
+  `,
+});
