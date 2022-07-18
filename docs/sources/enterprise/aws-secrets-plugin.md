@@ -59,7 +59,7 @@ Alternatively, you can configure authentication and region selection explicitly 
 
 You can configure Grafana to migrate your existing secrets from Grafana to the plugin on startup. This migration is a one-time blocking operation that runs on Grafana startup, meaning Grafana will not be usable until migration is complete.
 
-**Note:** The speed of this migration is contingent on the number of secrets and system performance, so it can potentially run slowly (e.g. two secrets per second).
+> **Note:** The speed of this migration is contingent on the number of secrets and system performance, and can run at a rate as low as two secrets per second.
 
 Once migration to the plugin has completed, and if [backwards compatibility](#backwards-compatibility) is disabled, the plugin will be required for Grafana to start. If the plugin is uninstalled unexpectedly, or if it fails to start for any reason, Grafana will also fail to start. Because the ability to migrate from the plugin back to Grafana is not yet implemented, we highly recommend keeping backwards compatibility turned on (default).
 
