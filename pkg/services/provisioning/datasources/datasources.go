@@ -154,7 +154,7 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 	for _, ds := range dsToDelete {
 		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name}
 		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgId: ds.OrgID}
-		if err := dc.store.GetDataSource(ctx, getDsQuery); !errors.Is(err, datasources.ErrDataSourceNotFound) {
+		if err := dc.store.GetDataSource(ctx, getDsQuery); err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return err
 		}
 
@@ -162,7 +162,7 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 			return err
 		}
 
-		if cmd.DeletedDatasourcesCount > 0 {
+		if getDsQuery.Result != nil {
 			if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 				SourceUID: getDsQuery.Result.Uid,
 			}); err != nil {
@@ -175,6 +175,10 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 				return err
 			}
 
+			dc.log.Info("deleted correlations based on configuration", "ds_name", ds.Name)
+		}
+
+		if cmd.DeletedDatasourcesCount > 0 {
 			dc.log.Info("deleted datasource based on configuration", "name", ds.Name)
 		}
 	}
