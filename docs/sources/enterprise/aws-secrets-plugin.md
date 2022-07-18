@@ -67,7 +67,7 @@ Once migration to the plugin has completed, the plugin must be installed for Gra
 
 ### Migration to plugin
 
-Migration from Grafana to the plugin is initiated by configuration. Add the following to the Grafana `custom.ini` file:
+To initiate secret migration from Grafana to the plugin, enable the `migrate_to_plugin` setting in the `secrets` section of the Grafana `custom.ini` file:
 
 ```ini
 [secrets]
