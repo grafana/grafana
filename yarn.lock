@@ -21210,7 +21210,6 @@ __metadata:
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.2
     react-draggable: 4.4.5
-    react-dropzone: ^14.2.2
     react-grid-layout: 1.3.4
     react-highlight-words: 0.18.0
     react-hook-form: 7.5.3
@@ -30926,19 +30925,6 @@ __metadata:
   peerDependencies:
     react: ">= 16.8 || 18.0.0"
   checksum: 8556d997d66bad79fe165a30d6dc8f917c67d8c7d23069c417eb2a0da6df824ba71b84b532707711e184da105122f6a6e81104341dc5b8c0f96e318267fdda91
-  languageName: node
-  linkType: hard
-
-"react-dropzone@npm:^14.2.2":
-  version: 14.2.2
-  resolution: "react-dropzone@npm:14.2.2"
-  dependencies:
-    attr-accept: ^2.2.2
-    file-selector: ^0.6.0
-    prop-types: ^15.8.1
-  peerDependencies:
-    react: ">= 16.8 || 18.0.0"
-  checksum: ef9ea7b3b5734e8eade2d29efc26da410dd7d6d046216331f6a51e2df4459c35f3a8f950fa7f723f3db6b0ead8aa68f58f6adbd39b98575c9fc8d8dfe02b671f
   languageName: node
   linkType: hard
 
