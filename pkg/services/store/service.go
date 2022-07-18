@@ -28,6 +28,9 @@ var ErrAccessDenied = errors.New("access denied")
 const RootPublicStatic = "public-static"
 const RootResources = "resources"
 const RootDevenv = "devenv"
+const RootSystem = "system"
+
+const SystemBrandingStorage = "system/branding"
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
 
@@ -105,14 +108,22 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0)
-		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-			storages = append(storages,
-				newSQLStorage(RootResources,
-					"Resources",
-					&StorageSQLConfig{orgId: orgId}, sql).
-					setBuiltin(true).
-					setDescription("Upload custom resource files"))
-		}
+
+		// Custom upload files
+		storages = append(storages,
+			newSQLStorage(RootResources,
+				"Resources",
+				&StorageSQLConfig{orgId: orgId}, sql).
+				setBuiltin(true).
+				setDescription("Upload custom resource files"))
+
+		// System settings
+		storages = append(storages,
+			newSQLStorage(RootSystem,
+				"System",
+				&StorageSQLConfig{orgId: orgId},
+				sql,
+			).setBuiltin(true).setDescription("Grafana system storage"))
 
 		return storages
 	}
@@ -136,6 +147,12 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				ActionFilesDelete: denyAllPathFilter,
 			}
 		case RootResources:
+			return map[string]filestorage.PathFilter{
+				ActionFilesRead:   allowAllPathFilter,
+				ActionFilesWrite:  allowAllPathFilter,
+				ActionFilesDelete: allowAllPathFilter,
+			}
+		case RootSystem:
 			return map[string]filestorage.PathFilter{
 				ActionFilesRead:   allowAllPathFilter,
 				ActionFilesWrite:  allowAllPathFilter,
