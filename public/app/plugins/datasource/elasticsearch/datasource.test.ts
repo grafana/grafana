@@ -1033,15 +1033,19 @@ describe('modifyQuery', () => {
     });
 
     it('should add the filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', key: 'foo', value: 'bar' }).query).toBe('foo:"bar"');
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'foo:"bar"'
+      );
     });
 
     it('should add the negative filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', key: 'foo', value: 'bar' }).query).toBe('-foo:"bar"');
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        '-foo:"bar"'
+      );
     });
 
     it('should do nothing on unknown type', () => {
-      expect(ds.modifyQuery(query, { type: 'unknown', key: 'foo', value: 'bar' }).query).toBe(query.query);
+      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
     });
   });
 
@@ -1052,19 +1056,19 @@ describe('modifyQuery', () => {
     });
 
     it('should add the filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', key: 'foo', value: 'bar' }).query).toBe(
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
         'test:"value" AND foo:"bar"'
       );
     });
 
     it('should add the negative filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', key: 'foo', value: 'bar' }).query).toBe(
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
         'test:"value" AND -foo:"bar"'
       );
     });
 
     it('should do nothing on unknown type', () => {
-      expect(ds.modifyQuery(query, { type: 'unknown', key: 'foo', value: 'bar' }).query).toBe(query.query);
+      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
     });
   });
 });
