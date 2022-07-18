@@ -31,7 +31,6 @@ export const FileUpload: FC<Props> = ({
   children = 'Upload file',
   accept = '*',
   size = 'md',
-  showFileName = true,
 }) => {
   const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
@@ -64,7 +63,7 @@ export const FileUpload: FC<Props> = ({
         {children}
       </label>
 
-      {showFileName && fileName && (
+      {fileName && (
         <span
           aria-label="File name"
           className={style.fileName}

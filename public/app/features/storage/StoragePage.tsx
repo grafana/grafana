@@ -265,7 +265,7 @@ export default function StoragePage(props: Props) {
             )}
 
             {canAddFolder && (
-              <FileUpload accept={fileFormats} onFileUpload={onFileUpload} showFileName={true} key={fileUploadKey}>
+              <FileUpload accept={fileFormats} onFileUpload={onFileUpload} key={fileUploadKey}>
                 Upload
               </FileUpload>
             )}
@@ -309,7 +309,8 @@ export default function StoragePage(props: Props) {
             body={
               <div>
                 <p>{file?.name}</p>
-                <p>A file with this name already exists. What would you like to do?</p>
+                <p>A file with this name already exists.</p>
+                <p>What would you like to do?</p>
               </div>
             }
             title={'This file already exists'}
