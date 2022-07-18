@@ -229,41 +229,40 @@ func TestValues(t *testing.T) {
 			t.Run("Should unmarshal top-level slices and nested structures", func(t *testing.T) {
 				doc := `
                  val:
-                   - $STRING
-                   - $INT
-                   - stringMap:
-                       interpolatedString: $STRING
-                       interpolatedInt: $INT
-                       string: "just a string"
-                     sameLevel: $STRING
+                   - interpolatedString: $STRING
+                     interpolatedInt: $INT
+                     string: "just a string"
+                   - interpolatedString: $STRING
+                     interpolatedInt: $INT
+                     string: "just a string"
                `
 				unmarshalingTest(t, doc, d)
 
 				type stringMap = map[string]interface{}
 
-				require.Equal(t, []interface{}{
-					"test",
-					"1",
-					stringMap{
-						"stringMap": stringMap{
-							"interpolatedString": "test",
-							"interpolatedInt":    "1",
-							"string":             "just a string",
-						},
-						"sameLevel": "test",
+				require.Equal(t, []stringMap{
+					{
+						"interpolatedString": "test",
+						"interpolatedInt":    "1",
+						"string":             "just a string",
+					},
+					{
+						"interpolatedString": "test",
+						"interpolatedInt":    "1",
+						"string":             "just a string",
 					},
 				}, d.Val.Value())
 
-				require.Equal(t, []interface{}{
-					"$STRING",
-					"$INT",
-					stringMap{
-						"stringMap": stringMap{
-							"interpolatedString": "$STRING",
-							"interpolatedInt":    "$INT",
-							"string":             "just a string",
-						},
-						"sameLevel": "$STRING",
+				require.Equal(t, []stringMap{
+					{
+						"interpolatedString": "$STRING",
+						"interpolatedInt":    "$INT",
+						"string":             "just a string",
+					},
+					{
+						"interpolatedString": "$STRING",
+						"interpolatedInt":    "$INT",
+						"string":             "just a string",
 					},
 				}, d.Val.Raw)
 			})
