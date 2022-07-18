@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -461,7 +462,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 		if affectedRows, err := sess.Insert(dashVersion); err != nil {
 			return err
 		} else if affectedRows == 0 {
-			return models.ErrDashboardNotFound
+			return dashboards.ErrDashboardNotFound
 		}
 
 		return nil

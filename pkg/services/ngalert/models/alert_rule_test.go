@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -113,9 +114,9 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				},
 			},
 			{
-				name: "For is 0",
+				name: "For is -1",
 				mutator: func(r *AlertRule) {
-					r.For = 0
+					r.For = -1
 				},
 			},
 		}
@@ -581,4 +582,18 @@ func TestSortByGroupIndex(t *testing.T) {
 			return rules[i].ID < rules[j].ID
 		}))
 	})
+}
+
+func TestTimeRangeYAML(t *testing.T) {
+	yamlRaw := "from: 600\nto: 0\n"
+	var rtr RelativeTimeRange
+	err := yaml.Unmarshal([]byte(yamlRaw), &rtr)
+	require.NoError(t, err)
+	// nanoseconds
+	require.Equal(t, Duration(600000000000), rtr.From)
+	require.Equal(t, Duration(0), rtr.To)
+
+	serialized, err := yaml.Marshal(rtr)
+	require.NoError(t, err)
+	require.Equal(t, yamlRaw, string(serialized))
 }

@@ -471,6 +471,8 @@ Content-Type: application/json
 
 `POST /api/admin/pause-all-alerts`
 
+> **Note:** This API is relevant for the [legacy dashboard alerts]({{< relref "../../old-alerting/" >}}) only. For default alerting, use [silences]({{< relref "../../alerting/silences/" >}}) to stop alerts from being delivered.
+
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
@@ -716,16 +718,75 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/rotate-data-keys`
 
-Rotates data encryption keys, so all the active keys are disabled
-and no longer used for encryption but kept for decryption operations.
-
-Secrets encrypted with one of the deactivated keys need to be re-encrypted
-to actually stop using those keys for both encryption and decryption.
+[Rotates]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#rotate-data-keys" >}}) data encryption keys.
 
 **Example Request**:
 
 ```http
 POST /api/admin/encryption/rotate-data-keys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 204
+Content-Type: application/json
+```
+
+## Re-encrypt data encryption keys
+
+`POST /api/admin/encryption/reencrypt-data-keys`
+
+[Re-encrypts]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-data-keys" >}}) data encryption keys.
+
+**Example Request**:
+
+```http
+POST /api/admin/encryption/reencrypt-data-keys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 204
+Content-Type: application/json
+```
+
+## Re-encrypt secrets
+
+`POST /api/admin/encryption/reencrypt-secrets`
+
+[Re-encrypts]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-secrets" >}}) secrets.
+
+**Example Request**:
+
+```http
+POST /api/admin/encryption/reencrypt-secrets HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 204
+Content-Type: application/json
+```
+
+## Roll back secrets
+
+`POST /api/admin/encryption/rollback-secrets`
+
+[Rolls back]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#roll-back-secrets" >}}) secrets.
+
+**Example Request**:
+
+```http
+POST /api/admin/encryption/rollback-secrets HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 ```

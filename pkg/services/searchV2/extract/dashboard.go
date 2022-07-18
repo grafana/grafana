@@ -3,6 +3,7 @@ package extract
 import (
 	"io"
 	"strconv"
+	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -11,12 +12,111 @@ func logf(format string, a ...interface{}) {
 	//fmt.Printf(format, a...)
 }
 
+type templateVariable struct {
+	current struct {
+		value interface{}
+	}
+	name         string
+	query        interface{}
+	variableType string
+}
+
+type datasourceVariableLookup struct {
+	variableNameToRefs map[string][]DataSourceRef
+	dsLookup           DatasourceLookup
+}
+
+func (d *datasourceVariableLookup) getDsRefsByTemplateVariableValue(value string, datasourceType string) []DataSourceRef {
+	switch value {
+	case "default":
+		// can be the default DS, or a DS with UID="default"
+		candidateDs := d.dsLookup.ByRef(&DataSourceRef{UID: value})
+		if candidateDs == nil {
+			// get the actual default DS
+			candidateDs = d.dsLookup.ByRef(nil)
+		}
+
+		if candidateDs != nil {
+			return []DataSourceRef{*candidateDs}
+		}
+		return []DataSourceRef{}
+	case "$__all":
+		// TODO: filter datasources by template variable's regex
+		return d.dsLookup.ByType(datasourceType)
+	case "":
+		return []DataSourceRef{}
+	case "No data sources found":
+		return []DataSourceRef{}
+	default:
+		return []DataSourceRef{
+			{
+				UID:  value,
+				Type: datasourceType,
+			},
+		}
+	}
+}
+
+func (d *datasourceVariableLookup) add(templateVariable templateVariable) {
+	var refs []DataSourceRef
+
+	datasourceType, isDataSourceTypeValid := templateVariable.query.(string)
+	if !isDataSourceTypeValid {
+		d.variableNameToRefs[templateVariable.name] = refs
+		return
+	}
+
+	if values, multiValueVariable := templateVariable.current.value.([]interface{}); multiValueVariable {
+		for _, value := range values {
+			if valueAsString, ok := value.(string); ok {
+				refs = append(refs, d.getDsRefsByTemplateVariableValue(valueAsString, datasourceType)...)
+			}
+		}
+	}
+
+	if value, stringValue := templateVariable.current.value.(string); stringValue {
+		refs = append(refs, d.getDsRefsByTemplateVariableValue(value, datasourceType)...)
+	}
+
+	d.variableNameToRefs[templateVariable.name] = unique(refs)
+}
+
+func unique(refs []DataSourceRef) []DataSourceRef {
+	var uniqueRefs []DataSourceRef
+	uidPresence := make(map[string]bool)
+	for _, ref := range refs {
+		if !uidPresence[ref.UID] {
+			uidPresence[ref.UID] = true
+			uniqueRefs = append(uniqueRefs, ref)
+		}
+	}
+	return uniqueRefs
+}
+
+func (d *datasourceVariableLookup) getDatasourceRefs(name string) []DataSourceRef {
+	refs, ok := d.variableNameToRefs[name]
+	if ok {
+		return refs
+	}
+
+	return []DataSourceRef{}
+}
+
+func newDatasourceVariableLookup(dsLookup DatasourceLookup) *datasourceVariableLookup {
+	return &datasourceVariableLookup{
+		variableNameToRefs: make(map[string][]DataSourceRef),
+		dsLookup:           dsLookup,
+	}
+}
+
 // nolint:gocyclo
 // ReadDashboard will take a byte stream and return dashboard info
 func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, error) {
 	dash := &DashboardInfo{}
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
+
+	datasourceVariablesLookup := newDatasourceVariableLookup(lookup)
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		// Skip null values so we don't need special int handling
@@ -112,12 +212,33 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 			for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
 				if sub == "list" {
 					for iter.ReadArray() {
+						templateVariable := templateVariable{}
+
 						for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
-							if k == "name" {
-								dash.TemplateVars = append(dash.TemplateVars, iter.ReadString())
-							} else {
+							switch k {
+							case "name":
+								name := iter.ReadString()
+								dash.TemplateVars = append(dash.TemplateVars, name)
+								templateVariable.name = name
+							case "type":
+								templateVariable.variableType = iter.ReadString()
+							case "query":
+								templateVariable.query = iter.Read()
+							case "current":
+								for c := iter.ReadObject(); c != ""; c = iter.ReadObject() {
+									if c == "value" {
+										templateVariable.current.value = iter.Read()
+									} else {
+										iter.Skip()
+									}
+								}
+							default:
 								iter.Skip()
 							}
+						}
+
+						if templateVariable.variableType == "datasource" {
+							datasourceVariablesLookup.add(templateVariable)
 						}
 					}
 				} else {
@@ -139,6 +260,8 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 		}
 	}
 
+	replaceDatasourceVariables(dash, datasourceVariablesLookup)
+
 	targets := newTargetInfo(lookup)
 	for _, panel := range dash.Panels {
 		targets.addPanel(panel)
@@ -146,6 +269,43 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 	dash.Datasource = targets.GetDatasourceInfo()
 
 	return dash, iter.Error
+}
+
+func replaceDatasourceVariables(dash *DashboardInfo, datasourceVariablesLookup *datasourceVariableLookup) {
+	for i, panel := range dash.Panels {
+		var dsVariableRefs []DataSourceRef
+		var dsRefs []DataSourceRef
+
+		// partition into actual datasource references and variables
+		for i := range panel.Datasource {
+			isVariableRef := strings.HasPrefix(panel.Datasource[i].UID, "$")
+			if isVariableRef {
+				dsVariableRefs = append(dsVariableRefs, panel.Datasource[i])
+			} else {
+				dsRefs = append(dsRefs, panel.Datasource[i])
+			}
+		}
+
+		dash.Panels[i].Datasource = append(dsRefs, findDatasourceRefsForVariables(dsVariableRefs, datasourceVariablesLookup)...)
+	}
+}
+
+func getDataSourceVariableName(dsVariableRef DataSourceRef) string {
+	if strings.HasPrefix(dsVariableRef.UID, "${") {
+		return strings.TrimPrefix(strings.TrimSuffix(dsVariableRef.UID, "}"), "${")
+	}
+
+	return strings.TrimPrefix(dsVariableRef.UID, "$")
+}
+
+func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVariablesLookup *datasourceVariableLookup) []DataSourceRef {
+	var referencedDs []DataSourceRef
+	for _, dsVariableRef := range dsVariableRefs {
+		variableName := getDataSourceVariableName(dsVariableRef)
+		refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
+		referencedDs = append(referencedDs, refs...)
+	}
+	return referencedDs
 }
 
 // will always return strings for now

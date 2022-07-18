@@ -87,7 +87,7 @@ func TestPrometheusRules(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -163,7 +163,7 @@ func TestPrometheusRules(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{},
 						Annotations: map[string]string{"__panelId__": "1"},
 					},
@@ -351,7 +351,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:    interval,
+						For:    &interval,
 						Labels: map[string]string{},
 						Annotations: map[string]string{
 							"__dashboardUid__": dashboardUID,

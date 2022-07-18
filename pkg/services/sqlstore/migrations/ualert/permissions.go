@@ -7,6 +7,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
@@ -151,7 +152,7 @@ func (m *folderHelper) generateNewDashboardUid(orgId int64) (string, error) {
 		}
 	}
 
-	return "", models.ErrDashboardFailedGenerateUniqueUid
+	return "", dashboards.ErrDashboardFailedGenerateUniqueUid
 }
 
 // based on SQLStore.UpdateDashboardACL()

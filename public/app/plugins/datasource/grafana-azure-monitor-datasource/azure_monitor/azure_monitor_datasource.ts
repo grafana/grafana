@@ -1,7 +1,7 @@
 import { find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { resourceTypeDisplayNames, supportedMetricNamespaces } from '../azureMetadata';
@@ -42,11 +42,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   declare resourceGroup: string;
   declare resourceName: string;
   timeSrv: TimeSrv;
+  templateSrv: TemplateSrv;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
 
     this.timeSrv = getTimeSrv();
+    this.templateSrv = getTemplateSrv();
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
     const cloud = getAzureCloud(instanceSettings);
@@ -202,14 +204,18 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, skipToken?: string) {
+  getResourceNames(subscriptionId: string, resourceGroup?: string, metricDefinition?: string, skipToken?: string) {
     const validMetricDefinition = startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')
       ? 'Microsoft.Storage/storageAccounts'
       : metricDefinition;
-    let url =
-      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/resources?` +
-      `$filter=resourceType eq '${validMetricDefinition}'&` +
-      `api-version=${this.listByResourceGroupApiVersion}`;
+    let url = `${this.resourcePath}/subscriptions/${subscriptionId}`;
+    if (resourceGroup) {
+      url += `/resourceGroups/${resourceGroup}`;
+    }
+    url += `/resources?api-version=${this.listByResourceGroupApiVersion}`;
+    if (validMetricDefinition) {
+      url += `&$filter=resourceType eq '${validMetricDefinition}'`;
+    }
     if (skipToken) {
       url += `&$skiptoken=${skipToken}`;
     }
@@ -244,11 +250,16 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
-      this.replaceTemplateVariables(query)
+      this.replaceTemplateVariables(query),
+      this.templateSrv
     );
     return this.getResource(url)
       .then((result: AzureMonitorMetricNamespacesResponse) => {
-        return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
+        return ResponseParser.parseResponseValues(
+          result,
+          'properties.metricNamespaceName',
+          'properties.metricNamespaceName'
+        );
       })
       .then((result) => {
         if (url.includes('Microsoft.Storage/storageAccounts')) {
@@ -273,7 +284,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
       this.apiVersion,
-      this.replaceTemplateVariables(query)
+      this.replaceTemplateVariables(query),
+      this.templateSrv
     );
     return this.getResource(url).then((result: AzureMonitorMetricNamesResponse) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
@@ -285,7 +297,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
       this.apiVersion,
-      this.replaceTemplateVariables(query)
+      this.replaceTemplateVariables(query),
+      this.templateSrv
     );
     return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
       return ResponseParser.parseMetadata(result, metricName);

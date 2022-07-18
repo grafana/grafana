@@ -17,39 +17,37 @@ In this topic you'll learn how to use the role picker, provisioning, and the HTT
 
 This section describes how to:
 
-- Assign a fixed role to a user or team as an organization administrator.
+- Assign a fixed role to a user, team or service account as an organization administrator.
 - Assign a fixed role to a user as a server administrator. This approach enables you to assign a fixed role to a user in multiple organizations, without needing to switch organizations.
 
-In both cases, the assignment applies only to the user or team within the affected organization, and no other organizations. For example, if you grant the user the **Data source editor** role in the **Main** organization, then the user can edit data sources in the **Main** organization, but not in other organizations.
-
-> **Note:** After you apply your changes, user and team permissions update immediately, and the UI reflects the new permissions the next time they reload their browser or visit another page.
+In both cases, the assignment applies only to the user, team or service account within the affected organization, and no other organizations. For example, if you grant the user the **Data source editor** role in the **Main** organization, then the user can edit data sources in the **Main** organization, but not in other organizations.
 
 <br/>
 
 **Before you begin:**
 
 - [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy/" >}}).
-- Identify the fixed roles that you want to assign to the user or team.
+- Identify the fixed roles that you want to assign to the user, team or service account.
 
   For more information about available fixed roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions/" >}}).
 
 - Ensure that your own user account has the correct permissions:
-  - If you are assigning permissions to a user or team within an organization, you must have organization administrator or server administrator permissions.
+  - If you are assigning permissions to a user, team or service account within an organization, you must have organization administrator or server administrator permissions.
   - If you are assigning permissions to a user who belongs to multiple organizations, you must have server administrator permissions.
   - Your Grafana user can also assign fixed role if it has either the `fixed:roles:writer` fixed role assigned to the same organization to which you are assigning RBAC to a user, or a custom role with `users.roles:add` and `users.roles:remove` permissions.
   - Your own user account must have the roles you are granting. For example, if you would like to grant the `fixed:users:writer` role to a team, you must have that role yourself.
 
 <br/>
 
-**To assign a fixed role to a user or team:**
+**To assign a fixed role to a user, team or service account:**
 
 1. Sign in to Grafana.
-2. Switch to the organization that contains the user or team.
+2. Switch to the organization that contains the user, team or service account.
 
    For more information about switching organizations, refer to [Switch organizations]({{< relref "../../user-management/user-preferences/_index.md#switch-organizations" >}}).
 
-3. Hover your cursor over **Configuration** (the gear icon) in the left navigation menu, and click **Users** or **Teams**.
-4. In the **Role** column, select the fixed role that you want to assign to the user or team.
+3. Hover your cursor over **Configuration** (the gear icon) in the left navigation menu, and click **Users** or **Teams** or **Service Accounts**.
+4. In the **Role** column, select the fixed role that you want to assign to the user, team or service account.
 5. Click **Update**.
 
 ![User role picker in an organization](/static/img/docs/enterprise/user_role_picker_in_org.png)
