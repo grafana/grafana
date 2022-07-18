@@ -200,8 +200,8 @@ func (e *gitExportJob) process(exporters []Exporter) error {
 			}
 		}
 
-		prev := e.status.Count[exp.Key]
-		e.status.Count[exp.Key] = prev + (e.helper.counter - before)
+		// Aggregate the counts for each org in the same report
+		e.status.Count[exp.Key] += (e.helper.counter - before)
 	}
 	return nil
 }
