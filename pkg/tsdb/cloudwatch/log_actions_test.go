@@ -406,33 +406,6 @@ func Test_executeStartQuery(t *testing.T) {
 		}, cli.calls.startQueryWithContext)
 	})
 
-	t.Run("cannot parse limit as float", func(t *testing.T) {
-		cli = fakeCWLogsClient{}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-			Queries: []backend.DataQuery{
-				{
-					RefID:     "A",
-					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
-					JSON: json.RawMessage(`{
-						"type":    "logAction",
-						"subtype": "StartQuery",
-						"limit":   12.0
-					}`),
-				},
-			},
-		})
-
-		assert.NoError(t, err)
-		require.Len(t, cli.calls.startQueryWithContext, 1)
-		assert.Nil(t, cli.calls.startQueryWithContext[0].Limit)
-	})
-
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {

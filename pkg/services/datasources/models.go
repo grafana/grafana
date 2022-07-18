@@ -160,6 +160,10 @@ type GetDataSourcesQuery struct {
 	Result          []*DataSource
 }
 
+type GetAllDataSourcesQuery struct {
+	Result []*DataSource
+}
+
 type GetDataSourcesByTypeQuery struct {
 	Type   string
 	Result []*DataSource

@@ -19,11 +19,11 @@ export interface PromLokiVisualQuery {
 }
 
 export abstract class LokiAndPromQueryModellerBase implements VisualQueryModeller {
-  protected operationsRegisty: Registry<QueryBuilderOperationDef>;
+  protected operationsRegistry: Registry<QueryBuilderOperationDef>;
   private categories: string[] = [];
 
   constructor(getOperations: () => QueryBuilderOperationDef[]) {
-    this.operationsRegisty = new Registry<QueryBuilderOperationDef>(getOperations);
+    this.operationsRegistry = new Registry<QueryBuilderOperationDef>(getOperations);
   }
 
   protected setOperationCategories(categories: string[]) {
@@ -31,11 +31,11 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
   }
 
   getOperationsForCategory(category: string) {
-    return this.operationsRegisty.list().filter((op) => op.category === category && !op.hideFromList);
+    return this.operationsRegistry.list().filter((op) => op.category === category && !op.hideFromList);
   }
 
   getAlternativeOperations(key: string) {
-    return this.operationsRegisty.list().filter((op) => op.alternativesKey === key);
+    return this.operationsRegistry.list().filter((op) => op.alternativesKey && op.alternativesKey === key);
   }
 
   getCategories() {
@@ -43,12 +43,12 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
   }
 
   getOperationDef(id: string): QueryBuilderOperationDef | undefined {
-    return this.operationsRegisty.getIfExists(id);
+    return this.operationsRegistry.getIfExists(id);
   }
 
   renderOperations(queryString: string, operations: QueryBuilderOperation[]) {
     for (const operation of operations) {
-      const def = this.operationsRegisty.getIfExists(operation.id);
+      const def = this.operationsRegistry.getIfExists(operation.id);
       if (!def) {
         throw new Error(`Could not find operation ${operation.id} in the registry`);
       }

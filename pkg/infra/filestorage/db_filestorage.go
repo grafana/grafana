@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"reflect"
 
 	// can ignore because we don't need a cryptographically secure hash function
 	// sha1 low chance of collisions and better performance than sha256
@@ -135,30 +136,23 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 	if err != nil {
 		return err
 	}
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		table := &file{}
-		exists, innerErr := sess.Table("file").Where("path_hash = ?", pathHash).Get(table)
-		if innerErr != nil {
-			return innerErr
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		deletedFilesCount, err := sess.Table("file").Where("path_hash = ?", pathHash).Delete(&file{})
+		if err != nil {
+			return err
 		}
 
-		if !exists {
-			return nil
+		deletedMetaCount, err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Delete(&fileMeta{})
+		if err != nil {
+			if rollErr := sess.Rollback(); rollErr != nil {
+				return fmt.Errorf("failed to roll back transaction due to error: %s: %w", rollErr, err)
+			}
+
+			return err
 		}
 
-		number, innerErr := sess.Table("file").Where("path_hash = ?", pathHash).Delete(table)
-		if innerErr != nil {
-			return innerErr
-		}
-		s.log.Info("Deleted file", "path", filePath, "affectedRecords", number)
-
-		metaTable := &fileMeta{}
-		number, innerErr = sess.Table("file_meta").Where("path_hash = ?", pathHash).Delete(metaTable)
-		if innerErr != nil {
-			return innerErr
-		}
-		s.log.Info("Deleted metadata", "path", filePath, "affectedRecords", number)
-		return innerErr
+		s.log.Info("Deleted file", "path", filePath, "deletedMetaCount", deletedMetaCount, "deletedFilesCount", deletedFilesCount)
+		return err
 	})
 
 	return err
@@ -490,24 +484,87 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 	return err
 }
 
-func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string) error {
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		existing := &file{}
-		internalFolderPathHash, err := createPathHash(folderPath + Delimiter)
-		if err != nil {
-			return err
-		}
-		exists, err := sess.Table("file").Where("path_hash = ?", internalFolderPathHash).Get(existing)
+func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, options *DeleteFolderOptions) error {
+	lowerFolderPath := strings.ToLower(folderPath)
+	if lowerFolderPath == "" || lowerFolderPath == Delimiter {
+		lowerFolderPath = Delimiter
+	} else if !strings.HasSuffix(lowerFolderPath, Delimiter) {
+		lowerFolderPath = lowerFolderPath + Delimiter
+	}
+
+	if !options.Force {
+		return s.Delete(ctx, lowerFolderPath)
+	}
+
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var rawHashes []interface{}
+
+		// xorm does not support `.Delete()` with `.Join()`, so we first have to retrieve all path_hashes and then use them to filter `file_meta` table
+		err := sess.Table("file").
+			Cols("path_hash").
+			Where("LOWER(path) LIKE ?", lowerFolderPath+"%").
+			Find(&rawHashes)
 		if err != nil {
 			return err
 		}
 
-		if !exists {
+		if len(rawHashes) == 0 {
+			s.log.Info("Force deleted folder", "path", lowerFolderPath, "deletedFilesCount", 0, "deletedMetaCount", 0)
 			return nil
 		}
 
-		_, err = sess.Table("file").Where("path_hash = ?", internalFolderPathHash).Delete(existing)
-		return err
+		accessFilter := options.AccessFilter.asSQLFilter()
+		accessibleFilesCount, err := sess.Table("file").
+			Cols("path_hash").
+			Where("LOWER(path) LIKE ?", lowerFolderPath+"%").
+			Where(accessFilter.Where, accessFilter.Args...).
+			Count(&file{})
+		if err != nil {
+			return err
+		}
+
+		if int64(len(rawHashes)) != accessibleFilesCount {
+			s.log.Error("force folder delete: unauthorized access", "path", lowerFolderPath, "expectedAccessibleFilesCount", int64(len(rawHashes)), "actualAccessibleFilesCount", accessibleFilesCount)
+			return fmt.Errorf("force folder delete: unauthorized access for path %s", lowerFolderPath)
+		}
+
+		var hashes []interface{}
+		for _, hash := range rawHashes {
+			if hashString, ok := hash.(string); ok {
+				hashes = append(hashes, hashString)
+
+				// MySQL returns the `path_hash` field as []uint8
+			} else if hashUint, ok := hash.([]uint8); ok {
+				hashes = append(hashes, string(hashUint))
+			} else {
+				return fmt.Errorf("invalid hash type: %s", reflect.TypeOf(hash))
+			}
+		}
+
+		deletedFilesCount, err := sess.
+			Table("file").
+			In("path_hash", hashes...).
+			Delete(&file{})
+
+		if err != nil {
+			return err
+		}
+
+		deletedMetaCount, err := sess.
+			Table("file_meta").
+			In("path_hash", hashes...).
+			Delete(&fileMeta{})
+
+		if err != nil {
+			if rollErr := sess.Rollback(); rollErr != nil {
+				return fmt.Errorf("failed to roll back transaction due to error: %s: %w", rollErr, err)
+			}
+
+			return err
+		}
+
+		s.log.Info("Force deleted folder", "path", folderPath, "deletedFilesCount", deletedFilesCount, "deletedMetaCount", deletedMetaCount)
+		return nil
 	})
 
 	return err

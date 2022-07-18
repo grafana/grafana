@@ -141,6 +141,11 @@ async function getMetrics(
     await datasource.languageProvider.loadMetricsMetadata();
   }
 
+  // Error handling for when metrics metadata returns as undefined
+  if (!datasource.languageProvider.metricsMetadata) {
+    datasource.languageProvider.metricsMetadata = {};
+  }
+
   let metrics;
   if (query.labels.length > 0) {
     const expr = promQueryModeller.renderLabels(query.labels);

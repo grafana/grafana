@@ -26,6 +26,7 @@ type commitHelper struct {
 	users         map[int64]*userInfo
 	stopRequested bool
 	broadcast     func(path string)
+	exporter      string // key for the current exporter
 }
 
 type commitBody struct {
