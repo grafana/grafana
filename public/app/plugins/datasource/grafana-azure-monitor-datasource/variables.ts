@@ -29,18 +29,54 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     const promisedResults = async () => {
       const queryObj = await migrateStringQueriesToObjectQueries(request.targets[0], { datasource: this.datasource });
 
-      if (queryObj.queryType === AzureQueryType.GrafanaTemplateVariableFn && queryObj.grafanaTemplateVariableFn) {
-        try {
-          const templateVariablesResults = await this.callGrafanaTemplateVariableFn(queryObj.grafanaTemplateVariableFn);
-          return {
-            data: templateVariablesResults?.length ? [toDataFrame(templateVariablesResults)] : [],
-          };
-        } catch (err) {
-          return { data: [], error: { message: messageFromError(err) } };
+      try {
+        switch (queryObj.queryType) {
+          case AzureQueryType.SubscriptionsQuery:
+            const res = await this.datasource.getSubscriptions();
+            return {
+              data: res?.length ? [toDataFrame(res)] : [],
+            };
+          case AzureQueryType.ResourceGroupsQuery:
+            if (queryObj.subscription) {
+              const rgs = await this.datasource.getResourceGroups(queryObj.subscription);
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
+          case AzureQueryType.NamespacesQuery:
+            if (queryObj.subscription) {
+              const rgs = await this.datasource.getMetricNamespaces(queryObj.subscription, queryObj.resourceGroup);
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
+          case AzureQueryType.ResourceNamesQuery:
+            if (queryObj.subscription) {
+              const rgs = await this.datasource.getResourceNames(
+                queryObj.subscription,
+                queryObj.resourceGroup,
+                queryObj.namespace
+              );
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
+          case AzureQueryType.GrafanaTemplateVariableFn:
+            if (queryObj.grafanaTemplateVariableFn) {
+              const templateVariablesResults = await this.callGrafanaTemplateVariableFn(
+                queryObj.grafanaTemplateVariableFn
+              );
+              return {
+                data: templateVariablesResults?.length ? [toDataFrame(templateVariablesResults)] : [],
+              };
+            }
+          default:
+            request.targets[0] = queryObj;
+            return lastValueFrom(this.datasource.query(request));
         }
+      } catch (err) {
+        return { data: [], error: new Error(messageFromError(err)) };
       }
-      request.targets[0] = queryObj;
-      return lastValueFrom(this.datasource.query(request));
     };
 
     return from(promisedResults());

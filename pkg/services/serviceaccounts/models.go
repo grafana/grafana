@@ -13,10 +13,12 @@ var (
 )
 
 const (
-	ActionRead   = "serviceaccounts:read"
-	ActionWrite  = "serviceaccounts:write"
-	ActionCreate = "serviceaccounts:create"
-	ActionDelete = "serviceaccounts:delete"
+	ActionRead             = "serviceaccounts:read"
+	ActionWrite            = "serviceaccounts:write"
+	ActionCreate           = "serviceaccounts:create"
+	ActionDelete           = "serviceaccounts:delete"
+	ActionPermissionsRead  = "serviceaccounts.permissions:read"
+	ActionPermissionsWrite = "serviceaccounts.permissions:write"
 )
 
 type ServiceAccount struct {
@@ -24,7 +26,9 @@ type ServiceAccount struct {
 }
 
 type CreateServiceAccountForm struct {
-	Name string `json:"name" binding:"Required"`
+	Name       string           `json:"name" binding:"Required"`
+	Role       *models.RoleType `json:"role"`
+	IsDisabled *bool            `json:"isDisabled"`
 }
 
 type UpdateServiceAccountForm struct {

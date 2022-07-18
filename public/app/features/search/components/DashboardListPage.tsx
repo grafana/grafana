@@ -4,15 +4,14 @@ import { connect, MapStateToProps } from 'react-redux';
 import { useAsync } from 'react-use';
 
 import { NavModel, locationUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
-import Page from 'app/core/components/Page/Page';
+import { locationService } from '@grafana/runtime';
+import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { FolderDTO, StoreState } from 'app/types';
 
 import { GrafanaRouteComponentProps } from '../../../core/navigation/types';
 import { loadFolderPage } from '../loaders';
 
-import ManageDashboards from './ManageDashboards';
 import ManageDashboardsNew from './ManageDashboardsNew';
 
 export interface DashboardListPageRouteParams {
@@ -46,22 +45,16 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, match, location })
 
   return (
     <Page navModel={value?.pageNavModel ?? navModel}>
-      {Boolean(config.featureToggles.panelTitleSearch) ? (
-        <Page.Contents
-          isLoading={loading}
-          className={css`
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-          `}
-        >
-          <ManageDashboardsNew folder={value?.folder} />
-        </Page.Contents>
-      ) : (
-        <Page.Contents isLoading={loading}>
-          <ManageDashboards folder={value?.folder} />
-        </Page.Contents>
-      )}
+      <Page.Contents
+        isLoading={loading}
+        className={css`
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        `}
+      >
+        <ManageDashboardsNew folder={value?.folder} />
+      </Page.Contents>
     </Page>
   );
 });

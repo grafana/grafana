@@ -23,6 +23,7 @@ var (
 	ErrRuleGroupNamespaceNotFound         = errors.New("rule group not found under this namespace")
 	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
+	ErrQuotaReached                       = errors.New("quota has been exceeded")
 )
 
 // swagger:enum NoDataState
@@ -87,7 +88,7 @@ const (
 
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
-	ScreenshotTokenAnnotation = "__alertScreenshotToken__"
+	ImageTokenAnnotation = "__alertImageToken__"
 
 	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels
 	// in that they are not meant for internal-use only and will be passed-through to AMs and available to users in the same
@@ -105,9 +106,9 @@ var (
 		NamespaceUIDLabel: {},
 	}
 	InternalAnnotationNameSet = map[string]struct{}{
-		DashboardUIDAnnotation:    {},
-		PanelIDAnnotation:         {},
-		ScreenshotTokenAnnotation: {},
+		DashboardUIDAnnotation: {},
+		PanelIDAnnotation:      {},
+		ImageTokenAnnotation:   {},
 	}
 )
 
@@ -168,6 +169,14 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 	}
 
 	return labels
+}
+
+func (alertRule *AlertRule) GetEvalCondition() Condition {
+	return Condition{
+		Condition: alertRule.Condition,
+		OrgID:     alertRule.OrgID,
+		Data:      alertRule.Data,
+	}
 }
 
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
@@ -307,8 +316,6 @@ type ListAlertRulesQuery struct {
 }
 
 type GetAlertRulesForSchedulingQuery struct {
-	ExcludeOrgIDs []int64
-
 	Result []*SchedulableAlertRule
 }
 
@@ -388,7 +395,7 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.NoDataState == "" {
 		ruleToPatch.NoDataState = existingRule.NoDataState
 	}
-	if ruleToPatch.For == 0 {
+	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
 	}
 }

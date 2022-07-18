@@ -1,5 +1,9 @@
 import { escapeRegExp } from 'lodash';
 
+import { parser } from '@grafana/lezer-logql';
+
+import { ErrorName } from '../prometheus/querybuilder/shared/parsingUtils';
+
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {
@@ -28,8 +32,8 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
     if (skip) {
       continue;
     }
-    // Check if there is more chained
-    const filterEnd = expression.search(/\|=|\|~|!=|!~/);
+    // Check if there is more chained, by just looking for the next pipe-operator
+    const filterEnd = expression.search(/\|/);
     let filterTerm;
     if (filterEnd === -1) {
       filterTerm = expression.trim();
@@ -46,14 +50,20 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
       const unwrappedFilterTerm = term[1];
       const regexOperator = filterOperator === '|~';
 
+      let resultTerm = '';
+
       // Only filter expressions with |~ operator are treated as regular expressions
       if (regexOperator) {
         // When using backticks, Loki doesn't require to escape special characters and we can just push regular expression to highlights array
         // When using quotes, we have extra backslash escaping and we need to replace \\ with \
-        results.push(backtickedTerm ? unwrappedFilterTerm : unwrappedFilterTerm.replace(/\\\\/g, '\\'));
+        resultTerm = backtickedTerm ? unwrappedFilterTerm : unwrappedFilterTerm.replace(/\\\\/g, '\\');
       } else {
         // We need to escape this string so it is not matched as regular expression
-        results.push(escapeRegExp(unwrappedFilterTerm));
+        resultTerm = escapeRegExp(unwrappedFilterTerm);
+      }
+
+      if (resultTerm) {
+        results.push(resultTerm);
       }
     } else {
       return results;
@@ -89,4 +99,63 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
   // otherwise it is range
   const { instant, range, ...rest } = query;
   return { ...rest, queryType: LokiQueryType.Range };
+}
+
+export function isValidQuery(query: string): boolean {
+  let isValid = true;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type): false | void => {
+      if (type.name === ErrorName) {
+        isValid = false;
+      }
+    },
+  });
+  return isValid;
+}
+
+export function isLogsQuery(query: string): boolean {
+  let isLogsQuery = true;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type): false | void => {
+      if (type.name === 'MetricExpr') {
+        isLogsQuery = false;
+      }
+    },
+  });
+  return isLogsQuery;
+}
+
+export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
+  let parserCount = 0;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type): false | void => {
+      if (type.name === 'LabelParser' || type.name === 'JsonExpressionParser') {
+        parserCount++;
+      }
+    },
+  });
+  return { queryWithParser: parserCount > 0, parserCount };
+}
+
+export function isQueryPipelineErrorFiltering(query: string): boolean {
+  let isQueryPipelineErrorFiltering = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'LabelFilter') {
+        const label = get().getChild('Matcher')?.getChild('Identifier');
+        if (label) {
+          const labelName = query.substring(label.from, label.to);
+          if (labelName === '__error__') {
+            isQueryPipelineErrorFiltering = true;
+          }
+        }
+      }
+    },
+  });
+
+  return isQueryPipelineErrorFiltering;
 }

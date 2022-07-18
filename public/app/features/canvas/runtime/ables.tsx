@@ -44,11 +44,8 @@ export const constraintViewable = (scene: Scene) => ({
     const rect = moveable.getRect();
     const targetElement = scene.findElementByTarget(moveable.state.target);
 
-    // If target is currently in motion or selection is more than 1 element don't display constraint visualizations
-    if (
-      targetElement?.isMoving ||
-      (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1)
-    ) {
+    // If selection is more than 1 element don't display constraint visualizations
+    if (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1) {
       return;
     }
 

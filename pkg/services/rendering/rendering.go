@@ -27,18 +27,22 @@ func init() {
 	remotecache.Register(&RenderUser{})
 }
 
+var _ Service = (*RenderingService)(nil)
+
 const ServiceName = "RenderingService"
 
 type RenderingService struct {
-	log             log.Logger
-	pluginInfo      *plugins.Plugin
-	renderAction    renderFunc
-	renderCSVAction renderCSVFunc
-	domain          string
-	inProgressCount int32
-	version         string
-	versionMutex    sync.RWMutex
-	capabilities    []Capability
+	log               log.Logger
+	pluginInfo        *plugins.Plugin
+	renderAction      renderFunc
+	renderCSVAction   renderCSVFunc
+	sanitizeSVGAction sanitizeFunc
+	sanitizeURL       string
+	domain            string
+	inProgressCount   int32
+	version           string
+	versionMutex      sync.RWMutex
+	capabilities      []Capability
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
@@ -59,8 +63,14 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		return nil, fmt.Errorf("failed to create CSVs directory %q: %w", cfg.CSVsDir, err)
 	}
 
+	logger := log.New("rendering")
+
+	// URL for HTTP sanitize API
+	var sanitizeURL string
+
+	//  value used for domain attribute of renderKey cookie
 	var domain string
-	// set value used for domain attribute of renderKey cookie
+
 	switch {
 	case cfg.RendererUrl != "":
 		// RendererCallbackUrl has already been passed, it won't generate an error.
@@ -69,6 +79,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 			return nil, err
 		}
 
+		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
 		domain = u.Hostname()
 	case cfg.HTTPAddr != setting.DefaultHTTPAddr:
 		domain = cfg.HTTPAddr
@@ -76,7 +87,6 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		domain = "localhost"
 	}
 
-	logger := log.New("rendering")
 	s := &RenderingService{
 		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
 			cache:     remoteCache,
@@ -92,14 +102,24 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 				name:             ScalingDownImages,
 				semverConstraint: ">= 3.4.0",
 			},
+			{
+				name:             SvgSanitization,
+				semverConstraint: ">= 3.5.0",
+			},
 		},
 		Cfg:                   cfg,
 		RemoteCacheService:    remoteCache,
 		RendererPluginManager: rm,
 		log:                   logger,
 		domain:                domain,
+		sanitizeURL:           sanitizeURL,
 	}
 	return s, nil
+}
+
+func getSanitizerURL(rendererURL string) string {
+	rendererBaseURL := strings.TrimSuffix(rendererURL, "/render")
+	return rendererBaseURL + "/sanitize"
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
@@ -120,6 +140,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		})
 		rs.renderAction = rs.renderViaHTTP
 		rs.renderCSVAction = rs.renderCSVViaHTTP
+		rs.sanitizeSVGAction = rs.sanitizeViaHTTP
 
 		refreshTicker := time.NewTicker(remoteVersionRefreshInterval)
 
@@ -146,6 +167,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.version = rs.pluginInfo.Info.Version
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
+		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
 		<-ctx.Done()
 
 		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
@@ -291,6 +313,26 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 	saveMetrics(elapsedTime, err, RenderCSV)
 
 	return result, err
+}
+
+func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
+	capability, err := rs.HasCapability(SvgSanitization)
+	if err != nil {
+		return nil, err
+	}
+
+	if !capability.IsSupported {
+		return nil, fmt.Errorf("svg sanitization unsupported, requires image renderer version: %s", capability.SemverConstraint)
+	}
+
+	start := time.Now()
+
+	action, err := rs.sanitizeSVGAction(ctx, req)
+	if err != nil {
+		defer rs.log.Info("svg sanitization finished", "duration", time.Since(start), "filename", req.Filename, "isError", err != nil)
+	}
+
+	return action, err
 }
 
 func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderKeyProvider renderKeyProvider) (*RenderCSVResult, error) {

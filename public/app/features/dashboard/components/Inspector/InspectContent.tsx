@@ -1,3 +1,4 @@
+import { t } from '@lingui/macro';
 import React, { useState } from 'react';
 
 import { CoreApp, DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
@@ -57,11 +58,15 @@ export const InspectContent: React.FC<Props> = ({
     activeTab = InspectTab.JSON;
   }
 
-  const title = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text');
+  const panelTitle = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text') || 'Panel';
+  const title = t({
+    id: 'dashboard.inspect.title',
+    message: `Inspect: ${panelTitle}`,
+  });
 
   return (
     <Drawer
-      title={`Inspect: ${title || 'Panel'}`}
+      title={title}
       subtitle={data && formatStats(data)}
       width="50%"
       onClose={onClose}
@@ -119,5 +124,8 @@ function formatStats(data: PanelData) {
   const requestTime = request.endTime ? request.endTime - request.startTime : 0;
   const formatted = formattedValueToString(getValueFormat('ms')(requestTime));
 
-  return `${queryCount} queries with total query time of ${formatted}`;
+  return t({
+    id: 'dashboard.inspect.subtitle',
+    message: `${queryCount} queries with total query time of ${formatted}`,
+  });
 }

@@ -2,7 +2,6 @@ import { debounce } from 'lodash';
 import React, { useCallback, useMemo } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, CodeEditor } from '@grafana/ui';
 
 import AzureMonitorDatasource from '../../datasource';
@@ -20,7 +19,6 @@ import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
 import { QueryHeader } from '../QueryHeader';
 import { Space } from '../Space';
 
-import QueryTypeField from './QueryTypeField';
 import usePreparedQuery from './usePreparedQuery';
 
 export type AzureMonitorQueryEditorProps = QueryEditorProps<
@@ -47,7 +45,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
     [onChange, onRunQuery]
   );
 
-  const query = usePreparedQuery(baseQuery, onQueryChange);
+  const query = usePreparedQuery(baseQuery, onQueryChange, setError);
 
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
   const variableOptionGroup = {
@@ -57,10 +55,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
 
   return (
     <div data-testid="azure-monitor-query-editor">
-      {config.featureToggles.azureMonitorExperimentalUI && <QueryHeader query={query} onQueryChange={onQueryChange} />}
-      {!config.featureToggles.azureMonitorExperimentalUI && (
-        <QueryTypeField query={query} onQueryChange={onQueryChange} />
-      )}
+      <QueryHeader query={query} onQueryChange={onQueryChange} />
 
       <EditorForQueryType
         data={data}

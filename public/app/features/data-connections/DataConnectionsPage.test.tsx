@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import DataConnectionsPage from './DataConnectionsPage';
-import navIndex from './__mocks__/store.navIndex.mock';
+import { navIndex } from './__mocks__/store.navIndex.mock';
 import { ROUTE_BASE_ID, ROUTES } from './constants';
 
 const renderPage = (path = `/${ROUTE_BASE_ID}`): RenderResult => {
