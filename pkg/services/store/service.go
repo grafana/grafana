@@ -143,14 +143,14 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		if storageName == RootSystem {
 			if user == SystemBrandingReader {
 				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   filestorage.NewPathFilter([]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, []string{filestorage.Delimiter + brandingStorage}, nil, nil),
+					ActionFilesRead:   createSystemBrandingPathFilter(),
 					ActionFilesWrite:  denyAllPathFilter,
 					ActionFilesDelete: denyAllPathFilter,
 				}
 			}
 
 			if user == SystemBrandingAdmin {
-				systemBrandingFilter := filestorage.NewPathFilter([]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, []string{filestorage.Delimiter + brandingStorage}, nil, nil)
+				systemBrandingFilter := createSystemBrandingPathFilter()
 				return map[string]filestorage.PathFilter{
 					ActionFilesRead:   systemBrandingFilter,
 					ActionFilesWrite:  systemBrandingFilter,
@@ -188,6 +188,14 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	})
 
 	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService)
+}
+
+func createSystemBrandingPathFilter() filestorage.PathFilter {
+	return filestorage.NewPathFilter(
+		[]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, // access to all folders and files inside `/branding/`
+		[]string{filestorage.Delimiter + brandingStorage},                         // access to the `/branding` folder itself, but not to any other sibling folder
+		nil,
+		nil)
 }
 
 func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime, authService storageAuthService) *standardStorageService {
