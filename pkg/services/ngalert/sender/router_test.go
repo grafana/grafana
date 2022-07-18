@@ -53,7 +53,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagerSenders))
 	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
 
 	// Then, ensure we've discovered the Alertmanager.
@@ -74,9 +74,9 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 
 	// Now, let's remove the Alertmanager from the admin configuration.
 	mockedGetAdminConfigurations.Return(nil, nil)
-	// Again, make sure we sync and verify the senders.
+	// Again, make sure we sync and verify the externalAlertmanagerSenders.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 0, len(alertsRouter.senders))
+	require.Equal(t, 0, len(alertsRouter.externalAlertmanagerSenders))
 	require.Equal(t, 0, len(alertsRouter.sendersCfgHash))
 
 	// Then, ensure we've dropped the Alertmanager.
@@ -111,7 +111,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagerSenders))
 	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
 
 	// Then, ensure we've discovered the Alertmanager.
@@ -123,9 +123,9 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		{OrgID: ruleKey2.OrgID, Alertmanagers: []string{fakeAM.Server.URL}},
 	}, nil)
 
-	// If we sync again, new senders must have spawned.
+	// If we sync again, new externalAlertmanagerSenders must have spawned.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 2, len(alertsRouter.senders))
+	require.Equal(t, 2, len(alertsRouter.externalAlertmanagerSenders))
 	require.Equal(t, 2, len(alertsRouter.sendersCfgHash))
 
 	// Then, ensure we've discovered the Alertmanager for the new organization.
@@ -165,9 +165,9 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// Now, sync again.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
 
-	// The hash for org two should not be the same and we should still have two senders.
+	// The hash for org two should not be the same and we should still have two externalAlertmanagerSenders.
 	require.NotEqual(t, alertsRouter.sendersCfgHash[ruleKey2.OrgID], currentHash)
-	require.Equal(t, 2, len(alertsRouter.senders))
+	require.Equal(t, 2, len(alertsRouter.externalAlertmanagerSenders))
 	require.Equal(t, 2, len(alertsRouter.sendersCfgHash))
 
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey2.OrgID, 2, 0)
@@ -202,7 +202,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
 
-	require.Equal(t, 0, len(alertsRouter.senders))
+	require.Equal(t, 0, len(alertsRouter.externalAlertmanagerSenders))
 	require.Equal(t, 0, len(alertsRouter.sendersCfgHash))
 
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey1.OrgID, 0, 0)
@@ -236,7 +236,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagerSenders))
 	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
 	require.Equal(t, models.AllAlertmanagers, alertsRouter.sendAlertsTo[ruleKey.OrgID])
 
@@ -259,9 +259,9 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.ExternalAlertmanagers},
 	}, nil)
-	// Again, make sure we sync and verify the senders.
+	// Again, make sure we sync and verify the externalAlertmanagerSenders.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagerSenders))
 	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
 
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 1, 0)
@@ -272,10 +272,10 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.InternalAlertmanager},
 	}, nil)
 
-	// Again, make sure we sync and verify the senders.
-	// senders should be running even though alerts are being handled externally.
+	// Again, make sure we sync and verify the externalAlertmanagerSenders.
+	// externalAlertmanagerSenders should be running even though alerts are being handled externally.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagerSenders))
 	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
 
 	// Then, ensure the Alertmanager is still listed and the Alertmanagers choice has changed.
