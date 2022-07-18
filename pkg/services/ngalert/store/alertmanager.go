@@ -234,6 +234,9 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID, limit int
 			return err
 		}
 		affactedRows = rows
+		if affactedRows > 0 {
+			st.Logger.Info("deleted old alert_configuration(s)", "org", orgID, "limit", limit, "delete_count", affactedRows)
+		}
 		return nil
 	})
 	return affactedRows, err
