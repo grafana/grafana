@@ -210,3 +210,196 @@ We could also think about replacing `ds_uid` array with something like `linked_e
 
 ```
 
+### idea #2 - alternative structure that does not assume entity id global uniqueness
+
+```ts
+enum Action {
+    query = "query",
+    edit = "edit",
+    delete = "delete",
+    view = "view",
+} 
+
+type EntityUID = string
+
+type EntityType = string
+
+export type Permissions = {
+  self: Record<Action, boolean>;
+} & Record<EntityType, Record<EntityUID, Record<Action, boolean>>> 
+```
+
+```json
+{
+  "schema": {
+    "name": "Query results",
+    "meta": {
+...
+    },
+    "fields": [
+...
+      {
+        "name": "linked_entity_uid",
+        "type": "other",
+        "typeInfo": {
+          "frame": "json.RawMessage",
+          "nullable": true
+        }
+      },
+      {
+        "name": "permissions",
+        "type": "other",
+        "typeInfo": {
+          "frame": "json.RawMessage",
+          "nullable": true
+        }
+      },
+...
+    ]
+  },
+  "data": {
+    "values": [
+...
+      [
+        [
+          { "uid": "some-datasource-uid", "type": "datasource"},
+          { "uid": "PD8C576611E62080A", "type": "datasource"}
+        ]
+      ],
+      [
+        {
+          "self": {
+            "edit": true,
+            "view": true,
+            "delete": true
+          },
+          "datasource": {
+            "PD8C576611E62080A": {
+              "query": false,
+              "view": false
+            },
+            "some-datasource-uid": {
+              "query": false,
+              "view": false
+            }
+          },
+          "annotations": {
+            "PD8C576611E62080A": {
+              "view": false
+            },
+            "some-annotation-uid": {
+              "view": false
+            }
+          }
+        }
+      ],
+...
+    ]
+  }
+}
+
+```
+
+### idea #3 - alternative structure that does not assume entity id global uniqueness as a list
+
+
+```ts
+enum Action {
+    query = "query",
+    edit = "edit",
+    delete = "delete",
+    view = "view",
+} 
+
+type EntityUID = string
+
+type EntityType = string
+
+type EntityPermissions = {
+    type: "__self" | EntityType,
+    uid: string,
+    permissions: Record<Action, boolean>
+}
+
+export type Permissions = EntityPermissions[]
+```
+
+```json
+{
+  "schema": {
+    "name": "Query results",
+    "meta": {
+      ...
+    },
+    "fields": [
+      ...
+      {
+        "name": "linked_entity_uid",
+        "type": "other",
+        "typeInfo": {
+          "frame": "json.RawMessage",
+          "nullable": true
+        }
+      },
+      {
+        "name": "permissions",
+        "type": "other",
+        "typeInfo": {
+          "frame": "json.RawMessage",
+          "nullable": true
+        }
+      },
+      ...
+    ]
+  },
+  "data": {
+    "values": [
+      ...
+      [
+        [
+          {
+            "uid": "some-datasource-uid",
+            "type": "datasource"
+          },
+          {
+            "uid": "PD8C576611E62080A",
+            "type": "datasource"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "__self",
+            "uid": "abc123",
+            "permissions": {
+              "edit": true,
+              "view": true,
+              "delete": true
+            }
+          },
+          {
+            "type": "annotation",
+            "uid": "abc123",
+            "permissions": {
+              "edit": true,
+              "view": true,
+              "delete": true
+            }
+          },
+          {
+            "type": "datasource",
+            "uid": "abc123",
+            "permissions": {
+              "view": true,
+              "query": true
+            }
+          }
+        ]
+      ],
+      ...
+    ]
+  }
+}
+
+```
