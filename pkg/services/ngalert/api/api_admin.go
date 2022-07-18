@@ -118,8 +118,6 @@ func (srv AdminSrv) hasExternalAlertmanager(orgID int64, alertmanagers []string)
 	if len(alertmanagers) > 0 {
 		return true
 	}
-	// We might have alertmanager datasources that are acting as external
-	// alertmanager, let's fetch them.
 	query := &datasources.GetDataSourcesByTypeQuery{
 		OrgId: orgID,
 		Type:  "alertmanager",
