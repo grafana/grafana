@@ -87,7 +87,9 @@ To stop storing secrets in the legacy table while the secrets plugin is enabled,
 enabled = disableSecretsCompatibility
 ```
 
-While secrets will not be read from this table while the plugin is active, it gives the ability to quickly uninstall the secrets plugin without losing access to all of your secrets. Because the ability to migrate from the plugin back to Grafana is not yet implemented, we highly recommend keeping backwards compatibility turned on.
+While secrets will not be read from this legacy table while the plugin is active, backward compatibility allows you to uninstall the secrets plugin without losing access to all of your secrets.
+
+> **Note:** We have not yet implemented migrations from the plugin back to Grafana's database. Disabling backward compatibility and uninstalling the plugin can cause Grafana to fail to start. We strongly recommend keeping backward compatibility enabled, as is the default.
 
 ## Limitations
 
