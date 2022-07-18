@@ -57,6 +57,7 @@ type DataSourceService interface {
 }
 
 // CacheService interface for retrieving a cached datasource.
+//go:generate mockgen -destination=mock.go -package=datasources github.com/grafana/grafana/pkg/services/datasources CacheService
 type CacheService interface {
 	// GetDatasource gets a datasource identified by datasource numeric identifier.
 	GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*DataSource, error)

@@ -47,6 +47,7 @@ func (s *LastSeenDatasourceCache) GetDatasource(ctx context.Context, datasourceI
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.datasources[datasource.Id] = datasource
+	s.uidsToIDs[datasource.Uid] = datasource.Id
 	return datasource, nil
 }
 
