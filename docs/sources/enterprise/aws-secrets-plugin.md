@@ -53,7 +53,7 @@ Alternatively, you can configure authentication and region selection explicitly 
 | `aws_region`            | AWS instance region                                                                                                                                                | us-east-1                                | _Read from runtime environment_ |
 | `kms_key_id`            | AWS Key Management System access key, used for secret encryption                                                                                                   | 82065da4-3e2b-4372-87bf-664d1e488244     | _none_                          |
 | `secret_name_prefix`    | String prepended to each AWS Secret Manager secret name. Use this to avoid secret name conflicts in large organizations running multiple Grafana instances. | metrics-team                             | _none_                          |
-| `secret_description`    | Description applied to every secret in AWS Secrets Manager. For bookkeeping purposes only                                                                          | Metrics team datasource                  | _none_                          |
+| `secret_description`    | Description applied to every secret in AWS Secrets Manager. Use only for bookkeeping purposes.                                                                          | Metrics team datasource                  | _none_                          |
 
 ## Migration
 
