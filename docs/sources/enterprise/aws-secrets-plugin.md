@@ -93,4 +93,4 @@ While secrets will not be read from this legacy table while the plugin is active
 
 ## Limitations
 
-If secret rotation has been activated on your AWS Secrets Manager instance, the backwards compatibility feature will not be sufficient as a fallback for plugin errors. This is because legacy secrets will not be kept up to date with AWS Secrets Manager automatically. If you are planning to implement secret rotation, we recommend waiting until migration from the plugin back to Grafana is available if there is a desire to potentially uninstall the AWS Secrets Manager plugin.
+If your AWS Secrets Manager instance uses secret rotation, the backward compatibility feature will not be a sufficient fallback for plugin errors, because legacy secrets will not be kept up to date with AWS Secrets Manager automatically. If you plan to implement secret rotation, we recommend that you avoid installing this plugin until we implement migration from the plugin back to Grafana's database.
