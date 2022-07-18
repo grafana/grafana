@@ -153,12 +153,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "storageLocalUpload",
-			Description:     "allow uploads to local storage",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
 			Name:            "azureMonitorResourcePickerForMetrics",
 			Description:     "New UI for Azure Monitor Metrics Query",
 			State:           FeatureStateAlpha,
