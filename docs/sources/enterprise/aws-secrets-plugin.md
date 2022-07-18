@@ -42,7 +42,9 @@ Alternatively, you can configure authentication and region selection explicitly 
 
 ## Configure the plugin
 
-To begin, create a new configuration section in the custom.ini file called `[plugin.grafana-aws-secrets-manager]`. Place all of the following configuration settings under this section. All of following settings are optional.
+1. Open the **custom.ini** file.
+2. Create a configuration section file called `[plugin.grafana-aws-secrets-manager]`. 
+3. Place the following optional configuration settings in the `aws-secrets-manager` section.
 
 | Setting                 | Description                                                                                                                                                        | Example                                  | Default                         |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------- |
