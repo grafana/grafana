@@ -14,6 +14,12 @@ import { StatementPosition } from '../types';
 
 import { initStatementPositionResolvers } from './statementPositionResolversRegistry';
 
+const templateSrvMock = { replace: jest.fn(), getVariables: () => [], getAdhocFilters: jest.fn() };
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => templateSrvMock,
+}));
+
 describe('statementPosition', () => {
   testStatementPosition(
     StatementPosition.SelectKeyword,
