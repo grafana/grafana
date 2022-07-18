@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -260,6 +261,7 @@ var wireBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDashboardPermissions,
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
+	wire.Bind(new(csrf.Service), new(*csrf.ProvideCsrfService)),
 )
 
 var wireSet = wire.NewSet(
