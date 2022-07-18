@@ -2,14 +2,13 @@
 message Entity {
     string path = 1; // will include slashes
     string kind = 2; // dash, ds, alert, folder, svg, png, df, dqr, ... (will validate body)
-    string apiVersion = 3; // v1  (container version)
-    string schemaVersion = 4; // the body
+    string apiVersion = 3; // v1  -- defines the wrapper
+    string schemaVersion = 4; // defines the body contents
 
-    EntityProperties props = 5; // common user defined properties for everything
-    StorageMetadata meta = 6; // Added from the storage system
+    EntityProperties props = 5; // common user defined properties avaliable for everything
+    StorageMetadata meta = 6; // Metadata managed by the underlying storage engine(s)
 
-    // Body depends on kind
-    bytes body = 7;
+    bytes body = 7; // The real payload
 }
 
 // Defined by user interaction
