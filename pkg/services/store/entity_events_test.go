@@ -21,7 +21,6 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 			sql: sqlstore.InitTestDB(t),
 			log: log.New("entity-event-test"),
 		}
-
 	}
 
 	t.Run("Should insert an entity event", func(t *testing.T) {
