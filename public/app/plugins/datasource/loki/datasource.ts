@@ -32,6 +32,7 @@ import {
   toUtc,
   QueryHint,
   getDefaultTimeRange,
+  QueryFixAction,
 } from '@grafana/data';
 import { FetchError, config, DataSourceWithBackend } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -389,15 +390,19 @@ export class LokiDatasource
     return escapedValues.join('|');
   }
 
-  modifyQuery(query: LokiQuery, action: any): LokiQuery {
+  modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = this.addLabelToQuery(expression, action.key, '=', action.value);
+        if (action.options?.key && action.options?.value) {
+          expression = this.addLabelToQuery(expression, action.options.key, '=', action.options.value);
+        }
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = this.addLabelToQuery(expression, action.key, '!=', action.value);
+        if (action.options?.key && action.options?.value) {
+          expression = this.addLabelToQuery(expression, action.options.key, '!=', action.options.value);
+        }
         break;
       }
       case 'ADD_LOGFMT_PARSER': {

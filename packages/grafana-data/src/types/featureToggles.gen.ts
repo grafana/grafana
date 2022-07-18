@@ -43,7 +43,6 @@ export interface FeatureToggles {
   storage?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
-  storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
   tracing?: boolean;
