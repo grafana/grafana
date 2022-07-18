@@ -11,8 +11,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -27,11 +27,11 @@ type HTTPStorageService interface {
 }
 
 type httpStorage struct {
-	store StorageService
-	quotaService *quota.QuotaService
+	store        StorageService
+	quotaService quota.Service
 }
 
-func ProvideHTTPService(store StorageService, quotaService *quota.QuotaService) HTTPStorageService {
+func ProvideHTTPService(store StorageService, quotaService quota.Service) HTTPStorageService {
 	return &httpStorage{
 		store:        store,
 		quotaService: quotaService,
