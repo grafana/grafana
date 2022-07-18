@@ -74,7 +74,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
 }
 
-export type SceneObjectList<T = SceneObjectState> = Array<SceneObject<T>>;
+export type SceneObjectList<T extends SceneObjectState | SceneLayoutState = SceneObjectState> = Array<SceneObject<T>>;
 
 export interface SceneLayoutState extends SceneObjectState {
   children: SceneObjectList;
@@ -116,4 +116,10 @@ export interface SceneObjectWithUrlSync extends SceneObject {
 
 export function isSceneObjectWithUrlSync(obj: any): obj is SceneObjectWithUrlSync {
   return obj.getUrlState !== undefined;
+}
+
+export function isSceneLayoutObject(
+  obj: SceneObject<SceneObjectState | SceneLayoutState>
+): obj is SceneObject<SceneLayoutState> {
+  return 'children' in obj.state && obj.state.children !== undefined;
 }
