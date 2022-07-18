@@ -1,25 +1,26 @@
 ---
 aliases:
   - /docs/grafana/latest/enterprise/aws-secrets-plugin/
-description: 'Configuring the AWS Secrets Manager plugin'
+description: 'Learn how to use AWS Secrets Manager plugin to store Grafana secrets.'
 keywords:
   - grafana
   - secrets
   - secretsmanager
   - aws
   - backend
-title: AWS Secrets Manager Integration
+title: Store secrets using AWS Secrets Manager plugin
 weight: 2000
 ---
 
-# AWS Secrets Manager Plugin
+# Store secrets using AWS Secrets Manager plugin
 
 By default, Grafana stores all encrypted secrets in its own SQL database. To store secrets in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/), use the AWS Secrets Manager plugin. This is limited to datasource secrets as of Grafana version 9.1, but future versions will include all secrets, such as user credentials.
 
 You can configure options in the plugin to determine secret storage behavior in AWS Secrets Manager, and also migrate secrets from existing Grafana instances to AWS Secrets Manager. We also provide backward compatibility so that the plugin can be safely uninstalled, with some [limitations](#limitations).
 
 > **Note:** Available only in [Grafana Enterprise]({{< relref "/enterprise/" >}}).
-## Installation
+
+## Install the plugin
 
 You can install the plugin using [Grafana CLI]({{< relref "../../../cli/" >}}):
 
@@ -34,7 +35,7 @@ After the plugin is installed, it must be explicitly enabled. You can do this by
 use_plugin = true
 ```
 
-## Authentication
+## Authenticate with AWS
 
 By default, the plugin attempts to authenticate with AWS and select a region using parameters read from the runtime environment. For more details, see the [AWS CLI](https://aws.amazon.com/cli/) setup documentation.
 
@@ -43,17 +44,17 @@ Alternatively, you can configure authentication and region selection explicitly 
 ## Configure the plugin
 
 1. Open the **custom.ini** file.
-2. Create a configuration section file called `[plugin.grafana-aws-secrets-manager]`. 
+2. Create a configuration section file called `[plugin.grafana-aws-secrets-manager]`.
 3. Place the following optional configuration settings in the `aws-secrets-manager` section.
 
-| Setting                 | Description                                                                                                                                                        | Example                                  | Default                         |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------- |
-| `aws_access_key_id`     | IAM user’s Access Key ID                                                                                                                                           | AKIAIOSFODNN7EXAMPLE                     | _Read from runtime environment_ |
-| `aws_secret_access_key` | IAM user’s Secret Access Key                                                                                                                                       | wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY | _Read from runtime environment_ |
-| `aws_region`            | AWS instance region                                                                                                                                                | us-east-1                                | _Read from runtime environment_ |
-| `kms_key_id`            | AWS Key Management System access key, used for secret encryption                                                                                                   | 82065da4-3e2b-4372-87bf-664d1e488244     | _none_                          |
+| Setting                 | Description                                                                                                                                                 | Example                                  | Default                         |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------- |
+| `aws_access_key_id`     | IAM user’s Access Key ID                                                                                                                                    | AKIAIOSFODNN7EXAMPLE                     | _Read from runtime environment_ |
+| `aws_secret_access_key` | IAM user’s Secret Access Key                                                                                                                                | wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY | _Read from runtime environment_ |
+| `aws_region`            | AWS instance region                                                                                                                                         | us-east-1                                | _Read from runtime environment_ |
+| `kms_key_id`            | AWS Key Management System access key, used for secret encryption                                                                                            | 82065da4-3e2b-4372-87bf-664d1e488244     | _none_                          |
 | `secret_name_prefix`    | String prepended to each AWS Secret Manager secret name. Use this to avoid secret name conflicts in large organizations running multiple Grafana instances. | metrics-team                             | _none_                          |
-| `secret_description`    | Description applied to every secret in AWS Secrets Manager. Use only for bookkeeping purposes.                                                                          | Metrics team datasource                  | _none_                          |
+| `secret_description`    | Description applied to every secret in AWS Secrets Manager. Use only for bookkeeping purposes.                                                              | Metrics team datasource                  | _none_                          |
 
 ## Migration
 
@@ -78,7 +79,7 @@ Secrets will be migrated to the plugin one-by-one, then deleted from the Grafana
 
 ## Backward compatibility
 
-After the plugin is installed and enabled, secrets are stored by default in both AWS Secrets Manager **and** in a legacy location in the Grafana database. 
+After the plugin is installed and enabled, secrets are stored by default in both AWS Secrets Manager **and** in a legacy location in the Grafana database.
 
 To stop storing secrets in the legacy table while the secrets plugin is enabled, disable backward compatibility by adding a [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) called `disableSecretsCompatibility`:
 
