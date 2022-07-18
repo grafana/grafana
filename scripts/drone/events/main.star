@@ -6,14 +6,6 @@ load(
     'gen_version_step',
     'wire_install_step',
     'yarn_install_step',
-    'lint_drone_step',
-    'lint_backend_step',
-    'lint_frontend_step',
-    'codespell_step',
-    'shellcheck_step',
-    'test_backend_step',
-    'test_backend_integration_step',
-    'test_frontend_step',
     'build_backend_step',
     'build_frontend_step',
     'build_frontend_package_step',
@@ -43,13 +35,6 @@ load(
     'test_a11y_frontend_step',
     'trigger_oss',
     'betterer_frontend_step'
-)
-
-load(
-    'scripts/drone/services/services.star',
-    'integration_test_services',
-    'integration_test_services_volumes',
-    'ldap_service',
 )
 
 load(
@@ -107,10 +92,6 @@ def get_steps(edition):
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, ver_mode=ver_mode),
     ]
-    integration_test_steps = [
-        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
-        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
-    ]
 
     # Insert remaining steps
     build_steps.extend([
@@ -141,7 +122,7 @@ def get_steps(edition):
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
     store_steps = [store_packages_step(edition=edition, ver_mode=ver_mode),]
 
-    return init_steps, build_steps, integration_test_steps, windows_steps, store_steps
+    return init_steps, build_steps, windows_steps, store_steps
 
 def trigger_test_release():
     return {
@@ -176,8 +157,6 @@ def trigger_test_release():
     }
 
 def main_pipelines(edition):
-    services = integration_test_services(edition)
-    volumes = integration_test_services_volumes()
     drone_change_trigger = {
         'event': ['push',],
         'branch': 'main',
@@ -193,7 +172,7 @@ def main_pipelines(edition):
             ],
         },
     }
-    init_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition)
+    init_steps, build_steps, windows_steps, store_steps = get_steps(edition=edition)
 
     pipelines = [docs_pipelines(edition, ver_mode, trigger), test_frontend(trigger, ver_mode), test_backend(trigger, ver_mode), pipeline(
         name='main-build-e2e-publish', edition=edition, trigger=trigger, services=[],

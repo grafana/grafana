@@ -6,17 +6,10 @@ load(
     'wire_install_step',
     'identify_runner_step',
     'lint_drone_step',
-    'lint_backend_step',
-    'lint_frontend_step',
-    'codespell_step',
-    'shellcheck_step',
     'build_backend_step',
     'build_frontend_step',
     'build_frontend_package_step',
     'build_plugins_step',
-    'test_backend_step',
-    'test_backend_integration_step',
-    'test_frontend_step',
     'package_step',
     'grafana_server_step',
     'e2e_tests_step',
@@ -33,13 +26,6 @@ load(
     'test_a11y_frontend_step',
     'enterprise_downstream_step',
     'betterer_frontend_step',
-)
-
-load(
-    'scripts/drone/services/services.star',
-    'integration_test_services',
-    'integration_test_services_volumes',
-    'ldap_service',
 )
 
 load(
@@ -96,29 +82,7 @@ def pr_verify_drone():
     )
 
 
-def pr_test_backend():
-    init_steps = [
-        identify_runner_step(),
-        download_grabpl_step(),
-        gen_version_step(ver_mode),
-        verify_gen_cue_step(edition="oss"),
-        wire_install_step(),
-    ]
-    test_steps = [
-        codespell_step(),
-        shellcheck_step(),
-        lint_backend_step(edition="oss"),
-        test_backend_step(edition="oss"),
-        test_backend_integration_step(edition="oss"),
-    ]
-    return pipeline(
-        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), services=[], steps=init_steps + test_steps,
-    )
-
-
 def pr_pipelines(edition):
-    services = integration_test_services(edition)
-    volumes = integration_test_services_volumes()
     variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64',]
     init_steps = [
         identify_runner_step(),
