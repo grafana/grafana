@@ -261,7 +261,7 @@ var wireBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDashboardPermissions,
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
-	wire.Bind(new(csrf.Service), new(*csrf.ProvideCsrfService)),
+	wire.Bind(new(csrf.Service), new(*csrf.ProvideService)),
 )
 
 var wireSet = wire.NewSet(
