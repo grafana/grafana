@@ -40,7 +40,7 @@ By default, the plugin attempts to authenticate with AWS and select a region usi
 
 Alternatively, you can configure authentication and region selection explicitly through Grafana's configuration. For a full list of available options, see [Configuring the plugin](#configuring-the-plugin). For more information on configuring Grafana, see [Configuring Grafana]({{< relref "../setup-grafana/configure-grafana/" >}}).
 
-## Configuring the plugin
+## Configure the plugin
 
 To begin, create a new configuration section in the custom.ini file called `[plugin.grafana-aws-secrets-manager]`. Place all of the following configuration settings under this section. All of following settings are optional.
 
