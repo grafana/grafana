@@ -67,7 +67,7 @@ func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Respo
 			return response.Error(http.StatusForbidden, "Data source is read only", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete correlation", err)
 	}
 
 	return response.JSON(http.StatusOK, DeleteCorrelationResponse{Message: "Correlation deleted"})
