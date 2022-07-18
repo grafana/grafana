@@ -20,12 +20,10 @@ func NewPlaylistServiveFake() *FakePlaylistService {
 
 func (f *FakePlaylistService) Create(context.Context, *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	return f.ExpectedPlaylist, f.ExpectedError
-
 }
 
 func (f *FakePlaylistService) Update(context.Context, *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
 	return f.ExpectedPlaylistDTO, f.ExpectedError
-
 }
 
 func (f *FakePlaylistService) Get(context.Context, *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
