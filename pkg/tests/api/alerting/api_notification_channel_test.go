@@ -2099,7 +2099,7 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recv1/slack_test_without_token": {
 		`{
 		  "channel": "#test-channel",
-          "text": "Integration Test [FIRING:1] SlackAlert1 ",
+          "text": "Integration Test [FIRING:1] SlackAlert1 (default)",
 		  "username": "Integration Test",
 		  "icon_emoji": "🚀",
 		  "icon_url": "https://awesomeemoji.com/rocket",
@@ -2129,7 +2129,7 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recvX/slack_testX": {
 		`{
 		  "channel": "#test-channel",
-          "text": "[FIRING:1] SlackAlert2 ",
+          "text": "[FIRING:1] SlackAlert2 (default)",
 		  "username": "Integration Test",
 		  "attachments": [
 			{
