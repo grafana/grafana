@@ -104,3 +104,5 @@ type GetDashboardACLInfoListQuery struct {
 	OrgID       int64
 	Result      []*DashboardACLInfoDTO
 }
+
+func (p DashboardACL) TableName() string { return "dashboard_acl" }
