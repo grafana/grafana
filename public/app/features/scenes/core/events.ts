@@ -1,12 +1,12 @@
 import { BusEventWithPayload } from '@grafana/data';
 
-import { SceneObject, SceneObjectState } from './types';
+import { SceneObject, SceneObjectState, SceneObjectWithUrlSync } from './types';
 
 export interface SceneObjectStateChangedPayload {
   prevState: SceneObjectState;
   newState: SceneObjectState;
   partialUpdate: Partial<SceneObjectState>;
-  changedObject: SceneObject;
+  changedObject: SceneObject | SceneObjectWithUrlSync;
 }
 
 export class SceneObjectStateChangedEvent extends BusEventWithPayload<SceneObjectStateChangedPayload> {

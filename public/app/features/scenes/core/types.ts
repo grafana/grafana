@@ -118,13 +118,3 @@ export interface SceneObjectWithUrlSync extends SceneObject {
   getUrlState(): UrlQueryMap;
   updateFromUrl(values: UrlQueryMap): void;
 }
-
-export function isSceneObjectWithUrlSync(obj: any): obj is SceneObjectWithUrlSync {
-  return obj.getUrlState !== undefined;
-}
-
-export function isSceneLayoutObject(
-  obj: SceneObject<SceneObjectStatePlain | SceneLayoutState>
-): obj is SceneObject<SceneLayoutState> {
-  return 'children' in obj.state && obj.state.children !== undefined;
-}
