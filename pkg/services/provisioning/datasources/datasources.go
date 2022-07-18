@@ -154,7 +154,9 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 	for _, ds := range dsToDelete {
 		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name}
 		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgId: ds.OrgID}
-		dc.store.GetDataSource(ctx, getDsQuery)
+		if err := dc.store.GetDataSource(ctx, getDsQuery); !errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return err
+		}
 
 		if err := dc.store.DeleteDataSource(ctx, cmd); err != nil {
 			return err
