@@ -15,13 +15,13 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-type AdminSrv struct {
+type ConfigSrv struct {
 	alertmanagerProvider ExternalAlertmanagerProvider
 	store                store.AdminConfigurationStore
 	log                  log.Logger
 }
 
-func (srv AdminSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Response {
+func (srv ConfigSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Response {
 	urls := srv.alertmanagerProvider.AlertmanagersFor(c.OrgId)
 	droppedURLs := srv.alertmanagerProvider.DroppedAlertmanagersFor(c.OrgId)
 	ams := v1.AlertManagersResult{Active: make([]v1.AlertManager, len(urls)), Dropped: make([]v1.AlertManager, len(droppedURLs))}
@@ -38,7 +38,7 @@ func (srv AdminSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Respons
 	})
 }
 
-func (srv AdminSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Response {
+func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Response {
 	if c.OrgRole != models.ROLE_ADMIN {
 		return accessForbiddenResp()
 	}
@@ -61,7 +61,7 @@ func (srv AdminSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, resp)
 }
 
-func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
+func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
 	if c.OrgRole != models.ROLE_ADMIN {
 		return accessForbiddenResp()
 	}
@@ -97,7 +97,7 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 	return response.JSON(http.StatusCreated, util.DynMap{"message": "admin configuration updated"})
 }
 
-func (srv AdminSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
+func (srv ConfigSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
 	if c.OrgRole != models.ROLE_ADMIN {
 		return accessForbiddenResp()
 	}
