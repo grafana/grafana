@@ -74,7 +74,8 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 		return response.Error(400, "Invalid alertmanager choice specified", nil)
 	}
 
-	if sendAlertsTo == ngmodels.ExternalAlertmanagers && !srv.hasExternalAlertmanager(c.OrgId, body.Alertmanagers) {
+	if sendAlertsTo == ngmodels.ExternalAlertmanagers && !srv.hasExternalAlertmanager(
+		c.Req.Context(), c.OrgId, body.Alertmanagers) {
 		return response.Error(400, "At least one Alertmanager must be provided to choose this option", nil)
 	}
 
@@ -114,7 +115,8 @@ func (srv AdminSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Resp
 	return response.JSON(http.StatusOK, util.DynMap{"message": "admin configuration deleted"})
 }
 
-func (srv AdminSrv) hasExternalAlertmanager(orgID int64, alertmanagers []string) bool {
+func (srv AdminSrv) hasExternalAlertmanager(ctx context.Context, orgID int64,
+	alertmanagers []string) bool {
 	if len(alertmanagers) > 0 {
 		return true
 	}
@@ -122,7 +124,7 @@ func (srv AdminSrv) hasExternalAlertmanager(orgID int64, alertmanagers []string)
 		OrgId: orgID,
 		Type:  "alertmanager",
 	}
-	err := srv.datasourceService.GetDataSourcesByType(context.Background(), query)
+	err := srv.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {
 		srv.log.Error("failed to fetch datasources for org", "org", orgID)
 		return false
