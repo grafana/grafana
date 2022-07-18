@@ -54,14 +54,24 @@ export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<Ne
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if (canRemove) {
-    toolbarActions.push(<ToolbarButton icon="times" variant={'default'} onClick={model.onRemove} />);
+    toolbarActions.push(
+      <ToolbarButton
+        icon="times"
+        variant={'default'}
+        onClick={model.onRemove}
+        key="remove-button"
+        aria-label="Remove scene"
+      />
+    );
   }
 
   return (
     <div className={styles.row}>
       <div className={styles.rowHeader}>
         <Stack gap={0}>
-          <div className={styles.title}>{title}</div>
+          <div className={styles.title} role="heading">
+            {title}
+          </div>
           {canCollapse && (
             <div className={styles.toggle}>
               <Button
@@ -69,6 +79,7 @@ export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<Ne
                 icon={isCollapsed ? 'angle-down' : 'angle-up'}
                 fill="text"
                 variant="secondary"
+                aria-label={isCollapsed ? 'Expand scene' : 'Collapse scene'}
                 onClick={model.onToggle}
               />
             </div>

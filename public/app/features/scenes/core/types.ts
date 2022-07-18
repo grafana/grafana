@@ -74,7 +74,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
 }
 
-export type SceneObjectList<T = SceneObjectState> = Array<SceneObject<T>>;
+export type SceneObjectList<T extends SceneObjectState | SceneLayoutState = SceneObjectState> = Array<SceneObject<T>>;
 
 export interface SceneLayoutState extends SceneObjectState {
   children: SceneObjectList;
