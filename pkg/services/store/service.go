@@ -108,15 +108,16 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0)
-		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-			storages = append(storages,
-				newSQLStorage(RootResources,
-					"Resources",
-					&StorageSQLConfig{orgId: orgId}, sql).
-					setBuiltin(true).
-					setDescription("Upload custom resource files"))
-		}
 
+		// Custom upload files
+		storages = append(storages,
+			newSQLStorage(RootResources,
+				"Resources",
+				&StorageSQLConfig{orgId: orgId}, sql).
+				setBuiltin(true).
+				setDescription("Upload custom resource files"))
+
+		// System settings
 		storages = append(storages,
 			newSQLStorage(RootSystem,
 				"System",
