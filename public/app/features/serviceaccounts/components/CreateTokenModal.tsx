@@ -88,42 +88,40 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
     >
       {!token ? (
         <div>
-          <FieldSet>
-            <Field
-              label="Display name"
-              description="Name to easily identify the token"
-              className={styles.modalRow}
-              // for now this is required
-              // need to make this optional in backend as well
-              required={true}
-            >
-              <Input
-                name="tokenName"
-                value={newTokenName}
-                placeholder={defaultTokenName}
-                onChange={(e) => {
-                  setNewTokenName(e.currentTarget.value);
-                }}
-              />
-            </Field>
+          <Field
+            label="Display name"
+            description="Name to easily identify the token"
+            // for now this is required
+            // need to make this optional in backend as well
+            required={true}
+          >
+            <Input
+              name="tokenName"
+              value={newTokenName}
+              placeholder={defaultTokenName}
+              onChange={(e) => {
+                setNewTokenName(e.currentTarget.value);
+              }}
+            />
+          </Field>
+          <Field label="Expiration">
             <RadioButtonGroup
-              className={styles.modalRow}
               options={EXPIRATION_OPTIONS}
               value={isWithExpirationDate}
               onChange={setIsWithExpirationDate}
               size="md"
             />
-            {isWithExpirationDate && (
-              <Field label="Expiration date" className={styles.modalRow}>
-                <DatePickerWithInput
-                  onChange={onExpirationDateChange}
-                  value={newTokenExpirationDate}
-                  placeholder=""
-                  minDate={tomorrow}
-                />
-              </Field>
-            )}
-          </FieldSet>
+          </Field>
+          {isWithExpirationDate && (
+            <Field label="Expiration date">
+              <DatePickerWithInput
+                onChange={onExpirationDateChange}
+                value={newTokenExpirationDate}
+                placeholder=""
+                minDate={tomorrow}
+              />
+            </Field>
+          )}
           <Modal.ButtonRow>
             <Button onClick={onGenerateToken} disabled={isWithExpirationDate && !isExpirationDateValid}>
               Generate token
@@ -132,35 +130,31 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
         </div>
       ) : (
         <>
-          <FieldSet>
-            <Label
-              description="You will not be able to see or generate it again. Loosing a token requires creating new one."
-              className={styles.modalRow}
-            >
-              Copy the token. It will be showed only once.
-            </Label>
-            <Field label="Token" className={styles.modalRow}>
-              <div className={styles.modalTokenRow}>
-                <Input name="tokenValue" value={token} readOnly />
-                <ClipboardButton
-                  className={styles.modalCopyToClipboardButton}
-                  variant="secondary"
-                  size="md"
-                  getText={() => token}
-                >
-                  <Icon name="copy" /> Copy to clipboard
-                </ClipboardButton>
-              </div>
-            </Field>
-          </FieldSet>
-          <HorizontalGroup>
+          <Field
+            label="Token"
+            description="Copy the token now as you will not able to see it again. Loosing a token requires creating a new one."
+          >
+            <div className={styles.modalTokenRow}>
+              <Input name="tokenValue" value={token} readOnly />
+              <ClipboardButton
+                className={styles.modalCopyToClipboardButton}
+                variant="secondary"
+                size="md"
+                icon="copy"
+                getText={() => token}
+              >
+                Copy clipboard
+              </ClipboardButton>
+            </div>
+          </Field>
+          <Modal.ButtonRow>
             <ClipboardButton variant="primary" getText={() => token} onClipboardCopy={onCloseInternal}>
               Copy to clipboard and close
             </ClipboardButton>
             <Button variant="secondary" onClick={onCloseInternal}>
               Close
             </Button>
-          </HorizontalGroup>
+          </Modal.ButtonRow>
         </>
       )}
     </Modal>
@@ -181,9 +175,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     modalContent: css`
       overflow: visible;
-    `,
-    modalRow: css`
-      margin-bottom: ${theme.spacing(4)};
     `,
     modalTokenRow: css`
       display: flex;
