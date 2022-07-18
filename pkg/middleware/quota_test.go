@@ -253,3 +253,7 @@ func (m *mockQuotaService) QuotaReached(c *models.ReqContext, target string) (bo
 func (m *mockQuotaService) CheckQuotaReached(c context.Context, target string, params *quota.ScopeParameters) (bool, error) {
 	return m.reached, m.err
 }
+
+func (m *mockQuotaService) DeleteByUser(c context.Context, userID int64) error {
+	return m.err
+}

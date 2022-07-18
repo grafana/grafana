@@ -46,7 +46,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return response.Error(500, "Failed to get dashboard permissions", err)
 	}
 
-	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
+	filteredACLs := make([]*models.DashboardACLInfoDTO, 0, len(acl))
 	for _, perm := range acl {
 		if perm.UserId > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
 			continue
@@ -61,16 +61,16 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 
-		filteredAcls = append(filteredAcls, perm)
+		filteredACLs = append(filteredACLs, perm)
 	}
 
-	return response.JSON(http.StatusOK, filteredAcls)
+	return response.JSON(http.StatusOK, filteredACLs)
 }
 
 func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
 	var dashID int64
 	var err error
-	apiCmd := dtos.UpdateDashboardAclCommand{}
+	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -100,9 +100,9 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return dashboardGuardianResponse(err)
 	}
 
-	var items []*models.DashboardAcl
+	var items []*models.DashboardACL
 	for _, item := range apiCmd.Items {
-		items = append(items, &models.DashboardAcl{
+		items = append(items, &models.DashboardACL{
 			OrgID:       c.OrgId,
 			DashboardID: dashID,
 			UserID:      item.UserID,
@@ -133,7 +133,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	}
 
 	if !hs.AccessControl.IsDisabled() {
-		old, err := g.GetAcl()
+		old, err := g.GetACL()
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
@@ -144,7 +144,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	}
 
 	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), dashID, items); err != nil {
-		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
+		if errors.Is(err, models.ErrDashboardACLInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return response.Error(409, err.Error(), err)
 		}
@@ -155,7 +155,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 }
 
 // updateDashboardAccessControl is used for api backward compatibility
-func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID int64, uid string, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
+func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID int64, uid string, isFolder bool, items []*models.DashboardACL, old []*models.DashboardACLInfoDTO) error {
 	commands := []accesscontrol.SetResourcePermissionCommand{}
 	for _, item := range items {
 		permissions := item.Permission.String()
@@ -216,7 +216,7 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 	return nil
 }
 
-func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
+func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardACLCommand) error {
 	for _, item := range apiCmd.Items {
 		if item.UserID > 0 && item.TeamID > 0 {
 			return models.ErrPermissionsWithUserAndTeamNotAllowed

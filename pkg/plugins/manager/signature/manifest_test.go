@@ -1,11 +1,14 @@
 package signature
 
 import (
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -110,6 +113,57 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
 		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootURLs)
 		assert.Equal(t, []string{"plugin.json"}, fileList(manifest))
+	})
+}
+
+func TestCalculate(t *testing.T) {
+	t.Run("Validate root URL against App URL for non-private plugin if is specified in manifest", func(t *testing.T) {
+		tcs := []struct {
+			appURL            string
+			expectedSignature plugins.Signature
+		}{
+			{
+				appURL: "https://dev.grafana.com",
+				expectedSignature: plugins.Signature{
+					Status:     plugins.SignatureValid,
+					Type:       plugins.GrafanaSignature,
+					SigningOrg: "Grafana Labs",
+				},
+			},
+			{
+				appURL: "https://non.matching.url.com",
+				expectedSignature: plugins.Signature{
+					Status: plugins.SignatureInvalid,
+				},
+			},
+		}
+
+		parentDir, err := filepath.Abs("../")
+		if err != nil {
+			t.Errorf("could not construct absolute path of current dir")
+			return
+		}
+
+		for _, tc := range tcs {
+			origAppURL := setting.AppUrl
+			t.Cleanup(func() {
+				setting.AppUrl = origAppURL
+			})
+			setting.AppUrl = tc.appURL
+
+			sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
+				JSONData: plugins.JSONData{
+					ID: "test",
+					Info: plugins.Info{
+						Version: "1.0.0",
+					},
+				},
+				PluginDir: filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin"),
+				Class:     plugins.External,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedSignature, sig)
+		}
 	})
 }
 

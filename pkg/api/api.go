@@ -108,6 +108,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
+	if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
+		r.Get("/g/*", reqSignedIn, hs.Index)
+	}
+
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), hs.Index)
 	}
@@ -567,14 +571,19 @@ func (hs *HTTPServer) registerRoutes() {
 			adminRoute.Get("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetStatus))
 			adminRoute.Post("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestExport))
 			adminRoute.Post("/export/stop", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestStop))
+			adminRoute.Get("/export/options", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetOptions))
 		}
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
+		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))
+		adminRoute.Post("/encryption/reencrypt-secrets", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptSecrets))
+		adminRoute.Post("/encryption/rollback-secrets", reqGrafanaAdmin, routing.Wrap(hs.AdminRollbackSecrets))
 
 		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDashboards)), routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersPlugins)), routing.Wrap(hs.AdminProvisioningReloadPlugins))
 		adminRoute.Post("/provisioning/datasources/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDatasources)), routing.Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersNotifications)), routing.Wrap(hs.AdminProvisioningReloadNotifications))
+		adminRoute.Post("/provisioning/alerting/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersAlertRules)), routing.Wrap(hs.AdminProvisioningReloadAlerting))
 
 		adminRoute.Post("/ldap/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPConfigReload)), routing.Wrap(hs.ReloadLDAPCfg))
 		adminRoute.Post("/ldap/sync/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPUsersSync)), routing.Wrap(hs.PostSyncUserWithLDAP))

@@ -146,7 +146,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	}
 
 	// Validate that private is running within defined root URLs
-	if manifest.SignatureType == plugins.PrivateSignature {
+	if manifest.SignatureType == plugins.PrivateSignature || len(manifest.RootURLs) > 0 {
 		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl); err != nil {
 			mlog.Warn("Could not verify if root URLs match", "plugin", plugin.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err

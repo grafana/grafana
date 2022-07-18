@@ -36,6 +36,31 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             return {
               data: res?.length ? [toDataFrame(res)] : [],
             };
+          case AzureQueryType.ResourceGroupsQuery:
+            if (queryObj.subscription) {
+              const rgs = await this.datasource.getResourceGroups(queryObj.subscription);
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
+          case AzureQueryType.NamespacesQuery:
+            if (queryObj.subscription) {
+              const rgs = await this.datasource.getMetricNamespaces(queryObj.subscription, queryObj.resourceGroup);
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
+          case AzureQueryType.ResourceNamesQuery:
+            if (queryObj.subscription) {
+              const rgs = await this.datasource.getResourceNames(
+                queryObj.subscription,
+                queryObj.resourceGroup,
+                queryObj.namespace
+              );
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
           case AzureQueryType.GrafanaTemplateVariableFn:
             if (queryObj.grafanaTemplateVariableFn) {
               const templateVariablesResults = await this.callGrafanaTemplateVariableFn(
@@ -50,7 +75,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             return lastValueFrom(this.datasource.query(request));
         }
       } catch (err) {
-        return { data: [], error: { message: messageFromError(err) } };
+        return { data: [], error: new Error(messageFromError(err)) };
       }
     };
 

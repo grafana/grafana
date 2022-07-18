@@ -133,7 +133,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		UpdatedBy:              updater,
 		CreatedBy:              creator,
 		Version:                dash.Version,
-		HasAcl:                 dash.HasAcl,
+		HasACL:                 dash.HasACL,
 		IsFolder:               dash.IsFolder,
 		FolderId:               dash.FolderId,
 		Url:                    dash.GetUrl(),
@@ -445,7 +445,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 // GetHomeDashboard returns the home dashboard.
 func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.OrgId, UserID: c.SignedInUser.UserId}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.OrgId, UserID: c.SignedInUser.UserId, Teams: c.Teams}
 	homePage := hs.Cfg.HomePage
 
 	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
