@@ -161,13 +161,17 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 		}
 
 		if cmd.DeletedDatasourcesCount > 0 {
-			dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
+			if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 				SourceUID: getDsQuery.Result.Uid,
-			})
+			}); err != nil {
+				return err
+			}
 
-			dc.correlationsStore.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{
+			if err := dc.correlationsStore.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{
 				TargetUID: getDsQuery.Result.Uid,
-			})
+			}); err != nil {
+				return err
+			}
 
 			dc.log.Info("deleted datasource based on configuration", "name", ds.Name)
 		}
