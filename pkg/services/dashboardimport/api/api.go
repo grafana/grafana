@@ -3,8 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -22,12 +20,10 @@ type ImportDashboardAPI struct {
 	quotaService           QuotaService
 	pluginStore            plugins.Store
 	ac                     accesscontrol.AccessControl
-	logger                 log.Logger
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
-	pluginStore plugins.Store, ac accesscontrol.AccessControl,
-) *ImportDashboardAPI {
+	pluginStore plugins.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,
