@@ -265,11 +265,18 @@ export default function StoragePage(props: Props) {
             )}
 
             {canAddFolder && (
-              <FileUpload accept={fileFormats} onFileUpload={onFileUpload} key={fileUploadKey}>
-                Upload
-              </FileUpload>
+              <>
+                <FileUpload
+                  accept={fileFormats}
+                  onFileUpload={onFileUpload}
+                  key={fileUploadKey}
+                  className={styles.uploadButton}
+                >
+                  Upload
+                </FileUpload>
+                <Button onClick={() => setIsAddingNewFolder(true)}>New Folder</Button>
+              </>
             )}
-            {canAddFolder && <Button onClick={() => setIsAddingNewFolder(true)}>New Folder</Button>}
             {canDelete && (
               <Button
                 variant="destructive"
@@ -397,14 +404,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.colors.border.medium};
     height: 100%;
   `,
-  uploadSpot: css`
-    margin-left: ${theme.spacing(2)};
-  `,
   border: css`
     border: 1px solid ${theme.colors.border.medium};
     padding: ${theme.spacing(2)};
   `,
   errorAlert: css`
     padding-top: 20px;
+  `,
+  uploadButton: css`
+    margin-right: ${theme.spacing(2)};
   `,
 });
