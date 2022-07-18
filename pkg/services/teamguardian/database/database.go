@@ -22,3 +22,11 @@ func (t *TeamGuardianStoreImpl) GetTeamMembers(ctx context.Context, query models
 
 	return query.Result, nil
 }
+
+func (t *TeamGuardianStoreImpl) DeleteByUser(ctx context.Context, userID int64) error {
+	return t.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var rawSQL = "DELETE FROM team_member WHERE user_id = ?"
+		_, err := sess.Exec(rawSQL, userID)
+		return err
+	})
+}

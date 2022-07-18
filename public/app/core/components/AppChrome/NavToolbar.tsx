@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { Breadcrumbs } from './Breadcrumbs';
+import { NavToolbarSeparator } from './NavToolbarSeparator';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props {
@@ -32,10 +33,12 @@ export function NavToolbar({
         <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
       </div>
       <Breadcrumbs sectionNav={sectionNav} pageNav={pageNav} />
-      <div className={styles.leftActions}></div>
-      <div className={styles.rightActions}>
+      <div className={styles.actions}>
         {actions}
-        <ToolbarButton icon={searchBarHidden ? 'angle-down' : 'angle-up'} onClick={onToggleSearchBar} />
+        {actions && <NavToolbarSeparator />}
+        <ToolbarButton onClick={onToggleSearchBar} narrow tooltip="Toggle top search bar">
+          <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
+        </ToolbarButton>
       </div>
     </div>
   );
@@ -55,16 +58,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       paddingRight: theme.spacing(1),
     }),
-    leftActions: css({
+    actions: css({
       display: 'flex',
       alignItems: 'center',
+      flexWrap: 'nowrap',
+      justifyContent: 'flex-end',
+      paddingLeft: theme.spacing(1),
       flexGrow: 1,
-      gap: theme.spacing(2),
-    }),
-    rightActions: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(2),
+      gap: theme.spacing(0.5),
     }),
   };
 };
