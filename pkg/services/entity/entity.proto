@@ -1,91 +1,175 @@
 
-
-
-// // User defined properties
-// type Entity struct {
-// 	Kind       string     `json:"kind" yaml:"kind"` // Must match file path conventions
-// 	APIVersion string     `json:"apiVersion" yaml:"apiVersion"`
-// 	Properties Properties `json:"properties" yaml:"properties"`
-
-// 	// Augmented from the storage/entity API
-// 	Metadata *Metadata `json:"meta,omitempty" yaml:"meta,omitempty"`
-
-// 	// Body {depends on implementation}
-// }
-
-// // User defined properties save in object body
-// type Properties struct {
-// 	Name        string            `json:"name" yaml:"name"`
-// 	Description string            `json:"description,omitempty" yaml:"description,omitempty"`
-// 	Labels      map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
-// 	SecureKeys  []string          `json:"secureKeys,omitempty" yaml:"secureKeys,omitempty"`
-// }
-
-// // System defined properties
-// type Metadata struct {
-// 	UID       string    `json:"uid" yaml:"uid"`
-// 	UpdatedBy string    `json:"updatedBy" yaml:"updatedBy"` // users who have saved that file
-// 	CreatedAt time.Time `json:"createdAt" yaml:"createdAt"`
-// 	UpdatedAt time.Time `json:"updatedAt" yaml:"updatedAt"`
-// 	Version   string    `json:"version,omitempty" yaml:"version,omitempty"` // same as hash? etag? md5
-// 	Hash      string    `json:"hash,omitempty" yaml:"hash,omitempty"`
-
-// 	Dependencies  []string     // list of GRNs?
-// 	Provinance    []Provinance // where did the entity come from
-// 	AccessControl []string     // what can the request user do with this item
-// }
-
-// // Where did it come from
-// type Provinance struct {
-// 	When   time.Time `json:"updatedAt" yaml:"updatedAt"`
-// 	Source string
-// 	//...
-// }
-
-
-
 message Entity {
+    string path = 1; // will include slashes
+    string kind = 2; // dash, ds, alert, folder, svg, png, df, dqr, ... (will validate body)
+    string apiVersion = 3; // v1  (container version)
+    string schemaVersion = 4; // the body
+
+    EntityProperties props = 5; // common user defined properties for everything
+    StorageMetadata meta = 6; // Added from the storage system
+
+    // Body depends on kind
+    bytes body = 7;
+}
+
+// Defined by user interaction
+message EntityProperties {
+    string name = 1;
+    string description = 2;
+    map<string,string> labels = 3;  // encode "tags" as empty value like we do for annotations
+    repeated secureKeys = 4;
+    Provinance provinance = 5; // where did this entity come from
+}
+
+message Provinance {
+    int64 when = 1; // Unix millis when the event happened
+    string source = 2; // Identifier for the source 
+    string path = 3; // optional path to source location
+}
+
+// System manages these properties
+message StorageMetadata {
+    int64 createdAt = 1;
+    int64 updatedAt = 2;
+    string updatedBy = 3;
+    string version = 4; // might be hash
+    string etag = 5; // checksum 
+    int64 size = 6; // in bytes
+    bool requiresPR = 7; // the storage engine does not allow directly writing this version
+
+    repeated EntityLocator dependencies = 8;  // list of GRNs? extracted from the body... based on kind?
+    repeated string accessControl = 9; // list of operations the calling user can perform
+    repeated EntityPR prs = 10; // avaliable PRs for this path
+}
+
+message EntityLocator {
+    string path = 1;
+    string kind = 2;
+}
+
+message EntityPR {
+    string url = 1;
+    string name = 2;
+    string version = 3; // passed to get and it will load the content
+}
+  
+message Folder {
     string path = 1; // uid?  with slashes
-    string kind = 2; // uid?  with slashes
     string apiVersion = 3; // v1  (includes container+object)
 
     EntityProperties props = 4;
     EntityMetadata meta = 5; // Added from the system
 
-    // Depends on kind
-    bytes body = 6;
-}
-  
-  message EntityProperties {
-    string name = 2;
-    string description = 3;
-    map<string,string> labels = 9;
-    repeated secureKeys = 6;
-  }
-  
-  message EntityMetadata {
-    int64 createdAt = 1;
-    int64 updatedBy = 2;
-    string updatedBy = 3;
-    string version = 4;
-    string hash = 5;
+    repeated Entity items = 6;
 
-    repeated string dependencies = 6;
-    repeated string accessControl = 7; // list of operations the calling user can perform
-  }
-  
-  message Provinance {
-    // Unix millis when the time
-    int64 when = 1;
-  
-    // The unique identifier of the plugin the request  originating from.
-    string source = 2;
-  }
-  
-  //---------------------------------------------------------
-  // Resource service enables HTTP-style requests over gRPC.
-  //---------------------------------------------------------
-  
-  service Resource {
-    rpc CallResource(CallResourceRequest) returns (stream CallResourceResponse);
-  }
+    string nextPageToken = 7;
+}
+
+message EntityHistory {
+    int64 when = 1; // Unix millis when the event happened
+    string who = 2; // Identifier for the source 
+    string comment = 3; // optional path to source location
+}
+
+message EntityHistoryResponse {
+    string path = 1; 
+    string kind = 2;
+
+    repeated EntityHistory event = 2;
+    string nextPageToken = 3; // optional path to source location
+}
+
+//---------------------------------------------------------
+// Resource service enables HTTP-style requests over gRPC.
+//---------------------------------------------------------
+
+message AuthInfo {
+    string uid = 1;
+    // teams/groups/role?
+    // ????
+}
+
+message GetEntityRequest {
+    AuthInfo auth = 1;
+
+    string path = 1; 
+    string kind = 1; 
+    string version = 1;  // empty is latest, branch/hash/etc
+
+    bool withBody = 4;
+    bool withACL = 4;
+    bool withProps = 4;
+    bool withStroageMeta = 4;
+    bool withSecureKeys = 5; // excluded when not necessary (requires edit rights)
+    bool withPRs = 6;
+}
+
+message ListFolderRequest {
+    AuthInfo auth = 1;
+
+    string path = 1; 
+    string version = 1;  // version of the folder metadata
+    string pageToken = 1;  // Optional next token to iterate with
+    int maxResults = 1; // max items in the list
+
+    bool withACL = 4;
+    bool withProps = 4;
+    bool withStroageMeta = 4;
+}
+
+message GetHistoryRequest {
+    AuthInfo auth = 1;
+
+    string path = 1; 
+    string kind = 1;  // version of the folder metadata
+    string pageToken = 1;  // Optional next token to iterate with
+    int maxResults = 1; 
+}
+
+message SaveEntityRequest {
+    AuthInfo auth = 1;
+
+    string path = 1; 
+    string kind = 1; 
+    string previousVersion = 1;  // Create vs Update with optimistic locking
+
+    EntityProperties props = 4;
+    bytes body = 6;
+
+    string comment = 1; 
+}
+
+message CreatePullRequest {
+    AuthInfo auth = 1;
+
+    string path = 2; 
+    string kind = 3; 
+
+    EntityProperties props = 4;
+    bytes body = 5;
+
+    string title = 6;
+    string comment = 7; 
+}
+
+message DeleteEntityRequest {
+    AuthInfo auth = 1;
+
+    string path = 2; 
+    string kind = 3; 
+    string version = 4; // for pull requests 
+
+    bool recursive = 5; // for folders
+}
+
+service Entity {
+    rpc GetEntity(GetEntityRequest) returns (Entity);
+    rpc ListFolder(ListFolderRequest) returns (Folder); 
+    rpc SaveEntity(SaveEntityRequest) returns (Entity); 
+    rpc DeleteEntity(DeleteEntityRequest) returns bool;  // true if it found something to return
+    rpc GetEntityHistory(GetHistoryRequest) returns (EntityHistoryResponse);
+    rpc CreatePR(CreatePullRequest) returns (Entity); 
+
+    // Later... 
+    rpc WatchEntity(GetEntityRequest) returns (stream Entity);
+}
