@@ -6,15 +6,14 @@ Here is a proposal about a new package layout which:
 
 Entities:
 
-* `StandardSearchService` - wrapper for all known indexes. For now only has reference to `dashboardSearch`.
-* `dashboardSearch` - manages dashboard indexes for all organizations, every organization has its own `dashboardIndex`.
-* every `dashboardIndex` has its own `*bluge.Writer`
-
 ```
 type StandardSearchService struct {
-  dashboardSearch *dashboardSearch
+  dashboardOrgIndexManager *orgIndexManager
 }
 
+// orgIndexManager is responsible controlling index lifecycle for all orgs: 
+// re-indexing, making backups, polling entity_events (actually this is our 
+// current `run` method).
 type orgIndexManager struct {
   indexes map[int64]Index
 }
@@ -33,6 +32,7 @@ type Index interface {
 
 type dashboardIndex struct {
   // Implements Index for one ORG.
+
   orgID int64
   writer *bluge.Writer
 }
@@ -62,8 +62,6 @@ dashboard
 * `eventId` - the last event ID applied to the index in the backup. Since we make backups periodically we may need to apply some missing updates from `entity_event` table to catch up the state.
 
 As we don't have org id separation in `entity_event` table we manage indexes for all organizations in one goroutine. By different types of indexes are a separate consumers of `entity_event` table - so different types of indexes do not depend on each other at all.
-
-`orgIndexManager` is responsible controlling index lifecycle for all orgs: re-indexing, making backups, polling entity_events (actually this is our current `run` method).
 
 We can do backups after full-reindexing with the event id seen before re-indexing started.
 
