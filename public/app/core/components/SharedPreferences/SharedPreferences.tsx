@@ -22,7 +22,7 @@ import {
 } from '@grafana/ui';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
+import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
 
 import { UserPreferencesDTO } from '../../../types';
 
@@ -32,7 +32,7 @@ export interface Props {
 }
 
 export type State = UserPreferencesDTO & {
-  dashboards: DashboardSearchHit[];
+  dashboards: DashboardSearchItem[];
 };
 
 const themes: SelectableValue[] = [
@@ -74,12 +74,11 @@ const languages: Array<SelectableValue<string>> = [
 
 const i18nFlag = Boolean(config.featureToggles.internationalization);
 
-const DEFAULT_DASHBOARD_HOME: DashboardSearchHit = {
-  id: 0,
+const DEFAULT_DASHBOARD_HOME: DashboardSearchItem = {
   title: 'Default',
   tags: [],
   type: '' as DashboardSearchItemType,
-  uid: undefined,
+  uid: 'default',
   uri: '',
   url: '',
   folderId: 0,
@@ -111,14 +110,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const prefs = await this.service.load();
-    const dashboards = await backendSrv.search({ starred: true });
+    const dashboards = await backendSrv.search({ starred: true }) as DashboardSearchItem[];
 
     if (prefs.homeDashboardUID && !dashboards.find((d) => d.uid === prefs.homeDashboardUID)) {
       const missingDash = await backendSrv.getDashboardByUid(prefs.homeDashboardUID);
 
       if (missingDash?.dashboard) {
         dashboards.push({
-          id: missingDash.dashboard.id,
           title: missingDash.dashboard.title,
           tags: [],
           type: DashboardSearchItemType.DashDB,
@@ -176,7 +174,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ locale });
   };
 
-  getFullDashName = (dashboard: SelectableValue<DashboardSearchHit>) => {
+  getFullDashName = (dashboard: SelectableValue<DashboardSearchItem>) => {
     if (typeof dashboard.folderTitle === 'undefined' || dashboard.folderTitle === '') {
       return dashboard.title;
     }
@@ -229,7 +227,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                   value={dashboards.find((dashboard) => dashboard.uid === homeDashboardUID)}
                   getOptionValue={(i) => i.uid}
                   getOptionLabel={this.getFullDashName}
-                  onChange={(dashboard: SelectableValue<DashboardSearchHit>) =>
+                  onChange={(dashboard: SelectableValue<DashboardSearchItem>) =>
                     this.onHomeDashboardChanged(dashboard.uid)
                   }
                   options={dashboards}
