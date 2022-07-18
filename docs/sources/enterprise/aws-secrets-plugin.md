@@ -18,6 +18,7 @@ By default, Grafana stores all encrypted secrets in its own SQL database. To sto
 
 You can configure options in the plugin to determine secret storage behavior in AWS Secrets Manager, and also migrate secrets from existing Grafana instances to AWS Secrets Manager. We also provide backward compatibility so that the plugin can be safely uninstalled, with some [limitations](#limitations).
 
+> **Note:** Available only in [Grafana Enterprise]({{< relref "/enterprise/" >}}).
 ## Installation
 
 You can install the plugin using [Grafana CLI]({{< relref "../../../cli/" >}}):
