@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -54,9 +54,9 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	})
 
 	// Create a couple of "fake" Alertmanagers
-	fakeAM1 := store.NewFakeExternalAlertmanager(t)
-	fakeAM2 := store.NewFakeExternalAlertmanager(t)
-	fakeAM3 := store.NewFakeExternalAlertmanager(t)
+	fakeAM1 := sender.NewFakeExternalAlertmanager(t)
+	fakeAM2 := sender.NewFakeExternalAlertmanager(t)
+	fakeAM3 := sender.NewFakeExternalAlertmanager(t)
 
 	// Now, let's test the configuration API.
 	{
