@@ -11,27 +11,6 @@ import { appEvents } from 'app/core/core';
 import { ShareModalTabProps } from './types';
 import { buildImageUrl, buildShareUrl } from './utils';
 
-const currentThemeTranstation = t({
-  id: 'share-modal.link.theme-current',
-  message: `Current`,
-});
-
-const darkThemeTranstation = t({
-  id: 'share-modal.link.theme-dark',
-  message: `Dark`,
-});
-
-const lightThemeTranstation = t({
-  id: 'share-modal.link.theme-light',
-  message: `Light`,
-});
-
-const themeOptions: Array<SelectableValue<string>> = [
-  { label: currentThemeTranstation, value: 'current' },
-  { label: darkThemeTranstation, value: 'dark' },
-  { label: lightThemeTranstation, value: 'light' },
-];
-
 export interface Props extends ShareModalTabProps {}
 
 export interface State {
@@ -127,6 +106,30 @@ export class ShareLink extends PureComponent<Props, State> {
       message: `Link URL`,
     });
 
+    const themeOptions: Array<SelectableValue<string>> = [
+      {
+        label: t({
+          id: 'share-modal.link.theme-current',
+          message: `Current`,
+        }),
+        value: 'current',
+      },
+      {
+        label: t({
+          id: 'share-modal.link.theme-dark',
+          message: `Dark`,
+        }),
+        value: 'dark',
+      },
+      {
+        label: t({
+          id: 'share-modal.link.theme-light',
+          message: `Light`,
+        }),
+        value: 'light',
+      },
+    ];
+
     return (
       <>
         <p className="share-modal-info-text">
@@ -142,7 +145,12 @@ export class ShareLink extends PureComponent<Props, State> {
               onChange={this.onUseCurrentTimeRangeChange}
             />
           </Field>
-          <Field label="Theme">
+          <Field
+            label={t({
+              id: 'share-modal.link.theme',
+              message: `Theme`,
+            })}
+          >
             <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
           </Field>
           <Field label={shortenURLTranslation}>
@@ -176,7 +184,11 @@ export class ShareLink extends PureComponent<Props, State> {
             )}
 
             {!isDashboardSaved && (
-              <Alert severity="info" title="Dashboard is not saved" bottomSpacing={0}>
+              <Alert
+                severity="info"
+                title={t({ id: 'share-modal.link.save-alert', message: `Dashboard is not saved` })}
+                bottomSpacing={0}
+              >
                 <Trans id="share-modal.link.save-dashboard">
                   To render a panel image, you must save the dashboard first.
                 </Trans>
@@ -186,18 +198,21 @@ export class ShareLink extends PureComponent<Props, State> {
         )}
 
         {panel && !config.rendererAvailable && (
-          <Alert severity="info" title="Image renderer plugin not installed" bottomSpacing={0}>
-            <Trans id="share-modal.link.must-install">To render a panel image, you must install the</Trans>
-            &nbsp;
-            <a
-              href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="external-link"
-            >
-              <Trans id="share-modal.link.grafana-plugin">Grafana image renderer plugin</Trans>
-            </a>
-            <Trans id="share-modal.link.contact-administrator">
+          <Alert
+            severity="info"
+            title={t({ id: 'share-modal.link.render-alert', message: `Image renderer plugin not installed` })}
+            bottomSpacing={0}
+          >
+            <Trans id="share-modal.link.render-instructions">
+              To render a panel image, you must install the &nbsp;
+              <a
+                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="external-link"
+              >
+                Grafana image renderer plugin
+              </a>
               . Please contact your Grafana administrator to install the plugin.
             </Trans>
           </Alert>
