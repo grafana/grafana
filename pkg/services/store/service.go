@@ -30,7 +30,13 @@ const RootResources = "resources"
 const RootDevenv = "devenv"
 const RootSystem = "system"
 
-const SystemBrandingStorage = "system/branding"
+const brandingStorage = "branding"
+const SystemBrandingStorage = "system/" + brandingStorage
+
+var (
+	SystemBrandingReader = &models.SignedInUser{}
+	SystemBrandingAdmin  = &models.SignedInUser{}
+)
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
 
@@ -89,6 +95,11 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			},
 		}).setReadOnly(true).setBuiltin(true).
 			setDescription("Access files from the static public files"),
+		newSQLStorage(RootSystem,
+			"System",
+			&StorageSQLConfig{orgId: ac.GlobalOrgID},
+			sql,
+		).setBuiltin(true).setDescription("Grafana system storage"),
 	}
 
 	// Development dashboards
@@ -128,7 +139,30 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	}
 
 	authService := newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
-		if user == nil || !user.IsGrafanaAdmin {
+		if user == nil {
+			return nil
+		}
+
+		if storageName == RootSystem {
+			if user == SystemBrandingReader {
+				return map[string]filestorage.PathFilter{
+					ActionFilesRead:   filestorage.NewPathFilter([]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, []string{filestorage.Delimiter + brandingStorage}, nil, nil),
+					ActionFilesWrite:  denyAllPathFilter,
+					ActionFilesDelete: denyAllPathFilter,
+				}
+			}
+
+			if user == SystemBrandingAdmin {
+				systemBrandingFilter := filestorage.NewPathFilter([]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, []string{filestorage.Delimiter + brandingStorage}, nil, nil)
+				return map[string]filestorage.PathFilter{
+					ActionFilesRead:   systemBrandingFilter,
+					ActionFilesWrite:  systemBrandingFilter,
+					ActionFilesDelete: systemBrandingFilter,
+				}
+			}
+		}
+
+		if !user.IsGrafanaAdmin {
 			return nil
 		}
 
@@ -146,12 +180,6 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				ActionFilesDelete: denyAllPathFilter,
 			}
 		case RootResources:
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   allowAllPathFilter,
-				ActionFilesWrite:  allowAllPathFilter,
-				ActionFilesDelete: allowAllPathFilter,
-			}
-		case RootSystem:
 			return map[string]filestorage.PathFilter{
 				ActionFilesRead:   allowAllPathFilter,
 				ActionFilesWrite:  allowAllPathFilter,
