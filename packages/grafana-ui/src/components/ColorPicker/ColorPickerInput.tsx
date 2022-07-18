@@ -67,9 +67,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     picker: css`
       position: absolute;
-      bottom: 4px;
-      padding: 2px;
-      border-radius: 8px;
+      bottom: ${theme.spacing(0.5)};
+      padding: ${theme.spacing(0.25)};
+      border-radius: ${theme.shape.borderRadius(4)};
       background: ${theme.colors.border.medium};
     `,
     input: css``,
