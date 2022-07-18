@@ -121,7 +121,6 @@ func (s *inmemStore) Update(ctx context.Context, preference *pref.Preference) er
 	return nil
 }
 
-// TODO: implement DeleteByUser
 func (s *inmemStore) DeleteByUser(ctx context.Context, userID int64) error {
-	return nil
+	panic("not yet implemented")
 }

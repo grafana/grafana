@@ -190,6 +190,11 @@ func (s *Service) getQuotaScopes(target string) ([]models.QuotaScope, error) {
 			models.QuotaScope{Name: "org", Target: target, DefaultLimit: s.Cfg.Quota.Org.AlertRule},
 		)
 		return scopes, nil
+	case "file":
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: s.Cfg.Quota.Global.File},
+		)
+		return scopes, nil
 	default:
 		return scopes, quota.ErrInvalidQuotaTarget
 	}

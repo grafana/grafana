@@ -171,13 +171,13 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 		return nil
 	})
 	g.Go(func() error {
-		if err := s.orgService.DeleteOrgUser(ctx, cmd.UserID); err != nil {
+		if err := s.orgService.DeleteUserFromAll(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
 	})
 	g.Go(func() error {
-		if err := s.dashboardService.DeleteAclByUser(ctx, cmd.UserID); err != nil {
+		if err := s.dashboardService.DeleteACLByUser(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil

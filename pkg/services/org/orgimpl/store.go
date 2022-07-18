@@ -16,7 +16,7 @@ type store interface {
 	Get(context.Context, int64) (*org.Org, error)
 	Insert(context.Context, *org.Org) (int64, error)
 	InsertOrgUser(context.Context, *org.OrgUser) (int64, error)
-	DeleteOrgUser(context.Context, int64) error
+	DeleteUserFromAll(context.Context, int64) error
 }
 
 type sqlStore struct {
@@ -83,7 +83,7 @@ func (ss *sqlStore) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (int64,
 	return orgID, nil
 }
 
-func (ss *sqlStore) DeleteOrgUser(ctx context.Context, userID int64) error {
+func (ss *sqlStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Exec("DELETE FROM org_user WHERE user_id = ?", userID); err != nil {
 			return err
