@@ -6,6 +6,8 @@ export const ROUTE_BASE_ID = 'data-connections';
 
 export enum ROUTES {
   DataSources = '/data-connections/data-sources',
+  DataSourcesNew = '/data-connections/data-sources/new',
+  DataSourcesEdit = '/data-connections/data-sources/edit/:uid',
   Plugins = '/data-connections/plugins',
   CloudIntegrations = '/data-connections/cloud-integrations',
   RecordedQueries = '/data-connections/recorded-queries',
