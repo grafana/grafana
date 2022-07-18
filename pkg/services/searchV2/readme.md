@@ -15,23 +15,26 @@ type StandardSearchService struct {
   dashboardSearch *dashboardSearch
 }
 
-type dashboardSearch struct {
-  indexes map[int64]*dashboardIndex
+type orgIndexManager struct {
+  indexes map[int64]Index
 }
 
-type dashboardIndex struct {
-  writer *bluge.Writer
-}
-
-func (*dashboardSearch) run(ctx) error {
+func (*orgIndexManager) run(ctx) error {
   // Create initial indexes for known orgs.
   // Start applying events, do full re-indexing, do backups etc.
 }
 
-func (*dashboardSearch) backup(ctx, currentEventID) error {
-  // write meta.json
-  // for each org do the backup using *bluge.Writer.
-  // done.
+type Index interface {
+  Init(ctx) error // Index initially or load from existing backup.
+  ReIndex(ctx) error
+  ApplyUpdates(ctx, []EntityEvent) (newEventID, error)
+  BackupTo(ctx, currentEventID) error
+}
+
+type dashboardIndex struct {
+  // Implements Index for one ORG.
+  orgID int64
+  writer *bluge.Writer
 }
 ```
 
@@ -60,32 +63,7 @@ dashboard
 
 As we don't have org id separation in `entity_event` table we manage indexes for all organizations in one goroutine. By different types of indexes are a separate consumers of `entity_event` table - so different types of indexes do not depend on each other at all.
 
-`IndexManager` is responsible controlling index lifecycle (actually this is our current `run` method), it accepts interface like:
-
-```
-type Index interface {
-  Init(ctx, orgIDs) error // Index initially or load from existing backup.
-  FullReIndex(ctx) error
-  HasOrgIndex(ctx, orgID) bool
-  ReIndexForOrg(ctx, orgID) error
-  ApplyUpdates(ctx, []EntityEvent) newEventID
-  DoBackup(ctx, currentEventID) error
-}
-```
-
-Index implementation may re-use `BackupManager`:
-
-```
-type BackupData struct {
-  Indexes map[int64]*bluge.Writer
-  EventID int64
-}
-
-type BackupManager interface {
-  Save(BackupData) error
-  Load() (BackupData, bool, error)
-}
-```
+`orgIndexManager` is responsible controlling index lifecycle for all orgs: re-indexing, making backups, polling entity_events (actually this is our current `run` method).
 
 We can do backups after full-reindexing with the event id seen before re-indexing started.
 
