@@ -1,9 +1,8 @@
 import { uniqBy } from 'lodash';
 
 import { DataFrame, MetricFindValue } from '@grafana/data';
-import { ResponseParser } from 'app/features/plugins/sql/types';
 
-export class MSSqlResponseParser implements ResponseParser {
+export default class ResponseParser {
   transformMetricFindResponse(frame: DataFrame): MetricFindValue[] {
     const values: MetricFindValue[] = [];
     const textField = frame.fields.find((f) => f.name === '__text');
