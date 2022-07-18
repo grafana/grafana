@@ -3,22 +3,22 @@ package userimpl
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/services/teamguardian/manager"
+	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/userauth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
@@ -27,10 +27,10 @@ type Service struct {
 	starService        star.Service
 	dashboardService   dashboards.DashboardService
 	preferenceService  pref.Service
-	teamMemberService  *manager.Service
+	teamMemberService  teamguardian.TeamGuardian
 	userAuthService    userauth.Service
 	quotaService       quota.Service
-	accessControlStore *database.AccessControlStore
+	accessControlStore accesscontrol.AccessControl
 }
 
 func ProvideService(
@@ -39,10 +39,10 @@ func ProvideService(
 	starService star.Service,
 	dashboardService dashboards.DashboardService,
 	preferenceService pref.Service,
-	teamMemberService *manager.Service,
+	teamMemberService teamguardian.TeamGuardian,
 	userAuthService userauth.Service,
 	quotaService quota.Service,
-	accessControlStore *database.AccessControlStore,
+	accessControlStore accesscontrol.AccessControl,
 ) user.Service {
 	return &Service{
 		store: &sqlStore{
@@ -154,7 +154,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
-	_, err := s.store.ExistNotServiceAccount(ctx, cmd.UserID)
+	_, err := s.store.GetNotServiceAccount(ctx, cmd.UserID)
 	if err != nil {
 		return err
 	}
@@ -162,32 +162,65 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 	if err := s.store.Delete(ctx, cmd.UserID); err != nil {
 		return err
 	}
-	if err := s.starService.DeleteByUser(ctx, cmd.UserID); err != nil {
-		fmt.Printf("failed to delete star for user with ID %v: %v", cmd.UserID, err)
-	}
-	if err := s.orgService.DeleteOrgUser(ctx, cmd.UserID); err != nil {
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		if err := s.starService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.orgService.DeleteOrgUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.dashboardService.DeleteAclByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.teamMemberService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.userAuthService.Delete(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.userAuthService.DeleteToken(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.quotaService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.accessControlStore.DeleteUserPermissions(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
 		return err
 	}
-	if err := s.dashboardService.DeleteAclByUser(ctx, cmd.UserID); err != nil {
-		return err
-	}
-	if err := s.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
-		return err
-	}
-	if err := s.teamMemberService.DeleteByUser(ctx, cmd.UserID); err != nil {
-		return err
-	}
-	if err := s.userAuthService.Delete(ctx, cmd.UserID); err != nil {
-		return err
-	}
-	if err := s.userAuthService.DeleteToken(ctx, cmd.UserID); err != nil {
-		return err
-	}
-	if err := s.quotaService.DeleteByUser(ctx, cmd.UserID); err != nil {
-		return err
-	}
-	if err := s.accessControlStore.DeleteUserPermissions(ctx, cmd.UserID); err != nil {
-		return err
-	}
+
 	return nil
 }
