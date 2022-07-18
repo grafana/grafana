@@ -123,7 +123,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 	})
 }
 
-func (d *DashboardStore) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		if query.SignedInUser.HasRole(models.ROLE_ADMIN) {
 			query.Result = true
@@ -131,7 +131,7 @@ func (d *DashboardStore) HasAdminPermissionInFolders(ctx context.Context, query 
 		}
 
 		builder := &sqlstore.SQLBuilder{}
-		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, d.dialect.BooleanStr(true))
+		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgId)
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
 
 		type folderCount struct {
@@ -146,5 +146,13 @@ func (d *DashboardStore) HasAdminPermissionInFolders(ctx context.Context, query 
 		query.Result = len(resp) > 0 && resp[0].Count > 0
 
 		return nil
+	})
+}
+
+func (d *DashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var rawSQL = "DELETE FROM dashboard_acl WHERE user_id = ?"
+		_, err := sess.Exec(rawSQL, userID)
+		return err
 	})
 }

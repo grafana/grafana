@@ -68,8 +68,10 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
-		SQLStore:         ng.SQLStore,
-		BaseInterval:     baseInterval * time.Second,
+		SQLStore: ng.SQLStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: baseInterval * time.Second,
+		},
 		Logger:           log.New("ngalert-test"),
 		DashboardService: dashboardService,
 	}

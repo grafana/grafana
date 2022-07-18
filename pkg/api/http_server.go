@@ -62,9 +62,11 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/quota"
+
+	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
-	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -78,6 +80,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -101,7 +104,7 @@ type HTTPServer struct {
 	CacheService                 *localcache.CacheService
 	DataSourceCache              datasources.CacheService
 	AuthTokenService             models.UserTokenService
-	QuotaService                 *quota.QuotaService
+	QuotaService                 quota.Service
 	RemoteCacheService           *remotecache.RemoteCache
 	ProvisioningService          provisioning.ProvisioningService
 	Login                        login.Service
@@ -148,7 +151,7 @@ type HTTPServer struct {
 	authenticator                loginpkg.Authenticator
 	teamPermissionsService       accesscontrol.TeamPermissionsService
 	NotificationService          *notifications.NotificationService
-	dashboardService             dashboards.DashboardService
+	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
@@ -163,10 +166,13 @@ type HTTPServer struct {
 	folderPermissionsService     accesscontrol.FolderPermissionsService
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
+	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
 	CoremodelRegistry            *registry.Generic
 	CoremodelStaticRegistry      *registry.Static
 	kvStore                      kvstore.KVStore
+	secretsMigrator              secrets.Migrator
+	userService                  user.Service
 }
 
 type ServerOptions struct {
@@ -187,7 +193,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
 	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer, exportService export.ExportService,
+	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer, exportService export.ExportService,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
@@ -201,8 +207,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
-	kvStore kvstore.KVStore, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck,
-) (*HTTPServer, error) {
+	kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck,
+	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -266,7 +272,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authInfoService:              authInfoService,
 		authenticator:                authenticator,
 		NotificationService:          notificationService,
-		dashboardService:             dashboardService,
+		DashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
@@ -286,6 +292,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		CoremodelRegistry:            coremodelRegistry,
 		CoremodelStaticRegistry:      coremodelStaticRegistry,
 		kvStore:                      kvStore,
+		PublicDashboardsApi:          publicDashboardsApi,
+		secretsMigrator:              secretsMigrator,
+		userService:                  userService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -513,7 +522,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-	m.UseMiddleware(hs.Csrf.Middleware(hs.log))
+	m.UseMiddleware(hs.Csrf.Middleware())
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")

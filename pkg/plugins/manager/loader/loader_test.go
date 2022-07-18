@@ -344,6 +344,38 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 		{
+			name:  "Load a plugin with manifest which has a file not found in plugin folder",
+			class: plugins.External,
+			cfg: &plugins.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test"},
+			},
+			pluginPaths: []string{"../testdata/invalid-v2-missing-file"},
+			want:        []*plugins.Plugin{},
+			pluginErrors: map[string]*plugins.Error{
+				"test": {
+					PluginID:  "test",
+					ErrorCode: "signatureModified",
+				},
+			},
+		},
+		{
+			name:  "Load a plugin with file which is missing from the manifest",
+			class: plugins.External,
+			cfg: &plugins.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test"},
+			},
+			pluginPaths: []string{"../testdata/invalid-v2-extra-file"},
+			want:        []*plugins.Plugin{},
+			pluginErrors: map[string]*plugins.Error{
+				"test": {
+					PluginID:  "test",
+					ErrorCode: "signatureModified",
+				},
+			},
+		},
+		{
 			name:  "Load an app with includes",
 			class: plugins.External,
 			cfg: &plugins.Cfg{
@@ -531,8 +563,8 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 					},
 				},
 				pluginErrors: map[string]*plugins.Error{
-					"test": {
-						PluginID:  "test",
+					"test-panel": {
+						PluginID:  "test-panel",
 						ErrorCode: "signatureMissing",
 					},
 				},
@@ -555,6 +587,11 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				})
 				if !cmp.Equal(got, tt.want, compareOpts) {
 					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+				}
+				pluginErrs := l.PluginErrors()
+				require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
+				for _, pluginErr := range pluginErrs {
+					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 				}
 			})
 		}

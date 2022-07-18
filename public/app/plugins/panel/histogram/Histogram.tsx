@@ -221,7 +221,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 };
 
 const preparePlotData = (frame: DataFrame) => {
-  let data: AlignedData = [] as any;
+  let data = [];
 
   for (const field of frame.fields) {
     if (field.name !== histogramFrameBucketMaxFieldName) {
@@ -240,7 +240,7 @@ const preparePlotData = (frame: DataFrame) => {
     }
   }
 
-  return data;
+  return data as AlignedData;
 };
 
 interface State {

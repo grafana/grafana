@@ -10,12 +10,6 @@ weight: 100
 
 Explore and export panel, panel data, and data frame JSON models.
 
-## Before you begin:
-
-- [Add a panel to a dashboard]({{< relref "add-panel/" >}}).
-
-**To view a panel JSON model**:
-
 1. Open the panel inspector and then click the **JSON** tab or in the panel menu click **Inspect > Panel JSON**.
 
 1. In Select source, choose one of the following options:

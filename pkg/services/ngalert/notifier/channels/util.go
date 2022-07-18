@@ -113,7 +113,7 @@ func openImage(path string) (io.ReadCloser, error) {
 }
 
 func getTokenFromAnnotations(annotations model.LabelSet) string {
-	if value, ok := annotations[models.ScreenshotTokenAnnotation]; ok {
+	if value, ok := annotations[models.ImageTokenAnnotation]; ok {
 		return string(value)
 	}
 	return ""

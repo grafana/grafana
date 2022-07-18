@@ -15,13 +15,6 @@ type SaveDashboardDTO struct {
 	Dashboard *models.Dashboard
 }
 
-type SavePublicDashboardConfigDTO struct {
-	DashboardUid    string
-	OrgId           int64
-	UserId          int64
-	PublicDashboard *models.PublicDashboard
-}
-
 type DashboardSearchProjection struct {
 	ID          int64  `xorm:"id"`
 	UID         string `xorm:"uid"`

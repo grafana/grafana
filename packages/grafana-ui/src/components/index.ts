@@ -79,6 +79,7 @@ export { TableCellDisplayMode, TableSortByFieldState } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
+export { VerticalTab } from './Tabs/VerticalTab';
 export { TabContent } from './Tabs/TabContent';
 export { Counter } from './Tabs/Counter';
 
@@ -211,6 +212,8 @@ export { Input, getInputStyles } from './Input/Input';
 export { AutoSizeInput } from './Input/AutoSizeInput';
 export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
+export * from './SecretInput';
+export * from './SecretTextArea';
 
 export { Switch, InlineSwitch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';

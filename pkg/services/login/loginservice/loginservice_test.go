@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/go-kit/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 	}
 
 	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
+		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
 	}
@@ -52,7 +52,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	}
 
 	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
+		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
 	}
@@ -65,14 +65,16 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 func Test_teamSync(t *testing.T) {
 	authInfoMock := &logintest.AuthInfoServiceFake{}
 	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
+		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 	}
 
-	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
+	email := "test_user@example.org"
+	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: email},
+		UserLookupParams: models.UserLookupParams{Email: &email}}
 	expectedUser := &user.User{
 		ID:    1,
-		Email: "test_user@example.org",
+		Email: email,
 		Name:  "test_user",
 		Login: "test_user",
 	}

@@ -339,6 +339,10 @@ type testRenderService struct {
 	renderErrorImageProvider func(error error) (*rendering.RenderResult, error)
 }
 
+func (s *testRenderService) SanitizeSVG(ctx context.Context, req *rendering.SanitizeSVGRequest) (*rendering.SanitizeSVGResponse, error) {
+	return &rendering.SanitizeSVGResponse{Sanitized: req.Content}, nil
+}
+
 func (s *testRenderService) HasCapability(feature rendering.CapabilityName) (rendering.CapabilitySupportRequestResult, error) {
 	return rendering.CapabilitySupportRequestResult{}, nil
 }

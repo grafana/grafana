@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -42,6 +43,11 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 				ReqSignedIn: true,
 			}))
 
+			// Preventing access to plugin routes if the user has no right to access the plugin
+			authorize := ac.Middleware(hs.AccessControl)
+			handlers = append(handlers, authorize(middleware.ReqSignedIn,
+				ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))))
+
 			if route.ReqRole != "" {
 				if route.ReqRole == models.ROLE_ADMIN {
 					handlers = append(handlers, middleware.RoleAuth(models.ROLE_ADMIN))
@@ -49,6 +55,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 					handlers = append(handlers, middleware.RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN))
 				}
 			}
+
 			handlers = append(handlers, AppPluginRoute(route, plugin.ID, hs))
 			for _, method := range strings.Split(route.Method, ",") {
 				r.Handle(strings.TrimSpace(method), url, handlers)

@@ -142,6 +142,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "dashboardsFromStorage",
+			Description: "Load dashboards from the generic storage interface",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:            "export",
 			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
@@ -188,12 +193,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "azureMonitorExperimentalUI",
-			Description:  "Use grafana-experimental UI in Azure Monitor",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "traceToMetrics",
 			Description:  "Enable trace to metrics links",
 			State:        FeatureStateAlpha,
@@ -228,6 +227,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "scenes",
+			Description:  "Experimental framework to build interactive dashboards",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "useLegacyHeatmapPanel",
 			Description: "Continue to use the angular/flot based heatmap panel",
 			State:       FeatureStateStable,
@@ -237,6 +242,12 @@ var (
 			Description:  "Use grafana-experimental UI in Cloud Monitoring",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "disableSecretsCompatibility",
+			Description:     "Disable duplicated secret storage in legacy tables",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
