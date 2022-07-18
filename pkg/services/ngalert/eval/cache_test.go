@@ -63,6 +63,14 @@ func TestLastSeenDatasourceCache_GetDatasource(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, datasource)
 	assert.Equal(t, expected2, *datasource)
+
+	// a user in a different org cannot get this datasource
+	user = models.SignedInUser{OrgId: 2}
+	m.EXPECT().GetDatasource(ctx, int64(2), &user, false).
+		Return(nil, errors.New("unexpected error"))
+	datasource, err = s.GetDatasource(ctx, 2, &user, false)
+	assert.EqualError(t, err, "unexpected error")
+	assert.Nil(t, datasource)
 }
 
 func TestLastSeenDatasourceCache_GetDatasourceByUID(t *testing.T) {
@@ -114,4 +122,12 @@ func TestLastSeenDatasourceCache_GetDatasourceByUID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, datasource)
 	assert.Equal(t, expected2, *datasource)
+
+	// a user in a different org cannot get this datasource
+	user = models.SignedInUser{OrgId: 2}
+	m.EXPECT().GetDatasourceByUID(ctx, "foo", &user, false).
+		Return(nil, errors.New("unexpected error"))
+	datasource, err = s.GetDatasourceByUID(ctx, "foo", &user, false)
+	assert.EqualError(t, err, "unexpected error")
+	assert.Nil(t, datasource)
 }
