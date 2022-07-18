@@ -67,7 +67,7 @@ func TestUserService(t *testing.T) {
 		preferenceService.ExpectedError = nil
 	})
 
-	t.Run("delete user succesfully", func(t *testing.T) {
+	t.Run("delete user successfully", func(t *testing.T) {
 		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
 		require.NoError(t, err)
 	})
