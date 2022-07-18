@@ -1,11 +1,22 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
-import { FileError, FileRejection } from 'react-dropzone';
+import React, { useMemo, useState, FormEvent, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton, Alert } from '@grafana/ui';
+import {
+  useStyles2,
+  IconName,
+  Spinner,
+  TabsBar,
+  Tab,
+  Button,
+  HorizontalGroup,
+  LinkButton,
+  Alert,
+  FileUpload,
+  ConfirmModal,
+} from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -19,7 +30,6 @@ import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
-import { UploadModal } from './UploadModal';
 import { getGrafanaStorage, filenameAlreadyExists } from './storage';
 import { StorageView, UploadReponse } from './types';
 
@@ -33,6 +43,7 @@ interface QueryParams {
 
 const folderNameRegex = /^[a-z\d!\-_.*'() ]+$/;
 const folderNameMaxLength = 256;
+const fileFormats = 'image/jpg, image/jpeg, image/png, image/gif, image/webp';
 
 interface Props extends GrafanaRouteComponentProps<RouteParams, QueryParams> {}
 
@@ -59,8 +70,15 @@ export default function StoragePage(props: Props) {
   };
 
   const [isAddingNewFolder, setIsAddingNewFolder] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(true);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [file, setFile] = useState<File | undefined>(undefined);
+  const [filenameExists, setFilenameExists] = useState(false);
+  const [fileUploadKey, setFileUploadKey] = useState(1);
+
+  useEffect(() => {
+    setFileUploadKey((prev) => prev + 1);
+  }, [file]);
 
   const listing = useAsync((): Promise<DataFrame | undefined> => {
     return getGrafanaStorage()
@@ -100,13 +118,13 @@ export default function StoragePage(props: Props) {
     }
   };
 
-  const doUpload = async (acceptedFile: File, overwriteExistingFile: boolean) => {
-    if (!acceptedFile) {
+  const doUpload = async (fileToUpload: File, overwriteExistingFile: boolean) => {
+    if (!fileToUpload) {
       setErrorMessages(['Please select a file.']);
       return;
     }
 
-    const rsp = await getGrafanaStorage().upload(path, acceptedFile, overwriteExistingFile);
+    const rsp = await getGrafanaStorage().upload(path, fileToUpload, overwriteExistingFile);
     if (rsp.status !== 200) {
       setErrorMessages([rsp.message]);
     } else {
@@ -185,36 +203,6 @@ export default function StoragePage(props: Props) {
     const canViewDashboard =
       path.startsWith('devenv/') && config.featureToggles.dashboardsFromStorage && (isFolder || path.endsWith('.json'));
 
-    const onFileUpload = (acceptedFiles: File[], rejectedFiles: FileRejection[], overwriteExistingFile: boolean) => {
-      const file = acceptedFiles[0];
-
-      if (rejectedFiles.length > 0) {
-        setErrors(rejectedFiles);
-        return;
-      }
-
-      const filenameExists = file ? filenameAlreadyExists(file.name, fileNames) : false;
-      if (file && filenameExists && !overwriteExistingFile) {
-        setErrorMessages([`${file.name} already exists`]);
-        return;
-      }
-
-      doUpload(file, overwriteExistingFile).then((r) => {});
-    };
-
-    const setErrors = (rejectedFiles: FileRejection[]) => {
-      let errors: string[] = [];
-      rejectedFiles.map((rejectedFile) => {
-        rejectedFile.errors.map((error: FileError) => {
-          if (errors.indexOf(error.message) === -1) {
-            errors.push(error.message);
-          }
-        });
-      });
-
-      setErrorMessages(errors);
-    };
-
     const getErrorMessages = () => {
       return (
         <div className={styles.errorAlert}>
@@ -231,6 +219,40 @@ export default function StoragePage(props: Props) {
       setErrorMessages([]);
     };
 
+    const onFileUpload = (event: FormEvent<HTMLInputElement>) => {
+      setErrorMessages([]);
+
+      const fileToUpload =
+        event.currentTarget.files && event.currentTarget.files.length > 0 && event.currentTarget.files[0]
+          ? event.currentTarget.files[0]
+          : undefined;
+      if (fileToUpload) {
+        setFile(fileToUpload);
+
+        const fileExists = filenameAlreadyExists(fileToUpload.name, fileNames);
+        if (!fileExists) {
+          setFilenameExists(false);
+          doUpload(fileToUpload, false).then((r) => {});
+        } else {
+          setFilenameExists(true);
+          setIsConfirmOpen(true);
+        }
+      }
+    };
+
+    const onOverwriteConfirm = () => {
+      if (file) {
+        doUpload(file, true).then((r) => {});
+        setIsConfirmOpen(false);
+      }
+    };
+
+    const onOverwriteDismiss = () => {
+      setFile(undefined);
+      setFilenameExists(false);
+      setIsConfirmOpen(false);
+    };
+
     return (
       <div className={styles.wrapper}>
         <HorizontalGroup width="100%" justify="space-between" spacing={'md'} height={25}>
@@ -241,7 +263,12 @@ export default function StoragePage(props: Props) {
                 Dashboard
               </LinkButton>
             )}
-            <Button onClick={() => setShowUploadModal(true)}>Upload</Button>
+
+            {canAddFolder && (
+              <FileUpload accept={fileFormats} onFileUpload={onFileUpload} showFileName={true} key={fileUploadKey}>
+                Upload
+              </FileUpload>
+            )}
             {canAddFolder && <Button onClick={() => setIsAddingNewFolder(true)}>New Folder</Button>}
             {canDelete && (
               <Button
@@ -276,6 +303,22 @@ export default function StoragePage(props: Props) {
 
         {errorMessages.length > 0 && getErrorMessages()}
 
+        {file && filenameExists && (
+          <ConfirmModal
+            isOpen={isConfirmOpen}
+            body={
+              <div>
+                <p>{file?.name}</p>
+                <p>A file with this name already exists. What would you like to do?</p>
+              </div>
+            }
+            title={'This file already exists'}
+            confirmText={'Replace'}
+            onConfirm={onOverwriteConfirm}
+            onDismiss={onOverwriteDismiss}
+          />
+        )}
+
         <TabsBar>
           {opts.map((opt) => (
             <Tab
@@ -291,8 +334,6 @@ export default function StoragePage(props: Props) {
         ) : (
           <FileView path={path} listing={frame} onPathChange={setPath} view={view} />
         )}
-
-        {showUploadModal && <UploadModal onDismiss={() => setShowUploadModal(false)} onFileUpload={onFileUpload} />}
 
         {isAddingNewFolder && (
           <CreateNewFolderModal
