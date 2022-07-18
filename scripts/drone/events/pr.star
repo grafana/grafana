@@ -57,6 +57,11 @@ load(
 )
 
 load(
+    'scripts/drone/pipelines/verify_drone.star',
+    'verify_drone',
+)
+
+load(
     'scripts/drone/pipelines/docs.star',
     'docs_pipelines',
     'trigger_docs',
@@ -76,16 +81,6 @@ trigger = {
     },
 }
 
-def pr_verify_drone():
-    steps = [
-        identify_runner_step(),
-        download_grabpl_step(),
-        lint_drone_step(),
-    ]
-    return pipeline(
-        name='pr-verify-drone', edition="oss", trigger=get_pr_trigger(include_paths=['scripts/drone/**', '.drone.yml', '.drone.star']), services=[], steps=steps,
-    )
-
 
 def pr_pipelines(edition):
     variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64',]
@@ -99,7 +94,7 @@ def pr_pipelines(edition):
     ]
 
     return [
-        pr_verify_drone(),
+        verify_drone(get_pr_trigger(include_paths=['scripts/drone/**', '.drone.yml', '.drone.star']), ver_mode),
         test_frontend(get_pr_trigger(exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']), ver_mode),
         test_backend(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), ver_mode),
         build_e2e(trigger, ver_mode, edition),
