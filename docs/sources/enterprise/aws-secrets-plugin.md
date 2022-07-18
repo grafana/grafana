@@ -20,7 +20,7 @@ You can configure options in the plugin to determine secret storage behavior in 
 
 ## Installation
 
-You can install the plugin using Grafana CLI:
+You can install the plugin using [Grafana CLI]({{< relref "../../../cli/" >}}):
 
 ```sh
 grafana-cli plugins install grafana-aws-secrets-manager
