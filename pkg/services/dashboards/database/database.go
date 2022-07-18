@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/store"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -505,6 +507,25 @@ func saveDashboard(sess *sqlstore.DBSession, cmd *models.SaveDashboardCommand) e
 		}
 	}
 
+	var entityEvent *store.EntityEvent
+	if dash.IsFolder {
+		entityEvent = &store.EntityEvent{
+			EventType: store.EntityEventTypeUpdate,
+			EntityId:  store.CreateDatabaseEntityId(dash.Uid, dash.OrgId, store.EntityTypeFolder),
+			Created:   time.Now().Unix(),
+		}
+	} else {
+		entityEvent = &store.EntityEvent{
+			EventType: store.EntityEventTypeUpdate,
+			EntityId:  store.CreateDatabaseEntityId(dash.Uid, dash.OrgId, store.EntityTypeDashboard),
+			Created:   time.Now().Unix(),
+		}
+	}
+	_, err = sess.Insert(entityEvent)
+	if err != nil {
+		return err
+	}
+
 	cmd.Result = dash
 
 	return nil
@@ -810,6 +831,25 @@ func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, ses
 		if err != nil {
 			return err
 		}
+	}
+
+	var entityEvent *store.EntityEvent
+	if dashboard.IsFolder {
+		entityEvent = &store.EntityEvent{
+			EventType: store.EntityEventTypeDelete,
+			EntityId:  store.CreateDatabaseEntityId(dashboard.Uid, dashboard.OrgId, store.EntityTypeFolder),
+			Created:   time.Now().Unix(),
+		}
+	} else {
+		entityEvent = &store.EntityEvent{
+			EventType: store.EntityEventTypeDelete,
+			EntityId:  store.CreateDatabaseEntityId(dashboard.Uid, dashboard.OrgId, store.EntityTypeDashboard),
+			Created:   time.Now().Unix(),
+		}
+	}
+	_, err = sess.Insert(entityEvent)
+	if err != nil {
+		return err
 	}
 
 	return nil

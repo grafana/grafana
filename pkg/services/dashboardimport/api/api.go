@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -23,20 +22,17 @@ type ImportDashboardAPI struct {
 	quotaService           QuotaService
 	pluginStore            plugins.Store
 	ac                     accesscontrol.AccessControl
-	entityEventsService    store.EntityEventsService
 	logger                 log.Logger
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
 	pluginStore plugins.Store, ac accesscontrol.AccessControl,
-	entityEventsService store.EntityEventsService) *ImportDashboardAPI {
+) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,
 		pluginStore:            pluginStore,
 		ac:                     ac,
-		entityEventsService:    entityEventsService,
-		logger:                 log.New("d"),
 	}
 }
 
@@ -74,14 +70,6 @@ func (api *ImportDashboardAPI) ImportDashboard(c *models.ReqContext) response.Re
 	resp, err := api.dashboardImportService.ImportDashboard(c.Req.Context(), &req)
 	if err != nil {
 		return apierrors.ToDashboardErrorResponse(c.Req.Context(), api.pluginStore, err)
-	}
-	if api.entityEventsService != nil {
-		if err := api.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
-			EntityId:  store.CreateDatabaseEntityId(resp.UID, c.OrgId, store.EntityTypeDashboard),
-			EventType: store.EntityEventTypeCreate,
-		}); err != nil {
-			api.logger.Warn("failed to save dashboard entity event", "uid", resp.UID, "error", err)
-		}
 	}
 
 	return response.JSON(http.StatusOK, resp)

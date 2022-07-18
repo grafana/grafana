@@ -26,7 +26,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, acmock.New().WithDisabled(), nil)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, acmock.New().WithDisabled())
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -103,7 +103,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, acmock.New().WithDisabled(), nil)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, acmock.New().WithDisabled())
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -128,7 +128,7 @@ func TestImportDashboardAPI(t *testing.T) {
 
 	t.Run("Quota reached", func(t *testing.T) {
 		service := &serviceMock{}
-		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), nil, acmock.New().WithDisabled(), nil)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), nil, acmock.New().WithDisabled())
 
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
