@@ -61,7 +61,9 @@ You can configure Grafana to migrate your existing secrets from Grafana to the p
 
 > **Note:** The speed of this migration is contingent on the number of secrets and system performance, and can run at a rate as low as two secrets per second.
 
-Once migration to the plugin has completed, and if [backwards compatibility](#backwards-compatibility) is disabled, the plugin will be required for Grafana to start. If the plugin is uninstalled unexpectedly, or if it fails to start for any reason, Grafana will also fail to start. Because the ability to migrate from the plugin back to Grafana is not yet implemented, we highly recommend keeping backwards compatibility turned on (default).
+Once migration to the plugin has completed, the plugin must be installed for Grafana to start unless backward compatibility is enabled. If the plugin is uninstalled unexpectedly, or if it fails to start for any reason, Grafana will also fail to start.
+
+> **Note:** Because we have not yet implemented migrations from the plugin back to Grafana's database, we strongly recommend keeping backward compatibility enabled, as is the default.
 
 ### Migration to plugin
 
