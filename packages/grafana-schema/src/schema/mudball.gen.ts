@@ -201,6 +201,14 @@ export interface OptionsWithLegend {
   legend: VizLegendOptions;
 }
 
+export interface OptionsWithTimezones {
+  timezones?: string[];
+}
+
+export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
+  timezones: [],
+};
+
 export interface OptionsWithTextFormatting {
   text?: VizTextDisplayOptions;
 }
