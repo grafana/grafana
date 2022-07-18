@@ -10,6 +10,7 @@ var (
 	ErrTargetDataSourceDoesNotExists      = errors.New("target data source does not exist")
 	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation UID")
 	ErrCorrelationIdentifierNotSet        = errors.New("source identifier and org id are needed to be able to edit correlations")
+	ErrCorrelationNotFound                = errors.New("correlation not found")
 )
 
 // Correlation is the model for correlations definitions
@@ -55,6 +56,20 @@ type CreateCorrelationCommand struct {
 	// Optional description of the correlation
 	// example: Logs to Traces
 	Description string `json:"description"`
+}
+
+// swagger:model
+type DeleteCorrelationResponse struct {
+	// example: Correlation deleted
+	Message string `json:"message"`
+}
+
+// DeleteCorrelationCommand is the command for deleting a correlation
+type DeleteCorrelationCommand struct {
+	// UID of the correlation to be deleted.
+	UID       string
+	SourceUID string
+	OrgId     int64
 }
 
 type DeleteCorrelationsBySourceUIDCommand struct {

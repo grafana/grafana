@@ -20,6 +20,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
+		entities.Delete("/:correlationUid", authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
 	})
 }
 
@@ -46,4 +47,28 @@ func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Respo
 	}
 
 	return response.JSON(http.StatusOK, CreateCorrelationResponse{Result: correlation, Message: "Correlation created"})
+}
+
+// deleteHandler handles DELETE /datasources/uid/:uid/correlations/:correlationUid
+func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Response {
+	cmd := DeleteCorrelationCommand{
+		UID:       web.Params(c.Req)[":correlationUid"],
+		SourceUID: web.Params(c.Req)[":uid"],
+		OrgId:     c.OrgId,
+	}
+
+	err := s.DeleteCorrelation(c.Req.Context(), cmd)
+	if err != nil {
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "Correlation not found", err)
+		}
+
+		if errors.Is(err, ErrSourceDataSourceReadOnly) {
+			return response.Error(http.StatusForbidden, "Data source is read only", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
+	}
+
+	return response.JSON(http.StatusOK, DeleteCorrelationResponse{Message: "Correlation deleted"})
 }

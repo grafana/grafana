@@ -3699,6 +3699,44 @@
         }
       }
     },
+    "/datasources/uid/{uid}/correlations/{correlationUid}": {
+      "delete": {
+        "tags": ["correlations"],
+        "summary": "Delete a correlation.",
+        "operationId": "deleteCorrelation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "correlationUid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deleteCorrelationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}/health": {
       "get": {
         "tags": ["datasources"],
@@ -10586,6 +10624,15 @@
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
     },
+    "DeleteCorrelationResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation deleted"
+        }
+      }
+    },
     "DeleteTokenCommand": {
       "type": "object",
       "properties": {
@@ -14059,6 +14106,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "deleteCorrelationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DeleteCorrelationResponse"
       }
     },
     "deleteDashboardResponse": {

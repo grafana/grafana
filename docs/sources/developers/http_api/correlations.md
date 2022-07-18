@@ -68,3 +68,36 @@ Status codes:
 - **403** – Forbidden, source data source is read-only
 - **404** – Not found, either source or target data source could not be found
 - **500** – Internal error
+
+## Delete correlations
+
+`DELETE /api/datasources/uid/:uid/correlations/:correlationUid`
+
+Deletes a correlation.
+
+**Example request:**
+
+```http
+DELETE /api/datasources/uid/uyBf2637k/correlations/J6gn7d31L HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "message": "Correlation deleted"
+}
+```
+
+Status codes:
+
+- **200** – OK
+- **401** – Unauthorized
+- **403** – Forbidden, data source is read-only
+- **404** – Correlation not found
+- **500** – Internal error
