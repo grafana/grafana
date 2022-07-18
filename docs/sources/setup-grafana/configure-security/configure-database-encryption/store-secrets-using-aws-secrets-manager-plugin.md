@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/aws-secrets-plugin/
+  - /docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/store-secrets-using-aws-secrets=manager-plugin/
 description: 'Learn how to use AWS Secrets Manager plugin to store Grafana secrets.'
 keywords:
   - grafana
@@ -28,12 +28,14 @@ You can install the plugin using [Grafana CLI]({{< relref "../../../cli/" >}}):
 grafana-cli plugins install grafana-aws-secrets-manager
 ```
 
-After the plugin is installed, it must be explicitly enabled. You can do this by adding the following to the Grafana `custom.ini` file:
+After you install the plugin, you must enable it.
 
-```ini
-[secrets]
-use_plugin = true
-```
+1. Open the Grafana `custom.ini` file.
+2. Locate or create the `[secrets]` section.
+3. Set the key `use_plugin` to `true`.
+4. Save your changes and restart the Grafana server.
+
+If you have enabled the plugin correctly, you will see the plugin listed in the [plugin catalog]({{< relref "../../administration/plugin-management/#plugin-catalog" >}}) with the badges `Installed` and `Signed`.
 
 ## Authenticate with AWS
 
@@ -56,7 +58,7 @@ Alternatively, you can configure authentication and region selection explicitly 
 | `secret_name_prefix`    | String prepended to each AWS Secret Manager secret name. Use this to avoid secret name conflicts in large organizations running multiple Grafana instances. | metrics-team                             | _none_                          |
 | `secret_description`    | Description applied to every secret in AWS Secrets Manager. Use only for bookkeeping purposes.                                                              | Metrics team datasource                  | _none_                          |
 
-## Migration
+## Migrate your secrets to the plugin
 
 You can configure Grafana to migrate your existing secrets from Grafana to the plugin on startup. This migration is a one-time blocking operation that runs on Grafana startup, meaning Grafana will not be usable until migration is complete.
 
@@ -66,7 +68,7 @@ Once migration to the plugin has completed, the plugin must be installed for Gra
 
 > **Note:** Because we have not yet implemented migrations from the plugin back to Grafana's database, we strongly recommend keeping backward compatibility enabled, as is the default.
 
-### Migration to plugin
+### Initiate the migration
 
 To initiate secret migration from Grafana to the plugin, enable the `migrate_to_plugin` setting in the `secrets` section of the Grafana `custom.ini` file:
 
@@ -75,7 +77,7 @@ To initiate secret migration from Grafana to the plugin, enable the `migrate_to_
 migrate_to_plugin = true
 ```
 
-Secrets will be migrated to the plugin one-by-one, then deleted from the Grafana database if backwards compatibility is disabled.
+The plugin migrates secrets individually. If backward compatibility is disabled, it also deletes them from the Grafana database.
 
 ## Backward compatibility
 
