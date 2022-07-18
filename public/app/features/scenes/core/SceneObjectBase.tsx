@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { EventBusSrv } from '@grafana/data';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
-import { SceneObjectStatePlainChangedEvent } from './events';
+import { SceneObjectStateChangedEvent } from './events';
 import {
   SceneDataState,
   SceneObject,
@@ -82,7 +82,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
     // broadcast state change. This is event is subscribed to by UrlSyncManager and UndoManager
     this.getRoot().events.publish(
-      new SceneObjectStatePlainChangedEvent({
+      new SceneObjectStateChangedEvent({
         prevState,
         newState: this.state,
         partialUpdate: update,
