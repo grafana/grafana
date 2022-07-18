@@ -34,8 +34,8 @@ const brandingStorage = "branding"
 const SystemBrandingStorage = "system/" + brandingStorage
 
 var (
-	SystemBrandingReader = &models.SignedInUser{}
-	SystemBrandingAdmin  = &models.SignedInUser{}
+	SystemBrandingReader = &models.SignedInUser{OrgId: ac.GlobalOrgID}
+	SystemBrandingAdmin  = &models.SignedInUser{OrgId: ac.GlobalOrgID}
 )
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
