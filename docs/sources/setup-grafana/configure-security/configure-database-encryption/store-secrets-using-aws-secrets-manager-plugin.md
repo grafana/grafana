@@ -9,6 +9,7 @@ keywords:
   - aws
   - backend
 title: Store secrets using AWS Secrets Manager plugin
+menuTitle: Store Secrets in AWS Secrets Manager
 weight: 2000
 ---
 
