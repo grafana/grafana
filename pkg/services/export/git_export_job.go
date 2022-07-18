@@ -144,7 +144,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 	for _, org := range cmd.Result {
 		if len(cmd.Result) > 1 {
 			e.helper.orgDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.Id))
-			e.status.Count["orgs"] = e.status.Count["orgs"] + 1
+			e.status.Count["orgs"] += 1
 		}
 		err = e.helper.initOrg(e.sql, org.Id)
 		if err != nil {
@@ -202,8 +202,6 @@ func (e *gitExportJob) process(exporters []Exporter) error {
 
 		prev := e.status.Count[exp.Key]
 		e.status.Count[exp.Key] = prev + (e.helper.counter - before)
-
-		fmt.Printf("STATUS: %+v\n", e.status.Count)
 	}
 	return nil
 }
