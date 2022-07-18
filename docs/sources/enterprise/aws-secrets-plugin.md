@@ -16,7 +16,7 @@ weight: 2000
 
 By default, Grafana stores all encrypted secrets in its own SQL database. To store secrets in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/), use the AWS Secrets Manager plugin. This is limited to datasource secrets as of Grafana version 9.1, but future versions will include all secrets, such as user credentials.
 
-There are a number of configuration options available that determine secret storage behavior in AWS Secrets Manager. We also provide the ability to migrate secrets from existing Grafana instances to AWS Secrets Manager. We provide a degree of backwards compatibility so that the plugin can be quickly uninstalled, but it has some [limitations](#limitations).
+You can configure options in the plugin to determine secret storage behavior in AWS Secrets Manager, and also migrate secrets from existing Grafana instances to AWS Secrets Manager. We also provide backward compatibility so that the plugin can be safely uninstalled, with some [limitations](#limitations).
 
 ## Installation
 
