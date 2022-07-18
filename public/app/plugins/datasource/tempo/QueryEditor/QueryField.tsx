@@ -75,9 +75,9 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'traceId', label: 'TraceID' },
       { value: 'upload', label: 'JSON file' },
+      { value: 'serviceMap', label: 'Service Graph' },
     ];
 
-    queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
     // span names in Tempo search links (generated on the service graph page) are in camel case (for Prometheus queries)
     // but the span name dropdown menu in the search tab is lower case
     query.spanName = query.spanName?.toLowerCase();
