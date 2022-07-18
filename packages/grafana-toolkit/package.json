@@ -31,7 +31,7 @@
   ],
   "scripts": {
     "build": "grafana-toolkit toolkit:build",
-    "clean": "rimraf ./dist ./compiled",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
     "precommit": "npm run lint & npm run typecheck",
     "typecheck": "tsc --noEmit"
   },
