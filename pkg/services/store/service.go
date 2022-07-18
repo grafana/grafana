@@ -95,11 +95,6 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			},
 		}).setReadOnly(true).setBuiltin(true).
 			setDescription("Access files from the static public files"),
-		newSQLStorage(RootSystem,
-			"System",
-			&StorageSQLConfig{orgId: ac.GlobalOrgID},
-			sql,
-		).setBuiltin(true).setDescription("Grafana system storage"),
 	}
 
 	// Development dashboards
@@ -137,6 +132,8 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 
 		return storages
 	}
+
+	globalRoots = append(globalRoots, initializeOrgStorages(ac.GlobalOrgID)...)
 
 	authService := newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
 		if user == nil {
