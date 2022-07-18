@@ -242,7 +242,9 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			OrgId: cfg.OrgID,
 			Type:  "alertmanager",
 		}
-		err = sch.datasourceService.GetDataSourcesByType(context.Background(), query)
+		ctx, cancle := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancle()
+		err = sch.datasourceService.GetDataSourcesByType(ctx, query)
 		if err != nil {
 			sch.log.Error("failed to fetch datasources for org", "org", cfg.OrgID)
 			continue
