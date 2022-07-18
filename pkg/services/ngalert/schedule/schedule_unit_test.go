@@ -16,6 +16,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	prometheusModel "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	busmock "github.com/grafana/grafana/pkg/bus/mock"
@@ -23,13 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -41,17 +42,17 @@ import (
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, *store.FakeAdminConfigStore, prometheus.Gatherer, *sender.AlertsRouter) {
+		senderMock *AlertsSenderMock,
+	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, prometheus.Gatherer) {
 		ruleStore := store.NewFakeRuleStore(t)
 		instanceStore := &store.FakeInstanceStore{}
-		adminConfigStore := store.NewFakeAdminConfigStore(t)
 
 		registry := prometheus.NewPedanticRegistry()
-		sch, _, alertsRouter := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, registry)
+		sch, _ := setupScheduler(t, ruleStore, instanceStore, registry, senderMock)
 		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
 			evalAppliedChan <- t
 		}
-		return sch, ruleStore, instanceStore, adminConfigStore, registry, alertsRouter
+		return sch, ruleStore, instanceStore, registry
 	}
 
 	// normal states do not include NoData and Error because currently it is not possible to perform any sensible test
@@ -67,7 +68,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		t.Run(fmt.Sprintf("when rule evaluation happens (evaluation state %s)", evalState), func(t *testing.T) {
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
-			sch, ruleStore, instanceStore, _, reg, _ := createSchedule(evalAppliedChan)
+			sch, ruleStore, instanceStore, reg := createSchedule(evalAppliedChan, nil)
 
 			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), evalState)
 
@@ -186,7 +187,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	t.Run("should exit", func(t *testing.T) {
 		t.Run("when context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
-			sch, _, _, _, _, _ := createSchedule(make(chan time.Time))
+			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
@@ -205,7 +206,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
 
 		ctx := context.Background()
-		sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, nil)
 
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
@@ -257,7 +258,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
 
-		sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, nil)
 
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
@@ -309,7 +310,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
 			updateChan := make(chan ruleVersion)
 
-			sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, nil)
 
 			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), eval.Alerting) // we want the alert to fire
 
@@ -352,7 +353,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
 			updateChan := make(chan ruleVersion)
 
-			sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, nil)
 			sch.maxAttempts = rand.Int63n(4) + 1
 
 			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
@@ -384,32 +385,20 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 	t.Run("when rule version is updated", func(t *testing.T) {
 		t.Run("should clear the state and expire firing alerts", func(t *testing.T) {
-			fakeAM := sender.NewFakeExternalAlertmanager(t)
-			defer fakeAM.Close()
-
 			orgID := rand.Int63()
-			s, err := sender.New()
-			require.NoError(t, err)
-			adminConfig := &models.AdminConfiguration{OrgID: orgID, Alertmanagers: []string{fakeAM.Server.URL}}
-			err = s.ApplyConfig(adminConfig)
-			require.NoError(t, err)
-			s.Run()
-			defer s.Stop()
-
-			require.Eventuallyf(t, func() bool {
-				return len(s.Alertmanagers()) == 1
-			}, 20*time.Second, 200*time.Millisecond, "external Alertmanager was not discovered.")
 
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
 			updateChan := make(chan ruleVersion)
 
-			ctx := context.Background()
-			sch, ruleStore, _, _, _, alertsRouter := createSchedule(evalAppliedChan)
-			alertsRouter.Senders[orgID] = s
+			sender := AlertsSenderMock{}
 
-			var rulePtr = CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting) // we want the alert to fire
-			var rule = *rulePtr
+			ctx := context.Background()
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+
+			var rule = CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting) // we want the alert to fire
+
+			sender.EXPECT().Send(rule.GetKey(), mock.Anything)
 
 			// define some state
 			states := make([]*state.State, 0, len(allStates))
@@ -457,26 +446,23 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			updateChan <- ruleVersion(rule.Version)
 
 			wg.Wait()
-			newRule := rule
+			newRule := models.CopyRule(rule)
 			newRule.Version++
-			ruleStore.PutRule(ctx, &newRule)
+			ruleStore.PutRule(ctx, newRule)
 			wg.Add(1)
 			updateChan <- ruleVersion(newRule.Version)
 			wg.Wait()
 
 			require.Eventually(t, func() bool {
-				return len(sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)) == 0
+				return len(sender.Calls) > 0
 			}, 5*time.Second, 100*time.Millisecond)
 
-			var count int
-			require.Eventuallyf(t, func() bool {
-				count = fakeAM.AlertsCount()
-				return count == expectedToBeSent
-			}, 20*time.Second, 200*time.Millisecond, "Alertmanager was expected to receive %d alerts, but received only %d", expectedToBeSent, count)
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
-			for _, alert := range fakeAM.Alerts() {
-				require.Equalf(t, sch.clock.Now().UTC(), time.Time(alert.EndsAt).UTC(), "Alert received by Alertmanager should be expired as of now")
-			}
+			sender.AssertExpectations(t)
+			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
+			require.Len(t, args.PostableAlerts, expectedToBeSent)
 		})
 	})
 
@@ -492,34 +478,21 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	})
 
 	t.Run("when there are alerts that should be firing", func(t *testing.T) {
-		t.Run("it should send to local alertmanager if configured for organization", func(t *testing.T) {
-			// TODO figure out how to simulate multiorg alertmanager
-			t.Skip()
-		})
-		t.Run("it should send to external alertmanager if configured for organization", func(t *testing.T) {
-			fakeAM := sender.NewFakeExternalAlertmanager(t)
-			defer fakeAM.Close()
-
+		t.Run("it should call sender", func(t *testing.T) {
 			orgID := rand.Int63()
-			s, err := sender.New()
-			require.NoError(t, err)
-			adminConfig := &models.AdminConfiguration{OrgID: orgID, Alertmanagers: []string{fakeAM.Server.URL}}
-			err = s.ApplyConfig(adminConfig)
-			require.NoError(t, err)
-			s.Run()
-			defer s.Stop()
-
-			require.Eventuallyf(t, func() bool {
-				return len(s.Alertmanagers()) == 1
-			}, 20*time.Second, 200*time.Millisecond, "external Alertmanager was not discovered.")
 
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
 
-			sch, ruleStore, _, _, _, alertsRouter := createSchedule(evalAppliedChan)
-			alertsRouter.Senders[orgID] = s
+			sender := AlertsSenderMock{}
+
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+
 			// eval.Alerting makes state manager to create notifications for alertmanagers
 			rule := CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting)
+			folder, _ := ruleStore.GetNamespaceByUID(context.Background(), rule.NamespaceUID, orgID, nil)
+
+			sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
@@ -531,13 +504,22 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				scheduledAt: time.Now(),
 				version:     rule.Version,
 			}
+
 			waitForTimeChannel(t, evalAppliedChan)
 
-			var count int
-			require.Eventuallyf(t, func() bool {
-				count = fakeAM.AlertsCount()
-				return count == 1 && fakeAM.AlertNamesCompare([]string{rule.Title})
-			}, 20*time.Second, 200*time.Millisecond, "Alertmanager never received an '%s', received alerts count: %d", rule.Title, count)
+			sender.AssertExpectations(t)
+			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
+
+			require.Len(t, args.PostableAlerts, 1)
+
+			t.Run("should add extra labels", func(t *testing.T) {
+				alert := args.PostableAlerts[0]
+				assert.Equal(t, rule.UID, alert.Labels[models.RuleUIDLabel])
+				assert.Equal(t, rule.NamespaceUID, alert.Labels[models.NamespaceUIDLabel])
+				assert.Equal(t, rule.Title, alert.Labels[prometheusModel.AlertNameLabel])
+				assert.Equal(t, folder.Title, alert.Labels[models.FolderTitleLabel])
+			})
 		})
 	})
 
@@ -628,12 +610,11 @@ func setupSchedulerWithFakeStores(t *testing.T) *schedule {
 	t.Helper()
 	ruleStore := store.NewFakeRuleStore(t)
 	instanceStore := &store.FakeInstanceStore{}
-	adminConfigStore := store.NewFakeAdminConfigStore(t)
-	sch, _, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, nil)
+	sch, _ := setupScheduler(t, ruleStore, instanceStore, nil, nil)
 	return sch
 }
 
-func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock, *sender.AlertsRouter) {
+func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock) (*schedule, *clock.Mock) {
 	t.Helper()
 
 	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
@@ -645,16 +626,16 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	}
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
-	require.NoError(t, err)
 
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
 
-	alertsRouter := sender.NewAlertsRouter(moa, acs, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute) // do not poll in unit tests.
+	if senderMock == nil {
+		senderMock = &AlertsSenderMock{}
+		senderMock.EXPECT().Send(mock.Anything, mock.Anything).Return()
+	}
 
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval:            time.Second,
@@ -670,10 +651,10 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		InstanceStore: is,
 		Logger:        logger,
 		Metrics:       m.GetSchedulerMetrics(),
-		AlertSender:   alertsRouter,
+		AlertSender:   senderMock,
 	}
 	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
-	return NewScheduler(schedCfg, appUrl, st, busmock.New()), mockedClock, alertsRouter
+	return NewScheduler(schedCfg, appUrl, st, busmock.New()), mockedClock
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
