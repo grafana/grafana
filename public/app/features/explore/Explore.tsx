@@ -150,11 +150,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onClickFilterLabel = (key: string, value: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', key, value });
+    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
   };
 
   onClickFilterOutLabel = (key: string, value: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER_OUT', key, value });
+    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
   };
 
   onClickAddQueryRowButton = () => {

@@ -374,12 +374,12 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgID, 0, false, "prod", "webapp")
 					dash2 := insertTestDashboard(t, sqlStore, "2 test dash", ac3.OrgID, 0, false, "prod", "webapp")
 
-					err = updateDashboardAcl(t, sqlStore, dash1.Id, &models.DashboardAcl{
+					err = updateDashboardACL(t, sqlStore, dash1.Id, &models.DashboardACL{
 						DashboardID: dash1.Id, OrgID: ac1.OrgID, UserID: ac3.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
 
-					err = updateDashboardAcl(t, sqlStore, dash2.Id, &models.DashboardAcl{
+					err = updateDashboardACL(t, sqlStore, dash2.Id, &models.DashboardACL{
 						DashboardID: dash2.Id, OrgID: ac3.OrgID, UserID: ac3.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -390,18 +390,18 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						require.NoError(t, err)
 
 						t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
-							permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: dash1.Id, OrgID: ac1.OrgID}
+							permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash1.Id, OrgID: ac1.OrgID}
 
-							err = getDashboardAclInfoList(sqlStore, permQuery)
+							err = getDashboardACLInfoList(sqlStore, permQuery)
 							require.NoError(t, err)
 
 							require.Equal(t, len(permQuery.Result), 0)
 						})
 
 						t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
-							permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: dash2.Id, OrgID: ac3.OrgID}
+							permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash2.Id, OrgID: ac3.OrgID}
 
-							err = getDashboardAclInfoList(sqlStore, permQuery)
+							err = getDashboardACLInfoList(sqlStore, permQuery)
 							require.NoError(t, err)
 
 							require.Equal(t, len(permQuery.Result), 1)
@@ -473,7 +473,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 }
 
 //TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64, items ...*models.DashboardAcl) error {
+func updateDashboardACL(t *testing.T, sqlStore *SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
 	t.Helper()
 
 	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
@@ -486,7 +486,7 @@ func updateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64, ite
 			item.Created = time.Now()
 			item.Updated = time.Now()
 			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return models.ErrDashboardAclInfoMissing
+				return models.ErrDashboardACLInfoMissing
 			}
 
 			if item.DashboardID == 0 {
@@ -499,8 +499,8 @@ func updateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64, ite
 			}
 		}
 
-		// Update dashboard HasAcl flag
-		dashboard := models.Dashboard{HasAcl: true}
+		// Update dashboard HasACL flag
+		dashboard := models.Dashboard{HasACL: true}
 		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 		return err
 	})
@@ -509,10 +509,10 @@ func updateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64, ite
 
 // This function was copied from pkg/services/dashboards/database to circumvent
 // import cycles. When this org-related code is refactored into a service the
-// tests can the real GetDashboardAclInfoList functions
-func getDashboardAclInfoList(s *SQLStore, query *models.GetDashboardAclInfoListQuery) error {
+// tests can the real GetDashboardACLInfoList functions
+func getDashboardACLInfoList(s *SQLStore, query *models.GetDashboardACLInfoListQuery) error {
 	outerErr := s.WithDbSession(context.Background(), func(dbSession *DBSession) error {
-		query.Result = make([]*models.DashboardAclInfoDTO, 0)
+		query.Result = make([]*models.DashboardACLInfoDTO, 0)
 		falseStr := dialect.BooleanStr(false)
 
 		if query.DashboardID == 0 {
