@@ -37,7 +37,7 @@ use_plugin = true
 
 By default, the plugin attempts to authenticate with AWS and select a region using parameters read from the runtime environment. For more details, see the [AWS CLI](https://aws.amazon.com/cli/) setup documentation.
 
-Alternatively, you can configure authentication and region selection explicitly through Grafana’s configuration. The full list of available options can be found below. For more information on configuring Grafana, see [Configuring Grafana]({{< relref "../setup-grafana/configure-grafana/" >}}).
+Alternatively, you can configure authentication and region selection explicitly through Grafana's configuration. For a full list of available options, see [Configuring the plugin](#configuring-the-plugin). For more information on configuring Grafana, see [Configuring Grafana]({{< relref "../setup-grafana/configure-grafana/" >}}).
 
 ## Configuring the plugin
 
