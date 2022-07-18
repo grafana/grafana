@@ -110,7 +110,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 
 			entityType := EntityTypeJSON
 			mimeType := http.DetectContentType(data)
-			if strings.HasPrefix(mimeType, "image") {
+			if strings.HasPrefix(mimeType, "image") || strings.HasSuffix(path, ".svg") {
 				entityType = EntityTypeImage
 			}
 
