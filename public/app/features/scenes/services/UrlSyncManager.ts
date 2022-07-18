@@ -3,7 +3,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { locationService } from '@grafana/runtime';
 
-import { SceneObjectStateChangedEvent } from '../core/events';
+import { SceneObjectStatePlainChangedEvent } from '../core/events';
 import { isSceneObjectWithUrlSync, SceneObject } from '../core/types';
 
 export class UrlSyncManager {
@@ -11,7 +11,7 @@ export class UrlSyncManager {
   private stateChangeSub: Unsubscribable;
 
   constructor(sceneRoot: SceneObject) {
-    this.stateChangeSub = sceneRoot.events.subscribe(SceneObjectStateChangedEvent, this.onStateChanged);
+    this.stateChangeSub = sceneRoot.events.subscribe(SceneObjectStatePlainChangedEvent, this.onStateChanged);
     this.locationListenerUnsub = locationService.getHistory().listen(this.onLocationUpdate);
   }
 
@@ -19,7 +19,7 @@ export class UrlSyncManager {
     // TODO: find any scene object whose state we need to update
   };
 
-  onStateChanged = ({ payload }: SceneObjectStateChangedEvent) => {
+  onStateChanged = ({ payload }: SceneObjectStatePlainChangedEvent) => {
     const changedObject = payload.changedObject;
     if (!isSceneObjectWithUrlSync(changedObject)) {
       return;
