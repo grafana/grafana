@@ -14,7 +14,7 @@ import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { TimeSeriesOptions } from './types';
-import { prepareGraphableFields } from './utils';
+import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -51,6 +51,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const timezones = getTimezones(options.timezones, timeZone);
+  console.log('SHOW', timezones);
 
   return (
     <TimeSeries
