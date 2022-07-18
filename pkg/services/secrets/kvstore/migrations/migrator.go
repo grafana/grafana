@@ -28,7 +28,6 @@ func ProvideSecretMigrationService(
 	dataSourceSecretMigrationService *datasources.DataSourceSecretMigrationService,
 	pluginSecretMigrationService *kvstore.PluginSecretMigrationService,
 ) *SecretMigrationServiceImpl {
-
 	services := make([]SecretMigrationService, 0)
 	services = append(services, dataSourceSecretMigrationService)
 	// pluginMigrationService should always be the last one
