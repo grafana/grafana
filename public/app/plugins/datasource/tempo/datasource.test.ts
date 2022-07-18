@@ -77,9 +77,11 @@ describe('Tempo data source', () => {
       const queries = ds.interpolateVariablesInQueries([getQuery()], {
         interpolationVar: { text: text, value: text },
       });
-      expect(templateSrv.replace).toBeCalledTimes(5);
+      expect(templateSrv.replace).toBeCalledTimes(7);
       expect(queries[0].linkedQuery?.expr).toBe(text);
       expect(queries[0].query).toBe(text);
+      expect(queries[0].serviceName).toBe(text);
+      expect(queries[0].spanName).toBe(text);
       expect(queries[0].search).toBe(text);
       expect(queries[0].minDuration).toBe(text);
       expect(queries[0].maxDuration).toBe(text);
@@ -94,9 +96,11 @@ describe('Tempo data source', () => {
       const resp = ds.applyTemplateVariables(getQuery(), {
         interpolationVar: { text: text, value: text },
       });
-      expect(templateSrv.replace).toBeCalledTimes(5);
+      expect(templateSrv.replace).toBeCalledTimes(7);
       expect(resp.linkedQuery?.expr).toBe(text);
       expect(resp.query).toBe(text);
+      expect(resp.serviceName).toBe(text);
+      expect(resp.spanName).toBe(text);
       expect(resp.search).toBe(text);
       expect(resp.minDuration).toBe(text);
       expect(resp.maxDuration).toBe(text);
