@@ -403,3 +403,109 @@ export type Permissions = EntityPermissions[]
 }
 
 ```
+
+
+### idea #4 - alternative structure that does not assume entity id global uniqueness as a list, no `__self` - pattern matching on the frontend
+
+
+
+```ts
+enum Action {
+    query = "query",
+    edit = "edit",
+    delete = "delete",
+    view = "view",
+} 
+
+type EntityUID = string
+
+type EntityType = string
+
+type EntityPermissions = {
+    type: EntityType,
+    uid: string,
+    permissions: Record<Action, boolean>
+}
+
+export type Permissions = EntityPermissions[]
+```
+
+```json
+{
+  "schema": {
+    "name": "Query results",
+    "meta": {
+      ...
+    },
+    "fields": [
+      ...
+      {
+        "name": "linked_entity_uid",
+        "type": "other",
+        "typeInfo": {
+          "frame": "json.RawMessage",
+          "nullable": true
+        }
+      },
+      {
+        "name": "permissions",
+        "type": "other",
+        "typeInfo": {
+          "frame": "json.RawMessage",
+          "nullable": true
+        }
+      },
+      ...
+    ]
+  },
+  "data": {
+    "values": [
+      ...
+      [
+        [
+          {
+            "uid": "some-datasource-uid",
+            "type": "datasource"
+          },
+          {
+            "uid": "PD8C576611E62080A",
+            "type": "datasource"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "dashboard", <---- self!
+            "uid": "abc123",
+            "permissions": {
+              "edit": true,
+              "view": true,
+              "delete": true
+            }
+          },
+          {
+            "type": "annotation",
+            "uid": "abc123",
+            "permissions": {
+              "edit": true,
+              "view": true,
+              "delete": true
+            }
+          },
+          {
+            "type": "datasource",
+            "uid": "abc123",
+            "permissions": {
+              "view": true,
+              "query": true
+            }
+          }
+        ]
+      ],
+      ...
+    ]
+  }
+}
+
+```
