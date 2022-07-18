@@ -76,12 +76,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
     onClose();
   };
 
-  const modalTitle = (
-    <div className={styles.modalHeaderTitle}>
-      <Icon className={styles.modalHeaderIcon} name="key-skeleton-alt" size="lg" />
-      <span>{!token ? 'Add service account token' : 'Service account token created'}</span>
-    </div>
-  );
+  const modalTitle = !token ? 'Add service account token' : 'Service account token created';
 
   return (
     <Modal
@@ -129,9 +124,11 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
               </Field>
             )}
           </FieldSet>
-          <Button onClick={onGenerateToken} disabled={isWithExpirationDate && !isExpirationDateValid}>
-            Generate token
-          </Button>
+          <Modal.ButtonRow>
+            <Button onClick={onGenerateToken} disabled={isWithExpirationDate && !isExpirationDateValid}>
+              Generate token
+            </Button>
+          </Modal.ButtonRow>
         </div>
       ) : (
         <>
@@ -193,21 +190,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     modalCopyToClipboardButton: css`
       margin-left: ${theme.spacing(0.5)};
-    `,
-    modalHeaderTitle: css`
-      font-size: ${theme.typography.size.lg};
-      margin: ${theme.spacing(0, 4, 0, 1)};
-      display: flex;
-      align-items: center;
-      position: relative;
-      top: 2px;
-    `,
-    modalHeaderIcon: css`
-      margin-right: ${theme.spacing(2)};
-      font-size: inherit;
-      &:before {
-        vertical-align: baseline;
-      }
     `,
   };
 };
