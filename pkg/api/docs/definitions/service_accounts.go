@@ -99,7 +99,7 @@ type SearchOrgServiceAccountsWithPagingParams struct {
 }
 
 // swagger:parameters createServiceAccount
-type createServiceAccountParams struct {
+type CreateServiceAccountParams struct {
 	//in:body
 	Body serviceaccounts.CreateServiceAccountForm
 }
@@ -114,6 +114,8 @@ type RetrieveServiceAccountParams struct {
 type UpdateServiceAccountParams struct {
 	// in:path
 	ServiceAccountId int64 `json:"serviceAccountId"`
+	// in:body
+	Body serviceaccounts.UpdateServiceAccountForm
 }
 
 // swagger:parameters deleteServiceAccount

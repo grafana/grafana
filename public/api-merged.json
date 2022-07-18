@@ -119,6 +119,13 @@
         "tags": ["access_control", "enterprise"],
         "summary": "Get all roles.",
         "operationId": "getAllRoles",
+        "parameters": [
+          {
+            "type": "boolean",
+            "name": "delegatable",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/getAllRolesResponse"
@@ -142,7 +149,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateRoleWithPermissionsCommand"
+              "$ref": "#/definitions/CreateRoleForm"
             }
           }
         ],
@@ -233,6 +240,16 @@
         "summary": "Delete a custom role.",
         "operationId": "deleteCustomRole",
         "parameters": [
+          {
+            "type": "boolean",
+            "name": "force",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "global",
+            "in": "query"
+          },
           {
             "type": "string",
             "name": "roleUID",
@@ -7241,6 +7258,13 @@
             "name": "serviceAccountId",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateServiceAccountForm"
+            }
           }
         ],
         "responses": {
@@ -7310,6 +7334,13 @@
             "name": "serviceAccountId",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AddServiceAccountTokenCommand"
+            }
           }
         ],
         "responses": {
@@ -9477,6 +9508,18 @@
         }
       }
     },
+    "AddServiceAccountTokenCommand": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "secondsToLive": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AddTeamMemberCommand": {
       "type": "object",
       "properties": {
@@ -10627,7 +10670,7 @@
         }
       }
     },
-    "CreateRoleWithPermissionsCommand": {
+    "CreateRoleForm": {
       "type": "object",
       "properties": {
         "description": {
@@ -10635,6 +10678,9 @@
         },
         "displayName": {
           "type": "string"
+        },
+        "global": {
+          "type": "boolean"
         },
         "group": {
           "type": "string"
@@ -11314,6 +11360,83 @@
         },
         "user": {
           "type": "string"
+        }
+      }
+    },
+    "DataSourcePermissionRuleDTO": {
+      "type": "object",
+      "properties": {
+        "builtInRole": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "datasourceId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isManaged": {
+          "type": "boolean"
+        },
+        "permission": {
+          "$ref": "#/definitions/DsPermissionType"
+        },
+        "permissionName": {
+          "type": "string"
+        },
+        "team": {
+          "type": "string"
+        },
+        "teamAvatarUrl": {
+          "type": "string"
+        },
+        "teamEmail": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAvatarUrl": {
+          "type": "string"
+        },
+        "userEmail": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userLogin": {
+          "type": "string"
+        }
+      }
+    },
+    "DataSourcePermissionsDTO": {
+      "type": "object",
+      "properties": {
+        "datasourceId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataSourcePermissionRuleDTO"
+          }
         }
       }
     },
@@ -16376,6 +16499,21 @@
         }
       }
     },
+    "UpdateServiceAccountForm": {
+      "type": "object",
+      "properties": {
+        "isDisabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
+        }
+      }
+    },
     "UpdateTeamCommand": {
       "type": "object",
       "properties": {
@@ -17366,7 +17504,16 @@
     "createReportResponse": {
       "description": "",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
       }
     },
     "createServiceAccountResponse": {
@@ -17792,7 +17939,7 @@
     "getPermissionseResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/AddPermissionDTO"
+        "$ref": "#/definitions/DataSourcePermissionsDTO"
       }
     },
     "getPlaylistDashboardsResponse": {

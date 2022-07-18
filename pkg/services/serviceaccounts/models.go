@@ -35,6 +35,7 @@ type CreateServiceAccountForm struct {
 	IsDisabled *bool `json:"isDisabled"`
 }
 
+// swagger:model
 type UpdateServiceAccountForm struct {
 	Name       *string          `json:"name"`
 	Role       *models.RoleType `json:"role"`

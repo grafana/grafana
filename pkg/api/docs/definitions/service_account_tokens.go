@@ -2,6 +2,7 @@ package definitions
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 )
 
@@ -64,6 +65,8 @@ type ListTokensParams struct {
 type CreateTokenParams struct {
 	// in:path
 	ServiceAccountId int64 `json:"serviceAccountId"`
+	// in:body
+	Body serviceaccounts.AddServiceAccountTokenCommand
 }
 
 // swagger:parameters deleteToken
