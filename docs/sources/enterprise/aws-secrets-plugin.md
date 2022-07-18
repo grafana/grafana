@@ -78,7 +78,9 @@ Secrets will be migrated to the plugin one-by-one, then deleted from the Grafana
 
 ## Backward compatibility
 
-By default, after the plugin is installed and enabled, secrets will be stored in AWS Secrets Manager **and** in a legacy location in the Grafana database. If you wish to stop to storing secrets in the legacy table while the secrets plugin is enabled, you can disable backwards compatibility by adding a [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) called `disableSecretsCompatibility`:
+After the plugin is installed and enabled, secrets are stored by default in both AWS Secrets Manager **and** in a legacy location in the Grafana database. 
+
+To stop storing secrets in the legacy table while the secrets plugin is enabled, disable backward compatibility by adding a [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) called `disableSecretsCompatibility`:
 
 ```ini
 [feature_toggles]
