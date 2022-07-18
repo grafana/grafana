@@ -9,12 +9,10 @@ import { StorageView } from './types';
 
 interface Props {
   listing: DataFrame;
-  path: string;
-  onPathChange: (p: string, view?: StorageView) => void;
   view: StorageView;
 }
 
-export function FolderView({ listing, path, onPathChange, view }: Props) {
+export function FolderView({ listing, view }: Props) {
   const styles = useStyles2(getStyles);
 
   switch (view) {

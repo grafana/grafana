@@ -237,7 +237,7 @@ export default function StoragePage(props: Props) {
           ))}
         </TabsBar>
         {isFolder ? (
-          <FolderView path={path} listing={frame} onPathChange={setPath} view={view} />
+          <FolderView listing={frame} view={view} />
         ) : (
           <FileView path={path} listing={frame} onPathChange={setPath} view={view} />
         )}
