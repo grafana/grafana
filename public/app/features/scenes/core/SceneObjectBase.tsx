@@ -21,7 +21,7 @@ import {
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
   subject = new Subject<TState>();
   state: TState;
-  parent?: SceneObjectBase<SceneObjectState>;
+  parent?: SceneObjectBase<SceneObjectState | SceneLayoutState>;
   subs = new Subscription();
   isActive?: boolean;
   events = new EventBusSrv();
