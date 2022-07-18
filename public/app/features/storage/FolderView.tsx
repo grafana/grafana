@@ -12,10 +12,9 @@ interface Props {
   path: string;
   onPathChange: (p: string, view?: StorageView) => void;
   view: StorageView;
-  fileNames: string[];
 }
 
-export function FolderView({ listing, path, onPathChange, view, fileNames }: Props) {
+export function FolderView({ listing, path, onPathChange, view }: Props) {
   const styles = useStyles2(getStyles);
 
   switch (view) {
