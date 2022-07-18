@@ -10,7 +10,6 @@ import {
   dataSourceLoaded,
   setDataSourceName,
   setIsDefault,
-  updateDataSource,
   useDataSource,
   useDataSourceExploreUrl,
   useDataSourceMeta,
@@ -19,6 +18,7 @@ import {
   useDeleteLoadedDataSource,
   useInitDataSourceSettings,
   useTestDataSource,
+  useUpdateDatasource,
 } from '../state';
 import { DataSourceRights } from '../types';
 
@@ -50,11 +50,11 @@ export function EditDataSource({ uid, pageId }: Props): React.ReactElement {
   const dataSourceRights = useDataSourceRights(uid);
   const exploreUrl = useDataSourceExploreUrl(uid);
   const onDelete = useDeleteLoadedDataSource();
+  const onTest = useTestDataSource(uid);
+  const onUpdate = useUpdateDatasource();
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
   const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));
-  const onTest = useTestDataSource(uid);
-  const onUpdate = (ds: DataSourceSettingsType) => updateDataSource({ ...ds });
 
   return (
     <EditDataSourceView

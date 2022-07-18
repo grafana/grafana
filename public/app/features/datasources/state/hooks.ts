@@ -84,9 +84,7 @@ export const useAddDatasource = () => {
 export const useUpdateDatasource = () => {
   const dispatch = useDispatch();
 
-  return (dataSource: DataSourceSettings) => {
-    dispatch(updateDataSource(dataSource));
-  };
+  return (dataSource: DataSourceSettings) => dispatch(updateDataSource(dataSource));
 };
 
 export const useDeleteLoadedDataSource = () => {
