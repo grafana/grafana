@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -54,6 +55,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
 			}
 			hs.pluginManager = pm
+			hs.QuotaService = quotatest.NewQuotaServiceFake()
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {

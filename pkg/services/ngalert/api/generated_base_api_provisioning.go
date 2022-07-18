@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type ProvisioningApiForkingService interface {
+type ProvisioningApi interface {
 	RouteDeleteAlertRule(*models.ReqContext) response.Response
 	RouteDeleteContactpoints(*models.ReqContext) response.Response
 	RouteDeleteMuteTiming(*models.ReqContext) response.Response
@@ -43,125 +43,147 @@ type ProvisioningApiForkingService interface {
 	RouteResetPolicyTree(*models.ReqContext) response.Response
 }
 
-func (f *ForkedProvisioningApi) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
-	return f.forkRouteDeleteAlertRule(ctx, uIDParam)
+	return f.handleRouteDeleteAlertRule(ctx, uIDParam)
 }
-func (f *ForkedProvisioningApi) RouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
-	return f.forkRouteDeleteContactpoints(ctx, uIDParam)
+	return f.handleRouteDeleteContactpoints(ctx, uIDParam)
 }
-func (f *ForkedProvisioningApi) RouteDeleteMuteTiming(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteDeleteMuteTiming(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
-	return f.forkRouteDeleteMuteTiming(ctx, nameParam)
+	return f.handleRouteDeleteMuteTiming(ctx, nameParam)
 }
-func (f *ForkedProvisioningApi) RouteDeleteTemplate(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteDeleteTemplate(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
-	return f.forkRouteDeleteTemplate(ctx, nameParam)
+	return f.handleRouteDeleteTemplate(ctx, nameParam)
 }
-func (f *ForkedProvisioningApi) RouteGetAlertRule(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetAlertRule(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
-	return f.forkRouteGetAlertRule(ctx, uIDParam)
+	return f.handleRouteGetAlertRule(ctx, uIDParam)
 }
-func (f *ForkedProvisioningApi) RouteGetAlertRuleGroup(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetAlertRuleGroup(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
 	groupParam := web.Params(ctx.Req)[":Group"]
-	return f.forkRouteGetAlertRuleGroup(ctx, folderUIDParam, groupParam)
+	return f.handleRouteGetAlertRuleGroup(ctx, folderUIDParam, groupParam)
 }
-func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetContactpoints(ctx)
+func (f *ProvisioningApiHandler) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetContactpoints(ctx)
 }
-func (f *ForkedProvisioningApi) RouteGetMuteTiming(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetMuteTiming(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
-	return f.forkRouteGetMuteTiming(ctx, nameParam)
+	return f.handleRouteGetMuteTiming(ctx, nameParam)
 }
-func (f *ForkedProvisioningApi) RouteGetMuteTimings(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetMuteTimings(ctx)
+func (f *ProvisioningApiHandler) RouteGetMuteTimings(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetMuteTimings(ctx)
 }
-func (f *ForkedProvisioningApi) RouteGetPolicyTree(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetPolicyTree(ctx)
+func (f *ProvisioningApiHandler) RouteGetPolicyTree(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetPolicyTree(ctx)
 }
-func (f *ForkedProvisioningApi) RouteGetTemplate(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetTemplate(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
-	return f.forkRouteGetTemplate(ctx, nameParam)
+	return f.handleRouteGetTemplate(ctx, nameParam)
 }
-func (f *ForkedProvisioningApi) RouteGetTemplates(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetTemplates(ctx)
+func (f *ProvisioningApiHandler) RouteGetTemplates(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetTemplates(ctx)
 }
-func (f *ForkedProvisioningApi) RoutePostAlertRule(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostAlertRule(ctx, conf)
+	return f.handleRoutePostAlertRule(ctx, conf)
 }
-func (f *ForkedProvisioningApi) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostContactpoints(ctx, conf)
+	return f.handleRoutePostContactpoints(ctx, conf)
 }
-func (f *ForkedProvisioningApi) RoutePostMuteTiming(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.MuteTimeInterval{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostMuteTiming(ctx, conf)
+	return f.handleRoutePostMuteTiming(ctx, conf)
 }
-func (f *ForkedProvisioningApi) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
+	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutAlertRule(ctx, conf, uIDParam)
+	return f.handleRoutePutAlertRule(ctx, conf, uIDParam)
 }
-func (f *ForkedProvisioningApi) RoutePutAlertRuleGroup(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutAlertRuleGroup(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
 	groupParam := web.Params(ctx.Req)[":Group"]
+	// Parse Request Body
 	conf := apimodels.AlertRuleGroupMetadata{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutAlertRuleGroup(ctx, conf, folderUIDParam, groupParam)
+	return f.handleRoutePutAlertRuleGroup(ctx, conf, folderUIDParam, groupParam)
 }
-func (f *ForkedProvisioningApi) RoutePutContactpoint(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutContactpoint(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
+	// Parse Request Body
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutContactpoint(ctx, conf, uIDParam)
+	return f.handleRoutePutContactpoint(ctx, conf, uIDParam)
 }
-func (f *ForkedProvisioningApi) RoutePutMuteTiming(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutMuteTiming(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
+	// Parse Request Body
 	conf := apimodels.MuteTimeInterval{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutMuteTiming(ctx, conf, nameParam)
+	return f.handleRoutePutMuteTiming(ctx, conf, nameParam)
 }
-func (f *ForkedProvisioningApi) RoutePutPolicyTree(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutPolicyTree(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.Route{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutPolicyTree(ctx, conf)
+	return f.handleRoutePutPolicyTree(ctx, conf)
 }
-func (f *ForkedProvisioningApi) RoutePutTemplate(ctx *models.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
+	// Parse Request Body
 	conf := apimodels.MessageTemplateContent{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutTemplate(ctx, conf, nameParam)
+	return f.handleRoutePutTemplate(ctx, conf, nameParam)
 }
-func (f *ForkedProvisioningApi) RouteResetPolicyTree(ctx *models.ReqContext) response.Response {
-	return f.forkRouteResetPolicyTree(ctx)
+func (f *ProvisioningApiHandler) RouteResetPolicyTree(ctx *models.ReqContext) response.Response {
+	return f.handleRouteResetPolicyTree(ctx)
 }
 
-func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
+func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/v1/provisioning/alert-rules/{UID}"),

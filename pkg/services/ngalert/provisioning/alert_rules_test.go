@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -174,8 +176,10 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 	t.Helper()
 	sqlStore := sqlstore.InitTestDB(t)
 	store := store.DBstore{
-		SQLStore:     sqlStore,
-		BaseInterval: time.Second * 10,
+		SQLStore: sqlStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: time.Second * 10,
+		},
 	}
 	quotas := MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
