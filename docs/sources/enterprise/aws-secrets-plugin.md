@@ -1,7 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/enterprise/aws-secrets-plugin/
-description: 'Configuring the AWS Secrets Manager plugin'
+description: 'Learn how to use AWS Secrets Manager plugin to encrypt Grafana secrets.'
 keywords:
   - grafana
   - secrets
