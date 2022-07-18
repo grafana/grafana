@@ -12,9 +12,11 @@ func ReEncryptDEKS(_ utils.CommandLine, runner runner.Runner) error {
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	return runner.SecretsMigrator.ReEncryptSecrets(context.Background())
+	_, err := runner.SecretsMigrator.ReEncryptSecrets(context.Background())
+	return err
 }
 
 func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	return runner.SecretsMigrator.RollBackSecrets(context.Background())
+	_, err := runner.SecretsMigrator.RollBackSecrets(context.Background())
+	return err
 }

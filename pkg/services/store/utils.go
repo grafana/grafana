@@ -28,3 +28,8 @@ func getPathAndScope(c *models.ReqContext) (string, string) {
 	}
 	return splitFirstSegment(path)
 }
+
+func getFirstSegment(path string) string {
+	firstSegment, _ := splitFirstSegment(path)
+	return firstSegment
+}

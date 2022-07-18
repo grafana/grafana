@@ -10397,9 +10397,6 @@
     "CreatePlaylistCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/Playlist"
-        },
         "interval": {
           "type": "string"
         },
@@ -15896,9 +15893,6 @@
     "UpdatePlaylistCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/PlaylistDTO"
-        },
         "interval": {
           "type": "string"
         },
