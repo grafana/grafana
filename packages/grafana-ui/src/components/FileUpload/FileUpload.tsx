@@ -21,6 +21,8 @@ export interface Props {
   className?: string;
   /** Button size */
   size?: ComponentSize;
+  /** Show the file name */
+  showFileName?: boolean;
 }
 
 export const FileUpload: FC<Props> = ({
@@ -29,6 +31,7 @@ export const FileUpload: FC<Props> = ({
   children = 'Upload file',
   accept = '*',
   size = 'md',
+  showFileName = true,
 }) => {
   const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
@@ -61,7 +64,7 @@ export const FileUpload: FC<Props> = ({
         {children}
       </label>
 
-      {fileName && (
+      {showFileName && fileName && (
         <span
           aria-label="File name"
           className={style.fileName}
