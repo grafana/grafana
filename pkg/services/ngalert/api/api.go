@@ -61,6 +61,7 @@ type AlertingStore interface {
 type API struct {
 	Cfg                  *setting.Cfg
 	DatasourceCache      datasources.CacheService
+	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
 	ExpressionService    *expr.Service
 	QuotaService         *quota.QuotaService
@@ -128,9 +129,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
 		&AdminSrv{
-			store:     api.AdminConfigStore,
-			log:       logger,
-			scheduler: api.Schedule,
+			datasourceService: api.DatasourceService,
+			store:             api.AdminConfigStore,
+			log:               logger,
+			scheduler:         api.Schedule,
 		},
 	), m)
 

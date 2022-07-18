@@ -33,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
+func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
 	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
@@ -41,6 +41,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
+		DataSourceService:   dataSourceService,
 		RouteRegister:       routeRegister,
 		SQLStore:            sqlStore,
 		KVStore:             kvStore,
@@ -73,6 +74,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 type AlertNG struct {
 	Cfg                 *setting.Cfg
 	DataSourceCache     datasources.CacheService
+	DataSourceService   datasources.DataSourceService
 	RouteRegister       routing.RouteRegister
 	SQLStore            *sqlstore.SQLStore
 	KVStore             kvstore.KVStore
@@ -143,6 +145,8 @@ func (ng *AlertNG) init() error {
 		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
 		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		MinRuleInterval:         ng.Cfg.UnifiedAlerting.MinInterval,
+		DatasourceService:       ng.DataSourceService,
+		SecretService:           ng.SecretsService,
 	}
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
@@ -169,6 +173,7 @@ func (ng *AlertNG) init() error {
 	api := api.API{
 		Cfg:                  ng.Cfg,
 		DatasourceCache:      ng.DataSourceCache,
+		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
 		ExpressionService:    ng.ExpressionService,
 		Schedule:             ng.schedule,

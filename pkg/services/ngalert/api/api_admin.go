@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -16,9 +18,10 @@ import (
 )
 
 type AdminSrv struct {
-	scheduler Scheduler
-	store     store.AdminConfigurationStore
-	log       log.Logger
+	datasourceService datasources.DataSourceService
+	scheduler         Scheduler
+	store             store.AdminConfigurationStore
+	log               log.Logger
 }
 
 func (srv AdminSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Response {
@@ -71,7 +74,7 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 		return response.Error(400, "Invalid alertmanager choice specified", nil)
 	}
 
-	if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(body.Alertmanagers) == 0 {
+	if sendAlertsTo == ngmodels.ExternalAlertmanagers && !srv.hasExternalAlertmanager(c.OrgId, body.Alertmanagers) {
 		return response.Error(400, "At least one Alertmanager must be provided to choose this option", nil)
 	}
 
@@ -109,4 +112,27 @@ func (srv AdminSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Resp
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{"message": "admin configuration deleted"})
+}
+
+func (srv AdminSrv) hasExternalAlertmanager(orgID int64, alertmanagers []string) bool {
+	if len(alertmanagers) > 0 {
+		return true
+	}
+	// We might have alertmanager datasources that are acting as external
+	// alertmanager, let's fetch them.
+	query := &datasources.GetDataSourcesByTypeQuery{
+		OrgId: orgID,
+		Type:  "alertmanager",
+	}
+	err := srv.datasourceService.GetDataSourcesByType(context.Background(), query)
+	if err != nil {
+		srv.log.Error("failed to fetch datasources for org", "org", orgID)
+		return false
+	}
+	for _, ds := range query.Result {
+		if !ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
+			return true
+		}
+	}
+	return false
 }

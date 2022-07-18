@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
@@ -111,6 +113,9 @@ type schedule struct {
 
 	// bus is used to hook into events that should cause rule updates.
 	bus bus.Bus
+
+	datasourceService datasources.DataSourceService
+	secretService     secrets.Service
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -131,6 +136,8 @@ type SchedulerCfg struct {
 	AdminConfigPollInterval time.Duration
 	DisabledOrgs            map[int64]struct{}
 	MinRuleInterval         time.Duration
+	DatasourceService       datasources.DataSourceService
+	SecretService           secrets.Service
 }
 
 // NewScheduler returns a new schedule.
@@ -163,6 +170,8 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		minRuleInterval:         cfg.MinRuleInterval,
 		schedulableAlertRules:   schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.SchedulableAlertRule)},
 		bus:                     bus,
+		datasourceService:       cfg.DatasourceService,
+		secretService:           cfg.SecretService,
 	}
 
 	bus.AddEventListener(sch.folderUpdateHandler)
@@ -221,14 +230,38 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 
 		existing, ok := sch.senders[cfg.OrgID]
 
-		// We have no running sender and no Alertmanager(s) configured, no-op.
-		if !ok && len(cfg.Alertmanagers) == 0 {
-			sch.log.Debug("no external alertmanagers configured", "org", cfg.OrgID)
-			continue
-		}
 		//  We have no running sender and alerts are handled internally, no-op.
 		if !ok && cfg.SendAlertsTo == ngmodels.InternalAlertmanager {
 			sch.log.Debug("alerts are handled internally", "org", cfg.OrgID)
+			continue
+		}
+
+		// We might have alertmanager datasources that are acting as external
+		// alertmanager, let's fetch them.
+		query := &datasources.GetDataSourcesByTypeQuery{
+			OrgId: cfg.OrgID,
+			Type:  "alertmanager",
+		}
+		err = sch.datasourceService.GetDataSourcesByType(context.Background(), query)
+		if err != nil {
+			sch.log.Error("failed to fetch datasources for org", "org", cfg.OrgID)
+			continue
+		}
+		for _, ds := range query.Result {
+			if !ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
+				continue
+			}
+			amURL, err := sch.buildExternalURL(ds)
+			if err != nil {
+				sch.log.Error(fmt.Errorf("failed to generate external alertmanager URL: %w", err).Error(),
+					"org", ds.OrgId, "uid", ds.Uid)
+			}
+			cfg.Alertmanagers = append(cfg.Alertmanagers, amURL)
+		}
+
+		// We have no running sender and no Alertmanager(s) configured, no-op.
+		if !ok && len(cfg.Alertmanagers) == 0 {
+			sch.log.Debug("no external alertmanagers configured", "org", cfg.OrgID)
 			continue
 		}
 
@@ -297,6 +330,24 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 	sch.log.Debug("finish of admin configuration sync")
 
 	return nil
+}
+
+func (sch *schedule) buildExternalURL(ds *datasources.DataSource) (string, error) {
+	amURL := ds.Url
+	// if basic auth is enabled we need to build the url with basic auth baked in
+	if ds.BasicAuth {
+		parsed, err := url.Parse(ds.Url)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
+		}
+		password := sch.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "basicAuthPassword", "")
+		if password == "" {
+			return "", fmt.Errorf("basic auth enabled but no password set")
+		}
+		amURL = fmt.Sprintf("%s://%s:%s@%s%s%s", parsed.Scheme, ds.BasicAuthUser,
+			password, parsed.Host, parsed.Path, parsed.RawQuery)
+	}
+	return amURL, nil
 }
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.
