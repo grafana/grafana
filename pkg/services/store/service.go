@@ -28,6 +28,9 @@ var ErrAccessDenied = errors.New("access denied")
 const RootPublicStatic = "public-static"
 const RootResources = "resources"
 const RootDevenv = "devenv"
+const RootSystem = "system"
+
+const SystemBrandingStorage = "system/branding"
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
 
@@ -114,6 +117,13 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 					setDescription("Upload custom resource files"))
 		}
 
+		storages = append(storages,
+			newSQLStorage(RootSystem,
+				"System",
+				&StorageSQLConfig{orgId: orgId},
+				sql,
+			).setBuiltin(true).setDescription("Grafana system storage"))
+
 		return storages
 	}
 
@@ -136,6 +146,12 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				ActionFilesDelete: denyAllPathFilter,
 			}
 		case RootResources:
+			return map[string]filestorage.PathFilter{
+				ActionFilesRead:   allowAllPathFilter,
+				ActionFilesWrite:  allowAllPathFilter,
+				ActionFilesDelete: allowAllPathFilter,
+			}
+		case RootSystem:
 			return map[string]filestorage.PathFilter{
 				ActionFilesRead:   allowAllPathFilter,
 				ActionFilesWrite:  allowAllPathFilter,
