@@ -1,14 +1,12 @@
 package kind
 
-import "github.com/grafana/grafana/pkg/services/entity"
+import "github.com/grafana/grafana-plugin-sdk-go/experimental/entity"
 
-type DashboardBody struct {
-	// ...
-}
+type DashboardBody = map[string]interface{}
 
 // Where did it come from
 type Dashboard struct {
-	entity.Entity
+	entity.ConcreteEntityBase
 
-	Body DashboardBody
+	Body DashboardBody `json:"body,omitempty"`
 }

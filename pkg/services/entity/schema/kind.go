@@ -1,6 +1,10 @@
 package schema
 
-import "github.com/grafana/grafana-plugin-sdk-go/data"
+import (
+	"fmt"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+)
 
 // User defined properties
 type EntityKindInfo struct {
@@ -8,30 +12,37 @@ type EntityKindInfo struct {
 	Description          string `json:"description,omitempty"`
 	FileSuffix           string `json:"suffix"` // "-dash.json"
 	Category             string `json:"category,omitempty"`
-	Plugin               string `json:"plugin,omitempty"` // the plugin that knows how to read/write the object
 	CurrentSchemaVersion string `json:"currentSchemaVersion,omitempty"`
 	IsJSON               bool   `json:"isJSON,omitempty"`
-	IsBuiltin            bool   `json:"isBuiltin,omitempty"` // add ext
+
+	//	Plugin               string `json:"plugin,omitempty"` // the plugin that knows how to read/write an object
 }
 
-type ValidationInfo struct {
-	Valid         bool          `json:"valid"`
-	SchemaVersion string        `json:"schemaVersion,omitempty"`
-	Info          []data.Notice `json:"info,omitempty"`    // ERROR, WARNING
-	Details       interface{}   `json:"details,omitempty"` // if the system has a known details format
+type ValidationRequest struct {
+	SchemaVersion string `json:"schemaVersion"`
+	Body          []byte `json:"body"`
+
+	ExtractDependencies bool `json:"extractDependencies,omitempty"`
+	IncludeDetails      bool `json:"includeDetails,omitempty"`
+	Sanitize            bool `json:"sanitize,omitempty"`
+}
+
+type ValidationResponse struct {
+	Valid             bool          `json:"valid"`
+	SchemaVersion     string        `json:"schemaVersion,omitempty"`
+	Info              []data.Notice `json:"info,omitempty"`    // Show errors or warnings
+	ValidationDetails interface{}   `json:"details,omitempty"` // if the system has a known details format
+	Dependencies      []string      `json:"dependencies,omitempty"`
+	SanitizedBody     []byte        `json:"sanitized,omitempty"`
 }
 
 type KindHandler interface {
 	Info() EntityKindInfo
-	GetSchema(schemaVersion string) SchemaHandler // empty will give you the current one
-	ListVersions() []string                       // list possible schema versions
-}
+	GetSchemaVersions() []string // list possible schema versions
 
-type SchemaHandler interface {
-	Validate(body []byte) ValidationInfo
-	Sanitize(body []byte) ([]byte, ValidationInfo)
-	Migrate(body []byte, fromVersion string) ([]byte, ValidationInfo)
-	GetJSONSchema() []byte // the schema we can pass to monaco editor
+	Validate(opts ValidationRequest) ValidationResponse
+	Migrate(opts ValidationRequest, targetVersion string) ValidationResponse
+	GetJSONSchema(schemaVersion string) []byte // the schema we can pass to monaco editor
 }
 
 type KindRegistry interface {
@@ -57,6 +68,20 @@ var kinds = []EntityKindInfo{
 		ID:         "playlist",
 		FileSuffix: "-playlist.json",
 	},
+	{
+		ID:          "annotation",
+		Description: "Single annotation event",
+		FileSuffix:  "-anno.json",
+	},
+	// ???
+	{
+		ID:         "readme",
+		FileSuffix: "README.md",
+	},
+	{
+		ID:         "folder",
+		FileSuffix: "__folder.json",
+	},
 	// Data
 	{
 		ID:         "dataFrame",
@@ -68,6 +93,11 @@ var kinds = []EntityKindInfo{
 		Description: "query result format",
 		FileSuffix:  "-dqr.json",
 		Category:    "Data",
+	},
+	{
+		ID:         "CSV",
+		FileSuffix: ".csv",
+		Category:   "Data",
 	},
 	{
 		ID:         "GeoJSON",
@@ -91,6 +121,11 @@ var kinds = []EntityKindInfo{
 		Category:   "Image",
 	},
 	{
+		ID:         "JPEG",
+		FileSuffix: ".jpg",
+		Category:   "Image",
+	},
+	{
 		ID:         "GIF",
 		FileSuffix: ".gif",
 		Category:   "Image",
@@ -99,6 +134,6 @@ var kinds = []EntityKindInfo{
 
 func GetXXX() {
 	for _, k := range kinds {
-
+		fmt.Printf("%+v\n", k)
 	}
 }
