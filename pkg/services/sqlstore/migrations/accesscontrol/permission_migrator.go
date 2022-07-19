@@ -107,23 +107,25 @@ func (m *permissionMigrator) bulkAssignRoles(allRoles []*accesscontrol.Role) err
 
 	err := batch(len(userRoleAssignments), batchSize, func(start, end int) error {
 		_, err := m.sess.Table("user_role").InsertMulti(userRoleAssignments[start:end])
-		return fmt.Errorf("failed to create user role assignments: %w", err)
+		return err
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create user role assignments: %w", err)
 	}
 
 	err = batch(len(teamRoleAssignments), batchSize, func(start, end int) error {
 		_, err := m.sess.Table("team_role").InsertMulti(teamRoleAssignments[start:end])
-		return fmt.Errorf("failed to create team role assignments: %w", err)
+		return err
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create team role assignments: %w", err)
 	}
 
 	return batch(len(builtInRoleAssignments), batchSize, func(start, end int) error {
-		_, err := m.sess.Table("builtin_role").InsertMulti(builtInRoleAssignments[start:end])
-		return fmt.Errorf("failed to create builtin role assignments: %w", err)
+		if _, err := m.sess.Table("builtin_role").InsertMulti(builtInRoleAssignments[start:end]); err != nil {
+			return fmt.Errorf("failed to create builtin role assignments: %w", err)
+		}
+		return nil
 	})
 }
 
