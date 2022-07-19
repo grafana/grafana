@@ -73,7 +73,6 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 			}
 		}
 		s.logger.Debug("deleted unified secrets after migration", "number of secrets", len(allSec))
-
 	}
 	return nil
 }
