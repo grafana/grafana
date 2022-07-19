@@ -21,6 +21,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
 		entities.Delete("/:correlationUID", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
+		entities.Patch("/:correlationUID", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
 	})
 }
 
@@ -75,4 +76,30 @@ func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Respo
 	}
 
 	return response.JSON(http.StatusOK, DeleteCorrelationResponse{Message: "Correlation deleted"})
+}
+
+// updateHandler handles PATCH /datasources/uid/:uid/correlations/:correlationUid
+func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Response {
+	cmd := UpdateCorrelationCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	cmd.UID = web.Params(c.Req)[":correlationUid"]
+	cmd.SourceUID = web.Params(c.Req)[":uid"]
+	cmd.OrgId = c.OrgId
+
+	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
+	if err != nil {
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "Correlation not found", err)
+		}
+
+		if errors.Is(err, ErrSourceDataSourceReadOnly) {
+			return response.Error(http.StatusForbidden, "Data source is read only", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+	}
+
+	return response.JSON(http.StatusOK, UpdateCorrelationResponse{Message: "Correlation updated", Result: correlation})
 }

@@ -72,6 +72,28 @@ type DeleteCorrelationCommand struct {
 	OrgId     int64
 }
 
+// swagger:model
+type UpdateCorrelationResponse struct {
+	Result Correlation `json:"result"`
+	// example: Correlation updated
+	Message string `json:"message"`
+}
+
+// UpdateCorrelationCommand is the command for updating a correlation
+type UpdateCorrelationCommand struct {
+	// UID of the correlation to be deleted.
+	UID       string `json:"-"`
+	SourceUID string `json:"-"`
+	OrgId     int64  `json:"-"`
+
+	// Optional label identifying the correlation
+	// example: My label
+	Label string `json:"label"`
+	// Optional description of the correlation
+	// example: Logs to Traces
+	Description string `json:"description"`
+}
+
 type DeleteCorrelationsBySourceUIDCommand struct {
 	SourceUID string
 }

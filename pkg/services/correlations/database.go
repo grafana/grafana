@@ -77,6 +77,45 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 	})
 }
 
+func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
+	correlation := Correlation{
+		UID:       cmd.UID,
+		SourceUID: cmd.SourceUID,
+	}
+
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		query := &datasources.GetDataSourceQuery{
+			OrgId: cmd.OrgId,
+			Uid:   cmd.SourceUID,
+		}
+		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+			return ErrSourceDataSourceDoesNotExists
+		}
+
+		if query.Result.ReadOnly {
+			return ErrSourceDataSourceReadOnly
+		}
+
+		_, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(Correlation{
+			Label:       cmd.Label,
+			Description: cmd.Description,
+		})
+		if err != nil {
+			return err
+		}
+
+		_, err = session.Get(&correlation)
+
+		return err
+	})
+
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	return correlation, nil
+}
+
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		_, err := session.Delete(&Correlation{SourceUID: cmd.SourceUID})

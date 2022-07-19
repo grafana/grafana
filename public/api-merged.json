@@ -4322,6 +4322,49 @@
             "$ref": "#/responses/internalServerError"
           }
         }
+      },
+      "patch": {
+        "tags": ["correlations"],
+        "summary": "Updates a correlation.",
+        "operationId": "updateCorrelation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "correlationUid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateCorrelationCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updateCorrelationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
       }
     },
     "/datasources/uid/{uid}/health": {
@@ -16544,6 +16587,34 @@
         }
       }
     },
+    "UpdateCorrelationCommand": {
+      "description": "UpdateCorrelationCommand is the command for updating a correlation",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Optional description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Optional label identifying the correlation",
+          "type": "string",
+          "example": "My label"
+        }
+      }
+    },
+    "UpdateCorrelationResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation updated"
+        },
+        "result": {
+          "$ref": "#/definitions/Correlation"
+        }
+      }
+    },
     "UpdateDashboardACLCommand": {
       "type": "object",
       "properties": {
@@ -18677,6 +18748,12 @@
       "description": "UnprocessableEntityError",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "updateCorrelationResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/UpdateCorrelationResponse"
       }
     },
     "updatePlaylistResponse": {

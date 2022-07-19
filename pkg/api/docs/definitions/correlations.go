@@ -58,3 +58,32 @@ type DeleteCorrelationResponse struct {
 	// in: body
 	Body correlations.DeleteCorrelationResponse `json:"body"`
 }
+
+// swagger:route PATCH /datasources/uid/{uid}/correlations/{correlationUid} correlations updateCorrelation
+//
+// Updates a correlation.
+//
+// Responses:
+// 200: updateCorrelationResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:parameters updateCorrelation
+type UpdateCorrelationParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+	// in:path
+	// required:true
+	CorrelationUID string `json:"correlationUid"`
+	// in: body
+	Body correlations.UpdateCorrelationCommand `json:"body"`
+}
+
+//swagger:response updateCorrelationResponse
+type UpdateCorrelationResponse struct {
+	// in: body
+	Body correlations.UpdateCorrelationResponse `json:"body"`
+}
