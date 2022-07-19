@@ -236,30 +236,14 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		// We might have alertmanager datasources that are acting as external
-		// alertmanager, let's fetch them.
-		query := &datasources.GetDataSourcesByTypeQuery{
-			OrgId: cfg.OrgID,
-			Type:  datasources.DS_ALERTMANAGER,
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		err = sch.datasourceService.GetDataSourcesByType(ctx, query)
+		externalAlertmanager, err := sch.alertmanagersFromDatasources(cfg.OrgID)
 		if err != nil {
-			sch.log.Error("failed to fetch datasources for org", "org", cfg.OrgID)
+			sch.log.Error("failed to get alertmanagers from datasources",
+				"org", cfg.OrgID,
+				"err", err)
 			continue
 		}
-		for _, ds := range query.Result {
-			if !ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
-				continue
-			}
-			amURL, err := sch.buildExternalURL(ds)
-			if err != nil {
-				sch.log.Error(fmt.Errorf("failed to generate external alertmanager URL: %w", err).Error(),
-					"org", ds.OrgId, "uid", ds.Uid)
-			}
-			cfg.Alertmanagers = append(cfg.Alertmanagers, amURL)
-		}
+		cfg.Alertmanagers = append(cfg.Alertmanagers, externalAlertmanager...)
 
 		// We have no running sender and no Alertmanager(s) configured, no-op.
 		if !ok && len(cfg.Alertmanagers) == 0 {
@@ -332,6 +316,37 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 	sch.log.Debug("finish of admin configuration sync")
 
 	return nil
+}
+
+func (sch *schedule) alertmanagersFromDatasources(orgID int64) ([]string, error) {
+	var alertmanagers []string
+	// We might have alertmanager datasources that are acting as external
+	// alertmanager, let's fetch them.
+	query := &datasources.GetDataSourcesByTypeQuery{
+		OrgId: orgID,
+		Type:  datasources.DS_ALERTMANAGER,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	err := sch.datasourceService.GetDataSourcesByType(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
+	}
+	for _, ds := range query.Result {
+		if !ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
+			continue
+		}
+		amURL, err := sch.buildExternalURL(ds)
+		if err != nil {
+			sch.log.Error("failed to build external alertmanager URL",
+				"org", ds.OrgId,
+				"uid", ds.Uid,
+				"err", err)
+			continue
+		}
+		alertmanagers = append(alertmanagers, amURL)
+	}
+	return alertmanagers, nil
 }
 
 func (sch *schedule) buildExternalURL(ds *datasources.DataSource) (string, error) {

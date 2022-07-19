@@ -130,7 +130,7 @@ func (srv AdminSrv) hasExternalAlertmanager(ctx context.Context, orgID int64,
 		return false
 	}
 	for _, ds := range query.Result {
-		if !ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
+		if ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
 			return true
 		}
 	}
