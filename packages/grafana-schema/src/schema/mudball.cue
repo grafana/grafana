@@ -135,6 +135,7 @@ LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 LegendDisplayMode: "list" | "table" @cuetsy(kind="enum")
 
 // TODO docs
+
 LegendVisibility: "visible" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
