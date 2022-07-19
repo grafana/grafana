@@ -37,7 +37,7 @@ type ExternalAlertmanagerSender struct {
 	sdManager *discovery.Manager
 }
 
-func New() (*ExternalAlertmanagerSender, error) {
+func NewExternalAlertmanagerSender() (*ExternalAlertmanagerSender, error) {
 	l := log.New("sender")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanagerSender{

@@ -124,7 +124,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 		// No sender and have Alertmanager(s) to send to - start a new one.
 		d.logger.Info("creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
-		s, err := New()
+		s, err := NewExternalAlertmanagerSender()
 		if err != nil {
 			d.logger.Error("unable to start the sender", "err", err, "org", cfg.OrgID)
 			continue
