@@ -341,7 +341,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		states := sch.stateManager.GetStatesForRuleUID(key.OrgID, key.UID)
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		sch.stateManager.RemoveByRuleUID(key.OrgID, key.UID)
-		sch.alertsSender.Send(key, expiredAlerts)
+		if len(expiredAlerts.PostableAlerts) > 0 {
+			sch.alertsSender.Send(key, expiredAlerts)
+		}
 	}
 
 	evaluate := func(ctx context.Context, extraLabels map[string]string, attempt int64, e *evaluation) {
@@ -362,7 +364,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, extraLabels)
 		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
-		sch.alertsSender.Send(key, alerts)
+		if len(alerts.PostableAlerts) > 0 {
+			sch.alertsSender.Send(key, alerts)
+		}
 	}
 
 	retryIfError := func(f func(attempt int64) error) error {
