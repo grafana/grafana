@@ -42,7 +42,6 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
     const { legend, frames } = this.props;
 
     //hides and shows the legend ON the uPlot graph
-
     if (!config || (legend && legend.showLegend === LegendVisibility.Hidden)) {
       return null;
     }
