@@ -50,11 +50,6 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
 	log := log.New("middleware.request-metrics")
 
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-		if strings.HasPrefix(c.Req.URL.Path, "/public/") || c.Req.URL.Path == "robots.txt" || c.Req.URL.Path == "/metrics" {
-			c.Next()
-			return
-		}
-
 		rw := res.(web.ResponseWriter)
 		now := time.Now()
 		httpRequestsInFlight.Inc()
@@ -65,11 +60,17 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
 		code := sanitizeCode(status)
 
 		handler := "unknown"
-		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
+		if routeOperation, exists := routeOperationName(c.Req); exists {
 			handler = routeOperation
 		} else {
-			if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
-				log.Warn("request instrumented as unknown", "path", c.Req.URL.Path, "status_code", status)
+			// if grafana does not recognize the handler and returns 404 we should register it as `notfound`
+			if status == http.StatusNotFound {
+				handler = "notfound"
+			} else {
+				// log requests where we could not identify handler so we can register them.
+				if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
+					log.Warn("request instrumented as unknown", "path", c.Req.URL.Path, "status_code", status)
+				}
 			}
 		}
 

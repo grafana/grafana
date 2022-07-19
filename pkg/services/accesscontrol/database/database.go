@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,8 +21,8 @@ type AccessControlStore struct {
 	sql *sqlstore.SQLStore
 }
 
-func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]*accesscontrol.Permission, error) {
-	result := make([]*accesscontrol.Permission, 0)
+func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	result := make([]accesscontrol.Permission, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		filter, params := userRolesFilter(query.OrgID, query.UserID, query.Roles)
 
@@ -109,4 +110,47 @@ func deletePermissions(sess *sqlstore.DBSession, ids []int64) error {
 	}
 
 	return nil
+}
+
+func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, userID int64) error {
+	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Delete user role assignments
+		if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
+			return err
+		}
+
+		// Delete permissions that are scoped to user
+		if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", accesscontrol.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
+			return err
+		}
+
+		var roleIDs []int64
+		if err := sess.SQL("SELECT id FROM role WHERE name = ?", accesscontrol.ManagedUserRoleName(userID)).Find(&roleIDs); err != nil {
+			return err
+		}
+
+		if len(roleIDs) == 0 {
+			return nil
+		}
+
+		query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+		args := make([]interface{}, 0, len(roleIDs)+1)
+		args = append(args, query)
+		for _, id := range roleIDs {
+			args = append(args, id)
+		}
+
+		// Delete managed user permissions
+		if _, err := sess.Exec(args...); err != nil {
+			return err
+		}
+
+		// Delete managed user roles
+		if _, err := sess.Exec("DELETE FROM role WHERE name = ?", accesscontrol.ManagedUserRoleName(userID)); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return err
 }

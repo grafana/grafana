@@ -18,12 +18,12 @@ import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import { createRef, RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
 import { Accessors } from '../ScrollManager';
 import { PEER_SERVICE } from '../constants/tag-keys';
-import { SpanLinkFunc, TNil } from '../types';
+import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
@@ -84,10 +84,12 @@ export enum TopOfViewRefType {
 
 type TVirtualizedTraceViewOwnProps = {
   currentViewRangeTime: [number, number];
+  timeZone: TimeZone;
   findMatchesIDs: Set<string> | TNil;
   scrollToFirstVisibleSpan: () => void;
   registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
+  spanBarOptions: SpanBarOptions | undefined;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   childrenToggle: (spanID: string) => void;
   clearShouldScrollToFirstUiFindMatch: () => void;
@@ -386,6 +388,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       findMatchesIDs,
       spanNameColumnWidth,
       trace,
+      spanBarOptions,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -439,6 +442,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           clippingLeft={this.getClipping().left}
           clippingRight={this.getClipping().right}
           color={color}
+          spanBarOptions={spanBarOptions}
           columnDivision={spanNameColumnWidth}
           isChildrenExpanded={!isCollapsed}
           isDetailExpanded={isDetailExpanded}
@@ -478,6 +482,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailToggle,
       spanNameColumnWidth,
       trace,
+      timeZone,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -510,6 +515,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           warningsToggle={detailWarningsToggle}
           stackTracesToggle={detailStackTracesToggle}
           span={span}
+          timeZone={timeZone}
           tagsToggle={detailTagsToggle}
           traceStartTime={trace.startTime}
           hoverIndentGuideIds={hoverIndentGuideIds}

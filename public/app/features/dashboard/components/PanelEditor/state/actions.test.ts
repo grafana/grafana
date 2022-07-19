@@ -134,6 +134,35 @@ describe('panelEditor actions', () => {
       expect(dispatchedActions.length).toBe(2);
       expect(sourcePanel.getOptions()).toEqual({});
     });
+
+    it('should not increment configRev when no changes made and leaving panel edit', async () => {
+      const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
+      sourcePanel.plugin = getPanelPlugin({});
+
+      const dashboard = new DashboardModel({
+        panels: [{ id: 12, type: 'graph' }],
+      });
+
+      const panel = dashboard.initEditPanel(sourcePanel);
+
+      const state: PanelEditorState = {
+        ...initialState(),
+        getPanel: () => panel,
+        getSourcePanel: () => sourcePanel,
+      };
+
+      await thunkTester({
+        panelEditor: state,
+        panels: {},
+        dashboard: {
+          getModel: () => dashboard,
+        },
+      })
+        .givenThunk(exitPanelEditor)
+        .whenThunkIsDispatched();
+
+      expect(sourcePanel.configRev).toEqual(0);
+    });
   });
 
   describe('skipPanelUpdate', () => {

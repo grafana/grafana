@@ -50,7 +50,7 @@ type Scheduler struct {
 	BehindSeconds                       prometheus.Gauge
 	EvalTotal                           *prometheus.CounterVec
 	EvalFailures                        *prometheus.CounterVec
-	EvalDuration                        *prometheus.SummaryVec
+	EvalDuration                        *prometheus.HistogramVec
 	SchedulePeriodicDuration            prometheus.Histogram
 	SchedulableAlertRules               prometheus.Gauge
 	SchedulableAlertRulesHash           prometheus.Gauge
@@ -156,13 +156,13 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
-		EvalDuration: promauto.With(r).NewSummaryVec(
-			prometheus.SummaryOpts{
-				Namespace:  Namespace,
-				Subsystem:  Subsystem,
-				Name:       "rule_evaluation_duration_seconds",
-				Help:       "The duration for a rule to execute.",
-				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		EvalDuration: promauto.With(r).NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_evaluation_duration_seconds",
+				Help:      "The duration for a rule to execute.",
+				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 			},
 			[]string{"org"},
 		),

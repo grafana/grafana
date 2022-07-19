@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
 	"github.com/stretchr/testify/mock"
@@ -33,11 +32,9 @@ func TestUpdateTeam(t *testing.T) {
 
 		t.Run("Given an editor and a team he isn't a member of", func(t *testing.T) {
 			t.Run("Should not be able to update the team", func(t *testing.T) {
-				_, err := tracing.InitializeTracerForTest()
-				require.NoError(t, err)
 				ctx := context.Background()
 				store.On("GetTeamMembers", ctx, mock.Anything).Return([]*models.TeamMemberDTO{}, nil).Once()
-				err = teamGuardianService.CanAdmin(ctx, testTeam.OrgId, testTeam.Id, &editor)
+				err := teamGuardianService.CanAdmin(ctx, testTeam.OrgId, testTeam.Id, &editor)
 				require.Equal(t, models.ErrNotAllowedToUpdateTeam, err)
 			})
 		})

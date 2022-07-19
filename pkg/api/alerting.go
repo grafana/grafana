@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -151,7 +152,7 @@ func (hs *HTTPServer) AlertTest(c *models.ReqContext) response.Response {
 		if errors.As(err, &validationErr) {
 			return response.Error(422, validationErr.Error(), nil)
 		}
-		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return response.Error(403, "Access denied to datasource", err)
 		}
 		return response.Error(500, "Failed to test rule", err)
@@ -506,91 +507,107 @@ func (hs *HTTPServer) NotificationTest(c *models.ReqContext) response.Response {
 }
 
 // POST /api/alerts/:alertId/pause
-func (hs *HTTPServer) PauseAlert(c *models.ReqContext) response.Response {
-	dto := dtos.PauseAlertCommand{}
-	if err := web.Bind(c.Req, &dto); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	alertID, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
-	}
-	result := make(map[string]interface{})
-	result["alertId"] = alertID
-
-	query := models.GetAlertByIdQuery{Id: alertID}
-	if err := hs.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
-		return response.Error(500, "Get Alert failed", err)
+func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.ReqContext) response.Response {
+	if legacyAlertingEnabled == nil || !*legacyAlertingEnabled {
+		return func(_ *models.ReqContext) response.Response {
+			return response.Error(http.StatusBadRequest, "legacy alerting is disabled, so this call has no effect.", nil)
+		}
 	}
 
-	guardian := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgId, c.SignedInUser)
-	if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
+	return func(c *models.ReqContext) response.Response {
+		dto := dtos.PauseAlertCommand{}
+		if err := web.Bind(c.Req, &dto); err != nil {
+			return response.Error(http.StatusBadRequest, "bad request data", err)
+		}
+		alertID, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
 		if err != nil {
-			return response.Error(500, "Error while checking permissions for Alert", err)
+			return response.Error(http.StatusBadRequest, "alertId is invalid", err)
+		}
+		result := make(map[string]interface{})
+		result["alertId"] = alertID
+
+		query := models.GetAlertByIdQuery{Id: alertID}
+		if err := hs.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
+			return response.Error(500, "Get Alert failed", err)
 		}
 
-		return response.Error(403, "Access denied to this dashboard and alert", nil)
-	}
+		guardian := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgId, c.SignedInUser)
+		if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
+			if err != nil {
+				return response.Error(500, "Error while checking permissions for Alert", err)
+			}
 
-	// Alert state validation
-	if query.Result.State != models.AlertStatePaused && !dto.Paused {
-		result["state"] = "un-paused"
-		result["message"] = "Alert is already un-paused"
+			return response.Error(403, "Access denied to this dashboard and alert", nil)
+		}
+
+		// Alert state validation
+		if query.Result.State != models.AlertStatePaused && !dto.Paused {
+			result["state"] = "un-paused"
+			result["message"] = "Alert is already un-paused"
+			return response.JSON(http.StatusOK, result)
+		} else if query.Result.State == models.AlertStatePaused && dto.Paused {
+			result["state"] = models.AlertStatePaused
+			result["message"] = "Alert is already paused"
+			return response.JSON(http.StatusOK, result)
+		}
+
+		cmd := models.PauseAlertCommand{
+			OrgId:    c.OrgId,
+			AlertIds: []int64{alertID},
+			Paused:   dto.Paused,
+		}
+
+		if err := hs.SQLStore.PauseAlert(c.Req.Context(), &cmd); err != nil {
+			return response.Error(500, "", err)
+		}
+
+		resp := models.AlertStateUnknown
+		pausedState := "un-paused"
+		if cmd.Paused {
+			resp = models.AlertStatePaused
+			pausedState = "paused"
+		}
+
+		result["state"] = resp
+		result["message"] = "Alert " + pausedState
 		return response.JSON(http.StatusOK, result)
-	} else if query.Result.State == models.AlertStatePaused && dto.Paused {
-		result["state"] = models.AlertStatePaused
-		result["message"] = "Alert is already paused"
-		return response.JSON(http.StatusOK, result)
 	}
-
-	cmd := models.PauseAlertCommand{
-		OrgId:    c.OrgId,
-		AlertIds: []int64{alertID},
-		Paused:   dto.Paused,
-	}
-
-	if err := hs.SQLStore.PauseAlert(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "", err)
-	}
-
-	resp := models.AlertStateUnknown
-	pausedState := "un-paused"
-	if cmd.Paused {
-		resp = models.AlertStatePaused
-		pausedState = "paused"
-	}
-
-	result["state"] = resp
-	result["message"] = "Alert " + pausedState
-	return response.JSON(http.StatusOK, result)
 }
 
 // POST /api/admin/pause-all-alerts
-func (hs *HTTPServer) PauseAllAlerts(c *models.ReqContext) response.Response {
-	dto := dtos.PauseAllAlertsCommand{}
-	if err := web.Bind(c.Req, &dto); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	updateCmd := models.PauseAllAlertCommand{
-		Paused: dto.Paused,
+func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *models.ReqContext) response.Response {
+	if legacyAlertingEnabled == nil || !*legacyAlertingEnabled {
+		return func(_ *models.ReqContext) response.Response {
+			return response.Error(http.StatusBadRequest, "legacy alerting is disabled, so this call has no effect.", nil)
+		}
 	}
 
-	if err := hs.SQLStore.PauseAllAlerts(c.Req.Context(), &updateCmd); err != nil {
-		return response.Error(500, "Failed to pause alerts", err)
-	}
+	return func(c *models.ReqContext) response.Response {
+		dto := dtos.PauseAllAlertsCommand{}
+		if err := web.Bind(c.Req, &dto); err != nil {
+			return response.Error(http.StatusBadRequest, "bad request data", err)
+		}
+		updateCmd := models.PauseAllAlertCommand{
+			Paused: dto.Paused,
+		}
 
-	resp := models.AlertStatePending
-	pausedState := "un paused"
-	if updateCmd.Paused {
-		resp = models.AlertStatePaused
-		pausedState = "paused"
-	}
+		if err := hs.SQLStore.PauseAllAlerts(c.Req.Context(), &updateCmd); err != nil {
+			return response.Error(500, "Failed to pause alerts", err)
+		}
 
-	result := map[string]interface{}{
-		"state":          resp,
-		"message":        "alerts " + pausedState,
-		"alertsAffected": updateCmd.ResultCount,
-	}
+		resp := models.AlertStatePending
+		pausedState := "un paused"
+		if updateCmd.Paused {
+			resp = models.AlertStatePaused
+			pausedState = "paused"
+		}
 
-	return response.JSON(http.StatusOK, result)
+		result := map[string]interface{}{
+			"state":          resp,
+			"message":        "alerts " + pausedState,
+			"alertsAffected": updateCmd.ResultCount,
+		}
+
+		return response.JSON(http.StatusOK, result)
+	}
 }

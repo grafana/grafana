@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Button, Field, Form, HorizontalGroup, Input, LinkButton } from '@grafana/ui';
-import { DashboardPickerByID } from 'app/core/components/editors/DashboardPickerByID';
+import { DashboardPickerByID } from 'app/core/components/OptionsUI/DashboardPickerByID';
 
 import { TagFilter } from '../../core/components/TagFilter/TagFilter';
 import { SearchSrv } from '../../core/services/search_srv';

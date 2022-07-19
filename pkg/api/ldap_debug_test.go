@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -403,7 +404,7 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 
 func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 	sqlstoremock := mockstore.SQLStoreMock{}
-	sqlstoremock.ExpectedUser = &models.User{Login: "ldap-daniel", Id: 34}
+	sqlstoremock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -453,7 +454,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &models.User{Login: "ldap-daniel", Id: 34}}
+	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 34}}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -477,7 +478,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &models.User{Login: "ldap-daniel", Id: 34}}
+	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 34}}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		sc.authInfoService.ExpectedExternalUser = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -514,7 +515,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "ReloadLDAPCfg should return 200 for user with correct permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPConfigReload},
 			},
 		},
@@ -523,7 +524,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "ReloadLDAPCfg should return 403 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -532,7 +533,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetLDAPStatus should return 200 for user without required permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPStatusRead},
 			},
 		},
@@ -541,7 +542,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetLDAPStatus should return 200 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -550,7 +551,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetUserFromLDAP should return 200 for user with required permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPUsersRead},
 			},
 		},
@@ -559,7 +560,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetUserFromLDAP should return 403 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -568,7 +569,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPUsersSync},
 			},
 		},
@@ -577,7 +578,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -601,7 +602,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.LDAPEnabled = true
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
-			hs.SQLStore = &mockstore.SQLStoreMock{ExpectedUser: &models.User{}}
+			hs.SQLStore = &mockstore.SQLStoreMock{ExpectedUser: &user.User{}}
 			hs.authInfoService = &logintest.AuthInfoServiceFake{}
 			hs.Login = &loginservice.LoginServiceMock{}
 			sc.resp = httptest.NewRecorder()

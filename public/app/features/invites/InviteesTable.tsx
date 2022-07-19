@@ -22,7 +22,7 @@ export default class InviteesTable extends PureComponent<Props> {
             <th style={{ width: '34px' }} />
           </tr>
         </thead>
-        <tbody>
+        <tbody data-testid="InviteesTable-body">
           {invitees.map((invitee, index) => {
             return <InviteeRow key={`${invitee.id}-${index}`} invitee={invitee} />;
           })}

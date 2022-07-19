@@ -345,6 +345,12 @@ abstract class DataSourceApi<
     | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
     | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
     | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
+
+  /*
+   * Optionally, use this method to set default values for a query
+   * @alpha -- experimental
+   */
+  getDefaultQuery?(app: CoreApp): Partial<TQuery>;
 }
 
 export interface MetadataInspectorProps<
@@ -477,6 +483,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
   dashboardId?: number;
+  publicDashboardAccessToken?: string;
 
   // Request Timing
   startTime: number;
@@ -499,6 +506,7 @@ export interface QueryFixAction {
   type: string;
   query?: string;
   preventSubmit?: boolean;
+  options?: KeyValue<string>;
 }
 
 export interface QueryHint {

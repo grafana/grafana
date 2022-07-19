@@ -32,7 +32,13 @@ class InviteeRow extends PureComponent<Props> {
           &nbsp;
         </td>
         <td>
-          <Button variant="destructive" size="sm" icon="times" onClick={() => revokeInvite(invitee.code)} />
+          <Button
+            variant="destructive"
+            size="sm"
+            icon="times"
+            onClick={() => revokeInvite(invitee.code)}
+            aria-label="Revoke Invite"
+          />
         </td>
       </tr>
     );

@@ -319,14 +319,10 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 		},
 	}
 
-	_ = withStoredImage(ctx, sn.log, sn.images,
-		func(index int, image *ngmodels.Image) error {
-			if image != nil {
-				req.Attachments[0].ImageURL = image.URL
-			}
-			return nil
-		},
-		0, alrts...)
+	_ = withStoredImages(ctx, sn.log, sn.images, func(index int, image ngmodels.Image) error {
+		req.Attachments[0].ImageURL = image.URL
+		return ErrImagesDone
+	}, alrts...)
 
 	if tmplErr != nil {
 		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())

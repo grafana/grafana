@@ -8,6 +8,7 @@ import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { SearchCard } from '../../components/SearchCard';
+import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
 
 import { SearchResultsProps } from './SearchResultsTable';
@@ -19,7 +20,7 @@ export const SearchResultsGrid = ({
   selection,
   selectionToggle,
   onTagSelected,
-  onDatasourceChange,
+  keyboardEvents,
 }: SearchResultsProps) => {
   const styles = useStyles2(getStyles);
 
@@ -37,12 +38,12 @@ export const SearchResultsGrid = ({
   };
 
   const itemCount = response.totalRows ?? response.view.length;
-
   const view = response.view;
   const numColumns = Math.ceil(width / 320);
   const cellWidth = width / numColumns;
   const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
   const numRows = Math.ceil(itemCount / numColumns);
+  const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, numColumns, response);
 
   return (
     <InfiniteLoader isItemLoaded={response.isItemLoaded} itemCount={itemCount} loadMoreItems={response.loadMoreItems}>
@@ -100,10 +101,15 @@ export const SearchResultsGrid = ({
               }
             }
 
+            let className = styles.virtualizedGridItemWrapper;
+            if (rowIndex === highlightIndex.y && columnIndex === highlightIndex.x) {
+              className += ' ' + styles.selectedItem;
+            }
+
             // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
             // And without this wrapper there is no room for that margin
             return item ? (
-              <li style={style} className={styles.virtualizedGridItemWrapper}>
+              <li style={style} className={className}>
                 <SearchCard key={item.uid} {...itemProps} item={facade} />
               </li>
             ) : null;
@@ -125,5 +131,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     > ul {
       list-style: none;
     }
+  `,
+  selectedItem: css`
+    box-shadow: inset 1px 1px 3px 3px ${theme.colors.primary.border};
   `,
 });

@@ -20,11 +20,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "serviceAccounts",
-			Description: "support service accounts",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "database_metrics",
 			Description: "Add prometheus metrics for database tables",
 			State:       FeatureStateStable,
@@ -68,12 +63,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoServiceGraph",
-			Description:  "show service",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "tempoApmTable",
 			Description:  "Show APM table",
 			State:        FeatureStateAlpha,
@@ -96,21 +85,15 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "newNavigation",
-			Description: "Try the next gen navigation model",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "publicDashboards",
-			Description:     "enables public access to dashboards",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "publicDashboards",
+			Description: "enables public access to dashboards",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "lokiLive",
@@ -153,14 +136,13 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "export",
-			Description:     "Export grafana instance (to git, etc)",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "dashboardsFromStorage",
+			Description: "Load dashboards from the generic storage interface",
+			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "storageLocalUpload",
-			Description:     "allow uploads to local storage",
+			Name:            "export",
+			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
@@ -189,11 +171,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "savedItems",
-			Description: "Enable Saved Items in the navbar.",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
@@ -202,12 +179,6 @@ var (
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:         "azureMonitorExperimentalUI",
-			Description:  "Use grafana-experimental UI in Azure Monitor",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
 		},
 		{
 			Name:         "traceToMetrics",
@@ -244,10 +215,27 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "scenes",
+			Description:  "Experimental framework to build interactive dashboards",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "useLegacyHeatmapPanel",
+			Description: "Continue to use the angular/flot based heatmap panel",
+			State:       FeatureStateStable,
+		},
+		{
 			Name:         "cloudMonitoringExperimentalUI",
 			Description:  "Use grafana-experimental UI in Cloud Monitoring",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "disableSecretsCompatibility",
+			Description:     "Disable duplicated secret storage in legacy tables",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
@@ -261,6 +249,16 @@ var (
 		{
 			Name:        "internationalization",
 			Description: "Enables work-in-progress internationalization",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "topnav",
+			Description: "New top nav and page layouts",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "customBranding",
+			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
 		},
 	}

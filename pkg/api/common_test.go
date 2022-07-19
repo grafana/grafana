@@ -38,12 +38,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -193,8 +192,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
 	loginService := &logintest.LoginServiceFake{}
 	authenticator := &logintest.AuthenticatorFake{}
@@ -231,7 +229,7 @@ func (s *fakeRenderService) Init() error {
 	return nil
 }
 
-func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
+func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.Quota.Enabled = false
 
 	store := sqlstore.InitTestDB(t)
@@ -240,7 +238,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		Live:               newTestLive(t, store),
 		License:            &licensing.OSSLicensingService{},
 		Features:           featuremgmt.WithFeatures(),
-		QuotaService:       &quota.QuotaService{Cfg: cfg},
+		QuotaService:       &quotaimpl.Service{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
 		searchUsersService: searchusers.ProvideUsersService(store, filters.ProvideOSSSearchUserFilter()),
@@ -260,7 +258,7 @@ type accessControlTestCase struct {
 	desc         string
 	url          string
 	method       string
-	permissions  []*accesscontrol.Permission
+	permissions  []accesscontrol.Permission
 }
 
 // accessControlScenarioContext contains the setups for accesscontrol tests
@@ -287,9 +285,9 @@ type accessControlScenarioContext struct {
 	dashboardsStore dashboards.Store
 }
 
-func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
+func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accesscontrol.Permission, org int64) {
 	acmock.GetUserPermissionsFunc =
-		func(_ context.Context, u *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+		func(_ context.Context, u *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 			if u.OrgId == org {
 				return perms, nil
 			}
@@ -342,15 +340,6 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db, featuremgmt.WithFeatures())
 }
 
-func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, features *featuremgmt.FeatureManager) accessControlScenarioContext {
-	// Use a new conf
-	cfg := setting.NewCfg()
-	db := sqlstore.InitTestDB(t)
-	db.Cfg = setting.NewCfg()
-
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock(), features)
-}
-
 func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, features *featuremgmt.FeatureManager) accessControlScenarioContext {
 	t.Helper()
 
@@ -390,14 +379,14 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		Cfg:                    cfg,
 		Features:               features,
 		Live:                   newTestLive(t, db),
-		QuotaService:           &quota.QuotaService{Cfg: cfg},
+		QuotaService:           &quotaimpl.Service{Cfg: cfg},
 		RouteRegister:          routeRegister,
 		SQLStore:               store,
 		License:                &licensing.OSSLicensingService{},
 		AccessControl:          ac,
 		teamPermissionsService: teamPermissionService,
 		searchUsersService:     searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
-		dashboardService: dashboardservice.ProvideDashboardService(
+		DashboardService: dashboardservice.ProvideDashboardService(
 			cfg, dashboardsStore, nil, features,
 			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
 		),

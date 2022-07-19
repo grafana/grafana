@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -31,11 +33,12 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 	sqlStore := sqlstore.InitTestDB(t)
 
 	hs := &HTTPServer{
-		Cfg:           cfg,
-		License:       &licensing.OSSLicensingService{Cfg: cfg},
-		SQLStore:      sqlStore,
-		SocialService: social.ProvideService(cfg),
-		HooksService:  hooks.ProvideService(),
+		Cfg:            cfg,
+		License:        &licensing.OSSLicensingService{Cfg: cfg},
+		SQLStore:       sqlStore,
+		SocialService:  social.ProvideService(cfg),
+		HooksService:   hooks.ProvideService(),
+		SecretsService: fakes.NewFakeSecretsService(),
 	}
 
 	m := web.New()
@@ -55,9 +58,9 @@ func TestOAuthLogin_UnknownProvider(t *testing.T) {
 	recorder := httptest.NewRecorder()
 
 	m.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusNotFound, recorder.Code)
-	assert.Contains(t, recorder.Body.String(), "OAuth not enabled")
+	// expect to be redirected to /login
+	assert.Equal(t, http.StatusFound, recorder.Code)
+	assert.Equal(t, "/login", recorder.Header().Get("Location"))
 }
 
 func TestOAuthLogin_Base(t *testing.T) {

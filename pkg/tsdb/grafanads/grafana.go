@@ -9,8 +9,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,8 +57,8 @@ type Service struct {
 	store  store.StorageService
 }
 
-func DataSourceModel(orgId int64) *models.DataSource {
-	return &models.DataSource{
+func DataSourceModel(orgId int64) *datasources.DataSource {
+	return &datasources.DataSource{
 		Id:             DatasourceID,
 		Uid:            DatasourceUID,
 		Name:           DatasourceName,
@@ -108,10 +109,10 @@ func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) back
 	}
 
 	path := store.RootPublicStatic + "/" + q.Path
-	frame, err := s.store.List(ctx, nil, path)
+	listFrame, err := s.store.List(ctx, nil, path)
 	response.Error = err
-	if frame != nil {
-		response.Frames = data.Frames{frame}
+	if listFrame != nil {
+		response.Frames = data.Frames{listFrame.Frame}
 	}
 	return response
 }

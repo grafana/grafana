@@ -102,13 +102,13 @@ func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error
 	return false, nil
 }
 
-func createOrg(name string, userID int64, engine *xorm.Engine) (models.Org, error) {
+func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, engine *xorm.Engine) (models.Org, error) {
 	org := models.Org{
 		Name:    name,
 		Created: time.Now(),
 		Updated: time.Now(),
 	}
-	if err := inTransactionWithRetryCtx(context.Background(), engine, func(sess *DBSession) error {
+	if err := inTransactionWithRetryCtx(ctx, engine, ss.bus, func(sess *DBSession) error {
 		if isNameTaken, err := isOrgNameTaken(name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -145,11 +145,11 @@ func createOrg(name string, userID int64, engine *xorm.Engine) (models.Org, erro
 
 // CreateOrgWithMember creates an organization with a certain name and a certain user as member.
 func (ss *SQLStore) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
-	return createOrg(name, userID, ss.engine)
+	return ss.createOrg(context.Background(), name, userID, ss.engine)
 }
 
 func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
-	org, err := createOrg(cmd.Name, cmd.UserId, ss.engine)
+	org, err := ss.createOrg(ctx, cmd.Name, cmd.UserId, ss.engine)
 	if err != nil {
 		return err
 	}

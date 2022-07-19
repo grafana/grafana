@@ -12,8 +12,10 @@ import {
   DateTime,
   FieldType,
   MutableDataFrame,
+  ScopedVars,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -31,9 +33,11 @@ export interface JaegerJsonData extends DataSourceJsonData {
 export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
+  spanBar?: SpanBarOptions;
   constructor(
     private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly timeSrv: TimeSrv = getTimeSrv(),
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
@@ -54,7 +58,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
 
     if (target.queryType !== 'search' && target.query) {
       return this._request(
-        `/api/traces/${encodeURIComponent(getTemplateSrv().replace(target.query, options.scopedVars))}`
+        `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query, options.scopedVars))}`
       ).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
@@ -89,18 +93,26 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       }
     }
 
-    let jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
+    let jaegerInterpolated = pick(this.applyVariables(target, options.scopedVars), [
+      'service',
+      'operation',
+      'tags',
+      'minDuration',
+      'maxDuration',
+      'limit',
+    ]);
     // remove empty properties
-    jaegerQuery = pickBy(jaegerQuery, identity);
-    if (jaegerQuery.tags) {
-      jaegerQuery = {
-        ...jaegerQuery,
-        tags: convertTagsLogfmt(getTemplateSrv().replace(jaegerQuery.tags, options.scopedVars)),
-      };
-    }
+    let jaegerQuery = pickBy(jaegerInterpolated, identity);
 
     if (jaegerQuery.operation === ALL_OPERATIONS_KEY) {
       jaegerQuery = omit(jaegerQuery, 'operation');
+    }
+
+    if (jaegerQuery.tags) {
+      jaegerQuery = {
+        ...jaegerQuery,
+        tags: convertTagsLogfmt(jaegerQuery.tags.toString()),
+      };
     }
 
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
@@ -115,6 +127,39 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
         };
       })
     );
+  }
+
+  interpolateVariablesInQueries(queries: JaegerQuery[], scopedVars: ScopedVars): JaegerQuery[] {
+    if (!queries || queries.length === 0) {
+      return [];
+    }
+
+    return queries.map((query) => {
+      return {
+        ...query,
+        datasource: this.getRef(),
+        ...this.applyVariables(query, scopedVars),
+      };
+    });
+  }
+
+  applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {
+    let expandedQuery = { ...query };
+
+    if (query.tags && this.templateSrv.containsTemplate(query.tags)) {
+      expandedQuery = {
+        ...query,
+        tags: this.templateSrv.replace(query.tags, scopedVars),
+      };
+    }
+
+    return {
+      ...expandedQuery,
+      service: this.templateSrv.replace(query.service ?? '', scopedVars),
+      operation: this.templateSrv.replace(query.operation ?? '', scopedVars),
+      minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
+      maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
+    };
   }
 
   async testDatasource(): Promise<any> {

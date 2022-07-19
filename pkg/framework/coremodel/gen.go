@@ -50,7 +50,7 @@ func main() {
 	var lins []*gcgen.ExtractedLineage
 	for _, item := range items {
 		if item.IsDir() {
-			lin, err := gcgen.ExtractLineage(filepath.Join(cmroot, item.Name(), "lineage.cue"), lib)
+			lin, err := gcgen.ExtractLineage(filepath.Join(cmroot, item.Name(), "coremodel.cue"), lib)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "could not process coremodel dir %s: %s\n", cmroot, err)
 				os.Exit(1)
@@ -62,20 +62,27 @@ func main() {
 
 	wd := gcgen.NewWriteDiffer()
 	for _, ls := range lins {
-		wdg, err := ls.GenerateGoCoremodel(filepath.Join(cmroot, ls.Lineage.Name()))
+		gofiles, err := ls.GenerateGoCoremodel(filepath.Join(cmroot, ls.Lineage.Name()))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to generate Go for %s: %s\n", ls.Lineage.Name(), err)
 			os.Exit(1)
 		}
-		wd.Merge(wdg)
+		wd.Merge(gofiles)
 
-		wdt, err := ls.GenerateTypescriptCoremodel(filepath.Join(tsroot, ls.Lineage.Name()))
+		tsfiles, err := ls.GenerateTypescriptCoremodel(filepath.Join(tsroot, ls.Lineage.Name()))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to generate TypeScript for %s: %s\n", ls.Lineage.Name(), err)
 			os.Exit(1)
 		}
-		wd.Merge(wdt)
+		wd.Merge(tsfiles)
 	}
+
+	regfiles, err := gcgen.GenerateCoremodelRegistry(filepath.Join(groot, "pkg", "framework", "coremodel", "registry", "registry_gen.go"), lins)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to generate coremodel registry: %s\n", err)
+		os.Exit(1)
+	}
+	wd.Merge(regfiles)
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		err = wd.Verify()

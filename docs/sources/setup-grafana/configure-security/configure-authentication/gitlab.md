@@ -122,7 +122,7 @@ role_attribute_path = is_admin && 'Admin' || 'Viewer'
 
 You can use GitLab OAuth to map roles. During mapping, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
 
-For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [About users and permissions]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions/" >}}).
+For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
 An example Query could look like the following:
 

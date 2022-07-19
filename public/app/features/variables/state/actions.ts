@@ -678,7 +678,9 @@ export const templateVarsChangedInUrl =
   async (dispatch, getState) => {
     const update: Array<Promise<any>> = [];
     const dashboard = getState().dashboard.getModel();
-    for (const variable of getVariablesByKey(key, getState())) {
+    const panelIds = new Set<number>();
+    const variables = getVariablesByKey(key, getState());
+    for (const variable of variables) {
       const key = `var-${variable.name}`;
       if (!vars.hasOwnProperty(key)) {
         // key not found quick exit
@@ -704,13 +706,26 @@ export const templateVarsChangedInUrl =
         }
       }
 
+      // for adhoc variables we don't know which panels that will be impacted
+      if (!isAdHoc(variable)) {
+        getAllAffectedPanelIdsForVariableChange(variable.id, variables, dashboard?.panels ?? []).forEach((id) =>
+          panelIds.add(id)
+        );
+      }
+
       const promise = variableAdapters.get(variable.type).setValueFromUrl(variable, value);
       update.push(promise);
     }
 
     if (update.length) {
       await Promise.all(update);
-      events.publish(new VariablesChangedInUrl({ panelIds: [], refreshAll: true }));
+
+      events.publish(
+        new VariablesChangedInUrl({
+          refreshAll: panelIds.size === 0,
+          panelIds: Array.from(panelIds),
+        })
+      );
     }
   };
 

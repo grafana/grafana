@@ -81,7 +81,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
 
-	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", groups)
+	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}

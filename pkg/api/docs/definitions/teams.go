@@ -1,6 +1,9 @@
 package definitions
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/models"
+)
 
 // swagger:route GET /teams/search teams searchTeams
 //
@@ -120,33 +123,97 @@ import "github.com/grafana/grafana/pkg/models"
 // 401: unauthorisedError
 // 500: internalServerError
 
-// swagger:parameters getTeam updateTeam deleteTeamByID getTeamMembers addTeamMember updateTeamMember
-// swagger:parameters removeTeamMember getTeamPreferences updateTeamPreferences
-type TeamIDParam struct {
+// swagger:parameters updateTeamPreferences
+type UpdateTeamPreferencesParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:body
+	// required:true
+	Body dtos.UpdatePrefsCmd `json:"body"`
+}
+
+// swagger:parameters getTeam
+type GetTeamParams struct {
 	// in:path
 	// required:true
 	TeamID string `json:"team_id"`
 }
 
+// swagger:parameters deleteTeamByID
+type DeleteTeamByIDParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters getTeamMembers
+type GetTeamMembersParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters getTeamPreferences
+type GetTeamPreferencesParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters removeTeamMember
+type RemoveTeamMemberParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters searchTeams
+type SearchTeamsParams struct {
+	// in:query
+	// required:false
+	// default: 1
+	Page int `json:"page"`
+	// Number of items per page
+	// The totalCount field in the response can be used for pagination list E.g. if totalCount is equal to 100 teams and the perpage parameter is set to 10 then there are 10 pages of teams.
+	// in:query
+	// required:false
+	// default: 1000
+	PerPage int    `json:"perpage"`
+	Name    string `json:"name"`
+	// If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.
+	// required:false
+	Query string `json:"query"`
+}
+
 // swagger:parameters createTeam
-type CreateTeamParam struct {
+type CreateTeamParams struct {
 	// in:body
 	// required:true
 	Body models.CreateTeamCommand `json:"body"`
 }
 
 // swagger:parameters updateTeam
-type UpdateTeamParam struct {
+type UpdateTeamParams struct {
 	// in:body
 	// required:true
 	Body models.UpdateTeamCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
 }
 
-// swagger:parameters addTeamMemberTeam
-type AddTeamMemberParam struct {
+// swagger:parameters addTeamMember
+type AddTeamMemberParams struct {
 	// in:body
 	// required:true
 	Body models.AddTeamMemberCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
 }
 
 // swagger:parameters updateTeamMember
@@ -154,6 +221,12 @@ type UpdateTeamMember struct {
 	// in:body
 	// required:true
 	Body models.UpdateTeamMemberCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
 }
 
 // swagger:response searchTeamsResponse

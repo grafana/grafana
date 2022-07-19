@@ -21,7 +21,7 @@ type AccessControl interface {
 	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
 
 	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
+	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]Permission, error)
 
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
@@ -42,7 +42,7 @@ type RoleRegistry interface {
 
 type PermissionsStore interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
+	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
 }
 
 type TeamPermissionsService interface {
@@ -59,6 +59,10 @@ type DashboardPermissionsService interface {
 }
 
 type DatasourcePermissionsService interface {
+	PermissionsService
+}
+
+type ServiceAccountPermissionsService interface {
 	PermissionsService
 }
 
@@ -144,7 +148,7 @@ var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
 	return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR
 }
 
-func BuildPermissionsMap(permissions []*Permission) map[string]bool {
+func BuildPermissionsMap(permissions []Permission) map[string]bool {
 	permissionsMap := make(map[string]bool)
 	for _, p := range permissions {
 		permissionsMap[p.Action] = true
@@ -154,7 +158,7 @@ func BuildPermissionsMap(permissions []*Permission) map[string]bool {
 }
 
 // GroupScopesByAction will group scopes on action
-func GroupScopesByAction(permissions []*Permission) map[string][]string {
+func GroupScopesByAction(permissions []Permission) map[string][]string {
 	m := make(map[string][]string)
 	for _, p := range permissions {
 		m[p.Action] = append(m[p.Action], p.Scope)

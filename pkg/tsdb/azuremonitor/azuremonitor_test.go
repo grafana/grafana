@@ -1,8 +1,13 @@
 package azuremonitor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -16,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -66,14 +72,18 @@ func TestNewInstanceSettings(t *testing.T) {
 }
 
 type fakeInstance struct {
+	cloud    string
 	routes   map[string]types.AzRoute
 	services map[string]types.DatasourceService
+	settings types.AzureMonitorSettings
 }
 
 func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
 	return types.DatasourceInfo{
+		Cloud:    f.cloud,
 		Routes:   f.routes,
 		Services: f.services,
+		Settings: f.settings,
 	}, nil
 }
 
@@ -155,6 +165,275 @@ func Test_newMux(t *testing.T) {
 			if res == nil {
 				t.Errorf("Expecting a response")
 			}
+		})
+	}
+}
+
+type RoundTripFunc func(req *http.Request) (*http.Response, error)
+
+func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+func NewTestClient(fn RoundTripFunc) *http.Client {
+	return &http.Client{
+		Transport: fn,
+	}
+}
+
+func TestCheckHealth(t *testing.T) {
+	logAnalyticsResponse := func(empty bool) (*http.Response, error) {
+		if !empty {
+			body := struct {
+				Value []types.LogAnalyticsWorkspaceResponse
+			}{Value: []types.LogAnalyticsWorkspaceResponse{{
+				Id:       "abcd-1234",
+				Location: "location",
+				Name:     "test-workspace",
+				Properties: types.LogAnalyticsWorkspaceProperties{
+					CreatedDate: "",
+					CustomerId:  "abcd-1234",
+					Features:    types.LogAnalyticsWorkspaceFeatures{},
+				},
+				ProvisioningState:               "provisioned",
+				PublicNetworkAccessForIngestion: "enabled",
+				PublicNetworkAccessForQuery:     "disabled",
+				RetentionInDays:                 0},
+			}}
+			bodyMarshal, err := json.Marshal(body)
+			if err != nil {
+				return nil, err
+			}
+			return &http.Response{
+				StatusCode: 200,
+				Body:       ioutil.NopCloser(bytes.NewBuffer(bodyMarshal)),
+				Header:     make(http.Header),
+			}, nil
+		} else {
+			body := struct {
+				Value []types.LogAnalyticsWorkspaceResponse
+			}{Value: []types.LogAnalyticsWorkspaceResponse{}}
+			bodyMarshal, err := json.Marshal(body)
+			if err != nil {
+				return nil, err
+			}
+			return &http.Response{
+				StatusCode: 200,
+				Body:       ioutil.NopCloser(bytes.NewBuffer(bodyMarshal)),
+				Header:     make(http.Header),
+			}, nil
+		}
+	}
+	azureMonitorClient := func(logAnalyticsEmpty bool, fail bool) *http.Client {
+		return NewTestClient(func(req *http.Request) (*http.Response, error) {
+			if strings.Contains(req.URL.String(), "workspaces") {
+				return logAnalyticsResponse(logAnalyticsEmpty)
+			} else {
+				if !fail {
+					return &http.Response{
+						StatusCode: 200,
+						Body:       ioutil.NopCloser(bytes.NewBufferString("OK")),
+						Header:     make(http.Header),
+					}, nil
+				} else {
+					return &http.Response{
+						StatusCode: 404,
+						Body:       ioutil.NopCloser(bytes.NewBufferString("not found")),
+						Header:     make(http.Header),
+					}, nil
+				}
+			}
+		})
+	}
+	okClient := NewTestClient(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(bytes.NewBufferString("OK")),
+			Header:     make(http.Header),
+		}, nil
+	})
+	failClient := func(azureHealthCheckError bool) *http.Client {
+		return NewTestClient(func(req *http.Request) (*http.Response, error) {
+			if azureHealthCheckError {
+				return nil, errors.New("not found")
+			}
+			return &http.Response{
+				StatusCode: 404,
+				Body:       ioutil.NopCloser(bytes.NewBufferString("not found")),
+				Header:     make(http.Header),
+			}, nil
+		})
+	}
+
+	cloud := "AzureCloud"
+	tests := []struct {
+		name           string
+		errorExpected  bool
+		expectedResult *backend.CheckHealthResult
+		customServices map[string]types.DatasourceService
+	}{
+		{
+			name:          "Successfully queries all endpoints",
+			errorExpected: false,
+			expectedResult: &backend.CheckHealthResult{
+				Status:  backend.HealthStatusOk,
+				Message: "Successfully connected to all Azure Monitor endpoints.",
+			},
+			customServices: map[string]types.DatasourceService{
+				azureMonitor: {
+					URL:        routes[cloud]["Azure Monitor"].URL,
+					HTTPClient: azureMonitorClient(false, false),
+				},
+				azureLogAnalytics: {
+					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					HTTPClient: okClient,
+				},
+				azureResourceGraph: {
+					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					HTTPClient: okClient,
+				}},
+		},
+		{
+			name:          "Successfully queries all endpoints except metrics",
+			errorExpected: false,
+			expectedResult: &backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Error connecting to Azure Monitor endpoint: not found\n2. Successfully connected to Azure Log Analytics endpoint.\n3. Successfully connected to Azure Resource Graph endpoint." }`),
+			},
+			customServices: map[string]types.DatasourceService{
+				azureMonitor: {
+					URL:        routes[cloud]["Azure Monitor"].URL,
+					HTTPClient: azureMonitorClient(false, true),
+				},
+				azureLogAnalytics: {
+					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					HTTPClient: okClient,
+				},
+				azureResourceGraph: {
+					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					HTTPClient: okClient,
+				}},
+		},
+		{
+			name:          "Successfully queries all endpoints except log analytics",
+			errorExpected: false,
+			expectedResult: &backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Successfully connected to Azure Monitor endpoint.\n2. Error connecting to Azure Log Analytics endpoint: not found\n3. Successfully connected to Azure Resource Graph endpoint." }`),
+			},
+			customServices: map[string]types.DatasourceService{
+				azureMonitor: {
+					URL:        routes[cloud]["Azure Monitor"].URL,
+					HTTPClient: azureMonitorClient(false, false),
+				},
+				azureLogAnalytics: {
+					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					HTTPClient: failClient(false),
+				},
+				azureResourceGraph: {
+					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					HTTPClient: okClient,
+				}},
+		},
+		{
+			name:          "Successfully queries all endpoints except resource graph",
+			errorExpected: false,
+			expectedResult: &backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Successfully connected to Azure Monitor endpoint.\n2. Successfully connected to Azure Log Analytics endpoint.\n3. Error connecting to Azure Resource Graph endpoint: not found" }`),
+			},
+			customServices: map[string]types.DatasourceService{
+				azureMonitor: {
+					URL:        routes[cloud]["Azure Monitor"].URL,
+					HTTPClient: azureMonitorClient(false, false),
+				},
+				azureLogAnalytics: {
+					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					HTTPClient: okClient,
+				},
+				azureResourceGraph: {
+					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					HTTPClient: failClient(false),
+				}},
+		},
+		{
+			name:          "Successfully returns UNKNOWN status if no log analytics workspace is found",
+			errorExpected: false,
+			expectedResult: &backend.CheckHealthResult{
+				Status:  backend.HealthStatusUnknown,
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Successfully connected to Azure Monitor endpoint.\n2. No Log Analytics workspaces found.\n3. Successfully connected to Azure Resource Graph endpoint." }`),
+			},
+			customServices: map[string]types.DatasourceService{
+				azureMonitor: {
+					URL:        routes[cloud]["Azure Monitor"].URL,
+					HTTPClient: azureMonitorClient(true, false),
+				},
+				azureLogAnalytics: {
+					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					HTTPClient: okClient,
+				},
+				azureResourceGraph: {
+					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					HTTPClient: okClient,
+				}},
+		},
+		{
+			name:          "Successfully returns Azure health check errors",
+			errorExpected: false,
+			expectedResult: &backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Error connecting to Azure Monitor endpoint: health check failed: Get \"https://management.azure.com/subscriptions?api-version=2018-01-01\": not found\n2. Error connecting to Azure Log Analytics endpoint: health check failed: Get \"https://management.azure.com/subscriptions//providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview\": not found\n3. Error connecting to Azure Resource Graph endpoint: health check failed: Post \"https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2021-06-01-preview\": not found" }`),
+			},
+			customServices: map[string]types.DatasourceService{
+				azureMonitor: {
+					URL:        routes[cloud]["Azure Monitor"].URL,
+					HTTPClient: failClient(true),
+				},
+				azureLogAnalytics: {
+					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					HTTPClient: failClient(true),
+				},
+				azureResourceGraph: {
+					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					HTTPClient: failClient(true),
+				}},
+		},
+	}
+
+	instance := &fakeInstance{
+		cloud:    cloud,
+		routes:   routes[cloud],
+		services: map[string]types.DatasourceService{},
+		settings: types.AzureMonitorSettings{
+			LogAnalyticsDefaultWorkspace: "workspace-id",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			instance.services = tt.customServices
+			s := &Service{
+				im: instance,
+			}
+			res, err := s.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+				}})
+			if tt.errorExpected {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectedResult, res)
 		})
 	}
 }

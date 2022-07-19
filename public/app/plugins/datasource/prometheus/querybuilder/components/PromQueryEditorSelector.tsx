@@ -98,9 +98,12 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
           }}
           options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
         />
-        <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
+
         {editorMode === QueryEditorMode.Builder && (
-          <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
+          <>
+            <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
+            <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
+          </>
         )}
         <FlexItem grow={1} />
         {app !== CoreApp.Explore && (

@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime/src';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, RadioButtonGroup, Switch } from '@grafana/ui';
 import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
@@ -38,6 +39,7 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
+    reportInteraction('grafana_dashboards_link_share_viewed');
     this.buildUrl();
   }
 

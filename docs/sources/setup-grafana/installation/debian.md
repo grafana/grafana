@@ -38,8 +38,6 @@ If you install from the APT repository, then Grafana is automatically updated ev
 #### To install the latest Enterprise edition:
 
 ```bash
-sudo apt-get install -y apt-transport-https
-sudo apt-get install -y software-properties-common wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
@@ -65,8 +63,7 @@ sudo apt-get install grafana-enterprise
 #### To install the latest OSS release:
 
 ```bash
-sudo apt-get install -y apt-transport-https
-sudo apt-get install -y software-properties-common wget
+sudo apt-get install -y wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 

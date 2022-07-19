@@ -31,7 +31,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	dashboardID := cmd.HomeDashboardID
 	if cmd.HomeDashboardUID != nil {
 		query := models.GetDashboardQuery{Uid: *cmd.HomeDashboardUID}
-		err := hs.dashboardService.GetDashboard(c.Req.Context(), &query)
+		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err != nil {
 			return response.Error(404, "Dashboard not found", err)
 		}
@@ -65,7 +65,7 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
 	if preference.HomeDashboardID != 0 {
 		query := models.GetDashboardQuery{Id: preference.HomeDashboardID, OrgId: orgID}
-		err = hs.dashboardService.GetDashboard(ctx, &query)
+		err = hs.DashboardService.GetDashboard(ctx, &query)
 		if err == nil {
 			dashboardUID = query.Result.Uid
 		}
@@ -80,6 +80,7 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	}
 
 	if preference.JSONData != nil {
+		dto.Locale = preference.JSONData.Locale
 		dto.Navbar = preference.JSONData.Navbar
 		dto.QueryHistory = preference.JSONData.QueryHistory
 	}
@@ -104,7 +105,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
-		err := hs.dashboardService.GetDashboard(ctx, &query)
+		err := hs.DashboardService.GetDashboard(ctx, &query)
 		if err != nil {
 			return response.Error(404, "Dashboard not found", err)
 		}
@@ -117,6 +118,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		OrgID:           orgID,
 		TeamID:          teamId,
 		Theme:           dtoCmd.Theme,
+		Locale:          dtoCmd.Locale,
 		Timezone:        dtoCmd.Timezone,
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
@@ -149,7 +151,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
-		err := hs.dashboardService.GetDashboard(ctx, &query)
+		err := hs.DashboardService.GetDashboard(ctx, &query)
 		if err != nil {
 			return response.Error(404, "Dashboard not found", err)
 		}
@@ -165,6 +167,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		Timezone:        dtoCmd.Timezone,
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
+		Locale:          dtoCmd.Locale,
 		Navbar:          dtoCmd.Navbar,
 		QueryHistory:    dtoCmd.QueryHistory,
 	}

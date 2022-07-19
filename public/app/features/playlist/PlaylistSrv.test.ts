@@ -18,7 +18,7 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-const mockStore = configureMockStore<any, any>();
+const mockStore = configureMockStore();
 
 setStore(
   mockStore({
@@ -29,7 +29,7 @@ setStore(
 const dashboards = [{ url: '/dash1' }, { url: '/dash2' }];
 
 function createPlaylistSrv(): PlaylistSrv {
-  locationService.push('/playlists/1');
+  locationService.push('/playlists/foo');
   return new PlaylistSrv();
 }
 
@@ -66,9 +66,9 @@ describe('PlaylistSrv', () => {
     getMock.mockImplementation(
       jest.fn((url) => {
         switch (url) {
-          case '/api/playlists/1':
+          case '/api/playlists/foo':
             return Promise.resolve({ interval: '1s' });
-          case '/api/playlists/1/dashboards':
+          case '/api/playlists/foo/dashboards':
             return Promise.resolve(dashboards);
           default:
             throw new Error(`Unexpected url=${url}`);
@@ -88,7 +88,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('runs all dashboards in cycle and reloads page after 3 cycles', async () => {
-    await srv.start(1);
+    await srv.start('foo');
 
     for (let i = 0; i < 6; i++) {
       srv.next();
@@ -99,7 +99,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('keeps the refresh counter value after restarting', async () => {
-    await srv.start(1);
+    await srv.start('foo');
 
     // 1 complete loop
     for (let i = 0; i < 3; i++) {
@@ -107,7 +107,7 @@ describe('PlaylistSrv', () => {
     }
 
     srv.stop();
-    await srv.start(1);
+    await srv.start('foo');
 
     // Another 2 loops
     for (let i = 0; i < 4; i++) {
@@ -119,7 +119,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('Should stop playlist when navigating away', async () => {
-    await srv.start(1);
+    await srv.start('foo');
 
     locationService.push('/datasources');
 
@@ -127,7 +127,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('storeUpdated should not stop playlist when navigating to next dashboard', async () => {
-    await srv.start(1);
+    await srv.start('foo');
 
     srv.next();
 

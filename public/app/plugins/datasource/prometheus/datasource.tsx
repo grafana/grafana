@@ -22,6 +22,7 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
+  QueryFixAction,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -31,6 +32,7 @@ import {
   DataSourceWithBackend,
   BackendDataSourceResponse,
   toDataQueryResponse,
+  isFetchError,
 } from '@grafana/runtime';
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -224,7 +226,7 @@ export class PrometheusDatasource
         );
       } catch (err) {
         // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
-        if (this.httpMethod === 'POST' && (err.status === 405 || err.status === 400)) {
+        if (this.httpMethod === 'POST' && isFetchError(err) && (err.status === 405 || err.status === 400)) {
           console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
         } else {
           throw err;
@@ -1029,15 +1031,22 @@ export class PrometheusDatasource
     }
   }
 
-  modifyQuery(query: PromQuery, action: any): PromQuery {
+  modifyQuery(query: PromQuery, action: QueryFixAction): PromQuery {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value);
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value);
+        }
+
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = addLabelToQuery(expression, action.key, action.value, '!=');
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value, '!=');
+        }
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
@@ -1053,8 +1062,8 @@ export class PrometheusDatasource
         break;
       }
       case 'EXPAND_RULES': {
-        if (action.mapping) {
-          expression = expandRecordingRules(expression, action.mapping);
+        if (action.options) {
+          expression = expandRecordingRules(expression, action.options);
         }
         break;
       }

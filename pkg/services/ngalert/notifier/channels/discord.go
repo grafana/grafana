@@ -199,14 +199,9 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	attachments := make([]discordAttachment, 0)
 
 	_ = withStoredImages(ctx, d.log, d.images,
-		func(index int, image *ngmodels.Image) error {
+		func(index int, image ngmodels.Image) error {
 			if embedQuota < 1 {
-				// TODO: Could be a sentinel error to stop execution.
-				return nil
-			}
-
-			if image == nil {
-				return nil
+				return ErrImagesDone
 			}
 
 			if len(image.URL) > 0 {

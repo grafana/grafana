@@ -15,12 +15,14 @@
 import { css } from '@emotion/css';
 import React, { RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { Accessors } from '../ScrollManager';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
+import { SpanBarOptions } from '../settings/SpanBarSettings';
 import { SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
@@ -75,9 +77,12 @@ type TProps = TExtractUiFindFromStateReturn & {
   scrollToFirstVisibleSpan: () => void;
   traceTimeline: TTraceTimeline;
   trace: Trace;
+  datasourceType: string;
+  spanBarOptions: SpanBarOptions | undefined;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
+  timeZone: TimeZone;
 
   setSpanNameColumnWidth: (width: number) => void;
   collapseAll: (spans: TraceSpan[]) => void;
@@ -140,18 +145,34 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
 
   collapseAll = () => {
     this.props.collapseAll(this.props.trace.spans);
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'collapseAll',
+    });
   };
 
   collapseOne = () => {
     this.props.collapseOne(this.props.trace.spans);
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'collapseOne',
+    });
   };
 
   expandAll = () => {
     this.props.expandAll();
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'expandAll',
+    });
   };
 
   expandOne = () => {
     this.props.expandOne(this.props.trace.spans);
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'expandOne',
+    });
   };
 
   render() {

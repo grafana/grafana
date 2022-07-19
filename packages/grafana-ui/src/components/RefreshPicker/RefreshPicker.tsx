@@ -4,8 +4,9 @@ import React, { PureComponent } from 'react';
 import { SelectableValue, parseDuration } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { ButtonGroup, ToolbarButton, ToolbarButtonVariant } from '../Button';
+import { ButtonGroup } from '../Button';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
+import { ToolbarButtonVariant, ToolbarButton } from '../ToolbarButton';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];

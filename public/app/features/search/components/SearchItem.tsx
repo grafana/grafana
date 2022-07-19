@@ -28,6 +28,7 @@ const getIconFromMeta = (meta = ''): IconName => {
   return metaIconMap.has(meta) ? metaIconMap.get(meta)! : 'sort-amount-down';
 };
 
+/** @deprecated */
 export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
   const styles = useStyles2(getStyles);
   const tagSelected = useCallback(

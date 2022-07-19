@@ -242,3 +242,48 @@ func TestIntegrationKVStore(t *testing.T) {
 		require.Len(t, keys, 0, "querying a not existing namespace and key should return an empty slice")
 	})
 }
+
+func TestGetItems(t *testing.T) {
+	kv := createTestableKVStore(t)
+
+	ctx := context.Background()
+
+	testCases := []*TestCase{
+		{
+			OrgId:     1,
+			Namespace: "testing1",
+			Key:       "key1",
+		},
+		{
+			OrgId:     2,
+			Namespace: "testing1",
+			Key:       "key1",
+		},
+		{
+			OrgId:     2,
+			Namespace: "testing1",
+			Key:       "key2",
+		},
+	}
+
+	for _, tc := range testCases {
+		err := kv.Set(ctx, tc.OrgId, tc.Namespace, tc.Key, tc.Value())
+		require.NoError(t, err)
+	}
+
+	t.Run("Get all values per org", func(t *testing.T) {
+		for _, tc := range testCases {
+			items, err := kv.GetAll(ctx, tc.OrgId, tc.Namespace)
+			require.NoError(t, err)
+			require.Equal(t, items[tc.OrgId][tc.Key], tc.Value())
+		}
+	})
+
+	t.Run("Get all values for all orgs", func(t *testing.T) {
+		items, err := kv.GetAll(ctx, AllOrganizations, "testing1")
+		require.NoError(t, err)
+		for _, tc := range testCases {
+			require.Equal(t, items[tc.OrgId][tc.Key], tc.Value())
+		}
+	})
+}
