@@ -32,17 +32,20 @@ var (
 		}
 	})
 	publicRoot, _            = filepath.Abs("../../../public")
-	publicStaticFilesStorage = newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
-		Path: publicRoot,
-		Roots: []string{
-			"/testdata/",
-			"/img/icons/",
-			"/img/bg/",
-			"/gazetteer/",
-			"/maps/",
-			"/upload/",
-		},
-	}).setReadOnly(true).setBuiltin(true)
+	publicStaticFilesStorage = newDiskStorage(RootStorageConfig{
+		Prefix: "public",
+		Name:   "Public static files",
+		Disk: &StorageLocalDiskConfig{
+			Path: publicRoot,
+			Roots: []string{
+				"/testdata/",
+				"/img/icons/",
+				"/img/bg/",
+				"/gazetteer/",
+				"/maps/",
+				"/upload/",
+			},
+		}}).setReadOnly(true).setBuiltin(true)
 )
 
 func TestListFiles(t *testing.T) {
@@ -82,7 +85,12 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	t.Helper()
 	storageName := "resources"
 	mockStorage := &filestorage.MockFileStorage{}
-	sqlStorage := newSQLStorage(storageName, "Testing upload", &StorageSQLConfig{orgId: 1}, sqlstore.InitTestDB(t))
+	sqlStorage := newSQLStorage(
+		storageName, "Testing upload", "dummy descr",
+		&StorageSQLConfig{},
+		sqlstore.InitTestDB(t),
+		1, // orgID (prefix init)
+	)
 	sqlStorage.store = mockStorage
 
 	if authService == nil {

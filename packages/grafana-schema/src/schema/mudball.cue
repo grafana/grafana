@@ -6,6 +6,9 @@ package schema
 AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
+AxisColorMode:      "text" | "series"                                       @cuetsy(kind="enum")
+
+// TODO docs
 VisibilityMode:     "auto" | "never" | "always"                             @cuetsy(kind="enum")
 
 // TODO docs
@@ -85,6 +88,7 @@ ScaleDistributionConfig: {
 // TODO docs
 AxisConfig: {
 	axisPlacement?:     AxisPlacement
+	axisColorMode?:     AxisColorMode
 	axisLabel?:         string
 	axisWidth?:         number
 	axisSoftMin?:       number
