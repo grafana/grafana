@@ -298,18 +298,25 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(orgID int64, dash
 	return r0, r1
 }
 
-// HasActivePublicDashboard provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardStore) HasActivePublicDashboard(ctx context.Context, query *models.HasActivePublicDashboardQuery) error {
-	ret := _m.Called(ctx, query)
+// HasActivePublicDashboard provides a mock function with given fields: ctx, dashboardUid
+func (_m *FakeDashboardStore) HasActivePublicDashboard(ctx context.Context, dashboardUid string) (bool, error) {
+	ret := _m.Called(ctx, dashboardUid)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.HasActivePublicDashboardQuery) error); ok {
-		r0 = rf(ctx, query)
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, dashboardUid)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, dashboardUid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // HasAdminPermissionInDashboardsOrFolders provides a mock function with given fields: ctx, query
