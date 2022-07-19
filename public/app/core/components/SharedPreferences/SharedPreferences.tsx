@@ -78,7 +78,7 @@ const DEFAULT_DASHBOARD_HOME: DashboardSearchItem = {
   title: 'Default',
   tags: [],
   type: '' as DashboardSearchItemType,
-  uid: 'default',
+  uid: undefined,
   uri: '',
   url: '',
   folderId: 0,
@@ -110,7 +110,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const prefs = await this.service.load();
-    const dashboards = await backendSrv.search({ starred: true }) as DashboardSearchItem[];
+    const dashboards = (await backendSrv.search({ starred: true })) as DashboardSearchItem[];
 
     if (prefs.homeDashboardUID && !dashboards.find((d) => d.uid === prefs.homeDashboardUID)) {
       const missingDash = await backendSrv.getDashboardByUid(prefs.homeDashboardUID);
