@@ -1659,15 +1659,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           }
         ],
         "responses": {
           "201": {
-            "description": "AlertRule",
+            "description": "ProvisionedAlertRule",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           },
           "400": {
@@ -1698,9 +1698,9 @@
         ],
         "responses": {
           "200": {
-            "description": "AlertRule",
+            "description": "ProvisionedAlertRule",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           },
           "404": {
@@ -1730,15 +1730,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "AlertRule",
+            "description": "ProvisionedAlertRule",
             "schema": {
-              "$ref": "#/definitions/AlertRule"
+              "$ref": "#/definitions/ProvisionedAlertRule"
             }
           },
           "400": {
@@ -1780,6 +1780,14 @@
         ],
         "summary": "Get all the contact points.",
         "operationId": "RouteGetContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Filter by name",
+            "name": "name",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "ContactPoints",
@@ -1916,7 +1924,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/AlertRuleGroup"
+            "description": "AlertRuleGroup",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroup"
+            }
           },
           "404": {
             "description": " Not found."
@@ -2163,6 +2174,25 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Clears the notification policy tree.",
+        "operationId": "RouteResetPolicyTree",
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
             }
           }
         }
@@ -2518,83 +2548,27 @@
     },
     "AlertRule": {
       "type": "object",
-      "required": [
-        "orgID",
-        "folderUID",
-        "ruleGroup",
-        "title",
-        "condition",
-        "data",
-        "noDataState",
-        "execErrState",
-        "for"
-      ],
+      "title": "AlertRule is the model for alert rules in unified alerting.",
       "properties": {
-        "annotations": {
+        "Annotations": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "example": {
-            "runbook_url": "https://supercoolrunbook.com/page/13"
           }
         },
-        "condition": {
-          "type": "string",
-          "example": "A"
+        "Condition": {
+          "type": "string"
         },
-        "data": {
+        "DashboardUID": {
+          "type": "string"
+        },
+        "Data": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertQuery"
-          },
-          "example": [
-            {
-              "datasourceUid": "-100",
-              "model": {
-                "conditions": [
-                  {
-                    "evaluator": {
-                      "params": [
-                        0,
-                        0
-                      ],
-                      "type": "gt"
-                    },
-                    "operator": {
-                      "type": "and"
-                    },
-                    "query": {
-                      "params": []
-                    },
-                    "reducer": {
-                      "params": [],
-                      "type": "avg"
-                    },
-                    "type": "query"
-                  }
-                ],
-                "datasource": {
-                  "type": "__expr__",
-                  "uid": "__expr__"
-                },
-                "expression": "1 == 1",
-                "hide": false,
-                "intervalMs": 1000,
-                "maxDataPoints": 43200,
-                "refId": "A",
-                "type": "math"
-              },
-              "queryType": "",
-              "refId": "A",
-              "relativeTimeRange": {
-                "from": 0,
-                "to": 0
-              }
-            }
-          ]
+          }
         },
-        "execErrState": {
+        "ExecErrState": {
           "type": "string",
           "enum": [
             "Alerting",
@@ -2602,27 +2576,27 @@
             "OK"
           ]
         },
-        "folderUID": {
-          "type": "string",
-          "example": "project_x"
-        },
-        "for": {
+        "For": {
           "$ref": "#/definitions/Duration"
         },
-        "id": {
+        "ID": {
           "type": "integer",
           "format": "int64"
         },
-        "labels": {
+        "IntervalSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "example": {
-            "team": "sre-team-1"
           }
         },
-        "noDataState": {
+        "NamespaceUID": {
+          "type": "string"
+        },
+        "NoDataState": {
           "type": "string",
           "enum": [
             "Alerting",
@@ -2630,32 +2604,55 @@
             "OK"
           ]
         },
-        "orgID": {
+        "OrgID": {
           "type": "integer",
           "format": "int64"
         },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
+        "PanelID": {
+          "type": "integer",
+          "format": "int64"
         },
-        "ruleGroup": {
-          "type": "string",
-          "maxLength": 190,
-          "minLength": 1,
-          "example": "eval_group_1"
-        },
-        "title": {
-          "type": "string",
-          "maxLength": 190,
-          "minLength": 1,
-          "example": "Always firing"
-        },
-        "uid": {
+        "RuleGroup": {
           "type": "string"
         },
-        "updated": {
+        "RuleGroupIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "UID": {
+          "type": "string"
+        },
+        "Updated": {
           "type": "string",
-          "format": "date-time",
-          "readOnly": true
+          "format": "date-time"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "AlertRuleGroup": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertRule"
+          }
+        },
+        "title": {
+          "type": "string"
         }
       }
     },
@@ -4209,6 +4206,149 @@
     "Provenance": {
       "type": "string"
     },
+    "ProvisionedAlertRule": {
+      "type": "object",
+      "required": [
+        "orgID",
+        "folderUID",
+        "ruleGroup",
+        "title",
+        "condition",
+        "data",
+        "noDataState",
+        "execErrState",
+        "for"
+      ],
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "runbook_url": "https://supercoolrunbook.com/page/13"
+          }
+        },
+        "condition": {
+          "type": "string",
+          "example": "A"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "example": [
+            {
+              "datasourceUid": "-100",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0,
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": []
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "avg"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "1 == 1",
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A",
+                "type": "math"
+              },
+              "queryType": "",
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              }
+            }
+          ]
+        },
+        "execErrState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "Error",
+            "OK"
+          ]
+        },
+        "folderUID": {
+          "type": "string",
+          "example": "project_x"
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "team": "sre-team-1"
+          }
+        },
+        "noDataState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "orgID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "ruleGroup": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "example": "eval_group_1"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "example": "Always firing"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
     "PushoverConfig": {
       "type": "object",
       "properties": {
@@ -4947,9 +5087,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -5175,6 +5314,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -5283,6 +5423,7 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5339,6 +5480,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -5506,6 +5648,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",

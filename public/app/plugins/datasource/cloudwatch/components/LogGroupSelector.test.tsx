@@ -85,7 +85,6 @@ describe('LogGroupSelector', () => {
       'DeliciousGroup',
       'DeliciousGroup2',
       'DeliciousGroup3',
-
       'VelvetGroup',
       'VelvetGroup2',
       'VelvetGroup3',

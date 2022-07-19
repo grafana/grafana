@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 
 import { NavModel, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { FolderDTO, StoreState } from 'app/types';
 

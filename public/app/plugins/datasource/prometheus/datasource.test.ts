@@ -2154,7 +2154,7 @@ describe('modifyQuery', () => {
     describe('and query has no labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
-        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER' };
+        const action = { options: { key: 'cluster', value: 'us-cluster' }, type: 'ADD_FILTER' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
@@ -2168,7 +2168,7 @@ describe('modifyQuery', () => {
     describe('and query has labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
-        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER' };
+        const action = { options: { key: 'pod', value: 'pod-123' }, type: 'ADD_FILTER' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
@@ -2184,7 +2184,7 @@ describe('modifyQuery', () => {
     describe('and query has no labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
-        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER_OUT' };
+        const action = { options: { key: 'cluster', value: 'us-cluster' }, type: 'ADD_FILTER_OUT' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
@@ -2198,7 +2198,7 @@ describe('modifyQuery', () => {
     describe('and query has labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
-        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER_OUT' };
+        const action = { options: { key: 'pod', value: 'pod-123' }, type: 'ADD_FILTER_OUT' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 

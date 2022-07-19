@@ -9,6 +9,7 @@ import { IconName } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
+import { PopoverContent, Tooltip, TooltipPlacement } from '../Tooltip';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
@@ -24,6 +25,10 @@ type CommonProps = {
   children?: React.ReactNode;
   fullWidth?: boolean;
   type?: string;
+  /** Tooltip content to display on hover */
+  tooltip?: PopoverContent;
+  /** Position of the tooltip */
+  tooltipPlacement?: TooltipPlacement;
 };
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -79,6 +84,8 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       onBlur,
       onFocus,
       disabled,
+      tooltip,
+      tooltipPlacement,
       ...otherProps
     },
     ref
@@ -103,12 +110,22 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       className
     );
 
-    return (
+    const button = (
       <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>
     );
+
+    if (tooltip) {
+      return (
+        <Tooltip content={tooltip} placement={tooltipPlacement}>
+          {button}
+        </Tooltip>
+      );
+    }
+
+    return button;
   }
 );
 

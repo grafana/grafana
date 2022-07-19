@@ -3,7 +3,7 @@ import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   FileDropzone,
   InlineField,
@@ -75,14 +75,12 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'traceId', label: 'TraceID' },
       { value: 'upload', label: 'JSON file' },
+      { value: 'serviceMap', label: 'Service Graph' },
     ];
 
-    if (config.featureToggles.tempoServiceGraph) {
-      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
-      // span names in Tempo search links (generated on the service graph page) are in camel case (for Prometheus queries)
-      // but the span name dropdown menu in the search tab is lower case
-      query.spanName = query.spanName?.toLowerCase();
-    }
+    // span names in Tempo search links (generated on the service graph page) are in camel case (for Prometheus queries)
+    // but the span name dropdown menu in the search tab is lower case
+    query.spanName = query.spanName?.toLowerCase();
 
     if (!datasource?.search?.hide) {
       queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });

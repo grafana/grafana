@@ -68,6 +68,11 @@ func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *
 }
 
 // createUser creates a user in the database
+// if autoAssignOrg is enabled then args.OrgID will be used
+// to add to an existing Org with id=args.OrgID
+// if autoAssignOrg is disabled then args.OrgName will be used
+// to create a new Org with name=args.OrgName.
+// If a org already exists with that name, it will error
 func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.CreateUserCommand) (user.User, error) {
 	var usr user.User
 	var orgID int64 = -1

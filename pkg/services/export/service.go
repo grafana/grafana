@@ -23,8 +23,122 @@ type ExportService interface {
 	// List folder contents
 	HandleGetStatus(c *models.ReqContext) response.Response
 
+	// List Get Options
+	HandleGetOptions(c *models.ReqContext) response.Response
+
 	// Read raw file contents out of the store
 	HandleRequestExport(c *models.ReqContext) response.Response
+
+	// Cancel any running export
+	HandleRequestStop(c *models.ReqContext) response.Response
+}
+
+var exporters = []Exporter{
+	{
+		Key:         "auth",
+		Name:        "Authentication",
+		Description: "Saves raw SQL tables",
+		process:     dumpAuthTables,
+	},
+	{
+		Key:         "dash",
+		Name:        "Dashboards",
+		Description: "Save dashboard JSON",
+		process:     exportDashboards,
+		Exporters: []Exporter{
+			{
+				Key:         "dash_thumbs",
+				Name:        "Dashboard thumbnails",
+				Description: "Save current dashboard preview images",
+				process:     exportDashboardThumbnails,
+			},
+		},
+	},
+	{
+		Key:         "alerts",
+		Name:        "Alerts",
+		Description: "Archive alert rules and configuration",
+		process:     exportAlerts,
+	},
+	{
+		Key:         "ds",
+		Name:        "Data sources",
+		Description: "Data source configurations",
+		process:     exportDataSources,
+	},
+	{
+		Key:         "system",
+		Name:        "System",
+		Description: "Save service settings",
+		Exporters: []Exporter{
+			{
+				Key:         "system_preferences",
+				Name:        "Preferences",
+				Description: "User and team preferences",
+				process:     exportSystemPreferences,
+			},
+			{
+				Key:         "system_stars",
+				Name:        "Stars",
+				Description: "User stars",
+				process:     exportSystemStars,
+			},
+			{
+				Key:         "system_playlists",
+				Name:        "Playlists",
+				Description: "Playlists",
+				process:     exportSystemPlaylists,
+			},
+			{
+				Key:         "system_kv_store",
+				Name:        "Key Value store",
+				Description: "Internal KV store",
+				process:     exportKVStore,
+			},
+			{
+				Key:         "system_short_url",
+				Name:        "Short URLs",
+				Description: "saved links",
+				process:     exportSystemShortURL,
+			},
+			{
+				Key:         "system_live",
+				Name:        "Grafana live",
+				Description: "archived messages",
+				process:     exportLive,
+			},
+		},
+	},
+	{
+		Key:         "files",
+		Name:        "Files",
+		Description: "Export internal file system",
+		process:     exportFiles,
+	},
+	{
+		Key:         "anno",
+		Name:        "Annotations",
+		Description: "Write an DataFrame for all annotations on a dashboard",
+		process:     exportAnnotations,
+	},
+	{
+		Key:         "plugins",
+		Name:        "Plugins",
+		Description: "Save settings for all configured plugins",
+		process:     exportPlugins,
+	},
+	{
+		Key:         "usage",
+		Name:        "Usage",
+		Description: "archive current usage stats",
+		process:     exportUsage,
+	},
+	// {
+	// 	Key:         "snapshots",
+	// 	Name:        "Snapshots",
+	// 	Description: "write snapshots",
+	// 	process:     exportSnapshots,
+	// },
 }
 
 type StandardExport struct {
@@ -56,9 +170,25 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	}
 }
 
+func (ex *StandardExport) HandleGetOptions(c *models.ReqContext) response.Response {
+	info := map[string]interface{}{
+		"exporters": exporters,
+	}
+	return response.JSON(http.StatusOK, info)
+}
+
 func (ex *StandardExport) HandleGetStatus(c *models.ReqContext) response.Response {
 	ex.mutex.Lock()
 	defer ex.mutex.Unlock()
+
+	return response.JSON(http.StatusOK, ex.exportJob.getStatus())
+}
+
+func (ex *StandardExport) HandleRequestStop(c *models.ReqContext) response.Response {
+	ex.mutex.Lock()
+	defer ex.mutex.Unlock()
+
+	ex.exportJob.requestStop()
 
 	return response.JSON(http.StatusOK, ex.exportJob.getStatus())
 }
@@ -102,7 +232,12 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 	}
 
 	ex.exportJob = job
-	return response.JSON(http.StatusOK, ex.exportJob.getStatus())
+
+	info := map[string]interface{}{
+		"cfg":    cfg, // parsed job we are running
+		"status": ex.exportJob.getStatus(),
+	}
+	return response.JSON(http.StatusOK, info)
 }
 
 func (ex *StandardExport) broadcastStatus(orgID int64, s ExportStatus) {
