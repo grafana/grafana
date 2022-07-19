@@ -30,8 +30,8 @@ type AlertsRouter struct {
 	// externalAlertmanagerSenders help us send alerts to external Alertmanagers.
 	adminConfigMtx                     sync.RWMutex
 	sendAlertsTo                       map[int64]models.AlertmanagersChoice
-	externalAlertmanagerSenders        map[int64]*ExternalAlertmanager
-	externalAlertmanagerSendersCfgHash map[int64]string
+	externalAlertmanagers        map[int64]*ExternalAlertmanager
+	externalAlertmanagersCfgHash map[int64]string
 
 	multiOrgNotifier *notifier.MultiOrgAlertmanager
 
@@ -47,8 +47,8 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 		adminConfigStore: store,
 
 		adminConfigMtx:                     sync.RWMutex{},
-		externalAlertmanagerSenders:        map[int64]*ExternalAlertmanager{},
-		externalAlertmanagerSendersCfgHash: map[int64]string{},
+		externalAlertmanagers:        map[int64]*ExternalAlertmanager{},
+		externalAlertmanagersCfgHash: map[int64]string{},
 		sendAlertsTo:                       map[int64]models.AlertmanagersChoice{},
 
 		multiOrgNotifier: multiOrgNotifier,
@@ -83,9 +83,9 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		// Update the Alertmanagers choice for the organization.
 		d.sendAlertsTo[cfg.OrgID] = cfg.SendAlertsTo
 
-		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which externalAlertmanagerSenders we need to keep.
+		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which externalAlertmanagers we need to keep.
 
-		existing, ok := d.externalAlertmanagerSenders[cfg.OrgID]
+		existing, ok := d.externalAlertmanagers[cfg.OrgID]
 
 		// We have no running sender and no Alertmanager(s) configured, no-op.
 		if !ok && len(cfg.Alertmanagers) == 0 {
