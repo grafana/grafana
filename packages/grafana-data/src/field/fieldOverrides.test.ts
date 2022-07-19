@@ -619,7 +619,7 @@ describe('getLinksSupplier', () => {
                 url: '',
                 title: '',
                 internal: {
-                  datasourceUid: '0',
+                  datasourceUid: '1234',
                   datasourceName: 'testDS',
                   query: '12345',
                 },
@@ -645,7 +645,7 @@ describe('getLinksSupplier', () => {
     expect(links[0]).toEqual(
       expect.objectContaining({
         title: 'testDS',
-        href: `/explore?left=${encodeURIComponent('{"datasource":"testDS","queries":["12345"],"panelsState":{}}')}`,
+        href: `/explore?left=${encodeURIComponent('{"datasource":"1234","queries":["12345"],"panelsState":{}}')}`,
         onClick: undefined,
       })
     );
