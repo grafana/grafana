@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -713,5 +714,37 @@ func withGroupKey(groupKey models.AlertRuleGroupKey) func(rule *models.AlertRule
 		rule.RuleGroup = groupKey.RuleGroup
 		rule.OrgID = groupKey.OrgID
 		rule.NamespaceUID = groupKey.NamespaceUID
+	}
+}
+
+func withDashboard(dashboardUID *string, panelID *int64) models.AlertRuleMutator {
+	return func(rule *models.AlertRule) {
+		rule.DashboardUID = dashboardUID
+		rule.PanelID = panelID
+	}
+}
+
+// simulateSubmitted resets some fields of the structure that are not populated by API model to model conversion
+func simulateSubmitted(rule *models.AlertRule) {
+	rule.ID = 0
+	rule.Version = 0
+	rule.Updated = time.Time{}
+}
+
+func withoutUID(rule *models.AlertRule) {
+	rule.UID = ""
+}
+
+func withUIDs(uids map[string]*models.AlertRule) func(rule *models.AlertRule) {
+	unused := make([]string, 0, len(uids))
+	for s := range uids {
+		unused = append(unused, s)
+	}
+	return func(rule *models.AlertRule) {
+		if len(unused) == 0 {
+			return
+		}
+		rule.UID = unused[0]
+		unused = unused[1:]
 	}
 }

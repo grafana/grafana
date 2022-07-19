@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-openapi/loads"
 	"github.com/stretchr/testify/require"
+	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -132,6 +133,22 @@ func mapUpdates(updates []store.RuleDelta, mapFunc func(store.RuleDelta) *models
 	return result
 }
 
+func deduplicateSlice(slice []string) []string {
+	if len(slice) == 0 {
+		return nil
+	}
+	existing := make(map[string]struct{}, len(slice))
+	result := make([]string, 0, len(slice))
+	for _, str := range slice {
+		if _, ok := existing[str]; ok {
+			continue
+		}
+		result = append(result, str)
+		existing[str] = struct{}{}
+	}
+	return result
+}
+
 func TestAuthorizeRuleChanges(t *testing.T) {
 	groupKey := models.GenerateGroupKey(rand.Int63())
 	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
@@ -146,7 +163,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			changes: func() *store.GroupDelta {
 				return &store.GroupDelta{
 					GroupKey: groupKey,
-					New:      models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey))),
+					New:      models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey), withDashboard(nil, nil))),
 					Update:   nil,
 					Delete:   nil,
 				}
@@ -162,7 +179,37 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ac.ActionAlertingRuleCreate: {
 						namespaceIdScope,
 					},
-					datasources.ActionQuery: scopes,
+					datasources.ActionQuery: deduplicateSlice(scopes),
+				}
+			},
+		},
+		{
+			name: "if a new rule refers to a dashboard it should check dashboard permissions",
+			changes: func() *store.GroupDelta {
+				return &store.GroupDelta{
+					GroupKey: groupKey,
+					New:      models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey), withDashboard(ptr.String(util.GenerateShortUID()), ptr.Int64(rand.Int63())))),
+					Update:   nil,
+					Delete:   nil,
+				}
+			},
+			permissions: func(c *store.GroupDelta) map[string][]string {
+				var dashboardScopes []string
+				for _, rule := range c.New {
+					dashboardScopes = append(dashboardScopes, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(*rule.DashboardUID))
+				}
+				var scopes []string
+				for _, rule := range c.New {
+					for _, query := range rule.Data {
+						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
+					}
+				}
+				return map[string][]string{
+					ac.ActionAlertingRuleCreate: {
+						namespaceIdScope,
+					},
+					dashboards.ActionDashboardsWrite: deduplicateSlice(dashboardScopes),
+					datasources.ActionQuery:          deduplicateSlice(scopes),
 				}
 			},
 		},
@@ -193,8 +240,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules to update within the same namespace it should check update action and access to datasource",
 			changes: func() *store.GroupDelta {
-				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
+				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey), withDashboard(nil, nil)))
+				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey), withDashboard(nil, nil)))
 				updates := make([]store.RuleDelta, 0, len(rules))
 
 				for _, rule := range rules {
@@ -230,10 +277,53 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 		},
 		{
+			name: "if dashboard reference is changed it should check access to new dashboard",
+			changes: func() *store.GroupDelta {
+				rule := models.AlertRuleGen(withGroupKey(groupKey), withDashboard(ptr.String(util.GenerateShortUID()), ptr.Int64(rand.Int63())))()
+				updated := models.CopyRule(rule)
+				updated.DashboardUID = ptr.String(util.GenerateShortUID())
+
+				updates := []store.RuleDelta{
+					{
+						Existing: rule,
+						New:      updated,
+					},
+				}
+
+				return &store.GroupDelta{
+					GroupKey: groupKey,
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+						groupKey: []*models.AlertRule{
+							rule,
+						},
+					},
+					New:    nil,
+					Update: updates,
+					Delete: nil,
+				}
+			},
+			permissions: func(c *store.GroupDelta) map[string][]string {
+				scopes := getDatasourceScopesForRules(append(c.AffectedGroups[c.GroupKey], mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+					return update.New
+				})...))
+				var dashboardScopes []string
+				for _, rule := range c.Update {
+					dashboardScopes = append(dashboardScopes, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(*rule.New.DashboardUID))
+				}
+				return map[string][]string{
+					ac.ActionAlertingRuleUpdate: {
+						namespaceIdScope,
+					},
+					datasources.ActionQuery:          scopes,
+					dashboards.ActionDashboardsWrite: dashboardScopes,
+				}
+			},
+		},
+		{
 			name: "if there are rules that are moved between namespaces it should check delete+add action and access to group where rules come from",
 			changes: func() *store.GroupDelta {
-				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
+				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey), withDashboard(nil, nil)))
+				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey), withDashboard(nil, nil)))
 
 				targetGroupKey := models.GenerateGroupKey(groupKey.OrgID)
 
@@ -294,8 +384,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					NamespaceUID: groupKey.NamespaceUID,
 					RuleGroup:    util.GenerateShortUID(),
 				}
-				sourceGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-				targetGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(targetGroupKey)))
+				sourceGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey), withDashboard(nil, nil)))
+				targetGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(targetGroupKey), withDashboard(nil, nil)))
 
 				updates := make([]store.RuleDelta, 0, len(sourceGroup))
 				toCopy := len(sourceGroup)

@@ -280,6 +280,13 @@ func authorizeRuleChanges(change *store.GroupDelta, evaluator func(evaluator ac.
 			if !dsAllowed {
 				return fmt.Errorf("%w to create a new alert rule '%s' because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Title)
 			}
+
+			if rule.DashboardUID != nil {
+				dashboardChangeAuthorized := evaluator(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(*rule.DashboardUID)))
+				if !dashboardChangeAuthorized {
+					return fmt.Errorf("%w to assing a new rule '%s' to a dashboard %s", ErrAuthorization, rule.Title, *rule.DashboardUID)
+				}
+			}
 		}
 	}
 
@@ -318,6 +325,13 @@ func authorizeRuleChanges(change *store.GroupDelta, evaluator func(evaluator ac.
 			}
 			if !authorizeAccessToRuleGroup(rules, evaluator) {
 				return fmt.Errorf("%w to move rule %s between two different groups because user does not have access to the source group %s", ErrAuthorization, rule.Existing.UID, rule.Existing.RuleGroup)
+			}
+		}
+
+		if rule.Existing.DashboardUID != rule.New.DashboardUID && rule.New.DashboardUID != nil {
+			dashboardChangeAuthorized := evaluator(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(*rule.New.DashboardUID)))
+			if !dashboardChangeAuthorized {
+				return fmt.Errorf("%w to assing rule %s to a dashboard %s", ErrAuthorization, rule.Existing.UID, *rule.New.DashboardUID)
 			}
 		}
 	}
