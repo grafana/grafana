@@ -19,7 +19,8 @@ weight: 130
 The following table lists the contact point types supported by Grafana.
 
 | Name                                             | Type                      | Grafana Alertmanager | Other Alertmanagers                                                                                      |
-| ------------------------------------------------ | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------------ |---------------------------| -------------------- | -------------------------------------------------------------------------------------------------------- |
+| [Amazon SNS](https://aws.amazon.com/sns/)        | `sns`                     | Supported            | N/A                                                                                                      |
 | [DingDing](https://www.dingtalk.com/en)          | `dingding`                | Supported            | N/A                                                                                                      |
 | [Discord](https://discord.com/)                  | `discord`                 | Supported            | N/A                                                                                                      |
 | [Email](#email)                                  | `email`                   | Supported            | Supported                                                                                                |
