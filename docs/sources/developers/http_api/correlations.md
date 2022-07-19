@@ -71,14 +71,14 @@ Status codes:
 
 ## Delete correlations
 
-`DELETE /api/datasources/uid/:uid/correlation/:correlationUid`
+`DELETE /api/datasources/uid/:uid/correlations/:correlationUid`
 
 Deletes a correlation.
 
 **Example request:**
 
 ```http
-DELETE /api/datasources/uid/uyBf2637k/correlation/J6gn7d31L HTTP/1.1
+DELETE /api/datasources/uid/uyBf2637k/correlations/J6gn7d31L HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
