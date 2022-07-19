@@ -85,29 +85,37 @@ type standardStorageService struct {
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
 	globalRoots := []storageRuntime{
-		newDiskStorage(RootPublicStatic, "Public static files", &StorageLocalDiskConfig{
-			Path: cfg.StaticRootPath,
-			Roots: []string{
-				"/testdata/",
-				"/img/",
-				"/gazetteer/",
-				"/maps/",
+		newDiskStorage(RootStorageConfig{
+			Prefix:      RootPublicStatic,
+			Name:        "Public static files",
+			Description: "Access files from the static public files",
+			Disk: &StorageLocalDiskConfig{
+				Path: cfg.StaticRootPath,
+				Roots: []string{
+					"/testdata/",
+					"/img/",
+					"/gazetteer/",
+					"/maps/",
+				},
 			},
-		}).setReadOnly(true).setBuiltin(true).
-			setDescription("Access files from the static public files"),
+		}).setReadOnly(true).setBuiltin(true),
 	}
 
 	// Development dashboards
 	if setting.Env != setting.Prod {
 		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
 		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
-			// path/to/whatever exists
-			s := newDiskStorage(RootDevenv, "Development Environment", &StorageLocalDiskConfig{
-				Path: devenv,
-				Roots: []string{
-					"/dev-dashboards/",
-				},
-			}).setReadOnly(false).setDescription("Explore files within the developer environment directly")
+			s := newDiskStorage(RootStorageConfig{
+				Prefix:      RootDevenv,
+				Name:        "Development Environment",
+				Description: "Explore files within the developer environment directly",
+				Disk: &StorageLocalDiskConfig{
+					Path: devenv,
+					Roots: []string{
+						"/dev-dashboards/",
+					},
+				}}).setReadOnly(false)
+
 			globalRoots = append(globalRoots, s)
 		}
 	}
@@ -119,17 +127,17 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		storages = append(storages,
 			newSQLStorage(RootResources,
 				"Resources",
-				&StorageSQLConfig{orgId: orgId}, sql).
-				setBuiltin(true).
-				setDescription("Upload custom resource files"))
+				"Upload custom resource files",
+				&StorageSQLConfig{}, sql, orgId).
+				setBuiltin(true))
 
 		// System settings
 		storages = append(storages,
 			newSQLStorage(RootSystem,
 				"System",
-				&StorageSQLConfig{orgId: orgId},
-				sql,
-			).setBuiltin(true).setDescription("Grafana system storage"))
+				"Grafana system storage",
+				&StorageSQLConfig{}, sql, orgId).
+				setBuiltin(true))
 
 		return storages
 	}
