@@ -7,15 +7,19 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	RuleOrgID         int64  `xorm:"rule_org_id"`
-	RuleUID           string `xorm:"rule_uid"`
+	AlertInstanceKey  `xorm:"extends"`
 	Labels            InstanceLabels
-	LabelsHash        string
 	CurrentState      InstanceStateType
 	CurrentReason     string
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
 	LastEvalTime      time.Time
+}
+
+type AlertInstanceKey struct {
+	RuleOrgID  int64  `xorm:"rule_org_id"`
+	RuleUID    string `xorm:"rule_uid"`
+	LabelsHash string
 }
 
 // InstanceStateType is an enum for instance states.
@@ -42,22 +46,6 @@ func (i InstanceStateType) IsValid() bool {
 		i == InstanceStateNoData ||
 		i == InstanceStatePending ||
 		i == InstanceStateError
-}
-
-type SaveAlertInstancesCommand struct {
-	Instances []SaveAlertInstanceCommandFields
-}
-
-// SaveAlertInstanceCommand is the query for saving a new alert instance.
-type SaveAlertInstanceCommandFields struct {
-	RuleOrgID         int64
-	RuleUID           string
-	Labels            InstanceLabels
-	State             InstanceStateType
-	StateReason       string
-	LastEvalTime      time.Time
-	CurrentStateSince time.Time
-	CurrentStateEnd   time.Time
 }
 
 // GetAlertInstanceQuery is the query for retrieving/deleting an alert definition by ID.

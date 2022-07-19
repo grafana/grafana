@@ -426,10 +426,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Len(t, states, 1)
 				s := states[0]
 
-				var cmd *models.SaveAlertInstancesCommand
+				var cmd *models.AlertInstance
 				for _, op := range instanceStore.RecordedOps {
 					switch q := op.(type) {
-					case models.SaveAlertInstancesCommand:
+					case models.AlertInstance:
 						cmd = &q
 					}
 					if cmd != nil {
@@ -439,11 +439,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 				require.NotNil(t, cmd)
 				t.Logf("Saved alert instances: %v", cmd)
-				require.Equal(t, rule.OrgID, cmd.Instances[0].RuleOrgID)
-				require.Equal(t, expectedTime, cmd.Instances[0].LastEvalTime)
-				require.Equal(t, rule.UID, cmd.Instances[0].RuleUID)
-				require.Equal(t, evalState.String(), string(cmd.Instances[0].State))
-				require.Equal(t, s.Labels, data.Labels(cmd.Instances[0].Labels))
+				require.Equal(t, rule.OrgID, cmd.RuleOrgID)
+				require.Equal(t, expectedTime, cmd.LastEvalTime)
+				require.Equal(t, rule.UID, cmd.RuleUID)
+				require.Equal(t, evalState.String(), string(cmd.CurrentState))
+				require.Equal(t, s.Labels, data.Labels(cmd.Labels))
 			})
 			t.Run("it reports metrics", func(t *testing.T) {
 				// duration metric has 0 values because of mocked clock that do not advance

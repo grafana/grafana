@@ -12,15 +12,9 @@ import (
 type InstanceStore interface {
 	GetAlertInstance(ctx context.Context, cmd *models.GetAlertInstanceQuery) error
 	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) error
-	SaveAlertInstances(ctx context.Context, cmd *models.SaveAlertInstancesCommand) error
+	SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error
 	FetchOrgIds(ctx context.Context) ([]int64, error)
-	DeleteAlertInstances(ctx context.Context, keys ...InstanceKey) error
-}
-
-type InstanceKey struct {
-	OrgID      int64
-	RuleUID    string
-	LabelsHash string
+	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
 }
 
 // GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
@@ -70,6 +64,7 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 			params = append(params, p...)
 		}
 
+		// TODO: Why do we use the title here?
 		addToQuery("SELECT alert_instance.*, alert_rule.title AS rule_title FROM alert_instance LEFT JOIN alert_rule ON alert_instance.rule_org_id = alert_rule.org_id AND alert_instance.rule_uid = alert_rule.uid WHERE rule_org_id = ?", cmd.RuleOrgID)
 
 		if cmd.RuleUID != "" {
@@ -93,36 +88,26 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 	})
 }
 
-// SaveAlertInstances saves all the provided alert instances in a single write transaction.
-func (st DBstore) SaveAlertInstances(ctx context.Context, cmd *models.SaveAlertInstancesCommand) error {
+// SaveAlertInstances saves all the provided alert instances to the store. It
+// writes transactions with a maximum count of 400 rows. Larger writes are
+// split into multiple transactions.
+func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error {
 	rowLimit := 400
-	for i := 0; i < len(cmd.Instances); i += rowLimit {
+	for i := 0; i < len(cmd); i += rowLimit {
 		err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			values := make([]interface{}, 0)
 			limit := i + rowLimit
-			if len(cmd.Instances) < limit {
-				limit = len(cmd.Instances)
+			if len(cmd) < limit {
+				limit = len(cmd)
 			}
 
-			for _, fields := range cmd.Instances[i:limit] {
-				labelTupleJSON, labelsHash, err := fields.Labels.StringAndHash()
+			for _, alertInstance := range cmd[i:limit] {
+				labelTupleJSON, err := alertInstance.Labels.StringKey()
 				if err != nil {
 					return err
 				}
 
-				alertInstance := &models.AlertInstance{
-					RuleOrgID:         fields.RuleOrgID,
-					RuleUID:           fields.RuleUID,
-					Labels:            fields.Labels,
-					LabelsHash:        labelsHash,
-					CurrentState:      fields.State,
-					CurrentReason:     fields.StateReason,
-					CurrentStateSince: fields.CurrentStateSince,
-					CurrentStateEnd:   fields.CurrentStateEnd,
-					LastEvalTime:      fields.LastEvalTime,
-				}
-
-				if err := models.ValidateAlertInstance(alertInstance); err != nil {
+				if err := models.ValidateAlertInstance(&alertInstance); err != nil {
 					return err
 				}
 
@@ -135,7 +120,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd *models.SaveAlertI
 				"alert_instance",
 				[]string{"rule_org_id", "rule_uid", "labels_hash"},
 				[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"},
-				len(cmd.Instances))
+				len(cmd))
 			if err != nil {
 				return err
 			}
@@ -177,19 +162,34 @@ func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 	return orgIds, err
 }
 
-func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...InstanceKey) error {
+// DeleteAlertInstances deletes instances with the provided keys. It
+// writes transactions with a maximum count of 400 rows. Larger writes are
+// split into multiple transactions.
+func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error {
 	if len(keys) == 0 {
 		return nil
 	}
 
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for _, k := range keys {
-			_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels_hash = ?",
-				k.OrgID, k.RuleUID, k.LabelsHash)
-			if err != nil {
-				return err
+	rowLimit := 400
+	for i := 0; i < len(keys); i = +rowLimit {
+		err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			limit := i + rowLimit
+			if len(keys) < limit {
+				limit = len(keys)
 			}
+
+			for _, k := range keys[i:limit] {
+				_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels_hash = ?",
+					k.RuleOrgID, k.RuleUID, k.LabelsHash)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-		return nil
-	})
+	}
+	return nil
 }

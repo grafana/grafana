@@ -467,25 +467,43 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	}
 }
 
+// TODO: Is the `State` type necessary? Should it embed the instance?
 func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State) {
 	sch.log.Debug("saving alert states", "count", len(states))
-	cmd := ngmodels.SaveAlertInstancesCommand{}
+	instances := make([]ngmodels.AlertInstance, 0, len(states))
 	for _, s := range states {
-		fields := ngmodels.SaveAlertInstanceCommandFields{
-			RuleOrgID:         s.OrgID,
-			RuleUID:           s.AlertRuleUID,
+		labels := ngmodels.InstanceLabels(s.Labels)
+		_, hash, err := labels.StringAndHash()
+		if err == nil {
+			sch.log.Error("failed to save alert instance with invalid labels", "orgID", s.OrgID, "ruleUID", s.AlertRuleUID, "err", err)
+		}
+		fields := ngmodels.AlertInstance{
+			AlertInstanceKey: ngmodels.AlertInstanceKey{
+				RuleOrgID:  s.OrgID,
+				RuleUID:    s.AlertRuleUID,
+				LabelsHash: hash,
+			},
 			Labels:            ngmodels.InstanceLabels(s.Labels),
-			State:             ngmodels.InstanceStateType(s.State.String()),
-			StateReason:       s.StateReason,
+			CurrentState:      ngmodels.InstanceStateType(s.State.String()),
+			CurrentReason:     s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
 		}
-		cmd.Instances = append(cmd.Instances, fields)
+		instances = append(instances, fields)
 	}
-	err := sch.instanceStore.SaveAlertInstances(ctx, &cmd)
+	err := sch.instanceStore.SaveAlertInstances(ctx, instances...)
 	if err != nil {
-		//sch.log.Error("failed to save alert states", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
+		type debugInfo struct {
+			OrgID int64
+			Uid   string
+			State string
+		}
+		debug := make([]debugInfo, 0, len(instances))
+		for _, inst := range instances {
+			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState)})
+		}
+		sch.log.Error("failed to save alert states", "states", debug, "err", err)
 	}
 }
 
