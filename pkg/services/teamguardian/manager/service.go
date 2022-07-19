@@ -11,7 +11,7 @@ type Service struct {
 	store teamguardian.Store
 }
 
-func ProvideService(store teamguardian.Store) *Service {
+func ProvideService(store teamguardian.Store) teamguardian.TeamGuardian {
 	return &Service{store: store}
 }
 

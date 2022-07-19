@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton } from '@grafana/ui';
+import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton, Alert } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -18,6 +18,7 @@ import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
+import { UploadButton } from './UploadButton';
 import { getGrafanaStorage, filenameAlreadyExists } from './storage';
 import { StorageView } from './types';
 
@@ -57,6 +58,7 @@ export default function StoragePage(props: Props) {
   };
 
   const [isAddingNewFolder, setIsAddingNewFolder] = useState(false);
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   const listing = useAsync((): Promise<DataFrame | undefined> => {
     return getGrafanaStorage()
@@ -153,17 +155,26 @@ export default function StoragePage(props: Props) {
       opts.push({ what: StorageView.History, text: 'History' });
     }
 
-    // Hardcode the uploadable folder :)
-    if (isFolder && path.startsWith('resources')) {
-      opts.push({
-        what: StorageView.Upload,
-        text: 'Upload',
-      });
-    }
     const canAddFolder = isFolder && path.startsWith('resources');
     const canDelete = path.startsWith('resources/');
     const canViewDashboard =
       path.startsWith('devenv/') && config.featureToggles.dashboardsFromStorage && (isFolder || path.endsWith('.json'));
+
+    const getErrorMessages = () => {
+      return (
+        <div className={styles.errorAlert}>
+          <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
+            {errorMessages.map((error) => {
+              return <div key={error}>{error}</div>;
+            })}
+          </Alert>
+        </div>
+      );
+    };
+
+    const clearAlert = () => {
+      setErrorMessages([]);
+    };
 
     return (
       <div className={styles.wrapper}>
@@ -175,7 +186,13 @@ export default function StoragePage(props: Props) {
                 Dashboard
               </LinkButton>
             )}
-            {canAddFolder && <Button onClick={() => setIsAddingNewFolder(true)}>New Folder</Button>}
+
+            {canAddFolder && (
+              <>
+                <UploadButton path={path} setErrorMessages={setErrorMessages} fileNames={fileNames} setPath={setPath} />
+                <Button onClick={() => setIsAddingNewFolder(true)}>New Folder</Button>
+              </>
+            )}
             {canDelete && (
               <Button
                 variant="destructive"
@@ -207,6 +224,8 @@ export default function StoragePage(props: Props) {
           </HorizontalGroup>
         </HorizontalGroup>
 
+        {errorMessages.length > 0 && getErrorMessages()}
+
         <TabsBar>
           {opts.map((opt) => (
             <Tab
@@ -218,7 +237,7 @@ export default function StoragePage(props: Props) {
           ))}
         </TabsBar>
         {isFolder ? (
-          <FolderView path={path} listing={frame} onPathChange={setPath} view={view} fileNames={fileNames} />
+          <FolderView listing={frame} view={view} />
         ) : (
           <FileView path={path} listing={frame} onPathChange={setPath} view={view} />
         )}
@@ -284,11 +303,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.colors.border.medium};
     height: 100%;
   `,
-  uploadSpot: css`
-    margin-left: ${theme.spacing(2)};
-  `,
   border: css`
     border: 1px solid ${theme.colors.border.medium};
     padding: ${theme.spacing(2)};
+  `,
+  errorAlert: css`
+    padding-top: 20px;
+  `,
+  uploadButton: css`
+    margin-right: ${theme.spacing(2)};
   `,
 });
