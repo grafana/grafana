@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { locationUtil, textUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
+import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate, Tag } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
 import config from 'app/core/config';
@@ -152,6 +152,10 @@ export const DashNav = React.memo<Props>((props) => {
           )}
         </ModalsController>
       );
+    }
+
+    if (dashboard.meta.publicDashboardEnabled) {
+      buttons.push(<Tag name="Public" colorIndex={5}></Tag>);
     }
 
     if (dashboard.uid && config.featureToggles.dashboardComments) {
