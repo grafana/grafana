@@ -32,7 +32,7 @@ type CreateCorrelationResponse struct {
 	Body correlations.CreateCorrelationResponse `json:"body"`
 }
 
-// swagger:route DELETE /datasources/uid/{uid}/correlations/{correlationUid} correlations deleteCorrelation
+// swagger:route DELETE /datasources/uid/{uid}/correlation/{correlationUid} correlations deleteCorrelation
 //
 // Delete a correlation.
 //
