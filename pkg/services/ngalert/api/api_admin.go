@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -74,8 +75,13 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 		return response.Error(400, "Invalid alertmanager choice specified", err)
 	}
 
-	if sendAlertsTo == ngmodels.ExternalAlertmanagers && !srv.hasExternalAlertmanager(
-		c.Req.Context(), c.OrgId, body.Alertmanagers) {
+	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return response.Error(500, "Couldn't fetch the external alertmanagers from datasources", err)
+	}
+
+	if sendAlertsTo == ngmodels.ExternalAlertmanagers &&
+		(len(body.Alertmanagers) < 1 && len(externalAlertmanagers) < 1) {
 		return response.Error(400, "At least one Alertmanager must be provided to choose this option", nil)
 	}
 
@@ -115,24 +121,24 @@ func (srv AdminSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Resp
 	return response.JSON(http.StatusOK, util.DynMap{"message": "admin configuration deleted"})
 }
 
-func (srv AdminSrv) hasExternalAlertmanager(ctx context.Context, orgID int64,
-	alertmanagers []string) bool {
-	if len(alertmanagers) > 0 {
-		return true
-	}
+// externalAlertmanagers returns the URL of any external datasource. The URL
+// does not contain any auth.
+func (srv AdminSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]string, error) {
+	var alertmanagers []string
 	query := &datasources.GetDataSourcesByTypeQuery{
 		OrgId: orgID,
 		Type:  datasources.DS_ALERTMANAGER,
 	}
 	err := srv.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {
-		srv.log.Error("failed to fetch datasources for org", "org", orgID)
-		return false
+		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
 	for _, ds := range query.Result {
 		if ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
-			return true
+			// we don't need to build the exact URL as we only need
+			// to know if any is set
+			alertmanagers = append(alertmanagers, ds.Uid)
 		}
 	}
-	return false
+	return alertmanagers, nil
 }
