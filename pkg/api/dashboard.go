@@ -83,7 +83,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		err                error
 	)
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		hasPublicDashboard, err = hs.DashboardService.HasActivePublicDashboard(c.Req.Context(), dash.Uid)
+		hasPublicDashboard, err = hs.PublicDashboardsApi.PublicDashboardService.PublicDashboardEnabled(c.Req.Context(), dash.Uid)
 		if err != nil {
 			return response.Error(500, "Error while retrieving public dashboards", err)
 		}

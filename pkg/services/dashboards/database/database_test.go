@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	publicDashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
-	publicDashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -30,14 +28,12 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
-	var publicDashboardStore *publicDashboardsStore.PublicDashboardStoreImpl
 	var starService star.Service
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
 		starService = starimpl.ProvideService(sqlStore)
 		dashboardStore = ProvideDashboardStore(sqlStore)
-		publicDashboardStore = publicDashboardsStore.ProvideStore(sqlStore)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
@@ -77,54 +73,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, query.Result.Id, savedDash.Id)
 		require.Equal(t, query.Result.Uid, savedDash.Uid)
 		require.False(t, query.Result.IsFolder)
-	})
-
-	t.Run("HasActivePublicDashboard Will return true when dashboard has at least one enabled public dashboard", func(t *testing.T) {
-		setup()
-
-		_, err := publicDashboardStore.SavePublicDashboardConfig(context.Background(), publicDashboardModels.SavePublicDashboardConfigCommand{
-			DashboardUid: savedDash.Uid,
-			OrgId:        savedDash.OrgId,
-			PublicDashboard: publicDashboardModels.PublicDashboard{
-				IsEnabled:    true,
-				Uid:          "abc123",
-				DashboardUid: savedDash.Uid,
-				OrgId:        savedDash.OrgId,
-				CreatedAt:    time.Now(),
-				CreatedBy:    7,
-				AccessToken:  "NOTAREALUUID",
-			},
-		})
-		require.NoError(t, err)
-
-		res, err := dashboardStore.HasActivePublicDashboard(context.Background(), savedDash.Uid)
-		require.NoError(t, err)
-
-		require.True(t, res)
-	})
-
-	t.Run("HasActivePublicDashboard will return false when dashboard has public dashboards but they are not enabled", func(t *testing.T) {
-		setup()
-
-		_, err := publicDashboardStore.SavePublicDashboardConfig(context.Background(), publicDashboardModels.SavePublicDashboardConfigCommand{
-			DashboardUid: savedDash.Uid,
-			OrgId:        savedDash.OrgId,
-			PublicDashboard: publicDashboardModels.PublicDashboard{
-				IsEnabled:    false,
-				Uid:          "abc123",
-				DashboardUid: savedDash.Uid,
-				OrgId:        savedDash.OrgId,
-				CreatedAt:    time.Now(),
-				CreatedBy:    7,
-				AccessToken:  "NOTAREALUUID",
-			},
-		})
-		require.NoError(t, err)
-
-		res, err := dashboardStore.HasActivePublicDashboard(context.Background(), savedDash.Uid)
-		require.NoError(t, err)
-
-		require.False(t, res)
 	})
 
 	t.Run("Should be able to get dashboard by slug", func(t *testing.T) {

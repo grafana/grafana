@@ -514,10 +514,6 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *models
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasActivePublicDashboard(ctx context.Context, dashboardUid string) (bool, error) {
-	return dr.dashboardStore.HasActivePublicDashboard(ctx, dashboardUid)
-}
-
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
