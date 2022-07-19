@@ -1,11 +1,10 @@
-import { useEffect } from 'react';
 import { useObservable } from 'react-use';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { EventBusSrv } from '@grafana/data';
 
-import { SceneComponentEditWrapper } from './SceneComponentEditWrapper';
+import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
 import {
   SceneDataState,
@@ -16,14 +15,15 @@ import {
   SceneEditor,
   SceneObjectList,
   SceneTimeRange,
+  isSceneObject,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
   subject = new Subject<TState>();
   state: TState;
-  parent?: SceneObjectBase<any>;
+  parent?: SceneObjectBase<SceneObjectState>;
   subs = new Subscription();
-  isMounted?: boolean;
+  isActive?: boolean;
   events = new EventBusSrv();
 
   constructor(state: TState) {
@@ -41,7 +41,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Wraps the component in an EditWrapper that handles edit mode
    */
   get Component(): SceneComponent<this> {
-    return SceneComponentEditWrapper;
+    return SceneComponentWrapper;
   }
 
   /**
@@ -53,13 +53,13 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
   private setParent() {
     for (const propValue of Object.values(this.state)) {
-      if (propValue instanceof SceneObjectBase) {
+      if (isSceneObject(propValue)) {
         propValue.parent = this;
       }
 
       if (Array.isArray(propValue)) {
         for (const child of propValue) {
-          if (child instanceof SceneObjectBase) {
+          if (isSceneObject(child)) {
             child.parent = this;
           }
         }
@@ -96,44 +96,25 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     return !this.parent ? this : this.parent.getRoot();
   }
 
-  onMount() {
-    this.isMounted = true;
+  activate() {
+    this.isActive = true;
 
     const { $data } = this.state;
-    if ($data && !$data.isMounted) {
-      $data.onMount();
+    if ($data && !$data.isActive) {
+      $data.activate();
     }
   }
 
-  onUnmount() {
-    this.isMounted = false;
+  deactivate(): void {
+    this.isActive = false;
 
     const { $data } = this.state;
-    if ($data && $data.isMounted) {
-      $data.onUnmount();
+    if ($data && $data.isActive) {
+      $data.deactivate();
     }
 
     this.subs.unsubscribe();
     this.subs = new Subscription();
-  }
-
-  /**
-   * The scene object needs to know when the react component is mounted to trigger query and other lazy actions
-   */
-  useMount() {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-      if (!this.isMounted) {
-        this.onMount();
-      }
-      return () => {
-        if (this.isMounted) {
-          this.onUnmount();
-        }
-      };
-    }, []);
-
-    return this;
   }
 
   useState() {

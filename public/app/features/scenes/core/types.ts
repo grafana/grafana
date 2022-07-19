@@ -41,7 +41,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   state: TState;
 
   /** True when there is a React component mounted for this Object */
-  isMounted?: boolean;
+  isActive?: boolean;
 
   /** SceneObject parent */
   parent?: SceneObject;
@@ -55,14 +55,11 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** How to modify state */
   setState(state: Partial<TState>): void;
 
-  /** Utility hook for main component so that object knows when it's mounted */
-  useMount(): this;
-
-  /** Called when component mounts. A place to register event listeners add subscribe to state changes */
-  onMount(): void;
+  /** Called when the Component is mounted. A place to register event listeners add subscribe to state changes */
+  activate(): void;
 
   /** Called when component unmounts. Unsubscribe to events */
-  onUnmount(): void;
+  deactivate(): void;
 
   /** Get the scene editor */
   getSceneEditor(): SceneEditor;
@@ -77,7 +74,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
 }
 
-export type SceneObjectList<T = SceneObjectState> = Array<SceneObject<T>>;
+export type SceneObjectList<T extends SceneObjectState | SceneLayoutState = SceneObjectState> = Array<SceneObject<T>>;
 
 export interface SceneLayoutState extends SceneObjectState {
   children: SceneObjectList;
@@ -119,4 +116,10 @@ export interface SceneObjectWithUrlSync extends SceneObject {
 
 export function isSceneObjectWithUrlSync(obj: any): obj is SceneObjectWithUrlSync {
   return obj.getUrlState !== undefined;
+}
+
+export function isSceneLayoutObject(
+  obj: SceneObject<SceneObjectState | SceneLayoutState>
+): obj is SceneObject<SceneLayoutState> {
+  return 'children' in obj.state && obj.state.children !== undefined;
 }

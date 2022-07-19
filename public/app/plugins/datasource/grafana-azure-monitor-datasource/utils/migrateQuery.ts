@@ -1,3 +1,7 @@
+import React from 'react';
+
+import { TemplateSrv } from '@grafana/runtime';
+
 import UrlBuilder from '../azure_monitor/url_builder';
 import { setKustoQuery } from '../components/LogsQueryEditor/setQueryValue';
 import {
@@ -5,11 +9,15 @@ import {
   setTimeGrain as setMetricsTimeGrain,
 } from '../components/MetricsQueryEditor/setQueryValue';
 import TimegrainConverter from '../time_grain_converter';
-import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureMetricDimension, AzureMonitorErrorish, AzureMonitorQuery, AzureQueryType } from '../types';
 
 const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
 
-export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuery {
+export default function migrateQuery(
+  query: AzureMonitorQuery,
+  templateSrv: TemplateSrv,
+  setError: (errorSource: string, error: AzureMonitorErrorish) => void
+): AzureMonitorQuery {
   let workingQuery = query;
 
   // The old angular controller also had a `migrateApplicationInsightsKeys` migraiton that
@@ -21,7 +29,7 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
   workingQuery = migrateLogAnalyticsToFromTimes(workingQuery);
   workingQuery = migrateToDefaultNamespace(workingQuery);
   workingQuery = migrateDimensionToDimensionFilter(workingQuery);
-  workingQuery = migrateResourceUri(workingQuery);
+  workingQuery = migrateResourceUri(workingQuery, templateSrv, setError);
   workingQuery = migrateDimensionFilterToArray(workingQuery);
 
   return workingQuery;
@@ -96,7 +104,11 @@ function migrateDimensionToDimensionFilter(query: AzureMonitorQuery): AzureMonit
 // Azure Monitor metric queries prior to Grafana version 9 did not include a `resourceUri`.
 // The resourceUri was previously constructed with the subscription id, resource group,
 // metric definition (a.k.a. resource type), and the resource name.
-function migrateResourceUri(query: AzureMonitorQuery): AzureMonitorQuery {
+function migrateResourceUri(
+  query: AzureMonitorQuery,
+  templateSrv: TemplateSrv,
+  setError?: (errorSource: string, error: AzureMonitorErrorish) => void
+): AzureMonitorQuery {
   const azureMonitorQuery = query.azureMonitor;
 
   if (!azureMonitorQuery || azureMonitorQuery.resourceUri) {
@@ -109,11 +121,62 @@ function migrateResourceUri(query: AzureMonitorQuery): AzureMonitorQuery {
     return query;
   }
 
-  if (metricDefinition.includes('$') || resourceName.includes('$')) {
+  const metricDefinitionArray = metricDefinition.split('/');
+  if (metricDefinitionArray.some((p) => templateSrv.replace(p).split('/').length > 2)) {
+    // If a metric definition includes template variable with a subresource e.g.
+    // Microsoft.Storage/storageAccounts/libraries, it's not possible to generate a valid
+    // resource URI
+    if (setError) {
+      setError(
+        'Resource URI migration',
+        React.createElement(
+          'div',
+          null,
+          `Failed to create resource URI. Validate the metric definition template variable against supported cases `,
+          React.createElement(
+            'a',
+            {
+              href: 'https://grafana.com/docs/grafana/latest/datasources/azuremonitor/template-variables/',
+            },
+            'here.'
+          )
+        )
+      );
+    }
     return query;
   }
 
-  const resourceUri = UrlBuilder.buildResourceUri(subscription, resourceGroup, metricDefinition, resourceName);
+  const resourceNameArray = resourceName.split('/');
+  if (resourceNameArray.some((p) => templateSrv.replace(p).split('/').length > 1)) {
+    // If a resource name includes template variable with a subresource e.g.
+    // abc123/def456, it's not possible to generate a valid resource URI
+    if (setError) {
+      setError(
+        'Resource URI migration',
+        React.createElement(
+          'div',
+          null,
+          `Failed to create resource URI. Validate the resource name template variable against supported cases `,
+          React.createElement(
+            'a',
+            {
+              href: 'https://grafana.com/docs/grafana/latest/datasources/azuremonitor/template-variables/',
+            },
+            'here.'
+          )
+        )
+      );
+    }
+    return query;
+  }
+
+  const resourceUri = UrlBuilder.buildResourceUri(
+    subscription,
+    resourceGroup,
+    metricDefinition,
+    resourceName,
+    templateSrv
+  );
 
   return {
     ...query,
@@ -163,7 +226,7 @@ function migrateDimensionFilterToArray(query: AzureMonitorQuery): AzureMonitorQu
 
 // datasource.ts also contains some migrations, which have been moved to here. Unsure whether
 // they should also do all the other migrations...
-export function datasourceMigrations(query: AzureMonitorQuery): AzureMonitorQuery {
+export function datasourceMigrations(query: AzureMonitorQuery, templateSrv: TemplateSrv): AzureMonitorQuery {
   let workingQuery = query;
 
   if (!workingQuery.queryType) {
@@ -175,7 +238,7 @@ export function datasourceMigrations(query: AzureMonitorQuery): AzureMonitorQuer
 
   if (workingQuery.queryType === AzureQueryType.AzureMonitor && workingQuery.azureMonitor) {
     workingQuery = migrateDimensionToDimensionFilter(workingQuery);
-    workingQuery = migrateResourceUri(workingQuery);
+    workingQuery = migrateResourceUri(workingQuery, templateSrv);
     workingQuery = migrateDimensionFilterToArray(workingQuery);
   }
 

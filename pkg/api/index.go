@@ -36,17 +36,17 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 
 	children := []*dtos.NavLink{
 		{
-			Text: "Preferences", Id: "profile-settings", Url: hs.Cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
+			Text: "Preferences", Id: "profile/settings", Url: hs.Cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
 		},
 	}
 
 	children = append(children, &dtos.NavLink{
-		Text: "Notification history", Id: "notifications", Url: hs.Cfg.AppSubURL + "/notifications", Icon: "bell",
+		Text: "Notification history", Id: "profile/notifications", Url: hs.Cfg.AppSubURL + "profile/notifications", Icon: "bell",
 	})
 
 	if setting.AddChangePasswordLink() {
 		children = append(children, &dtos.NavLink{
-			Text: "Change password", Id: "change-password", Url: hs.Cfg.AppSubURL + "/profile/password",
+			Text: "Change password", Id: "profile/password", Url: hs.Cfg.AppSubURL + "/profile/password",
 			Icon: "lock",
 		})
 	}
@@ -76,6 +76,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 }
 
 func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return nil, err
@@ -84,6 +85,11 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 	appLinks := []*dtos.NavLink{}
 	for _, plugin := range enabledPlugins[plugins.App] {
 		if !plugin.Pinned {
+			continue
+		}
+
+		if !hasAccess(ac.ReqSignedIn,
+			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
 			continue
 		}
 

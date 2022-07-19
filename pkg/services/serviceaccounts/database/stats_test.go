@@ -16,6 +16,7 @@ func TestStore_UsageStats(t *testing.T) {
 	saToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, saToCreate)
+	InitMetrics()
 
 	keyName := t.Name()
 	key, err := apikeygen.New(sa.OrgID, keyName)

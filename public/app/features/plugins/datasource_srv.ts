@@ -25,7 +25,7 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { CONDITIONAL_DATASOURCE_NAME } from 'app/plugins/datasource/conditional/ConditionalDataSource';
 
-import { DataSourceVariableModel } from '../variables/types';
+import { isDataSource } from '../variables/guard';
 
 import { importDataSourcePlugin } from './plugin_loader';
 
@@ -251,11 +251,12 @@ export class DatasourceSrv implements DataSourceService {
     });
 
     if (filters.variables) {
-      for (const variable of this.templateSrv.getVariables().filter((variable) => variable.type === 'datasource')) {
-        const dsVar = variable as DataSourceVariableModel;
-        const first = dsVar.current.value === 'default' ? this.defaultName : dsVar.current.value;
-        const dsName = first as unknown as string;
-        const dsSettings = this.settingsMapByName[dsName];
+      for (const variable of this.templateSrv.getVariables()) {
+        if (!isDataSource(variable) || variable.multi || variable.includeAll) {
+          continue;
+        }
+        const dsName = variable.current.value === 'default' ? this.defaultName : variable.current.value;
+        const dsSettings = !Array.isArray(dsName) && this.settingsMapByName[dsName];
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;

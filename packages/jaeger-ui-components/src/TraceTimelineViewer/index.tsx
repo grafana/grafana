@@ -16,6 +16,7 @@ import { css } from '@emotion/css';
 import React, { RefObject } from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { Accessors } from '../ScrollManager';
@@ -76,6 +77,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   scrollToFirstVisibleSpan: () => void;
   traceTimeline: TTraceTimeline;
   trace: Trace;
+  datasourceType: string;
   spanBarOptions: SpanBarOptions | undefined;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
@@ -143,18 +145,34 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
 
   collapseAll = () => {
     this.props.collapseAll(this.props.trace.spans);
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'collapseAll',
+    });
   };
 
   collapseOne = () => {
     this.props.collapseOne(this.props.trace.spans);
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'collapseOne',
+    });
   };
 
   expandAll = () => {
     this.props.expandAll();
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'expandAll',
+    });
   };
 
   expandOne = () => {
     this.props.expandOne(this.props.trace.spans);
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'expandOne',
+    });
   };
 
   render() {

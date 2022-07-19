@@ -1023,7 +1023,7 @@ def store_packages_step(edition, ver_mode):
         'name': 'store-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'grabpl',
+            'gen-version',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
@@ -1170,6 +1170,18 @@ def verify_gen_cue_step(edition):
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
             'CODEGEN_VERIFY=1 make gen-cue',
+        ],
+    }
+
+def artifacts_page_step():
+    return {
+        'name': 'artifacts-page',
+        'image': build_image,
+        'depends_on': [
+            'grabpl',
+        ],
+        'commands': [
+            './bin/grabpl artifacts-page',
         ],
     }
 

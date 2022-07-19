@@ -157,6 +157,16 @@ type ListOptions struct {
 	Filter       PathFilter
 }
 
+type DeleteFolderOptions struct {
+	// Force if set to true, the `deleteFolder` operation will delete the selected folder together with all the nested files & folders
+	Force bool
+
+	// AccessFilter must match all the nested files & folders in order for the `deleteFolder` operation to succeed
+	// The access check is not performed if `AccessFilter` is nil
+	AccessFilter PathFilter
+}
+
+//go:generate mockery --name FileStorage --structname MockFileStorage --inpackage --filename file_storage_mock.go
 type FileStorage interface {
 	Get(ctx context.Context, path string) (*File, error)
 	Delete(ctx context.Context, path string) error
@@ -166,7 +176,7 @@ type FileStorage interface {
 	List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error)
 
 	CreateFolder(ctx context.Context, path string) error
-	DeleteFolder(ctx context.Context, path string) error
+	DeleteFolder(ctx context.Context, path string, options *DeleteFolderOptions) error
 
 	close() error
 }

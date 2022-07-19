@@ -12,9 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+const (
+	DefaultCacheTTL = 5 * time.Second
+)
+
 func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore) *CacheServiceImpl {
 	return &CacheServiceImpl{
 		logger:       log.New("datasources"),
+		cacheTTL:     DefaultCacheTTL,
 		CacheService: cacheService,
 		SQLStore:     sqlStore,
 	}
@@ -22,6 +27,7 @@ func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlsto
 
 type CacheServiceImpl struct {
 	logger       log.Logger
+	cacheTTL     time.Duration
 	CacheService *localcache.CacheService
 	SQLStore     *sqlstore.SQLStore
 }
@@ -56,7 +62,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	if ds.Uid != "" {
 		dc.CacheService.Set(uidKey(ds.OrgId, ds.Uid), ds, time.Second*5)
 	}
-	dc.CacheService.Set(cacheKey, ds, time.Second*5)
+	dc.CacheService.Set(cacheKey, ds, dc.cacheTTL)
 	return ds, nil
 }
 
@@ -92,8 +98,8 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	ds := query.Result
 
-	dc.CacheService.Set(uidCacheKey, ds, time.Second*5)
-	dc.CacheService.Set(idKey(ds.Id), ds, time.Second*5)
+	dc.CacheService.Set(uidCacheKey, ds, dc.cacheTTL)
+	dc.CacheService.Set(idKey(ds.Id), ds, dc.cacheTTL)
 	return ds, nil
 }
 

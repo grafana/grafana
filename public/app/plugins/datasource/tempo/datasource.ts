@@ -136,6 +136,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     // Run search queries on linked datasource
     if (logsDatasourceUid && targets.search?.length > 0) {
+      reportInteraction('grafana_traces_loki_search_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        linkedQueryExpr: targets.search[0].linkedQuery?.expr ?? '',
+      });
+
       const dsSrv = getDatasourceSrv();
       subQueries.push(
         from(dsSrv.get(logsDatasourceUid)).pipe(
@@ -175,7 +181,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           app: options.app ?? '',
           serviceName: targets.nativeSearch[0].serviceName ?? '',
           spanName: targets.nativeSearch[0].spanName ?? '',
-          limit: targets.nativeSearch[0].limit ?? '',
+          resultLimit: targets.nativeSearch[0].limit ?? '',
           search: targets.nativeSearch[0].search ?? '',
         });
 
@@ -201,6 +207,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.upload?.length) {
       if (this.uploadedJson) {
+        reportInteraction('grafana_traces_json_file_uploaded', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+        });
+
         const jsonData = JSON.parse(this.uploadedJson as string);
         const isTraceData = jsonData.batches;
         const isServiceGraphData =
@@ -219,19 +230,26 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
+      reportInteraction('grafana_traces_service_graph_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        serviceMapQuery: targets.serviceMap[0].serviceMapQuery ?? '',
+      });
+
       const dsId = this.serviceMap.datasourceUid;
+      const tempoDsUid = this.uid;
       if (config.featureToggles.tempoApmTable) {
         subQueries.push(
-          serviceMapQuery(options, dsId, this.name).pipe(
+          serviceMapQuery(options, dsId, tempoDsUid).pipe(
             concatMap((result) =>
               rateQuery(options, result, dsId).pipe(
-                concatMap((result) => errorAndDurationQuery(options, result, dsId, this.name))
+                concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
               )
             )
           )
         );
       } else {
-        subQueries.push(serviceMapQuery(options, dsId, this.name));
+        subQueries.push(serviceMapQuery(options, dsId, tempoDsUid));
       }
     }
 
@@ -279,6 +297,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return {
       ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', scopedVars),
+      serviceName: this.templateSrv.replace(query.serviceName ?? '', scopedVars),
+      spanName: this.templateSrv.replace(query.spanName ?? '', scopedVars),
       search: this.templateSrv.replace(query.search ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
@@ -566,7 +586,7 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
         instant: instant,
       } as PromQuery,
       datasourceUid,
-      datasourceName: 'Prometheus',
+      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
   };
 }
@@ -585,8 +605,8 @@ export function makeTempoLink(title: string, serviceName: string, spanName: stri
     title,
     internal: {
       query,
-      datasourceUid: datasourceUid,
-      datasourceName: 'Tempo',
+      datasourceUid,
+      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
   };
 }

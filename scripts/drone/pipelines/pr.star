@@ -70,6 +70,16 @@ trigger = {
     },
 }
 
+def pr_verify_drone():
+    steps = [
+        identify_runner_step(),
+        download_grabpl_step(),
+        lint_drone_step(),
+    ]
+    return pipeline(
+        name='pr-verify-drone', edition="oss", trigger=get_pr_trigger(include_paths=['scripts/drone/**', '.drone.yml', '.drone.star']), services=[], steps=steps,
+    )
+
 
 def pr_test_frontend():
     init_steps = [
@@ -97,7 +107,6 @@ def pr_test_backend():
         wire_install_step(),
     ]
     test_steps = [
-        lint_drone_step(),
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition="oss"),
@@ -149,6 +158,7 @@ def pr_pipelines(edition):
     ])
 
     return [
+        pr_verify_drone(),
         pr_test_frontend(),
         pr_test_backend(),
         pipeline(

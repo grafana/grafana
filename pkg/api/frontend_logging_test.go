@@ -11,10 +11,10 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -258,7 +258,7 @@ func TestFrontendLoggingEndpointSentry(t *testing.T) {
 				assert.Len(t, logs, 10)
 				assertContextContains(t, logs, "logger", "frontend")
 				assertContextContains(t, logs, "msg", "hello world")
-				assertContextContains(t, logs, "lvl", level.InfoValue())
+				assertContextContains(t, logs, level.Key().(string), level.InfoValue())
 				assertContextContains(t, logs, "logger", "frontend")
 				assertContextContains(t, logs, "url", messageEvent.Request.URL)
 				assertContextContains(t, logs, "user_agent", messageEvent.Request.Headers["User-Agent"])
