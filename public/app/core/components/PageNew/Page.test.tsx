@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { NavModelItem } from '@grafana/data';
-import { config, GrafanaContext } from '@grafana/runtime';
-import { GrafanaContextWithInternals } from 'app/core/context/GrafanaContextInternal';
+import { config } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { configureStore } from 'app/store/configureStore';
 
-import { AppChromeService } from '../AppChrome/AppChromeService';
 import { PageProps } from '../Page/types';
 
 import { Page } from './Page';
@@ -33,7 +33,7 @@ const setup = (props: Partial<PageProps>) => {
     },
   ];
 
-  const context = { chrome: new AppChromeService() } as GrafanaContextWithInternals;
+  const context = getGrafanaContextMock();
   const store = configureStore();
 
   const renderResult = render(

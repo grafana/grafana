@@ -4,7 +4,7 @@ import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 
-import { useGrafanaInternal } from '../context/GrafanaContextInternal';
+import { useGrafana } from '../context/GrafanaContext';
 import { keybindingSrv } from '../services/keybindingSrv';
 
 import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
@@ -12,7 +12,7 @@ import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
 export function GrafanaRoute(props: Props) {
-  const { chrome } = useGrafanaInternal();
+  const { chrome } = useGrafana();
 
   useEffect(() => {
     chrome.routeMounted(props.route);

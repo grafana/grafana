@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
-import { useGrafanaInternal } from 'app/core/context/GrafanaContextInternal';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Footer } from '../Footer/Footer';
 import { PageLayoutType, PageType } from '../Page/types';
@@ -30,7 +30,7 @@ export const Page: PageType = ({
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
-  const { chrome } = useGrafanaInternal();
+  const { chrome } = useGrafana();
 
   usePageTitle(navModel, pageNav);
 

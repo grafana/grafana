@@ -44,7 +44,7 @@ import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { AppWrapper } from './AppWrapper';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
-import { GrafanaContextWithInternals } from './core/context/GrafanaContextInternal';
+import { GrafanaContextType } from './core/context/GrafanaContext';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
@@ -93,7 +93,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export class GrafanaApp {
-  context!: GrafanaContextWithInternals;
+  context!: GrafanaContextType;
 
   async init() {
     try {

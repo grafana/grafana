@@ -2,8 +2,9 @@ import { render } from '@testing-library/react';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { GrafanaContext, setEchoSrv } from '@grafana/runtime';
+import { setEchoSrv } from '@grafana/runtime';
 
+import { GrafanaContext } from '../context/GrafanaContext';
 import { Echo } from '../services/echo/Echo';
 
 import { GrafanaRoute } from './GrafanaRoute';

@@ -29,4 +29,3 @@ export { PanelDataErrorView, PanelDataErrorViewProps } from './components/PanelD
 export { toDataQueryError } from './utils/toDataQueryError';
 export { setQueryRunnerFactory, createQueryRunner, QueryRunnerFactory } from './services/QueryRunner';
 export { DataSourcePicker, DataSourcePickerProps, DataSourcePickerState } from './components/DataSourcePicker';
-export { GrafanaContext, GrafanaContextType, useGrafana } from './context/GrafanaContext';

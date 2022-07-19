@@ -4,7 +4,7 @@ import React, { PropsWithChildren } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { useGrafanaInternal } from 'app/core/context/GrafanaContextInternal';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
 
@@ -16,7 +16,7 @@ export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
-  const { chrome } = useGrafanaInternal();
+  const { chrome } = useGrafana();
   const state = chrome.useState();
 
   if (state.chromeless || !config.featureToggles.topnav) {

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { useGrafanaInternal } from 'app/core/context/GrafanaContextInternal';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 export interface AppChromeUpdateProps {
   pageNav?: NavModelItem;
@@ -12,7 +12,7 @@ export interface AppChromeUpdateProps {
  * This is the way core pages and plugins update the breadcrumbs and page toolbar actions
  */
 export const AppChromeUpdate = React.memo<AppChromeUpdateProps>(({ pageNav, actions }: AppChromeUpdateProps) => {
-  const { chrome } = useGrafanaInternal();
+  const { chrome } = useGrafana();
 
   useEffect(() => {
     chrome.update({ pageNav, actions });
