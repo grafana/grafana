@@ -29,9 +29,9 @@ type ServiceAccount struct {
 type CreateServiceAccountForm struct {
 	// example: grafana
 	Name string `json:"name" binding:"Required"`
-	// exmaple: Admin
+	// example: Admin
 	Role *models.RoleType `json:"role"`
-	// exmaple: false
+	// example: false
 	IsDisabled *bool `json:"isDisabled"`
 }
 

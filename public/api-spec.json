@@ -7713,16 +7713,15 @@
         "operationId": "removeTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
+            "type": "string",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "name": "groupId",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -9818,17 +9817,17 @@
       "type": "object",
       "properties": {
         "isDisabled": {
-          "description": "exmaple: false",
-          "type": "boolean"
+          "type": "boolean",
+          "example": false
         },
         "name": {
           "type": "string",
           "example": "grafana"
         },
         "role": {
-          "description": "exmaple: Admin",
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": ["Viewer", "Editor", "Admin"],
+          "example": "Admin"
         }
       }
     },
