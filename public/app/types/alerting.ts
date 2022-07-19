@@ -143,6 +143,36 @@ export interface NotificationChannelState {
   notificationChannel: any;
 }
 
+export interface IntegrationError {
+  lastError: string;
+  lastNotify: string;
+  lastNotifyDuration: number;
+  name: string;
+}
+
+export interface IntegrationState {
+  [key: string]: IntegrationError;
+}
+
+export interface ReceiverState {
+  active: boolean;
+  integrations: IntegrationState[];
+}
+
+export interface ReceiversState {
+  [key: string]: ReceiverState;
+}
+
+export interface ContactPointsState {
+  receivers: ReceiversState[];
+  errorCount: number;
+}
+
+export interface ContactPointStateDTO {
+  active: boolean;
+  integrations: IntegrationError[];
+}
+
 export interface AlertRulesState {
   items: AlertRule[];
   searchQuery: string;
