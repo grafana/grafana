@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"testing"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
