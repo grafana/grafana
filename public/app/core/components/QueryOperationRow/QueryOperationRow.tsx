@@ -9,7 +9,7 @@ import { ReactUtils, stylesFactory, useTheme } from '@grafana/ui';
 
 import { QueryOperationRowHeader } from './QueryOperationRowHeader';
 
-interface QueryOperationRowProps {
+export interface QueryOperationRowProps {
   index: number;
   id: string;
   title?: string;

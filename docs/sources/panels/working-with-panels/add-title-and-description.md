@@ -10,12 +10,6 @@ weight: 30
 
 Add a title and description to a panel to share with users any important information about the visualization. For example, use the description to document the purpose of the visualization.
 
-## Before you begin:
-
-- [Add a panel to a dashboard]({{< relref "add-panel/" >}}).
-
-**To add a title and description to a panel**:
-
 1. Open a panel.
 
 1. In the panel display options pane, locate the **Panel options** section.

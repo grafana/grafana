@@ -146,14 +146,14 @@ describe('<SpanDetail>', () => {
   });
 
   it('renders the span tags', () => {
-    const target = <AccordianKeyValues data={span.tags} label="Tags" isOpen={detailState.isTagsOpen} />;
+    const target = <AccordianKeyValues data={span.tags} label="Attributes" isOpen={detailState.isTagsOpen} />;
     expect(wrapper.containsMatchingElement(target)).toBe(true);
     wrapper.find({ data: span.tags }).simulate('toggle');
     expect(props.tagsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the process tags', () => {
-    const target = <AccordianKeyValues data={span.process.tags} label="Process" isOpen={detailState.isProcessOpen} />;
+    const target = <AccordianKeyValues data={span.process.tags} label="Resource" isOpen={detailState.isProcessOpen} />;
     expect(wrapper.containsMatchingElement(target)).toBe(true);
     wrapper.find({ data: span.process.tags }).simulate('toggle');
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);

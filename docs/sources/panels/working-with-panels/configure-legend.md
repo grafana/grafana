@@ -16,12 +16,6 @@ Visualizations can often be visually complex, and include many data series. You 
 
 When you apply your changes, the visualization changes appear to all users of the panel.
 
-### Before you begin
-
-- [Add a panel to a dashboard]({{< relref "add-panel/" >}}).
-
-**To isolate series data in a visualization**:
-
 1. Open the panel.
 
 1. In the legend, click the label of the series you want to isolate.
