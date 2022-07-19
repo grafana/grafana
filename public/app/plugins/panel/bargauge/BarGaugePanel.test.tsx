@@ -17,7 +17,7 @@ describe('BarGaugePanel', () => {
 
       render(<BarGaugePanel {...panelData} />);
 
-      expect(screen.getByText(/no data/i)).toHaveTextContent('No data');
+      expect(screen.getByText(/no data/i)).toBeInTheDocument();
     });
   });
 
@@ -44,7 +44,7 @@ describe('BarGaugePanel', () => {
       const { rerender } = render(<BarGaugePanel {...panelData} />);
       expect(screen.queryByText(/100/)).toBeInTheDocument();
       expect(screen.queryByText(/firstbarpanel/i)).not.toBeInTheDocument();
-      expect(screen.queryAllByTestId(valueSelector).length).toEqual(1);
+      expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
 
       rerender(
         <BarGaugePanel
@@ -77,7 +77,7 @@ describe('BarGaugePanel', () => {
       expect(screen.queryByText(/secondbarpanel/i)).toBeInTheDocument();
       expect(screen.queryByText(/200/)).toBeInTheDocument();
       expect(screen.queryByText(/300/)).toBeInTheDocument();
-      expect(screen.queryAllByTestId(valueSelector).length).toEqual(2);
+      expect(screen.getAllByTestId(valueSelector).length).toEqual(2);
     });
   });
 });
