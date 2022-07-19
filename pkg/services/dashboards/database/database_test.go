@@ -97,11 +97,10 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		query := models.HasActivePublicDashboardQuery{DashboardUid: savedDash.Uid}
-		err = dashboardStore.HasActivePublicDashboard(context.Background(), &query)
+		res, err := dashboardStore.HasActivePublicDashboard(context.Background(), savedDash.Uid)
 		require.NoError(t, err)
 
-		require.True(t, query.Result)
+		require.True(t, res)
 	})
 
 	t.Run("HasActivePublicDashboard will return false when dashboard has public dashboards but they are not enabled", func(t *testing.T) {
@@ -122,11 +121,10 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		query := models.HasActivePublicDashboardQuery{DashboardUid: savedDash.Uid}
-		err = dashboardStore.HasActivePublicDashboard(context.Background(), &query)
+		res, err := dashboardStore.HasActivePublicDashboard(context.Background(), savedDash.Uid)
 		require.NoError(t, err)
 
-		require.False(t, query.Result)
+		require.False(t, res)
 	})
 
 	t.Run("Should be able to get dashboard by slug", func(t *testing.T) {
