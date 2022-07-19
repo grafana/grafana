@@ -818,6 +818,30 @@ func UserDeletions() []string {
 	return deletes
 }
 
+func updateAllTablesForFromUser(intoUser user.User, fromUserId int64) error {
+	// TODO:
+	fmt.Printf("merging user %d into user %d", fromUserId, intoUser.ID)
+	return nil
+}
+
+// UpdateUserPermissions sets the user Server Admin flag
+func (ss *SQLStore) MergeUser(intoUserId int64, fromUserIds []int64) error {
+	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+
+		var intoUser user.User
+		if _, err := sess.ID(intoUserId).Where(notServiceAccountFilter(ss)).Get(&intoUser); err != nil {
+			return err
+		}
+
+		for _, fromUserId := range fromUserIds {
+			// update all tables fromUserIds to intoUserIds
+			updateAllTablesForFromUser(intoUser, fromUserId)
+		}
+
+		return nil
+	})
+}
+
 // UpdateUserPermissions sets the user Server Admin flag
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
