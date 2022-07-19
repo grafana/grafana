@@ -1,8 +1,10 @@
 import { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { CartesianCoords2D } from '@grafana/data';
-import { UPlotConfigBuilder } from '@grafana/ui';
-import { positionTooltip } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin';
+
+import { positionTooltip } from '../plugins/TooltipPlugin';
+
+import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 
 export type HoverEvent = {
   xIndex: number;
@@ -23,7 +25,7 @@ type SetupConfigParams = {
 
 // This applies config hooks to setup tooltip listener. Ideally this could happen in the same `prepConfig` function
 // however the GraphNG structures do not allow access to the `setHover` callback
-export const setupConfig = ({
+export const setupUPlotConfig = ({
   config,
   onUPlotClick,
   setFocusedSeriesIdx,
@@ -32,13 +34,37 @@ export const setupConfig = ({
   setHover,
   isToolTipOpen,
 }: SetupConfigParams): UPlotConfigBuilder => {
+  // Ensure tooltip is closed on config changes
+  isToolTipOpen.current = false;
+
+  var onMouseLeave = () => {
+    if (!isToolTipOpen.current) {
+      setCoords(null);
+    }
+  };
+
+  let ref_parent: HTMLElement | null = null;
+  let ref_over: HTMLElement | null = null;
   config.addHook('init', (u) => {
-    u.root.parentElement?.addEventListener('click', onUPlotClick);
-    u.over.addEventListener('mouseleave', () => {
-      if (!isToolTipOpen.current) {
-        setCoords(null);
-      }
-    });
+    ref_parent = u.root.parentElement;
+    ref_over = u.over;
+    ref_parent?.addEventListener('click', onUPlotClick);
+    ref_over.addEventListener('mouseleave', onMouseLeave);
+  });
+
+  var clearPopupIfOpened = () => {
+    if (isToolTipOpen.current) {
+      setCoords(null);
+      onUPlotClick();
+    }
+  };
+
+  config.addHook('drawClear', clearPopupIfOpened);
+
+  config.addHook('destroy', () => {
+    ref_parent?.removeEventListener('click', onUPlotClick);
+    ref_over?.removeEventListener('mouseleave', onMouseLeave);
+    clearPopupIfOpened();
   });
 
   let rect: DOMRect;

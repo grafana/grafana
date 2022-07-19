@@ -26,12 +26,12 @@ import {
   VizTooltipContainer,
 } from '@grafana/ui';
 import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
+import { HoverEvent, setupUPlotConfig } from '@grafana/ui/src/components/uPlot/config/setupUPlotConfig';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { DataHoverView } from '../geomap/components/DataHoverView';
 import { getFieldLegendItem } from '../state-timeline/utils';
 
-import { HoverEvent, setupConfig } from './config';
 import { PanelOptions } from './models.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
@@ -284,7 +284,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     >
       {(config) => {
         if (oldConfig.current !== config) {
-          oldConfig.current = setupConfig({
+          oldConfig.current = setupUPlotConfig({
             config,
             onUPlotClick,
             setFocusedSeriesIdx,

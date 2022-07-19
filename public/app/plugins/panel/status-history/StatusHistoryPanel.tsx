@@ -2,9 +2,9 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
 import { Portal, UPlotConfigBuilder, useTheme2, VizTooltipContainer, ZoomPlugin } from '@grafana/ui';
+import { HoverEvent, setupUPlotConfig } from '@grafana/ui/src/components/uPlot/config/setupUPlotConfig';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
-import { HoverEvent, setupConfig } from '../barchart/config';
 import { TimelineChart } from '../state-timeline/TimelineChart';
 import { TimelineMode } from '../state-timeline/types';
 import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
@@ -161,7 +161,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
     >
       {(config, alignedFrame) => {
         if (oldConfig.current !== config) {
-          oldConfig.current = setupConfig({
+          oldConfig.current = setupUPlotConfig({
             config,
             onUPlotClick,
             setFocusedSeriesIdx,

@@ -2,10 +2,10 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
 import { Portal, UPlotConfigBuilder, usePanelContext, useTheme2, VizTooltipContainer, ZoomPlugin } from '@grafana/ui';
+import { HoverEvent, setupUPlotConfig } from '@grafana/ui/src/components/uPlot/config/setupUPlotConfig';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
 
-import { HoverEvent, setupConfig } from '../barchart/config';
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
@@ -159,7 +159,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
     >
       {(config, alignedFrame) => {
         if (oldConfig.current !== config) {
-          oldConfig.current = setupConfig({
+          oldConfig.current = setupUPlotConfig({
             config,
             onUPlotClick,
             setFocusedSeriesIdx,
