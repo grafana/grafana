@@ -31,6 +31,7 @@ interface State {
 
 export class ShareSnapshot extends PureComponent<Props, State> {
   private dashboard: DashboardModel;
+  private expireOptions: Array<SelectableValue<number>>;
 
   constructor(props: Props) {
     super(props);
@@ -68,8 +69,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     this.state = {
       isLoading: false,
       step: 1,
-      selectedExpireOption: expireOptions[0],
-      snapshotExpires: expireOptions[0].value,
+      selectedExpireOption: this.expireOptions[0],
+      snapshotExpires: this.expireOptions[0].value,
       snapshotName: props.dashboard.title,
       timeoutSeconds: 4,
       snapshotUrl: '',
@@ -276,7 +277,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           <Select
             inputId="expire-select-input"
             width={30}
-            options={expireOptions}
+            options={this.expireOptions}
             value={selectedExpireOption}
             onChange={this.onExpireChange}
           />
