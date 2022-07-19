@@ -1,5 +1,6 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { NestedScene } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
 import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { SceneTimePicker } from '../components/SceneTimePicker';
@@ -40,9 +41,10 @@ export function getNestedScene(): Scene {
   return scene;
 }
 
-export function getInnerScene(title: string): Scene {
-  const scene = new Scene({
+export function getInnerScene(title: string) {
+  const scene = new NestedScene({
     title: title,
+    canRemove: true,
     layout: new SceneFlexLayout({
       direction: 'row',
       children: [

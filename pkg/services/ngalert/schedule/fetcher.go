@@ -36,19 +36,18 @@ func sortedUIDs(alertRules []*models.SchedulableAlertRule) []string {
 // updateSchedulableAlertRules updates the alert rules for the scheduler.
 // It returns an error if the database is unavailable or the query returned
 // an error.
-func (sch *schedule) updateSchedulableAlertRules(ctx context.Context, disabledOrgs []int64) error {
+func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) error {
 	start := time.Now()
 	defer func() {
 		sch.metrics.UpdateSchedulableAlertRulesDuration.Observe(
 			time.Since(start).Seconds())
 	}()
 
-	q := models.GetAlertRulesForSchedulingQuery{
-		ExcludeOrgIDs: disabledOrgs,
-	}
+	q := models.GetAlertRulesForSchedulingQuery{}
 	if err := sch.ruleStore.GetAlertRulesForScheduling(ctx, &q); err != nil {
 		return fmt.Errorf("failed to get alert rules: %w", err)
 	}
+	sch.log.Debug("alert rules fetched", "count", len(q.Result))
 	sch.schedulableAlertRules.set(q.Result)
 	return nil
 }

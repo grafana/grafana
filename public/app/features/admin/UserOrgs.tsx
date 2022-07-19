@@ -60,7 +60,8 @@ export class UserOrgs extends PureComponent<Props, State> {
     const addToOrgContainerClass = css`
       margin-top: 0.8rem;
     `;
-    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
+
+    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
     return (
       <>
         <h3 className="page-heading">Organizations</h3>

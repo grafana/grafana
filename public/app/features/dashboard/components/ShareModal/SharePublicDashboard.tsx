@@ -1,7 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime/src';
-import { Alert, Button, Checkbox, ClipboardButton, Field, FieldSet, Input, LinkButton, Switch } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  ClipboardButton,
+  Field,
+  FieldSet,
+  Input,
+  Label,
+  LinkButton,
+  Switch,
+} from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
@@ -154,8 +165,9 @@ export const SharePublicDashboard = (props: Props) => {
           <div>
             <h4 className="share-modal-info-text">Public Dashboard Configuration</h4>
             <FieldSet>
-              Time Range
-              <br />
+              <Label description="The public dashboard uses the default time settings of the dashboard">
+                Time Range
+              </Label>
               <div style={{ padding: '5px' }}>
                 <Input
                   value={props.dashboard.getDefaultTime().from}
