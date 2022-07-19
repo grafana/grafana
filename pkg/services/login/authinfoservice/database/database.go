@@ -18,13 +18,15 @@ type AuthInfoStore struct {
 	sqlStore       sqlstore.Store
 	secretsService secrets.Service
 	logger         log.Logger
+	userService    user.Service
 }
 
-func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Service) *AuthInfoStore {
+func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Service, userService user.Service) *AuthInfoStore {
 	store := &AuthInfoStore{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
+		userService:    userService,
 	}
 	return store
 }
@@ -220,12 +222,13 @@ func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAu
 }
 
 func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
-	query := models.GetUserByIdQuery{Id: id}
-	if err := s.sqlStore.GetUserById(ctx, &query); err != nil {
+	query := user.GetUserByIDQuery{ID: id}
+	user, err := s.userService.GetByID(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return user, nil
 }
 
 func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
