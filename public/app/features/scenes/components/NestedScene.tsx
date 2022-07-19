@@ -6,20 +6,14 @@ import { Stack } from '@grafana/experimental';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import {
-  SceneObject,
-  SceneObjectState,
-  SceneLayoutState,
-  SceneComponentProps,
-  isSceneLayoutObject,
-} from '../core/types';
+import { SceneObject, SceneLayoutChildState, SceneComponentProps, SceneLayout } from '../core/types';
 
-interface NestedSceneState extends SceneObjectState {
+interface NestedSceneState extends SceneLayoutChildState {
   title: string;
   isCollapsed?: boolean;
   canCollapse?: boolean;
   canRemove?: boolean;
-  layout: SceneObject<SceneLayoutState>;
+  layout: SceneLayout;
   actions?: SceneObject[];
 }
 
@@ -39,7 +33,7 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
   /** Removes itself from it's parent's children array */
   onRemove = () => {
     const parent = this.parent!;
-    if (isSceneLayoutObject(parent)) {
+    if ('children' in parent.state) {
       parent.setState({
         children: parent.state.children.filter((x) => x !== this),
       });

@@ -9,13 +9,12 @@ import { SceneObjectStateChangedEvent } from './events';
 import {
   SceneDataState,
   SceneObject,
-  SceneLayoutState,
-  SceneObjectState,
   SceneComponent,
   SceneEditor,
-  SceneObjectList,
   SceneTimeRange,
   isSceneObject,
+  SceneObjectState,
+  SceneLayoutChild,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
@@ -185,10 +184,9 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     }
 
     // Clone layout children
-    const layout = this.state as any as SceneLayoutState;
-    if (layout.children) {
-      const newChildren: SceneObjectList = [];
-      for (const child of layout.children) {
+    if ('children' in this.state) {
+      const newChildren: SceneLayoutChild[] = [];
+      for (const child of this.state.children) {
         newChildren.push(child.clone());
       }
       (clonedState as any).children = newChildren;
