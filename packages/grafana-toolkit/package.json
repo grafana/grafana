@@ -70,7 +70,7 @@
     "eslint": "8.20.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-jsdoc": "38.0.6",
-    "eslint-plugin-react": "7.30.1",
+    "eslint-plugin-react": "7.29.4",
     "eslint-plugin-react-hooks": "4.6.0",
     "execa": "^5.1.1",
     "file-loader": "^6.2.0",
