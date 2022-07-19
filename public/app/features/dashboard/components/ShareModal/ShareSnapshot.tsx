@@ -14,33 +14,6 @@ import { ShareModalTabProps } from './types';
 
 const snapshotApiUrl = '/api/snapshots';
 
-const neverExpireTranslation = t({
-  id: 'share-modal.snapshot.expire-never',
-  message: `Never`,
-});
-
-const hourExpireTranslation = t({
-  id: 'share-modal.snapshot.expire-hour',
-  message: `1 Hour`,
-});
-
-const dayExpireTranslation = t({
-  id: 'share-modal.snapshot.expire-day',
-  message: `1 Day`,
-});
-
-const weekExpireTranslation = t({
-  id: 'share-modal.snapshot.expire-week',
-  message: `7 Days`,
-});
-
-const expireOptions: Array<SelectableValue<number>> = [
-  { label: neverExpireTranslation, value: 0 },
-  { label: hourExpireTranslation, value: 60 * 60 },
-  { label: dayExpireTranslation, value: 60 * 60 * 24 },
-  { label: weekExpireTranslation, value: 60 * 60 * 24 * 7 },
-];
-
 interface Props extends ShareModalTabProps {}
 
 interface State {
@@ -62,6 +35,36 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.dashboard = props.dashboard;
+    this.expireOptions = [
+      {
+        label: t({
+          id: 'share-modal.snapshot.expire-never',
+          message: `Never`,
+        }),
+        value: 0,
+      },
+      {
+        label: t({
+          id: 'share-modal.snapshot.expire-hour',
+          message: `1 Hour`,
+        }),
+        value: 60 * 60,
+      },
+      {
+        label: t({
+          id: 'share-modal.snapshot.expire-day',
+          message: `1 Day`,
+        }),
+        value: 60 * 60 * 24,
+      },
+      {
+        label: t({
+          id: 'share-modal.snapshot.expire-week',
+          message: `7 Days`,
+        }),
+        value: 60 * 60 * 24 * 7,
+      },
+    ];
     this.state = {
       isLoading: false,
       step: 1,
