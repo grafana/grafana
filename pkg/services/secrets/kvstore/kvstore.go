@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -14,9 +15,14 @@ const (
 	AllOrganizations = -1
 )
 
-func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, remoteCheck UseRemoteSecretsPluginCheck) SecretsKVStore {
+func ProvideService(sqlStore sqlstore.Store,
+	secretsService secrets.Service,
+	remoteCheck UseRemoteSecretsPluginCheck,
+	kvstore kvstore.KVStore,
+) (SecretsKVStore, error) {
 	var store SecretsKVStore
 	logger := log.New("secrets.kvstore")
+	namespacedKVStore := GetNamespacedKVStore(kvstore)
 	store = &secretsKVStoreSQL{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
@@ -25,7 +31,8 @@ func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, rem
 			cache: make(map[int64]cachedDecrypted),
 		},
 	}
-	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
+	if usePlugin, err := remoteCheck.ShouldUseRemoteSecretsPlugin(); err == nil && usePlugin {
+		// plugin should be used and there was no error starting it
 		logger.Debug("secrets kvstore is using a remote plugin for secrets management")
 		secretsPlugin, err := remoteCheck.GetPlugin()
 		if err != nil {
@@ -37,10 +44,20 @@ func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, rem
 				log:            logger,
 			}
 		}
+	} else if err != nil {
+		// there was an error starting the plugin
+		if isFatal, err2 := isPluginErrorFatal(context.TODO(), namespacedKVStore); isFatal || err2 != nil {
+			// plugin error was fatal or there was an error determining if the error was fatal
+			logger.Error("secrets management plugin is required to start -- exiting app")
+			if err2 != nil {
+				return nil, err2
+			}
+			return nil, err
+		}
 	} else {
 		logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
 	}
-	return NewCachedKVStore(store, 5*time.Second, 5*time.Minute)
+	return NewCachedKVStore(store, 5*time.Second, 5*time.Minute), nil
 }
 
 // SecretsKVStore is an interface for k/v store.

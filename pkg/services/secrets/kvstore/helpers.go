@@ -2,8 +2,11 @@ package kvstore
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -27,6 +30,26 @@ func SetupTestService(t *testing.T) SecretsKVStore {
 	}
 
 	return kv
+}
+
+// Helpers to determine whether plugin startup failures are fatal to the app
+func GetNamespacedKVStore(kv kvstore.KVStore) *kvstore.NamespacedKVStore {
+	return kvstore.WithNamespace(kv, kvstore.AllOrganizations, PluginNamespace)
+}
+
+func isPluginErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
+	_, exists, err := kvstore.Get(ctx, QuitOnPluginStartupFailureKey)
+	if err != nil {
+		return true, errors.New(fmt.Sprint("error retrieving key ", QuitOnPluginStartupFailureKey, " from kvstore. error: ", err.Error()))
+	}
+	return exists, nil
+}
+
+func setPluginErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore, isFatal bool) error {
+	if !isFatal {
+		return kvstore.Del(ctx, QuitOnPluginStartupFailureKey)
+	}
+	return kvstore.Set(ctx, QuitOnPluginStartupFailureKey, "true")
 }
 
 // In memory kv store used for testing
