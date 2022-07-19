@@ -20,7 +20,7 @@ The following table lists the contact point types supported by Grafana.
 
 | Name                                          | Type                      | Grafana Alertmanager | Other Alertmanagers                                                                                      |
 | --------------------------------------------- | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
-| [Amazon SNS](https://aws.amazon.com/sns/)        | `sns`                     | Supported            | N/A                                                                                                   |
+| [Amazon SNS](https://aws.amazon.com/sns/)     | `sns`                     | Supported            | N/A                                                                                                      |
 | [DingDing](#dingdingdingtalk)                 | `dingding`                | Supported            | N/A                                                                                                      |
 | [Discord](#discord)                           | `discord`                 | Supported            | N/A                                                                                                      |
 | [Email](#email)                               | `email`                   | Supported            | Supported                                                                                                |
