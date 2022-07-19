@@ -112,8 +112,8 @@ func provideMockRemotePluginCheck() *mockRemoteSecretsPluginCheck {
 	return &mockRemoteSecretsPluginCheck{}
 }
 
-func (c *mockRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
-	return true
+func (c *mockRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() (bool, error) {
+	return true, nil
 }
 
 func (c *mockRemoteSecretsPluginCheck) GetPlugin() (secretsmanagerplugin.SecretsManagerPlugin, error) {

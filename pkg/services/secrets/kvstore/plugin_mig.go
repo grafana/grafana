@@ -39,8 +39,8 @@ func ProvidePluginSecretMigrationService(
 
 func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 	// Check if we should migrate to plugin - default false
-	if s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_to_plugin").MustBool(false) &&
-		s.remoteCheck.ShouldUseRemoteSecretsPlugin() {
+	shouldUseRemotePlugin, _ := s.remoteCheck.ShouldUseRemoteSecretsPlugin()
+	if s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_to_plugin").MustBool(false) && shouldUseRemotePlugin {
 		// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
 		// the secrets store would be the plugin.
 		secretsSql := &secretsKVStoreSQL{
