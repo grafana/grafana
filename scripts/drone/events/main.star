@@ -71,6 +71,11 @@ load(
     'build_e2e',
 )
 
+load(
+    'scripts/drone/pipelines/windows.star',
+    'windows',
+)
+
 load('scripts/drone/vault.star', 'from_secret')
 
 
@@ -125,10 +130,9 @@ def get_steps(edition):
         upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss)
     ])
 
-    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
     store_steps = [store_packages_step(edition=edition, ver_mode=ver_mode),]
 
-    return init_steps, windows_steps, store_steps
+    return init_steps, store_steps
 
 def main_pipelines(edition):
     drone_change_trigger = {
@@ -146,16 +150,13 @@ def main_pipelines(edition):
             ],
         },
     }
-    init_steps, windows_steps, store_steps = get_steps(edition=edition)
+    init_steps, store_steps = get_steps(edition=edition)
 
     pipelines = [docs_pipelines(edition, ver_mode, trigger), test_frontend(trigger, ver_mode), test_backend(trigger, ver_mode),
     build_e2e(trigger, ver_mode, edition),
     integration_tests(trigger, ver_mode, edition),
-    pipeline(
-        name='main-windows', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
-        steps=[identify_runner_step('windows')] + windows_steps,
-        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
-    ), notify_pipeline(
+    windows(trigger, edition, ver_mode),
+    notify_pipeline(
         name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger,
         template=drone_change_template, secret='drone-changes-webhook',
     ), pipeline(
