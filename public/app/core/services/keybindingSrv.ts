@@ -297,14 +297,6 @@ export class KeybindingSrv {
     });
 
     // toggle panel legend
-    // this.bindWithPanelId('p l', (panelId) => {
-    //   const panelInfo = dashboard.getPanelInfoById(panelId)!;
-
-    //   if (panelInfo.panel.legend) {
-    //     panelInfo.panel.legend.show = !panelInfo.panel.legend.show;
-    //     panelInfo.panel.render();
-    //   }
-    // });
 
     // toggle all panel legends
     this.bind('d l', () => {
