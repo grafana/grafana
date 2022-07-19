@@ -27,7 +27,7 @@ ARG DEBIAN_FRONTEND=noninteractive \
   GOOGLE_SDK_CHECKSUM=374f960c9f384f88b6fc190b268ceac5dcad777301390107af63782bfb5ecbc7
 
 # Need procps for pkill utility, which is used by the build pipeline tool to restart the GPG agent
-RUN apt update && apt install -yq curl python3-pip procps && pip3 install -U awscli crcmod && \
+RUN apt update && apt install -yq git curl python3-pip procps && pip3 install -U awscli crcmod && \
     curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz && \
     echo "${GOOGLE_SDK_CHECKSUM} google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status && \
     tar xzf google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz -C /opt && \

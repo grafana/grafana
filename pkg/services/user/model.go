@@ -1,6 +1,8 @@
 package user
 
-import "time"
+import (
+	"time"
+)
 
 type HelpFlags1 uint64
 
@@ -52,4 +54,8 @@ func (u *User) NameOrFallback() string {
 		return u.Login
 	}
 	return u.Email
+}
+
+type DeleteUserCommand struct {
+	UserID int64
 }
