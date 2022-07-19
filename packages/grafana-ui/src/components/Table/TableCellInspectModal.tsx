@@ -43,7 +43,7 @@ export function TableCellInspectModal({ value, onDismiss, mode }: TableCellInspe
       )}
       <Modal.ButtonRow>
         <ClipboardButton icon="copy" getText={() => text}>
-          Copy
+          Copy to Clipboard
         </ClipboardButton>
       </Modal.ButtonRow>
     </Modal>
