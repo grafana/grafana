@@ -67,10 +67,13 @@ def main_pipelines(edition):
         },
     }
 
-    pipelines = [docs_pipelines(edition, ver_mode, trigger), test_frontend(trigger, ver_mode), test_backend(trigger, ver_mode),
-    build_e2e(trigger, ver_mode, edition),
-    integration_tests(trigger, ver_mode, edition),
-    windows(trigger, edition, ver_mode),
+    pipelines = [
+        docs_pipelines(edition, ver_mode, trigger),
+        test_frontend(trigger, ver_mode),
+        test_backend(trigger, ver_mode),
+        build_e2e(trigger, ver_mode, edition),
+        integration_tests(trigger, ver_mode, edition),
+        windows(trigger, edition, ver_mode),
     notify_pipeline(
         name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger,
         template=drone_change_template, secret='drone-changes-webhook',
