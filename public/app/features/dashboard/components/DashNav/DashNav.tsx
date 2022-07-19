@@ -153,7 +153,7 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (dashboard.meta.hasPublicDashboard) {
+    if (dashboard.meta.publicDashboardEnabled) {
       buttons.push(<Tag name="Public" colorIndex={5}></Tag>);
     }
 
