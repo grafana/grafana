@@ -16,6 +16,13 @@ weight: 8
 Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to expose your
 dashboard to the world.
 
+#### Security implications of making your dashboard public
+
+- Anyone with the URL can access the dashboard.
+- Public dashboards are read-only.
+- Arbitrary queries **cannot** be run against your datasources through public dashboards. Public dashboards can only execute the
+  queries stored on the original dashboard.
+
 #### Enable the feature
 
 Add the `publicDashboards` feature toggle to your `custom.ini` file.
