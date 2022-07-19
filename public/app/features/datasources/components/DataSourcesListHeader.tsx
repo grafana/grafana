@@ -6,7 +6,7 @@ import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, StoreState } from 'app/types';
 
-import { getDataSourcesSearchQuery, setDataSourcesSearchQuery } from '../state';
+import { getDataSourcesSearchQuery, setDataSourcesSearchQuery, useDataSourcesRoutes } from '../state';
 
 export function DataSourcesListHeader() {
   const dispatch = useDispatch();
@@ -31,7 +31,7 @@ export type ViewProps = {
 
 export function DataSourcesListHeaderView({ searchQuery, setSearchQuery, canCreateDataSource }: ViewProps) {
   const linkButton = {
-    href: 'datasources/new',
+    href: dataSourcesRoutes.New,
     title: 'Add data source',
     disabled: !canCreateDataSource,
   };

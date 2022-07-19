@@ -15,6 +15,7 @@ import {
   useLoadDataSourcePlugins,
   getFilteredDataSourcePlugins,
   setDataSourceTypeSearchQuery,
+  useDataSourcesRoutes,
 } from '../state';
 
 export function NewDataSource() {
@@ -67,7 +68,7 @@ export function NewDataSourceView({
       <div className="page-action-bar">
         <FilterInput value={searchQuery} onChange={onSetSearchQuery} placeholder="Filter by name or type" />
         <div className="page-action-bar__spacer" />
-        <LinkButton href="datasources" fill="outline" variant="secondary" icon="arrow-left">
+        <LinkButton href={dataSourcesRoutes.List} fill="outline" variant="secondary" icon="arrow-left">
           Cancel
         </LinkButton>
       </div>
