@@ -105,3 +105,11 @@ func (f *FakeUserStore) Delete(ctx context.Context, userID int64) error {
 func (f *FakeUserStore) GetNotServiceAccount(ctx context.Context, userID int64) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
+
+func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, string) error {
+	return f.ExpectedError
+}

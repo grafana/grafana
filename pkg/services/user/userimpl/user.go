@@ -22,7 +22,8 @@ import (
 )
 
 type Service struct {
-	store              store
+	store store
+
 	orgService         org.Service
 	starService        star.Service
 	dashboardService   dashboards.DashboardService
@@ -31,6 +32,8 @@ type Service struct {
 	userAuthService    userauth.Service
 	quotaService       quota.Service
 	accessControlStore accesscontrol.AccessControl
+
+	cfg *setting.Cfg
 }
 
 func ProvideService(
@@ -43,6 +46,7 @@ func ProvideService(
 	userAuthService userauth.Service,
 	quotaService quota.Service,
 	accessControlStore accesscontrol.AccessControl,
+	cfg *setting.Cfg,
 ) user.Service {
 	return &Service{
 		store: &sqlStore{
@@ -57,6 +61,7 @@ func ProvideService(
 		userAuthService:    userAuthService,
 		quotaService:       quotaService,
 		accessControlStore: accessControlStore,
+		cfg:                cfg,
 	}
 }
 
@@ -223,4 +228,17 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 	}
 
 	return nil
+}
+
+func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+	user, err := s.store.GetByID(ctx, query.ID)
+	if err != nil {
+		return nil, err
+	}
+	if s.cfg.CaseInsensitiveLogin {
+		if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
 }
