@@ -955,6 +955,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 			folderPermissions, dashboardPermissions, ac,
 		),
 		DashboardService: dashboardService,
+		Features:         featuremgmt.WithFeatures(),
 	}
 	hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
