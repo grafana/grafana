@@ -26,7 +26,6 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  tempoServiceGraph?: boolean;
   tempoApmTable?: boolean;
   prometheus_azure_auth?: boolean;
   prometheusAzureOverrideAudience?: boolean;
@@ -43,7 +42,6 @@ export interface FeatureToggles {
   storage?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
-  storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
   tracing?: boolean;

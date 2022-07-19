@@ -14,12 +14,12 @@
     "id": {
       "type": "string",
       "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.",
-      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
     },
     "type": {
       "type": "string",
       "description": "Plugin type.",
-      "enum": ["app", "datasource", "panel"]
+      "enum": ["app", "datasource", "panel", "secretsmanager"]
     },
     "name": {
       "type": "string",
@@ -68,7 +68,7 @@
           },
           "type": {
             "type": "string",
-            "enum": ["dashboard", "page", "panel", "datasource"]
+            "enum": ["dashboard", "page", "panel", "datasource", "secretsmanager"]
           },
           "name": {
             "type": "string"
@@ -159,11 +159,11 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
               },
               "type": {
                 "type": "string",
-                "enum": ["app", "datasource", "panel"]
+                "enum": ["app", "datasource", "panel", "secretsmanager"]
               },
               "name": {
                 "type": "string"
