@@ -13,7 +13,7 @@ import {
   SilenceCreatePayload,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
+import { ContactPointsState, FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
 import {
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -50,7 +50,7 @@ import {
 import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { fetchNotifiers } from '../api/grafana';
+import { fetchContactPointsState, fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
   deleteNamespace,
@@ -452,6 +452,12 @@ export const saveRuleFormAction = createAsyncThunk(
 export const fetchGrafanaNotifiersAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaNotifiers',
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
+);
+
+export const fetchContactPointsStateAction = createAsyncThunk(
+  'unifiedalerting/fetchContactPointsState',
+  (alertManagerSourceName: String): Promise<ContactPointsState> =>
+    withSerializedError(fetchContactPointsState(alertManagerSourceName))
 );
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(
