@@ -4,7 +4,7 @@ import { useUrlParams } from 'app/core/navigation/hooks';
 
 import { defaultQueryParams } from '../reducers/searchQueryReducer';
 
-import DashboardSearch from './DashboardSearch';
+import { DashboardSearch } from './DashboardSearch';
 
 export const SearchWrapper: FC = memo(() => {
   const [params, updateUrlParams] = useUrlParams();

@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const defaultTimeout = 10
+
 // Config holds list of connections to LDAP
 type Config struct {
 	Servers []*ServerConfig `toml:"servers"`
@@ -29,6 +31,7 @@ type ServerConfig struct {
 	ClientKey     string       `toml:"client_key"`
 	BindDN        string       `toml:"bind_dn"`
 	BindPassword  string       `toml:"bind_password"`
+	Timeout       int          `toml:"timeout"`
 	Attr          AttributeMap `toml:"attributes"`
 
 	SearchFilter  string   `toml:"search_filter"`
@@ -140,8 +143,8 @@ func readConfig(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("LDAP enabled but no LDAP servers defined in config file")
 	}
 
-	// set default org id
 	for _, server := range result.Servers {
+		// set default org id
 		err = assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		if err != nil {
 			return nil, fmt.Errorf("%v: %w", "Failed to validate SearchFilter section", err)
@@ -159,6 +162,11 @@ func readConfig(configFile string) (*Config, error) {
 			if groupMap.OrgId == 0 {
 				groupMap.OrgId = 1
 			}
+		}
+
+		// set default timeout if unspecified
+		if server.Timeout == 0 {
+			server.Timeout = defaultTimeout
 		}
 	}
 

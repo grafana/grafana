@@ -90,7 +90,7 @@ export default function AccordianLogs(props: AccordianLogsProps) {
   return (
     <div className={styles.AccordianLogs}>
       <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>
-        {arrow} <strong>Logs</strong> ({logs.length})
+        {arrow} <strong>Events</strong> ({logs.length})
       </HeaderComponent>
       {isOpen && (
         <div className={styles.AccordianLogsContent}>

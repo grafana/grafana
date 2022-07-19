@@ -18,6 +18,7 @@ type WeComConfig struct {
 	*NotificationChannelConfig
 	URL     string
 	Message string
+	Title   string
 }
 
 func WeComFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -40,6 +41,7 @@ func NewWeComConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedV
 		NotificationChannelConfig: config,
 		URL:                       url,
 		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Title:                     config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
 	}, nil
 }
 
@@ -55,6 +57,7 @@ func NewWeComNotifier(config *WeComConfig, ns notifications.WebhookSender, t *te
 		}),
 		URL:     config.URL,
 		Message: config.Message,
+		Title:   config.Title,
 		log:     log.New("alerting.notifier.wecom"),
 		ns:      ns,
 		tmpl:    t,
@@ -66,6 +69,7 @@ type WeComNotifier struct {
 	*Base
 	URL     string
 	Message string
+	Title   string
 	tmpl    *template.Template
 	log     log.Logger
 	ns      notifications.WebhookSender
@@ -82,7 +86,7 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		"msgtype": "markdown",
 	}
 	content := fmt.Sprintf("# %s\n%s\n",
-		tmpl(DefaultMessageTitleEmbed),
+		tmpl(w.Title),
 		tmpl(w.Message),
 	)
 

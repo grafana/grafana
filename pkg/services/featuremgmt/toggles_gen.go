@@ -47,10 +47,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoServiceGraph
-	// show service
-	FlagTempoServiceGraph = "tempoServiceGraph"
-
 	// FlagTempoApmTable
 	// Show APM table
 	FlagTempoApmTable = "tempoApmTable"
@@ -107,13 +103,13 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
+	// FlagDashboardsFromStorage
+	// Load dashboards from the generic storage interface
+	FlagDashboardsFromStorage = "dashboardsFromStorage"
+
 	// FlagExport
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"
-
-	// FlagStorageLocalUpload
-	// allow uploads to local storage
-	FlagStorageLocalUpload = "storageLocalUpload"
 
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query
@@ -139,10 +135,6 @@ const (
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
 
-	// FlagAzureMonitorExperimentalUI
-	// Use grafana-experimental UI in Azure Monitor
-	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
-
 	// FlagTraceToMetrics
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
@@ -167,6 +159,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagScenes
+	// Experimental framework to build interactive dashboards
+	FlagScenes = "scenes"
+
 	// FlagUseLegacyHeatmapPanel
 	// Continue to use the angular/flot based heatmap panel
 	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
@@ -174,6 +170,10 @@ const (
 	// FlagCloudMonitoringExperimentalUI
 	// Use grafana-experimental UI in Cloud Monitoring
 	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
+
+	// FlagDisableSecretsCompatibility
+	// Disable duplicated secret storage in legacy tables
+	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
 
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown
