@@ -11,6 +11,7 @@ import {
   DataSourceApi,
   ExplorePanelsState,
   PreferredVisualisationType,
+  DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
@@ -138,7 +139,7 @@ export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphS
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasourceNameOrUid: string,
+  dataSourceRef: DataSourceRef,
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
@@ -152,7 +153,7 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       const orgId = getState().user.orgId;
-      const loadResult = await loadAndInitDatasource(orgId, datasourceNameOrUid);
+      const loadResult = await loadAndInitDatasource(orgId, dataSourceRef);
       instance = loadResult.instance;
       history = loadResult.history;
     }

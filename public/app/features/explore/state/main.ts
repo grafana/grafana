@@ -108,9 +108,9 @@ export const splitOpen: SplitOpen = (options): ThunkResult<void> => {
     let rightUrlState: ExploreUrlState = leftUrlState;
 
     if (options) {
-      const datasourceName = getDataSourceSrv().getInstanceSettings(options.datasourceUid)?.name || '';
+      const datasourceUid = getDataSourceSrv().getInstanceSettings(options.datasourceUid)?.uid || '';
       rightUrlState = {
-        datasource: datasourceName,
+        datasource: datasourceUid,
         queries: [options.query],
         range: options.range || leftState.range,
         panelsState: options.panelsState,
