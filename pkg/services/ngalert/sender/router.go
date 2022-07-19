@@ -28,10 +28,10 @@ type AlertsRouter struct {
 	adminConfigStore store.AdminConfigurationStore
 
 	// externalAlertmanagerSenders help us send alerts to external Alertmanagers.
-	adminConfigMtx              sync.RWMutex
-	sendAlertsTo                map[int64]models.AlertmanagersChoice
-	externalAlertmanagerSenders map[int64]*ExternalAlertmanagerSender
-	sendersCfgHash              map[int64]string
+	adminConfigMtx                     sync.RWMutex
+	sendAlertsTo                       map[int64]models.AlertmanagersChoice
+	externalAlertmanagerSenders        map[int64]*ExternalAlertmanagerSender
+	externalAlertmanagerSendersCfgHash map[int64]string
 
 	multiOrgNotifier *notifier.MultiOrgAlertmanager
 
@@ -46,10 +46,10 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 		clock:            clk,
 		adminConfigStore: store,
 
-		adminConfigMtx:              sync.RWMutex{},
-		externalAlertmanagerSenders: map[int64]*ExternalAlertmanagerSender{},
-		sendersCfgHash:              map[int64]string{},
-		sendAlertsTo:                map[int64]models.AlertmanagersChoice{},
+		adminConfigMtx:                     sync.RWMutex{},
+		externalAlertmanagerSenders:        map[int64]*ExternalAlertmanagerSender{},
+		externalAlertmanagerSendersCfgHash: map[int64]string{},
+		sendAlertsTo:                       map[int64]models.AlertmanagersChoice{},
 
 		multiOrgNotifier: multiOrgNotifier,
 
@@ -107,7 +107,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 		// We have a running sender, check if we need to apply a new config.
 		if ok {
-			if d.sendersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
+			if d.externalAlertmanagerSendersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
 				d.logger.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
 				continue
 			}
@@ -118,7 +118,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 				d.logger.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
 				continue
 			}
-			d.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+			d.externalAlertmanagerSendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
 			continue
 		}
 
@@ -139,7 +139,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		d.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+		d.externalAlertmanagerSendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
 	}
 
 	sendersToStop := map[int64]*ExternalAlertmanagerSender{}
@@ -148,7 +148,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		if _, exists := orgsFound[orgID]; !exists {
 			sendersToStop[orgID] = s
 			delete(d.externalAlertmanagerSenders, orgID)
-			delete(d.sendersCfgHash, orgID)
+			delete(d.externalAlertmanagerSendersCfgHash, orgID)
 		}
 	}
 	d.adminConfigMtx.Unlock()
