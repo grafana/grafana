@@ -30,6 +30,11 @@ const (
 
 type DsAccess string
 
+type DataSourceRef struct {
+	UID  string
+	Type string
+}
+
 type DataSource struct {
 	Id      int64 `json:"id,omitempty"`
 	OrgId   int64 `json:"orgId,omitempty"`
