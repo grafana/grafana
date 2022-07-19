@@ -29,7 +29,7 @@ If the user is aware of the change and intended it, then that's great! But if th
 
 In Grafana, you can change your names and emails associated with groups or accounts in the Settings or Preferences. This topic provides instructions for each task.
 
-{{< docs/shared "preferences/some-tasks-require-permissions.md" >}}
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
 
 ### Change organization name
 
@@ -39,24 +39,20 @@ Grafana server administrators and organization administrators can change organiz
 
 Follow these instructions if you are a Grafana Server Admin.
 
-{{< docs/list >}}
-{{< docs/shared "manage-users/view-server-org-list.md" >}}
-
+1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears.
+1. Click **Orgs**.
 1. In the organization list, click the name of the organization that you want to change.
 1. In **Name**, enter the new organization name.
 1. Click **Update**.
-   {{< /docs/list >}}
 
 #### Organization Admin change organization name
 
 If you are an Organization Admin, follow these steps:
 
-{{< docs/list >}}
-{{< docs/shared "preferences/org-preferences-list.md" >}}
-
+1. Hover your cursor over the **Configuration** (gear) icon.
+1. Click **Preferences**.
 1. In **Organization name**, enter the new name.
 1. Click **Update organization name**.
-   {{< /docs/list >}}
 
 ### Change team name or email
 
@@ -80,7 +76,7 @@ To learn how to edit your user information, refer to [Edit your profile]({{< rel
 
 In Grafana, you can modify the UI theme configured in the Settings or Preferences. Set the UI theme for the server, an organization, a team, or your personal user account using the instructions in this topic.
 
-{{< docs/shared "preferences/some-tasks-require-permissions.md" >}}
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
 
 ### Theme options
 
@@ -112,36 +108,34 @@ To see what the current settings are, refer to [View server settings]({{< relref
 
 Organization administrators can change the UI theme for all users in an organization.
 
-{{< docs/list >}}
-{{< docs/shared "preferences/org-preferences-list.md" >}}
-{{< docs/shared "preferences/select-ui-theme-list.md" >}}
-{{< /docs/list >}}
+1. Hover your cursor over the **Configuration** (gear) icon.
+1. Click **Preferences**.
+1. In the Preferences section, select the **UI theme**.
+1. Click **Save**.
 
 ### Change team UI theme
 
 Organization and team administrators can change the UI theme for all users in a team.
 
-{{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
-
+1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
+1. Click **Teams**. Grafana displays the team list.
 1. Click on the team that you want to change the UI theme for and then navigate to the **Settings** tab.
-   {{< docs/shared "preferences/select-ui-theme-list.md" >}}
-   {{< /docs/list >}}
+1. In the Preferences section, select the **UI theme**.
+1. Click **Save**.
 
 ### Change your personal UI theme
 
 You can change the UI theme for your user account. This setting overrides UI theme settings at higher levels.
 
-{{< docs/list >}}
-{{< docs/shared "preferences/navigate-user-preferences-list.md" >}}
-{{< docs/shared "preferences/select-ui-theme-list.md" >}}
-{{< /docs/list >}}
+1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
+1. In the Preferences section, select the **UI theme**.
+1. Click **Save**.
 
 ## Change the Grafana default timezone
 
 By default, Grafana uses the timezone in your web browser. However, you can override this setting at the server, organization, team, or individual user level. This topic provides instructions for each task.
 
-{{< docs/shared "preferences/some-tasks-require-permissions.md" >}}
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
 
 ### Set server timezone
 
@@ -151,36 +145,34 @@ Grafana server administrators can choose a default timezone for all users on the
 
 Organization administrators can choose a default timezone for their organization.
 
-{{< docs/list >}}
-{{< docs/shared "preferences/org-preferences-list.md" >}}
-{{< docs/shared "preferences/select-timezone-list.md" >}}
-{{< /docs/list >}}
+1. Hover your cursor over the **Configuration** (gear) icon.
+1. Click **Preferences**.
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/time-range-controls/" >}}) for more information about Grafana time settings.
+1. Click **Save**.
 
 ### Set team timezone
 
 Organization administrators and team administrators can choose a default timezone for all users in a team.
 
-{{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
-
+1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
+1. Click **Teams**. Grafana displays the team list.
 1. Click on the team you that you want to change the timezone for and then navigate to the **Settings** tab.
-   {{< docs/shared "preferences/select-timezone-list.md" >}}
-   {{< /docs/list >}}
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/time-range-controls/" >}}) for more information about Grafana time settings.
+1. Click **Save**.
 
 ### Set your personal timezone
 
 You can change the timezone for your user account. This setting overrides timezone settings at higher levels.
 
-{{< docs/list >}}
-{{< docs/shared "preferences/navigate-user-preferences-list.md" >}}
-{{< docs/shared "preferences/select-timezone-list.md" >}}
-{{< /docs/list >}}
+1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/time-range-controls/" >}}) for more information about Grafana time settings.
+1. Click **Save**.
 
 ## Change the default home dashboard
 
 The home dashboard you set is the one all users will see by default when they log in. You can set the home dashboard for the server, an organization, a team, or your personal user account. This topic provides instructions for each task.
 
-{{< docs/shared "preferences/some-tasks-require-permissions.md" >}}
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
 
 ### Navigate to the home dashboard
 
@@ -216,30 +208,31 @@ default_home_dashboard_path = data/main-dashboard.json
 
 Organization administrators can choose a home dashboard for their organization.
 
-{{< docs/list >}}
-{{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
-{{< docs/shared "preferences/org-preferences-list.md" >}}
-{{< docs/shared "preferences/select-home-dashboard-list.md" >}}
-{{< /docs/list >}}
+1. Navigate to the dashboard you want to set as the home dashboard.
+1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
+1. Hover your cursor over the **Configuration** (gear) icon.
+1. Click **Preferences**.
+1. In the **Home Dashboard** field, select the dashboard that you want to use for your home dashboard. Options include all starred dashboards.
+1. Click **Save**.
 
 ### Set home dashboard for your team
 
 Organization administrators and Team Admins can choose a home dashboard for a team.
 
-{{< docs/list >}}
-{{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
-
+1. Navigate to the dashboard you want to set as the home dashboard.
+1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
+1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
+1. Click **Teams**. Grafana displays the team list.
 1. Click on the team that you want to change the home dashboard for and then navigate to the **Settings** tab.
-   {{< docs/shared "preferences/select-home-dashboard-list.md" >}}
-   {{< /docs/list >}}
+1. In the **Home Dashboard** field, select the dashboard that you want to use for your home dashboard. Options include all starred dashboards.
+1. Click **Save**.
 
 ### Set your personal home dashboard
 
 You can choose your own personal home dashboard. This setting overrides all home dashboards set at higher levels.
 
-{{< docs/list >}}
-{{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
-{{< docs/shared "preferences/navigate-user-preferences-list.md" >}}
-{{< docs/shared "preferences/select-home-dashboard-list.md" >}}
-{{< /docs/list >}}
+1. Navigate to the dashboard you want to set as the home dashboard.
+1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
+1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
+1. In the **Home Dashboard** field, select the dashboard that you want to use for your home dashboard. Options include all starred dashboards.
+1. Click **Save**.

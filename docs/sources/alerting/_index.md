@@ -19,7 +19,7 @@ Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
 
 The following diagram gives you an overview of how Grafana Alerting works and introduces you to some of the key concepts that work together and form the core of our flexible and powerful alerting engine.
 
-{{< figure src="/static/img/docs/alerting/unified/about-alerting-flow-diagram.jpg" caption="Grafana Alerting overview" >}}
+{{< figure src="/static/img/docs/alerting/unified/about-alerting-flow-diagram-latest.png" caption="Grafana Alerting overview" >}}
 
 1. Alert rules
 

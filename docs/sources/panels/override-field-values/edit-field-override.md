@@ -10,11 +10,6 @@ weight: 40
 
 Edit a field override when you want to make changes to an override setting.
 
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
-- [Add a field override]({{< relref "add-a-field-override/" >}}).
-
 **To edit a field override**:
 
 1. Edit the panel that contains the overrides you want to edit.

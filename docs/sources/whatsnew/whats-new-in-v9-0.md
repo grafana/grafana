@@ -15,7 +15,7 @@ title: What's new in Grafana v9.0
 weight: -33
 ---
 
-# What’s new in Grafana v9.0
+# What's new in Grafana v9.0
 
 As tradition goes, GrafanaCon — our yearly community event for Grafana open source users — is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0: a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default Grafana Alerting experience.
 

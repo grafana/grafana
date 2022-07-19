@@ -3,7 +3,7 @@ import React, { FC, Fragment, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -103,7 +103,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         variant="primary"
         icon="book"
         target="__blank"
-        href={rule.annotations[Annotation.runbookURL]}
+        href={textUtil.sanitizeUrl(rule.annotations[Annotation.runbookURL])}
       >
         View runbook
       </LinkButton>

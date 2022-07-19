@@ -25,6 +25,15 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		uid := cmd.Result.UID
 
+		t.Run("Can get playlist", func(t *testing.T) {
+			get := &models.GetPlaylistByUidQuery{UID: uid, OrgId: 1}
+			err = ss.GetPlaylist(context.Background(), get)
+			require.NoError(t, err)
+			require.NotNil(t, get.Result)
+			require.Equal(t, get.Result.Name, "NYC office")
+			require.Equal(t, get.Result.Interval, "10m")
+		})
+
 		t.Run("Can get playlist items", func(t *testing.T) {
 			get := &models.GetPlaylistItemsByUidQuery{PlaylistUID: uid, OrgId: 1}
 			err = ss.GetPlaylistItem(context.Background(), get)
@@ -49,9 +58,16 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 
 			getQuery := models.GetPlaylistByUidQuery{UID: uid, OrgId: 1}
 			err = ss.GetPlaylist(context.Background(), &getQuery)
-			require.NoError(t, err)
-			require.Equal(t, uid, getQuery.Result.UID, "playlist should've been removed")
+			require.Error(t, err)
+			require.ErrorIs(t, err, models.ErrPlaylistNotFound)
 		})
+	})
+
+	t.Run("Get playlist that doesn't exist", func(t *testing.T) {
+		get := &models.GetPlaylistByUidQuery{UID: "unknown", OrgId: 1}
+		err := ss.GetPlaylist(context.Background(), get)
+		require.Error(t, err)
+		require.ErrorIs(t, err, models.ErrPlaylistNotFound)
 	})
 
 	t.Run("Delete playlist that doesn't exist", func(t *testing.T) {

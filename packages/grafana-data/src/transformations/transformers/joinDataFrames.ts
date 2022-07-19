@@ -241,10 +241,9 @@ export type TypedArray =
   | Float32Array
   | Float64Array;
 
-export type AlignedData = [
-  xValues: number[] | TypedArray,
-  ...yValues: Array<Array<number | null | undefined> | TypedArray>
-];
+export type AlignedData =
+  | TypedArray[]
+  | [xValues: number[] | TypedArray, ...yValues: Array<Array<number | null | undefined> | TypedArray>];
 
 // nullModes
 const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)

@@ -52,7 +52,6 @@ export interface FeatureToggles {
   savedItems?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
-  azureMonitorExperimentalUI?: boolean;
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
   validateDashboardsOnSave?: boolean;

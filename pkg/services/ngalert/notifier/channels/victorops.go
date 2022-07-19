@@ -119,8 +119,8 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 
 	_ = withStoredImages(ctx, vn.log, vn.images,
-		func(index int, image *ngmodels.Image) error {
-			if image != nil && image.URL != "" {
+		func(index int, image ngmodels.Image) error {
+			if image.URL != "" {
 				bodyJSON.Set("image_url", image.URL)
 				return ErrImagesDone
 			}

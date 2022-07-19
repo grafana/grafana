@@ -42,7 +42,8 @@ load(
     'validate_scuemata_step',
     'ensure_cuetsified_step',
     'test_a11y_frontend_step',
-    'trigger_oss'
+    'trigger_oss',
+    'betterer_frontend_step'
 )
 
 load(
@@ -83,6 +84,7 @@ def main_test_frontend():
     ]
     test_steps = [
         lint_frontend_step(),
+        betterer_frontend_step(),
         test_frontend_step(),
     ]
     return pipeline(

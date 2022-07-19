@@ -14,14 +14,12 @@ Dashboard snapshots are static . Queries and expressions cannot be re-executed f
 
 Before you begin, ensure that you have configured a data source. See also:
 
-- [Working with Grafana dashboard UI]({{< relref "dashboard-ui/" >}})
+- [Use dashboards]({{< relref "use-dashboards/" >}})
 - [Dashboard folders]({{< relref "dashboard-folders/" >}})
 - [Create dashboard]({{< relref "dashboard-create/" >}})
 - [Manage dashboards]({{< relref "dashboard-manage/" >}})
 - [Annotations]({{< relref "annotations/" >}})
 - [Playlist]({{< relref "playlist/" >}})
-- [Search]({{< relref "search/" >}})
-- [Keyboard shortcuts]({{< relref "shortcuts/" >}})
 - [Reporting]({{< relref "reporting/" >}})
 - [Time range controls]({{< relref "time-range-controls/" >}})
 - [Dashboard version history]({{< relref "dashboard-history/" >}})

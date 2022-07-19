@@ -33,6 +33,7 @@ load(
     'ensure_cuetsified_step',
     'test_a11y_frontend_step',
     'enterprise_downstream_step',
+    'betterer_frontend_step',
 )
 
 load(
@@ -80,6 +81,7 @@ def pr_test_frontend():
     ]
     test_steps = [
         lint_frontend_step(),
+        betterer_frontend_step(),
         test_frontend_step(),
     ]
     return pipeline(

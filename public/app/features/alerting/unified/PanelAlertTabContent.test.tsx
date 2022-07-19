@@ -159,7 +159,7 @@ const dashboard = {
   },
 } as DashboardModel;
 
-const panel = {
+const panel = new PanelModel({
   datasource: {
     type: 'prometheus',
     uid: dataSources.prometheus.uid,
@@ -172,7 +172,7 @@ const panel = {
       refId: 'A',
     },
   ],
-} as any as PanelModel;
+});
 
 const ui = {
   row: byTestId('row'),
@@ -196,11 +196,14 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will take into account panel maxDataPoints', async () => {
-    await renderAlertTabContent(dashboard, {
-      ...panel,
-      maxDataPoints: 100,
-      interval: '10s',
-    } as any as PanelModel);
+    await renderAlertTabContent(
+      dashboard,
+      new PanelModel({
+        ...panel,
+        maxDataPoints: 100,
+        interval: '10s',
+      })
+    );
 
     const button = await ui.createButton.find();
     const href = button.href;
@@ -222,12 +225,15 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will work with default datasource', async () => {
-    await renderAlertTabContent(dashboard, {
-      ...panel,
-      datasource: undefined,
-      maxDataPoints: 100,
-      interval: '10s',
-    } as any as PanelModel);
+    await renderAlertTabContent(
+      dashboard,
+      new PanelModel({
+        ...panel,
+        datasource: undefined,
+        maxDataPoints: 100,
+        interval: '10s',
+      })
+    );
 
     const button = await ui.createButton.find();
     const href = button.href;
@@ -251,10 +257,13 @@ describe('PanelAlertTabContent', () => {
   it('Will take into account datasource minInterval', async () => {
     (getDatasourceSrv() as any as MockDataSourceSrv).datasources[dataSources.prometheus.uid].interval = '7m';
 
-    await renderAlertTabContent(dashboard, {
-      ...panel,
-      maxDataPoints: 100,
-    } as any as PanelModel);
+    await renderAlertTabContent(
+      dashboard,
+      new PanelModel({
+        ...panel,
+        maxDataPoints: 100,
+      })
+    );
 
     const button = await ui.createButton.find();
     const href = button.href;
