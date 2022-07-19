@@ -19,14 +19,14 @@ This API can be used to define correlations between data sources.
 
 ## Create correlations
 
-`POST /api/datasources/uid/:sourceUid/correlation`
+`POST /api/datasources/uid/:sourceUid/correlations`
 
 Creates a correlation between two data sources - the source data source indicated by the path UID, and the target data source which is specified in the body.
 
 **Example request:**
 
 ```http
-POST /api/datasources/uid/uyBf2637k/correlation HTTP/1.1
+POST /api/datasources/uid/uyBf2637k/correlations HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
