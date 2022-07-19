@@ -143,19 +143,19 @@ export interface NotificationChannelState {
 }
 
 export interface IntegrationError {
-  lastError: string;
+  lastError: null | string;
   lastNotify: string;
-  lastNotifyDuration: number;
-  name: string;
+  lastNotifyDuration: string;
 }
 
 export interface IntegrationState {
-  [key: string]: IntegrationError;
+  [key: string]: IntegrationError[]; // key is the integration name
 }
 
 export interface ReceiverState {
   active: boolean;
   integrations: IntegrationState[];
+  errorCount: number; // errors by receiver
 }
 
 export interface ReceiversState {
@@ -163,7 +163,7 @@ export interface ReceiversState {
 }
 
 export interface ContactPointsState {
-  receivers: ReceiversState[];
+  receivers: ReceiversState;
   errorCount: number;
 }
 
