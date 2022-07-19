@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 import { useAsync } from 'react-use';
 
-import { DataFrame, GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Card, Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { DataFrame, NavModel, NavModelItem } from '@grafana/data';
+import { Card, Icon, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -11,16 +10,14 @@ import { getGrafanaStorage } from './storage';
 
 export interface Props extends GrafanaRouteComponentProps<{ slug: string }> {}
 
-export const StorageFolderPage: FC<Props> = (props) => {
+export function StorageFolderPage(props: Props) {
   const slug = props.match.params.slug ?? '';
-
-  const styles = useStyles2(getStyles);
   const listing = useAsync((): Promise<DataFrame | undefined> => {
     return getGrafanaStorage().list(slug);
   }, [slug]);
 
   const childRoot = slug.length > 0 ? `g/${slug}/` : 'g/';
-  const pageNav = getPageNav(slug);
+  const pageNav = getPageNavFromSlug(slug);
 
   const renderListing = () => {
     if (listing.value) {
@@ -47,16 +44,16 @@ export const StorageFolderPage: FC<Props> = (props) => {
     return <div>?</div>;
   };
 
-  const navModel = { main: { text: 'Content' }, node: { text: 'Content' } };
+  const navModel = getRootContentNavModel();
 
   return (
     <Page navModel={navModel} pageNav={pageNav}>
       {renderListing()}
     </Page>
   );
-};
+}
 
-function getPageNav(slug: string) {
+export function getPageNavFromSlug(slug: string) {
   const parts = slug.split('/');
   let pageNavs: NavModelItem[] = [];
   let url = 'g';
@@ -71,13 +68,8 @@ function getPageNav(slug: string) {
   return lastPageNav;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    background: theme.colors.background.primary,
-    border: `1px solid ${theme.colors.border.weak} `,
-    borderRadius: theme.shape.borderRadius(1),
-    padding: theme.spacing(2),
-  }),
-});
+export function getRootContentNavModel(): NavModel {
+  return { main: { text: 'C:' }, node: { text: 'Content', url: '/g' } };
+}
 
 export default StorageFolderPage;
