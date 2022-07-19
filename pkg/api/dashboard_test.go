@@ -261,6 +261,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			AccessControl:           accesscontrolmock.New(),
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
+			Features:                featuremgmt.WithFeatures(),
 		}
 		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
@@ -901,6 +902,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				SQLStore:                     mockSQLStore,
 				AccessControl:                accesscontrolmock.New(),
 				DashboardService:             dashboardService,
+				Features:                     featuremgmt.WithFeatures(),
 			}
 			hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 			hs.callGetDashboard(sc)
@@ -955,6 +957,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 			folderPermissions, dashboardPermissions, ac,
 		),
 		DashboardService: dashboardService,
+		Features:         featuremgmt.WithFeatures(),
 	}
 	hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
@@ -1053,6 +1056,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
+			Features:                featuremgmt.WithFeatures(),
 		}
 		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
