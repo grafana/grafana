@@ -21,6 +21,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { notifyApp } from 'app/core/actions';
 import { config } from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -46,7 +47,6 @@ import {
   CloudWatchLogsRequest,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
-  CloudWatchRowContextOptions,
   DescribeLogGroupsRequest,
   Dimensions,
   GetLogEventsRequest,
@@ -488,7 +488,7 @@ export class CloudWatchDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    { limit = 10, direction = 'BACKWARD' }: CloudWatchRowContextOptions = {},
+    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {},
     query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
     let logStreamField = null;

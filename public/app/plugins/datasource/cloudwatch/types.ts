@@ -1,6 +1,5 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
 import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
 import {
   QueryEditorArrayExpression,
@@ -439,8 +438,4 @@ export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
     type: string;
   };
   type: string;
-}
-
-export interface CloudWatchRowContextOptions extends RowContextOptions {
-  query?: CloudWatchLogsQuery;
 }
