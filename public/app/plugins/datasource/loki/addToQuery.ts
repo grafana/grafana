@@ -1,5 +1,3 @@
-import { sortBy } from 'lodash';
-
 import { parser } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
@@ -260,6 +258,5 @@ function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabe
  * @param positions
  */
 function findLastPosition(positions: Position[]): Position {
-  const sorted = sortBy(positions, (position) => position.to);
-  return sorted[sorted.length - 1];
+  return positions.reduce((prev, current) => (prev.to > current.to ? prev : current));
 }
