@@ -103,7 +103,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
   onPropChanged = async ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
     this.props.changeVariableProp(this.props.identifier, propName, propValue);
     if (updateOptions) {
-      await this.props.updateOptions(toKeyedVariableIdentifier(this.props.variable));
+      await this.props.updateOptions(toKeyedVariableIdentifier(this.props.variable), null);
     }
   };
 

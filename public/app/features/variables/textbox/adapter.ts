@@ -23,14 +23,16 @@ export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableM
     dependsOn: (variable, variableToTest) => {
       return false;
     },
-    setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
+    setValue: async (variable, triggerVariableIdentifier, option, emitChanges = false) => {
+      await dispatch(
+        setOptionAsCurrent(toKeyedVariableIdentifier(variable), triggerVariableIdentifier, option, emitChanges)
+      );
     },
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setTextBoxVariableOptionsFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async (variable) => {
-      await dispatch(updateTextBoxVariableOptions(toKeyedVariableIdentifier(variable)));
+    updateOptions: async (variable, triggerVariableIdentifier) => {
+      await dispatch(updateTextBoxVariableOptions(toKeyedVariableIdentifier(variable), triggerVariableIdentifier));
     },
     getSaveModel: (variable, saveCurrentAsDefault) => {
       const { index, id, state, global, originalQuery, rootStateKey, ...rest } = cloneDeep(variable);

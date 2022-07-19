@@ -18,7 +18,9 @@ describe('operators', () => {
       it('then the correct observable should be created', async () => {
         const variable = queryBuilder().withId('query').withRootStateKey('key').build();
         const dispatch = jest.fn().mockResolvedValue({});
-        const observable = of(undefined).pipe(validateVariableSelection({ variable, dispatch }));
+        const observable = of(undefined).pipe(
+          validateVariableSelection({ variable, dispatch, triggerVariableIdentifier: null })
+        );
 
         await expect(observable).toEmitValuesWith((received) => {
           expect(received[0]).toEqual({});

@@ -142,7 +142,7 @@ describe('VariableQueryRunner', () => {
         done,
       });
 
-      runner.queueRequest({ identifier, datasource });
+      runner.queueRequest({ identifier, triggerVariableIdentifier: null, datasource });
     });
   });
 
@@ -178,7 +178,7 @@ describe('VariableQueryRunner', () => {
           done,
         });
 
-        runner.queueRequest({ identifier, datasource });
+        runner.queueRequest({ identifier, triggerVariableIdentifier: null, datasource });
       });
     });
 
@@ -211,7 +211,7 @@ describe('VariableQueryRunner', () => {
           done,
         });
 
-        runner.queueRequest({ identifier, datasource });
+        runner.queueRequest({ identifier, triggerVariableIdentifier: null, datasource });
       });
     });
   });
@@ -239,7 +239,7 @@ describe('VariableQueryRunner', () => {
           done,
         });
 
-        runner.queueRequest({ identifier, datasource });
+        runner.queueRequest({ identifier, triggerVariableIdentifier: null, datasource });
         runner.cancelRequest(identifier);
       });
     });
@@ -268,8 +268,8 @@ describe('VariableQueryRunner', () => {
           done,
         });
 
-        runner.queueRequest({ identifier, datasource });
-        runner.queueRequest({ identifier, datasource });
+        runner.queueRequest({ identifier, triggerVariableIdentifier: null, datasource });
+        runner.queueRequest({ identifier, triggerVariableIdentifier: null, datasource });
       });
     });
   });

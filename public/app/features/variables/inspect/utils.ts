@@ -290,7 +290,8 @@ export function getDependenciesForVariable(
     }
 
     const depends = variableAdapters.get(variable.type).dependsOn(variable, { name: variableId });
-    if (!depends) {
+
+    if (!depends || deps.has(variable.name)) {
       continue;
     }
 

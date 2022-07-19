@@ -5,7 +5,7 @@ import { Registry, UrlQueryValue, VariableType } from '@grafana/data';
 
 import { VariableEditorProps } from './editor/types';
 import { VariablePickerProps } from './pickers/types';
-import { VariablesState } from './state/types';
+import { KeyedVariableIdentifier, VariablesState } from './state/types';
 import { VariableModel, VariableOption } from './types';
 
 export interface VariableAdapter<Model extends VariableModel> {
@@ -14,9 +14,18 @@ export interface VariableAdapter<Model extends VariableModel> {
   name: string;
   initialState: Model;
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
-  setValue: (variable: Model, option: VariableOption, emitChanges?: boolean) => Promise<void>;
+  setValue: (
+    variable: Model,
+    triggerVariableIdentifier: KeyedVariableIdentifier | null,
+    option: VariableOption,
+    emitChanges?: boolean
+  ) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
-  updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
+  updateOptions: (
+    variable: Model,
+    triggerVariableIdentifier: KeyedVariableIdentifier | null,
+    searchFilter?: string
+  ) => Promise<void>;
   getSaveModel: (variable: Model, saveCurrentAsDefault?: boolean) => Partial<Model>;
   getValueForUrl: (variable: Model) => string | string[];
   picker: ComponentType<VariablePickerProps<Model>>;

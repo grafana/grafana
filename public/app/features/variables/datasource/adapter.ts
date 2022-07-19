@@ -27,14 +27,16 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
       }
       return false;
     },
-    setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
+    setValue: async (variable, triggerVariableIdentifier, option, emitChanges = false) => {
+      await dispatch(
+        setOptionAsCurrent(toKeyedVariableIdentifier(variable), triggerVariableIdentifier, option, emitChanges)
+      );
     },
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async (variable) => {
-      await dispatch(updateDataSourceVariableOptions(toKeyedVariableIdentifier(variable)));
+    updateOptions: async (variable, triggerVariableIdentifier) => {
+      await dispatch(updateDataSourceVariableOptions(toKeyedVariableIdentifier(variable), triggerVariableIdentifier));
     },
     getSaveModel: (variable) => {
       const { index, id, state, global, rootStateKey, ...rest } = cloneDeep(variable);

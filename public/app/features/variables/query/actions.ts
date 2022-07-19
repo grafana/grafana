@@ -20,9 +20,18 @@ import { variableQueryObserver } from './variableQueryObserver';
 
 export const updateQueryVariableOptions = (
   identifier: KeyedVariableIdentifier,
+  triggerVariableIdentifier: KeyedVariableIdentifier | null,
   searchFilter?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
+    if (
+      identifier.id === triggerVariableIdentifier?.id &&
+      identifier.rootStateKey === triggerVariableIdentifier.rootStateKey &&
+      identifier.type === triggerVariableIdentifier.type
+    ) {
+      return;
+    }
+
     try {
       const { rootStateKey } = identifier;
       if (!hasOngoingTransaction(rootStateKey, getState())) {
@@ -44,7 +53,12 @@ export const updateQueryVariableOptions = (
         const responseSubscription = getVariableQueryRunner().getResponse(identifier).subscribe(observer);
         subscription.add(responseSubscription);
 
-        getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });
+        getVariableQueryRunner().queueRequest({
+          identifier,
+          datasource,
+          searchFilter,
+          triggerVariableIdentifier: triggerVariableIdentifier ?? identifier,
+        });
       });
     } catch (err) {
       if (err instanceof Error) {
@@ -142,7 +156,7 @@ export const changeQueryVariableQuery =
       );
     }
 
-    await dispatch(updateOptions(identifier));
+    await dispatch(updateOptions(identifier, null));
   };
 
 export function hasSelfReferencingQuery(name: string, query: any): boolean {

@@ -73,7 +73,7 @@ export const filterOrSearchOptions = (
 
 const setVariable = async (updated: VariableWithMultiSupport) => {
   const adapter = variableAdapters.get(updated.type);
-  await adapter.setValue(updated, updated.current, true);
+  await adapter.setValue(updated, null, updated.current, true);
   return;
 };
 
@@ -136,7 +136,7 @@ const searchForOptions = async (
     const existing = getVariable<VariableWithOptions>(identifier, getState());
 
     const adapter = variableAdapters.get(existing.type);
-    await adapter.updateOptions(existing, searchQuery);
+    await adapter.updateOptions(existing, null, searchQuery);
 
     const updated = getVariable<VariableWithOptions>(identifier, getState());
     dispatch(toKeyedAction(key, updateOptionsFromSearch(updated.options)));

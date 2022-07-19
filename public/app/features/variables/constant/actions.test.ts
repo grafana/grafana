@@ -42,7 +42,7 @@ describe('constant actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toKeyedVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toKeyedVariableIdentifier(variable), null), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', createConstantOptionsFromQuery(toVariablePayload(variable))),

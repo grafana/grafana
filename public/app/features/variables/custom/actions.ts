@@ -7,10 +7,13 @@ import { toVariablePayload } from '../utils';
 
 import { createCustomOptionsFromQuery } from './reducer';
 
-export const updateCustomVariableOptions = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
+export const updateCustomVariableOptions = (
+  identifier: KeyedVariableIdentifier,
+  triggerVariableIdentifier: KeyedVariableIdentifier | null
+): ThunkResult<void> => {
   return async (dispatch) => {
     const { rootStateKey } = identifier;
     await dispatch(toKeyedAction(rootStateKey, createCustomOptionsFromQuery(toVariablePayload(identifier))));
-    await dispatch(validateVariableSelectionState(identifier));
+    await dispatch(validateVariableSelectionState(identifier, triggerVariableIdentifier));
   };
 };

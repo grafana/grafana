@@ -46,7 +46,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
       return;
     }
 
-    variableAdapters.get(variable.type).updateOptions(variable);
+    variableAdapters.get(variable.type).updateOptions(variable, null);
   }, [variable, updatedValue, dispatch, onVariableChange]);
 
   const onChange = useCallback(

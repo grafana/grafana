@@ -55,7 +55,7 @@ describe('custom actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenAsyncActionIsDispatched(updateCustomVariableOptions(toKeyedVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateCustomVariableOptions(toKeyedVariableIdentifier(variable), null), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', createCustomOptionsFromQuery(toVariablePayload(variable))),

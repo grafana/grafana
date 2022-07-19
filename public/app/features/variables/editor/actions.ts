@@ -39,7 +39,7 @@ export const variableEditorUnMount = (identifier: KeyedVariableIdentifier): Thun
 
 export const onEditorUpdate = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
-    await dispatch(updateOptions(identifier));
+    await dispatch(updateOptions(identifier, null));
     dispatch(switchToListMode(identifier.rootStateKey));
   };
 };

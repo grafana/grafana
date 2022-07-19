@@ -273,10 +273,6 @@ export const processVariableDependencies = async (variable: VariableModel, state
     throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
   }
 
-  if (isDependencyGraphCircular(variable, state)) {
-    throw new Error('Circular dependency in dashboard variables detected. Dashboard may not work as expected.');
-  }
-
   const dependencies = getDirectDependencies(variable, state);
 
   if (!isWaitingForDependencies(variable.rootStateKey, dependencies, state)) {
@@ -345,6 +341,10 @@ const isWaitingForDependencies = (key: string, dependencies: VariableModel[], st
     variables.some((v) => v.id === d.id && (v.state === LoadingState.NotStarted || v.state === LoadingState.Loading))
   );
 
+  if (notCompletedDependencies.every((dep) => isDependencyGraphCircular(dep, state))) {
+    return false;
+  }
+
   return notCompletedDependencies.length > 0;
 };
 
@@ -369,7 +369,7 @@ export const processVariable = (
         refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
         refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
       ) {
-        await dispatch(updateOptions(toKeyedVariableIdentifier(refreshableVariable)));
+        await dispatch(updateOptions(toKeyedVariableIdentifier(refreshableVariable), null));
         return;
       }
     }
@@ -400,7 +400,7 @@ export const setOptionFromUrl = (
     const variable = getVariable(identifier, getState());
     if (getVariableRefresh(variable) !== VariableRefresh.never) {
       // updates options
-      await dispatch(updateOptions(toKeyedVariableIdentifier(variable)));
+      await dispatch(updateOptions(toKeyedVariableIdentifier(variable), null));
     }
 
     // get variable from state
@@ -453,7 +453,7 @@ export const setOptionFromUrl = (
       );
     }
 
-    await variableAdapters.get(variable.type).setValue(variableFromState, option);
+    await variableAdapters.get(variable.type).setValue(variableFromState, null, option);
   };
 };
 
@@ -483,6 +483,7 @@ export const selectOptionsForCurrentValue = (variable: VariableWithOptions): Var
 
 export const validateVariableSelectionState = (
   identifier: KeyedVariableIdentifier,
+  triggerVariableIdentifier: KeyedVariableIdentifier | null,
   defaultValue?: string
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
@@ -496,7 +497,7 @@ export const validateVariableSelectionState = (
       // if none pick first
       if (selected.length === 0) {
         const option = variableInState.options[0];
-        return setValue(variableInState, option);
+        return setValue(variableInState, triggerVariableIdentifier, option);
       }
 
       const option: VariableOption = {
@@ -504,7 +505,7 @@ export const validateVariableSelectionState = (
         text: selected.map((v) => v.text) as string[],
         selected: true,
       };
-      return setValue(variableInState, option);
+      return setValue(variableInState, triggerVariableIdentifier, option);
     }
 
     let option: VariableOption | undefined | null = null;
@@ -513,14 +514,14 @@ export const validateVariableSelectionState = (
     const text = getCurrentText(variableInState);
     option = variableInState.options?.find((v) => v.text === text);
     if (option) {
-      return setValue(variableInState, option);
+      return setValue(variableInState, triggerVariableIdentifier, option);
     }
 
     // 2. find the default value
     if (defaultValue) {
       option = variableInState.options?.find((v) => v.text === defaultValue);
       if (option) {
-        return setValue(variableInState, option);
+        return setValue(variableInState, triggerVariableIdentifier, option);
       }
     }
 
@@ -528,7 +529,7 @@ export const validateVariableSelectionState = (
     if (variableInState.options) {
       const option = variableInState.options[0];
       if (option) {
-        return setValue(variableInState, option);
+        return setValue(variableInState, triggerVariableIdentifier, option);
       }
     }
 
@@ -539,13 +540,14 @@ export const validateVariableSelectionState = (
 
 export const setOptionAsCurrent = (
   identifier: KeyedVariableIdentifier,
+  triggerVariableIdentifier: KeyedVariableIdentifier | null,
   current: VariableOption,
   emitChanges: boolean
 ): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
     const { rootStateKey: key } = identifier;
     dispatch(toKeyedAction(key, setCurrentVariableValue(toVariablePayload(identifier, { option: current }))));
-    return await dispatch(variableUpdated(identifier, emitChanges));
+    return await dispatch(variableUpdated(identifier, triggerVariableIdentifier, emitChanges));
   };
 };
 
@@ -573,6 +575,7 @@ const createGraph = (variables: VariableModel[]) => {
 
 export const variableUpdated = (
   identifier: KeyedVariableIdentifier,
+  triggerVariableIdentifier: KeyedVariableIdentifier | null,
   emitChangeEvents: boolean,
   events: typeof appEvents = appEvents
 ): ThunkResult<Promise<void>> => {
@@ -607,7 +610,7 @@ export const variableUpdated = (
           return Promise.resolve();
         }
 
-        return dispatch(updateOptions(toKeyedVariableIdentifier(variable)));
+        return dispatch(updateOptions(toKeyedVariableIdentifier(variable), triggerVariableIdentifier));
       });
     }
 
@@ -662,7 +665,7 @@ const timeRangeUpdated =
     const variableInState = getVariable<VariableWithOptions>(identifier, getState());
     const previousOptions = variableInState.options.slice();
 
-    await dispatch(updateOptions(toKeyedVariableIdentifier(variableInState), true));
+    await dispatch(updateOptions(toKeyedVariableIdentifier(variableInState), null, true));
 
     const updatedVariable = getVariable<VariableWithOptions>(identifier, getState());
     const updatedOptions = updatedVariable.options;
@@ -843,7 +846,11 @@ export const cancelVariables =
   };
 
 export const updateOptions =
-  (identifier: KeyedVariableIdentifier, rethrow = false): ThunkResult<Promise<void>> =>
+  (
+    identifier: KeyedVariableIdentifier,
+    triggerVariableIdentifier: KeyedVariableIdentifier | null,
+    rethrow = false
+  ): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     const { rootStateKey } = identifier;
     try {
@@ -855,7 +862,7 @@ export const updateOptions =
       const variableInState = getVariable(identifier, getState());
       dispatch(toKeyedAction(rootStateKey, variableStateFetching(toVariablePayload(variableInState))));
       await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
-      await variableAdapters.get(variableInState.type).updateOptions(variableInState);
+      await variableAdapters.get(variableInState.type).updateOptions(variableInState, triggerVariableIdentifier);
       dispatch(completeVariableLoading(identifier));
     } catch (error) {
       dispatch(toKeyedAction(rootStateKey, variableStateFailed(toVariablePayload(identifier, { error }))));

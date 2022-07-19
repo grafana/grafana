@@ -7,6 +7,7 @@ import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { ThunkDispatch } from '../../../types';
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { KeyedVariableIdentifier } from '../state/types';
 import { QueryVariableModel } from '../types';
 import { getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
@@ -117,20 +118,23 @@ export function updateOptionsState(args: {
 
 export function validateVariableSelection(args: {
   variable: QueryVariableModel;
+  triggerVariableIdentifier: KeyedVariableIdentifier | null;
   dispatch: ThunkDispatch;
   searchFilter?: string;
 }): OperatorFunction<void, void> {
   return (source) =>
     source.pipe(
       mergeMap(() => {
-        const { dispatch, variable, searchFilter } = args;
+        const { dispatch, triggerVariableIdentifier, variable, searchFilter } = args;
 
         // If we are searching options there is no need to validate selection state
         // This condition was added to as validateVariableSelectionState will update the current value of the variable
         // So after search and selection the current value is already update so no setValue, refresh and URL update is performed
         // The if statement below fixes https://github.com/grafana/grafana/issues/25671
         if (!searchFilter) {
-          return from(dispatch(validateVariableSelectionState(toKeyedVariableIdentifier(variable))));
+          return from(
+            dispatch(validateVariableSelectionState(toKeyedVariableIdentifier(variable), triggerVariableIdentifier))
+          );
         }
 
         return of<void>();

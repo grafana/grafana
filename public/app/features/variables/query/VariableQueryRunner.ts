@@ -27,6 +27,7 @@ import { QueryRunners } from './queryRunners';
 
 interface UpdateOptionsArgs {
   identifier: KeyedVariableIdentifier;
+  triggerVariableIdentifier: KeyedVariableIdentifier | null;
   datasource: DataSourceApi;
   searchFilter?: string;
 }
@@ -89,7 +90,8 @@ export class VariableQueryRunner {
   }
 
   private onNewRequest(args: UpdateOptionsArgs): void {
-    const { datasource, identifier, searchFilter } = args;
+    const { datasource, identifier, searchFilter, triggerVariableIdentifier } = args;
+
     try {
       const {
         dispatch,
@@ -132,7 +134,12 @@ export class VariableQueryRunner {
           }),
           toMetricFindValues(),
           updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
-          validateVariableSelection({ variable, dispatch, searchFilter }),
+          validateVariableSelection({
+            variable,
+            triggerVariableIdentifier,
+            dispatch,
+            searchFilter,
+          }),
           takeUntil(
             merge(this.updateOptionsRequests, this.cancelRequests).pipe(
               filter((args) => {

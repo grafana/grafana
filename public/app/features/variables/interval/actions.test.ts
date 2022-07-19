@@ -39,7 +39,7 @@ describe('interval actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         )
-        .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toKeyedVariableIdentifier(interval)), true);
+        .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toKeyedVariableIdentifier(interval), null), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', createIntervalOptions({ type: 'interval', id: '0', data: undefined })),
@@ -91,7 +91,7 @@ describe('interval actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(interval)), true);
+        .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(interval), null), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 4;
@@ -136,7 +136,7 @@ describe('interval actions', () => {
           .whenActionIsDispatched(
             toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
-          .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(interval)), true);
+          .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(interval), null), true);
 
         tester.thenNoActionsWhereDispatched();
       });

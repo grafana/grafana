@@ -59,7 +59,7 @@ describe('data source actions', () => {
             )
           )
           .whenAsyncActionIsDispatched(
-            updateDataSourceVariableOptions(toKeyedVariableIdentifier(datasource), dependencies),
+            updateDataSourceVariableOptions(toKeyedVariableIdentifier(datasource), null, dependencies),
             true
           );
 
@@ -116,7 +116,7 @@ describe('data source actions', () => {
             )
           )
           .whenAsyncActionIsDispatched(
-            updateDataSourceVariableOptions(toKeyedVariableIdentifier(datasource), dependencies),
+            updateDataSourceVariableOptions(toKeyedVariableIdentifier(datasource), null, dependencies),
             true
           );
 
