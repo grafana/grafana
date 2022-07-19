@@ -59,6 +59,8 @@ func TestReadDashboard(t *testing.T) {
 		"all-selected-multi-datasource-variable",
 		"all-selected-single-datasource-variable",
 		"repeated-datasource-variables-with-default",
+		"mixed-datasource-with-variable",
+		"special-datasource-types",
 	}
 
 	devdash := "../../../../devenv/dev-dashboards/"
