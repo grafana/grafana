@@ -24,7 +24,7 @@ describe('loadAndInitDatasource', () => {
     dataSourceMock.get.mockRejectedValueOnce(new Error('Datasource not found'));
     dataSourceMock.get.mockResolvedValue(DEFAULT_DATASOURCE);
 
-    const { instance } = await loadAndInitDatasource(1, 'Unknown');
+    const { instance } = await loadAndInitDatasource(1, { uid: 'Unknown' });
 
     expect(dataSourceMock.get).toBeCalledTimes(2);
     expect(dataSourceMock.get).toBeCalledWith('Unknown');
@@ -36,7 +36,7 @@ describe('loadAndInitDatasource', () => {
   it('saves last loaded data source uid', async () => {
     dataSourceMock.get.mockResolvedValue(TEST_DATASOURCE);
 
-    const { instance } = await loadAndInitDatasource(1, 'Test');
+    const { instance } = await loadAndInitDatasource(1, { uid: 'Test' });
 
     expect(dataSourceMock.get).toBeCalledTimes(1);
     expect(dataSourceMock.get).toBeCalledWith('Test');

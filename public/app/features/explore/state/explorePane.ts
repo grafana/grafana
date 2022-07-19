@@ -139,7 +139,7 @@ export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphS
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  dataSourceRef: DataSourceRef,
+  datasource: DataSourceRef | string,
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
@@ -153,7 +153,7 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       const orgId = getState().user.orgId;
-      const loadResult = await loadAndInitDatasource(orgId, dataSourceRef);
+      const loadResult = await loadAndInitDatasource(orgId, datasource);
       instance = loadResult.instance;
       history = loadResult.history;
     }
@@ -202,6 +202,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
+    // datasource will either be name or UID here
     const { datasource, queries, range: urlRange, panelsState } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
