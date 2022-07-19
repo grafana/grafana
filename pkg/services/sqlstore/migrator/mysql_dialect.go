@@ -210,7 +210,7 @@ func (db *MySQLDialect) IsDeadlock(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_LOCK_DEADLOCK)
 }
 
-// UpsertSQL returns the upsert sql statement for PostgreSQL dialect
+// UpsertSQL returns the upsert sql statement for MySQL dialect
 func (db *MySQLDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
 	q, _ := db.UpsertMultipleSQL(tableName, keyCols, updateCols, 1)
 	return q
