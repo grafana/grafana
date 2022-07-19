@@ -64,6 +64,24 @@ Alternatively, you can configure authentication and region selection explicitly 
 | `secret_name_prefix`    | String prepended to each AWS Secret Manager secret name. Use this to avoid secret name conflicts in large organizations running multiple Grafana instances. | metrics-team                                 | _none_                          |
 | `secret_description`    | Description applied to every secret in AWS Secrets Manager. Use only for bookkeeping purposes.                                                              | Metrics team datasource                      | _none_                          |
 
+### Sample configuration
+
+Here is a sample **config.ini** to configure the plugin and [enable migration](#migrate-your-secrets-to-the-plugin).
+
+```ini
+[secrets]
+use_plugin = true
+migrate_to_plugin = true
+
+[plugin.grafana-aws-secretsmanager]
+aws_access_key_id = AKIAIOSFODNN7EXAMPLE
+aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+aws_region = us-east-1
+kms_key_id = 82065da4-3e2b-4372-87bf-664d1e488244
+secret_name_prefix = my-org
+secret_description = My description
+```
+
 ## Migrate your secrets to the plugin
 
 You can configure Grafana to migrate your existing secrets from Grafana to the plugin on startup. This migration is a one-time blocking operation that runs on Grafana startup, meaning Grafana will not be usable until migration is complete.
