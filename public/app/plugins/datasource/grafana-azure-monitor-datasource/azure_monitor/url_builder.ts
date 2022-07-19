@@ -57,7 +57,7 @@ export default class UrlBuilder {
       );
     }
 
-    return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}`;
+    return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?region=global&api-version=${apiVersion}`;
   }
 
   static buildAzureMonitorGetMetricNamesUrl(
