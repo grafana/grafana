@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -99,6 +100,22 @@ func buildKey(orgId int64, namespace string, typ string) Key {
 		Namespace: namespace,
 		Type:      typ,
 	}
+}
+
+// Fake feature toggle - only need to check the backwards compatibility disabled flag
+type fakeFeatureToggles struct {
+	returnValue bool
+}
+
+func NewFakeFeatureToggles(t *testing.T, returnValue bool) featuremgmt.FeatureToggles {
+	t.Helper()
+	return fakeFeatureToggles{
+		returnValue: returnValue,
+	}
+}
+
+func (f fakeFeatureToggles) IsEnabled(feature string) bool {
+	return f.returnValue
 }
 
 var _ SecretsKVStore = FakeSecretsKVStore{}

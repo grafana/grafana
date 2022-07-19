@@ -3,7 +3,9 @@ package kvstore
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,6 +20,8 @@ type PluginSecretMigrationService struct {
 	sqlStore       sqlstore.Store
 	secretsService secrets.Service
 	remoteCheck    UseRemoteSecretsPluginCheck
+	features       featuremgmt.FeatureToggles
+	kvstore        kvstore.KVStore
 }
 
 func ProvidePluginSecretMigrationService(
@@ -26,6 +30,8 @@ func ProvidePluginSecretMigrationService(
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	remoteCheck UseRemoteSecretsPluginCheck,
+	features featuremgmt.FeatureToggles,
+	kvstore kvstore.KVStore,
 ) *PluginSecretMigrationService {
 	return &PluginSecretMigrationService{
 		secretsStore:   secretsStore,
@@ -34,6 +40,8 @@ func ProvidePluginSecretMigrationService(
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		remoteCheck:    remoteCheck,
+		features:       features,
+		kvstore:        kvstore,
 	}
 }
 
@@ -70,6 +78,17 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 				return err
 			}
 		}
+
+		// if backwards compatibility was disabled, the plugin is now required for the app to start
+		// this migrator always gets run, so if backwards compatibility is re-enabled, delete the flag
+		disableSecretsCompatibility := s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility)
+		namespacedKVStore := GetNamespacedKVStore(s.kvstore)
+		if disableSecretsCompatibility {
+			setPluginErrorFatal(ctx, namespacedKVStore, true)
+		} else {
+			setPluginErrorFatal(ctx, namespacedKVStore, false)
+		}
+
 	}
 	return nil
 }

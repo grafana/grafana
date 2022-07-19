@@ -6,9 +6,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -89,6 +91,8 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 		sqlStore,
 		secretsService,
 		remoteCheck,
+		NewFakeFeatureToggles(t, false),
+		notifier.NewFakeKVStore(t),
 	)
 
 	secretsSql := &secretsKVStoreSQL{
@@ -103,7 +107,6 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 	return migratorService, secretsStoreForPlugin, secretsSql
 }
 
-//
 type mockRemoteSecretsPluginCheck struct {
 	UseRemoteSecretsPluginCheck
 }
