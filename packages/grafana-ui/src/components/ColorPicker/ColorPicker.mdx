@@ -1,5 +1,6 @@
 import { Meta, Props } from '@storybook/addon-docs/blocks';
 import { ColorPicker } from './ColorPicker';
+import { ColorPickerInput } from './ColorPickerInput';
 
 <Meta title="Pickers and Editors/ColorPicker/ColorPicker" />
 
@@ -10,5 +11,11 @@ The `ColorPicker` component group consists of several building blocks that are c
 The `Popover` is a tabbed view where you can switch between `Palettes`. The `NamedColorsPalette` shows an arrangement of preset colors, while the `SpectrumPalette` is an unlimited HSB color picker. The preset colors are optimized to work well with both light and dark theme. `Popover` is triggered, for example, by the series legend of graphs, or by `Pickers`.
 
 The `Pickers` are single circular color fields that show the currently picked color. On click, they open the `Popover`.
+
+## ColorPickerInput
+
+Color picker component, modified to be used inside forms. Supports all usual input props. Allows manually typing in color value as well as selecting it from the popover.
+
+The format in which the color is returned to the `onChange` callback can be customised via `returnColorAs` prop.
 
 <Props of={ColorPicker} />

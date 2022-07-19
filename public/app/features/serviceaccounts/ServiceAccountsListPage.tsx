@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
@@ -165,8 +166,24 @@ export const ServiceAccountsListPageUnconnected = ({
     closeApiKeysMigrationInfo();
   };
 
+  const docsLink = (
+    <a
+      className="external-link"
+      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      here.
+    </a>
+  );
+  const subTitle = (
+    <span>
+      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more {docsLink}
+    </span>
+  );
+
   return (
-    <Page navId="serviceaccounts">
+    <Page navId="serviceaccounts" subTitle={subTitle}>
       <Page.Contents>
         {apiKeysMigrated && showApiKeysMigrationInfo && (
           <Alert
@@ -176,32 +193,30 @@ export const ServiceAccountsListPageUnconnected = ({
             onRemove={onMigrationInfoClose}
           ></Alert>
         )}
-        <div className={styles.pageHeader}>
-          <h2>Service accounts</h2>
-          <div className={styles.apiKeyInfoLabel}>
-            <Tooltip
-              placement="bottom"
-              interactive
-              content={
-                <>
-                  API keys are now service accounts with tokens. Find out more{' '}
-                  <a href="https://grafana.com/docs/grafana/latest/administration/service-accounts/">here.</a>
-                </>
-              }
-            >
-              <Icon name="question-circle" />
-            </Tooltip>
-            <span>Looking for API keys?</span>
+        {!config.featureToggles.topnav && (
+          <div className={styles.pageHeader}>
+            <h2>Service accounts</h2>
+            <div className={styles.apiKeyInfoLabel}>
+              <Tooltip
+                placement="bottom"
+                interactive
+                content={<>API keys are now service accounts with tokens. Find out more {docsLink}</>}
+              >
+                <Icon name="question-circle" />
+              </Tooltip>
+              <span>Looking for API keys?</span>
+            </div>
           </div>
-          {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-            <LinkButton href="org/serviceaccounts/create" variant="primary">
-              Add service account
-            </LinkButton>
-          )}
-        </div>
-        <div className={styles.filterRow}>
-          <FilterInput placeholder="Search service account by name" value={query} onChange={onQueryChange} width={50} />
-          <div className={styles.filterDelimiter}></div>
+        )}
+        <div className="page-action-bar">
+          <div className="gf-form gf-form--grow">
+            <FilterInput
+              placeholder="Search service account by name"
+              value={query}
+              onChange={onQueryChange}
+              width={50}
+            />
+          </div>
           <RadioButtonGroup
             options={[
               { label: 'All', value: ServiceAccountStateFilter.All },
@@ -212,6 +227,11 @@ export const ServiceAccountsListPageUnconnected = ({
             value={serviceAccountStateFilter}
             className={styles.filter}
           />
+          {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+            <LinkButton href="org/serviceaccounts/create" variant="primary">
+              Add service account
+            </LinkButton>
+          )}
         </div>
         {isLoading && <PageLoader />}
         {!isLoading && noServiceAccountsCreated && (
@@ -350,13 +370,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         padding: ${theme.spacing(0.5)};
       }
     `,
-    filterRow: cx(
-      'page-action-bar',
-      css`
-        display: flex;
-        justifycontent: flex-end;
-      `
-    ),
     filterDelimiter: css`
       flex-grow: 1;
     `,

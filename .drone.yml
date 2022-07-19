@@ -1146,7 +1146,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: store-storybook
   when:
     repo:
@@ -1277,7 +1277,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-packages
   when:
     repo:
@@ -1291,7 +1291,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-cdn-assets
   when:
     repo:
@@ -1305,12 +1305,6 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
-- name: postgres
-  temp:
-    medium: memory
-- name: mysql
-  temp:
-    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -1552,7 +1546,7 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: store-packages-oss
 trigger:
   branch: main
@@ -1828,7 +1822,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-cdn-assets
 - commands:
   - ./bin/grabpl upload-packages --edition oss
@@ -1842,7 +1836,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-packages
 - commands:
   - ./bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease
@@ -1860,7 +1854,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: store-storybook
 - commands:
   - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
@@ -1871,7 +1865,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: store-npm-packages
 trigger:
   event:
@@ -2442,7 +2436,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-cdn-assets
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise
@@ -2453,7 +2447,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-packages
 - commands:
   - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
@@ -2464,7 +2458,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: store-npm-packages
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise2  --sign ${DRONE_TAG}
@@ -2494,7 +2488,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-cdn-assets-enterprise2
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2
@@ -2505,7 +2499,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-packages-enterprise2
 trigger:
   event:
@@ -3237,7 +3231,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: publish-artifacts
 trigger:
   event:
@@ -3275,7 +3269,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: publish-artifacts
 trigger:
   event:
@@ -3319,7 +3313,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: retrieve-npm-packages
 - commands:
   - ./bin/grabpl artifacts npm release --tag v${TAG}
@@ -3382,7 +3376,7 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: store-packages-oss
 trigger:
   event:
@@ -3436,7 +3430,7 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: store-packages-enterprise
 trigger:
   event:
@@ -3712,7 +3706,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-cdn-assets
   when:
     repo:
@@ -3729,7 +3723,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-packages
   when:
     repo:
@@ -4284,7 +4278,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-cdn-assets
   when:
     repo:
@@ -4298,7 +4292,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-packages
   when:
     repo:
@@ -4332,7 +4326,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-cdn-assets-enterprise2
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2
@@ -4343,7 +4337,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.1
+  image: grafana/grafana-ci-deploy:1.3.2
   name: upload-packages-enterprise2
 trigger:
   ref:
@@ -4880,6 +4874,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 55383abbbc205824d35aa689a0e00f374e74520d77dc387e354b063e4ade0869
+hmac: 21307c19aa1bb40d2da542435c76666ba935db47ddd936ca24cfdf79ffb11443
 
 ...
