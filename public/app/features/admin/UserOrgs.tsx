@@ -165,7 +165,6 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
   onOrgRemove = async () => {
     const { org, user } = this.props;
     this.props.onOrgRemove(org.orgId);
-    // add the stored userRoles also
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.OrgUsersRemove)) {
         user && (await updateUserRoles([], user.id, org.orgId));
