@@ -185,7 +185,7 @@ func GenerateAlertRules(count int, f func() *AlertRule) []*AlertRule {
 	return result
 }
 
-// GenerateRuleKey generates random alert rule key
+// GenerateRuleKey generates a random alert rule key
 func GenerateRuleKey(orgID int64) AlertRuleKey {
 	return AlertRuleKey{
 		OrgID: orgID,
@@ -193,7 +193,7 @@ func GenerateRuleKey(orgID int64) AlertRuleKey {
 	}
 }
 
-// GenerateGroupKey generates random group key
+// GenerateGroupKey generates a random group key
 func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
 	return AlertRuleGroupKey{
 		OrgID:        orgID,
