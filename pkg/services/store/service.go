@@ -30,7 +30,13 @@ const RootResources = "resources"
 const RootDevenv = "devenv"
 const RootSystem = "system"
 
-const SystemBrandingStorage = "system/branding"
+const brandingStorage = "branding"
+const SystemBrandingStorage = "system/" + brandingStorage
+
+var (
+	SystemBrandingReader = &models.SignedInUser{OrgId: 1}
+	SystemBrandingAdmin  = &models.SignedInUser{OrgId: 1}
+)
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
 
@@ -105,9 +111,8 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	if settings.AddDevEnv && setting.Env != setting.Prod {
 		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
 		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
-			// path/to/whatever exists
 			s := newDiskStorage(RootStorageConfig{
-				Prefix:      "devenv",
+				Prefix:      RootDevenv,
 				Name:        "Development Environment",
 				Description: "Explore files within the developer environment directly",
 				Disk: &StorageLocalDiskConfig{
@@ -136,15 +141,16 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0)
-		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-			storages = append(storages,
-				newSQLStorage(RootResources,
-					"Resources",
-					"Upload custom resource files",
-					&StorageSQLConfig{}, sql, orgId).
-					setBuiltin(true))
-		}
 
+		// Custom upload files
+		storages = append(storages,
+			newSQLStorage(RootResources,
+				"Resources",
+				"Upload custom resource files",
+				&StorageSQLConfig{}, sql, orgId).
+				setBuiltin(true))
+
+		// System settings
 		storages = append(storages,
 			newSQLStorage(RootSystem,
 				"System",
@@ -156,7 +162,30 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	}
 
 	authService := newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
-		if user == nil || !user.IsGrafanaAdmin {
+		if user == nil {
+			return nil
+		}
+
+		if storageName == RootSystem {
+			if user == SystemBrandingReader {
+				return map[string]filestorage.PathFilter{
+					ActionFilesRead:   createSystemBrandingPathFilter(),
+					ActionFilesWrite:  denyAllPathFilter,
+					ActionFilesDelete: denyAllPathFilter,
+				}
+			}
+
+			if user == SystemBrandingAdmin {
+				systemBrandingFilter := createSystemBrandingPathFilter()
+				return map[string]filestorage.PathFilter{
+					ActionFilesRead:   systemBrandingFilter,
+					ActionFilesWrite:  systemBrandingFilter,
+					ActionFilesDelete: systemBrandingFilter,
+				}
+			}
+		}
+
+		if !user.IsGrafanaAdmin {
 			return nil
 		}
 
@@ -179,18 +208,20 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				ActionFilesWrite:  allowAllPathFilter,
 				ActionFilesDelete: allowAllPathFilter,
 			}
-		case RootSystem:
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   allowAllPathFilter,
-				ActionFilesWrite:  allowAllPathFilter,
-				ActionFilesDelete: allowAllPathFilter,
-			}
 		default:
 			return nil
 		}
 	})
 
 	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService)
+}
+
+func createSystemBrandingPathFilter() filestorage.PathFilter {
+	return filestorage.NewPathFilter(
+		[]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, // access to all folders and files inside `/branding/`
+		[]string{filestorage.Delimiter + brandingStorage},                         // access to the `/branding` folder itself, but not to any other sibling folder
+		nil,
+		nil)
 }
 
 func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime, authService storageAuthService) *standardStorageService {

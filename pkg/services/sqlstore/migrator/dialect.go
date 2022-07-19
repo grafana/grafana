@@ -49,6 +49,7 @@ type Dialect interface {
 	ColumnCheckSQL(tableName, columnName string) (string, []interface{})
 	// UpsertSQL returns the upsert sql statement for a dialect
 	UpsertSQL(tableName string, keyCols, updateCols []string) string
+	UpsertMultipleSQL(tableName string, keyCols, updateCols []string, count int) (string, error)
 
 	ColString(*Column) string
 	ColStringNoPk(*Column) string

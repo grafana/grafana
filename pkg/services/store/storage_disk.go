@@ -22,12 +22,9 @@ func newDiskStorage(scfg RootStorageConfig) *rootStorageDisk {
 	cfg := scfg.Disk
 	if cfg == nil {
 		cfg = &StorageLocalDiskConfig{}
+		scfg.Disk = cfg
 	}
 	scfg.Type = rootStorageTypeDisk
-	scfg.GCS = nil
-	scfg.Git = nil
-	scfg.SQL = nil
-	scfg.S3 = nil
 
 	meta := RootStorageMeta{
 		Config: scfg,
@@ -44,6 +41,7 @@ func newDiskStorage(scfg RootStorageConfig) *rootStorageDisk {
 			Text:     "Missing path configuration",
 		})
 	}
+
 	s := &rootStorageDisk{}
 
 	if meta.Notice == nil {
