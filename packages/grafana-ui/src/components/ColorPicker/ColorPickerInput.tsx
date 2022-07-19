@@ -47,18 +47,11 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
             <RgbaStringColorPicker
               color={currentColor}
               onChange={setColor}
-              className={cx(styles.picker, paletteStyles.root)}
+              className={cx(paletteStyles.root, styles.picker)}
             />
           )}
           <div onClick={() => setIsOpen(true)}>
-            <ColorInput
-              {...inputProps}
-              theme={theme}
-              color={currentColor}
-              onChange={setColor}
-              className={styles.input}
-              ref={ref}
-            />
+            <ColorInput {...inputProps} theme={theme} color={currentColor} onChange={setColor} ref={ref} />
           </div>
         </div>
       </ClickOutsideWrapper>
@@ -74,8 +67,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: relative;
     `,
     picker: css`
-      bottom: ${theme.spacing(0.5)};
+      &.react-colorful {
+        position: absolute;
+        width: 100%;
+        z-index: 11;
+        bottom: 36px;
+      }
     `,
-    input: css``,
+    inner: css`
+      position: absolute;
+    `,
   };
 };
