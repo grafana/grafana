@@ -96,15 +96,21 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return ErrSourceDataSourceReadOnly
 		}
 
-		_, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(Correlation{
+		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(Correlation{
 			Label:       cmd.Label,
 			Description: cmd.Description,
 		})
+		if updateCount == 0 {
+			return ErrCorrelationNotFound
+		}
 		if err != nil {
 			return err
 		}
 
-		_, err = session.Get(&correlation)
+		found, err := session.Get(&correlation)
+		if !found {
+			return ErrCorrelationNotFound
+		}
 
 		return err
 	})
