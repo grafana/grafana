@@ -51,6 +51,7 @@ interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
   legends: ReactNode[];
+  measureMenuActive?: boolean;
 }
 
 export interface GeomapLayerActions {
@@ -355,6 +356,10 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
+    // If measure menu is open, bypass tooltip logic and display measuring mouse events
+    if (this.state.measureMenuActive) {
+      return true;
+    }
     if (!this.map || this.state.ttipOpen) {
       return false;
     }
@@ -657,7 +662,16 @@ export class GeomapPanel extends Component<Props, State> {
 
     let bottomMiddle: ReactNode[] = [];
     if (options.showMeasure) {
-      bottomMiddle = [<MeasureOverlay key="measure" map={this.map} />];
+      bottomMiddle = [
+        <MeasureOverlay
+          key="measure"
+          map={this.map}
+          // Lifts menuActive state and resets tooltip state upon close
+          menuActiveState={(value: boolean) => {
+            this.setState({ ttipOpen: value, measureMenuActive: value });
+          }}
+        />,
+      ];
     }
 
     this.setState({ topRight, bottomMiddle });

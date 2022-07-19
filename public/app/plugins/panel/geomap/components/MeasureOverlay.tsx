@@ -15,6 +15,7 @@ import { config } from 'app/core/config';
 
 type Props = {
   map: Map;
+  menuActiveState: (value: boolean) => void;
 };
 
 // Open Layer styles
@@ -172,7 +173,6 @@ function styleFunction(feature: any, segments: boolean, drawType?: string, tip?:
     let point, label, line;
     if (!drawType || drawType === type) {
       if (type === 'Polygon') {
-        console.log(geometry);
         point = geometry.getInteriorPoint();
         label = formatArea(geometry);
         line = new LineString(geometry.getCoordinates()[0]);
@@ -244,7 +244,7 @@ function addInteraction(map: Map, typeSelect: string, showSegments: boolean, cle
   map.addInteraction(draw);
 }
 
-export const MeasureOverlay = ({ map }: Props) => {
+export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   const measureStyle = getStyles(config.theme);
 
   // Menu State Management
@@ -280,6 +280,9 @@ export const MeasureOverlay = ({ map }: Props) => {
         tooltipPlacement="right"
         onClick={() => {
           setMenuActive(!menuActive);
+          // Lift menu state
+          // TODO: consolidate into one state
+          menuActiveState(!menuActive);
           if (menuActive) {
             map.removeInteraction(draw);
             vector.set('visible', false);
