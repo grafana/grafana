@@ -107,7 +107,7 @@ func (m *permissionMigrator) bulkAssignRoles(allRoles []*accesscontrol.Role) err
 
 	err := batch(len(userRoleAssignments), batchSize, func(start, end int) error {
 		_, err := m.sess.Table("user_role").InsertMulti(userRoleAssignments[start:end])
-		return err
+		return fmt.Errorf("failed to create user role assignments: %w", err)
 	})
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func (m *permissionMigrator) bulkAssignRoles(allRoles []*accesscontrol.Role) err
 
 	err = batch(len(teamRoleAssignments), batchSize, func(start, end int) error {
 		_, err := m.sess.Table("team_role").InsertMulti(teamRoleAssignments[start:end])
-		return err
+		return fmt.Errorf("failed to create team role assignments: %w", err)
 	})
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (m *permissionMigrator) bulkAssignRoles(allRoles []*accesscontrol.Role) err
 
 	return batch(len(builtInRoleAssignments), batchSize, func(start, end int) error {
 		_, err := m.sess.Table("builtin_role").InsertMulti(builtInRoleAssignments[start:end])
-		return err
+		return fmt.Errorf("failed to create builtin role assignments: %w", err)
 	})
 }
 
@@ -148,7 +148,7 @@ func (m *permissionMigrator) createRoles(roles []*accesscontrol.Role) ([]*access
 	valueString := strings.Join(valueStrings, ",")
 	sql := fmt.Sprintf("INSERT INTO role (org_id, uid, name, version, created, updated) VALUES %s RETURNING id, org_id, name", valueString)
 	if errCreate := m.sess.SQL(sql, args...).Find(&createdRoles); errCreate != nil {
-		return nil, errCreate
+		return nil, fmt.Errorf("failed to create roles: %w", errCreate)
 	}
 
 	return createdRoles, nil
