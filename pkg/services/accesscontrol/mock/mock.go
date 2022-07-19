@@ -21,6 +21,7 @@ type Calls struct {
 	GetUserBuiltInRoles            []interface{}
 	RegisterFixedRoles             []interface{}
 	RegisterAttributeScopeResolver []interface{}
+	DeleteUserPermissions          []interface{}
 }
 
 type Mock struct {
@@ -42,6 +43,7 @@ type Mock struct {
 	GetUserBuiltInRolesFunc            func(user *models.SignedInUser) []string
 	RegisterFixedRolesFunc             func() error
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
+	DeleteUserPermissionsFunc          func(context.Context, int64) error
 
 	scopeResolvers accesscontrol.ScopeResolvers
 }
@@ -179,4 +181,13 @@ func (m *Mock) RegisterScopeAttributeResolver(scopePrefix string, resolver acces
 	if m.RegisterScopeAttributeResolverFunc != nil {
 		m.RegisterScopeAttributeResolverFunc(scopePrefix, resolver)
 	}
+}
+
+func (m *Mock) DeleteUserPermissions(ctx context.Context, userID int64) error {
+	m.Calls.DeleteUserPermissions = append(m.Calls.DeleteUserPermissions, []interface{}{ctx, userID})
+	// Use override if provided
+	if m.DeleteUserPermissionsFunc != nil {
+		return m.DeleteUserPermissionsFunc(ctx, userID)
+	}
+	return nil
 }
