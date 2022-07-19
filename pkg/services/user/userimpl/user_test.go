@@ -46,7 +46,7 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("delete user store returns error", func(t *testing.T) {
-                userStore.ExpectedDeleteUserError = models.ErrUserNotFound
+		userStore.ExpectedDeleteUserError = models.ErrUserNotFound
 		t.Cleanup(func() {
 			userStore.ExpectedDeleteUserError = nil
 		})
