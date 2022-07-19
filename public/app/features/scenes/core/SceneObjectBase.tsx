@@ -15,12 +15,13 @@ import {
   SceneEditor,
   SceneObjectList,
   SceneTimeRange,
+  isSceneObject,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
   subject = new Subject<TState>();
   state: TState;
-  parent?: SceneObjectBase<any>;
+  parent?: SceneObjectBase<SceneObjectState>;
   subs = new Subscription();
   isActive?: boolean;
   events = new EventBusSrv();
@@ -52,13 +53,13 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
   private setParent() {
     for (const propValue of Object.values(this.state)) {
-      if (propValue instanceof SceneObjectBase) {
+      if (isSceneObject(propValue)) {
         propValue.parent = this;
       }
 
       if (Array.isArray(propValue)) {
         for (const child of propValue) {
-          if (child instanceof SceneObjectBase) {
+          if (isSceneObject(child)) {
             child.parent = this;
           }
         }

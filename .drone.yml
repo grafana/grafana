@@ -1305,12 +1305,6 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
-- name: postgres
-  temp:
-    medium: memory
-- name: mysql
-  temp:
-    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -4880,6 +4874,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 8a23067c5b96dcf8e896e13780ee322dab8fc84806de1d08f63154b72a4f134d
+hmac: 8446933b337f25a57990382edd95197cd7993841828b1d3c6bd5cc026c6c5bd3
 
 ...

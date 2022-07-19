@@ -522,7 +522,7 @@ describe('LokiDatasource', () => {
       describe('and query has no parser', () => {
         it('then the correct label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
-          const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
           const ds = createLokiDSForTests();
           const result = ds.modifyQuery(query, action);
 
@@ -532,7 +532,7 @@ describe('LokiDatasource', () => {
 
         it('then the correctly escaped label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
-          const action = { key: 'job', value: '\\test', type: 'ADD_FILTER' };
+          const action = { options: { key: 'job', value: '\\test' }, type: 'ADD_FILTER' };
           const ds = createLokiDSForTests();
           const result = ds.modifyQuery(query, action);
 
@@ -542,7 +542,7 @@ describe('LokiDatasource', () => {
 
         it('then the correct label should be added for metrics query', () => {
           const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
-          const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
           const ds = createLokiDSForTests();
           const result = ds.modifyQuery(query, action);
 
@@ -552,7 +552,7 @@ describe('LokiDatasource', () => {
         describe('and query has parser', () => {
           it('then the correct label should be added for logs query', () => {
             const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
-            const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
+            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
             const ds = createLokiDSForTests();
             const result = ds.modifyQuery(query, action);
 
@@ -561,7 +561,7 @@ describe('LokiDatasource', () => {
           });
           it('then the correct label should be added for metrics query', () => {
             const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
-            const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
+            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
             const ds = createLokiDSForTests();
             const result = ds.modifyQuery(query, action);
 
@@ -576,7 +576,7 @@ describe('LokiDatasource', () => {
       describe('and query has no parser', () => {
         it('then the correct label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
-          const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER_OUT' };
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
           const ds = createLokiDSForTests();
           const result = ds.modifyQuery(query, action);
 
@@ -586,7 +586,7 @@ describe('LokiDatasource', () => {
 
         it('then the correctly escaped label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
-          const action = { key: 'job', value: '"test', type: 'ADD_FILTER_OUT' };
+          const action = { options: { key: 'job', value: '"test' }, type: 'ADD_FILTER_OUT' };
           const ds = createLokiDSForTests();
           const result = ds.modifyQuery(query, action);
 
@@ -596,7 +596,7 @@ describe('LokiDatasource', () => {
 
         it('then the correct label should be added for metrics query', () => {
           const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
-          const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER_OUT' };
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
           const ds = createLokiDSForTests();
           const result = ds.modifyQuery(query, action);
 
@@ -606,7 +606,7 @@ describe('LokiDatasource', () => {
         describe('and query has parser', () => {
           it('then the correct label should be added for logs query', () => {
             const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
-            const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER_OUT' };
+            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
             const ds = createLokiDSForTests();
             const result = ds.modifyQuery(query, action);
 
@@ -615,7 +615,7 @@ describe('LokiDatasource', () => {
           });
           it('then the correct label should be added for metrics query', () => {
             const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
-            const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER_OUT' };
+            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
             const ds = createLokiDSForTests();
             const result = ds.modifyQuery(query, action);
 
