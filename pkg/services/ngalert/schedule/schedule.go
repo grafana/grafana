@@ -333,7 +333,7 @@ func (sch *schedule) alertmanagersFromDatasources(orgID int64) ([]string, error)
 		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
 	for _, ds := range query.Result {
-		if !ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
+		if ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
 			continue
 		}
 		amURL, err := sch.buildExternalURL(ds)
