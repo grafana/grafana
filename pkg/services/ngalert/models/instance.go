@@ -70,11 +70,7 @@ type ListAlertInstancesQuery struct {
 
 // ValidateAlertInstance validates that the alert instance contains an alert rule id,
 // and state.
-func ValidateAlertInstance(alertInstance *AlertInstance) error {
-	if alertInstance == nil {
-		return fmt.Errorf("alert instance is invalid because it is nil")
-	}
-
+func ValidateAlertInstance(alertInstance AlertInstance) error {
 	if alertInstance.RuleOrgID == 0 {
 		return fmt.Errorf("alert instance is invalid due to missing alert rule organisation")
 	}

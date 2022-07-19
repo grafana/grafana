@@ -107,7 +107,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 					return err
 				}
 
-				if err := models.ValidateAlertInstance(&alertInstance); err != nil {
+				if err := models.ValidateAlertInstance(alertInstance); err != nil {
 					return err
 				}
 
