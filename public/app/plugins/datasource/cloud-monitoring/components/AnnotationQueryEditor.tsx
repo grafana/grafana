@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
-import { EditorField, EditorRows, EditorRow } from '@grafana/experimental';
+import { EditorField, EditorRows } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Input } from '@grafana/ui';
 
