@@ -26,8 +26,8 @@ const (
 	defaultTimeout          = 10 * time.Second
 )
 
-// ExternalAlertmanagerSender is responsible for dispatching alert notifications to an external Alertmanager service.
-type ExternalAlertmanagerSender struct {
+// ExternalAlertmanager is responsible for dispatching alert notifications to an external Alertmanager service.
+type ExternalAlertmanager struct {
 	logger log.Logger
 	wg     sync.WaitGroup
 
@@ -37,10 +37,10 @@ type ExternalAlertmanagerSender struct {
 	sdManager *discovery.Manager
 }
 
-func NewExternalAlertmanagerSender() (*ExternalAlertmanagerSender, error) {
+func NewExternalAlertmanagerSender() (*ExternalAlertmanager, error) {
 	l := log.New("sender")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
-	s := &ExternalAlertmanagerSender{
+	s := &ExternalAlertmanager{
 		logger:   l,
 		sdCancel: sdCancel,
 	}
@@ -58,7 +58,7 @@ func NewExternalAlertmanagerSender() (*ExternalAlertmanagerSender, error) {
 }
 
 // ApplyConfig syncs a configuration with the sender.
-func (s *ExternalAlertmanagerSender) ApplyConfig(cfg *ngmodels.AdminConfiguration) error {
+func (s *ExternalAlertmanager) ApplyConfig(cfg *ngmodels.AdminConfiguration) error {
 	notifierCfg, err := buildNotifierConfig(cfg)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (s *ExternalAlertmanagerSender) ApplyConfig(cfg *ngmodels.AdminConfiguratio
 	return s.sdManager.ApplyConfig(sdCfgs)
 }
 
-func (s *ExternalAlertmanagerSender) Run() {
+func (s *ExternalAlertmanager) Run() {
 	s.wg.Add(2)
 
 	go func() {
@@ -93,7 +93,7 @@ func (s *ExternalAlertmanagerSender) Run() {
 }
 
 // SendAlerts sends a set of alerts to the configured Alertmanager(s).
-func (s *ExternalAlertmanagerSender) SendAlerts(alerts apimodels.PostableAlerts) {
+func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 	if len(alerts.PostableAlerts) == 0 {
 		s.logger.Debug("no alerts to send to external Alertmanager(s)")
 		return
@@ -109,19 +109,19 @@ func (s *ExternalAlertmanagerSender) SendAlerts(alerts apimodels.PostableAlerts)
 }
 
 // Stop shuts down the sender.
-func (s *ExternalAlertmanagerSender) Stop() {
+func (s *ExternalAlertmanager) Stop() {
 	s.sdCancel()
 	s.manager.Stop()
 	s.wg.Wait()
 }
 
 // Alertmanagers returns a list of the discovered Alertmanager(s).
-func (s *ExternalAlertmanagerSender) Alertmanagers() []*url.URL {
+func (s *ExternalAlertmanager) Alertmanagers() []*url.URL {
 	return s.manager.Alertmanagers()
 }
 
 // DroppedAlertmanagers returns a list of Alertmanager(s) we no longer send alerts to.
-func (s *ExternalAlertmanagerSender) DroppedAlertmanagers() []*url.URL {
+func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 

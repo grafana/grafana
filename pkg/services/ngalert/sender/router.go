@@ -30,7 +30,7 @@ type AlertsRouter struct {
 	// externalAlertmanagerSenders help us send alerts to external Alertmanagers.
 	adminConfigMtx                     sync.RWMutex
 	sendAlertsTo                       map[int64]models.AlertmanagersChoice
-	externalAlertmanagerSenders        map[int64]*ExternalAlertmanagerSender
+	externalAlertmanagerSenders        map[int64]*ExternalAlertmanager
 	externalAlertmanagerSendersCfgHash map[int64]string
 
 	multiOrgNotifier *notifier.MultiOrgAlertmanager
@@ -47,7 +47,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 		adminConfigStore: store,
 
 		adminConfigMtx:                     sync.RWMutex{},
-		externalAlertmanagerSenders:        map[int64]*ExternalAlertmanagerSender{},
+		externalAlertmanagerSenders:        map[int64]*ExternalAlertmanager{},
 		externalAlertmanagerSendersCfgHash: map[int64]string{},
 		sendAlertsTo:                       map[int64]models.AlertmanagersChoice{},
 
@@ -142,7 +142,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		d.externalAlertmanagerSendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
 	}
 
-	sendersToStop := map[int64]*ExternalAlertmanagerSender{}
+	sendersToStop := map[int64]*ExternalAlertmanager{}
 
 	for orgID, s := range d.externalAlertmanagerSenders {
 		if _, exists := orgsFound[orgID]; !exists {
