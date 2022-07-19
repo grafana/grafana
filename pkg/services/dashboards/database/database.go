@@ -192,7 +192,7 @@ func (d *DashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models
 	return cmd.Result, err
 }
 
-func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
+func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardACL) error {
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// delete existing items
 		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
@@ -202,7 +202,7 @@ func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int
 
 		for _, item := range items {
 			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return models.ErrDashboardAclInfoMissing
+				return models.ErrDashboardACLInfoMissing
 			}
 
 			if item.DashboardID == 0 {
@@ -215,8 +215,8 @@ func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int
 			}
 		}
 
-		// Update dashboard HasAcl flag
-		dashboard := models.Dashboard{HasAcl: true}
+		// Update dashboard HasACL flag
+		dashboard := models.Dashboard{HasACL: true}
 		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 		return err
 	})

@@ -33,6 +33,7 @@
     "@emotion/css": "11.9.0",
     "@grafana/data": "9.1.0-pre",
     "@grafana/e2e-selectors": "9.1.0-pre",
+    "@grafana/runtime": "9.1.0-pre",
     "@grafana/ui": "9.1.0-pre",
     "chance": "^1.0.10",
     "classnames": "^2.2.5",
