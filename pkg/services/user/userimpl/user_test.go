@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -46,12 +45,12 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("delete user store returns error", func(t *testing.T) {
-		userStore.ExpectedDeleteUserError = models.ErrUserNotFound
+		userStore.ExpectedDeleteUserError = user.ErrUserNotFound
 		t.Cleanup(func() {
 			userStore.ExpectedDeleteUserError = nil
 		})
 		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
-		require.Error(t, err, models.ErrUserNotFound)
+		require.Error(t, err, user.ErrUserNotFound)
 	})
 
 	t.Run("delete user returns from team", func(t *testing.T) {
