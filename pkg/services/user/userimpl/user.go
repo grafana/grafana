@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/userauth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+
+	errwrap "github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -156,7 +158,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
 	_, err := s.store.GetNotServiceAccount(ctx, cmd.UserID)
 	if err != nil {
-		return err
+		return errwrap.Wrap(err, "failed to get user with not service account")
 	}
 	// delete from all the stores
 	if err := s.store.Delete(ctx, cmd.UserID); err != nil {
