@@ -77,9 +77,9 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
     if (!hasLevel && levelLikeLabel) {
       hints.push({
         type: 'ADD_LEVEL_LABEL_FORMAT',
-        label: 'Selected log stream selector has level-like label',
+        label: `Some logs in your selected log stream have "${levelLikeLabel}" label.`,
         fix: {
-          label: 'Consider using label format to rename it to level.',
+          label: `If ${levelLikeLabel} label has level values, consider using label_format to rename it to "level". Level label can be then visualized in log volumes.`,
           action: {
             type: 'ADD_LEVEL_LABEL_FORMAT',
             query,
