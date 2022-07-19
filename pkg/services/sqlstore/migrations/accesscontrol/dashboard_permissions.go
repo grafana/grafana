@@ -80,12 +80,12 @@ func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrato
 		return err
 	}
 
-	var acl []models.DashboardAcl
+	var acl []models.DashboardACL
 	if err := m.sess.Find(&acl); err != nil {
 		return err
 	}
 
-	aclMap := make(map[int64][]models.DashboardAcl, len(acl))
+	aclMap := make(map[int64][]models.DashboardACL, len(acl))
 	for _, p := range acl {
 		aclMap[p.DashboardID] = append(aclMap[p.DashboardID], p)
 	}
@@ -97,7 +97,7 @@ func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrato
 	return nil
 }
 
-func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard, aclMap map[int64][]models.DashboardAcl) error {
+func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard, aclMap map[int64][]models.DashboardACL) error {
 	permissionMap := map[int64]map[string][]*ac.Permission{}
 	for _, d := range dashboards {
 		if d.ID == -1 {
@@ -210,7 +210,7 @@ func (m dashboardPermissionsMigrator) mapPermission(id int64, p models.Permissio
 	return permissions
 }
 
-func getRoleName(p models.DashboardAcl) string {
+func getRoleName(p models.DashboardACL) string {
 	if p.UserID != 0 {
 		return fmt.Sprintf("managed:users:%d:permissions", p.UserID)
 	}

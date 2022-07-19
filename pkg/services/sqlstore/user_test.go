@@ -357,7 +357,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
+		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
 			Permission: models.PERMISSION_EDIT,
 		})
@@ -373,8 +373,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		require.Len(t, query1.Result, 1)
 
-		permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = getDashboardAclInfoList(ss, permQuery)
+		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		err = getDashboardACLInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
@@ -396,7 +396,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
+		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
 			Permission: models.PERMISSION_EDIT,
 		})
@@ -447,8 +447,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		require.Len(t, query2.Result, 1)
 
-		permQuery = &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = getDashboardAclInfoList(ss, permQuery)
+		permQuery = &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		err = getDashboardACLInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)

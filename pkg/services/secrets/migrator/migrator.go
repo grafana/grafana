@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -17,6 +18,7 @@ type SecretsMigrator struct {
 	secretsSrv    *manager.SecretsService
 	sqlStore      *sqlstore.SQLStore
 	settings      setting.Provider
+	features      featuremgmt.FeatureToggles
 }
 
 func ProvideSecretsMigrator(
@@ -24,18 +26,25 @@ func ProvideSecretsMigrator(
 	service *manager.SecretsService,
 	sqlStore *sqlstore.SQLStore,
 	settings setting.Provider,
+	features featuremgmt.FeatureToggles,
 ) *SecretsMigrator {
 	return &SecretsMigrator{
 		encryptionSrv: encryptionSrv,
 		secretsSrv:    service,
 		sqlStore:      sqlStore,
 		settings:      settings,
+		features:      features,
 	}
 }
 
-func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) error {
+func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) (bool, error) {
+	err := m.initProvidersIfNeeded()
+	if err != nil {
+		return false, err
+	}
+
 	toReencrypt := []interface {
-		reencrypt(context.Context, *manager.SecretsService, *sqlstore.SQLStore)
+		reencrypt(context.Context, *manager.SecretsService, *sqlstore.SQLStore) bool
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}, encoding: base64.StdEncoding},
@@ -47,14 +56,23 @@ func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) error {
 		alertingSecret{},
 	}
 
+	var anyFailure bool
+
 	for _, r := range toReencrypt {
-		r.reencrypt(ctx, m.secretsSrv, m.sqlStore)
+		if success := r.reencrypt(ctx, m.secretsSrv, m.sqlStore); !success {
+			anyFailure = true
+		}
 	}
 
-	return nil
+	return !anyFailure, nil
 }
 
-func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) error {
+func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
+	err := m.initProvidersIfNeeded()
+	if err != nil {
+		return false, err
+	}
+
 	toRollback := []interface {
 		rollback(context.Context, *manager.SecretsService, encryption.Internal, *sqlstore.SQLStore, string) bool
 	}{
@@ -83,11 +101,26 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) error {
 
 	if anyFailure {
 		logger.Warn("Some errors happened, not cleaning up data keys table...")
-		return nil
+		return false, nil
 	}
 
-	if _, sqlErr := m.sqlStore.NewSession(ctx).Exec("DELETE FROM data_keys"); sqlErr != nil {
+	_, sqlErr := m.sqlStore.NewSession(ctx).Exec("DELETE FROM data_keys")
+	if sqlErr != nil {
 		logger.Warn("Error while cleaning up data keys table...", "error", sqlErr)
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (m *SecretsMigrator) initProvidersIfNeeded() error {
+	if m.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
+		logger.Info("Envelope encryption is not enabled but trying to init providers anyway...")
+
+		if err := m.secretsSrv.InitProviders(); err != nil {
+			logger.Error("Envelope encryption providers initialization failed", "error", err)
+			return err
+		}
 	}
 
 	return nil

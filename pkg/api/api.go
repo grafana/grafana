@@ -227,17 +227,16 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
-			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
-				orgRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
-				orgRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
-				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
+			apiRoute.Group("/storage", func(storageRoute routing.RouteRegister) {
+				storageRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
+				storageRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
+				storageRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
 
-				if hs.Features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-					orgRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Delete))
-					orgRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Upload))
-					orgRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.CreateFolder))
-					orgRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.DeleteFolder))
-				}
+				// Write paths
+				storageRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Delete))
+				storageRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Upload))
+				storageRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.CreateFolder))
+				storageRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.DeleteFolder))
 			})
 		}
 
@@ -575,6 +574,9 @@ func (hs *HTTPServer) registerRoutes() {
 		}
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
+		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))
+		adminRoute.Post("/encryption/reencrypt-secrets", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptSecrets))
+		adminRoute.Post("/encryption/rollback-secrets", reqGrafanaAdmin, routing.Wrap(hs.AdminRollbackSecrets))
 
 		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDashboards)), routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersPlugins)), routing.Wrap(hs.AdminProvisioningReloadPlugins))

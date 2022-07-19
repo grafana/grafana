@@ -19,7 +19,7 @@ var (
 func ProvideService(
 	sqlStore sqlstore.Store,
 	userService user.Service,
-	quotaService *quota.QuotaService,
+	quotaService quota.Service,
 	authInfoService login.AuthInfoService,
 ) *Implementation {
 	s := &Implementation{
@@ -35,7 +35,7 @@ type Implementation struct {
 	SQLStore        sqlstore.Store
 	userService     user.Service
 	AuthInfoService login.AuthInfoService
-	QuotaService    *quota.QuotaService
+	QuotaService    quota.Service
 	TeamSync        login.TeamSyncFunc
 }
 
