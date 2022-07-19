@@ -284,7 +284,7 @@ func ProvideServiceAccountPermissions(
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,
-			Teams:           true,
+			Teams:           false,
 			BuiltInRoles:    false,
 			ServiceAccounts: false,
 		},
