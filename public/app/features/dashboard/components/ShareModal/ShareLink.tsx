@@ -94,7 +94,7 @@ export class ShareLink extends PureComponent<Props, State> {
         <FieldSet>
           <Field
             label="Lock time range"
-            description={isRelativeTime && 'Transforms the current relative time range to an absolute time range'}
+            description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}
           >
             <Switch
               id="share-current-time-range"
