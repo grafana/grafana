@@ -115,9 +115,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.test.tsx:3424320489": [
       [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:3368730691": [
-      [0, 31, 13, "RegExp match", "2409514259"]
     ]
   }`
 };
@@ -8722,9 +8719,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/bargauge/BarGaugeMigrations.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/bargauge/BarGaugePanel.tsx:5381": [
