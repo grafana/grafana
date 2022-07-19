@@ -56,6 +56,9 @@ func TestUserService(t *testing.T) {
 
 	t.Run("delete user returns from team", func(t *testing.T) {
 		teamMemberService.ExpectedError = errors.New("some error")
+		t.Cleanup(func() {
+			teamMemberService.ExpectedError = nil
+		})
 		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
 		require.Error(t, err)
 	})
