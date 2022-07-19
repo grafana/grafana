@@ -146,7 +146,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     border-radius: 2px;
 
     @media ${styleMixins.mediaUp(theme.v1.breakpoints.xl)} {
-      max-width: unset;
+      max-width: 60vw;
     }
   `;
 
