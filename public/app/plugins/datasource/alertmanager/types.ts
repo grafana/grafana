@@ -84,6 +84,7 @@ export type Receiver = {
   pagerduty_configs?: any[];
   pushover_configs?: any[];
   slack_configs?: any[];
+  sns_configs?: any[];
   opsgenie_configs?: any[];
   webhook_configs?: WebhookConfig[];
   victorops_configs?: any[];

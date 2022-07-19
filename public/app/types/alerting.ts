@@ -61,6 +61,7 @@ export type CloudNotifierType =
   | 'email'
   | 'pagerduty'
   | 'pushover'
+  | 'sns'
   | 'slack'
   | 'opsgenie'
   | 'victorops'

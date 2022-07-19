@@ -101,6 +101,24 @@ export const cloudNotifierTypes: NotifierDTO[] = [
     ],
   },
   {
+    name: 'AWS SNS',
+    description: 'Send a notification to an AWS SNS topic',
+    type: 'sns',
+    info: '',
+    heading: 'SNS settings',
+    options: [
+      option('name', 'Name', 'Name of the receiver.', { required: true }),
+      option('topic_arn', 'Topic ARN', 'The topic ARN of the SNS topic.', { required: true }),
+      option('subject', 'SNS Subject', 'Subject sent to the SNS topic'),
+      option('message', 'SNS Message', 'Message sent to the SNS topic'),
+      option('sigv4', 'SigV4 Authentication Information', '', {
+        element: 'subform',
+        subformOptions: [option('Region', 'Region', '')],
+      }),
+      option('attributes', 'Attributes', '', { element: 'key_value_map' }),
+    ],
+  },
+  {
     name: 'PagerDuty',
     description: 'Send notifications to PagerDuty',
     type: 'pagerduty',
