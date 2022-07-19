@@ -133,7 +133,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		UpdatedBy:              updater,
 		CreatedBy:              creator,
 		Version:                dash.Version,
-		HasAcl:                 dash.HasAcl,
+		HasACL:                 dash.HasACL,
 		IsFolder:               dash.IsFolder,
 		FolderId:               dash.FolderId,
 		Url:                    dash.GetUrl(),
