@@ -46,10 +46,12 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("delete user store returns error", func(t *testing.T) {
-		userStore.ExpectedDeleteUserError = models.ErrUserNotFound
+                userStore.ExpectedDeleteUserError = models.ErrUserNotFound
+		t.Cleanup(func() {
+			userStore.ExpectedDeleteUserError = nil
+		})
 		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
 		require.Error(t, err, models.ErrUserNotFound)
-		userStore.ExpectedDeleteUserError = nil
 	})
 
 	t.Run("delete user returns from team", func(t *testing.T) {
