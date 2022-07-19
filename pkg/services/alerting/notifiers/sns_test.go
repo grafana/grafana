@@ -215,7 +215,7 @@ func TestSNSNotifier(t *testing.T) {
 						{Key: "no-tag-prefix-sample", Value: "don't show this tag"},
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{}, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil)
 				evalContext.IsTestRun = true
 				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
@@ -263,7 +263,7 @@ func TestSNSNotifier(t *testing.T) {
 						{Key: "no-tag-prefix-sample", Value: "this tag should be visible"},
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{}, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil)
 				evalContext.IsTestRun = true
 				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
@@ -313,7 +313,7 @@ func TestSNSNotifier(t *testing.T) {
 						{Key: "no-tag-prefix-sample", Value: "don't show this tag"},
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{}, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil)
 				evalContext.IsTestRun = true
 				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
@@ -357,7 +357,7 @@ func TestSNSNotifier(t *testing.T) {
 						{Key: "tag-sample-2", Value: "show this tag"},
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{}, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil)
 				evalContext.IsTestRun = true
 				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
@@ -400,7 +400,7 @@ func TestSNSNotifier(t *testing.T) {
 					AlertRuleTags: []*models.Tag{
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{}, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil)
 				evalContext.IsTestRun = true
 				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
