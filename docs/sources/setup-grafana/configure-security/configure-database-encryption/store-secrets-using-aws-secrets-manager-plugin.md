@@ -26,7 +26,7 @@ You can configure options in the plugin to determine secret storage behavior in 
 You can install the plugin using [Grafana CLI]({{< relref "../../../cli/" >}}):
 
 ```sh
-grafana-cli plugins install grafana-aws-secrets-manager
+grafana-cli plugins install grafana-aws-secretsmanager
 ```
 
 After you install the plugin, you must enable it.
@@ -47,12 +47,12 @@ If you have enabled the plugin correctly, you will see the plugin listed in the 
 
 By default, the plugin attempts to authenticate with AWS and select a region using parameters read from the runtime environment. For more details, see the [AWS CLI](https://aws.amazon.com/cli/) setup documentation.
 
-Alternatively, you can configure authentication and region selection explicitly through Grafana's configuration. For a full list of available options, see [Configuring the plugin](#configuring-the-plugin). For more information on configuring Grafana, see [Configuring Grafana]({{< relref "../../configure-grafana/" >}}).
+Alternatively, you can configure authentication and region selection explicitly through Grafana's configuration. For a full list of available options, see [Configure the plugin](#configure-the-plugin). For more information on configuring Grafana, see [Configure Grafana]({{< relref "../../configure-grafana/" >}}).
 
 ## Configure the plugin
 
 1. Open the **custom.ini** file.
-2. Create a configuration section file called `[plugin.grafana-aws-secrets-manager]`.
+2. Create a configuration section file called `[plugin.grafana-aws-secretsmanager]`.
 3. Place the following optional configuration settings in the new section.
 
 | Setting                 | Description                                                                                                                                                 | Example                                      | Default                         |
@@ -70,13 +70,13 @@ You can configure Grafana to migrate your existing secrets from Grafana to the p
 
 > **Note:** The speed of this migration is contingent on the number of secrets and system performance, and can run at a rate as low as two secrets per second.
 
-Once migration to the plugin has completed, the plugin must be installed for Grafana to start unless backward compatibility is enabled. If the plugin is uninstalled unexpectedly, or if it fails to start for any reason, Grafana will also fail to start.
+Once migration to the plugin has completed, the plugin must remain installed for Grafana to start unless backward compatibility is enabled. If the plugin is uninstalled unexpectedly, or if it fails to start for any reason, Grafana will also fail to start.
 
 > **Note:** Because we have not yet implemented migrations from the plugin back to Grafana's database, we strongly recommend keeping backward compatibility enabled, as is the default.
 
 ### Initiate the migration
 
-To initiate secret migration from Grafana to the plugin, enable the `migrate_to_plugin` setting in the `secrets` section of the Grafana `custom.ini` file:
+To initiate secret migration from Grafana to the plugin, enable the `migrate_to_plugin` setting in the `secrets` section of the Grafana **custom.ini** file:
 
 ```ini
 [secrets]
