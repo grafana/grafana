@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -169,9 +170,10 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	query := models.GetUserByIdQuery{Id: userId}
+	query := user.GetUserByIDQuery{ID: userId}
 
-	if err := hs.SQLStore.GetUserById(c.Req.Context(), &query); err != nil { // validate the userId exists
+	user, err := hs.userService.GetByID(c.Req.Context(), &query)
+	if err != nil { // validate the userId exists
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -179,7 +181,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		return response.Error(500, "Failed to get user", err)
 	}
 
-	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.ID, AuthModule: models.AuthModuleLDAP}
+	authModuleQuery := &models.GetAuthInfoQuery{UserId: user.ID, AuthModule: models.AuthModuleLDAP}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
@@ -189,17 +191,17 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 	}
 
 	ldapServer := newLDAP(ldapConfig.Servers)
-	user, _, err := ldapServer.User(query.Result.Login)
+	userInfo, _, err := ldapServer.User(user.Login)
 	if err != nil {
 		if errors.Is(err, multildap.ErrDidNotFindUser) { // User was not in the LDAP server - we need to take action:
-			if hs.Cfg.AdminUser == query.Result.Login { // User is *the* Grafana Admin. We cannot disable it.
-				errMsg := fmt.Sprintf(`Refusing to sync grafana super admin "%s" - it would be disabled`, query.Result.Login)
+			if hs.Cfg.AdminUser == user.Login { // User is *the* Grafana Admin. We cannot disable it.
+				errMsg := fmt.Sprintf(`Refusing to sync grafana super admin "%s" - it would be disabled`, user.Login)
 				ldapLogger.Error(errMsg)
 				return response.Error(http.StatusBadRequest, errMsg, err)
 			}
 
 			// Since the user was not in the LDAP server. Let's disable it.
-			err := hs.Login.DisableExternalUser(c.Req.Context(), query.Result.Login)
+			err := hs.Login.DisableExternalUser(c.Req.Context(), user.Login)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
@@ -218,10 +220,10 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	upsertCmd := &models.UpsertUserCommand{
 		ReqContext:    c,
-		ExternalUser:  user,
+		ExternalUser:  userInfo,
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
 		UserLookupParams: models.UserLookupParams{
-			UserID: &query.Result.ID, // Upsert by ID only
+			UserID: &user.ID, // Upsert by ID only
 			Email:  nil,
 			Login:  nil,
 		},
