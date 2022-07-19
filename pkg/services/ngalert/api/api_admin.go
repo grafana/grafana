@@ -122,7 +122,7 @@ func (srv AdminSrv) hasExternalAlertmanager(ctx context.Context, orgID int64,
 	}
 	query := &datasources.GetDataSourcesByTypeQuery{
 		OrgId: orgID,
-		Type:  "alertmanager",
+		Type:  datasources.DS_ALERTMANAGER,
 	}
 	err := srv.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {

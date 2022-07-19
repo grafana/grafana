@@ -240,7 +240,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 		// alertmanager, let's fetch them.
 		query := &datasources.GetDataSourcesByTypeQuery{
 			OrgId: cfg.OrgID,
-			Type:  "alertmanager",
+			Type:  datasources.DS_ALERTMANAGER,
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
