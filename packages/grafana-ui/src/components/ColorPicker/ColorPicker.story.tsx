@@ -9,12 +9,13 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 import mdx from './ColorPicker.mdx';
+import { ColorPickerInput, ColorPickerInputProps } from './ColorPickerInput';
 import { ColorPickerProps } from './ColorPickerPopover';
 
 export default {
   title: 'Pickers and Editors/ColorPicker',
   component: ColorPicker,
-  subcomponents: { SeriesColorPicker },
+  subcomponents: { SeriesColorPicker, ColorPickerInput },
   decorators: [withCenteredStory],
   parameters: {
     docs: {
@@ -70,6 +71,16 @@ export const SeriesPicker: Story<ColorPickerProps> = ({ enableNamedColors }) => 
             )}
           </SeriesColorPicker>
         );
+      }}
+    </UseState>
+  );
+};
+
+export const Input: Story<ColorPickerInputProps> = () => {
+  return (
+    <UseState initialState="#ffffff">
+      {(value, onChange) => {
+        return <ColorPickerInput value={value} onChange={onChange} />;
       }}
     </UseState>
   );
