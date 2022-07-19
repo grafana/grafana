@@ -59,10 +59,6 @@ const (
 	// Use backend for tempo search
 	FlagTempoBackendSearch = "tempoBackendSearch"
 
-	// FlagTempoServiceGraph
-	// show service
-	FlagTempoServiceGraph = "tempoServiceGraph"
-
 	// FlagLokiBackendMode
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
