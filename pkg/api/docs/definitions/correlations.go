@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 )
 
-// swagger:route POST /datasources/uid/{uid}/correlations correlations createCorrelation
+// swagger:route POST /datasources/uid/{uid}/correlation correlations createCorrelation
 //
 // Add correlation.
 //
