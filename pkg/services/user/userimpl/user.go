@@ -240,5 +240,5 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 			return nil, err
 		}
 	}
-	return nil, nil
+	return user, nil
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/teamguardian/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/userauth/userauthtest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,12 +42,38 @@ func TestUserService(t *testing.T) {
 	}
 
 	t.Run("create user", func(t *testing.T) {
-		_, err := userService.Create(context.Background(), &user.CreateUserCommand{})
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email: "email",
+			Login: "login",
+			Name:  "name",
+		})
 		require.NoError(t, err)
 	})
 
+	t.Run("get user by ID", func(t *testing.T) {
+		userService.cfg = setting.NewCfg()
+		userService.cfg.CaseInsensitiveLogin = false
+		userStore.ExpectedUser = &user.User{ID: 1, Email: "email", Login: "login", Name: "name"}
+		u, err := userService.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 1})
+		require.NoError(t, err)
+		require.Equal(t, "login", u.Login)
+		require.Equal(t, "name", u.Name)
+		require.Equal(t, "email", u.Email)
+	})
+
+	t.Run("get user by ID with case insensitive login", func(t *testing.T) {
+		userService.cfg = setting.NewCfg()
+		userService.cfg.CaseInsensitiveLogin = true
+		userStore.ExpectedUser = &user.User{ID: 1, Email: "email", Login: "login", Name: "name"}
+		u, err := userService.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 1})
+		require.NoError(t, err)
+		require.Equal(t, "login", u.Login)
+		require.Equal(t, "name", u.Name)
+		require.Equal(t, "email", u.Email)
+	})
+
 	t.Run("delete user store returns error", func(t *testing.T) {
-                userStore.ExpectedDeleteUserError = models.ErrUserNotFound
+		userStore.ExpectedDeleteUserError = models.ErrUserNotFound
 		t.Cleanup(func() {
 			userStore.ExpectedDeleteUserError = nil
 		})
