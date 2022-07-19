@@ -143,9 +143,9 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		}
 	}
 
+	migrator.Logger.Debug(fmt.Sprintf("bulk-creating roles %v", rolesToCreate))
 	createdRoles, err := m.bulkCreateRoles(rolesToCreate)
 	if err != nil {
-		migrator.Logger.Debug(fmt.Sprintf("bulk-creating roles %v", rolesToCreate))
 		return fmt.Errorf("failed to bulk-create roles: %w", err)
 	}
 
