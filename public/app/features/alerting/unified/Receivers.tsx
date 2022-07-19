@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon } from '@grafana/ui';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
@@ -37,15 +38,15 @@ const NotificationError: FC<NotificationErrorProps> = ({ errorCount }: Notificat
 
   return (
     <div className={styles.warning}>
-      <div className={styles.wrapper}>
-        <div className={styles.warningCount}>
+      <Stack alignItems="flex-end" direction="column">
+        <Stack alignItems="center">
           <Icon name="exclamation-triangle" />
           <div className={styles.countMessage}>
             {`${errorCount} ${pluralize('error', errorCount)} with contact points`}
           </div>
-        </div>
+        </Stack>
         <div>{'Some alert notifications might not be delivered'}</div>
-      </div>
+      </Stack>
     </div>
   );
 };
@@ -179,15 +180,6 @@ export default withErrorBoundary(Receivers, { style: 'page' });
 const getStyles = (theme: GrafanaTheme2) => ({
   warning: css`
     color: ${theme.colors.warning.text};
-  `,
-  wrapper: css`
-    display: flex;
-    align-items: flex-end;
-    flex-direction: column;
-  `,
-  warningCount: css`
-    display: flex;
-    align-items: center;
   `,
   countMessage: css`
     padding-left: 10px;
