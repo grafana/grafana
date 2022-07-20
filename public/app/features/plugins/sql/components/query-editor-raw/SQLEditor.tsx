@@ -323,6 +323,14 @@ function extendStandardRegistries(id: string, lid: string, customProvider: SQLCo
         }
       });
 
+      if (kind.overrideDefault) {
+        const stbBehaviour = instanceSuggestionsRegistry.get(kind.id);
+        if (stbBehaviour !== undefined) {
+          stbBehaviour.suggestions = kind.suggestionsResolver;
+          continue;
+        }
+      }
+
       instanceSuggestionsRegistry.register({
         id: kind.id as SuggestionKind,
         name: kind.id,
