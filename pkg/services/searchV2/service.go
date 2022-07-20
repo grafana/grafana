@@ -333,7 +333,7 @@ func (s *StandardSearchService) getAllowedActionsByUid(ctx context.Context, user
 	resp := accesscontrol.GetResourcesMetadata(ctx, permissions, prefix, uidsAsMap)
 	for uid, meta := range resp {
 		var actions []string
-		for action, _ := range meta {
+		for action := range meta {
 			actions = append(actions, action)
 		}
 		out[uid] = actions
