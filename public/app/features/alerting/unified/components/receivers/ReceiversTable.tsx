@@ -46,9 +46,9 @@ interface ReceiverHealthProps {
 const ReceiverHealth: FC<ReceiverHealthProps> = ({ receiverName }) => {
   const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
   const { result: contactPointsState } = contactPointsStateRequest ?? initialAsyncRequestState;
-  if (contactPointsState?.errorCount ?? 0 > 0) {
-    const receiverState: ReceiverState | undefined = contactPointsState?.receivers[receiverName];
-    const errorsByReceiver = receiverState?.errorCount ?? 0;
+  const receiverState: ReceiverState | undefined = contactPointsState?.receivers[receiverName];
+  const errorsByReceiver = receiverState?.errorCount ?? 0;
+  if (errorsByReceiver > 0) {
     return <ReceiverError errorCount={errorsByReceiver} />;
   } else {
     return <div>OK</div>;
