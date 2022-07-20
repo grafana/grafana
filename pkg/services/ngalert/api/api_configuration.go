@@ -1,12 +1,15 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -16,6 +19,7 @@ import (
 )
 
 type ConfigSrv struct {
+	datasourceService    datasources.DataSourceService
 	alertmanagerProvider ExternalAlertmanagerProvider
 	store                store.AdminConfigurationStore
 	log                  log.Logger
@@ -68,11 +72,17 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 
 	sendAlertsTo, err := ngmodels.StringToAlertmanagersChoice(string(body.AlertmanagersChoice))
 	if err != nil {
-		return response.Error(400, "Invalid alertmanager choice specified", nil)
+		return response.Error(400, "Invalid alertmanager choice specified", err)
 	}
 
-	if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(body.Alertmanagers) == 0 {
-		return response.Error(400, "At least one Alertmanager must be provided to choose this option", nil)
+	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return response.Error(500, "Couldn't fetch the external Alertmanagers from datasources", err)
+	}
+
+	if sendAlertsTo == ngmodels.ExternalAlertmanagers &&
+		len(body.Alertmanagers)+len(externalAlertmanagers) < 1 {
+		return response.Error(400, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
 	}
 
 	cfg := &ngmodels.AdminConfiguration{
@@ -109,4 +119,26 @@ func (srv ConfigSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Res
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{"message": "admin configuration deleted"})
+}
+
+// externalAlertmanagers returns the URL of any external alertmanager that is
+// configured as datasource. The URL does not contain any auth.
+func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]string, error) {
+	var alertmanagers []string
+	query := &datasources.GetDataSourcesByTypeQuery{
+		OrgId: orgID,
+		Type:  datasources.DS_ALERTMANAGER,
+	}
+	err := srv.datasourceService.GetDataSourcesByType(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
+	}
+	for _, ds := range query.Result {
+		if ds.JsonData.Get(apimodels.HandleGrafanaManagedAlerts).MustBool(false) {
+			// we don't need to build the exact URL as we only need
+			// to know if any is set
+			alertmanagers = append(alertmanagers, ds.Uid)
+		}
+	}
+	return alertmanagers, nil
 }

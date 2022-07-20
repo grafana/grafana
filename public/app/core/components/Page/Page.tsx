@@ -2,7 +2,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModel, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 
@@ -10,6 +10,7 @@ import { Footer } from '../Footer/Footer';
 import { PageHeader } from '../PageHeader/PageHeader';
 import { Page as NewPage } from '../PageNew/Page';
 
+import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
 import { PageLayoutType, PageType } from './types';
 import { usePageNav } from './usePageNav';
@@ -31,7 +32,7 @@ export const OldPage: PageType = ({
 
   usePageTitle(navModel, pageNav);
 
-  const pageHeaderNav = pageNav ?? navModel?.main;
+  const pageHeaderNav = getPageHeaderNav(navModel, pageNav);
 
   return (
     <div className={cx(styles.wrapper, className)}>
@@ -58,8 +59,17 @@ export const OldPage: PageType = ({
   );
 };
 
+function getPageHeaderNav(navModel?: NavModel, pageNav?: NavModelItem): NavModelItem | undefined {
+  if (pageNav?.children && pageNav.children.length > 0) {
+    return pageNav;
+  }
+
+  return navModel?.main;
+}
+
 OldPage.Header = PageHeader;
 OldPage.Contents = PageContents;
+OldPage.OldNavOnly = OldNavOnly;
 
 export const Page: PageType = config.featureToggles.topnav ? NewPage : OldPage;
 

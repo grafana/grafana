@@ -3,7 +3,7 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { Field, HorizontalGroup, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { Field, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 
@@ -18,7 +18,7 @@ const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width
 const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
   { label: 'Left', value: HorizontalConstraint.Left },
   { label: 'Right', value: HorizontalConstraint.Right },
-  { label: 'Left and right', value: HorizontalConstraint.LeftRight },
+  { label: 'Left & right', value: HorizontalConstraint.LeftRight },
   { label: 'Center', value: HorizontalConstraint.Center },
   { label: 'Scale', value: HorizontalConstraint.Scale },
 ];
@@ -26,7 +26,7 @@ const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
 const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
   { label: 'Top', value: VerticalConstraint.Top },
   { label: 'Bottom', value: VerticalConstraint.Bottom },
-  { label: 'Top and bottom', value: VerticalConstraint.TopBottom },
+  { label: 'Top & bottom', value: VerticalConstraint.TopBottom },
   { label: 'Center', value: VerticalConstraint.Center },
   { label: 'Scale', value: VerticalConstraint.Scale },
 ];
@@ -99,8 +99,18 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
             currentConstraints={constraint}
           />
           <VerticalGroup>
-            <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={constraint.vertical} />
-            <Select options={horizontalOptions} onChange={onHorizontalConstraintSelect} value={constraint.horizontal} />
+            <HorizontalGroup>
+              <Icon name="arrows-h" />
+              <Select
+                options={horizontalOptions}
+                onChange={onHorizontalConstraintSelect}
+                value={constraint.horizontal}
+              />
+            </HorizontalGroup>
+            <HorizontalGroup>
+              <Icon name="arrows-v" />
+              <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={constraint.vertical} />
+            </HorizontalGroup>
           </VerticalGroup>
         </HorizontalGroup>
       </Field>
