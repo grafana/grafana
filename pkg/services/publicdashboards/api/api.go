@@ -25,6 +25,7 @@ import (
 
 type Api struct {
 	PublicDashboardService publicdashboards.Service
+	DashboardService       dashboards.DashboardService
 	RouteRegister          routing.RouteRegister
 	AccessControl          accesscontrol.AccessControl
 	QueryDataService       *query.Service
@@ -33,6 +34,7 @@ type Api struct {
 
 func ProvideApi(
 	pd publicdashboards.Service,
+	ds dashboards.DashboardService,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	qds *query.Service,
@@ -40,6 +42,7 @@ func ProvideApi(
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
+		DashboardService:       ds,
 		RouteRegister:          rr,
 		AccessControl:          ac,
 		QueryDataService:       qds,
@@ -126,7 +129,19 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 		PublicDashboard: pubdash,
 	}
 
-	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
+	// Get the original dashboard
+	dashboardQuery := models.GetDashboardQuery{
+		Uid:    dto.DashboardUid,
+		OrgId:  c.OrgId,
+		Result: nil,
+	}
+	err := api.DashboardService.GetDashboard(c.Req.Context(), &dashboardQuery)
+	if err != nil {
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to get dashboard", err)
+	}
+
+	// Save the public dashboard
+	pubdash, err = api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto, dashboardQuery.Result)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to save public dashboard configuration", err)
 	}

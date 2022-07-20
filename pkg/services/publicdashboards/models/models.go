@@ -45,6 +45,10 @@ var (
 		Reason:     "No Uid for public dashboard specified",
 		StatusCode: 400,
 	}
+	ErrPublicDashboardHasTemplateVariables = PublicDashboardErr{
+		Reason:     "Public dashboard has template variables",
+		StatusCode: 422,
+	}
 )
 
 type PublicDashboard struct {

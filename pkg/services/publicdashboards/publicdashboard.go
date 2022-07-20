@@ -15,7 +15,7 @@ type Service interface {
 	BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*models.SignedInUser, error)
 	GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
+	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO, dashboard *models.Dashboard) (*PublicDashboard, error)
 	BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64) (dtos.MetricRequest, error)
 	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
 }
