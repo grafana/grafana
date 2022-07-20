@@ -26,5 +26,6 @@ var wireExtsSet = wire.NewSet(
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
+	encryptionprovider.ProvideEncryptionProvider,
 	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 )
