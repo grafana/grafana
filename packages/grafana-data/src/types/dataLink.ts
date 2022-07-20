@@ -43,8 +43,8 @@ export interface DataLink<T extends DataQuery = any> {
 /** @internal */
 export interface InternalDataLink<T extends DataQuery = any> {
   query: T;
-  datasourceUid: string; // used as a title if one is not defined
-  datasourceName: string;
+  datasourceUid: string;
+  datasourceName: string; // used as a title if one is not defined
   panelsState?: ExplorePanelsState;
 }
 

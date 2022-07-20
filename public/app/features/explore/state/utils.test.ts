@@ -27,7 +27,7 @@ describe('loadAndInitDatasource', () => {
     const { instance } = await loadAndInitDatasource(1, { uid: 'Unknown' });
 
     expect(dataSourceMock.get).toBeCalledTimes(2);
-    expect(dataSourceMock.get).toBeCalledWith('Unknown');
+    expect(dataSourceMock.get).toBeCalledWith({ uid: 'Unknown' });
     expect(dataSourceMock.get).toBeCalledWith();
     expect(instance).toMatchObject(DEFAULT_DATASOURCE);
     expect(store.set).toBeCalledWith(lastUsedDatasourceKeyForOrgId(1), DEFAULT_DATASOURCE.uid);
@@ -39,7 +39,7 @@ describe('loadAndInitDatasource', () => {
     const { instance } = await loadAndInitDatasource(1, { uid: 'Test' });
 
     expect(dataSourceMock.get).toBeCalledTimes(1);
-    expect(dataSourceMock.get).toBeCalledWith('Test');
+    expect(dataSourceMock.get).toBeCalledWith({ uid: 'Test' });
     expect(instance).toMatchObject(TEST_DATASOURCE);
     expect(store.set).toBeCalledWith(lastUsedDatasourceKeyForOrgId(1), TEST_DATASOURCE.uid);
   });

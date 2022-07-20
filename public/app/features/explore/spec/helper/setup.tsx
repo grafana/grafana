@@ -57,10 +57,11 @@ export function setupExplore(options?: SetupOptions): {
       return dsSettings.map((d) => d.settings).find((x) => x.name === ref || x.uid === ref || x.uid === ref.uid);
     },
     get(datasource?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+      const datasourceStr = typeof datasource === 'string';
       return Promise.resolve(
         (datasource
-          ? dsSettings.find(
-              (d) => d.api.name === datasource || d.api.uid === datasource || d.api.uid === datasource.uid
+          ? dsSettings.find((d) =>
+              datasourceStr ? d.api.name === datasource || d.api.uid === datasource : d.api.uid === datasource?.uid
             )
           : dsSettings[0])!.api
       );
