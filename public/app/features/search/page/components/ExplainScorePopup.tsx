@@ -14,6 +14,7 @@ export interface Props {
 const tabs = [
   { label: 'Score', value: 'score' },
   { label: 'Fields', value: 'fields' },
+  { label: 'Allowed actions', value: 'allowed_actions' },
 ];
 
 export function ExplainScorePopup({ name, explain, frame, row }: Props) {
@@ -50,6 +51,21 @@ export function ExplainScorePopup({ name, explain, frame, row }: Props) {
           <div>
             <DataHoverView data={frame} rowIndex={row} />
           </div>
+        )}
+        {activeTab === tabs[2].value && (
+          <CodeEditor
+            width="100%"
+            height="70vh"
+            language="json"
+            showLineNumbers={false}
+            showMiniMap={false}
+            value={(() => {
+              const allowedActionsField = frame.fields.find((f) => f.name === 'allowed_actions');
+              const values = allowedActionsField?.values?.get(row);
+              return JSON.stringify(values ?? {}, null, 2);
+            })()}
+            readOnly={false}
+          />
         )}
       </TabContent>
     </Modal>
