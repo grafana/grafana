@@ -25,6 +25,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { GroupMode, SortOrder, UnifiedAlertListOptions } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
+import { filterAlerts } from './util';
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -151,6 +152,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
       return rules;
     }, [] as PromRuleWithLocation[]);
   }
+
   if (options.folder) {
     filteredRules = filteredRules.filter((rule) => {
       return rule.namespaceName === options.folder.title;
@@ -165,6 +167,16 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
         : ({ dataSourceName }) => dataSourceName === options.datasource
     );
   }
+
+  filteredRules = filteredRules.reduce<PromRuleWithLocation[]>((rules, rule) => {
+    const filteredAlerts = filterAlerts(options, rule.rule.alerts ?? []);
+    if (filteredAlerts.length) {
+      // We intentionally don't set alerts to filteredAlerts
+      // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
+      rules.push(rule);
+    }
+    return rules;
+  }, []);
 
   return filteredRules;
 }
