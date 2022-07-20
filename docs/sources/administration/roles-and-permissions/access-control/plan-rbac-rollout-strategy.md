@@ -282,10 +282,10 @@ roles:
     permissions:
       - action: 'plugins.app:access'
         scope: 'plugins:*'
-        state: absent
+        state: 'absent'
       - action: 'plugins.app:access'
         scope: 'plugins:id:kentik-connect-app'
-        state: present
+        state: 'present'
 ```
 
 - Or use [RBAC HTTP API]({{< relref "../../../developers/http_api/access_control/#update-a-role" >}}).
