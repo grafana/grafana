@@ -41,7 +41,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 					Type:  datasources.DS_ALERTMANAGER,
 					Url:   "http://localhost:9000",
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"handleGrafanaManagedAlerts": true,
+						definitions.HandleGrafanaManagedAlerts: true,
 					}),
 				},
 			},

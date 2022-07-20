@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -134,7 +135,7 @@ func (srv AdminSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]s
 		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
 	for _, ds := range query.Result {
-		if ds.JsonData.Get("handleGrafanaManagedAlerts").MustBool(false) {
+		if ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
 			// we don't need to build the exact URL as we only need
 			// to know if any is set
 			alertmanagers = append(alertmanagers, ds.Uid)
