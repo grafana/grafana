@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 
 import { Button, ButtonProps } from '../Button';
 
@@ -11,13 +11,40 @@ export interface Props extends ButtonProps {
   onClipboardError?(copiedText: string, error: unknown): void;
 }
 
-export function ClipboardButton({ onClipboardCopy, onClipboardError, children, getText, ...buttonProps }: Props) {
+const SHOW_SUCCESS_DURATION = 2 * 1000;
+
+export function ClipboardButton({
+  onClipboardCopy,
+  onClipboardError,
+  children,
+  getText,
+  icon,
+  variant,
+  ...buttonProps
+}: Props) {
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    if (showCopySuccess) {
+      timeoutId = setTimeout(() => {
+        setShowCopySuccess(false);
+      }, SHOW_SUCCESS_DURATION);
+    }
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [showCopySuccess]);
+
   const buttonRef = useRef<null | HTMLButtonElement>(null);
   const copyTextCallback = useCallback(async () => {
     const textToCopy = getText();
 
     try {
       await copyText(textToCopy, buttonRef);
+      setShowCopySuccess(true);
       onClipboardCopy?.(textToCopy);
     } catch (e) {
       onClipboardError?.(textToCopy, e);
@@ -25,7 +52,14 @@ export function ClipboardButton({ onClipboardCopy, onClipboardError, children, g
   }, [getText, onClipboardCopy, onClipboardError]);
 
   return (
-    <Button onClick={copyTextCallback} {...buttonProps} ref={buttonRef}>
+    <Button
+      onClick={copyTextCallback}
+      icon={showCopySuccess ? 'check' : icon}
+      variant={showCopySuccess ? 'success' : variant}
+      aria-label={showCopySuccess ? 'Copied' : undefined}
+      {...buttonProps}
+      ref={buttonRef}
+    >
       {children}
     </Button>
   );
