@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/userauth/userauthtest"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -70,6 +71,40 @@ func TestUserService(t *testing.T) {
 		require.Equal(t, "login", u.Login)
 		require.Equal(t, "name", u.Name)
 		require.Equal(t, "email", u.Email)
+	})
+
+	t.Run("delete user store returns error", func(t *testing.T) {
+		userStore.ExpectedDeleteUserError = models.ErrUserNotFound
+		t.Cleanup(func() {
+			userStore.ExpectedDeleteUserError = nil
+		})
+		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
+		require.Error(t, err, models.ErrUserNotFound)
+	})
+
+	t.Run("delete user returns from team", func(t *testing.T) {
+		teamMemberService.ExpectedError = errors.New("some error")
+		t.Cleanup(func() {
+			teamMemberService.ExpectedError = nil
+		})
+		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
+		require.Error(t, err)
+	})
+
+	t.Run("delete user returns from team and pref", func(t *testing.T) {
+		teamMemberService.ExpectedError = errors.New("some error")
+		preferenceService.ExpectedError = errors.New("some error 2")
+		t.Cleanup(func() {
+			teamMemberService.ExpectedError = nil
+			preferenceService.ExpectedError = nil
+		})
+		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
+		require.Error(t, err)
+	})
+
+	t.Run("delete user successfully", func(t *testing.T) {
+		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
+		require.NoError(t, err)
 	})
 
 	t.Run("delete user store returns error", func(t *testing.T) {

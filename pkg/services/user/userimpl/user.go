@@ -18,12 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/userauth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+
 	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
-	store store
-
+	store              store
 	orgService         org.Service
 	starService        star.Service
 	dashboardService   dashboards.DashboardService

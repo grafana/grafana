@@ -82,9 +82,10 @@ export default class UrlBuilder {
       );
     }
 
-    return (
-      `${baseUrl}${resourceUri}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}` +
-      `&metricnamespace=${encodeURIComponent(metricNamespace)}`
-    );
+    let url = `${baseUrl}${resourceUri}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}`;
+    if (metricNamespace) {
+      url += `&metricnamespace=${encodeURIComponent(metricNamespace)}`;
+    }
+    return url;
   }
 }

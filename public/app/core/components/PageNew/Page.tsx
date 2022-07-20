@@ -21,6 +21,7 @@ export const Page: PageType = ({
   navId,
   navModel: oldNavProp,
   pageNav,
+  subTitle,
   children,
   className,
   layout = PageLayoutType.Default,
@@ -52,7 +53,7 @@ export const Page: PageType = ({
           <div className={styles.pageContent}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
-                {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
+                {pageHeaderNav && <PageHeader navItem={pageHeaderNav} subTitle={subTitle} />}
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
                 {children}
               </div>

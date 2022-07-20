@@ -17,6 +17,7 @@ export interface ValueMappingEditRowModel {
   isNew?: boolean;
   specialMatch?: SpecialValueMatch;
   result: ValueMappingResult;
+  id: string;
 }
 
 interface Props {
@@ -29,7 +30,7 @@ interface Props {
 }
 
 export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate, showIconPicker }: Props) {
-  const { key, result } = mapping;
+  const { key, result, id } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -126,11 +127,11 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   ];
 
   return (
-    <Draggable draggableId={`mapping-${index}`} index={index}>
+    <Draggable key={id} draggableId={id} index={index}>
       {(provided) => (
-        <tr ref={provided.innerRef} {...provided.draggableProps}>
+        <tr ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
           <td>
-            <div {...provided.dragHandleProps} className={styles.dragHandle}>
+            <div className={styles.dragHandle}>
               <Icon name="draggabledots" size="lg" />
             </div>
           </td>

@@ -11,6 +11,7 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   navId?: string;
   navModel?: NavModel;
   pageNav?: NavModelItem;
+  subTitle?: React.ReactNode;
   layout?: PageLayoutType;
   /** Something we can remove when we remove the old nav. */
   toolbar?: React.ReactNode;
