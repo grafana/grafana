@@ -1058,21 +1058,21 @@ func TestBuildExternalURL(t *testing.T) {
 		expectedURL string
 	}{
 		{
-			name: "datasource wihtout auth",
+			name: "datasource without auth",
 			ds: &ds.DataSource{
 				Url: "https://localhost:9000",
 			},
 			expectedURL: "https://localhost:9000",
 		},
 		{
-			name: "datasource wihtout auth and with path",
+			name: "datasource without auth and with path",
 			ds: &ds.DataSource{
 				Url: "https://localhost:9000/path/to/am",
 			},
 			expectedURL: "https://localhost:9000/path/to/am",
 		},
 		{
-			name: "datasource wiht auth",
+			name: "datasource with auth",
 			ds: &ds.DataSource{
 				Url:           "https://localhost:9000",
 				BasicAuth:     true,
@@ -1084,7 +1084,7 @@ func TestBuildExternalURL(t *testing.T) {
 			expectedURL: "https://johndoe:123@localhost:9000",
 		},
 		{
-			name: "datasource wiht auth and path",
+			name: "datasource with auth and path",
 			ds: &ds.DataSource{
 				Url:           "https://localhost:9000/path/to/am",
 				BasicAuth:     true,

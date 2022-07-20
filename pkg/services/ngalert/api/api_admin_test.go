@@ -103,9 +103,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			require.Equal(t, test.message, res["message"])
 			require.Equal(t, test.statusCode, resp.Status())
 		})
-
 	}
-
 }
 
 func createAPIAdminSut(t *testing.T,
