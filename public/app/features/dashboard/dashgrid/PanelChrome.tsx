@@ -400,7 +400,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   onAnnotationCreate = async (event: AnnotationEventUIModel) => {
     const isRegion = event.from !== event.to;
     const anno = {
-      dashboardId: this.props.dashboard.id,
+      dashboardUID: this.props.dashboard.uid,
       panelId: this.props.panel.id,
       isRegion,
       time: event.from,
@@ -423,7 +423,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     const isRegion = event.from !== event.to;
     const anno = {
       id: event.id,
-      dashboardId: this.props.dashboard.id,
+      dashboardUID: this.props.dashboard.uid,
       panelId: this.props.panel.id,
       isRegion,
       time: event.from,
