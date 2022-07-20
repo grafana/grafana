@@ -435,6 +435,7 @@ steps:
   name: test-a11y-frontend
 - commands:
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -444,6 +445,8 @@ steps:
   name: copy-packages-for-docker
 - commands:
 >>>>>>> 78f26a079c... Chore: Upgrade to Go version 1.17.12 (#52523)
+=======
+>>>>>>> 3b6cef9dfa... CI: Refactor/Reorder `*.star` files (#52384)
   - ./bin/grabpl build-docker --edition oss -archs amd64
   depends_on:
   - copy-packages-for-docker
@@ -1196,6 +1199,7 @@ steps:
     - grafana/grafana
 - commands:
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -1205,6 +1209,8 @@ steps:
   name: copy-packages-for-docker
 - commands:
 >>>>>>> 78f26a079c... Chore: Upgrade to Go version 1.17.12 (#52523)
+=======
+>>>>>>> 3b6cef9dfa... CI: Refactor/Reorder `*.star` files (#52384)
   - ./bin/grabpl build-docker --edition oss
   depends_on:
   - copy-packages-for-docker
@@ -4896,6 +4902,7 @@ name: gcp_upload_artifacts_key
 kind: signature
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 hmac: fdbc2724cf738ea9a2cd2be46f70d13928c96cc29179a79b7108650af40740ff
 =======
 hmac: 09a6bfeebeb3a1a5251cc8946621df3bedefb591159a3c9382901d275a2dabe6
@@ -4903,5 +4910,8 @@ hmac: 09a6bfeebeb3a1a5251cc8946621df3bedefb591159a3c9382901d275a2dabe6
 =======
 hmac: d7d85528bb22e0a126fb5fb04ec3bdde3001ab0d5a9a88a34db3cd9985eeb9fa
 >>>>>>> 78f26a079c... Chore: Upgrade to Go version 1.17.12 (#52523)
+=======
+hmac: fdbc2724cf738ea9a2cd2be46f70d13928c96cc29179a79b7108650af40740ff
+>>>>>>> 3b6cef9dfa... CI: Refactor/Reorder `*.star` files (#52384)
 
 ...
