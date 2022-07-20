@@ -1,3 +1,5 @@
+import { sortBy } from 'lodash';
+
 import { parser } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
@@ -81,7 +83,7 @@ export function addNoPipelineErrorToQuery(query: string): string {
  * @param labelFormat
  */
 export function addLabelFormatToQuery(query: string, labelFormat: { originalLabel: string; renameTo: string }): string {
-  const logQueryPositions = getLogQueryPosition(query);
+  const logQueryPositions = getLogQueryPositions(query);
   return addLabelFormat(query, logQueryPositions, labelFormat);
 }
 
@@ -144,13 +146,39 @@ function getLineFiltersPositions(query: string): Position[] {
  * Parse the string and get all Log query positions in the query.
  * @param query
  */
-function getLogQueryPosition(query: string): Position[] {
+function getLogQueryPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
     enter: (type, from, to, get): false | void => {
       if (type.name === 'LogExpr') {
         positions.push({ from, to });
+        return false;
+      }
+
+      // This is a case in metrics query
+      if (type.name === 'LogRangeExpr') {
+        // Unfortunately, LogRangeExpr includes both log and non-log (e.g. Duration/Range/...) parts of query.
+        // We get position of all log-parts within LogRangeExpr: Selector, PipelineExpr and UnwrapExpr.
+        const logPartsPositions: Position[] = [];
+        const selector = get().getChild('Selector');
+        if (selector) {
+          logPartsPositions.push({ from: selector.from, to: selector.to });
+        }
+
+        const pipeline = get().getChild('PipelineExpr');
+        if (pipeline) {
+          logPartsPositions.push({ from: pipeline.from, to: pipeline.to });
+        }
+
+        const unwrap = get().getChild('UnwrapExpr');
+        if (unwrap) {
+          logPartsPositions.push({ from: unwrap.from, to: unwrap.to });
+        }
+
+        // We sort them and then pick "from" from first position and "to" from last position.
+        const sorted = sortBy(logPartsPositions, (position) => position.to);
+        positions.push({ from: sorted[0].from, to: sorted[sorted.length - 1].to });
         return false;
       }
     },

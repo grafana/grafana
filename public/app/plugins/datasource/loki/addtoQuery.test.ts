@@ -212,4 +212,24 @@ describe('addLabelFormatToQuery', () => {
       addLabelFormatToQuery('{job="grafana"} | logfmt | label_format a=b', { originalLabel: 'lvl', renameTo: 'level' })
     ).toBe('{job="grafana"} | logfmt | label_format a=b | label_format level=lvl');
   });
+
+  it('should add label format at the end of log query part of metrics query', () => {
+    expect(
+      addLabelFormatToQuery('rate({job="grafana"} | logfmt | label_format a=b [5m])', {
+        originalLabel: 'lvl',
+        renameTo: 'level',
+      })
+    ).toBe('rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m])');
+  });
+
+  it('should add label format at the end of multiple log query part of metrics query', () => {
+    expect(
+      addLabelFormatToQuery(
+        'rate({job="grafana"} | logfmt | label_format a=b [5m]) + rate({job="grafana"} | logfmt | label_format a=b [5m])',
+        { originalLabel: 'lvl', renameTo: 'level' }
+      )
+    ).toBe(
+      'rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m]) + rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m])'
+    );
+  });
 });
