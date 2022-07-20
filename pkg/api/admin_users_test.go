@@ -35,7 +35,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			IsGrafanaAdmin: false,
 		}
 		mock := &mockstore.SQLStoreMock{
-			ExpectedError: models.ErrLastGrafanaAdmin,
+			ExpectedError: user.ErrLastGrafanaAdmin,
 		}
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
 			"/api/admin/users/:id/permissions", role, updateCmd, func(sc *scenarioContext) {

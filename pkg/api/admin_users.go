@@ -113,8 +113,8 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 
 	err = hs.SQLStore.UpdateUserPermissions(userID, form.IsGrafanaAdmin)
 	if err != nil {
-		if errors.Is(err, models.ErrLastGrafanaAdmin) {
-			return response.Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
+		if errors.Is(err, user.ErrLastGrafanaAdmin) {
+			return response.Error(400, user.ErrLastGrafanaAdmin.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to update user permissions", err)

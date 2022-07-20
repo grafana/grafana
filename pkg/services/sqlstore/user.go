@@ -864,7 +864,7 @@ func validateOneAdminLeft(sess *DBSession) error {
 	}
 
 	if count == 0 {
-		return models.ErrLastGrafanaAdmin
+		return user.ErrLastGrafanaAdmin
 	}
 
 	return nil

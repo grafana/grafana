@@ -662,7 +662,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// Cannot make themselves a non-admin
 		updatePermsError := ss.UpdateUserPermissions(usr.ID, false)
 
-		require.Equal(t, updatePermsError, models.ErrLastGrafanaAdmin)
+		require.Equal(t, updatePermsError, user.ErrLastGrafanaAdmin)
 
 		query := models.GetUserByIdQuery{Id: usr.ID}
 		getUserError := ss.GetUserById(context.Background(), &query)
