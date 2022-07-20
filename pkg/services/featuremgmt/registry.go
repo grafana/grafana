@@ -78,12 +78,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "tempoServiceGraph",
-			Description:  "show service",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "lokiBackendMode",
 			Description:  "Loki datasource works as backend datasource",
 			State:        FeatureStateAlpha,
@@ -203,12 +197,6 @@ var (
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:         "azureMonitorExperimentalUI",
-			Description:  "Use grafana-experimental UI in Azure Monitor",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
 		},
 		{
 			Name:         "traceToMetrics",

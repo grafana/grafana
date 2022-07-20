@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { FC, useMemo } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { LoadingPlaceholder, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -17,13 +17,15 @@ interface Props {
 }
 
 export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
+
+  const dsConfigs = useUnifiedAlertingSelector((state) => state.dataSources);
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
 
   const dataSourcesLoading = useMemo(
-    () => rulesDataSources.filter((ds) => rules[ds.name]?.loading),
-    [rules, rulesDataSources]
+    () => rulesDataSources.filter((ds) => rules[ds.name]?.loading || dsConfigs[ds.name]?.loading),
+    [rules, dsConfigs, rulesDataSources]
   );
 
   return (
@@ -57,7 +59,7 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   loader: css`
     margin-bottom: 0;
   `,
@@ -66,6 +68,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     justify-content: space-between;
   `,
   wrapper: css`
-    margin-bottom: ${theme.spacing.xl};
+    margin-bottom: ${theme.v1.spacing.xl};
   `,
 });

@@ -37,6 +37,7 @@ type SendWebhookSync struct {
 	HttpMethod  string
 	HttpHeader  map[string]string
 	ContentType string
+	Validation  func(body []byte, statusCode int) error
 }
 
 type SendResetPasswordEmailCommand struct {

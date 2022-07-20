@@ -11,6 +11,13 @@ import { configureStore } from '../../../store/configureStore';
 import { frameOld } from './TraceView.test';
 import { TraceViewContainer } from './TraceViewContainer';
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
+
 function renderTraceViewContainer(frames = [frameOld]) {
   const store = configureStore();
   const mockPanelData = {

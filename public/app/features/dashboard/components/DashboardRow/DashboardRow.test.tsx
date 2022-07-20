@@ -1,3 +1,5 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -27,10 +29,16 @@ describe('DashboardRow', () => {
     expect(wrapper.find('.dashboard-row--collapsed')).toHaveLength(0);
   });
 
-  it('Should collapse after clicking title', () => {
-    wrapper.find('.dashboard-row__title').simulate('click');
+  it('Should collapse when the panel is collapsed', async () => {
+    const panel = new PanelModel({ collapsed: true });
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    const row = screen.getByTestId('dashboard-row-container');
+    expect(row).toHaveClass('dashboard-row--collapsed');
+  });
 
-    expect(wrapper.find('.dashboard-row--collapsed')).toHaveLength(1);
+  it('Should collapse after clicking title', async () => {
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    await userEvent.click(screen.getByTestId('data-testid dashboard-row-title-'));
     expect(dashboardMock.toggleRow.mock.calls).toHaveLength(1);
   });
 

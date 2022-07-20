@@ -15,7 +15,7 @@ title: What's new in Grafana v7.5
 weight: -32
 ---
 
-# What’s new in Grafana v7.5
+# What's new in Grafana v7.5
 
 This topic includes the release notes for Grafana v7.5. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 

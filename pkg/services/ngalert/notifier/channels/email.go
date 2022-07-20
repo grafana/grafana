@@ -110,18 +110,16 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	// Extend alerts data with images, if available.
 	var embeddedFiles []string
 	_ = withStoredImages(ctx, en.log, en.images,
-		func(index int, image *ngmodels.Image) error {
-			if image != nil {
-				if len(image.URL) != 0 {
-					data.Alerts[index].ImageURL = image.URL
-				} else if len(image.Path) != 0 {
-					_, err := os.Stat(image.Path)
-					if err == nil {
-						data.Alerts[index].EmbeddedImage = path.Base(image.Path)
-						embeddedFiles = append(embeddedFiles, image.Path)
-					} else {
-						en.log.Warn("failed to get image file for email attachment", "file", image.Path, "err", err)
-					}
+		func(index int, image ngmodels.Image) error {
+			if len(image.URL) != 0 {
+				data.Alerts[index].ImageURL = image.URL
+			} else if len(image.Path) != 0 {
+				_, err := os.Stat(image.Path)
+				if err == nil {
+					data.Alerts[index].EmbeddedImage = path.Base(image.Path)
+					embeddedFiles = append(embeddedFiles, image.Path)
+				} else {
+					en.log.Warn("failed to get image file for email attachment", "file", image.Path, "err", err)
 				}
 			}
 			return nil

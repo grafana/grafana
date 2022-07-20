@@ -5,9 +5,10 @@ import (
 
 	gokitlog "github.com/go-kit/log"
 	gokitlevel "github.com/go-kit/log/level"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/level"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewFilter(t *testing.T) {
@@ -24,14 +25,14 @@ func TestNewFilter(t *testing.T) {
 		require.Equal(t, "lvl", ctx.loggedArgs[3][2].(string))
 		require.Equal(t, "dbug", ctx.loggedArgs[3][3].(level.Value).String())
 
-		require.Equal(t, "level", ctx.loggedArgs[4][0].(string))
-		require.Equal(t, "info", ctx.loggedArgs[4][1].(gokitlevel.Value).String())
-		require.Equal(t, "level", ctx.loggedArgs[5][0].(string))
-		require.Equal(t, "warn", ctx.loggedArgs[5][1].(gokitlevel.Value).String())
-		require.Equal(t, "level", ctx.loggedArgs[6][0].(string))
-		require.Equal(t, "error", ctx.loggedArgs[6][1].(gokitlevel.Value).String())
-		require.Equal(t, "level", ctx.loggedArgs[7][0].(string))
-		require.Equal(t, "debug", ctx.loggedArgs[7][1].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[4][2].(string))
+		require.Equal(t, "info", ctx.loggedArgs[4][3].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[5][2].(string))
+		require.Equal(t, "warn", ctx.loggedArgs[5][3].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[6][2].(string))
+		require.Equal(t, "error", ctx.loggedArgs[6][3].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[7][2].(string))
+		require.Equal(t, "debug", ctx.loggedArgs[7][3].(gokitlevel.Value).String())
 	})
 
 	newFilteredLoggerScenario(t, "Given error, warnings, info, debug is allowed should log all messages", level.AllowDebug(), func(t *testing.T, ctx *scenarioContext) {
@@ -47,14 +48,14 @@ func TestNewFilter(t *testing.T) {
 		require.Equal(t, "lvl", ctx.loggedArgs[3][2].(string))
 		require.Equal(t, "dbug", ctx.loggedArgs[3][3].(level.Value).String())
 
-		require.Equal(t, "level", ctx.loggedArgs[4][0].(string))
-		require.Equal(t, "info", ctx.loggedArgs[4][1].(gokitlevel.Value).String())
-		require.Equal(t, "level", ctx.loggedArgs[5][0].(string))
-		require.Equal(t, "warn", ctx.loggedArgs[5][1].(gokitlevel.Value).String())
-		require.Equal(t, "level", ctx.loggedArgs[6][0].(string))
-		require.Equal(t, "error", ctx.loggedArgs[6][1].(gokitlevel.Value).String())
-		require.Equal(t, "level", ctx.loggedArgs[7][0].(string))
-		require.Equal(t, "debug", ctx.loggedArgs[7][1].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[4][2].(string))
+		require.Equal(t, "info", ctx.loggedArgs[4][3].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[5][2].(string))
+		require.Equal(t, "warn", ctx.loggedArgs[5][3].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[6][2].(string))
+		require.Equal(t, "error", ctx.loggedArgs[6][3].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[7][2].(string))
+		require.Equal(t, "debug", ctx.loggedArgs[7][3].(gokitlevel.Value).String())
 	})
 
 	newFilteredLoggerScenario(t, "Given error, warnings is allowed should log error and warning messages", level.AllowWarn(), func(t *testing.T, ctx *scenarioContext) {
@@ -66,10 +67,10 @@ func TestNewFilter(t *testing.T) {
 		require.Equal(t, "lvl", ctx.loggedArgs[1][2].(string))
 		require.Equal(t, "eror", ctx.loggedArgs[1][3].(level.Value).String())
 
-		require.Equal(t, "level", ctx.loggedArgs[2][0].(string))
-		require.Equal(t, "warn", ctx.loggedArgs[2][1].(gokitlevel.Value).String())
-		require.Equal(t, "level", ctx.loggedArgs[3][0].(string))
-		require.Equal(t, "error", ctx.loggedArgs[3][1].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[2][2].(string))
+		require.Equal(t, "warn", ctx.loggedArgs[2][3].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[3][2].(string))
+		require.Equal(t, "error", ctx.loggedArgs[3][3].(gokitlevel.Value).String())
 	})
 
 	newFilteredLoggerScenario(t, "Given error allowed should log error messages", level.AllowError(), func(t *testing.T, ctx *scenarioContext) {
@@ -79,8 +80,8 @@ func TestNewFilter(t *testing.T) {
 		require.Equal(t, "lvl", ctx.loggedArgs[0][2].(string))
 		require.Equal(t, "eror", ctx.loggedArgs[0][3].(level.Value).String())
 
-		require.Equal(t, "level", ctx.loggedArgs[1][0].(string))
-		require.Equal(t, "error", ctx.loggedArgs[1][1].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[1][2].(string))
+		require.Equal(t, "error", ctx.loggedArgs[1][3].(gokitlevel.Value).String())
 	})
 
 	newFilteredLoggerScenario(t, "Given error, warnings, info is allowed should log error, warning and info messages", level.AllowInfo(), func(t *testing.T, ctx *scenarioContext) {
@@ -94,12 +95,12 @@ func TestNewFilter(t *testing.T) {
 		require.Equal(t, "lvl", ctx.loggedArgs[2][2].(string))
 		require.Equal(t, "eror", ctx.loggedArgs[2][3].(level.Value).String())
 
-		require.Equal(t, "level", ctx.loggedArgs[3][0].(string))
-		require.Equal(t, "info", ctx.loggedArgs[3][1].(gokitlevel.Value).String())
-		require.Equal(t, "level", ctx.loggedArgs[4][0].(string))
-		require.Equal(t, "warn", ctx.loggedArgs[4][1].(gokitlevel.Value).String())
-		require.Equal(t, "level", ctx.loggedArgs[5][0].(string))
-		require.Equal(t, "error", ctx.loggedArgs[5][1].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[3][2].(string))
+		require.Equal(t, "info", ctx.loggedArgs[3][3].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[4][2].(string))
+		require.Equal(t, "warn", ctx.loggedArgs[4][3].(gokitlevel.Value).String())
+		require.Equal(t, "level", ctx.loggedArgs[5][2].(string))
+		require.Equal(t, "error", ctx.loggedArgs[5][3].(gokitlevel.Value).String())
 	})
 
 	newFilteredLoggerScenario(t, "Given no levels is allowed should not log any messages", level.AllowNone(), func(t *testing.T, ctx *scenarioContext) {
