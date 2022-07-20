@@ -51,6 +51,21 @@ load(
 )
 
 load(
+    'scripts/drone/pipelines/test_frontend.star',
+    'test_frontend',
+)
+
+load(
+    'scripts/drone/pipelines/test_backend.star',
+    'test_backend',
+)
+
+load(
+    'scripts/drone/pipelines/integration_tests.star',
+    'integration_tests',
+)
+
+load(
     'scripts/drone/pipelines/docs.star',
     'docs_pipelines',
     'trigger_docs',
@@ -78,23 +93,6 @@ def pr_verify_drone():
     ]
     return pipeline(
         name='pr-verify-drone', edition="oss", trigger=get_pr_trigger(include_paths=['scripts/drone/**', '.drone.yml', '.drone.star']), services=[], steps=steps,
-    )
-
-
-def pr_test_frontend():
-    init_steps = [
-        identify_runner_step(),
-        download_grabpl_step(),
-        gen_version_step(ver_mode),
-        yarn_install_step(),
-    ]
-    test_steps = [
-        lint_frontend_step(),
-        betterer_frontend_step(),
-        test_frontend_step(),
-    ]
-    return pipeline(
-        name='pr-test-frontend', edition="oss", trigger=get_pr_trigger(exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']), services=[], steps=init_steps + test_steps,
     )
 
 
@@ -137,10 +135,6 @@ def pr_pipelines(edition):
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, ver_mode=ver_mode),
     ]
-    integration_test_steps = [
-        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
-        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
-    ]
 
     # Insert remaining build_steps
     build_steps.extend([
@@ -159,15 +153,11 @@ def pr_pipelines(edition):
 
     return [
         pr_verify_drone(),
-        pr_test_frontend(),
-        pr_test_backend(),
+        test_frontend(get_pr_trigger(exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']), ver_mode),
+        test_backend(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), ver_mode),
         pipeline(
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=init_steps + build_steps,
-        ), pipeline(
-            name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition="oss"), wire_install_step(), ] + integration_test_steps,
-            volumes=volumes,
-        ), docs_pipelines(edition, ver_mode, trigger_docs())
+        ), integration_tests(trigger, ver_mode, edition),  docs_pipelines(edition, ver_mode, trigger_docs())
     ]
 
 

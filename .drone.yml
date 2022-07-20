@@ -851,12 +851,6 @@ steps:
   image: grafana/build-container:1.5.8
   name: wire-install
 - commands:
-  - ./bin/grabpl verify-drone
-  depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
-- commands:
   - |-
     echo -e "unknwon
     referer
@@ -894,6 +888,12 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.8
   name: test-backend-integration
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
 trigger:
   branch: main
   event:
@@ -4874,6 +4874,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d7d85528bb22e0a126fb5fb04ec3bdde3001ab0d5a9a88a34db3cd9985eeb9fa
+hmac: eda9baf175c276bf8ede782297ceddbdeb21050108470dd16dd610a3857ed939
 
 ...

@@ -65,6 +65,21 @@ load(
     'docs_pipelines',
 )
 
+load(
+    'scripts/drone/pipelines/test_frontend.star',
+    'test_frontend',
+)
+
+load(
+    'scripts/drone/pipelines/test_backend.star',
+    'test_backend',
+)
+
+load(
+    'scripts/drone/pipelines/integration_tests.star',
+    'integration_tests',
+)
+
 load('scripts/drone/vault.star', 'from_secret')
 
 
@@ -73,42 +88,6 @@ trigger = {
     'event': ['push',],
     'branch': 'main',
 }
-
-def main_test_frontend():
-    init_steps = [
-        identify_runner_step(),
-        download_grabpl_step(),
-        gen_version_step(ver_mode),
-        yarn_install_step(),
-    ]
-    test_steps = [
-        lint_frontend_step(),
-        betterer_frontend_step(),
-        test_frontend_step(),
-    ]
-    return pipeline(
-        name='main-test-frontend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
-    )
-
-def main_test_backend():
-    init_steps = [
-        identify_runner_step(),
-        download_grabpl_step(),
-        gen_version_step(ver_mode),
-        verify_gen_cue_step(edition="oss"),
-        wire_install_step(),
-    ]
-    test_steps = [
-        lint_drone_step(),
-        codespell_step(),
-        shellcheck_step(),
-        lint_backend_step(edition="oss"),
-        test_backend_step(edition="oss"),
-        test_backend_integration_step(edition="oss"),
-    ]
-    return pipeline(
-        name='main-test-backend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
-    )
 
 
 def get_steps(edition):
@@ -216,14 +195,12 @@ def main_pipelines(edition):
     }
     init_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition)
 
-    pipelines = [docs_pipelines(edition, ver_mode, trigger), main_test_frontend(), main_test_backend(), pipeline(
+    pipelines = [docs_pipelines(edition, ver_mode, trigger), test_frontend(trigger, ver_mode), test_backend(trigger, ver_mode), pipeline(
         name='main-build-e2e-publish', edition=edition, trigger=trigger, services=[],
         steps=init_steps + build_steps,
-    ), pipeline(
-        name='main-integration-tests', edition=edition, trigger=trigger, services=services,
-        steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition="oss"), wire_install_step(), ] + integration_test_steps,
-        volumes=volumes,
-    ), pipeline(
+    ),
+    integration_tests(trigger, ver_mode, edition),
+    pipeline(
         name='main-windows', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
         steps=[identify_runner_step('windows')] + windows_steps,
         depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
