@@ -42,6 +42,16 @@ func ProvideService(
 	}
 }
 
+func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
+	dashboard, err := pd.store.GetDashboard(ctx, dashboardUid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, err
+}
+
 // Gets public dashboard via access token
 func (pd *PublicDashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error) {
 	pubdash, d, err := pd.store.GetPublicDashboard(ctx, accessToken)
@@ -77,8 +87,12 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardConfig(ctx context.Conte
 
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
-func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO, dashboard *models.Dashboard) (*PublicDashboard, error) {
-	err := validation.ValidateSavePublicDashboard(dto, dashboard)
+func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+	dashboard, err := pd.GetDashboard(ctx, dto.DashboardUid)
+	if err != nil {
+		return nil, err
+	}
+	err = validation.ValidateSavePublicDashboard(dto, dashboard)
 	if err != nil {
 		return nil, err
 	}

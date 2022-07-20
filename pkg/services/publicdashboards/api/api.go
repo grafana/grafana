@@ -129,19 +129,8 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 		PublicDashboard: pubdash,
 	}
 
-	// Get the original dashboard
-	dashboardQuery := models.GetDashboardQuery{
-		Uid:    dto.DashboardUid,
-		OrgId:  c.OrgId,
-		Result: nil,
-	}
-	err := api.DashboardService.GetDashboard(c.Req.Context(), &dashboardQuery)
-	if err != nil {
-		return handleDashboardErr(http.StatusInternalServerError, "Failed to get dashboard", err)
-	}
-
 	// Save the public dashboard
-	pubdash, err = api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto, dashboardQuery.Result)
+	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to save public dashboard configuration", err)
 	}
