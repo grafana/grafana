@@ -33,7 +33,7 @@ type WebhookNotifier struct {
 	User     string
 	Password string
 
-	AuthorizationType        string
+	AuthorizationScheme      string
 	AuthorizationCredentials string
 }
 
@@ -44,7 +44,7 @@ type WebhookConfig struct {
 	MaxAlerts  int
 
 	// Authorization Header.
-	AuthorizationType        string
+	AuthorizationScheme      string
 	AuthorizationCredentials string
 	// HTTP Basic Authentication.
 	User     string
@@ -70,11 +70,11 @@ func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 
 	user := config.Settings.Get("username").MustString()
 	password := decryptFunc(context.Background(), config.SecureSettings, "password", config.Settings.Get("password").MustString())
-	authorizationType := config.Settings.Get("authorization_type").MustString("Bearer")
+	authorizationScheme := config.Settings.Get("authorization_type").MustString("Bearer")
 	authorizationCredentials := decryptFunc(context.Background(), config.SecureSettings, "authorization_credentials", config.Settings.Get("authorization_credentials").MustString())
 
-	if user != "" && password != "" && authorizationType != "" && authorizationCredentials != "" {
-		return nil, errors.New("both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted.")
+	if user != "" && password != "" && authorizationScheme != "" && authorizationCredentials != "" {
+		return nil, errors.New("both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted")
 	}
 
 	return &WebhookConfig{
@@ -82,7 +82,7 @@ func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 		URL:                       url,
 		User:                      user,
 		Password:                  password,
-		AuthorizationType:         authorizationType,
+		AuthorizationScheme:       authorizationScheme,
 		AuthorizationCredentials:  authorizationCredentials,
 		HTTPMethod:                config.Settings.Get("httpMethod").MustString("POST"),
 		MaxAlerts:                 config.Settings.Get("maxAlerts").MustInt(0),
@@ -104,7 +104,7 @@ func NewWebHookNotifier(config *WebhookConfig, ns notifications.WebhookSender, i
 		URL:                      config.URL,
 		User:                     config.User,
 		Password:                 config.Password,
-		AuthorizationType:        config.AuthorizationType,
+		AuthorizationScheme:      config.AuthorizationScheme,
 		AuthorizationCredentials: config.AuthorizationCredentials,
 		HTTPMethod:               config.HTTPMethod,
 		MaxAlerts:                config.MaxAlerts,
@@ -178,8 +178,8 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	headers := make(map[string]string, 1)
-	if wn.AuthorizationType != "" && wn.AuthorizationCredentials != "" {
-		headers["Authorization"] = fmt.Sprintf("%s %s", wn.AuthorizationType, wn.AuthorizationCredentials)
+	if wn.AuthorizationScheme != "" && wn.AuthorizationCredentials != "" {
+		headers["Authorization"] = fmt.Sprintf("%s %s", wn.AuthorizationScheme, wn.AuthorizationCredentials)
 	}
 
 	cmd := &models.SendWebhookSync{
