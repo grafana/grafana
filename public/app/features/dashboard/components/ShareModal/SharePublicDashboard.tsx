@@ -33,7 +33,6 @@ export const SharePublicDashboard = (props: Props) => {
     uid: '',
     dashboardUid: props.dashboard.uid,
   });
-
   const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
     public: false,
     datasources: false,
@@ -85,24 +84,12 @@ export const SharePublicDashboard = (props: Props) => {
     return acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
   };
 
-  const publicDashboardCanSave = (): string => {
-    if (props.dashboard.hasUnsavedChanges()) {
-      return 'This dashboard has unsaved changes and cannot be made public. Please save your changes first.';
-    }
-
-    if (dashboardHasTemplateVariables(dashboardVariables)) {
-      return 'This dashboard cannot be made public because it has template variables.';
-    }
-
-    return '';
-  };
-
   return (
     <>
       <p>Welcome to Grafana public dashboards alpha!</p>
-      {publicDashboardCanSave() !== '' ? (
-        <Alert severity="warning" title="dashboard cannot be made public">
-          {publicDashboardCanSave()}
+      {dashboardHasTemplateVariables(dashboardVariables) ? (
+        <Alert severity="warning" title="dashboard cannot be public">
+          This dashboard cannot be made public because it has template variables
         </Alert>
       ) : (
         <>
