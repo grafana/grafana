@@ -70,7 +70,7 @@ func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 
 	user := config.Settings.Get("username").MustString()
 	password := decryptFunc(context.Background(), config.SecureSettings, "password", config.Settings.Get("password").MustString())
-	authorizationScheme := config.Settings.Get("authorization_type").MustString("Bearer")
+	authorizationScheme := config.Settings.Get("authorization_scheme").MustString("Bearer")
 	authorizationCredentials := decryptFunc(context.Background(), config.SecureSettings, "authorization_credentials", config.Settings.Get("authorization_credentials").MustString())
 
 	if user != "" && password != "" && authorizationScheme != "" && authorizationCredentials != "" {
