@@ -10002,6 +10002,9 @@
         "publicDashboardAccessToken": {
           "type": "string"
         },
+        "publicDashboardEnabled": {
+          "type": "boolean"
+        },
         "slug": {
           "type": "string"
         },

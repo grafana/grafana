@@ -2331,6 +2331,587 @@
         }
       }
     },
+    "/api/v1/provisioning/alert-rules": {
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a new alert rule.",
+        "operationId": "RoutePostAlertRule",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/alert-rules/{UID}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a specific alert rule by UID.",
+        "operationId": "RouteGetAlertRule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing alert rule.",
+        "operationId": "RoutePutAlertRule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["provisioning"],
+        "summary": "Delete a specific alert rule by UID.",
+        "operationId": "RouteDeleteAlertRule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The alert rule was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/contact-points": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the contact points.",
+        "operationId": "RouteGetContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Filter by name",
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ContactPoints",
+            "schema": {
+              "$ref": "#/definitions/ContactPoints"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a contact point.",
+        "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "EmbeddedContactPoint",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/contact-points/{UID}": {
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing contact point.",
+        "operationId": "RoutePutContactpoint",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID is the contact point unique identifier",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Delete a contact point.",
+        "operationId": "RouteDeleteContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID is the contact point unique identifier",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The contact point was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a rule group.",
+        "operationId": "RouteGetAlertRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertRuleGroup",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroup"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update the interval of a rule group.",
+        "operationId": "RoutePutAlertRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroupMetadata"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertRuleGroupMetadata",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroupMetadata"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/mute-timings": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the mute timings.",
+        "operationId": "RouteGetMuteTimings",
+        "responses": {
+          "200": {
+            "description": "MuteTimings",
+            "schema": {
+              "$ref": "#/definitions/MuteTimings"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a new mute timing.",
+        "operationId": "RoutePostMuteTiming",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "MuteTimeInterval",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/mute-timings/{name}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a mute timing.",
+        "operationId": "RouteGetMuteTiming",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MuteTimeInterval",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Replace an existing mute timing.",
+        "operationId": "RoutePutMuteTiming",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MuteTimeInterval",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["provisioning"],
+        "summary": "Delete a mute timing.",
+        "operationId": "RouteDeleteMuteTiming",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The mute timing was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/policies": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get the notification policy tree.",
+        "operationId": "RouteGetPolicyTree",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Sets the notification policy tree.",
+        "operationId": "RoutePutPolicyTree",
+        "parameters": [
+          {
+            "description": "The new notification routing tree to use",
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Clears the notification policy tree.",
+        "operationId": "RouteResetPolicyTree",
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/templates": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all message templates.",
+        "operationId": "RouteGetTemplates",
+        "responses": {
+          "200": {
+            "description": "MessageTemplates",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplates"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/templates/{name}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a message template.",
+        "operationId": "RouteGetTemplate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Template Name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MessageTemplate",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplate"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Updates an existing template.",
+        "operationId": "RoutePutTemplate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Template Name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplateContent"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "MessageTemplate",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplate"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["provisioning"],
+        "summary": "Delete a template.",
+        "operationId": "RouteDeleteTemplate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Template Name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The template was deleted successfully."
+          }
+        }
+      }
+    },
     "/auth/keys": {
       "get": {
         "description": "Will return auth keys.",
@@ -3306,7 +3887,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3354,10 +3935,10 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "(empty)"
           },
           "202": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3397,7 +3978,7 @@
         ],
         "responses": {
           "202": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3440,7 +4021,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3489,10 +4070,10 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "(empty)"
           },
           "202": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3533,7 +4114,7 @@
         ],
         "responses": {
           "202": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -4842,7 +5423,7 @@
         "operationId": "getSAMLLogin",
         "responses": {
           "302": {
-            "description": ""
+            "description": "(empty)"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -4860,7 +5441,7 @@
         "operationId": "getSAMLLogout",
         "responses": {
           "302": {
-            "description": ""
+            "description": "(empty)"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -6917,7 +7498,7 @@
         ],
         "responses": {
           "302": {
-            "description": ""
+            "description": "(empty)"
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
@@ -6960,7 +7541,7 @@
         ],
         "responses": {
           "302": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -8754,587 +9335,6 @@
           }
         }
       }
-    },
-    "/v1/provisioning/alert-rules": {
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Create a new alert rule.",
-        "operationId": "RoutePostAlertRule",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/ProvisionedAlertRule"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "ProvisionedAlertRule",
-            "schema": {
-              "$ref": "#/definitions/ProvisionedAlertRule"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/alert-rules/{UID}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a specific alert rule by UID.",
-        "operationId": "RouteGetAlertRule",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Alert rule UID",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ProvisionedAlertRule",
-            "schema": {
-              "$ref": "#/definitions/ProvisionedAlertRule"
-            }
-          },
-          "404": {
-            "description": " Not found."
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Update an existing alert rule.",
-        "operationId": "RoutePutAlertRule",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Alert rule UID",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/ProvisionedAlertRule"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ProvisionedAlertRule",
-            "schema": {
-              "$ref": "#/definitions/ProvisionedAlertRule"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["provisioning"],
-        "summary": "Delete a specific alert rule by UID.",
-        "operationId": "RouteDeleteAlertRule",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Alert rule UID",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The alert rule was deleted successfully."
-          }
-        }
-      }
-    },
-    "/v1/provisioning/contact-points": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all the contact points.",
-        "operationId": "RouteGetContactpoints",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Filter by name",
-            "name": "name",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ContactPoints",
-            "schema": {
-              "$ref": "#/definitions/ContactPoints"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Create a contact point.",
-        "operationId": "RoutePostContactpoints",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "EmbeddedContactPoint",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/contact-points/{UID}": {
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Update an existing contact point.",
-        "operationId": "RoutePutContactpoint",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID is the contact point unique identifier",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Delete a contact point.",
-        "operationId": "RouteDeleteContactpoints",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID is the contact point unique identifier",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The contact point was deleted successfully."
-          }
-        }
-      }
-    },
-    "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a rule group.",
-        "operationId": "RouteGetAlertRuleGroup",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "FolderUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Group",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertRuleGroup",
-            "schema": {
-              "$ref": "#/definitions/AlertRuleGroup"
-            }
-          },
-          "404": {
-            "description": " Not found."
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Update the interval of a rule group.",
-        "operationId": "RoutePutAlertRuleGroup",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "FolderUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Group",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/AlertRuleGroupMetadata"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertRuleGroupMetadata",
-            "schema": {
-              "$ref": "#/definitions/AlertRuleGroupMetadata"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/mute-timings": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all the mute timings.",
-        "operationId": "RouteGetMuteTimings",
-        "responses": {
-          "200": {
-            "description": "MuteTimings",
-            "schema": {
-              "$ref": "#/definitions/MuteTimings"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Create a new mute timing.",
-        "operationId": "RoutePostMuteTiming",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "MuteTimeInterval",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/mute-timings/{name}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a mute timing.",
-        "operationId": "RouteGetMuteTiming",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Mute timing name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "MuteTimeInterval",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          },
-          "404": {
-            "description": " Not found."
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Replace an existing mute timing.",
-        "operationId": "RoutePutMuteTiming",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Mute timing name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "MuteTimeInterval",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["provisioning"],
-        "summary": "Delete a mute timing.",
-        "operationId": "RouteDeleteMuteTiming",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Mute timing name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The mute timing was deleted successfully."
-          }
-        }
-      }
-    },
-    "/v1/provisioning/policies": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get the notification policy tree.",
-        "operationId": "RouteGetPolicyTree",
-        "responses": {
-          "200": {
-            "description": "Route",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Sets the notification policy tree.",
-        "operationId": "RoutePutPolicyTree",
-        "parameters": [
-          {
-            "description": "The new notification routing tree to use",
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Clears the notification policy tree.",
-        "operationId": "RouteResetPolicyTree",
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/templates": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all message templates.",
-        "operationId": "RouteGetTemplates",
-        "responses": {
-          "200": {
-            "description": "MessageTemplates",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplates"
-            }
-          },
-          "404": {
-            "description": " Not found."
-          }
-        }
-      }
-    },
-    "/v1/provisioning/templates/{name}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a message template.",
-        "operationId": "RouteGetTemplate",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Template Name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "MessageTemplate",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplate"
-            }
-          },
-          "404": {
-            "description": " Not found."
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Updates an existing template.",
-        "operationId": "RoutePutTemplate",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Template Name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplateContent"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "MessageTemplate",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplate"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["provisioning"],
-        "summary": "Delete a template.",
-        "operationId": "RouteDeleteTemplate",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Template Name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The template was deleted successfully."
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -10970,6 +10970,9 @@
         "publicDashboardAccessToken": {
           "type": "string"
         },
+        "publicDashboardEnabled": {
+          "type": "boolean"
+        },
         "slug": {
           "type": "string"
         },
@@ -11494,9 +11497,9 @@
       "format": "int64"
     },
     "Duration": {
+      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
-      "format": "int64",
-      "title": "Duration is a type used for marshalling durations."
+      "format": "int64"
     },
     "EmailConfig": {
       "type": "object",
@@ -14324,10 +14327,10 @@
                       "type": "and"
                     },
                     "query": {
-                      "params": null
+                      "params": []
                     },
                     "reducer": {
-                      "params": null,
+                      "params": [],
                       "type": "avg"
                     },
                     "type": "query"
@@ -17467,7 +17470,7 @@
   },
   "responses": {
     "SMTPNotEnabledError": {
-      "description": ""
+      "description": "(empty)"
     },
     "acceptedResponse": {
       "description": "AcceptedResponse",
@@ -17476,7 +17479,7 @@
       }
     },
     "addOrgUser": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "message"],
@@ -17508,7 +17511,7 @@
       }
     },
     "contentResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17518,7 +17521,7 @@
       }
     },
     "createAnnotationResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "message"],
@@ -17537,7 +17540,7 @@
       }
     },
     "createOrUpdateDatasourceResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "name", "message", "datasource"],
@@ -17565,7 +17568,7 @@
       }
     },
     "createOrgResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["orgId", "message"],
@@ -17585,13 +17588,13 @@
       }
     },
     "createPlaylistResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Playlist"
       }
     },
     "createReportResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -17606,13 +17609,13 @@
       }
     },
     "createServiceAccountResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ServiceAccountDTO"
       }
     },
     "createSnapshotResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -17639,7 +17642,7 @@
       }
     },
     "createTeamResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -17654,13 +17657,13 @@
       }
     },
     "createTokenResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/NewApiKeyResult"
       }
     },
     "createUserResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/UserIdDTO"
       }
@@ -17676,19 +17679,19 @@
       }
     },
     "dashboardResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DashboardFullWithMeta"
       }
     },
     "dashboardVersionResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DashboardVersionMeta"
       }
     },
     "dashboardVersionsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17697,7 +17700,7 @@
       }
     },
     "dashboardsTagsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17706,7 +17709,7 @@
       }
     },
     "deleteAlertNotificationChannelResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "message"],
@@ -17725,7 +17728,7 @@
       }
     },
     "deleteDashboardResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "title", "message"],
@@ -17750,7 +17753,7 @@
       }
     },
     "deleteDatasourceByNameResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "message"],
@@ -17770,7 +17773,7 @@
       }
     },
     "deleteFolderResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "title", "message"],
@@ -17795,7 +17798,7 @@
       }
     },
     "folderResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Folder"
       }
@@ -17813,7 +17816,7 @@
       }
     },
     "getAPIkeyResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17822,19 +17825,19 @@
       }
     },
     "getAccessControlStatusResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Status"
       }
     },
     "getAlertNotificationChannelResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/AlertNotification"
       }
     },
     "getAlertNotificationChannelsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17843,13 +17846,13 @@
       }
     },
     "getAlertResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/LegacyAlert"
       }
     },
     "getAlertsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17858,7 +17861,7 @@
       }
     },
     "getAllRolesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17867,19 +17870,19 @@
       }
     },
     "getAnnotationResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ItemDTO"
       }
     },
     "getAnnotationTagsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/GetAnnotationTagsResponse"
       }
     },
     "getAnnotationsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17888,7 +17891,7 @@
       }
     },
     "getAuthTokensResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17897,7 +17900,7 @@
       }
     },
     "getCustomPermissionsReportResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17906,7 +17909,7 @@
       }
     },
     "getDashboardPermissionsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17915,7 +17918,7 @@
       }
     },
     "getDashboardStatesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17924,7 +17927,7 @@
       }
     },
     "getDatasourceIDresponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id"],
@@ -17939,19 +17942,19 @@
       }
     },
     "getDatasourceResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DataSource"
       }
     },
     "getDatasourcesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DataSourceList"
       }
     },
     "getFoldersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17966,7 +17969,7 @@
       }
     },
     "getInvitesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17975,46 +17978,46 @@
       }
     },
     "getLDAPSyncStatusResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ActiveSyncStatusDTO"
       }
     },
     "getLibraryElementConnectionsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/LibraryElementConnectionsResponse"
       }
     },
     "getLibraryElementResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/LibraryElementResponse"
       }
     },
     "getLibraryElementsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/LibraryElementSearchResponse"
       }
     },
     "getLicenseStatusResponse": {
-      "description": ""
+      "description": "(empty)"
     },
     "getLicenseTokenResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Token"
       }
     },
     "getOrgResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/OrgDetailsDTO"
       }
     },
     "getOrgUsersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18023,19 +18026,19 @@
       }
     },
     "getPermissionseResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DataSourcePermissionsDTO"
       }
     },
     "getPlaylistDashboardsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/PlaylistDashboardsSlice"
       }
     },
     "getPlaylistItemsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18044,43 +18047,43 @@
       }
     },
     "getPlaylistResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/PlaylistDTO"
       }
     },
     "getPreferencesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Prefs"
       }
     },
     "getQueryHistoryDeleteQueryResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryHistoryDeleteQueryResponse"
       }
     },
     "getQueryHistoryMigrationResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryHistoryMigrationResponse"
       }
     },
     "getQueryHistoryResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryHistoryResponse"
       }
     },
     "getQueryHistorySearchResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryHistorySearchResponse"
       }
     },
     "getQuotaResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18089,19 +18092,19 @@
       }
     },
     "getReportResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ConfigDTO"
       }
     },
     "getReportSettingsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SettingsDTO"
       }
     },
     "getReportsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18110,19 +18113,19 @@
       }
     },
     "getRoleResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/RoleDTO"
       }
     },
     "getSettingsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SettingsBag"
       }
     },
     "getSnapshotSharingOptionsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -18139,7 +18142,7 @@
       }
     },
     "getSnapshotsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18148,13 +18151,13 @@
       }
     },
     "getStatsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/AdminStats"
       }
     },
     "getTeamGroupsApiResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18163,7 +18166,7 @@
       }
     },
     "getTeamMembersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18172,13 +18175,13 @@
       }
     },
     "getTeamResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/TeamDTO"
       }
     },
     "getUserOrgListResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18187,7 +18190,7 @@
       }
     },
     "getUserTeamsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18196,7 +18199,7 @@
       }
     },
     "helpFlagResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -18211,7 +18214,7 @@
       }
     },
     "importDashboardResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ImportDashboardResponse"
       }
@@ -18223,7 +18226,7 @@
       }
     },
     "listBuiltinRolesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "additionalProperties": {
@@ -18235,7 +18238,7 @@
       }
     },
     "listRecordingRulesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18244,13 +18247,13 @@
       }
     },
     "listTokensResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/TokenDTO"
       }
     },
     "lookupAlertNotificationChannelsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18259,7 +18262,7 @@
       }
     },
     "lookupOrgUsersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18280,7 +18283,7 @@
       }
     },
     "pauseAlertResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["alertId", "message"],
@@ -18300,7 +18303,7 @@
       }
     },
     "pauseAlertsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["alertsAffected", "message"],
@@ -18321,7 +18324,7 @@
       }
     },
     "postAPIkeyResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/NewApiKeyResult"
       }
@@ -18367,7 +18370,7 @@
       }
     },
     "postRenewLicenseTokenResponse": {
-      "description": ""
+      "description": "(empty)"
     },
     "preconditionFailedError": {
       "description": "PreconditionFailedError",
@@ -18376,37 +18379,37 @@
       }
     },
     "queryDataResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
       }
     },
     "recordingRuleResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/RecordingRuleJSON"
       }
     },
     "recordingRuleWriteTargetResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/PrometheusRemoteWriteTargetJSON"
       }
     },
     "refreshLicenseStatsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ActiveUserStats"
       }
     },
     "retrieveServiceAccountResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ServiceAccountDTO"
       }
     },
     "searchOrgResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -18415,25 +18418,25 @@
       }
     },
     "searchOrgServiceAccountsWithPagingResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchServiceAccountsResult"
       }
     },
     "searchPlaylistsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Playlists"
       }
     },
     "searchResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/HitList"
       }
     },
     "searchSortingResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -18453,22 +18456,22 @@
       }
     },
     "searchTeamsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchTeamQueryResult"
       }
     },
     "searchUsersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchUserQueryResult"
       }
     },
     "snapshotResponse": {
-      "description": ""
+      "description": "(empty)"
     },
     "testAlertResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/AlertTestResult"
       }
@@ -18492,13 +18495,13 @@
       }
     },
     "updatePlaylistResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/PlaylistDTO"
       }
     },
     "updateServiceAccountResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -18519,7 +18522,7 @@
       }
     },
     "userResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
       }
