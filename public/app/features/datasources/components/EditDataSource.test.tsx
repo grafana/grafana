@@ -6,10 +6,11 @@ import { PluginState } from '@grafana/data';
 import { setAngularLoader } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../../__mocks__';
-import { missingRightsMessage } from '../DataSourceMissingRightsMessage';
-import { readOnlyMessage } from '../DataSourceReadOnlyMessage';
-import { EditDataSourceView, ViewProps } from '../EditDataSource';
+import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
+
+import { missingRightsMessage } from './DataSourceMissingRightsMessage';
+import { readOnlyMessage } from './DataSourceReadOnlyMessage';
+import { EditDataSourceView, ViewProps } from './EditDataSource';
 
 const setup = (props?: Partial<ViewProps>) => {
   const store = configureStore();

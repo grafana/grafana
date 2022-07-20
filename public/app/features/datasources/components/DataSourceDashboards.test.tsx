@@ -4,8 +4,9 @@ import { Provider } from 'react-redux';
 
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockDashboard } from '../../__mocks__';
-import { DataSourceDashboardsView, ViewProps } from '../DataSourceDashboards';
+import { getMockDashboard } from '../__mocks__';
+
+import { DataSourceDashboardsView, ViewProps } from './DataSourceDashboards';
 
 const setup = ({
   dashboards = [],

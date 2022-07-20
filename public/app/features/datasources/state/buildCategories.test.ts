@@ -1,7 +1,7 @@
 import { DataSourcePluginMeta } from '@grafana/data';
 import { getMockPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
-import { buildCategories } from '../buildCategories';
+import { buildCategories } from './buildCategories';
 
 const plugins: DataSourcePluginMeta[] = [
   {

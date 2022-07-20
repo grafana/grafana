@@ -4,16 +4,17 @@ import { DataSourceSettings } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
-import { getMockDataSource } from '../../__mocks__';
-import * as api from '../../api';
-import { GenericDataSourcePlugin } from '../../types';
+import { getMockDataSource } from '../__mocks__';
+import * as api from '../api';
+import { GenericDataSourcePlugin } from '../types';
+
 import {
   InitDataSourceSettingDependencies,
   testDataSource,
   TestDataSourceDependencies,
   initDataSourceSettings,
   loadDataSource,
-} from '../actions';
+} from './actions';
 import {
   initDataSourceSettingsSucceeded,
   initDataSourceSettingsFailed,
@@ -21,9 +22,9 @@ import {
   testDataSourceSucceeded,
   testDataSourceFailed,
   dataSourceLoaded,
-} from '../reducers';
+} from './reducers';
 
-jest.mock('../../api');
+jest.mock('../api');
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),

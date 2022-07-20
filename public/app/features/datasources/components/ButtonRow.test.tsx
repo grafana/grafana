@@ -3,7 +3,7 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { ButtonRow, Props } from '../ButtonRow';
+import { ButtonRow, Props } from './ButtonRow';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

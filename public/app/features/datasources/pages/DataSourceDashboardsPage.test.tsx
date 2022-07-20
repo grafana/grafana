@@ -7,12 +7,13 @@ import { setAngularLoader } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
-import { navIndex, getMockDataSource } from '../../__mocks__';
-import * as api from '../../api';
-import { initialState as dataSourcesInitialState } from '../../state';
-import DataSourceDashboardsPage from '../DataSourceDashboardsPage';
+import { navIndex, getMockDataSource } from '../__mocks__';
+import * as api from '../api';
+import { initialState as dataSourcesInitialState } from '../state';
 
-jest.mock('../../api');
+import DataSourceDashboardsPage from './DataSourceDashboardsPage';
+
+jest.mock('../api');
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: () => true,
