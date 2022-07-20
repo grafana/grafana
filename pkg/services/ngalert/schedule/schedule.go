@@ -353,9 +353,9 @@ func (sch *schedule) buildExternalURL(ds *datasources.DataSource) (string, error
 	amURL := ds.Url
 	// if basic auth is enabled we need to build the url with basic auth baked in
 	if !ds.BasicAuth {
-	  return amURL
+		return amURL, nil
 	}
-	
+
 	parsed, err := url.Parse(ds.Url)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
@@ -365,7 +365,7 @@ func (sch *schedule) buildExternalURL(ds *datasources.DataSource) (string, error
 		return "", fmt.Errorf("basic auth enabled but no password set")
 	}
 	return fmt.Sprintf("%s://%s:%s@%s%s%s", parsed.Scheme, ds.BasicAuthUser,
-			password, parsed.Host, parsed.Path, parsed.RawQuery)
+		password, parsed.Host, parsed.Path, parsed.RawQuery), nil
 }
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.
