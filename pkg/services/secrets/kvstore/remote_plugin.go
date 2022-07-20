@@ -11,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
-var setOnce sync.Once
+var (
+	fatalFlagOnce sync.Once
+)
 
 // secretsKVStorePlugin provides a key/value store backed by the Grafana plugin gRPC interface
 type secretsKVStorePlugin struct {
@@ -23,6 +25,7 @@ type secretsKVStorePlugin struct {
 }
 
 // Get an item from the store
+// If it is the first time a secret has been retrieved and backwards compatibility is disabled, mark plugin startup errors fatal
 func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	req := &smp.GetSecretRequest{
 		KeyDescriptor: &smp.Key{
@@ -37,6 +40,8 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 	} else if res.UserFriendlyError != "" {
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
+
+	updateFatalFlag(ctx, *kv)
 
 	return res.DecryptedValue, res.Exists, err
 }
@@ -58,11 +63,7 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
-	setOnce.Do(func() {
-		if isFatal, _ := isPluginStartupErrorFatal(ctx, kv.kvstore); !isFatal && kv.backwardsCompatibilityDisabled {
-			setPluginStartupErrorFatal(ctx, kv.kvstore, true)
-		}
-	})
+	updateFatalFlag(ctx, *kv)
 
 	return err
 }
@@ -135,6 +136,16 @@ func parseKeys(keys []*smp.Key) []Key {
 	}
 
 	return newKeys
+}
+
+func updateFatalFlag(ctx context.Context, kv secretsKVStorePlugin) {
+	fatalFlagOnce.Do(func() {
+		if isFatal, _ := isPluginStartupErrorFatal(ctx, kv.kvstore); !isFatal && kv.backwardsCompatibilityDisabled {
+			setPluginStartupErrorFatal(ctx, kv.kvstore, true)
+		} else if isFatal && !kv.backwardsCompatibilityDisabled {
+			setPluginStartupErrorFatal(ctx, kv.kvstore, false)
+		}
+	})
 }
 
 func wrapUserFriendlySecretError(ufe string) datasources.ErrDatasourceSecretsPluginUserFriendly {

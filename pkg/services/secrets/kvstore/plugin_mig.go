@@ -76,9 +76,15 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 		for index, sec := range allSec {
 			err = secretsSql.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
 			if err != nil {
+				s.logger.Error("plugin migrator encountered error while deleting unified secrets")
 				if index == 0 && !wasFatal {
 					// old unified secrets still exists, so plugin startup errors are still not fatal, unless they were before we started
-					setPluginStartupErrorFatal(ctx, namespacedKVStore, false)
+					err := setPluginStartupErrorFatal(ctx, namespacedKVStore, false)
+					if err != nil {
+						s.logger.Error("error reverting plugin failure fatal status", "error", err.Error())
+					} else {
+						s.logger.Debug("application will continue to function without the secrets plugin")
+					}
 				}
 				return err
 			}
