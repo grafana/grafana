@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -91,16 +92,16 @@ func runConflictingUsersCommand() func(context *cli.Context) error {
 			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
 		}
 
-		users, err := GetUsersWithConflictingEmailsOrLogins(context.Context, sqlStore)
+		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context.Context, sqlStore)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 		}
-		if len(users) < 1 {
+		if len(conflicts) < 1 {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
 
-		for _, cUser := range users {
+		for _, cUser := range conflicts {
 			logger.Infof("A user conflict found. \n")
 
 			cType := cUser.Conflict()
@@ -166,6 +167,46 @@ func confirm() bool {
 
 }
 
+func promptToMerge(cUser ConflictingUsers) (int64, error) {
+	logger.Infof("Choose which user to merge into:")
+	scanner := bufio.NewScanner(os.Stdin)
+	if ok := scanner.Scan(); !ok {
+		if err := scanner.Err(); err != nil {
+			return -1, fmt.Errorf("can't read conflict option from stdin: %w", err)
+		}
+		return -1, fmt.Errorf("can't read conflict option from stdin")
+	}
+	chosenUser := scanner.Text()
+	if !strings.Contains(cUser.Ids, chosenUser) {
+		return -1, fmt.Errorf("not a conflicting user id")
+	}
+	v, err := strconv.ParseInt(chosenUser, 10, 64)
+	if err != nil {
+		return -1, fmt.Errorf("could not parse id from string")
+	}
+	return v, nil
+}
+
+func promptSameIdentification(cUser ConflictingUsers) (int64, error) {
+	logger.Infof("Found same identification for users, choose which user to keep and update:")
+	scanner := bufio.NewScanner(os.Stdin)
+	if ok := scanner.Scan(); !ok {
+		if err := scanner.Err(); err != nil {
+			return -1, fmt.Errorf("can't read conflict option from stdin: %w", err)
+		}
+		return -1, fmt.Errorf("can't read conflict option from stdin")
+	}
+	chosenUser := scanner.Text()
+	if !strings.Contains(cUser.Ids, chosenUser) {
+		return -1, fmt.Errorf("not a conflicting user id")
+	}
+	v, err := strconv.ParseInt(chosenUser, 10, 64)
+	if err != nil {
+		return -1, fmt.Errorf("could not parse id from string")
+	}
+	return v, nil
+}
+
 func (c ConflictingUsers) Print() {
 	ids := strings.Split(c.Ids, ",")
 	emails := strings.Split(c.ConflictEmails, ",")
@@ -186,7 +227,7 @@ const (
 
 func (cUser ConflictingUsers) Conflict() conflictType {
 	// FIXME:
-	// need to make sure that we get sameidentification when that happens instead of email/logins cased
+	// need to make sure that we get same identification when that happens instead of email/logins cased
 	var cType conflictType
 	if cUser.SameIdentificationConflictIds {
 		cType = SameIdentification
@@ -232,6 +273,7 @@ func GetUsersWithConflictingEmailsOrLogins(ctx context.Context, s *sqlstore.SQLS
 	}
 	return stats, nil
 }
+
 func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 	userDialect := db.DB.GetDialect(s).Quote("user")
 	// this query counts how many users have the same login or email.

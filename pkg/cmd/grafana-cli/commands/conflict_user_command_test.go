@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -26,7 +28,7 @@ func TestUserManagerListConflictingUsers(t *testing.T) {
 			require.Nil(t, err)
 		}
 
-		// "Skipping duplicate users test for mysql as it does make unique constraint case insensitive by default
+		// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
 		if sqlStore.GetDialect().DriverName() != "mysql" {
 			dupUserEmailcmd := user.CreateUserCommand{
 				Email: "USERDUPLICATETEST1@TEST.COM",
@@ -36,7 +38,7 @@ func TestUserManagerListConflictingUsers(t *testing.T) {
 			_, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
 			require.NoError(t, err)
 
-			// add additional user with duplicate login where DOMAIN is upper case
+			// add additional user with conflicting login where DOMAIN is upper case
 			dupUserLogincmd := user.CreateUserCommand{
 				Email: "userduplicatetest1@test.com",
 				Name:  "user name 1",
