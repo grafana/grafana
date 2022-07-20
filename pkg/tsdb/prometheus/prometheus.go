@@ -212,5 +212,4 @@ func reportDiff(data *backend.QueryDataResponse, err error, streamData *backend.
 	} else {
 		plog.Debug("PrometheusStreamingJSONParserTest responses are the same")
 	}
-
 }
