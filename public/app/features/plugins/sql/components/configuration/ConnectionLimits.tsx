@@ -3,7 +3,7 @@ import React from 'react';
 import { FieldSet, InlineField } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { SQLConnectionLimits } from './types';
+import { SQLConnectionLimits } from '../../types';
 
 interface Props<T> {
   onPropertyChanged: (property: keyof T, value?: number) => void;

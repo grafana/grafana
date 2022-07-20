@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"time"
 
+	prometheusModel "github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,7 +33,7 @@ type ScheduleService interface {
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
 	// UpdateAlertRule notifies scheduler that a rule has been changed
-	UpdateAlertRule(key ngmodels.AlertRuleKey)
+	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64)
 	// UpdateAlertRulesByNamespaceUID notifies scheduler that all rules in a namespace should be updated.
 	UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error
 	// DeleteAlertRule notifies scheduler that a rule has been changed
@@ -88,7 +90,6 @@ type schedule struct {
 	metrics *metrics.Scheduler
 
 	alertsSender    AlertsSender
-	disabledOrgs    map[int64]struct{}
 	minRuleInterval time.Duration
 
 	// schedulableAlertRules contains the alert rules that are considered for
@@ -135,7 +136,6 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		appURL:                appURL,
 		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
 		stateManager:          stateManager,
-		disabledOrgs:          cfg.Cfg.DisabledOrgs,
 		minRuleInterval:       cfg.Cfg.MinInterval,
 		schedulableAlertRules: schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.SchedulableAlertRule)},
 		bus:                   bus,
@@ -157,12 +157,12 @@ func (sch *schedule) Run(ctx context.Context) error {
 }
 
 // UpdateAlertRule looks for the active rule evaluation and commands it to update the rule
-func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey) {
+func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64) {
 	ruleInfo, err := sch.registry.get(key)
 	if err != nil {
 		return
 	}
-	ruleInfo.update()
+	ruleInfo.update(ruleVersion(lastVersion))
 }
 
 // UpdateAlertRulesByNamespaceUID looks for the active rule evaluation for every rule in the given namespace and commands it to update the rule.
@@ -179,7 +179,7 @@ func (sch *schedule) UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID i
 		sch.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: orgID,
 			UID:   r.UID,
-		})
+		}, r.Version)
 	}
 
 	return nil
@@ -222,17 +222,11 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			sch.metrics.BehindSeconds.Set(start.Sub(tick).Seconds())
 
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
-			for disabledOrg := range sch.disabledOrgs {
-				disabledOrgs = append(disabledOrgs, disabledOrg)
-			}
 
-			if err := sch.updateSchedulableAlertRules(ctx, disabledOrgs); err != nil {
+			if err := sch.updateSchedulableAlertRules(ctx); err != nil {
 				sch.log.Error("scheduler failed to update alert rules", "err", err)
 			}
 			alertRules := sch.schedulableAlertRules.all()
-
-			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle
@@ -334,7 +328,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 	}
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan struct{}) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
 
@@ -350,42 +344,24 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		sch.alertsSender.Send(key, expiredAlerts)
 	}
 
-	updateRule := func(ctx context.Context, oldRule *ngmodels.AlertRule) (*ngmodels.AlertRule, error) {
+	updateRule := func(ctx context.Context, oldRule *ngmodels.AlertRule) (*ngmodels.AlertRule, map[string]string, error) {
 		q := ngmodels.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
 		err := sch.ruleStore.GetAlertRuleByUID(ctx, &q)
 		if err != nil {
 			logger.Error("failed to fetch alert rule", "err", err)
-			return nil, err
+			return nil, nil, err
 		}
 		if oldRule != nil && oldRule.Version < q.Result.Version {
 			clearState()
 		}
-
-		user := &models.SignedInUser{
-			UserId:  0,
-			OrgRole: models.ROLE_ADMIN,
-			OrgId:   key.OrgID,
+		newLabels, err := sch.getRuleExtraLabels(ctx, q.Result)
+		if err != nil {
+			return nil, nil, err
 		}
-
-		if !sch.disableGrafanaFolder {
-			folder, err := sch.ruleStore.GetNamespaceByUID(ctx, q.Result.NamespaceUID, q.Result.OrgID, user)
-			if err != nil {
-				logger.Error("failed to fetch alert rule namespace", "err", err)
-				return nil, err
-			}
-
-			if q.Result.Labels == nil {
-				q.Result.Labels = make(map[string]string)
-			} else if val, ok := q.Result.Labels[ngmodels.FolderTitleLabel]; ok {
-				logger.Warn("alert rule contains protected label, value will be overwritten", "label", ngmodels.FolderTitleLabel, "value", val)
-			}
-			q.Result.Labels[ngmodels.FolderTitleLabel] = folder.Title
-		}
-
-		return q.Result, nil
+		return q.Result, newLabels, nil
 	}
 
-	evaluate := func(ctx context.Context, r *ngmodels.AlertRule, attempt int64, e *evaluation) {
+	evaluate := func(ctx context.Context, r *ngmodels.AlertRule, extraLabels map[string]string, attempt int64, e *evaluation) {
 		logger := logger.New("version", r.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
@@ -400,7 +376,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 		}
 
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results)
+		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results, extraLabels)
 		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		sch.alertsSender.Send(key, alerts)
@@ -420,19 +396,29 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 	evalRunning := false
 	var currentRule *ngmodels.AlertRule
+	var extraLabels map[string]string
 	defer sch.stopApplied(key)
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
-		case <-updateCh:
+		case version := <-updateCh:
+			// sometimes it can happen when, for example, the rule evaluation took so long,
+			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
+			// therefore, at the time when message from updateCh is processed the current rule will have
+			// at least the same version (or greater) and the state created for the new version of the rule.
+			if currentRule != nil && int64(version) <= currentRule.Version {
+				logger.Info("skip updating rule because its current version is actual", "current_version", currentRule.Version, "new_version", version)
+				continue
+			}
 			logger.Info("fetching new version of the rule")
 			err := retryIfError(func(attempt int64) error {
-				newRule, err := updateRule(grafanaCtx, currentRule)
+				newRule, newExtraLabels, err := updateRule(grafanaCtx, currentRule)
 				if err != nil {
 					return err
 				}
 				logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
 				currentRule = newRule
+				extraLabels = newExtraLabels
 				return nil
 			})
 			if err != nil {
@@ -458,14 +444,15 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				err := retryIfError(func(attempt int64) error {
 					// fetch latest alert rule version
 					if currentRule == nil || currentRule.Version < ctx.version {
-						newRule, err := updateRule(grafanaCtx, currentRule)
+						newRule, newExtraLabels, err := updateRule(grafanaCtx, currentRule)
 						if err != nil {
 							return err
 						}
 						currentRule = newRule
+						extraLabels = newExtraLabels
 						logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
 					}
-					evaluate(grafanaCtx, currentRule, attempt, ctx)
+					evaluate(grafanaCtx, currentRule, extraLabels, attempt, ctx)
 					return nil
 				})
 				if err != nil {
@@ -534,4 +521,28 @@ func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 	}
 
 	sch.stopAppliedFunc(alertDefKey)
+}
+
+func (sch *schedule) getRuleExtraLabels(ctx context.Context, alertRule *ngmodels.AlertRule) (map[string]string, error) {
+	extraLabels := make(map[string]string, 4)
+
+	extraLabels[ngmodels.NamespaceUIDLabel] = alertRule.NamespaceUID
+	extraLabels[prometheusModel.AlertNameLabel] = alertRule.Title
+	extraLabels[ngmodels.RuleUIDLabel] = alertRule.UID
+
+	user := &models.SignedInUser{
+		UserId:  0,
+		OrgRole: models.ROLE_ADMIN,
+		OrgId:   alertRule.OrgID,
+	}
+
+	if !sch.disableGrafanaFolder {
+		folder, err := sch.ruleStore.GetNamespaceByUID(ctx, alertRule.NamespaceUID, alertRule.OrgID, user)
+		if err != nil {
+			sch.log.Error("failed to fetch alert rule namespace", "err", err, "uid", alertRule.UID, "org", alertRule.OrgID, "namespace_uid", alertRule.NamespaceUID)
+			return nil, err
+		}
+		extraLabels[ngmodels.FolderTitleLabel] = folder.Title
+	}
+	return extraLabels, nil
 }

@@ -239,7 +239,7 @@ export interface LegacyAzureGetMetricNamespacesQuery {
 
 export interface AzureGetMetricNamesQuery {
   resourceUri: string;
-  metricNamespace: string;
+  metricNamespace?: string;
 }
 
 export interface LegacyAzureGetMetricNamesQuery {
@@ -247,7 +247,7 @@ export interface LegacyAzureGetMetricNamesQuery {
   resourceGroup: string;
   metricDefinition: string;
   resourceName: string;
-  metricNamespace: string;
+  metricNamespace?: string;
 }
 
 export interface AzureGetMetricMetadataQuery {

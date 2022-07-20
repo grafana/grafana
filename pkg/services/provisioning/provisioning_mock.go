@@ -8,6 +8,7 @@ type Calls struct {
 	ProvisionPlugins                    []interface{}
 	ProvisionNotifications              []interface{}
 	ProvisionDashboards                 []interface{}
+	ProvisionAlertRules                 []interface{}
 	GetDashboardProvisionerResolvedPath []interface{}
 	GetAllowUIUpdatesFromConfig         []interface{}
 	Run                                 []interface{}
@@ -68,6 +69,11 @@ func (mock *ProvisioningServiceMock) ProvisionDashboards(ctx context.Context) er
 	if mock.ProvisionDashboardsFunc != nil {
 		return mock.ProvisionDashboardsFunc()
 	}
+	return nil
+}
+
+func (mock *ProvisioningServiceMock) ProvisionAlertRules(ctx context.Context) error {
+	mock.Calls.ProvisionAlertRules = append(mock.Calls.ProvisionAlertRules, nil)
 	return nil
 }
 
