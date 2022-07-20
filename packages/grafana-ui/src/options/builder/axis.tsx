@@ -96,17 +96,24 @@ export function addAxisConfig(
     });
 
   if (!hideScale) {
-    builder.addCustomEditor<void, ScaleDistributionConfig>({
-      id: 'scaleDistribution',
-      path: 'scaleDistribution',
-      name: 'Scale',
-      category,
-      editor: ScaleDistributionEditor as any,
-      override: ScaleDistributionEditor as any,
-      defaultValue: { type: ScaleDistribution.Linear },
-      shouldApply: (f) => f.type === FieldType.number,
-      process: identityOverrideProcessor,
-    });
+    builder
+      .addCustomEditor<void, ScaleDistributionConfig>({
+        id: 'scaleDistribution',
+        path: 'scaleDistribution',
+        name: 'Scale',
+        category,
+        editor: ScaleDistributionEditor as any,
+        override: ScaleDistributionEditor as any,
+        defaultValue: { type: ScaleDistribution.Linear },
+        shouldApply: (f) => f.type === FieldType.number,
+        process: identityOverrideProcessor,
+      })
+      .addBooleanSwitch({
+        path: 'axisSymmetrical',
+        name: 'Symmetrical scale',
+        category,
+        defaultValue: false,
+      });
   }
 }
 
