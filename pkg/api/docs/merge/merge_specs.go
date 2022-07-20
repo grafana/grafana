@@ -76,7 +76,7 @@ func mergeSpecs(output string, sources ...string) error {
 		for k, ad := range additionalSpec.OrigSpec().SwaggerProps.Definitions {
 			if ossd, exists := specOSS.SwaggerProps.Definitions[k]; exists {
 				if !compareDefinition(ad, ossd) {
-					return fmt.Errorf("the definition of %s differs in specs!", k)
+					return fmt.Errorf("the definition of %s differs in specs", k)
 				}
 			}
 			specOSS.SwaggerProps.Definitions[k] = ad
@@ -85,7 +85,7 @@ func mergeSpecs(output string, sources ...string) error {
 		for k, ar := range additionalSpec.OrigSpec().SwaggerProps.Responses {
 			if ossr, exists := specOSS.SwaggerProps.Responses[k]; exists {
 				if !reflect.DeepEqual(ar, ossr) {
-					return fmt.Errorf("the definition of %s differs in specs!", k)
+					return fmt.Errorf("the definition of %s differs in specs", k)
 				}
 			}
 			specOSS.SwaggerProps.Responses[k] = ar
