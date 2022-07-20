@@ -182,20 +182,4 @@ describe('statementPosition', () => {
     initStatementPositionResolvers
   );
 
-  // cloudwatch specific
-  // test.each([
-  //   [singleLineFullQuery.query, { line: 1, column: 40 }],
-  //   [multiLineFullQuery.query, { line: 2, column: 13 }],
-  //   [singleLineTwoQueries.query, { line: 1, column: 40 }],
-  // ])('should be namespace arg in the schema func', (query: string, position: monacoTypes.IPosition) => {
-  //   assertPosition(query, position, StatementPosition.SchemaFuncFirstArgument);
-  // });
-
-  // test.each([
-  //   [singleLineFullQuery.query, { line: 1, column: 50 }],
-  //   [multiLineFullQuery.query, { line: 2, column: 23 }],
-  //   [singleLineTwoQueries.query, { line: 1, column: 50 }],
-  // ])('should be label key args within the schema func', (query: string, position: monacoTypes.IPosition) => {
-  //   assertPosition(query, position, StatementPosition.SchemaFuncExtraArgument);
-  // });
 });
