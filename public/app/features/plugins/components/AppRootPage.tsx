@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react-reverse-portal';
 
 import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -94,24 +95,33 @@ class AppRootPage extends Component<Props, State> {
   render() {
     const { loading, plugin, nav, portalNode } = this.state;
 
-    if (plugin && !plugin.root) {
-      // TODO? redirect to plugin page?
-      return <div>No Root App</div>;
+    if (!plugin) {
+      return <Page navId="apps">{loading && <PageLoader />}</Page>;
+    }
+
+    if (!plugin.root) {
+      <Page navId="apps">
+        <div>No root App</div>;
+      </Page>;
+    }
+
+    const pluginRoot = (
+      <plugin.root
+        meta={plugin.meta}
+        basename={this.props.match.url}
+        onNavChanged={this.onNavChanged}
+        query={this.props.queryParams as KeyValue}
+        path={this.props.location.pathname}
+      />
+    );
+
+    if (config.featureToggles.topnav && !nav) {
+      return pluginRoot;
     }
 
     return (
       <>
-        <InPortal node={portalNode}>
-          {plugin && plugin.root && (
-            <plugin.root
-              meta={plugin.meta}
-              basename={this.props.match.url}
-              onNavChanged={this.onNavChanged}
-              query={this.props.queryParams as KeyValue}
-              path={this.props.location.pathname}
-            />
-          )}
-        </InPortal>
+        <InPortal node={portalNode}>{pluginRoot}</InPortal>
         {nav ? (
           <Page navModel={nav}>
             <Page.Contents isLoading={loading}>
@@ -121,7 +131,6 @@ class AppRootPage extends Component<Props, State> {
         ) : (
           <Page>
             <OutPortal node={portalNode} />
-            {loading && <PageLoader />}
           </Page>
         )}
       </>
