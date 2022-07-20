@@ -33,7 +33,7 @@ func ProvideService(sqlStore sqlstore.Store,
 	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
 		// Attempt to start the plugin
 		secretsPlugin, err := remoteCheck.StartAndReturnPlugin(context.TODO())
-		if err != nil {
+		if err != nil || secretsPlugin == nil {
 			namespacedKVStore := GetNamespacedKVStore(kvstore)
 			if isFatal, err2 := isPluginErrorFatal(context.TODO(), namespacedKVStore); isFatal || err2 != nil {
 				// plugin error was fatal or there was an error determining if the error was fatal
