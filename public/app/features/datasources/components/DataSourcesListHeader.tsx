@@ -8,7 +8,7 @@ import { AccessControlAction, StoreState } from 'app/types';
 
 import { getDataSourcesSearchQuery, setDataSourcesSearchQuery } from '../state';
 
-export function DataSourcesListHeader(): React.ReactElement {
+export function DataSourcesListHeader() {
   const dispatch = useDispatch();
   const setSearchQuery = useCallback((q: string) => dispatch(setDataSourcesSearchQuery(q)), [dispatch]);
   const searchQuery = useSelector(({ dataSources }: StoreState) => getDataSourcesSearchQuery(dataSources));
@@ -29,11 +29,7 @@ export type ViewProps = {
   canCreateDataSource: boolean;
 };
 
-export function DataSourcesListHeaderView({
-  searchQuery,
-  setSearchQuery,
-  canCreateDataSource,
-}: ViewProps): React.ReactElement {
+export function DataSourcesListHeaderView({ searchQuery, setSearchQuery, canCreateDataSource }: ViewProps) {
   const linkButton = {
     href: 'datasources/new',
     title: 'Add data source',

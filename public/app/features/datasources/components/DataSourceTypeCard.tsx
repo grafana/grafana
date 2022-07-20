@@ -10,7 +10,7 @@ export type Props = {
   onClick: () => void;
 };
 
-export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props): React.ReactElement {
+export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
   const isPhantom = dataSourcePlugin.module === 'phantom';
   const isClickable = !isPhantom && !dataSourcePlugin.unlicensed;
   const learnMoreLink = dataSourcePlugin.info?.links?.length > 0 ? dataSourcePlugin.info.links[0] : null;

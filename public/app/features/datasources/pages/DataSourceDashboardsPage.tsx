@@ -7,7 +7,7 @@ import { DataSourceDashboards } from '../components/DataSourceDashboards';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
-export function DataSourceDashboardsPage(props: Props): React.ReactElement {
+export function DataSourceDashboardsPage(props: Props) {
   const uid = props.match.params.uid;
 
   return (

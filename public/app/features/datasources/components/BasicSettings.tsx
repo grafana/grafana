@@ -10,7 +10,7 @@ export interface Props {
   onDefaultChange: (value: boolean) => void;
 }
 
-export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange }: Props): React.ReactElement {
+export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange }: Props) {
   return (
     <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">

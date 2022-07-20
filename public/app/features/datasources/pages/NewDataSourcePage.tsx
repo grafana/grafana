@@ -7,7 +7,7 @@ import { NewDataSource } from '../components/NewDataSource';
 
 const navModel = getNavModel();
 
-export function NewDataSourcePage(): React.ReactElement {
+export function NewDataSourcePage() {
   return (
     <Page navModel={navModel}>
       <Page.Contents>

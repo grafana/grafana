@@ -7,7 +7,7 @@ export type Props = {
   pageId: string;
 };
 
-export function DataSourcePluginConfigPage({ plugin, pageId }: Props): React.ReactElement | null {
+export function DataSourcePluginConfigPage({ plugin, pageId }: Props) {
   if (!plugin || !plugin.configPages) {
     return null;
   }

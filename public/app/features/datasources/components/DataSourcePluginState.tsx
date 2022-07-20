@@ -7,7 +7,7 @@ export type Props = {
   state?: PluginState;
 };
 
-export function DataSourcePluginState({ state }: Props): React.ReactElement {
+export function DataSourcePluginState({ state }: Props) {
   return (
     <div className="gf-form">
       <label className="gf-form-label width-10">Plugin state</label>

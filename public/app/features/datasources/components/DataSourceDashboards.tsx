@@ -14,7 +14,7 @@ export type Props = {
   uid: string;
 };
 
-export function DataSourceDashboards({ uid }: Props): React.ReactElement {
+export function DataSourceDashboards({ uid }: Props) {
   useLoadDataSource(uid);
 
   const dispatch = useDispatch();

@@ -8,7 +8,7 @@ export type Props = {
   testingStatus?: TestingStatus;
 };
 
-export function DataSourceTestingStatus({ testingStatus }: Props): React.ReactElement | null {
+export function DataSourceTestingStatus({ testingStatus }: Props) {
   const isError = testingStatus?.status === 'error';
   const message = testingStatus?.message;
   const detailsMessage = testingStatus?.details?.message;

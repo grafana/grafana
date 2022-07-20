@@ -40,7 +40,7 @@ export type Props = {
   pageId?: string | null;
 };
 
-export function EditDataSource({ uid, pageId }: Props): React.ReactElement {
+export function EditDataSource({ uid, pageId }: Props) {
   useInitDataSourceSettings(uid);
 
   const dispatch = useDispatch();
@@ -102,7 +102,7 @@ export function EditDataSourceView({
   onOptionsChange,
   onTest,
   onUpdate,
-}: ViewProps): React.ReactElement | null {
+}: ViewProps) {
   const { plugin, loadError, testingStatus, loading } = dataSourceSettings;
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;

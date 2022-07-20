@@ -8,7 +8,7 @@ import { useDataSourceSettingsNav } from '../state';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
-export function EditDataSourcePage(props: Props): React.ReactElement {
+export function EditDataSourcePage(props: Props) {
   const uid = props.match.params.uid;
   const params = new URLSearchParams(props.location.search);
   const pageId = params.get('page');

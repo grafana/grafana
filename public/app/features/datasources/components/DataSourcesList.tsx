@@ -13,7 +13,7 @@ import { getDataSources, getDataSourcesCount, useLoadDataSources } from '../stat
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 
-export function DataSourcesList(): React.ReactElement {
+export function DataSourcesList() {
   useLoadDataSources();
 
   const dataSources = useSelector((state: StoreState) => getDataSources(state.dataSources));
@@ -38,12 +38,7 @@ export type ViewProps = {
   hasCreateRights: boolean;
 };
 
-export function DataSourcesListView({
-  dataSources,
-  dataSourcesCount,
-  isLoading,
-  hasCreateRights,
-}: ViewProps): React.ReactElement {
+export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, hasCreateRights }: ViewProps) {
   const styles = useStyles(getStyles);
 
   if (isLoading) {

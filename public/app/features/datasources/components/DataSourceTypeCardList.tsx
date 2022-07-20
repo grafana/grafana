@@ -13,7 +13,7 @@ export type Props = {
   onClickDataSourceType: (dataSource: DataSourcePluginMeta) => void;
 };
 
-export function DataSourceTypeCardList({ dataSourcePlugins, onClickDataSourceType }: Props): React.ReactElement | null {
+export function DataSourceTypeCardList({ dataSourcePlugins, onClickDataSourceType }: Props) {
   if (!dataSourcePlugins || !dataSourcePlugins.length) {
     return null;
   }

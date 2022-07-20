@@ -12,7 +12,7 @@ export interface Props {
   onRemove: (dashboard: PluginDashboard) => void;
 }
 
-export function DashboardsTable({ dashboards, onImport, onRemove }: Props): React.ReactElement {
+export function DashboardsTable({ dashboards, onImport, onRemove }: Props) {
   function buttonText(dashboard: PluginDashboard) {
     return dashboard.revision !== dashboard.importedRevision ? 'Update' : 'Re-import';
   }

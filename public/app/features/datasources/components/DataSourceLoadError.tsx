@@ -11,7 +11,7 @@ export type Props = {
   onDelete: () => void;
 };
 
-export function DataSourceLoadError({ dataSourceRights, onDelete }: Props): React.ReactElement {
+export function DataSourceLoadError({ dataSourceRights, onDelete }: Props) {
   const { readOnly, hasDeleteRights } = dataSourceRights;
   const canDelete = !readOnly && hasDeleteRights;
   const navigateBack = () => history.back();

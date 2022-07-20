@@ -12,7 +12,7 @@ export interface Props {
   dataSource: DataSourceSettings;
 }
 
-export function CloudInfoBox({ dataSource }: Props): React.ReactElement | null {
+export function CloudInfoBox({ dataSource }: Props) {
   let mainDS = '';
   let extraDS = '';
 

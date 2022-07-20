@@ -17,7 +17,7 @@ import {
   setDataSourceTypeSearchQuery,
 } from '../state';
 
-export function NewDataSource(): React.ReactElement {
+export function NewDataSource() {
   useLoadDataSourcePlugins();
 
   const dispatch = useDispatch();
@@ -56,7 +56,7 @@ export function NewDataSourceView({
   isLoading,
   onAddDataSource,
   onSetSearchQuery,
-}: ViewProps): React.ReactElement {
+}: ViewProps) {
   if (isLoading) {
     return <PageLoader />;
   }

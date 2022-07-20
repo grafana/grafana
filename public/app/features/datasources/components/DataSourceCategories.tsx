@@ -14,7 +14,7 @@ export type Props = {
   onClickDataSourceType: (dataSource: DataSourcePluginMeta) => void;
 };
 
-export function DataSourceCategories({ categories, onClickDataSourceType }: Props): React.ReactElement {
+export function DataSourceCategories({ categories, onClickDataSourceType }: Props) {
   return (
     <>
       {/* Categories */}
