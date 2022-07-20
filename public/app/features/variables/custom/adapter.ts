@@ -24,16 +24,14 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
     dependsOn: () => {
       return false;
     },
-    setValue: async (variable, triggerVariableIdentifier, option, emitChanges = false) => {
-      await dispatch(
-        setOptionAsCurrent(toKeyedVariableIdentifier(variable), triggerVariableIdentifier, option, emitChanges)
-      );
+    setValue: async (variable, visitedVariables, option, emitChanges = false) => {
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), visitedVariables, option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async (variable, triggerVariableIdentifier) => {
-      await dispatch(updateCustomVariableOptions(toKeyedVariableIdentifier(variable), triggerVariableIdentifier));
+    updateOptions: async (variable, visitedVariables) => {
+      await dispatch(updateCustomVariableOptions(toKeyedVariableIdentifier(variable), visitedVariables));
     },
     getSaveModel: (variable) => {
       const { index, id, state, global, rootStateKey, ...rest } = cloneDeep(variable);

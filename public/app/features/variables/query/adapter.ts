@@ -24,18 +24,14 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource?.uid, variable.regex, variableToTest.name);
     },
-    setValue: async (variable, triggerVariableIdentifier, option, emitChanges = false) => {
-      await dispatch(
-        setOptionAsCurrent(toKeyedVariableIdentifier(variable), triggerVariableIdentifier, option, emitChanges)
-      );
+    setValue: async (variable, visitedVariables, option, emitChanges = false) => {
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), visitedVariables, option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async (variable, triggerVariableIdentifier, searchFilter) => {
-      await dispatch(
-        updateQueryVariableOptions(toKeyedVariableIdentifier(variable), triggerVariableIdentifier, searchFilter)
-      );
+    updateOptions: async (variable, visitedVariables, searchFilter) => {
+      await dispatch(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), visitedVariables, searchFilter));
     },
     getSaveModel: (variable) => {
       const { index, id, state, global, queryValue, rootStateKey, ...rest } = cloneDeep(variable);

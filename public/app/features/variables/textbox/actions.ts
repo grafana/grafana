@@ -14,16 +14,14 @@ import { createTextBoxOptions } from './reducer';
 
 export const updateTextBoxVariableOptions = (
   identifier: KeyedVariableIdentifier,
-  triggerVariableIdentifier: KeyedVariableIdentifier | null
+  visitedVariables: string[]
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { rootStateKey, type } = identifier;
     dispatch(toKeyedAction(rootStateKey, createTextBoxOptions(toVariablePayload(identifier))));
 
     const variableInState = getVariable<TextBoxVariableModel>(identifier, getState());
-    await variableAdapters
-      .get(type)
-      .setValue(variableInState, triggerVariableIdentifier, variableInState.options[0], true);
+    await variableAdapters.get(type).setValue(variableInState, visitedVariables, variableInState.options[0], true);
   };
 };
 

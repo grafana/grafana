@@ -26,7 +26,7 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
     dependsOn: () => {
       return false;
     },
-    setValue: async (variable, triggerVariableIdentifier, option, emitChanges = false) => {
+    setValue: async (variable, visitedVariables, option, emitChanges = false) => {
       return;
     },
     setValueFromUrl: async (variable, urlValue) => {

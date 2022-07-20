@@ -100,25 +100,49 @@ export class Node {
     return this.outputEdges.find((e) => e.outputNode?.name === to);
   }
 
-  getOptimizedInputEdges(): Edge[] {
-    const toBeRemoved: any[] = [];
-    this.inputEdges.forEach((e) => {
-      const inputEdgesNodes = e.inputNode?.inputEdges.map((e) => e.inputNode);
+  /**
+   * This performs transitive reduction on the graph then
+   * returns the remaining input edges.
+   * https://en.wikipedia.org/wiki/Transitive_reduction
+   */
+  getOptimizedInputEdges(excludedEdges = new Set<Edge>()): Edge[] {
+    excludedEdges = new Set(excludedEdges);
 
-      inputEdgesNodes?.forEach((n) => {
-        const edgeToRemove = n?.getEdgeTo(this.name);
-        if (edgeToRemove) {
-          toBeRemoved.push(edgeToRemove);
+    const isConnected = (node: Node, traveledEdges: Set<Edge>): boolean => {
+      if (node === this) {
+        return true;
+      }
+
+      return node.outputEdges.some((edge) => {
+        if (!edge.outputNode || traveledEdges.has(edge) || excludedEdges.has(edge)) {
+          return false;
         }
+        return isConnected(edge.outputNode, new Set([...traveledEdges, edge]));
       });
-    });
+    };
 
-    return this.inputEdges.filter((e) => toBeRemoved.indexOf(e) === -1);
+    return this.inputEdges.filter((edge) => {
+      if (!edge.inputNode) {
+        return false;
+      }
+
+      // Check if inputNode is connected via any other path
+      const connected = isConnected(edge.inputNode, new Set([edge]));
+
+      // If we're connected to inputNode via another path drop this edge
+      // b/c inputNode is still reachable transitively
+      if (connected) {
+        excludedEdges.add(edge);
+        return false;
+      }
+
+      return true;
+    });
   }
 }
 
 export class Graph {
-  nodes: any = {};
+  nodes: Record<string, Node> = {};
 
   constructor() {}
 

@@ -3,6 +3,7 @@ import { Graph } from './dag';
 describe('Directed acyclic graph', () => {
   describe('Given a graph with nodes with different links in between them', () => {
     const dag = new Graph();
+    const node0 = dag.createNode('0');
     const nodeA = dag.createNode('A');
     const nodeB = dag.createNode('B');
     const nodeC = dag.createNode('C');
@@ -12,17 +13,23 @@ describe('Directed acyclic graph', () => {
     const nodeG = dag.createNode('G');
     const nodeH = dag.createNode('H');
     const nodeI = dag.createNode('I');
+    dag.link([nodeA], node0);
     dag.link([nodeB, nodeC, nodeD, nodeE, nodeF, nodeG, nodeH], nodeA);
     dag.link([nodeC, nodeD, nodeE, nodeF, nodeI], nodeB);
     dag.link([nodeD, nodeE, nodeF, nodeG], nodeC);
     dag.link([nodeE, nodeF], nodeD);
     dag.link([nodeF, nodeG], nodeE);
+    dag.link([nodeI], node0);
     //printGraph(dag);
 
     it('nodes in graph should have expected edges', () => {
+      expect(node0.inputEdges).toHaveLength(2);
+      expect(node0.outputEdges).toHaveLength(0);
+      expect(node0.edges).toHaveLength(2);
+
       expect(nodeA.inputEdges).toHaveLength(7);
-      expect(nodeA.outputEdges).toHaveLength(0);
-      expect(nodeA.edges).toHaveLength(7);
+      expect(nodeA.outputEdges).toHaveLength(1);
+      expect(nodeA.edges).toHaveLength(8);
 
       expect(nodeB.inputEdges).toHaveLength(5);
       expect(nodeB.outputEdges).toHaveLength(1);
@@ -53,8 +60,8 @@ describe('Directed acyclic graph', () => {
       expect(nodeH.edges).toHaveLength(1);
 
       expect(nodeI.inputEdges).toHaveLength(0);
-      expect(nodeI.outputEdges).toHaveLength(1);
-      expect(nodeI.edges).toHaveLength(1);
+      expect(nodeI.outputEdges).toHaveLength(2);
+      expect(nodeI.edges).toHaveLength(2);
 
       expect(nodeA.getEdgeFrom(nodeB)).not.toBeUndefined();
       expect(nodeB.getEdgeTo(nodeA)).not.toBeUndefined();
@@ -88,6 +95,12 @@ describe('Directed acyclic graph', () => {
       const actual = nodeE.getOptimizedInputEdges().map((e) => e.inputNode);
       expect(actual).toHaveLength(2);
       expect(actual).toEqual(expect.arrayContaining([nodeF, nodeG]));
+    });
+
+    it('when optimizing input edges for node 0 should return node A', () => {
+      const actual = node0.getOptimizedInputEdges().map((e) => e.inputNode);
+      expect(actual).toHaveLength(1);
+      expect(actual).toEqual(expect.arrayContaining([nodeA]));
     });
 
     it('when optimizing input edges for node F should return zero nodes', () => {

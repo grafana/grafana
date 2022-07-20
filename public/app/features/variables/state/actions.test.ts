@@ -151,22 +151,6 @@ describe('shared actions', () => {
   });
 
   describe('when processVariables is dispatched', () => {
-    it('then circular dependencies fail gracefully', async () => {
-      const key = 'key';
-      const var1 = queryBuilder().withName('var1').withQuery('$var2').build();
-      const var2 = queryBuilder().withName('var2').withQuery('$var1').build();
-      const dashboard: any = { templating: { list: [var1, var2] } };
-      const preloadedState = getPreloadedState(key, {});
-
-      await expect(async () => {
-        await reduxTester<TemplatingReducerType>({ preloadedState })
-          .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
-          .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-          .whenAsyncActionIsDispatched(processVariables(key), true);
-      }).rejects.toThrow(/circular dependency in dashboard variables detected/i);
-    });
-
     it('then correct actions are dispatched', async () => {
       const key = 'key';
       const query = queryBuilder().build();
@@ -359,7 +343,7 @@ describe('shared actions', () => {
             toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
           )
           .whenAsyncActionIsDispatched(
-            validateVariableSelectionState(toKeyedVariableIdentifier(custom), defaultValue),
+            validateVariableSelectionState(toKeyedVariableIdentifier(custom), [], defaultValue),
             true
           );
 
@@ -421,7 +405,7 @@ describe('shared actions', () => {
               toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
             )
             .whenAsyncActionIsDispatched(
-              validateVariableSelectionState(toKeyedVariableIdentifier(custom), defaultValue),
+              validateVariableSelectionState(toKeyedVariableIdentifier(custom), [], defaultValue),
               true
             );
 

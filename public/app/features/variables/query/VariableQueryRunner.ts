@@ -27,7 +27,7 @@ import { QueryRunners } from './queryRunners';
 
 interface UpdateOptionsArgs {
   identifier: KeyedVariableIdentifier;
-  triggerVariableIdentifier: KeyedVariableIdentifier | null;
+  visitedVariables: string[];
   datasource: DataSourceApi;
   searchFilter?: string;
 }
@@ -90,7 +90,7 @@ export class VariableQueryRunner {
   }
 
   private onNewRequest(args: UpdateOptionsArgs): void {
-    const { datasource, identifier, searchFilter, triggerVariableIdentifier } = args;
+    const { datasource, identifier, searchFilter, visitedVariables } = args;
 
     try {
       const {
@@ -136,7 +136,7 @@ export class VariableQueryRunner {
           updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
           validateVariableSelection({
             variable,
-            triggerVariableIdentifier,
+            visitedVariables,
             dispatch,
             searchFilter,
           }),

@@ -65,7 +65,7 @@ export const changeFilter = (
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
     dispatch(toKeyedAction(identifier.rootStateKey, filterUpdated(toVariablePayload(variable, update))));
-    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), null, true));
+    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), [], true));
   };
 };
 
@@ -73,7 +73,7 @@ export const removeFilter = (identifier: KeyedVariableIdentifier, index: number)
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
     dispatch(toKeyedAction(identifier.rootStateKey, filterRemoved(toVariablePayload(variable, index))));
-    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), null, true));
+    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), [], true));
   };
 };
 
@@ -81,7 +81,7 @@ export const addFilter = (identifier: KeyedVariableIdentifier, filter: AdHocVari
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
     dispatch(toKeyedAction(identifier.rootStateKey, filterAdded(toVariablePayload(variable, filter))));
-    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), null, true));
+    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), [], true));
   };
 };
 
@@ -92,7 +92,7 @@ export const setFiltersFromUrl = (
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
     dispatch(toKeyedAction(identifier.rootStateKey, filtersRestored(toVariablePayload(variable, filters))));
-    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), null, true));
+    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), [], true));
   };
 };
 

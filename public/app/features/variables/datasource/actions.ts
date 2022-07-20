@@ -22,7 +22,7 @@ export interface DataSourceVariableActionDependencies {
 export const updateDataSourceVariableOptions =
   (
     identifier: KeyedVariableIdentifier,
-    triggerVariableIdentifier: KeyedVariableIdentifier | null,
+    visitedVariables: string[],
     dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
   ): ThunkResult<void> =>
   async (dispatch, getState) => {
@@ -37,7 +37,7 @@ export const updateDataSourceVariableOptions =
     }
 
     dispatch(toKeyedAction(rootStateKey, createDataSourceOptions(toVariablePayload(identifier, { sources, regex }))));
-    await dispatch(validateVariableSelectionState(identifier, triggerVariableIdentifier));
+    await dispatch(validateVariableSelectionState(identifier, visitedVariables));
   };
 
 export const initDataSourceVariableEditor =

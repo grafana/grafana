@@ -150,7 +150,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
         .whenAsyncActionIsDispatched(
-          setOptionAsCurrent(toKeyedVariableIdentifier(interval), null, interval.options[0], false)
+          setOptionAsCurrent(toKeyedVariableIdentifier(interval), [], interval.options[0], false)
         );
 
       const tester = await base.whenAsyncActionIsDispatched(onTimeRangeUpdated(key, range, dependencies), true);

@@ -49,7 +49,7 @@ describe('textbox actions', () => {
         .whenActionIsDispatched(
           toKeyedAction(key, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toKeyedVariableIdentifier(variable), null), true);
+        .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toKeyedVariableIdentifier(variable), []), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction(key, createTextBoxOptions(toVariablePayload(variable))),

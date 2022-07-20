@@ -99,7 +99,7 @@ describe('query actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), null), true);
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), []), true);
 
       tester.thenNoActionsWhereDispatched();
     });
@@ -118,7 +118,7 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), null), true);
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), []), true);
 
       const option = createOption('A');
       const update = { results: optionsMetrics, templatedRegex: '' };
@@ -143,7 +143,7 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), null), true);
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), []), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
@@ -169,7 +169,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), null), true);
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), []), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
@@ -197,7 +197,7 @@ describe('query actions', () => {
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(
-          updateQueryVariableOptions(toKeyedVariableIdentifier(variable), null, 'search'),
+          updateQueryVariableOptions(toKeyedVariableIdentifier(variable), [], 'search'),
           true
         );
 
@@ -225,7 +225,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
-        .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(variable), null), true);
+        .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(variable), []), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 5;

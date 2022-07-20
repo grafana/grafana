@@ -23,18 +23,16 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
     dependsOn: () => {
       return false;
     },
-    setValue: async (variable, triggerVariableIdentifier, option, emitChanges = false) => {
+    setValue: async (variable, visitedVariables, option, emitChanges = false) => {
       await dispatch(updateAutoValue(toKeyedVariableIdentifier(variable)));
-      await dispatch(
-        setOptionAsCurrent(toKeyedVariableIdentifier(variable), triggerVariableIdentifier, option, emitChanges)
-      );
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), visitedVariables, option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(updateAutoValue(toKeyedVariableIdentifier(variable)));
       await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async (variable, triggerVariableIdentifier) => {
-      await dispatch(updateIntervalVariableOptions(toKeyedVariableIdentifier(variable), triggerVariableIdentifier));
+    updateOptions: async (variable, visitedVariables) => {
+      await dispatch(updateIntervalVariableOptions(toKeyedVariableIdentifier(variable), visitedVariables));
     },
     getSaveModel: (variable) => {
       const { index, id, state, global, rootStateKey, ...rest } = cloneDeep(variable);

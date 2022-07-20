@@ -19,7 +19,7 @@ import { store } from 'app/store/store';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { appEvents } from '../../../core/core';
 import { getBackendSrv } from '../../../core/services/backend_srv';
-import { Graph } from '../../../core/utils/dag';
+import { Edge, Graph } from '../../../core/utils/dag';
 import { AppNotification, StoreState, ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
@@ -369,7 +369,7 @@ export const processVariable = (
         refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
         refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
       ) {
-        await dispatch(updateOptions(toKeyedVariableIdentifier(refreshableVariable), null));
+        await dispatch(updateOptions(toKeyedVariableIdentifier(refreshableVariable), []));
         return;
       }
     }
@@ -400,7 +400,7 @@ export const setOptionFromUrl = (
     const variable = getVariable(identifier, getState());
     if (getVariableRefresh(variable) !== VariableRefresh.never) {
       // updates options
-      await dispatch(updateOptions(toKeyedVariableIdentifier(variable), null));
+      await dispatch(updateOptions(toKeyedVariableIdentifier(variable), []));
     }
 
     // get variable from state
@@ -453,7 +453,7 @@ export const setOptionFromUrl = (
       );
     }
 
-    await variableAdapters.get(variable.type).setValue(variableFromState, null, option);
+    await variableAdapters.get(variable.type).setValue(variableFromState, [], option);
   };
 };
 
@@ -483,7 +483,7 @@ export const selectOptionsForCurrentValue = (variable: VariableWithOptions): Var
 
 export const validateVariableSelectionState = (
   identifier: KeyedVariableIdentifier,
-  triggerVariableIdentifier: KeyedVariableIdentifier | null,
+  visitedVariables: string[],
   defaultValue?: string
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
@@ -497,7 +497,7 @@ export const validateVariableSelectionState = (
       // if none pick first
       if (selected.length === 0) {
         const option = variableInState.options[0];
-        return setValue(variableInState, triggerVariableIdentifier, option);
+        return setValue(variableInState, visitedVariables, option);
       }
 
       const option: VariableOption = {
@@ -505,7 +505,7 @@ export const validateVariableSelectionState = (
         text: selected.map((v) => v.text) as string[],
         selected: true,
       };
-      return setValue(variableInState, triggerVariableIdentifier, option);
+      return setValue(variableInState, visitedVariables, option);
     }
 
     let option: VariableOption | undefined | null = null;
@@ -514,14 +514,14 @@ export const validateVariableSelectionState = (
     const text = getCurrentText(variableInState);
     option = variableInState.options?.find((v) => v.text === text);
     if (option) {
-      return setValue(variableInState, triggerVariableIdentifier, option);
+      return setValue(variableInState, visitedVariables, option);
     }
 
     // 2. find the default value
     if (defaultValue) {
       option = variableInState.options?.find((v) => v.text === defaultValue);
       if (option) {
-        return setValue(variableInState, triggerVariableIdentifier, option);
+        return setValue(variableInState, visitedVariables, option);
       }
     }
 
@@ -529,7 +529,7 @@ export const validateVariableSelectionState = (
     if (variableInState.options) {
       const option = variableInState.options[0];
       if (option) {
-        return setValue(variableInState, triggerVariableIdentifier, option);
+        return setValue(variableInState, visitedVariables, option);
       }
     }
 
@@ -540,14 +540,14 @@ export const validateVariableSelectionState = (
 
 export const setOptionAsCurrent = (
   identifier: KeyedVariableIdentifier,
-  triggerVariableIdentifier: KeyedVariableIdentifier | null,
+  visitedVariables: string[],
   current: VariableOption,
   emitChanges: boolean
 ): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
     const { rootStateKey: key } = identifier;
     dispatch(toKeyedAction(key, setCurrentVariableValue(toVariablePayload(identifier, { option: current }))));
-    return await dispatch(variableUpdated(identifier, triggerVariableIdentifier, emitChanges));
+    return await dispatch(variableUpdated(identifier, visitedVariables, emitChanges));
   };
 };
 
@@ -555,7 +555,7 @@ const createGraph = (variables: VariableModel[]) => {
   const g = new Graph();
 
   variables.forEach((v) => {
-    g.createNode(v.name);
+    g.createNode(v.id);
   });
 
   variables.forEach((v1) => {
@@ -565,7 +565,7 @@ const createGraph = (variables: VariableModel[]) => {
       }
 
       if (variableAdapters.get(v1.type).dependsOn(v1, v2)) {
-        g.link(v1.name, v2.name);
+        g.link(v1.id, v2.id);
       }
     });
   });
@@ -575,11 +575,13 @@ const createGraph = (variables: VariableModel[]) => {
 
 export const variableUpdated = (
   identifier: KeyedVariableIdentifier,
-  triggerVariableIdentifier: KeyedVariableIdentifier | null,
+  visitedVariables: string[],
   emitChangeEvents: boolean,
   events: typeof appEvents = appEvents
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
+    visitedVariables = [...visitedVariables, identifier.id];
+
     const state = getState();
     const { rootStateKey } = identifier;
     const variableInState = getVariable(identifier, state);
@@ -604,13 +606,24 @@ export const variableUpdated = (
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
     if (node) {
-      promises = node.getOptimizedInputEdges().map((e) => {
+      const excludedEdges = new Set<Edge>();
+      visitedVariables.forEach((nodeName) => {
+        const node = g.getNode(nodeName);
+        const optimizedInputEdges = new Set(node.getOptimizedInputEdges(excludedEdges));
+        node.edges.forEach((edge) => {
+          if (!optimizedInputEdges.has(edge)) {
+            excludedEdges.add(edge);
+          }
+        });
+      });
+      promises = node.getOptimizedInputEdges(excludedEdges).map((e) => {
         const variable = variables.find((v) => v.name === e.inputNode?.name);
-        if (!variable) {
+
+        if (!variable || visitedVariables.includes(variable.id)) {
           return Promise.resolve();
         }
 
-        return dispatch(updateOptions(toKeyedVariableIdentifier(variable), triggerVariableIdentifier));
+        return dispatch(updateOptions(toKeyedVariableIdentifier(variable), visitedVariables));
       });
     }
 
@@ -665,7 +678,7 @@ const timeRangeUpdated =
     const variableInState = getVariable<VariableWithOptions>(identifier, getState());
     const previousOptions = variableInState.options.slice();
 
-    await dispatch(updateOptions(toKeyedVariableIdentifier(variableInState), null, true));
+    await dispatch(updateOptions(toKeyedVariableIdentifier(variableInState), [], true));
 
     const updatedVariable = getVariable<VariableWithOptions>(identifier, getState());
     const updatedOptions = updatedVariable.options;
@@ -846,11 +859,7 @@ export const cancelVariables =
   };
 
 export const updateOptions =
-  (
-    identifier: KeyedVariableIdentifier,
-    triggerVariableIdentifier: KeyedVariableIdentifier | null,
-    rethrow = false
-  ): ThunkResult<Promise<void>> =>
+  (identifier: KeyedVariableIdentifier, visitedVariables: string[], rethrow = false): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     const { rootStateKey } = identifier;
     try {
@@ -862,7 +871,7 @@ export const updateOptions =
       const variableInState = getVariable(identifier, getState());
       dispatch(toKeyedAction(rootStateKey, variableStateFetching(toVariablePayload(variableInState))));
       await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
-      await variableAdapters.get(variableInState.type).updateOptions(variableInState, triggerVariableIdentifier);
+      await variableAdapters.get(variableInState.type).updateOptions(variableInState, visitedVariables);
       dispatch(completeVariableLoading(identifier));
     } catch (error) {
       dispatch(toKeyedAction(rootStateKey, variableStateFailed(toVariablePayload(identifier, { error }))));

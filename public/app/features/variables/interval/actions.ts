@@ -13,12 +13,12 @@ import { toVariablePayload } from '../utils';
 import { createIntervalOptions } from './reducer';
 
 export const updateIntervalVariableOptions =
-  (identifier: KeyedVariableIdentifier, triggerVariableIdentifier: KeyedVariableIdentifier | null): ThunkResult<void> =>
+  (identifier: KeyedVariableIdentifier, visitedVariables: string[]): ThunkResult<void> =>
   async (dispatch) => {
     const { rootStateKey } = identifier;
     await dispatch(toKeyedAction(rootStateKey, createIntervalOptions(toVariablePayload(identifier))));
     await dispatch(updateAutoValue(identifier));
-    await dispatch(validateVariableSelectionState(identifier, triggerVariableIdentifier));
+    await dispatch(validateVariableSelectionState(identifier, visitedVariables));
   };
 
 export interface UpdateAutoValueDependencies {
