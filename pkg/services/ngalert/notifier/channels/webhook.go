@@ -80,6 +80,10 @@ func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 	return &WebhookConfig{
 		NotificationChannelConfig: config,
 		URL:                       url,
+		User:                      user,
+		Password:                  password,
+		AuthorizationType:         authorizationType,
+		AuthorizationCredentials:  authorizationCredentials,
 		HTTPMethod:                config.Settings.Get("httpMethod").MustString("POST"),
 		MaxAlerts:                 config.Settings.Get("maxAlerts").MustInt(0),
 	}, nil
@@ -173,7 +177,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, err
 	}
 
-	var headers map[string]string
+	headers := make(map[string]string, 1)
 	if wn.AuthorizationType != "" && wn.AuthorizationCredentials != "" {
 		headers["Authorization"] = fmt.Sprintf("%s %s", wn.AuthorizationType, wn.AuthorizationCredentials)
 	}

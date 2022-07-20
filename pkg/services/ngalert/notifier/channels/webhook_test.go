@@ -93,6 +93,7 @@ func TestWebhookNotifier(t *testing.T) {
 				OrgID:    orgID,
 			},
 			expMsgError: nil,
+			expHeaders:  map[string]string{},
 		},
 		{
 			name: "Custom config with multiple alerts",
@@ -172,12 +173,12 @@ func TestWebhookNotifier(t *testing.T) {
 				OrgID:           orgID,
 			},
 			expMsgError: nil,
+			expHeaders:  map[string]string{},
 		},
 		{
 			name: "with Authorization set",
 			settings: `{
 				"url": "http://localhost/test1",
-				"authorization_type": "",
 				"authorization_credentials": "mysecret",
 				"httpMethod": "POST",
 				"maxAlerts": 2
@@ -190,6 +191,48 @@ func TestWebhookNotifier(t *testing.T) {
 					},
 				},
 			},
+			expMsg: &webhookMessage{
+				ExtendedData: &ExtendedData{
+					Receiver: "my_receiver",
+					Status:   "firing",
+					Alerts: ExtendedAlerts{
+						{
+							Status: "firing",
+							Labels: template.KV{
+								"alertname": "alert1",
+								"lbl1":      "val1",
+							},
+							Annotations: template.KV{
+								"ann1": "annv1",
+							},
+							Fingerprint:  "fac0861a85de433a",
+							DashboardURL: "http://localhost/d/abcd",
+							PanelURL:     "http://localhost/d/abcd?viewPanel=efgh",
+							SilenceURL:   "http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1",
+						},
+					},
+					GroupLabels: template.KV{
+						"alertname": "",
+					},
+					CommonLabels: template.KV{
+						"alertname": "alert1",
+						"lbl1":      "val1",
+					},
+					CommonAnnotations: template.KV{
+						"ann1": "annv1",
+					},
+					ExternalURL: "http://localhost",
+				},
+				Version:  "1",
+				GroupKey: "alertname",
+				Title:    "[FIRING:1]  (val1)",
+				State:    "alerting",
+				Message:  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				OrgID:    orgID,
+			},
+			expUrl:        "http://localhost/test1",
+			expHttpMethod: "POST",
+			expHeaders:    map[string]string{"Authorization": "Bearer mysecret"},
 		},
 		{
 			name: "with both HTTP basic auth and Authorization Header set",
