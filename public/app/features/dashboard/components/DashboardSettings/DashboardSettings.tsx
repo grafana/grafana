@@ -163,7 +163,16 @@ export function DashboardSettings({ dashboard, editview }: Props) {
   return (
     <FocusScope contain autoFocus>
       <div className="dashboard-settings" ref={ref} {...overlayProps} {...dialogProps}>
-        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose} />
+        <PageToolbar
+          className={css`
+            width: 60vw;
+            min-width: min-content;
+          `}
+          title={dashboard.title}
+          section="Settings"
+          parent={folderTitle}
+          onGoBack={onClose}
+        />
         <CustomScrollbar>
           <div className={styles.scrollInner}>
             <div className={styles.settingsWrapper}>

@@ -36,6 +36,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     exploreSplit: css`
       width: 50%;
+      min-width: min-content;
     `,
   };
 };
