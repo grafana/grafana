@@ -1,7 +1,6 @@
-import { configureStore as reduxConfigureStore, MiddlewareArray } from '@reduxjs/toolkit';
-import { AnyAction } from 'redux';
-import { ThunkMiddleware } from 'redux-thunk';
+import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 
+import { alertingApi } from 'app/features/alerting/unified/api/buildInfo';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
@@ -17,10 +16,12 @@ export function addRootReducer(reducers: any) {
 }
 
 export function configureStore(initialState?: Partial<StoreState>) {
-  const store = reduxConfigureStore<StoreState, AnyAction, MiddlewareArray<[ThunkMiddleware<StoreState, AnyAction>]>>({
+  const store = reduxConfigureStore({
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }),
+      getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
+        alertingApi.middleware
+      ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),

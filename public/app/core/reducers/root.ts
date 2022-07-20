@@ -3,6 +3,7 @@ import { AnyAction, combineReducers } from 'redux';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
+import { alertingApi } from 'app/features/alerting/unified/api/buildInfo';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
@@ -42,6 +43,7 @@ const rootReducers = {
   ...panelsReducers,
   ...templatingReducers,
   plugins: pluginsReducer,
+  [alertingApi.reducerPath]: alertingApi.reducer,
 };
 
 const addedReducers = {};

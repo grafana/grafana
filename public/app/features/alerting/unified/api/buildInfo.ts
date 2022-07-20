@@ -1,10 +1,11 @@
+import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { PromApplication, PromApiFeatures, PromBuildInfoResponse } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { getDataSourceByName } from '../utils/datasource';
+import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
@@ -20,14 +21,14 @@ import { fetchTestRulerRulesGroup } from './ruler';
 export async function discoverDataSourceFeatures(dsSettings: {
   url: string;
   name: string;
-  type: 'prometheus' | 'loki';
+  type: 'prometheus' | 'loki' | 'alertmanager';
 }): Promise<PromApiFeatures> {
   const { url, name, type } = dsSettings;
 
   // The current implementation of Loki's build info endpoint is useless
   // because it doesn't provide information about Loki's available features (e.g. Ruler API)
   // It's better to skip fetching it for Loki and go the Cortex path (manual discovery)
-  const buildInfoResponse = type === 'prometheus' ? await fetchPromBuildInfo(url) : undefined;
+  const buildInfoResponse = type === 'loki' ? undefined : await fetchPromBuildInfo(url);
 
   // check if the component returns buildinfo
   const hasBuildInfo = buildInfoResponse !== undefined;
@@ -47,6 +48,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
       application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: rulerSupported,
+        lazyAmConfigEnabled: false,
       },
     };
   }
@@ -58,6 +60,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: false,
+        lazyAmConfigEnabled: false,
       },
     };
   }
@@ -67,6 +70,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
     application: PromApplication.Mimir,
     features: {
       rulerApiEnabled: features?.ruler_config_api === 'true',
+      lazyAmConfigEnabled: features.alertmanager_config_api === 'true',
     },
   };
 }
@@ -75,6 +79,15 @@ export async function discoverDataSourceFeatures(dsSettings: {
  * Attempt to fetch buildinfo from our component
  */
 export async function discoverFeatures(dataSourceName: string): Promise<PromApiFeatures> {
+  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return {
+      features: {
+        rulerApiEnabled: true,
+        lazyAmConfigEnabled: false,
+      },
+    };
+  }
+
   const dsConfig = getDataSourceByName(dataSourceName);
   if (!dsConfig) {
     throw new Error(`Cannot find data source configuration for ${dataSourceName}`);
@@ -84,8 +97,10 @@ export async function discoverFeatures(dataSourceName: string): Promise<PromApiF
     throw new Error(`The data souce url cannot be empty.`);
   }
 
-  if (type !== 'prometheus' && type !== 'loki') {
-    throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
+  if (type !== 'prometheus' && type !== 'loki' && type !== 'alertmanager') {
+    throw new Error(
+      `The build info request is not available for ${type}. Only 'prometheus', 'loki' and 'alertmanager' are supported`
+    );
   }
 
   return discoverDataSourceFeatures({ name, url, type });
@@ -147,3 +162,44 @@ function errorIndicatesMissingRulerSupport(error: any) {
     error.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
   );
 }
+
+const backendSrvBaseQuery =
+  (): BaseQueryFn<{ url: string }, unknown, unknown> =>
+  async ({ url }) => {
+    try {
+      const response = await lastValueFrom(
+        getBackendSrv().fetch<PromBuildInfoResponse>({
+          url,
+          showErrorAlert: false,
+          showSuccessAlert: false,
+        })
+      );
+
+      return { data: response.data };
+    } catch (error) {
+      return {
+        error: {
+          data: error,
+        },
+      };
+    }
+  };
+
+export const alertingApi = createApi({
+  reducerPath: 'alertingApi',
+  baseQuery: backendSrvBaseQuery(),
+  endpoints: (build) => ({
+    discoverAmFeatures: build.query({
+      // query: (amUrl) => ({ url: `${amUrl}/api/v1/status/buildinfo` }),
+      queryFn: async ({ dataSourceName }: { dataSourceName: string }) => {
+        try {
+          const result = await discoverFeatures(dataSourceName);
+          return { data: result };
+        } catch (error) {
+          console.error(error);
+          return { error: error };
+        }
+      },
+    }),
+  }),
+});
