@@ -4402,6 +4402,33 @@
       }
     },
     "/datasources/uid/{sourceUID}/correlations": {
+      "get": {
+        "tags": ["correlations"],
+        "summary": "Gets all correlations originating from the given data source.",
+        "operationId": "getCorrelationsBySourceUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCorrelationsBySourceUIDResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "tags": [
           "correlations"
@@ -19208,6 +19235,15 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Correlation"
+      }
+    },
+    "getCorrelationsBySourceUIDResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Correlation"
+        }
       }
     },
     "getCurrentOrgResponse": {

@@ -103,6 +103,12 @@ type GetCorrelationQuery struct {
 	OrgId     int64  `json:"-"`
 }
 
+// GetCorrelationsBySourceUIDQuery is the query to retrieve all correlations originating by the given Data Source
+type GetCorrelationsBySourceUIDQuery struct {
+	SourceUID string `json:"-"`
+	OrgId     int64  `json:"-"`
+}
+
 type DeleteCorrelationsBySourceUIDCommand struct {
 	SourceUID string
 }

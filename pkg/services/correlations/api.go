@@ -19,6 +19,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	authorize := ac.Middleware(s.AccessControl)
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
+		entities.Get("/", middleware.ReqSignedIn, authorize(ac.ReqViewer, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
 		entities.Post("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
 
 		entities.Group("/:correlationUID", func(entities routing.RouteRegister) {
@@ -241,4 +242,47 @@ type GetCorrelationParams struct {
 type GetCorrelationResponse struct {
 	// in: body
 	Body Correlation `json:"body"`
+}
+
+// swagger:route GET /datasources/uid/{sourceUID}/correlations correlations getCorrelationsBySourceUID
+//
+// Gets all correlations originating from the given data source.
+//
+// Responses:
+// 200: getCorrelationsBySourceUIDResponse
+// 401: unauthorisedError
+// 404: notFoundError
+// 500: internalServerError
+func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *models.ReqContext) response.Response {
+	query := GetCorrelationsBySourceUIDQuery{
+		SourceUID: web.Params(c.Req)[":uid"],
+		OrgId:     c.OrgId,
+	}
+
+	correlations, err := s.getCorrelationsBySourceUID(c.Req.Context(), query)
+	if err != nil {
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "No correlation found", err)
+		}
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Source data source not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+	}
+
+	return response.JSON(http.StatusOK, correlations)
+}
+
+// swagger:parameters getCorrelationsBySourceUID
+type GetCorrelationsBySourceUIDParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"sourceUID"`
+}
+
+//swagger:response getCorrelationsBySourceUIDResponse
+type GetCorrelationsBySourceUIDResponse struct {
+	// in: body
+	Body []Correlation `json:"body"`
 }
