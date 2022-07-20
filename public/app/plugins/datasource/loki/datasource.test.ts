@@ -703,7 +703,7 @@ describe('LokiDatasource', () => {
 
   describe('prepareLogRowContextQueryTarget', () => {
     const ds = createLokiDSForTests();
-    it('creates query with only labels from /labels API', () => {
+    it('creates query with only labels from /labels API', async () => {
       const row: LogRowModel = {
         rowIndex: 0,
         dataFrame: new MutableDataFrame({
@@ -717,14 +717,38 @@ describe('LokiDatasource', () => {
         }),
         labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
         uid: '1',
-      } as any;
+      } as unknown as LogRowModel;
 
       //Mock stored labels to only include "bar" label
+      jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
       jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['bar']);
-      const contextQuery = ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
+      const contextQuery = await ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
 
       expect(contextQuery.query.expr).toContain('baz');
       expect(contextQuery.query.expr).not.toContain('uniqueParsedLabel');
+    });
+
+    it('should call languageProvider.start to fetch labels', async () => {
+      const row: LogRowModel = {
+        rowIndex: 0,
+        dataFrame: new MutableDataFrame({
+          fields: [
+            {
+              name: 'ts',
+              type: FieldType.time,
+              values: [0],
+            },
+          ],
+        }),
+        labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
+        uid: '1',
+      } as unknown as LogRowModel;
+
+      //Mock stored labels to only include "bar" label
+      jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
+      await ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
+
+      expect(ds.languageProvider.start).toBeCalled();
     });
   });
 
