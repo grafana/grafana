@@ -11,7 +11,7 @@ import { setFolderTitle } from './state/reducers';
 const setup = (propOverrides?: object) => {
   const props: Props = {
     ...getRouteComponentProps(),
-    navModel: {} as NavModel,
+    pageNav: {} as NavModel,
     folderUid: '1234',
     folder: {
       id: 0,
