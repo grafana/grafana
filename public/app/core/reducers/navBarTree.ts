@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { NavModelItem } from '@grafana/data';
-import config from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
 

@@ -12,15 +12,17 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardQuota(t *testing.T) {
@@ -173,19 +175,19 @@ providers:
 				desc:          "when updating provisioned dashboard using ID it should fail",
 				dashboardData: fmt.Sprintf(`{"title":"just testing", "id": %d, "version": 1}`, dashboardID),
 				expStatus:     http.StatusBadRequest,
-				expErrReason:  models.ErrDashboardCannotSaveProvisionedDashboard.Reason,
+				expErrReason:  dashboards.ErrDashboardCannotSaveProvisionedDashboard.Reason,
 			},
 			{
 				desc:          "when updating provisioned dashboard using UID it should fail",
 				dashboardData: fmt.Sprintf(`{"title":"just testing", "uid": %q, "version": 1}`, dashboardUID),
 				expStatus:     http.StatusBadRequest,
-				expErrReason:  models.ErrDashboardCannotSaveProvisionedDashboard.Reason,
+				expErrReason:  dashboards.ErrDashboardCannotSaveProvisionedDashboard.Reason,
 			},
 			{
 				desc:          "when updating dashboard using unknown ID, it should fail",
 				dashboardData: `{"title":"just testing", "id": 42, "version": 1}`,
 				expStatus:     http.StatusNotFound,
-				expErrReason:  models.ErrDashboardNotFound.Reason,
+				expErrReason:  dashboards.ErrDashboardNotFound.Reason,
 			},
 			{
 				desc:          "when updating dashboard using unknown UID, it should succeed",
@@ -247,7 +249,7 @@ providers:
 			dashboardErr := &errorResponseBody{}
 			err = json.Unmarshal(b, dashboardErr)
 			require.NoError(t, err)
-			assert.Equal(t, models.ErrDashboardCannotDeleteProvisionedDashboard.Reason, dashboardErr.Message)
+			assert.Equal(t, dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason, dashboardErr.Message)
 		})
 	})
 }

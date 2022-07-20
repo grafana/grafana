@@ -51,6 +51,7 @@ tls_client_cert =
 tls_client_key =
 tls_client_ca =
 use_pkce = true
+auth_style =
 ```
 
 Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
@@ -62,6 +63,9 @@ You can also specify the SSL/TLS configuration used by the client.
 - Set `tls_client_ca` to the path containing a trusted certificate authority list.
 
 `tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
+
+`auth_style` controls which [OAuth2 AuthStyle](https://pkg.go.dev/golang.org/x/oauth2#AuthStyle) is used when token is requested from OAuth provider. It determines how `client_id` and `client_secret` are sent to Oauth provider.
+Available values are `AutoDetect`, `InParams` and `InHeader`. By default, `AutoDetect` is used.
 
 Set `empty_scopes` to true to use an empty scope during authentication. By default, Grafana uses `user:email` as scope.
 

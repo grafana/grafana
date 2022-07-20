@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
@@ -17,7 +17,7 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
   const styles = getStyles(theme);
 
   return (
-    <table className="filter-table">
+    <table className={cx(styles.section, 'filter-table')}>
       <thead>
         <tr>
           <th>Name</th>
@@ -123,5 +123,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   neverExpire: css`
     color: ${theme.colors.text.secondary};
+  `,
+  section: css`
+    margin-bottom: ${theme.spacing(4)};
   `,
 });

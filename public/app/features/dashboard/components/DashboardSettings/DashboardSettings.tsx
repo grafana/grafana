@@ -161,7 +161,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
   const styles = getStyles(config.theme2);
 
   return (
-    <FocusScope contain autoFocus restoreFocus>
+    <FocusScope contain autoFocus>
       <div className="dashboard-settings" ref={ref} {...overlayProps} {...dialogProps}>
         <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose} />
         <CustomScrollbar>

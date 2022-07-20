@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -66,8 +65,8 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Regis
 		}, nil
 	}
 
-	s := screenshot.NewBrowserScreenshotService(ds, rs)
 	// Image uploading is an optional feature of screenshots
+	s := screenshot.NewRemoteRenderScreenshotService(ds, rs)
 	if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
 		u, err := imguploader.NewImageUploader()
 		if err != nil {
@@ -111,7 +110,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 	if err != nil {
 		// TODO: Check for screenshot upload failures. These images should still be
 		// stored because we have a local disk path that could be useful.
-		if errors.Is(err, models.ErrDashboardNotFound) {
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return nil, ErrNoDashboard
 		}
 		return nil, err
