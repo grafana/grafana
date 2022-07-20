@@ -3,4 +3,6 @@ set -eo pipefail
 
 cd "$(dirname "$0")"/..
 
-mixtool generate all mixin.libsonnet
+source ../.bingo/variables.env
+
+${MIXTOOL} generate all mixin.libsonnet

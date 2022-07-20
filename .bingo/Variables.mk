@@ -29,17 +29,23 @@ $(DRONE): $(BINGO_DIR)/drone.mod
 	@echo "(re)installing $(GOBIN)/drone-v1.5.0"
 	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=drone.mod -o=$(GOBIN)/drone-v1.5.0 "github.com/drone/drone-cli/drone"
 
-SWAGGER := $(GOBIN)/swagger-v0.29.0
-$(SWAGGER): $(BINGO_DIR)/swagger.mod
-	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/swagger-v0.29.0"
-	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=swagger.mod -o=$(GOBIN)/swagger-v0.29.0 "github.com/go-swagger/go-swagger/cmd/swagger"
-
 GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.40.1
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/golangci-lint-v1.40.1"
 	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.40.1 "github.com/golangci/golangci-lint/cmd/golangci-lint"
+
+MIXTOOL := $(GOBIN)/mixtool-v0.0.0-20220707192416-cac42a37b5a3
+$(MIXTOOL): $(BINGO_DIR)/mixtool.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/mixtool-v0.0.0-20220707192416-cac42a37b5a3"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=mixtool.mod -o=$(GOBIN)/mixtool-v0.0.0-20220707192416-cac42a37b5a3 "github.com/monitoring-mixins/mixtool/cmd/mixtool"
+
+SWAGGER := $(GOBIN)/swagger-v0.29.0
+$(SWAGGER): $(BINGO_DIR)/swagger.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/swagger-v0.29.0"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=swagger.mod -o=$(GOBIN)/swagger-v0.29.0 "github.com/go-swagger/go-swagger/cmd/swagger"
 
 WIRE := $(GOBIN)/wire-v0.5.0
 $(WIRE): $(BINGO_DIR)/wire.mod

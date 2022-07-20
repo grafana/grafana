@@ -126,13 +126,27 @@ test-js: ## Run tests for frontend.
 test: test-go test-js ## Run all tests.
 
 ##@ Linting
+ifeq ($(WIRE_TAGS), "oss")
 golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
 		--config ./conf/.golangci.toml \
 		$(GO_FILES)
+else
+golangci-lint: $(GOLANGCI_LINT)
+	@echo "lint pro via golangci-lint"
+	$(GOLANGCI_LINT) run \
+		--config ./conf/.golangci.toml \
+		--build-tags pro \
+		$(GO_FILES)
+endif
 
-lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
+jsonnetfmt: ./grafana-mixin/scripts/lint.sh ## Jsonnet reformatter
+
+mixtool: $(MIXTOOL) ## Improve jsonnet mixins workflow
+	./grafana-mixin/scripts/build.sh 
+
+lint-go: golangci-lint jsonnetfmt mixtool ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
