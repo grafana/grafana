@@ -229,3 +229,47 @@ Status codes:
 - **401** – Unauthorized
 - **404** – Not found, either source data source is not found or no correlation exists originating from the given data source
 - **500** – Internal error
+
+## Get all correlations
+
+`GET /api/datasources/correlations`
+
+Get all correlations.
+
+**Example request:**
+
+```http
+GET /api/datasources/correlations HTTP/1.1
+Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+[
+  {
+    "description": "Prometheus to Loki",
+    "label": "My Label",
+    "sourceUID": "uyBf2637k",
+    "targetUID": "PDDA8E780A17E7EF1",
+    "uid": "J6gn7d31L"
+  },
+  {
+    "description": "Loki to Tempo",
+    "label": "Another Label",
+    "sourceUID": "PDDA8E780A17E7EF1",
+    "targetUID": "P15396BDD62B2BE29",
+    "uid": "uWCpURgVk"
+  }
+]
+```
+
+Status codes:
+
+- **200** – OK
+- **401** – Unauthorized
+- **404** – Not found, no correlation is found
+- **500** – Internal error

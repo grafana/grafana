@@ -64,6 +64,10 @@ func (s CorrelationsService) GetCorrelationsBySourceUID(ctx context.Context, cmd
 	return s.getCorrelationsBySourceUID(ctx, cmd)
 }
 
+func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) ([]Correlation, error) {
+	return s.getCorrelations(ctx, cmd)
+}
+
 func (s CorrelationsService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.deleteCorrelationsBySourceUID(ctx, cmd)
 }

@@ -3373,6 +3373,27 @@
         }
       }
     },
+    "/datasources/correlations": {
+      "get": {
+        "tags": ["correlations"],
+        "summary": "Gets all correlations.",
+        "operationId": "getCorrelations",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCorrelationsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/id/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
@@ -15237,6 +15258,15 @@
       }
     },
     "getCorrelationsBySourceUIDResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Correlation"
+        }
+      }
+    },
+    "getCorrelationsResponse": {
       "description": "",
       "schema": {
         "type": "array",
