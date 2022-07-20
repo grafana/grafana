@@ -45,6 +45,7 @@ export interface GraphNGProps extends Themeable2 {
   height: number;
   timeRange: TimeRange;
   timeZone: TimeZone;
+  timeZone2?: TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   renderers?: Renderers;

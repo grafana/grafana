@@ -17,6 +17,7 @@ export interface ScaleProps {
   orientation: ScaleOrientation;
   direction: ScaleDirection;
   log?: number;
+  from?: string;
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -99,6 +100,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         range: range ?? rangeFn,
         dir: direction,
         ori: orientation,
+        from: this.props.from,
         ...distribution,
       },
     };

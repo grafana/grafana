@@ -52,7 +52,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const timezones = getTimezones(options.timezones, timeZone);
-  console.log('SHOW', timezones);
+  // console.log('SHOW', timezones);
 
   return (
     <TimeSeries
@@ -60,6 +60,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
+      timeZone2={timezones[1]}
       width={width}
       height={height}
       legend={options.legend}

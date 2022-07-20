@@ -286,6 +286,7 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
   timeZone: TimeZone;
+  timeZone2?: TimeZone;
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
   allFrames: DataFrame[];

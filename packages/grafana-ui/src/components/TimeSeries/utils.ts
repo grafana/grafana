@@ -49,6 +49,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   frame,
   theme,
   timeZone,
+  timeZone2,
   getTimeRange,
   eventBus,
   sync,
@@ -102,11 +103,36 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       isTime: true,
       placement: xFieldAxisPlacement,
       show: xFieldAxisShow,
-      label: xField.config.custom?.axisLabel,
+      label: timeZone2 ? undefined : xField.config.custom?.axisLabel,
       timeZone,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
     });
+
+    if (timeZone2) {
+      builder.addScale({
+        scaleKey: 'x2',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
+        isTime: true,
+        from: xScaleKey,
+        range: () => {
+          const r = getTimeRange();
+          return [r.from.valueOf(), r.to.valueOf()];
+        },
+      });
+
+      builder.addAxis({
+        scaleKey: 'x2',
+        isTime: true,
+        placement: xFieldAxisPlacement,
+        show: xFieldAxisShow,
+        label: xField.config.custom?.axisLabel,
+        timeZone: timeZone2,
+        theme,
+        grid: { show: false },
+      });
+    }
   } else {
     // Not time!
     if (xField.config.unit) {
