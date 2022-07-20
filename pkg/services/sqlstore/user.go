@@ -20,7 +20,7 @@ type ErrCaseInsensitiveLoginConflict struct {
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
-	return models.ErrCaseInsensitive
+	return user.ErrCaseInsensitive
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Error() string {
