@@ -142,15 +142,15 @@ export interface NotificationChannelState {
   notificationChannel: any;
 }
 
-export interface IntegrationError {
-  lastError: null | string;
+export interface IntegrationStatus {
+  lastError?: null | string;
   lastNotify: string;
   lastNotifyDuration: string;
   name: string;
 }
 
 export interface IntegrationTypesState {
-  [key: string]: IntegrationError[]; // key is the integration type
+  [key: string]: IntegrationStatus[]; // key is the integration type
 }
 
 export interface ReceiverState {
@@ -170,7 +170,7 @@ export interface ContactPointsState {
 
 export interface ReceiversStateDTO {
   active: boolean;
-  integrations: IntegrationError[];
+  integrations: IntegrationStatus[];
   name: string;
 }
 export interface AlertRulesState {
