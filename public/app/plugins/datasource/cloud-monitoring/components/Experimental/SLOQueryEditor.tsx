@@ -47,36 +47,36 @@ export function SLOQueryEditor({
 }: React.PropsWithChildren<Props>) {
   return (
     <>
-      <Project
-        refId={refId}
-        templateVariableOptions={variableOptionGroup.options}
-        projectName={query.projectName}
-        datasource={datasource}
-        onChange={(projectName) => onChange({ ...query, projectName })}
-      />
-      <Service
-        refId={refId}
-        datasource={datasource}
-        templateVariableOptions={variableOptionGroup.options}
-        query={query}
-        onChange={onChange}
-      />
-      <SLO
-        refId={refId}
-        datasource={datasource}
-        templateVariableOptions={variableOptionGroup.options}
-        query={query}
-        onChange={onChange}
-      />
-      <Selector
-        refId={refId}
-        datasource={datasource}
-        templateVariableOptions={variableOptionGroup.options}
-        query={query}
-        onChange={onChange}
-      />
-
       <EditorRow>
+        <Project
+          refId={refId}
+          templateVariableOptions={variableOptionGroup.options}
+          projectName={query.projectName}
+          datasource={datasource}
+          onChange={(projectName) => onChange({ ...query, projectName })}
+        />
+        <Service
+          refId={refId}
+          datasource={datasource}
+          templateVariableOptions={variableOptionGroup.options}
+          query={query}
+          onChange={onChange}
+        />
+        <SLO
+          refId={refId}
+          datasource={datasource}
+          templateVariableOptions={variableOptionGroup.options}
+          query={query}
+          onChange={onChange}
+        />
+        <Selector
+          refId={refId}
+          datasource={datasource}
+          templateVariableOptions={variableOptionGroup.options}
+          query={query}
+          onChange={onChange}
+        />
+
         <EditorFieldGroup>
           <EditorField label="Alignment period">
             <PeriodSelect
@@ -91,9 +91,9 @@ export function SLOQueryEditor({
             <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
           </Stack>
         </EditorFieldGroup>
-      </EditorRow>
 
-      <AliasBy refId={refId} value={query.aliasBy} onChange={(aliasBy) => onChange({ ...query, aliasBy })} />
+        <AliasBy refId={refId} value={query.aliasBy} onChange={(aliasBy) => onChange({ ...query, aliasBy })} />
+      </EditorRow>
     </>
   );
 }
