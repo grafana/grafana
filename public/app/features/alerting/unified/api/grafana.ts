@@ -10,7 +10,7 @@ export function fetchContactPointsState(alertManagerSourceName: String): Promise
     integrationName.indexOf('[') !== -1 ? integrationName.substring(0, integrationName.indexOf('[')) : integrationName;
 
   const contactPointsStateDtoToModel = (receiversSateDto: ReceiversStateDTO[]): ContactPointsState => {
-    //init object to return
+    // init object to return
     const contactPointpState: ContactPointsState = { receivers: {}, errorCount: 0 };
 
     // for each receiver from response

@@ -28,7 +28,7 @@ import { ReceiversSection } from './ReceiversSection';
 interface ReceiverErrorProps {
   errorCount: number;
 }
-const ReceiverError: FC<ReceiverErrorProps> = ({ errorCount }: ReceiverErrorProps) => {
+function ReceiverError({ errorCount }: ReceiverErrorProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.warning}>
@@ -38,12 +38,12 @@ const ReceiverError: FC<ReceiverErrorProps> = ({ errorCount }: ReceiverErrorProp
       </Stack>
     </div>
   );
-};
+}
 interface ReceiverHealthProps {
   receiverName: string;
 }
 
-const ReceiverHealth: FC<ReceiverHealthProps> = ({ receiverName }) => {
+function ReceiverHealth({ receiverName }: ReceiverHealthProps) {
   const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
   const { result: contactPointsState } = contactPointsStateRequest ?? initialAsyncRequestState;
   const receiverState: ReceiverState | undefined = contactPointsState?.receivers[receiverName];
@@ -53,7 +53,7 @@ const ReceiverHealth: FC<ReceiverHealthProps> = ({ receiverName }) => {
   } else {
     return <div>OK</div>;
   }
-};
+}
 
 interface Props {
   config: AlertManagerCortexConfig;
