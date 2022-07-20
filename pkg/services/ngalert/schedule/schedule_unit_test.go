@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	ds "github.com/grafana/grafana/pkg/services/datasources"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -1045,4 +1046,61 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSec
 
 	t.Logf("alert definition: %v with interval: %d created", rule.GetKey(), rule.IntervalSeconds)
 	return rule
+}
+
+func TestBuildExternalURL(t *testing.T) {
+	sch := schedule{
+		secretService: fakes.NewFakeSecretsService(),
+	}
+	tests := []struct {
+		name        string
+		ds          *ds.DataSource
+		expectedURL string
+	}{
+		{
+			name: "datasource wihtout auth",
+			ds: &ds.DataSource{
+				Url: "https://localhost:9000",
+			},
+			expectedURL: "https://localhost:9000",
+		},
+		{
+			name: "datasource wihtout auth and with path",
+			ds: &ds.DataSource{
+				Url: "https://localhost:9000/path/to/am",
+			},
+			expectedURL: "https://localhost:9000/path/to/am",
+		},
+		{
+			name: "datasource wiht auth",
+			ds: &ds.DataSource{
+				Url:           "https://localhost:9000",
+				BasicAuth:     true,
+				BasicAuthUser: "johndoe",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("123"),
+				},
+			},
+			expectedURL: "https://johndoe:123@localhost:9000",
+		},
+		{
+			name: "datasource wiht auth and path",
+			ds: &ds.DataSource{
+				Url:           "https://localhost:9000/path/to/am",
+				BasicAuth:     true,
+				BasicAuthUser: "johndoe",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("123"),
+				},
+			},
+			expectedURL: "https://johndoe:123@localhost:9000/path/to/am",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			url, err := sch.buildExternalURL(test.ds)
+			require.NoError(t, err)
+			require.Equal(t, test.expectedURL, url)
+		})
+	}
 }
