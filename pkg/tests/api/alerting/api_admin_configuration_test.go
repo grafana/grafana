@@ -108,7 +108,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		var res map[string]interface{}
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
-		require.Equal(t, "At least one Alertmanager must be provided to choose this option", res["message"])
+		require.Equal(t, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", res["message"])
 	}
 
 	// Now, lets re-set external Alertmanagers for main organisation
