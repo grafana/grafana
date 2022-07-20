@@ -4874,6 +4874,10 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
+<<<<<<< HEAD
 hmac: fdbc2724cf738ea9a2cd2be46f70d13928c96cc29179a79b7108650af40740ff
+=======
+hmac: 09a6bfeebeb3a1a5251cc8946621df3bedefb591159a3c9382901d275a2dabe6
+>>>>>>> 47678cd087... CI; Update Dockerfile for `grafana/grafana-ci-deploy` container (#52516)
 
 ...
