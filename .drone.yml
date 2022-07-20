@@ -126,7 +126,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: shellcheck
 - commands:
-  - ./bin/grabpl lint-backend --edition oss
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -797,7 +797,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: shellcheck
 - commands:
-  - ./bin/grabpl lint-backend --edition oss
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -1866,7 +1866,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: codespell
 - commands:
-  - ./bin/grabpl lint-backend --edition oss
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -2508,7 +2508,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: codespell
 - commands:
-  - ./bin/grabpl lint-backend --edition enterprise
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -2547,7 +2547,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: test-frontend
 - commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -3646,7 +3646,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: codespell
 - commands:
-  - ./bin/grabpl lint-backend --edition oss
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -4260,7 +4260,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: codespell
 - commands:
-  - ./bin/grabpl lint-backend --edition enterprise
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -4299,7 +4299,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: test-frontend
 - commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -4681,6 +4681,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 7187b5862a748406716c611fc2697b98a44b1d70431a049964fb3c6c4181fd7f
+hmac: ad9c98e244d2e7f09bfede40d3c5e9af904bc69f5e741a8b9d39df2f8915ee86
 
 ...
