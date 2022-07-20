@@ -121,6 +121,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 		wg.Wait()
 
+		// Report can take a while and we don't really need to wait for it.
 		go reportDiff(data, err, streamData, streamError)
 		return data, err
 	}
@@ -176,6 +177,7 @@ func reportDiff(data *backend.QueryDataResponse, err error, streamData *backend.
 	}
 
 	if !reflect.DeepEqual(data, streamData) {
+		plog.Debug("PrometheusStreamingJSONParserTest buffer and streaming data are different")
 		dataJson, jsonErr := json.MarshalIndent(data, "", "\t")
 		if jsonErr != nil {
 			plog.Debug("PrometheusStreamingJSONParserTest error marshaling data", "jsonErr", jsonErr)
@@ -184,7 +186,6 @@ func reportDiff(data *backend.QueryDataResponse, err error, streamData *backend.
 		if jsonErr != nil {
 			plog.Debug("PrometheusStreamingJSONParserTest error marshaling streaming data", "jsonErr", jsonErr)
 		}
-		plog.Debug("PrometheusStreamingJSONParserTest buffer and streaming data are different")
 		//fmt.Println(string(dataJson))
 		//fmt.Println(string(streamingJson))
 		differ := gojsondiff.New()
