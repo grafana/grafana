@@ -213,7 +213,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         <div>
           <AccordianKeyValues
             data={tags}
-            label="Tags"
+            label="Attributes"
             linksGetter={linksGetter}
             isOpen={isTagsOpen}
             onToggle={() => tagsToggle(spanID)}
@@ -222,7 +222,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             <AccordianKeyValues
               className={ubMb1}
               data={process.tags}
-              label="Process"
+              label="Resource"
               linksGetter={linksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}

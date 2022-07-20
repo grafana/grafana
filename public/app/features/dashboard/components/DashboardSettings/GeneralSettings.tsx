@@ -143,10 +143,11 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
         liveNow={dashboard.liveNow}
       />
 
+      {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
       <CollapsableSection label="Panel options" isOpen={true}>
         <Field
           label="Graph tooltip"
-          description="Controls tooltip and hover highlight behavior across different panels"
+          description="Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect"
         >
           <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={dashboard.graphTooltip} />
         </Field>

@@ -10,7 +10,7 @@ aliases:
   - /docs/grafana/latest/reference/search/
 title: 'Use dashboards'
 menuTitle: Use dashboards
-weight: 2
+weight: 1
 keywords:
   - dashboard
   - search

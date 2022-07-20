@@ -139,6 +139,21 @@ func (mr *MockServiceMockRecorder) RenderErrorImage(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenderErrorImage", reflect.TypeOf((*MockService)(nil).RenderErrorImage), arg0, arg1)
 }
 
+// SanitizeSVG mocks base method.
+func (m *MockService) SanitizeSVG(arg0 context.Context, arg1 *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SanitizeSVG", arg0, arg1)
+	ret0, _ := ret[0].(*SanitizeSVGResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SanitizeSVG indicates an expected call of SanitizeSVG.
+func (mr *MockServiceMockRecorder) SanitizeSVG(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SanitizeSVG", reflect.TypeOf((*MockService)(nil).SanitizeSVG), arg0, arg1)
+}
+
 // Version mocks base method.
 func (m *MockService) Version() string {
 	m.ctrl.T.Helper()

@@ -1,71 +1,92 @@
+import { render, screen } from '@testing-library/react';
 import { shallow } from 'enzyme';
 import React from 'react';
+import selectEvent from 'react-select-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
 
+import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
+
 import { ConfigEditor, Props } from './ConfigEditor';
+
+const ds = setupMockedDataSource();
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
-    loadDatasource: jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        getRegions: jest.fn().mockReturnValue([
-          {
-            label: 'ap-east-1',
-            value: 'ap-east-1',
-          },
-        ]),
-      })
-    ),
+    loadDatasource: jest.fn().mockResolvedValue({
+      getRegions: jest.fn().mockResolvedValue([
+        {
+          label: 'ap-east-1',
+          value: 'ap-east-1',
+        },
+      ]),
+      describeLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar']),
+      getActualRegion: jest.fn().mockReturnValue('ap-east-1'),
+      getVariables: jest.fn().mockReturnValue([]),
+    }),
   }),
 }));
 
-const setup = (propOverrides?: object) => {
-  const props: Props = {
-    options: {
-      id: 1,
-      uid: 'z',
-      orgId: 1,
-      typeLogoUrl: '',
-      name: 'CloudWatch',
-      access: 'proxy',
-      url: '',
-      database: '',
-      type: 'cloudwatch',
-      typeName: 'Cloudwatch',
-      user: '',
-      basicAuth: false,
-      basicAuthUser: '',
-      isDefault: true,
-      readOnly: false,
-      withCredentials: false,
-      secureJsonFields: {
-        accessKey: false,
-        secretKey: false,
-      },
-      jsonData: {
-        assumeRoleArn: '',
-        externalId: '',
-        database: '',
-        customMetricsNamespaces: '',
-        authType: AwsAuthType.Keys,
-        defaultRegion: 'us-east-2',
-        timeField: '@timestamp',
-      },
-      secureJsonData: {
-        secretKey: '',
-        accessKey: '',
-      },
+jest.mock('./XrayLinkConfig', () => ({
+  XrayLinkConfig: () => <></>,
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    put: jest.fn().mockResolvedValue({ datasource: ds.datasource }),
+  }),
+}));
+
+const props: Props = {
+  options: {
+    id: 1,
+    uid: 'z',
+    orgId: 1,
+    typeLogoUrl: '',
+    name: 'CloudWatch',
+    access: 'proxy',
+    url: '',
+    database: '',
+    type: 'cloudwatch',
+    typeName: 'Cloudwatch',
+    user: '',
+    basicAuth: false,
+    basicAuthUser: '',
+    isDefault: true,
+    readOnly: false,
+    withCredentials: false,
+    secureJsonFields: {
+      accessKey: false,
+      secretKey: false,
     },
-    onOptionsChange: jest.fn(),
-  };
+    jsonData: {
+      assumeRoleArn: '',
+      externalId: '',
+      database: '',
+      customMetricsNamespaces: '',
+      authType: AwsAuthType.Keys,
+      defaultRegion: 'us-east-2',
+      timeField: '@timestamp',
+    },
+    secureJsonData: {
+      secretKey: '',
+      accessKey: '',
+    },
+  },
+  onOptionsChange: jest.fn(),
+};
 
-  Object.assign(props, propOverrides);
+const setup = (propOverrides?: object) => {
+  const newProps = { ...props, ...propOverrides };
 
-  return shallow(<ConfigEditor {...props} />);
+  return shallow(<ConfigEditor {...newProps} />);
 };
 
 describe('Render', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
   it('should render component', () => {
     const wrapper = setup();
 
@@ -106,5 +127,16 @@ describe('Render', () => {
       },
     });
     expect(wrapper).toMatchSnapshot();
+  });
+
+  it('should load log groups when multiselect is opened', async () => {
+    (window as any).grafanaBootData = {
+      settings: {},
+    };
+
+    render(<ConfigEditor {...props} />);
+    const multiselect = await screen.findByLabelText('Log Groups');
+    selectEvent.openMenu(multiselect);
+    expect(await screen.findByText('logGroup-foo')).toBeInTheDocument();
   });
 });

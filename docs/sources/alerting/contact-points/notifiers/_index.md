@@ -18,25 +18,25 @@ weight: 130
 
 The following table lists the notifiers (contact point types) supported by Grafana.
 
-| Name                                          | Type                      | Grafana Alertmanager | Other Alertmanagers                                                                                      |
-| --------------------------------------------- | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
-| [DingDing](#dingdingdingtalk)                 | `dingding`                | Supported            | N/A                                                                                                      |
-| [Discord](#discord)                           | `discord`                 | Supported            | N/A                                                                                                      |
-| [Email](#email)                               | `email`                   | Supported            | Supported                                                                                                |
-| [Google Hangouts Chat](#google-hangouts-chat) | `googlechat`              | Supported            | N/A                                                                                                      |
-| [Kafka](#kafka)                               | `kafka`                   | Supported            | N/A                                                                                                      |
-| Line                                          | `line`                    | Supported            | N/A                                                                                                      |
-| Microsoft Teams                               | `teams`                   | Supported            | N/A                                                                                                      |
-| [Opsgenie](#opsgenie)                         | `opsgenie`                | Supported            | Supported                                                                                                |
-| [Pagerduty](#pagerduty)                       | `pagerduty`               | Supported            | Supported                                                                                                |
-| Prometheus Alertmanager                       | `prometheus-alertmanager` | Supported            | N/A                                                                                                      |
-| [Pushover](#pushover)                         | `pushover`                | Supported            | Supported                                                                                                |
-| Sensu                                         | `sensu`                   | Supported            | N/A                                                                                                      |
-| [Sensu Go](#sensu-go)                         | `sensugo`                 | Supported            | N/A                                                                                                      |
-| [Slack](#slack)                               | `slack`                   | Supported            | Supported                                                                                                |
-| Telegram                                      | `telegram`                | Supported            | N/A                                                                                                      |
-| Threema                                       | `threema`                 | Supported            | N/A                                                                                                      |
-| VictorOps                                     | `victorops`               | Supported            | Supported                                                                                                |
-| [Webhook](#webhook)                           | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
-| [WeCom](#wecom)                               | `wecom`                   | Supported            | N/A                                                                                                      |
-| [Zenduty](#zenduty)                           | `webhook`                 | Supported            | N/A                                                                                                      |
+| Name                                             | Type                      | Grafana Alertmanager | Other Alertmanagers                                                                                      |
+| ------------------------------------------------ | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
+| [DingDing](https://www.dingtalk.com/en)          | `dingding`                | Supported            | N/A                                                                                                      |
+| [Discord](https://discord.com/)                  | `discord`                 | Supported            | N/A                                                                                                      |
+| [Email](#email)                                  | `email`                   | Supported            | Supported                                                                                                |
+| [Google Hangouts](https://hangouts.google.com/)  | `googlechat`              | Supported            | N/A                                                                                                      |
+| [Kafka](https://kafka.apache.org/)               | `kafka`                   | Supported            | N/A                                                                                                      |
+| [Line](https://line.me/en/)                      | `line`                    | Supported            | N/A                                                                                                      |
+| [Microsoft Teams](https://teams.microsoft.com/)  | `teams`                   | Supported            | N/A                                                                                                      |
+| [Opsgenie](https://atlassian.com/opsgenie/)      | `opsgenie`                | Supported            | Supported                                                                                                |
+| [Pagerduty](https://www.pagerduty.com/)          | `pagerduty`               | Supported            | Supported                                                                                                |
+| [Prometheus Alertmanager](https://prometheus.io) | `prometheus-alertmanager` | Supported            | N/A                                                                                                      |
+| [Pushover](https://pushover.net/)                | `pushover`                | Supported            | Supported                                                                                                |
+| [Sensu](https://sensu.io/)                       | `sensu`                   | Supported            | N/A                                                                                                      |
+| [Sensu Go](https://docs.sensu.io/sensu-go/)      | `sensugo`                 | Supported            | N/A                                                                                                      |
+| [Slack](https://slack.com/)                      | `slack`                   | Supported            | Supported                                                                                                |
+| [Telegram](https://telegram.org/)                | `telegram`                | Supported            | N/A                                                                                                      |
+| [Threema](https://threema.ch/)                   | `threema`                 | Supported            | N/A                                                                                                      |
+| [VictorOps](https://help.victorops.com/)         | `victorops`               | Supported            | Supported                                                                                                |
+| [Webhook](#webhook)                              | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
+| [WeCom](#wecom)                                  | `wecom`                   | Supported            | N/A                                                                                                      |
+| [Zenduty](https://www.zenduty.com/)              | `webhook`                 | Supported            | N/A                                                                                                      |

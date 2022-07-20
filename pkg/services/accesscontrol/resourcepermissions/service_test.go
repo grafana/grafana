@@ -38,7 +38,7 @@ func TestService_SetUserPermission(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
-				Assignments:          Assignments{Users: true},
+				Assignments:          Assignments{Users: true, ServiceAccounts: true},
 				PermissionsToActions: nil,
 			})
 
@@ -159,9 +159,10 @@ func TestService_SetPermissions(t *testing.T) {
 			options: Options{
 				Resource: "dashboards",
 				Assignments: Assignments{
-					Users:        true,
-					Teams:        true,
-					BuiltInRoles: true,
+					Users:           true,
+					Teams:           true,
+					BuiltInRoles:    true,
+					ServiceAccounts: true,
 				},
 				PermissionsToActions: map[string][]string{
 					"View": {"dashboards:read"},
@@ -178,9 +179,10 @@ func TestService_SetPermissions(t *testing.T) {
 			options: Options{
 				Resource: "dashboards",
 				Assignments: Assignments{
-					Users:        true,
-					Teams:        true,
-					BuiltInRoles: true,
+					Users:           true,
+					Teams:           true,
+					BuiltInRoles:    true,
+					ServiceAccounts: true,
 				},
 				PermissionsToActions: map[string][]string{
 					"View": {"dashboards:read"},

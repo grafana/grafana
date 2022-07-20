@@ -150,11 +150,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onClickFilterLabel = (key: string, value: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', key, value });
+    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
   };
 
   onClickFilterOutLabel = (key: string, value: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER_OUT', key, value });
+    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
   };
 
   onClickAddQueryRowButton = () => {
@@ -280,12 +280,15 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderNodeGraphPanel() {
-    const { exploreId, showTrace, queryResponse } = this.props;
+    const { exploreId, showTrace, queryResponse, datasourceInstance } = this.props;
+    const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
+
     return (
       <NodeGraphContainer
         dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
         exploreId={exploreId}
         withTraceView={showTrace}
+        datasourceType={datasourceType}
       />
     );
   }

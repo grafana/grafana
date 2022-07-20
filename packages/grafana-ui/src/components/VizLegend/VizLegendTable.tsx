@@ -108,9 +108,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.primary.text};
     font-weight: ${theme.typography.fontWeightMedium};
     border-bottom: 1px solid ${theme.colors.border.weak};
-    padding: ${theme.spacing(0.25, 2, 0.25, 1)};
+    padding: ${theme.spacing(0.25, 1, 0.25, 1)};
     font-size: ${theme.typography.bodySmall.fontSize};
-    text-align: left;
+    text-align: right;
     white-space: nowrap;
   `,
   // This needs to be padding-right - icon size(xs==12) to avoid jumping

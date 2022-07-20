@@ -6,10 +6,15 @@ import {
   FrameGeometrySourceMode,
   PluginState,
   EventBus,
+  DataHoverEvent,
+  DataHoverClearEvent,
+  DataFrame,
+  TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
-import { getLocationMatchers } from 'app/features/geo/utils/location';
+import { Subscription, throttleTime } from 'rxjs';
+import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 import { getColorDimension } from 'app/features/dimensions';
 import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
 import { StyleEditor } from './StyleEditor';
@@ -18,6 +23,11 @@ import VectorLayer from 'ol/layer/Vector';
 import { isNumber } from 'lodash';
 import { routeStyle } from '../../style/markers';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { Group as LayerGroup } from 'ol/layer';
+import VectorSource from 'ol/source/Vector';
+import { Fill, Stroke, Style, Circle } from 'ol/style';
+import Feature from 'ol/Feature';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 // Configuration options for Circle overlays
 export interface RouteConfig {
@@ -70,9 +80,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
-    const vectorLayer = new VectorLayer({
-      source,
-    });
+    const vectorLayer = new VectorLayer({ source });
 
     if (!style.fields) {
       // Set a global style
@@ -94,8 +102,70 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       });
     }
 
+    // Crosshair layer
+    const crosshairFeature = new Feature({});
+    const crosshairRadius = (style.base.lineWidth || 6) + 2;
+    const crosshairStyle = new Style({
+      image: new Circle({
+        radius: crosshairRadius,
+        stroke: new Stroke({
+          color: alpha(style.base.color, 0.4),
+          width: crosshairRadius + 2
+        }),
+        fill: new Fill({color: style.base.color}),
+      })
+    });
+
+    const crosshairLayer = new VectorLayer({
+      source: new VectorSource({
+        features: [crosshairFeature],
+      }),
+      style: crosshairStyle,
+    });
+
+    const layer = new LayerGroup({
+      layers: [vectorLayer, crosshairLayer]
+    });
+
+    // Crosshair sharing subscriptions
+    const subscriptions = new Subscription();
+
+    subscriptions.add(
+      eventBus
+        .getStream(DataHoverEvent)
+        .pipe(throttleTime(8))
+        .subscribe({
+          next: (event) => {
+            const feature = source.getFeatures()[0];
+            const frame = feature?.get('frame') as DataFrame;
+            const time = event.payload?.point?.time as number;
+            if (frame && time) {
+              const timeField = frame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
+              if (timeField) {
+                const timestamps: number[] = timeField.values.toArray();
+                const pointIdx = findNearestTimeIndex(timestamps, time);
+                if (pointIdx !== null) {
+                  const out = getGeometryField(frame, location);
+                  if (out.field) {
+                    crosshairFeature.setGeometry(out.field.values.get(pointIdx));
+                    crosshairFeature.setStyle(crosshairStyle);
+                  }
+                }
+              }
+            }
+          },
+        })
+    );
+
+    subscriptions.add(
+      eventBus.subscribe(DataHoverClearEvent, (event) => {
+        crosshairFeature.setStyle(new Style({}));
+      })
+    );
+
     return {
-      init: () => vectorLayer,
+      init: () => layer,
+      dispose: () => subscriptions.unsubscribe(),
       update: (data: PanelData) => {
         if (!data.series?.length) {
           return; // ignore empty
@@ -145,3 +215,34 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
   // fill in the default values
   defaultOptions,
 };
+
+function findNearestTimeIndex(timestamps: number[], time: number): number | null {
+  if (timestamps.length === 0) {
+    return null;
+  } else if (timestamps.length === 1) {
+    return 0;
+  }
+  const lastIdx = timestamps.length - 1;
+  if (time < timestamps[0]) {
+    return 0;
+  } else if (time > timestamps[lastIdx]) {
+    return lastIdx;
+  }
+
+  const probableIdx = Math.abs(Math.round(lastIdx * (time - timestamps[0]) / (timestamps[lastIdx] - timestamps[0])));
+  if (time < timestamps[probableIdx]) {
+    for (let i = probableIdx; i > 0; i--) {
+      if (time > timestamps[i]) {
+        return i;
+      }
+    }
+    return 0;
+  } else {
+    for (let i = probableIdx; i < lastIdx; i++) {
+      if (time < timestamps[i]) {
+        return i;
+      }
+    }
+    return lastIdx;
+  }
+}

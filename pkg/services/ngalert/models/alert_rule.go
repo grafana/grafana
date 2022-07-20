@@ -23,6 +23,7 @@ var (
 	ErrRuleGroupNamespaceNotFound         = errors.New("rule group not found under this namespace")
 	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
+	ErrQuotaReached                       = errors.New("quota has been exceeded")
 )
 
 // swagger:enum NoDataState
@@ -170,6 +171,14 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 	return labels
 }
 
+func (alertRule *AlertRule) GetEvalCondition() Condition {
+	return Condition{
+		Condition: alertRule.Condition,
+		OrgID:     alertRule.OrgID,
+		Data:      alertRule.Data,
+	}
+}
+
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
 func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.DiffReport {
 	var reporter cmputil.DiffReporter
@@ -307,8 +316,6 @@ type ListAlertRulesQuery struct {
 }
 
 type GetAlertRulesForSchedulingQuery struct {
-	ExcludeOrgIDs []int64
-
 	Result []*SchedulableAlertRule
 }
 

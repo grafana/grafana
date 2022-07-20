@@ -22,7 +22,24 @@ func TestContactPointService(t *testing.T) {
 	t.Run("service gets contact points from AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), 1)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
+		require.NoError(t, err)
+
+		require.Len(t, cps, 1)
+		require.Equal(t, "email receiver", cps[0].Name)
+	})
+
+	t.Run("service filters contact points by name", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		q := ContactPointQuery{
+			OrgID: 1,
+			Name:  "email receiver",
+		}
+		cps, err := sut.GetContactPoints(context.Background(), q)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
@@ -36,7 +53,7 @@ func TestContactPointService(t *testing.T) {
 		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), 1)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
 		require.NoError(t, err)
 		require.Len(t, cps, 2)
 		require.Equal(t, "test-contact-point", cps[1].Name)
@@ -52,7 +69,7 @@ func TestContactPointService(t *testing.T) {
 		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), 1)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
 		require.NoError(t, err)
 		require.Len(t, cps, 2)
 		require.Equal(t, customUID, cps[1].UID)
@@ -120,7 +137,7 @@ func TestContactPointService(t *testing.T) {
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
 		sut := createContactPointServiceSut(secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), 1)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
 		require.NoError(t, err)
 
 		require.Equal(t, models.ProvenanceNone, models.Provenance(cps[0].Provenance))
@@ -133,7 +150,7 @@ func TestContactPointService(t *testing.T) {
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceNone)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), 1)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
 		require.NoError(t, err)
 		require.Equal(t, newCp.UID, cps[1].UID)
 		require.Equal(t, models.ProvenanceNone, models.Provenance(cps[1].Provenance))
@@ -141,7 +158,7 @@ func TestContactPointService(t *testing.T) {
 		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err = sut.GetContactPoints(context.Background(), 1)
+		cps, err = sut.GetContactPoints(context.Background(), cpsQuery(1))
 		require.NoError(t, err)
 		require.Equal(t, newCp.UID, cps[1].UID)
 		require.Equal(t, models.ProvenanceAPI, models.Provenance(cps[1].Provenance))
@@ -154,7 +171,7 @@ func TestContactPointService(t *testing.T) {
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceNone)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), 1)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
 		require.NoError(t, err)
 		require.Equal(t, newCp.UID, cps[1].UID)
 		require.Equal(t, models.ProvenanceNone, models.Provenance(cps[1].Provenance))
@@ -162,7 +179,7 @@ func TestContactPointService(t *testing.T) {
 		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceFile)
 		require.NoError(t, err)
 
-		cps, err = sut.GetContactPoints(context.Background(), 1)
+		cps, err = sut.GetContactPoints(context.Background(), cpsQuery(1))
 		require.NoError(t, err)
 		require.Equal(t, newCp.UID, cps[1].UID)
 		require.Equal(t, models.ProvenanceFile, models.Provenance(cps[1].Provenance))
@@ -175,7 +192,7 @@ func TestContactPointService(t *testing.T) {
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceFile)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), 1)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
 		require.NoError(t, err)
 		require.Equal(t, newCp.UID, cps[1].UID)
 		require.Equal(t, models.ProvenanceFile, models.Provenance(cps[1].Provenance))
@@ -191,7 +208,7 @@ func TestContactPointService(t *testing.T) {
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), 1)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
 		require.NoError(t, err)
 		require.Equal(t, newCp.UID, cps[1].UID)
 		require.Equal(t, models.ProvenanceAPI, models.Provenance(cps[1].Provenance))
@@ -266,6 +283,12 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 		Name:     "test-contact-point",
 		Type:     "slack",
 		Settings: settings,
+	}
+}
+
+func cpsQuery(orgID int64) ContactPointQuery {
+	return ContactPointQuery{
+		OrgID: orgID,
 	}
 }
 
