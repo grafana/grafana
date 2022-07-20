@@ -150,3 +150,38 @@ Status codes:
 - **403** – Forbidden, source data source is read-only
 - **404** – Not found, either source or target data source could not be found
 - **500** – Internal error
+
+## Get single correlation
+
+`GET /api/datasources/uid/:sourceUID/correlations/:correlationUID`
+
+Gets a single correlation.
+
+**Example request:**
+
+```http
+GET /api/datasources/uid/uyBf2637k/correlations/J6gn7d31L HTTP/1.1
+Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "description": "Logs to Traces",
+  "label": "My Label",
+  "sourceUID": "uyBf2637k",
+  "targetUID": "PDDA8E780A17E7EF1",
+  "uid": "J6gn7d31L"
+}
+```
+
+Status codes:
+
+- **200** – OK
+- **401** – Unauthorized
+- **404** – Not found, either source data source or correlation were not found
+- **500** – Internal error

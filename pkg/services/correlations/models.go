@@ -94,6 +94,15 @@ type UpdateCorrelationCommand struct {
 	Description *string `json:"description"`
 }
 
+// GetCorrelationQuery is the query to retrieve a single correlation
+type GetCorrelationQuery struct {
+	// UID of the correlation
+	UID string `json:"-"`
+	// UID of the source data source
+	SourceUID string `json:"-"`
+	OrgId     int64  `json:"-"`
+}
+
 type DeleteCorrelationsBySourceUIDCommand struct {
 	SourceUID string
 }

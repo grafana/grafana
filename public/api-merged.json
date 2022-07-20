@@ -4447,6 +4447,39 @@
       }
     },
     "/datasources/uid/{sourceUID}/correlations/{correlationUID}": {
+      "get": {
+        "tags": ["correlations"],
+        "summary": "Gets a correlation.",
+        "operationId": "getCorrelation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "correlationUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCorrelationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "patch": {
         "tags": [
           "correlations"
@@ -19169,6 +19202,12 @@
         "items": {
           "$ref": "#/definitions/ItemDTO"
         }
+      }
+    },
+    "getCorrelationResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Correlation"
       }
     },
     "getCurrentOrgResponse": {
