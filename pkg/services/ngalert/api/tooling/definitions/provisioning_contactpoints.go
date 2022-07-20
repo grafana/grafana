@@ -121,7 +121,7 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 func (e *EmbeddedContactPoint) SecretKeys() ([]string, error) {
 	notifiers := channels_config.GetAvailableNotifiers()
 	for _, n := range notifiers {
-		if n.Name == e.Type {
+		if n.Type == e.Type {
 			secureFields := []string{}
 			for _, field := range n.Options {
 				if field.Secure {
