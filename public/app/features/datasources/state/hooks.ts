@@ -73,7 +73,7 @@ export const useLoadDataSourcePlugins = () => {
 
 export const useAddDatasource = () => {
   const dispatch = useDispatch();
-  const dataSourcesRoutes = useContext(DataSourcesRoutesContext);
+  const dataSourcesRoutes = useDataSourcesRoutes();
 
   return (plugin: DataSourcePluginMeta) => {
     dispatch(addDataSource(plugin, dataSourcesRoutes.Edit));

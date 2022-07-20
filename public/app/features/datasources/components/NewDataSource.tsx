@@ -58,6 +58,8 @@ export function NewDataSourceView({
   onAddDataSource,
   onSetSearchQuery,
 }: ViewProps) {
+  const dataSourcesRoutes = useDataSourcesRoutes();
+
   if (isLoading) {
     return <PageLoader />;
   }

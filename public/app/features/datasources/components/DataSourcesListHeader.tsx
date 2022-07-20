@@ -30,6 +30,7 @@ export type ViewProps = {
 };
 
 export function DataSourcesListHeaderView({ searchQuery, setSearchQuery, canCreateDataSource }: ViewProps) {
+  const dataSourcesRoutes = useDataSourcesRoutes();
   const linkButton = {
     href: dataSourcesRoutes.New,
     title: 'Add data source',
