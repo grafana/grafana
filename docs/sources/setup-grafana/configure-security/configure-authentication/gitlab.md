@@ -139,7 +139,7 @@ if you have a group called 'example-group' you can use the following snippet to
 ensure those members inherit the role 'Editor'.
 
 ```bash
-role_attribute_path = contains(groups[*], 'example-group') && 'Editor' || 'Viewer'"
+role_attribute_path = contains(groups[*], 'example-group') && 'Editor' || 'Viewer'
 ```
 
 Note: If a match is found in other fields, groups will be ignored.
