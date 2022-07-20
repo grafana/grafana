@@ -106,11 +106,7 @@ LogsMetaRow.displayName = 'LogsMetaRow';
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
-    return (
-      <span className="logs-meta-item__labels">
-        <LogLabels labels={value} />
-      </span>
-    );
+    return <LogLabels labels={value} />;
   } else if (kind === LogsMetaKind.Error) {
     return <span className="logs-meta-item__error">{value}</span>;
   }
