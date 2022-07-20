@@ -244,7 +244,7 @@ func TestWebhookNotifier(t *testing.T) {
 				"httpMethod": "POST",
 				"maxAlerts": 2
 			}`,
-			expInitError: "both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted.",
+			expInitError: "both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted",
 		},
 		{
 			name:         "Error in initing",
