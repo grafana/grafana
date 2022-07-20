@@ -52,6 +52,11 @@ load(
 )
 
 load(
+    'scripts/drone/pipelines/build.star',
+    'build_e2e',
+)
+
+load(
     'scripts/drone/pipelines/docs.star',
     'docs_pipelines',
     'trigger_docs',
@@ -92,36 +97,14 @@ def pr_pipelines(edition):
         wire_install_step(),
         yarn_install_step(),
     ]
-    build_steps = [
-        enterprise_downstream_step(edition=edition, ver_mode=ver_mode),
-        build_backend_step(edition=edition, ver_mode=ver_mode),
-        build_frontend_step(edition=edition, ver_mode=ver_mode),
-        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_plugins_step(edition=edition, ver_mode=ver_mode),
-    ]
-
-    # Insert remaining build_steps
-    build_steps.extend([
-        package_step(edition=edition, ver_mode=ver_mode, variants=variants),
-        grafana_server_step(edition=edition),
-        e2e_tests_step('dashboards-suite', edition=edition),
-        e2e_tests_step('smoke-tests-suite', edition=edition),
-        e2e_tests_step('panels-suite', edition=edition),
-        e2e_tests_step('various-suite', edition=edition),
-        e2e_tests_artifacts(edition=edition),
-        build_storybook_step(edition=edition, ver_mode=ver_mode),
-        test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
-        copy_packages_for_docker_step(),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, archs=['amd64', ]),
-    ])
 
     return [
         pr_verify_drone(),
         test_frontend(get_pr_trigger(exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']), ver_mode),
         test_backend(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), ver_mode),
-        pipeline(
-            name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=init_steps + build_steps,
-        ), integration_tests(trigger, ver_mode, edition),  docs_pipelines(edition, ver_mode, trigger_docs())
+        build_e2e(trigger, ver_mode, edition),
+        integration_tests(trigger, ver_mode, edition),
+        docs_pipelines(edition, ver_mode, trigger_docs())
     ]
 
 

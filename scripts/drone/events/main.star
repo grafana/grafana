@@ -34,7 +34,8 @@ load(
     'verify_gen_cue_step',
     'test_a11y_frontend_step',
     'trigger_oss',
-    'betterer_frontend_step'
+    'betterer_frontend_step',
+    'trigger_test_release'
 )
 
 load(
@@ -63,6 +64,11 @@ load(
 load(
     'scripts/drone/pipelines/integration_tests.star',
     'integration_tests',
+)
+
+load(
+    'scripts/drone/pipelines/build.star',
+    'build_e2e',
 )
 
 load('scripts/drone/vault.star', 'from_secret')
@@ -122,39 +128,7 @@ def get_steps(edition):
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
     store_steps = [store_packages_step(edition=edition, ver_mode=ver_mode),]
 
-    return init_steps, build_steps, windows_steps, store_steps
-
-def trigger_test_release():
-    return {
-        'name': 'trigger-test-release',
-        'image': build_image,
-        'environment': {
-            'GITHUB_TOKEN': from_secret('github_token'),
-            'DOWNSTREAM_REPO': from_secret('downstream'),
-            'TEST_TAG': 'v0.0.0-test',
-        },
-        'commands': [
-            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
-            'cd grafana-enterprise',
-            'git fetch origin "refs/tags/*:refs/tags/*"',
-            'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
-            'cd -',
-            'git fetch origin "refs/tags/*:refs/tags/*"',
-            'git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git',
-            'git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet',
-        ],
-        'failure': 'ignore',
-        'when': {
-            'paths': {
-                'include': [
-                    '.drone.yml',
-                ]
-            },
-            'repo': [
-                'grafana/grafana',
-            ]
-        }
-    }
+    return init_steps, windows_steps, store_steps
 
 def main_pipelines(edition):
     drone_change_trigger = {
@@ -172,12 +146,10 @@ def main_pipelines(edition):
             ],
         },
     }
-    init_steps, build_steps, windows_steps, store_steps = get_steps(edition=edition)
+    init_steps, windows_steps, store_steps = get_steps(edition=edition)
 
-    pipelines = [docs_pipelines(edition, ver_mode, trigger), test_frontend(trigger, ver_mode), test_backend(trigger, ver_mode), pipeline(
-        name='main-build-e2e-publish', edition=edition, trigger=trigger, services=[],
-        steps=init_steps + build_steps,
-    ),
+    pipelines = [docs_pipelines(edition, ver_mode, trigger), test_frontend(trigger, ver_mode), test_backend(trigger, ver_mode),
+    build_e2e(trigger, ver_mode, edition),
     integration_tests(trigger, ver_mode, edition),
     pipeline(
         name='main-windows', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
