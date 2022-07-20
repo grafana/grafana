@@ -92,8 +92,6 @@ export function initStatementPositionResolvers(): StatementPositionResolversRegi
       id: StatementPosition.FromKeyword,
       name: StatementPosition.FromKeyword,
       resolve: (currentToken, previousKeyword, previousNonWhiteSpace, previousIsSlash) => {
-        // cloudwatch specific commented out
-        // Boolean(previousKeyword?.value === SELECT && previousNonWhiteSpace?.isParenthesis()),
         return Boolean(
           (previousKeyword?.value.toLowerCase() === SELECT && previousNonWhiteSpace?.value !== ',') ||
             ((currentToken?.isKeyword() || currentToken?.isIdentifier()) &&
