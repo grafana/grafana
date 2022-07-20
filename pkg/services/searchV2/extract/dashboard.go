@@ -274,7 +274,6 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 
 func filterOutSpecialDatasources(dash *DashboardInfo) {
 	for i, panel := range dash.Panels {
-
 		var dsRefs []DataSourceRef
 
 		// partition into actual datasource references and variables
