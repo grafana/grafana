@@ -9,7 +9,6 @@ import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ToolbarButtonVariant, ToolbarButton } from '../ToolbarButton';
 
 // Default intervals used in the refresh picker component
-// TODO: How to translate these?
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
 
 export interface Props {
@@ -24,6 +23,7 @@ export interface Props {
   noIntervalPicker?: boolean;
   width?: string;
   primary?: boolean;
+  // These props are used to translate the component
   offOptionLabelMsg?: string;
   offOptionAriaLabelMsg?: string;
   offDescriptionAriaLabelMsg?: string;
