@@ -54,7 +54,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		UserLookupParams: cmd.UserLookupParams,
 	})
 	if err != nil {
-		if !errors.Is(err, models.ErrUserNotFound) {
+		if !errors.Is(err, user.ErrUserNotFound) {
 			return err
 		}
 		if !cmd.SignupAllowed {
