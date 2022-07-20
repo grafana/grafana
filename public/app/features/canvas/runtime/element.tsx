@@ -82,6 +82,7 @@ export class ElementState implements LayerElement {
     const placement = this.options.placement ?? ({} as Placement);
 
     const style: React.CSSProperties = {
+      cursor: 'grab',
       position: 'absolute',
       // Minimum element size is 10x10
       minWidth: '10px',
