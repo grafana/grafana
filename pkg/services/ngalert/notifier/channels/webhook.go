@@ -177,7 +177,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, err
 	}
 
-	headers := make(map[string]string, 1)
+	headers := make(map[string]string)
 	if wn.AuthorizationScheme != "" && wn.AuthorizationCredentials != "" {
 		headers["Authorization"] = fmt.Sprintf("%s %s", wn.AuthorizationScheme, wn.AuthorizationCredentials)
 	}
