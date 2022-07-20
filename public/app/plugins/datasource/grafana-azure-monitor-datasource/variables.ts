@@ -61,6 +61,25 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
                 data: rgs?.length ? [toDataFrame(rgs)] : [],
               };
             }
+          case AzureQueryType.MetricNamesQuery:
+            if (queryObj.subscription && queryObj.resourceGroup && queryObj.namespace && queryObj.resource) {
+              const rgs = await this.datasource.getMetricNames(
+                queryObj.subscription,
+                queryObj.resourceGroup,
+                queryObj.namespace,
+                queryObj.resource
+              );
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
+          case AzureQueryType.WorkspacesQuery:
+            if (queryObj.subscription) {
+              const rgs = await this.datasource.getAzureLogAnalyticsWorkspaces(queryObj.subscription);
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
           case AzureQueryType.GrafanaTemplateVariableFn:
             if (queryObj.grafanaTemplateVariableFn) {
               const templateVariablesResults = await this.callGrafanaTemplateVariableFn(
