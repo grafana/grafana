@@ -233,7 +233,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${ds}"
       },
-      "description": "",
+      "description": "The dashboard provides geographic insights of availability tests on Azure Apps via different metrics for app monitoring through Application Insights.",
       "fieldConfig": {
         "defaults": {
           "color": {
