@@ -777,6 +777,13 @@ export class DashboardMigrator {
       }
     }
 
+    if (oldVersion < 37) {
+      panelUpgrades.push((panel: PanelModel) => {
+        panel.options.legend.showLegend = 'visible';
+        return panel;
+      });
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
