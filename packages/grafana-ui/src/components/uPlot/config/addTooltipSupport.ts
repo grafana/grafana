@@ -25,7 +25,7 @@ type SetupConfigParams = {
 
 // This applies config hooks to setup tooltip listener. Ideally this could happen in the same `prepConfig` function
 // however the GraphNG structures do not allow access to the `setHover` callback
-export const setupUPlotConfig = ({
+export const addTooltipSupport = ({
   config,
   onUPlotClick,
   setFocusedSeriesIdx,

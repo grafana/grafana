@@ -26,7 +26,7 @@ import {
   VizTooltipContainer,
 } from '@grafana/ui';
 import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
-import { HoverEvent, setupUPlotConfig } from '@grafana/ui/src/components/uPlot/config/setupUPlotConfig';
+import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { DataHoverView } from '../geomap/components/DataHoverView';
@@ -284,7 +284,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     >
       {(config) => {
         if (oldConfig.current !== config) {
-          oldConfig.current = setupUPlotConfig({
+          oldConfig.current = addTooltipSupport({
             config,
             onUPlotClick,
             setFocusedSeriesIdx,
