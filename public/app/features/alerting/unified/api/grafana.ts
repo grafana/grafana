@@ -7,7 +7,7 @@ export function fetchNotifiers(): Promise<NotifierDTO[]> {
 
 export function fetchContactPointsState(alertManagerSourceName: String): Promise<ContactPointsState> {
   const getIntegrationType = (integrationName: string): string =>
-    integrationName.indexOf('[') !== -1 ? integrationName.substring(0, integrationName.indexOf('[]')) : integrationName;
+    integrationName.indexOf('[') !== -1 ? integrationName.substring(0, integrationName.indexOf('[')) : integrationName;
 
   const contactPointsStateDtoToModel = (receiversSateDto: ReceiversStateDTO[]): ContactPointsState => {
     //init object to return
