@@ -878,7 +878,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 		// LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Add type for logzio Opsgenie integration
 		{
 			Type:        "logzio_opsgenie",
-			Name:        "OpsGenie (Logz.io Integration)",
+			Name:        "OpsGenie",
 			Description: "Sends notifications to OpsGenie. Use this type in case you use Logz.io integration in Opsgenie",
 			Heading:     "OpsGenie settings",
 			Options: []alerting.NotifierOption{
