@@ -1,27 +1,33 @@
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorRow, EditorField } from '@grafana/experimental';
+import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
-import { isMetricsQuery } from '../../datasource';
+import { isLogsQuery } from '../../query_utils';
 import { LokiQuery, LokiQueryType } from '../../types';
 
 export interface Props {
   query: LokiQuery;
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
+  app?: CoreApp;
 }
 
-export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onRunQuery }) => {
+export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange, onRunQuery }) => {
   const onQueryTypeChange = (value: LokiQueryType) => {
     onChange({ ...query, queryType: value });
     onRunQuery();
   };
 
   const onResolutionChange = (option: SelectableValue<number>) => {
+    reportInteraction('grafana_loki_resolution_clicked', {
+      app,
+      resolution: option.value,
+    });
     onChange({ ...query, resolution: option.value });
     onRunQuery();
   };
@@ -40,7 +46,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
   }
 
   let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
-  let showMaxLines = !isMetricsQuery(query.expr);
+  let showMaxLines = isLogsQuery(query.expr);
 
   return (
     <EditorRow>

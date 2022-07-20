@@ -31,9 +31,9 @@ What is your dashboard maturity level? Analyze your current dashboard setup and 
   - If you create a temporary dashboard, perhaps to test something, prefix the name with `TEST: `. Delete the dashboard when you are finished.
 - Copying dashboards with no significant changes is not a good idea.
   - You miss out on updates to the original dashboard, such as documentation changes, bug fixes, or additions to metrics.
-  - In many cases copies are being made to simply customize the view by setting template parameters. This should instead be done by maintaining a link to the master dashboard and customizing the view with [URL parameters]({{< relref "../linking/data-link-variables/" >}}).
+  - In many cases copies are being made to simply customize the view by setting template parameters. This should instead be done by maintaining a link to the master dashboard and customizing the view with [URL parameters]({{< relref "../panels/configure-data-links/#data-link-variables" >}}).
 - When you must copy a dashboard, clearly rename it and _do not_ copy the dashboard tags. Tags are important metadata for dashboards that are used during search. Copying tags can result in false matches.
 - Maintain a dashboard of dashboards or cross-reference dashboards. This can be done in several ways:
-  - Create dashboard links, panel, or data links. Links can go to other dashboards or to external systems. For more information, refer to [Linking]({{< relref "../linking/" >}}).
+  - Create dashboard links, panel, or data links. Links can go to other dashboards or to external systems. For more information, refer to [Manage dashboard links]({{< relref "../dashboards/manage-dashboard-links/" >}}).
   - Add a [Dashboard list panel]({{< relref "../visualizations/dashboard-list-panel/" >}}). You can then customize what you see by doing tag or folder searches.
   - Add a [Text panel]({{< relref "../visualizations/text-panel/" >}}) and use markdown to customize the display.

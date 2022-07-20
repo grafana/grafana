@@ -1,9 +1,11 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
+import { FeedbackLink } from 'app/plugins/datasource/prometheus/querybuilder/shared/FeedbackLink';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
@@ -79,23 +81,25 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         onDismiss={() => setParseModalOpen(false)}
       />
       <EditorHeader>
+        <InlineSelect
+          value={null}
+          placeholder="Query patterns"
+          aria-label={selectors.components.QueryBuilder.queryPatterns}
+          allowCustomValue
+          onChange={({ value }) => {
+            const result = buildVisualQueryFromString(query.expr || '');
+            result.query.operations = value?.operations!;
+            onChange({
+              ...query,
+              expr: lokiQueryModeller.renderQuery(result.query),
+            });
+          }}
+          options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
+        />
         {editorMode === QueryEditorMode.Builder && (
           <>
-            <InlineSelect
-              value={null}
-              placeholder="Query patterns"
-              allowCustomValue
-              onChange={({ value }) => {
-                const result = buildVisualQueryFromString(query.expr || '');
-                result.query.operations = value?.operations!;
-                onChange({
-                  ...query,
-                  expr: lokiQueryModeller.renderQuery(result.query),
-                });
-              }}
-              options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
-            />
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
+            <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/50785" />
           </>
         )}
         <FlexItem grow={1} />
@@ -126,7 +130,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         )}
         {editorMode === QueryEditorMode.Explain && <LokiQueryBuilderExplained query={query.expr} />}
         {editorMode !== QueryEditorMode.Explain && (
-          <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} />
+          <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} app={app} />
         )}
       </EditorRows>
     </>

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
-  "version": "9.0.0-pre",
+  "version": "9.1.0-pre",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
     "cli",
@@ -37,18 +37,18 @@
     "@types/lodash": "4.14.182",
     "@types/node": "16.11.36",
     "@types/uuid": "8.3.4",
-    "rollup": "2.74.1",
+    "rollup": "2.75.6",
     "rollup-plugin-copy": "3.4.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "webpack": "5.72.1"
+    "webpack": "5.73.0"
   },
   "types": "src/index.ts",
   "dependencies": {
     "@babel/core": "7.18.2",
     "@babel/preset-env": "7.18.2",
     "@cypress/webpack-preprocessor": "5.12.0",
-    "@grafana/e2e-selectors": "9.0.0-pre",
+    "@grafana/e2e-selectors": "9.1.0-pre",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mochajs/json-file-reporter": "^1.2.0",
     "babel-loader": "8.2.5",

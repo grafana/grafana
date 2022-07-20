@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
+import { EditorField, EditorRows, EditorRow } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Input } from '@grafana/ui';
 
 import { INPUT_WIDTH } from '../constants';
@@ -15,6 +17,7 @@ import {
   AlignmentTypes,
 } from '../types';
 
+import { MetricQueryEditor as ExperimentalMetricQueryEditor } from './Experimental/MetricQueryEditor';
 import { MetricQueryEditor } from './MetricQueryEditor';
 
 import { AnnotationsHelp, QueryEditorRow } from './';
@@ -77,26 +80,52 @@ export const AnnotationQueryEditor = (props: Props) => {
   );
 
   return (
-    <>
-      <MetricQueryEditor
-        refId={query.refId}
-        variableOptionGroup={variableOptionGroup}
-        customMetaData={customMetaData}
-        onChange={handleQueryChange}
-        onRunQuery={onRunQuery}
-        datasource={datasource}
-        query={metricQuery}
-      />
+    <EditorRows>
+      {config.featureToggles.cloudMonitoringExperimentalUI ? (
+        <>
+          <ExperimentalMetricQueryEditor
+            refId={query.refId}
+            variableOptionGroup={variableOptionGroup}
+            customMetaData={customMetaData}
+            onChange={handleQueryChange}
+            onRunQuery={onRunQuery}
+            datasource={datasource}
+            query={metricQuery}
+          />
 
-      <QueryEditorRow label="Title" htmlFor="annotation-query-title">
-        <Input id="annotation-query-title" value={title} width={INPUT_WIDTH} onChange={handleTitleChange} />
-      </QueryEditorRow>
+          <EditorRow>
+            <EditorField label="Title" htmlFor="annotation-query-title">
+              <Input id="annotation-query-title" value={title} onChange={handleTitleChange} />
+            </EditorField>
+          </EditorRow>
 
-      <QueryEditorRow label="Text" htmlFor="annotation-query-text">
-        <Input id="annotation-query-text" value={text} width={INPUT_WIDTH} onChange={handleTextChange} />
-      </QueryEditorRow>
+          <EditorRow>
+            <EditorField label="Text" htmlFor="annotation-query-text">
+              <Input id="annotation-query-text" value={text} onChange={handleTextChange} />
+            </EditorField>
+          </EditorRow>
+        </>
+      ) : (
+        <>
+          <MetricQueryEditor
+            refId={query.refId}
+            variableOptionGroup={variableOptionGroup}
+            customMetaData={customMetaData}
+            onChange={handleQueryChange}
+            onRunQuery={onRunQuery}
+            datasource={datasource}
+            query={metricQuery}
+          />
+          <QueryEditorRow label="Title" htmlFor="annotation-query-title">
+            <Input id="annotation-query-title" value={title} width={INPUT_WIDTH} onChange={handleTitleChange} />
+          </QueryEditorRow>
 
+          <QueryEditorRow label="Text" htmlFor="annotation-query-text">
+            <Input id="annotation-query-text" value={text} width={INPUT_WIDTH} onChange={handleTextChange} />
+          </QueryEditorRow>
+        </>
+      )}
       <AnnotationsHelp />
-    </>
+    </EditorRows>
   );
 };

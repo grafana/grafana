@@ -84,6 +84,16 @@ This is a configuration for the Loki search query type.
 
 -- **Data source -** The Loki instance in which you want to search traces. You must configure derived fields in the Loki instance.
 
+### Span bar label
+
+You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
+
+Select one of the following four options. The default selection is Duration.
+
+- **None -** Do not show any additional information on the span bar row.
+- **Duration -** Show the span duration on the span bar row.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
+
 ## Query traces
 
 You can query and display traces from Tempo via [Explore]({{< relref "../explore/" >}}).
@@ -174,10 +184,10 @@ To display the service graph:
 
 - [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) to generate service graph data
 - Link a Prometheus datasource in the Tempo datasource settings.
-- Navigate to [Explore]({{< relref "../explore/" >}})
-- Select the Tempo datasource
-- Select the **Service Graph** query type and run the query
-- Optionally, filter by service name
+- Navigate to [Explore]({{< relref "../explore/" >}}).
+- Select the Tempo datasource.
+- Select the **Service Graph** query type and run the query.
+- (Optional): filter by service name.
 
 You can pan and zoom the view with buttons or you mouse. For details about the visualization, refer to [Node graph panel](https://grafana.com/docs/grafana/latest/panels/visualizations/node-graph/).
 
@@ -191,6 +201,25 @@ The color of each circle represents the percentage of requests in each of the fo
 - purple = throttled responses
 
 Click on the service to see a context menu with additional links for quick navigation to other relevant information.
+
+## APM table
+
+The APM (Application Performance Management) table allows you to view several APM metrics out of the box.
+
+To display the APM table:
+
+1. Activate the tempoApmTable feature flag in your ini file.
+1. Link a Prometheus datasource in the Tempo datasource settings.
+1. Navigate to [Explore]({{< relref "../explore/_index.md" >}}).
+1. Select the Tempo datasource.
+1. Select the **Service Graph** query type and run the query.
+1. (Optional): filter your results.
+
+Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_latency_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
+
+Click a row in the rate, error rate, or duration columns to open a query in Prometheus with the span name of that row automatically set in the query. Click a row in the links column to open a query in Tempo with the span name of that row automatically set in the query.
+
+{{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Tempo APM table" >}}
 
 ## Linking Trace ID from logs
 

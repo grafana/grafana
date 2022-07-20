@@ -12,7 +12,6 @@ import { NotifierDTO } from 'app/types';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { makeAMLink } from '../../../utils/misc';
 
 import { ChannelSubForm } from './ChannelSubForm';
@@ -28,6 +27,7 @@ interface Props<R extends ChannelValues> {
   takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
   commonSettingsComponent: CommonSettingsComponentType;
   initialValues?: ReceiverFormValues<R>;
+  readOnly: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -40,10 +40,11 @@ export function ReceiverForm<R extends ChannelValues>({
   onTestChannel,
   takenReceiverNames,
   commonSettingsComponent,
+  readOnly,
 }: Props<R>): JSX.Element {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
-  const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+
   const defaultValues = initialValues || {
     name: '',
     items: [

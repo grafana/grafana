@@ -15,6 +15,8 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
   import: defineMessage({ id: 'nav.create-import', message: 'Import' }),
   alert: defineMessage({ id: 'nav.create-alert', message: 'New alert rule' }),
 
+  starred: defineMessage({ id: 'nav.starred', message: 'Starred' }),
+  'starred-empty': defineMessage({ id: 'nav.starred-empty', message: 'Your starred dashboards will appear here' }),
   dashboards: defineMessage({ id: 'nav.dashboards', message: 'Dashboards' }),
   'manage-dashboards': defineMessage({ id: 'nav.manage-dashboards', message: 'Browse' }),
   playlists: defineMessage({ id: 'nav.playlists', message: 'Playlists' }),
@@ -52,8 +54,8 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
 
   help: defineMessage({ id: 'nav.help', message: 'Help' }),
 
-  'profile-settings': defineMessage({ id: 'nav.profile-settings', message: 'Preferences' }),
-  'change-password': defineMessage({ id: 'nav.change-password', message: 'Change password' }),
+  'profile-settings': defineMessage({ id: 'nav.profile/settings', message: 'Preferences' }),
+  'change-password': defineMessage({ id: 'nav.profile/password', message: 'Change password' }),
   'sign-out': defineMessage({ id: 'nav.sign-out', message: 'Sign out' }),
 };
 

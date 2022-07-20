@@ -27,8 +27,8 @@ func TestHTTPServer_Search(t *testing.T) {
 		},
 	}
 
-	sc.acmock.GetUserPermissionsFunc = func(ctx context.Context, user *models.SignedInUser, options accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-		return []*accesscontrol.Permission{
+	sc.acmock.GetUserPermissionsFunc = func(ctx context.Context, user *models.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+		return []accesscontrol.Permission{
 			{Action: "folders:read", Scope: "folders:*"},
 			{Action: "folders:write", Scope: "folders:uid:folder2"},
 			{Action: "dashboards:read", Scope: "dashboards:*"},

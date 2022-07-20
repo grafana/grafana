@@ -92,7 +92,7 @@ export function OperationList<T extends QueryWithOperations>({
                 <div className={styles.operationList} ref={provided.innerRef} {...provided.droppableProps}>
                   {operations.map((op, index) => (
                     <OperationEditor
-                      key={op.id + index}
+                      key={op.id + JSON.stringify(op.params) + index}
                       queryModeller={queryModeller}
                       index={index}
                       operation={op}

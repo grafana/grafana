@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"context"
+	"math"
 	"math/rand"
 	"runtime"
 	"sync"
@@ -15,12 +16,17 @@ import (
 )
 
 func TestSchedule_alertRuleInfo(t *testing.T) {
+	type evalResponse struct {
+		success     bool
+		droppedEval *evaluation
+	}
+
 	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
-		t.Run("Update should send to updateCh", func(t *testing.T) {
+		t.Run("update should send to updateCh", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.update()
+				resultCh <- r.update(ruleVersion(rand.Int63()))
 			}()
 			select {
 			case <-r.updateCh:
@@ -29,34 +35,128 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 				t.Fatal("No message was received on update channel")
 			}
 		})
+		t.Run("update should drop any concurrent sending to updateCh", func(t *testing.T) {
+			r := newAlertRuleInfo(context.Background())
+			version1 := ruleVersion(rand.Int31())
+			version2 := version1 + 1
+
+			wg := sync.WaitGroup{}
+			wg.Add(1)
+			go func() {
+				wg.Done()
+				r.update(version1)
+				wg.Done()
+			}()
+			wg.Wait()
+			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
+			go func() {
+				wg.Done()
+				r.update(version2)
+			}()
+			wg.Wait() // at this point tick 1 has already been dropped
+			select {
+			case version := <-r.updateCh:
+				require.Equal(t, version2, version)
+			case <-time.After(5 * time.Second):
+				t.Fatal("No message was received on eval channel")
+			}
+		})
+		t.Run("update should drop any concurrent sending to updateCh and use greater version", func(t *testing.T) {
+			r := newAlertRuleInfo(context.Background())
+			version1 := ruleVersion(rand.Int31())
+			version2 := version1 + 1
+
+			wg := sync.WaitGroup{}
+			wg.Add(1)
+			go func() {
+				wg.Done()
+				r.update(version2)
+				wg.Done()
+			}()
+			wg.Wait()
+			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
+			go func() {
+				wg.Done()
+				r.update(version1)
+			}()
+			wg.Wait() // at this point tick 1 has already been dropped
+			select {
+			case version := <-r.updateCh:
+				require.Equal(t, version2, version)
+			case <-time.After(5 * time.Second):
+				t.Fatal("No message was received on eval channel")
+			}
+		})
 		t.Run("eval should send to evalCh", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			expected := time.Now()
-			resultCh := make(chan bool)
+			resultCh := make(chan evalResponse)
 			version := rand.Int63()
 			go func() {
-				resultCh <- r.eval(expected, version)
+				result, dropped := r.eval(expected, version)
+				resultCh <- evalResponse{result, dropped}
 			}()
 			select {
 			case ctx := <-r.evalCh:
 				require.Equal(t, version, ctx.version)
 				require.Equal(t, expected, ctx.scheduledAt)
-				require.True(t, <-resultCh)
+				result := <-resultCh
+				require.True(t, result.success)
+				require.Nilf(t, result.droppedEval, "expected no dropped evaluations but got one")
+			case <-time.After(5 * time.Second):
+				t.Fatal("No message was received on eval channel")
+			}
+		})
+		t.Run("eval should drop any concurrent sending to evalCh", func(t *testing.T) {
+			r := newAlertRuleInfo(context.Background())
+			time1 := time.UnixMilli(rand.Int63n(math.MaxInt64))
+			time2 := time.UnixMilli(rand.Int63n(math.MaxInt64))
+			resultCh1 := make(chan evalResponse)
+			resultCh2 := make(chan evalResponse)
+			version := rand.Int63()
+			wg := sync.WaitGroup{}
+			wg.Add(1)
+			go func() {
+				wg.Done()
+				result, dropped := r.eval(time1, version)
+				wg.Done()
+				resultCh1 <- evalResponse{result, dropped}
+			}()
+			wg.Wait()
+			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
+			go func() {
+				wg.Done()
+				result, dropped := r.eval(time2, version)
+				resultCh2 <- evalResponse{result, dropped}
+			}()
+			wg.Wait() // at this point tick 1 has already been dropped
+			select {
+			case ctx := <-r.evalCh:
+				require.Equal(t, time2, ctx.scheduledAt)
+				result := <-resultCh1
+				require.True(t, result.success)
+				require.Nilf(t, result.droppedEval, "expected no dropped evaluations but got one")
+				result = <-resultCh2
+				require.True(t, result.success)
+				require.NotNil(t, result.droppedEval, "expected no dropped evaluations but got one")
+				require.Equal(t, time1, result.droppedEval.scheduledAt)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on eval channel")
 			}
 		})
 		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			resultCh := make(chan bool)
+			resultCh := make(chan evalResponse)
 			go func() {
-				resultCh <- r.eval(time.Now(), rand.Int63())
+				result, dropped := r.eval(time.Now(), rand.Int63())
+				resultCh <- evalResponse{result, dropped}
 			}()
 			runtime.Gosched()
 			r.stop()
 			select {
 			case result := <-resultCh:
-				require.False(t, result)
+				require.False(t, result.success)
+				require.Nilf(t, result.droppedEval, "expected no dropped evaluations but got one")
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on eval channel")
 			}
@@ -66,12 +166,14 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			r.stop()
-			require.False(t, r.update())
+			require.False(t, r.update(ruleVersion(rand.Int63())))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			r.stop()
-			require.False(t, r.eval(time.Now(), rand.Int63()))
+			success, dropped := r.eval(time.Now(), rand.Int63())
+			require.False(t, success)
+			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
 		t.Run("stop should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
@@ -105,7 +207,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.update()
+						r.update(ruleVersion(rand.Int63()))
 					case 2:
 						r.eval(time.Now(), rand.Int63())
 					case 3:

@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { locationUtil } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp, updateNavIndex } from 'app/core/actions';
 import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -59,7 +59,7 @@ export function checkFolderPermissions(uid: string): ThunkResult<void> {
       );
       dispatch(setCanViewFolderPermissions(true));
     } catch (err) {
-      if (err.status !== 403) {
+      if (isFetchError(err) && err.status !== 403) {
         dispatch(notifyApp(createWarningNotification('Error checking folder permissions', err.data?.message)));
       }
 

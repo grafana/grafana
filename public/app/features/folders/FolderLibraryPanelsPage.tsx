@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useAsync } from 'react-use';
 
-import Page from '../../core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
+
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';

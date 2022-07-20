@@ -1,6 +1,8 @@
+import { uniqBy } from 'lodash';
 import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
@@ -38,13 +40,18 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
   };
 
   const getOptions = (): SelectableValue[] => {
-    return [...getSelectOptionsFromString(item?.value).map(toOption), ...(state.labelValues ?? [])];
+    const labelValues = state.labelValues ? [...state.labelValues] : [];
+    const selectedOptions = getSelectOptionsFromString(item?.value).map(toOption);
+
+    // Remove possible duplicated values
+    return uniqBy([...selectedOptions, ...labelValues], 'value');
   };
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         <Select
+          aria-label={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
           width="auto"
           value={item.label ? toOption(item.label) : null}
@@ -68,6 +75,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
         />
 
         <Select
+          aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
           value={toOption(item.op ?? defaultOp)}
           options={operators}
           width="auto"
@@ -79,6 +87,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
         />
 
         <Select
+          aria-label={selectors.components.QueryBuilder.valueSelect}
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
           value={

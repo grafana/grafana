@@ -1,6 +1,6 @@
 import { Location } from 'history';
 
-import { NavModelItem, NavSection } from '@grafana/data';
+import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -117,11 +117,11 @@ export const getActiveItem = (
   pathname: string,
   currentBestMatch?: NavModelItem
 ): NavModelItem | undefined => {
-  const newNavigationEnabled = getConfig().featureToggles.newNavigation;
-  const dashboardLinkMatch = newNavigationEnabled ? '/dashboards' : '/';
+  const dashboardLinkMatch = '/dashboards';
 
   for (const link of navTree) {
-    const linkPathname = stripQueryParams(link.url);
+    const linkWithoutParams = stripQueryParams(link.url);
+    const linkPathname = locationUtil.stripBaseFromUrl(linkWithoutParams);
     if (linkPathname) {
       if (linkPathname === pathname) {
         // exact match

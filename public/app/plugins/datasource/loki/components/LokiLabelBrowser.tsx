@@ -3,7 +3,8 @@ import { sortBy } from 'lodash';
 import React, { ChangeEvent } from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   HighlightPart,
@@ -31,6 +32,7 @@ export interface BrowserProps {
   languageProvider: LokiLanguageProvider | PromQlLanguageProvider;
   onChange: (selector: string) => void;
   theme: GrafanaTheme2;
+  app?: CoreApp;
   autoSelect?: number;
   hide?: () => void;
   lastUsedLabels: string[];
@@ -189,17 +191,29 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickRunLogsQuery = () => {
+    reportInteraction('grafana_loki_log_browser_closed', {
+      app: this.props.app,
+      closeType: 'showLogsButton',
+    });
     const selector = buildSelector(this.state.labels);
     this.props.onChange(selector);
   };
 
   onClickRunMetricsQuery = () => {
+    reportInteraction('grafana_loki_log_browser_closed', {
+      app: this.props.app,
+      closeType: 'showLogsRateButton',
+    });
     const selector = buildSelector(this.state.labels);
     const query = `rate(${selector}[$__interval])`;
     this.props.onChange(query);
   };
 
   onClickClear = () => {
+    reportInteraction('grafana_loki_log_browser_closed', {
+      app: this.props.app,
+      closeType: 'clearButton',
+    });
     this.setState((state) => {
       const labels: SelectableLabel[] = state.labels.map((label) => ({
         ...label,

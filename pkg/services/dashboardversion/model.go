@@ -13,7 +13,7 @@ var (
 )
 
 type DashboardVersion struct {
-	ID            int64 `json:"id"`
+	ID            int64 `json:"id" xorm:"pk autoincr 'id'"`
 	DashboardID   int64 `json:"dashboardId"  xorm:"dashboard_id"`
 	ParentVersion int   `json:"parentVersion"`
 	RestoredFrom  int   `json:"restoredFrom"`
@@ -45,9 +45,9 @@ type ListDashboardVersionsQuery struct {
 }
 
 type DashboardVersionDTO struct {
-	ID            int64     `json:"id"`
-	DashboardID   int64     `json:"dashboardId"`
-	DashboardUID  string    `json:"dashboardUid"`
+	ID            int64     `json:"id" xorm:"id"`
+	DashboardID   int64     `json:"dashboardId" xorm:"dashboard_id"`
+	DashboardUID  string    `json:"dashboardUid" xorm:"dashboard_uid"`
 	ParentVersion int       `json:"parentVersion"`
 	RestoredFrom  int       `json:"restoredFrom"`
 	Version       int       `json:"version"`

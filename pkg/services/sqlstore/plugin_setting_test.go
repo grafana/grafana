@@ -5,12 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationPluginSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	store := InitTestDB(t)
 
 	t.Run("Existing plugin settings", func(t *testing.T) {
@@ -83,7 +85,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 
 		t.Run("UpdatePluginSetting should update existing plugin settings and publish PluginStateChangedEvent", func(t *testing.T) {
 			var pluginStateChangedEvent *models.PluginStateChangedEvent
-			bus.AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
+			store.bus.AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
 				pluginStateChangedEvent = evt
 				return nil
 			})
@@ -142,7 +144,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 	t.Run("Non-existing plugin settings", func(t *testing.T) {
 		t.Run("UpdatePluginSetting should insert plugin settings and publish PluginStateChangedEvent", func(t *testing.T) {
 			var pluginStateChangedEvent *models.PluginStateChangedEvent
-			bus.AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
+			store.bus.AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
 				pluginStateChangedEvent = evt
 				return nil
 			})

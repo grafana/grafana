@@ -4,7 +4,9 @@ import { useLocation } from 'react-router-dom';
 
 import { locationUtil, textUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
+import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate, Tag } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
 import config from 'app/core/config';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
@@ -108,7 +110,7 @@ export const DashNav = React.memo<Props>((props) => {
     return playlistSrv.isPlaying;
   };
 
-  const renderLeftActionsButton = () => {
+  const renderLeftActions = () => {
     const { dashboard, kioskMode } = props;
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
@@ -150,6 +152,10 @@ export const DashNav = React.memo<Props>((props) => {
           )}
         </ModalsController>
       );
+    }
+
+    if (dashboard.meta.publicDashboardEnabled) {
+      buttons.push(<Tag name="Public" colorIndex={5}></Tag>);
     }
 
     if (dashboard.uid && config.featureToggles.dashboardComments) {
@@ -198,7 +204,7 @@ export const DashNav = React.memo<Props>((props) => {
     );
   };
 
-  const renderRightActionsButton = () => {
+  const renderRightActions = () => {
     const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
     const { canSave, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
@@ -274,6 +280,21 @@ export const DashNav = React.memo<Props>((props) => {
   const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
   const onGoBack = isFullscreen ? onClose : undefined;
 
+  if (config.featureToggles.topnav) {
+    return (
+      <AppChromeUpdate
+        pageNav={{ text: title }}
+        actions={
+          <>
+            {renderLeftActions()}
+            <NavToolbarSeparator leftActionsSeparator />
+            {renderRightActions()}
+          </>
+        }
+      />
+    );
+  }
+
   return (
     <PageToolbar
       pageIcon={isFullscreen ? undefined : 'apps'}
@@ -282,9 +303,9 @@ export const DashNav = React.memo<Props>((props) => {
       titleHref={titleHref}
       parentHref={parentHref}
       onGoBack={onGoBack}
-      leftItems={renderLeftActionsButton()}
+      leftItems={renderLeftActions()}
     >
-      {renderRightActionsButton()}
+      {renderRightActions()}
     </PageToolbar>
   );
 });

@@ -25,10 +25,14 @@ import {
   ScaleDirection,
   ScaleOrientation,
   StackingMode,
+  GraphTransform,
+  AxisColorMode,
+  GraphGradientMode,
 } from '@grafana/schema';
 
 import { buildScaleKey } from '../GraphNG/utils';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
+import { getScaleGradientFn } from '../uPlot/config/gradientFills';
 import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
@@ -191,6 +195,36 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+      let axisColor: uPlot.Axis.Stroke | undefined;
+
+      if (customConfig.axisColorMode === AxisColorMode.Series) {
+        if (
+          colorMode.isByValue &&
+          field.config.custom?.gradientMode === GraphGradientMode.Scheme &&
+          colorMode.id === FieldColorModeId.Thresholds
+        ) {
+          axisColor = getScaleGradientFn(1, theme, colorMode, field.config.thresholds);
+        } else {
+          axisColor = seriesColor;
+        }
+      }
+
+      let axisColorOpts = {};
+
+      if (axisColor) {
+        axisColorOpts = {
+          border: {
+            show: true,
+            width: 1,
+            stroke: axisColor,
+          },
+          ticks: {
+            stroke: axisColor,
+          },
+          color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
+        };
+      }
+
       builder.addAxis(
         tweakAxis(
           {
@@ -201,6 +235,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             formatValue: (v) => formattedValueToString(fmt(v)),
             theme,
             grid: { show: customConfig.axisGridShow },
+            show: customConfig.hideFrom?.viz === false,
+            ...axisColorOpts,
           },
           field
         )
@@ -284,6 +320,35 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       if (customRenderedFields.indexOf(dispName) >= 0) {
         pathBuilder = () => null;
         pointsBuilder = () => undefined;
+      } else if (customConfig.transform === GraphTransform.Constant) {
+        // patch some monkeys!
+        const defaultBuilder = uPlot.paths!.linear!();
+
+        pathBuilder = (u, seriesIdx) => {
+          //eslint-disable-next-line
+          const _data: any[] = (u as any)._data; // uplot.AlignedData not exposed in types
+
+          // the data we want the line renderer to pull is x at each plot edge with paired flat y values
+
+          const r = getTimeRange();
+          let xData = [r.from.valueOf(), r.to.valueOf()];
+          let firstY = _data[seriesIdx].find((v: number | null | undefined) => v != null);
+          let yData = [firstY, firstY];
+          let fauxData = _data.slice();
+          fauxData[0] = xData;
+          fauxData[seriesIdx] = yData;
+
+          //eslint-disable-next-line
+          return defaultBuilder(
+            {
+              ...u,
+              _data: fauxData,
+            } as any,
+            seriesIdx,
+            0,
+            1
+          );
+        };
       }
 
       if (customConfig.fillBelowTo) {
@@ -465,10 +530,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           return true;
         },
       },
-      // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
-      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
-      scales: [xScaleKey, null as any],
-      match: [() => true, () => true],
+      scales: [xScaleKey, yScaleKey],
+      // match: [() => true, (a, b) => a === b],
     };
   }
 

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -25,6 +25,11 @@ export function FeedbackLink({ feedbackUrl }: Props) {
         title="This query builder is new, please let us know how we can improve it"
         target="_blank"
         rel="noreferrer noopener"
+        onClick={() =>
+          reportInteraction('grafana_feedback_link_clicked', {
+            link: feedbackUrl,
+          })
+        }
       >
         <Icon name="comment-alt-message" /> Give feedback
       </a>

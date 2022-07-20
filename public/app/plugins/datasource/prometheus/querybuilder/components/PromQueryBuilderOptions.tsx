@@ -126,7 +126,7 @@ function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: str
 
   items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
   items.push(`Format: ${formatOption}`);
-  items.push(`Step ${query.interval}`);
+  items.push(`Step: ${query.interval ?? 'auto'}`);
   items.push(`Type: ${queryType}`);
 
   if (query.exemplar) {

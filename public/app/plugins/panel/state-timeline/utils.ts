@@ -23,6 +23,7 @@ import {
   ThresholdsMode,
   TimeRange,
 } from '@grafana/data';
+import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   FIXED_UNIT,
@@ -394,18 +395,20 @@ export function prepareTimelineFields(
   for (let frame of series) {
     let isTimeseries = false;
     let changed = false;
+    let maybeSortedFrame = maybeSortFrame(
+      frame,
+      frame.fields.findIndex((f) => f.type === FieldType.time)
+    );
 
     let nulledFrame = applyNullInsertThreshold({
-      frame,
+      frame: maybeSortedFrame,
       refFieldPseudoMin: timeRange.from.valueOf(),
       refFieldPseudoMax: timeRange.to.valueOf(),
     });
 
-    // Mark the field state as having a null threhold applied
-    frame.fields[0].state = {
-      ...frame.fields[0].state,
-      nullThresholdApplied: true,
-    };
+    if (nulledFrame !== frame) {
+      changed = true;
+    }
 
     const fields: Field[] = [];
     for (let field of nullToValue(nulledFrame).fields) {
@@ -447,11 +450,11 @@ export function prepareTimelineFields(
       hasTimeseries = true;
       if (changed) {
         frames.push({
-          ...frame,
+          ...maybeSortedFrame,
           fields,
         });
       } else {
-        frames.push(frame);
+        frames.push(maybeSortedFrame);
       }
     }
   }

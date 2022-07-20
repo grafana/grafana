@@ -5,39 +5,53 @@ import { VariableModel } from 'app/features/variables/types';
 import { dispatch } from 'app/store/store';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
-export interface PublicDashboardConfig {
-  isPublic: boolean;
-  publicDashboard: {
-    uid: string;
-    dashboardUid: string;
-    timeSettings?: object;
-  };
+export interface PublicDashboard {
+  accessToken?: string;
+  isEnabled: boolean;
+  uid: string;
+  dashboardUid: string;
+  timeSettings?: object;
 }
+
 export interface DashboardResponse {
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
 }
 
-export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
-  return variables.length > 0;
-};
-
 export const getPublicDashboardConfig = async (
   dashboardUid: string,
-  setPublicDashboardConfig: React.Dispatch<React.SetStateAction<PublicDashboardConfig>>
+  setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  const pdResp: PublicDashboardConfig = await getBackendSrv().get(url);
-  setPublicDashboardConfig(pdResp);
+  const pdResp: PublicDashboard = await getBackendSrv().get(url);
+  setPublicDashboard(pdResp);
 };
 
 export const savePublicDashboardConfig = async (
   dashboardUid: string,
-  publicDashboardConfig: PublicDashboardConfig,
-  setPublicDashboardConfig: Function
+  publicDashboardConfig: PublicDashboard,
+  setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  const pdResp: PublicDashboardConfig = await getBackendSrv().post(url, publicDashboardConfig);
+  const pdResp: PublicDashboard = await getBackendSrv().post(url, publicDashboardConfig);
+
+  // Never allow a user to send the orgId
+  // @ts-ignore
+  delete pdResp.orgId;
+
   dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
-  setPublicDashboardConfig(pdResp);
+  setPublicDashboard(pdResp);
+};
+
+// Instance methods
+export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
+  return variables.length > 0;
+};
+
+export const publicDashboardPersisted = (publicDashboard: PublicDashboard): boolean => {
+  return publicDashboard.uid !== '' && publicDashboard.uid !== undefined;
+};
+
+export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
+  return `${window.location.origin}/public-dashboards/${publicDashboard.accessToken}`;
 };

@@ -13,6 +13,7 @@ export interface SearchQuery {
   ds_uid?: string;
   tags?: string[];
   kind?: string[];
+  panel_type?: string;
   uid?: string[];
   id?: number[];
   facet?: FacetField[];
@@ -32,6 +33,10 @@ export interface DashboardQueryResult {
   tags: string[];
   location: string; // url that can be split
   ds_uid: string[];
+
+  // debugging fields
+  score: number;
+  explain: {};
 }
 
 export interface LocationInfo {

@@ -25,6 +25,9 @@ func mockTimeNow() {
 }
 
 func TestIntegrationAlertInstanceOperations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 

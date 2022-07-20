@@ -40,7 +40,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 		q.Result = &models.Dashboard{Uid: "home", Id: 1}
 	}).Return(nil)
 
-	sc.hs.dashboardService = dashSvc
+	sc.hs.DashboardService = dashSvc
 
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
@@ -79,17 +79,17 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("AccessControl allows getting org preferences with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsPreferencesRead}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesRead}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 	t.Run("AccessControl prevents getting org preferences with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsPreferencesRead}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesRead}}, 2)
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents getting org preferences with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -125,21 +125,21 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
 
 	input := strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl allows updating org preferences with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsPreferencesWrite}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesWrite}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	input = strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl prevents updating org preferences with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsPreferencesWrite}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesWrite}}, 2)
 		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	input = strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl prevents updating org preferences with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -169,7 +169,7 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 		q := args.Get(1).(*models.GetDashboardQuery)
 		q.Result = &models.Dashboard{Uid: "home", Id: 1}
 	}).Return(nil)
-	sc.hs.dashboardService = dashSvc
+	sc.hs.DashboardService = dashSvc
 	t.Run("Returns 200 on success", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPatch, patchUserPreferencesUrl, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)

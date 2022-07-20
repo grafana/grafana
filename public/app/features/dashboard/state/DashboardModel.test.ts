@@ -367,6 +367,15 @@ describe('DashboardModel', () => {
       dashboard.toggleRow(dashboard.panels[1]);
     });
 
+    it('should not impact hasUnsavedChanges', () => {
+      expect(dashboard.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('should impact hasUnsavedChanges if panels have changes when row is collapsed', () => {
+      dashboard.panels[0].setProperty('title', 'new title');
+      expect(dashboard.hasUnsavedChanges()).toBe(true);
+    });
+
     it('should remove panels and put them inside collapsed row', () => {
       expect(dashboard.panels.length).toBe(3);
       expect(dashboard.panels[1].panels?.length).toBe(2);
@@ -967,7 +976,7 @@ describe('exitViewPanel', () => {
 });
 
 describe('exitPanelEditor', () => {
-  function getTestContext(setPreviousAutoRefresh = false) {
+  function getTestContext(pauseAutoRefresh = false) {
     const panel: any = { destroy: jest.fn() };
     const dashboard = new DashboardModel({});
     const timeSrvMock = {
@@ -977,8 +986,8 @@ describe('exitPanelEditor', () => {
     } as unknown as TimeSrv;
     dashboard.startRefresh = jest.fn();
     dashboard.panelInEdit = panel;
-    if (setPreviousAutoRefresh) {
-      timeSrvMock.previousAutoRefresh = '5s';
+    if (pauseAutoRefresh) {
+      timeSrvMock.autoRefreshPaused = true;
     }
     setTimeSrv(timeSrvMock);
     return { dashboard, panel, timeSrvMock };

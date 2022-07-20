@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -19,12 +20,12 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd := models.CreateUserCommand{
+	cmd := user.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
 		Password: form.Password,
 		Name:     form.Name,
-		OrgId:    form.OrgId,
+		OrgID:    form.OrgId,
 	}
 
 	if len(cmd.Login) == 0 {
@@ -55,7 +56,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 
 	result := models.UserIdDTO{
 		Message: "User created",
-		Id:      user.Id,
+		Id:      user.ID,
 	}
 
 	return response.JSON(http.StatusOK, result)

@@ -20,7 +20,7 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
@@ -84,10 +84,12 @@ class UnthemedDashboardImport extends PureComponent<Props> {
           try {
             dashboard = JSON.parse(e.target.result);
           } catch (error) {
-            appEvents.emit(AppEvents.alertError, [
-              'Import failed',
-              'JSON -> JS Serialization failed: ' + error.message,
-            ]);
+            if (error instanceof Error) {
+              appEvents.emit(AppEvents.alertError, [
+                'Import failed',
+                'JSON -> JS Serialization failed: ' + error.message,
+              ]);
+            }
             return;
           }
           importDashboardJson(dashboard);

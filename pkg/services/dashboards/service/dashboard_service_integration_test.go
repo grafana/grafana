@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	dashbboardservice "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -22,6 +22,9 @@ import (
 const testOrgID int64 = 1
 
 func TestIntegrationIntegratedDashboardService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Given saved folders and dashboards in organization A", func(t *testing.T) {
 		// Basic validation tests
 
@@ -36,7 +39,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				}
 
 				err := callSaveWithError(cmd, sc.sqlStore)
-				assert.Equal(t, models.ErrDashboardNotFound, err)
+				assert.Equal(t, dashboards.ErrDashboardNotFound, err)
 			})
 
 		// Given other organization
@@ -56,7 +59,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					assert.Equal(t, models.ErrDashboardNotFound, err)
+					assert.Equal(t, dashboards.ErrDashboardNotFound, err)
 				})
 
 			permissionScenario(t, "When creating a dashboard with same uid as dashboard in organization A, it should create a new dashboard in org B",
@@ -98,7 +101,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sqlStore)
-					assert.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, int64(0), sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -118,7 +121,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.otherSavedFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -138,7 +141,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -159,7 +162,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -180,7 +183,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					assert.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -201,7 +204,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -222,7 +225,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -243,7 +246,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					assert.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -264,7 +267,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -285,7 +288,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sc.sqlStore)
-					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
+					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
@@ -426,7 +429,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardFolderNotFound, err)
+						assert.Equal(t, dashboards.ErrDashboardFolderNotFound, err)
 					})
 
 				permissionScenario(t, "When updating an existing dashboard by id without current version", canSave,
@@ -442,7 +445,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardVersionMismatch, err)
+						assert.Equal(t, dashboards.ErrDashboardVersionMismatch, err)
 					})
 
 				permissionScenario(t, "When updating an existing dashboard by id with current version", canSave,
@@ -482,7 +485,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardVersionMismatch, err)
+						assert.Equal(t, dashboards.ErrDashboardVersionMismatch, err)
 					})
 
 				permissionScenario(t, "When updating an existing dashboard by uid with current version", canSave,
@@ -521,7 +524,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardWithSameNameInFolderExists, err)
+						assert.Equal(t, dashboards.ErrDashboardWithSameNameInFolderExists, err)
 					})
 
 				permissionScenario(t, "When creating a dashboard with same name as dashboard in General folder",
@@ -537,7 +540,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardWithSameNameInFolderExists, err)
+						assert.Equal(t, dashboards.ErrDashboardWithSameNameInFolderExists, err)
 					})
 
 				permissionScenario(t, "When creating a folder with same name as existing folder", canSave,
@@ -553,7 +556,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardWithSameNameInFolderExists, err)
+						assert.Equal(t, dashboards.ErrDashboardWithSameNameInFolderExists, err)
 					})
 			})
 
@@ -641,7 +644,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardWithSameUIDExists, err)
+						assert.Equal(t, dashboards.ErrDashboardWithSameUIDExists, err)
 					})
 
 				permissionScenario(t, "When creating a dashboard with same name as dashboard in other folder", canSave,
@@ -705,7 +708,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardTypeMismatch, err)
+						assert.Equal(t, dashboards.ErrDashboardTypeMismatch, err)
 					})
 
 				permissionScenario(t, "When updating existing dashboard to a folder using id", canSave,
@@ -721,7 +724,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardTypeMismatch, err)
+						assert.Equal(t, dashboards.ErrDashboardTypeMismatch, err)
 					})
 
 				permissionScenario(t, "When updating existing folder to a dashboard using uid", canSave,
@@ -737,7 +740,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardTypeMismatch, err)
+						assert.Equal(t, dashboards.ErrDashboardTypeMismatch, err)
 					})
 
 				permissionScenario(t, "When updating existing dashboard to a folder using uid", canSave,
@@ -753,7 +756,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardTypeMismatch, err)
+						assert.Equal(t, dashboards.ErrDashboardTypeMismatch, err)
 					})
 
 				permissionScenario(t, "When updating existing folder to a dashboard using title", canSave,
@@ -768,7 +771,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardWithSameNameAsFolder, err)
+						assert.Equal(t, dashboards.ErrDashboardWithSameNameAsFolder, err)
 					})
 
 				permissionScenario(t, "When updating existing dashboard to a folder using title", canSave,
@@ -783,7 +786,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(cmd, sc.sqlStore)
-						assert.Equal(t, models.ErrDashboardFolderWithSameNameAsDashboard, err)
+						assert.Equal(t, dashboards.ErrDashboardFolderWithSameNameAsDashboard, err)
 					})
 			})
 		})
@@ -793,7 +796,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 type permissionScenarioContext struct {
 	dashboardGuardianMock    *guardian.FakeDashboardGuardian
 	sqlStore                 *sqlstore.SQLStore
-	dashboardStore           dashbboardservice.Store
+	dashboardStore           dashboards.Store
 	savedFolder              *models.Dashboard
 	savedDashInFolder        *models.Dashboard
 	otherSavedFolder         *models.Dashboard
@@ -910,7 +913,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		}),
 	}
 
-	dto := dashbboardservice.SaveDashboardDTO{
+	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -947,7 +950,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		}),
 	}
 
-	dto := dashbboardservice.SaveDashboardDTO{
+	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -972,10 +975,10 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	return res
 }
 
-func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashbboardservice.SaveDashboardDTO {
+func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashboards.SaveDashboardDTO {
 	dash := (&cmd).GetDashboardModel()
 
-	return dashbboardservice.SaveDashboardDTO{
+	return dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     cmd.OrgId,

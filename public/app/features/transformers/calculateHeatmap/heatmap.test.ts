@@ -1,7 +1,7 @@
 import { FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
 
-import { bucketsToScanlines, calculateHeatmapFromData } from './heatmap';
+import { rowsToCellsHeatmap, calculateHeatmapFromData } from './heatmap';
 import { HeatmapCalculationOptions } from './models.gen';
 
 describe('Heatmap transformer', () => {
@@ -58,7 +58,7 @@ describe('Heatmap transformer', () => {
       ],
     });
 
-    const heatmap = bucketsToScanlines({ frame, value: 'Speed' });
+    const heatmap = rowsToCellsHeatmap({ frame, value: 'Speed' });
     expect(heatmap.fields.map((f) => ({ name: f.name, type: f.type, config: f.config }))).toMatchInlineSnapshot(`
       Array [
         Object {
@@ -92,7 +92,7 @@ describe('Heatmap transformer', () => {
             "C",
           ],
         },
-        "type": "heatmap-scanlines",
+        "type": "heatmap-cells",
       }
     `);
     expect(heatmap.fields[1].values.toArray()).toMatchInlineSnapshot(`

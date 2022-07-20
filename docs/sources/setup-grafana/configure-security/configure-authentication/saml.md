@@ -130,7 +130,7 @@ Grafana supports user authentication through Okta, which is useful when you want
 **Before you begin:**
 
 - To configure SAML integration with Okta, create integration inside the Okta organization first. [Add integration in Okta](https://help.okta.com/en/prod/Content/Topics/Apps/apps-overview-add-apps.htm)
-- Ensure you have permission to administer SAML authentication. For more information about permissions, refer to [About users and permissions]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions/#" >}}).
+- Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
 **To set up SAML with Okta:**
 
@@ -281,7 +281,7 @@ To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../../conf
 
 > **Note:** Available in Grafana version 7.0 and later.
 
-Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [About users and permissions]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions/" >}}).
+Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
 1. In the configuration file, set [`assertion_attribute_role`]({{< relref "../../configure-grafana/enterprise-configuration/#assertion-attribute-role" >}}) option to the attribute name where the role information will be extracted from.
 1. Set the [`role_values_editor`]({{< relref "../../configure-grafana/enterprise-configuration/#role-values-editor" >}}) option to the values mapped to the `Editor` role.
@@ -290,7 +290,7 @@ Role sync allows you to map user roles from an identity provider to Grafana. To 
 
 If a user role doesn't match any of configured values, then the `Viewer` role will be assigned.
 
-Refer to [About users and permissions]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions/" >}}) for more information about roles and permissions in Grafana.
+For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
 Example configuration:
 
@@ -406,4 +406,21 @@ The keys you provide should look like:
 ...
 ...
 -----END PRIVATE KEY-----
+```
+
+### SAML login attempts fail with request response "origin not allowed"
+
+When the user logs in using SAML and gets presented with "origin not allowed", the user might be issuing the login from an IdP (identity provider) service or the user is behind a reverse proxy. This potentially happens as Grafana's CSRF checks deem the requests to be invalid. For more information [CSRF](https://owasp.org/www-community/attacks/csrf).
+
+To solve this issue, you can configure either the [`csrf_trusted_origins`]({{< relref "../../configure-grafana/#csrf-trusted-origins" >}}) or [`csrf_additional_headers`]({{< relref "../../configure-grafana/#csrf_additional_headers" >}}) option in the SAML configuration.
+
+Example of a configuration file:
+
+```bash
+# config.ini
+...
+[security]
+csrf_trusted_origins = https://grafana.example.com
+csrf_additional_headers = X-Forwarded-Host
+...
 ```

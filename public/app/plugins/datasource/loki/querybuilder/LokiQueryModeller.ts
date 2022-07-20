@@ -94,7 +94,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.Unwrap, params: [] },
+          { id: LokiOperationId.Unwrap, params: [''] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.SumOverTime, params: ['$__interval'] },
           { id: LokiOperationId.Sum, params: [] },
@@ -106,7 +106,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.CountOverTime, params: ['$__interval'] },
-          { id: LokiOperationId.Sum, params: ['label'] },
+          { id: LokiOperationId.Sum, params: [] },
         ],
       },
       {
@@ -149,7 +149,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
       },
       {
         name: 'Metrics query for extracted quantile',
-        // quantile_over_time(0.99,{} | logfmt | unwrap latency[$__interval]) by ()
+        // quantile_over_time(0.5,{} | logfmt | unwrap latency[$__interval]) by ()
         operations: [
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },

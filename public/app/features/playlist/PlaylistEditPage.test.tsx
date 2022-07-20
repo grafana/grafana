@@ -9,7 +9,7 @@ import { PlaylistEditPage } from './PlaylistEditPage';
 import { Playlist } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -19,12 +19,12 @@ jest.mock('../../core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-async function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
+async function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
-  const playlist = { name, items, interval } as unknown as Playlist;
+  const playlist = { name, items, interval, uid } as unknown as Playlist;
   const queryParams = {};
   const route: any = {};
-  const match: any = { params: { id: 1 } };
+  const match: any = { params: { uid: 'foo' } };
   const location: any = {};
   const history: any = {};
   const navModel: any = {
@@ -37,6 +37,7 @@ async function getTestContext({ name, interval, items }: Partial<Playlist> = {})
     name: 'Test Playlist',
     interval: '5s',
     items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+    uid: 'foo',
   });
   const { rerender } = render(
     <PlaylistEditPage
@@ -76,7 +77,7 @@ describe('PlaylistEditPage', () => {
       await userEvent.type(screen.getByRole('textbox', { name: /playlist interval/i }), '10s');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(putMock).toHaveBeenCalledTimes(1));
-      expect(putMock).toHaveBeenCalledWith('/api/playlists/1', {
+      expect(putMock).toHaveBeenCalledWith('/api/playlists/foo', {
         name: 'A Name',
         interval: '10s',
         items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],

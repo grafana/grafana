@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ActionMeta, AsyncSelect } from '@grafana/ui';
+import { ActionMeta, AsyncSelect, LoadOptionsCallback } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -52,7 +52,7 @@ export class FolderPicker extends PureComponent<Props, State> {
       folder: null,
     };
 
-    this.debouncedSearch = debounce(this.getOptions, 300, {
+    this.debouncedSearch = debounce(this.loadOptions, 300, {
       leading: true,
       trailing: true,
     });
@@ -82,7 +82,13 @@ export class FolderPicker extends PureComponent<Props, State> {
     await this.loadInitialValue();
   };
 
-  getOptions = async (query: string) => {
+  // when debouncing, we must use the callback form of react-select's loadOptions so we don't
+  // drop results for user input. This must not return a promise/use await.
+  loadOptions = (query: string, callback: LoadOptionsCallback<number>): void => {
+    this.searchFolders(query).then(callback);
+  };
+
+  private searchFolders = async (query: string) => {
     const {
       rootName,
       enableReset,
@@ -137,15 +143,19 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   createNewFolder = async (folderName: string) => {
     const newFolder = await createFolder({ title: folderName });
-    let folder = { value: -1, label: 'Not created' };
+    let folder: SelectableValue<number> = { value: -1, label: 'Not created' };
+
     if (newFolder.id > -1) {
       appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
       folder = { value: newFolder.id, label: newFolder.title };
+
       this.setState(
         {
           folder: newFolder,
         },
-        () => this.props.onChange({ id: newFolder.value!, title: newFolder.label! })
+        () => {
+          this.onFolderChange(folder, { action: 'create-option', option: folder });
+        }
       );
     } else {
       appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
@@ -159,7 +169,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     const resetFolder: SelectableValue<number> = { label: initialTitle, value: undefined };
     const rootFolder: SelectableValue<number> = { label: rootName, value: 0 };
 
-    const options = await this.getOptions('');
+    const options = await this.searchFolders('');
 
     let folder: SelectableValue<number> | null = null;
 

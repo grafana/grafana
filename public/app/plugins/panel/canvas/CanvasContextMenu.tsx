@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useObservable } from 'react-use';
 import { first } from 'rxjs/operators';
 
 import { ContextMenu, MenuItem } from '@grafana/ui';
 
 import { Scene } from '../../../features/canvas/runtime/scene';
 
+import { activePanelSubject } from './CanvasPanel';
 import { LayerActionID } from './types';
 
 type Props = {
@@ -18,6 +20,8 @@ type AnchorPoint = {
 };
 
 export const CanvasContextMenu = ({ scene }: Props) => {
+  const activePanel = useObservable(activePanelSubject);
+  const inlineEditorOpen = activePanel?.panel.state.openInlineEdit;
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [anchorPoint, setAnchorPoint] = useState<AnchorPoint>({ x: 0, y: 0 });
 
@@ -28,7 +32,8 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   const handleContextMenu = useCallback(
     (event) => {
       event.preventDefault();
-      if (event.currentTarget) {
+      const shouldSelectElement = event.currentTarget !== scene.div;
+      if (shouldSelectElement) {
         scene.select({ targets: [event.currentTarget as HTMLElement | SVGElement] });
       }
       setAnchorPoint({ x: event.pageX, y: event.pageY });
@@ -38,57 +43,82 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   );
 
   useEffect(() => {
-    if (selectedElements && selectedElements.length === 1) {
-      const element = selectedElements[0];
-      element.addEventListener('contextmenu', handleContextMenu);
+    if (scene.selecto) {
+      scene.selecto.getSelectableElements().forEach((element) => {
+        element.addEventListener('contextmenu', handleContextMenu);
+      });
     }
-  }, [selectedElements, handleContextMenu]);
+  }, [handleContextMenu, scene.selecto]);
 
-  if (!selectedElements) {
-    return <></>;
-  }
+  useEffect(() => {
+    if (scene.div) {
+      scene.div.addEventListener('contextmenu', handleContextMenu);
+    }
+  }, [handleContextMenu, scene.div]);
 
   const closeContextMenu = () => {
     setIsMenuVisible(false);
   };
 
   const renderMenuItems = () => {
-    return (
-      <>
-        <MenuItem
-          label="Delete"
-          onClick={() => {
-            contextMenuAction(LayerActionID.Delete);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        <MenuItem
-          label="Duplicate"
-          onClick={() => {
-            contextMenuAction(LayerActionID.Duplicate);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        <MenuItem
-          label="Bring to front"
-          onClick={() => {
-            contextMenuAction(LayerActionID.MoveTop);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        <MenuItem
-          label="Send to back"
-          onClick={() => {
-            contextMenuAction(LayerActionID.MoveBottom);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-      </>
+    const openCloseEditorMenuItem = !scene.isPanelEditing && (
+      <MenuItem
+        label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
+        onClick={() => {
+          if (scene.inlineEditingCallback) {
+            if (inlineEditorOpen) {
+              activePanel.panel.closeInlineEdit();
+            } else {
+              scene.inlineEditingCallback();
+            }
+          }
+          closeContextMenu();
+        }}
+        className={styles.menuItem}
+      />
     );
+
+    if (selectedElements && selectedElements.length >= 1) {
+      return (
+        <>
+          <MenuItem
+            label="Delete"
+            onClick={() => {
+              contextMenuAction(LayerActionID.Delete);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          <MenuItem
+            label="Duplicate"
+            onClick={() => {
+              contextMenuAction(LayerActionID.Duplicate);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          <MenuItem
+            label="Bring to front"
+            onClick={() => {
+              contextMenuAction(LayerActionID.MoveTop);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          <MenuItem
+            label="Send to back"
+            onClick={() => {
+              contextMenuAction(LayerActionID.MoveBottom);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          {openCloseEditorMenuItem}
+        </>
+      );
+    } else {
+      return openCloseEditorMenuItem;
+    }
   };
 
   const contextMenuAction = (actionType: string) => {

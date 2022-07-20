@@ -275,7 +275,7 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 }
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
-	if !s.options.Assignments.Users {
+	if !(s.options.Assignments.Users || s.options.Assignments.ServiceAccounts) {
 		return ErrInvalidAssignment
 	}
 
@@ -311,7 +311,6 @@ func (s *Service) declareFixedRoles() error {
 	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
 			DisplayName: s.options.ReaderRoleName,
 			Group:       s.options.RoleGroup,
@@ -324,7 +323,6 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
 			DisplayName: s.options.WriterRoleName,
 			Group:       s.options.RoleGroup,

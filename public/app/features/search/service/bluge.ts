@@ -21,13 +21,15 @@ export class BlugeSearcher implements GrafanaSearcher {
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
     const target = {
-      ...query,
-      refId: 'A',
+      refId: 'TagsQuery',
       queryType: GrafanaQueryType.Search,
-      query: query.query ?? '*',
-      sort: undefined, // no need to sort the initial query results (not used)
-      facet: [{ field: 'tag' }],
-      limit: 1, // 0 would be better, but is ignored by the backend
+      search: {
+        ...query,
+        query: query.query ?? '*',
+        sort: undefined, // no need to sort the initial query results (not used)
+        facet: [{ field: 'tag' }],
+        limit: 1, // 0 would be better, but is ignored by the backend
+      },
     };
 
     const data = (
@@ -57,6 +59,10 @@ export class BlugeSearcher implements GrafanaSearcher {
         opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
       }
+      for (const sf of sortTimeFields) {
+        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent)` });
+        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest)` });
+      }
     }
 
     return Promise.resolve(opts);
@@ -70,11 +76,13 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   query = await replaceCurrentFolderQuery(query);
   const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
   const target = {
-    ...query,
-    refId: 'A',
+    refId: 'Search',
     queryType: GrafanaQueryType.Search,
-    query: query.query ?? '*',
-    limit: firstPageSize,
+    search: {
+      ...query,
+      query: query.query ?? '*',
+      limit: query.limit ?? firstPageSize,
+    },
   };
   const rsp = await lastValueFrom(
     ds.query({
@@ -113,21 +121,29 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     }
   }
 
-  const view = new DataFrameView<DashboardQueryResult>(first);
-  return {
-    totalRows: meta.count ?? first.length,
-    view,
-    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-      console.log('LOAD NEXT PAGE', { startIndex, stopIndex, length: view.dataFrame.length });
+  let loadMax = 0;
+  let pending: Promise<void> | undefined = undefined;
+  const getNextPage = async () => {
+    while (loadMax > view.dataFrame.length) {
       const from = view.dataFrame.length;
-      const limit = stopIndex - from;
-      if (limit < 0) {
+      if (from >= meta.count) {
         return;
       }
       const frame = (
         await lastValueFrom(
           ds.query({
-            targets: [{ ...target, refId: 'Page', facet: undefined, from, limit: Math.max(limit, nextPageSizes) }],
+            targets: [
+              {
+                ...target,
+                search: {
+                  ...(target?.search ?? {}),
+                  from,
+                  limit: nextPageSizes,
+                },
+                refId: 'Page',
+                facet: undefined,
+              },
+            ],
           } as any)
         )
       ).data?.[0] as DataFrame;
@@ -156,7 +172,20 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
           meta.locationInfo[key] = value;
         }
       }
-      return;
+    }
+    pending = undefined;
+  };
+
+  const view = new DataFrameView<DashboardQueryResult>(first);
+  return {
+    totalRows: meta.count ?? first.length,
+    view,
+    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      loadMax = Math.max(loadMax, stopIndex);
+      if (!pending) {
+        pending = getNextPage();
+      }
+      return pending;
     },
     isItemLoaded: (index: number): boolean => {
       return index < view.dataFrame.length;
@@ -182,9 +211,20 @@ const sortFields = [
   { name: 'errors_last_30_days', display: 'Errors 30 days' },
 ];
 
+// Enterprise only time sort field values for dashboards
+const sortTimeFields = [
+  { name: 'created_at', display: 'Created time' },
+  { name: 'updated_at', display: 'Updated time' },
+];
+
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
+    if (sf.name === name) {
+      return sf.display;
+    }
+  }
+  for (const sf of sortTimeFields) {
     if (sf.name === name) {
       return sf.display;
     }
