@@ -33,7 +33,7 @@ runtime.setDataSourceSrv({
 
 describe('circularVariables', () => {
   it('should not result in updates if triggered variable has no dependencies', async () => {
-    const actual = await getVariableEvaluationOrder('A', {
+    const actual = await getVariableEvaluationOrder('B', {
       A: [],
       B: ['A'],
     });
