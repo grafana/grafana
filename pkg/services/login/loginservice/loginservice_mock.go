@@ -27,7 +27,7 @@ func (s LoginServiceMock) CreateUser(cmd user.CreateUserCommand) (*user.User, er
 	}
 
 	if cmd.Login == s.AlreadyExitingLogin {
-		return nil, models.ErrUserAlreadyExists
+		return nil, user.ErrUserAlreadyExists
 	}
 
 	if s.ExpectedUserForm.Login == cmd.Login && s.ExpectedUserForm.Email == cmd.Email &&

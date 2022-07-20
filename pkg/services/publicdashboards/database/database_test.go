@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	dashboards "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -37,6 +37,54 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
+
+	t.Run("PublicDashboardEnabled Will return true when dashboard has at least one enabled public dashboard", func(t *testing.T) {
+		setup()
+
+		_, err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+			DashboardUid: savedDashboard.Uid,
+			OrgId:        savedDashboard.OrgId,
+			PublicDashboard: PublicDashboard{
+				IsEnabled:    true,
+				Uid:          "abc123",
+				DashboardUid: savedDashboard.Uid,
+				OrgId:        savedDashboard.OrgId,
+				CreatedAt:    time.Now(),
+				CreatedBy:    7,
+				AccessToken:  "NOTAREALUUID",
+			},
+		})
+		require.NoError(t, err)
+
+		res, err := publicdashboardStore.PublicDashboardEnabled(context.Background(), savedDashboard.Uid)
+		require.NoError(t, err)
+
+		require.True(t, res)
+	})
+
+	t.Run("PublicDashboardEnabled will return false when dashboard has public dashboards but they are not enabled", func(t *testing.T) {
+		setup()
+
+		_, err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+			DashboardUid: savedDashboard.Uid,
+			OrgId:        savedDashboard.OrgId,
+			PublicDashboard: PublicDashboard{
+				IsEnabled:    false,
+				Uid:          "abc123",
+				DashboardUid: savedDashboard.Uid,
+				OrgId:        savedDashboard.OrgId,
+				CreatedAt:    time.Now(),
+				CreatedBy:    7,
+				AccessToken:  "NOTAREALUUID",
+			},
+		})
+		require.NoError(t, err)
+
+		res, err := publicdashboardStore.PublicDashboardEnabled(context.Background(), savedDashboard.Uid)
+		require.NoError(t, err)
+
+		require.False(t, res)
+	})
 
 	t.Run("returns PublicDashboard and Dashboard", func(t *testing.T) {
 		setup()

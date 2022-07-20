@@ -1345,6 +1345,8 @@ github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.m
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.138.0 h1:uJWNwHL4RoQF3axoi3RDSwoNu/KHy5F+5dnrK0fx5yc=
 github.com/grafana/grafana-plugin-sdk-go v0.138.0/go.mod h1:Y+Ps2sesZ62AyCnX+hzrYnyDQYe/ZZl+A8yKLOBm12c=
+github.com/grafana/grafana-plugin-sdk-go v0.139.0 h1:2RQKM2QpSaWTtaGN6sK+R7LO7zykOeTYF0QkAMA7JsI=
+github.com/grafana/grafana-plugin-sdk-go v0.139.0/go.mod h1:Y+Ps2sesZ62AyCnX+hzrYnyDQYe/ZZl+A8yKLOBm12c=
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b h1:YiSGp34F4V0G08HHx1cJBf2GVgwYAkXQjzuVs1t8jYk=
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b/go.mod h1:q83kyQoMD0vhy+RzFLlbw0UgHJ6TAihQpuXvdFmm4s4=
 github.com/grafana/thema v0.0.0-20220523183731-72aebd14e751 h1:5PpsfN52XA0hxOjD/qQ0QNiEkp9Y9Tb+yz/Hj9fyL4M=
