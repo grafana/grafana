@@ -15,7 +15,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 	grafanaLoginScenario(t, "When login with non-existing user", func(sc *grafanaLoginScenarioContext) {
 		sc.withNonExistingUser()
 		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
-		require.EqualError(t, err, models.ErrUserNotFound.Error())
+		require.EqualError(t, err, user.ErrUserNotFound.Error())
 
 		assert.False(t, sc.validatePasswordCalled)
 		assert.Nil(t, sc.loginUserQuery.User)
@@ -97,10 +97,10 @@ func mockPasswordValidation(valid bool, sc *grafanaLoginScenarioContext) {
 	}
 }
 
-func (sc *grafanaLoginScenarioContext) getUserByLoginQueryReturns(user *user.User) {
-	sc.store.ExpectedUser = user
-	if user == nil {
-		sc.store.ExpectedError = models.ErrUserNotFound
+func (sc *grafanaLoginScenarioContext) getUserByLoginQueryReturns(usr *user.User) {
+	sc.store.ExpectedUser = usr
+	if usr == nil {
+		sc.store.ExpectedError = user.ErrUserNotFound
 	}
 }
 

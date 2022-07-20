@@ -57,8 +57,9 @@ type RequestURIKey struct{}
 // COMMANDS
 
 type UpsertUserCommand struct {
-	ReqContext    *ReqContext
-	ExternalUser  *ExternalUserInfo
+	ReqContext   *ReqContext
+	ExternalUser *ExternalUserInfo
+	UserLookupParams
 	SignupAllowed bool
 
 	Result *user.User
@@ -98,9 +99,14 @@ type LoginUserQuery struct {
 type GetUserByAuthInfoQuery struct {
 	AuthModule string
 	AuthId     string
-	UserId     int64
-	Email      string
-	Login      string
+	UserLookupParams
+}
+
+type UserLookupParams struct {
+	// Describes lookup order as well
+	UserID *int64  // if set, will try to find the user by id
+	Email  *string // if set, will try to find the user by email
+	Login  *string // if set, will try to find the user by login
 }
 
 type GetExternalUserInfoByLoginQuery struct {

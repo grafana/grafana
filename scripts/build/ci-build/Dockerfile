@@ -102,11 +102,11 @@ RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20210208
 
-ENV GOVERSION=1.17.11 \
+ENV GOVERSION=1.17.12 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
     NODEVERSION=16.14.0-1nodesource1 \
-    YARNVERSION=1.22.15-1
+    YARNVERSION=1.22.19-1
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
@@ -117,7 +117,8 @@ COPY --from=toolchain /tmp/cue /usr/local/bin/
 COPY --from=toolchain /tmp/dockerize /usr/local/bin/
 
 RUN apt-get update && \
-    apt-get install -yq  \
+    apt-get install -yq \
+        apt-transport-https \
         build-essential netcat-traditional clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         python-pip      \
         ca-certificates \

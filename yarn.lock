@@ -3177,6 +3177,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/polyfill@npm:^7.6.0":
+  version: 7.12.1
+  resolution: "@babel/polyfill@npm:7.12.1"
+  dependencies:
+    core-js: ^2.6.5
+    regenerator-runtime: ^0.13.4
+  checksum: 3f59a9d85a41b390b044a1be13e11ae6d8efbfcf4e07217964585c7cef337b828eecfc5e164083227189146d2b6efc1affae8f59c831438eb40b848ab6fe5f39
+  languageName: node
+  linkType: hard
+
 "@babel/preset-env@npm:7.18.2":
   version: 7.18.2
   resolution: "@babel/preset-env@npm:7.18.2"
@@ -3444,6 +3454,15 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 1d8e888c104022c2924803fc9e217c99f8a9b87dc5bf8ea1ddd9921765102c8267d2bd92d4f42aaa1b5ca3713ea400580b29702bb89829a59d63baf0321eb284
+  languageName: node
+  linkType: hard
+
+"@babel/runtime@npm:7.18.6":
+  version: 7.18.6
+  resolution: "@babel/runtime@npm:7.18.6"
+  dependencies:
+    regenerator-runtime: ^0.13.4
+  checksum: 8b707b64ae0524db617d0c49933b258b96376a38307dc0be8fb42db5697608bcc1eba459acce541e376cff5ed5c5287d24db5780bd776b7c75ba2c2e26ff8a2c
   languageName: node
   linkType: hard
 
@@ -4801,14 +4820,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:^0.0.13":
-  version: 0.0.13
-  resolution: "@grafana/lezer-logql@npm:0.0.13"
+"@grafana/lezer-logql@npm:^0.0.14":
+  version: 0.0.14
+  resolution: "@grafana/lezer-logql@npm:0.0.14"
   dependencies:
     lezer: ^0.13.5
   peerDependencies:
     "@lezer/lr": ^0.15.8
-  checksum: 417ab91c4fa8317789435bafbadd0bc24a6b9d8494a87614f14dc8cbe5f05bf94f529eadc0b2643ff71a3a3fee45cbf588538d8224abe2f4134ff5cc2c2b0055
+  checksum: 4e35f455b6b7c286dfca9f3770df0d4c325057352dc8241665b667d798db09de54e1c14f7bfd34d4ae5bbef782d28994ceaf5c517fc18cff46ae3a47527e1990
   languageName: node
   linkType: hard
 
@@ -11367,6 +11386,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/rc-tree@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@types/rc-tree@npm:3.0.0"
+  dependencies:
+    rc-tree: "*"
+  checksum: bf8e599c5a62c8f8d91fbecdc210119c4c2ad07bdfb8adecb4d1cce9cb967fd6856ad2940431b8fdc9993cd261f127c33588f2988bfc7bc6438993de1c6eeff3
+  languageName: node
+  linkType: hard
+
 "@types/react-beautiful-dnd@npm:13.1.2":
   version: 13.1.2
   resolution: "@types/react-beautiful-dnd@npm:13.1.2"
@@ -16295,7 +16323,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:^2.0.0, core-js@npm:^2.4.0":
+"core-js@npm:^2.0.0, core-js@npm:^2.4.0, core-js@npm:^2.6.5":
   version: 2.6.12
   resolution: "core-js@npm:2.6.12"
   checksum: 44fa9934a85f8c78d61e0c8b7b22436330471ffe59ec5076fe7f324d6e8cf7f824b14b1c81ca73608b13bdb0fef035bd820989bf059767ad6fa13123bb8bd016
@@ -20937,6 +20965,7 @@ __metadata:
     "@babel/preset-env": 7.18.2
     "@babel/preset-react": 7.18.6
     "@babel/preset-typescript": 7.18.6
+    "@babel/runtime": 7.18.6
     "@betterer/betterer": 5.3.5
     "@betterer/cli": 5.3.5
     "@betterer/eslint": 5.3.5
@@ -20954,7 +20983,7 @@ __metadata:
     "@grafana/eslint-config": 4.0.0
     "@grafana/experimental": ^0.0.2-canary.32
     "@grafana/google-sdk": 0.0.3
-    "@grafana/lezer-logql": ^0.0.13
+    "@grafana/lezer-logql": ^0.0.14
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
@@ -21031,6 +21060,7 @@ __metadata:
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
     "@types/rc-time-picker": 3.4.1
+    "@types/rc-tree": ^3.0.0
     "@types/react": 17.0.42
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-dom": 17.0.14
@@ -21172,6 +21202,7 @@ __metadata:
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: 3.7.3
+    rc-tree: ^5.6.5
     re-resizable: 6.9.9
     react: 17.0.2
     react-awesome-query-builder: ^5.1.2
@@ -21217,6 +21248,7 @@ __metadata:
     sinon: 14.0.0
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
+    sql-formatter-plus: ^1.3.6
     style-loader: 3.3.1
     stylelint: 14.9.1
     stylelint-config-prettier: 9.0.3
@@ -30467,7 +30499,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:~5.6.3":
+"rc-tree@npm:*, rc-tree@npm:^5.6.5, rc-tree@npm:~5.6.3":
   version: 5.6.5
   resolution: "rc-tree@npm:5.6.5"
   dependencies:
@@ -33880,6 +33912,16 @@ __metadata:
   version: 1.0.3
   resolution: "sprintf-js@npm:1.0.3"
   checksum: 19d79aec211f09b99ec3099b5b2ae2f6e9cdefe50bc91ac4c69144b6d3928a640bb6ae5b3def70c2e85a2c3d9f5ec2719921e3a59d3ca3ef4b2fd1a4656a0df3
+  languageName: node
+  linkType: hard
+
+"sql-formatter-plus@npm:^1.3.6":
+  version: 1.3.6
+  resolution: "sql-formatter-plus@npm:1.3.6"
+  dependencies:
+    "@babel/polyfill": ^7.6.0
+    lodash: ^4.17.15
+  checksum: 5c215f85936b3465d6778af868f0a8a2d3dd4b714ab95025c3b17b9748fe420ae2e128c523d50be0a43667bf8329a974f3248828971299146786e28d9714e752
   languageName: node
   linkType: hard
 

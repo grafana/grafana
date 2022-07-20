@@ -187,16 +187,20 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
-  it('returns error for query with JSON expression parser', () => {
+  it('parses query with JSON parser with expression', () => {
     const context = buildVisualQueryFromString('{app="frontend"} | json label="value" ');
-    expect(context.errors).toEqual([
-      {
-        text: 'JsonExpressionParser not supported in visual query builder: json label="value"',
-        from: 19,
-        to: 37,
-        parentType: 'PipelineStage',
-      },
-    ]);
+    expect(context.query).toEqual({
+      labels: [{ label: 'app', op: '=', value: 'frontend' }],
+      operations: [{ id: 'json', params: ['label="value"'] }],
+    });
+  });
+
+  it('parses query with JSON parser with multiple expressions', () => {
+    const context = buildVisualQueryFromString('{app="frontend"} | json label="value", bar="baz", foo="bar" ');
+    expect(context.query).toEqual({
+      labels: [{ label: 'app', op: '=', value: 'frontend' }],
+      operations: [{ id: 'json', params: ['label="value"', 'bar="baz"', 'foo="bar"'] }],
+    });
   });
 
   it('parses query with with simple unwrap', () => {

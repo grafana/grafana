@@ -43,13 +43,14 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
     setIsCollapsed(!expandAll);
   }, [expandAll]);
 
-  const hasRuler = useHasRuler();
+  const { hasRuler, rulerRulesLoaded } = useHasRuler();
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
-  const isDeleting = hasRuler(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
+  const isDeleting =
+    hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
   const deleteGroup = () => {

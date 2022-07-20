@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 
@@ -28,7 +27,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				Login: "test1",
 			},
 		)
-		require.Error(t, err, models.ErrUserNotFound)
+		require.Error(t, err, user.ErrUserNotFound)
 	})
 
 	t.Run("insert user", func(t *testing.T) {

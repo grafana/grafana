@@ -22,6 +22,7 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
+  QueryFixAction,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -1030,15 +1031,22 @@ export class PrometheusDatasource
     }
   }
 
-  modifyQuery(query: PromQuery, action: any): PromQuery {
+  modifyQuery(query: PromQuery, action: QueryFixAction): PromQuery {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value);
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value);
+        }
+
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = addLabelToQuery(expression, action.key, action.value, '!=');
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value, '!=');
+        }
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
@@ -1054,8 +1062,8 @@ export class PrometheusDatasource
         break;
       }
       case 'EXPAND_RULES': {
-        if (action.mapping) {
-          expression = expandRecordingRules(expression, action.mapping);
+        if (action.options) {
+          expression = expandRecordingRules(expression, action.options);
         }
         break;
       }
