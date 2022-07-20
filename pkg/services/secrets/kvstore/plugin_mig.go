@@ -41,14 +41,6 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 	// Check if we should migrate to plugin - default false
 	if s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_to_plugin").MustBool(false) &&
 		s.remoteCheck.ShouldUseRemoteSecretsPlugin() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-		s.logger.Debug("starting migration of unified secrets to the plugin")
-=======
->>>>>>> e1785f4eb4... Secret migration from Sql KV Store to Secret Plugin (#52191)
-=======
-		s.logger.Debug("starting migration of unified secrets to the plugin")
->>>>>>> acd85314b3... Secrets: Add logging to track secrets migration (#52481)
 		// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
 		// the secrets store would be the plugin.
 		secretsSql := &secretsKVStoreSQL{
@@ -71,14 +63,6 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 				return err
 			}
 		}
-<<<<<<< HEAD
-<<<<<<< HEAD
-		s.logger.Debug("migrated unified secrets to plugin", "number of secrets", len(allSec))
-=======
->>>>>>> e1785f4eb4... Secret migration from Sql KV Store to Secret Plugin (#52191)
-=======
-		s.logger.Debug("migrated unified secrets to plugin", "number of secrets", len(allSec))
->>>>>>> acd85314b3... Secrets: Add logging to track secrets migration (#52481)
 		// as no err was returned, when we delete all the secrets from the sql store
 		for _, sec := range allSec {
 			err = secretsSql.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
@@ -86,14 +70,6 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 				return err
 			}
 		}
-<<<<<<< HEAD
-<<<<<<< HEAD
-		s.logger.Debug("deleted unified secrets after migration", "number of secrets", len(allSec))
-=======
->>>>>>> e1785f4eb4... Secret migration from Sql KV Store to Secret Plugin (#52191)
-=======
-		s.logger.Debug("deleted unified secrets after migration", "number of secrets", len(allSec))
->>>>>>> acd85314b3... Secrets: Add logging to track secrets migration (#52481)
 	}
 	return nil
 }
