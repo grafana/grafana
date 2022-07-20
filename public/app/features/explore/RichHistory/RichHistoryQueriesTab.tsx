@@ -40,15 +40,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
   return {
     container: css`
       display: flex;
-      .label-slider {
-        font-size: ${theme.typography.size.sm};
-        &:last-of-type {
-          margin-top: ${theme.spacing.lg};
-        }
-        &:first-of-type {
-          font-weight: ${theme.typography.weight.semibold};
-          margin-bottom: ${theme.spacing.md};
-        }
+    `,
+    labelSlider: css`
+      font-size: ${theme.typography.size.sm};
+      &:last-of-type {
+        margin-top: ${theme.spacing.lg};
+      }
+      &:first-of-type {
+        font-weight: ${theme.typography.weight.semibold};
+        margin-bottom: ${theme.spacing.md};
       }
     `,
     containerContent: css`
@@ -176,8 +176,8 @@ export function RichHistoryQueriesTab(props: Props) {
     <div className={styles.container}>
       <div className={styles.containerSlider}>
         <div className={styles.slider}>
-          <div className="label-slider">Filter history</div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
+          <div className={styles.labelSlider}>Filter history</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
           <div className="slider">
             <RangeSlider
               tooltipAlwaysVisible={false}
@@ -192,7 +192,7 @@ export function RichHistoryQueriesTab(props: Props) {
               }}
             />
           </div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
         </div>
       </div>
 
