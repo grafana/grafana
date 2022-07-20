@@ -30,7 +30,6 @@ func ProvidePluginSecretMigrationService(
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	remoteCheck UseRemoteSecretsPluginCheck,
-	features featuremgmt.FeatureToggles,
 	kvstore kvstore.KVStore,
 ) *PluginSecretMigrationService {
 	return &PluginSecretMigrationService{
@@ -40,7 +39,6 @@ func ProvidePluginSecretMigrationService(
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		remoteCheck:    remoteCheck,
-		features:       features,
 		kvstore:        kvstore,
 	}
 }
@@ -59,6 +57,10 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 			},
 		}
 
+		// before we start migrating, check see if plugin startup failures were already fatal
+		namespacedKVStore := GetNamespacedKVStore(s.kvstore)
+		wasFatal, _ := isPluginStartupErrorFatal(ctx, namespacedKVStore)
+
 		allSec, err := secretsSql.GetAll(ctx)
 		if err != nil {
 			return nil
@@ -71,18 +73,16 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 			}
 		}
 		// as no err was returned, when we delete all the secrets from the sql store
-		for _, sec := range allSec {
+		for index, sec := range allSec {
 			err = secretsSql.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
 			if err != nil {
+				if index == 0 && !wasFatal {
+					// old unified secrets still exists, so plugin startup errors are still not fatal, unless they were before we started
+					setPluginStartupErrorFatal(ctx, namespacedKVStore, false)
+				}
 				return err
 			}
 		}
-
-		// if backwards compatibility was disabled, the plugin is now required for the app to start
-		// this migrator always gets run, so if backwards compatibility is re-enabled, delete the flag
-		disableSecretsCompatibility := s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility)
-		namespacedKVStore := GetNamespacedKVStore(s.kvstore)
-		setPluginErrorFatal(ctx, namespacedKVStore, disableSecretsCompatibility)
 	}
 	return nil
 }
