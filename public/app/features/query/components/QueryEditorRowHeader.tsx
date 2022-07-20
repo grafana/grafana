@@ -1,10 +1,13 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { Subscription } from 'rxjs';
 
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
+import { Icon, Input, FieldValidationMessage, useStyles, useForceUpdate } from '@grafana/ui';
+import { useSelector } from 'app/types';
+import { PanelConfigChangedEvent } from 'app/types/events';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
@@ -21,6 +24,19 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
 
 export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQuery>) => {
   const { query, queries, onClick, onChange, collapsedText, renderExtras, disabled } = props;
+
+  const panel = useSelector((state) => state.dashboard.getModel()?.panelInEdit);
+  const forceUpdate = useForceUpdate();
+
+  useEffect(() => {
+    if (!panel) {
+      return;
+    }
+
+    const eventSubs = new Subscription();
+    eventSubs.add(panel.events.subscribe(PanelConfigChangedEvent, forceUpdate));
+    return () => eventSubs.unsubscribe();
+  }, [panel, forceUpdate]);
 
   const styles = useStyles(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -114,7 +130,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
             {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
           </>
         )}
-        {renderDataSource(props, styles)}
+        {renderDataSource(props, styles, panel?.repeat)}
         {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
         {disabled && <em className={styles.contextInfo}>Disabled</em>}
       </div>
@@ -130,7 +146,8 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
 
 const renderDataSource = <TQuery extends DataQuery>(
   props: Props<TQuery>,
-  styles: ReturnType<typeof getStyles>
+  styles: ReturnType<typeof getStyles>,
+  repeatVariableName?: string
 ): ReactNode => {
   const { alerting, dataSource, onChangeDataSource } = props;
 
@@ -140,7 +157,13 @@ const renderDataSource = <TQuery extends DataQuery>(
 
   return (
     <div className={styles.itemWrapper}>
-      <DataSourcePicker variables={true} alerting={alerting} current={dataSource.name} onChange={onChangeDataSource} />
+      <DataSourcePicker
+        variables={true}
+        alerting={alerting}
+        current={dataSource.name}
+        onChange={onChangeDataSource}
+        repeatVariableName={repeatVariableName}
+      />
     </div>
   );
 };

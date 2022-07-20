@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Components
 import {
@@ -23,7 +23,7 @@ import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
  */
 export interface DataSourcePickerProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
-  current: DataSourceRef | string | null; // uid
+  current: DataSourceRef | string | undefined | null; // uid
   hideTextValue?: boolean;
   onBlur?: () => void;
   autoFocus?: boolean;
@@ -46,6 +46,7 @@ export interface DataSourcePickerProps {
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
+  repeatVariableName?: string;
 }
 
 /**
@@ -63,108 +64,129 @@ export interface DataSourcePickerState {
  *
  * @internal
  */
-export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataSourcePickerState> {
-  dataSourceSrv = getDataSourceSrv();
+export const DataSourcePicker = React.memo(
+  ({
+    autoFocus = false,
+    openMenuOnFocus = false,
+    placeholder = 'Select data source',
+    alerting,
+    annotations,
+    current,
+    dashboard,
+    filter,
+    hideTextValue,
+    inputId,
+    logs,
+    metrics,
+    mixed,
+    noDefault,
+    onBlur,
+    onChange,
+    onClear,
+    pluginId,
+    repeatVariableName,
+    tracing,
+    type,
+    variables,
+    width,
+  }: DataSourcePickerProps) => {
+    const dataSourceSrv = getDataSourceSrv();
+    const [error, setError] = useState<string | undefined>(undefined);
 
-  static defaultProps: Partial<DataSourcePickerProps> = {
-    autoFocus: false,
-    openMenuOnFocus: false,
-    placeholder: 'Select data source',
-  };
+    useEffect(() => {
+      const dsSettings = dataSourceSrv.getInstanceSettings(current);
+      if (!dsSettings) {
+        setError(`Could not find data source ${current}`);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-  state: DataSourcePickerState = {};
+    const onValueChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
+      if (actionMeta.action === 'clear' && onClear) {
+        onClear();
+        return;
+      }
 
-  constructor(props: DataSourcePickerProps) {
-    super(props);
-  }
+      const dsSettings = dataSourceSrv.getInstanceSettings(item.value);
 
-  componentDidMount() {
-    const { current } = this.props;
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(current);
-    if (!dsSettings) {
-      this.setState({ error: 'Could not find data source ' + current });
-    }
-  }
-
-  onChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
-    if (actionMeta.action === 'clear' && this.props.onClear) {
-      this.props.onClear();
-      return;
-    }
-
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(item.value);
-
-    if (dsSettings) {
-      this.props.onChange(dsSettings);
-      this.setState({ error: undefined });
-    }
-  };
-
-  private getCurrentValue(): SelectableValue<string> | undefined {
-    const { current, hideTextValue, noDefault } = this.props;
-    if (!current && noDefault) {
-      return;
-    }
-
-    const ds = this.dataSourceSrv.getInstanceSettings(current);
-
-    if (ds) {
-      return {
-        label: ds.name.slice(0, 37),
-        value: ds.uid,
-        imgUrl: ds.meta.info.logos.small,
-        hideText: hideTextValue,
-        meta: ds.meta,
-      };
-    }
-
-    const uid = getDataSourceUID(current);
-
-    if (uid === ExpressionDatasourceRef.uid || uid === ExpressionDatasourceRef.name) {
-      return { label: uid, value: uid, hideText: hideTextValue };
-    }
-
-    return {
-      label: (uid ?? 'no name') + ' - not found',
-      value: uid ?? undefined,
-      imgUrl: '',
-      hideText: hideTextValue,
+      if (dsSettings) {
+        onChange(dsSettings);
+        setError(undefined);
+      }
     };
-  }
 
-  getDataSourceOptions() {
-    const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
-      this.props;
+    const selectOptions = (() => {
+      const options = dataSourceSrv
+        .getList(
+          {
+            alerting,
+            tracing,
+            metrics,
+            logs,
+            dashboard,
+            mixed,
+            variables,
+            annotations,
+            pluginId,
+            filter,
+            type,
+          },
+          repeatVariableName
+        )
+        .map((ds) => ({
+          value: ds.name,
+          label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+          imgUrl: ds.meta.info.logos.small,
+          meta: ds.meta,
+        }));
 
-    const options = this.dataSourceSrv
-      .getList({
-        alerting,
-        tracing,
-        metrics,
-        logs,
-        dashboard,
-        mixed,
-        variables,
-        annotations,
-        pluginId,
-        filter,
-        type,
-      })
-      .map((ds) => ({
-        value: ds.name,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
-        imgUrl: ds.meta.info.logos.small,
-        meta: ds.meta,
-      }));
+      return options;
+    })();
 
-    return options;
-  }
+    const currentOption = (() => {
+      if (!current && noDefault) {
+        return null;
+      }
 
-  render() {
-    const { autoFocus, onBlur, onClear, openMenuOnFocus, placeholder, width, inputId } = this.props;
-    const { error } = this.state;
-    const options = this.getDataSourceOptions();
-    const value = this.getCurrentValue();
+      let currentName = typeof current === 'string' ? current : current?.uid ?? '';
+      const isDatasourceVariable = currentName.startsWith('$');
+      const isValidOption = selectOptions.some((o) => o.value === currentName);
+      if (isDatasourceVariable && !isValidOption) {
+        // datasource variable is no longer a valid option, set to default
+        const defaults = dataSourceSrv.getInstanceSettings();
+        if (defaults && !noDefault) {
+          onChange(defaults);
+        }
+
+        return null;
+      }
+
+      const ds = dataSourceSrv.getInstanceSettings(current);
+
+      if (ds) {
+        return {
+          label: ds.name.slice(0, 37),
+          value: ds.uid,
+          imgUrl: ds.meta.info.logos.small,
+          hideText: hideTextValue,
+          meta: ds.meta,
+        };
+      }
+
+      const uid = getDataSourceUID(current ?? null);
+
+      if (uid === ExpressionDatasourceRef.uid || uid === ExpressionDatasourceRef.name) {
+        return { label: uid, value: uid, hideText: hideTextValue };
+      }
+
+      return {
+        label: `${uid ?? 'no name'} - not found`,
+        value: uid ?? undefined,
+        imgUrl: '',
+        hideText: hideTextValue,
+      };
+    })();
+
     const isClearable = typeof onClear === 'function';
 
     return (
@@ -176,8 +198,8 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           isMulti={false}
           isClearable={isClearable}
           backspaceRemovesValue={false}
-          onChange={this.onChange}
-          options={options}
+          onChange={onValueChange}
+          options={selectOptions}
           autoFocus={autoFocus}
           onBlur={onBlur}
           width={width}
@@ -185,10 +207,10 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           maxMenuHeight={500}
           placeholder={placeholder}
           noOptionsMessage="No datasources found"
-          value={value ?? null}
+          value={currentOption}
           invalid={!!error}
           getOptionLabel={(o) => {
-            if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
+            if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== currentOption) {
               return (
                 <HorizontalGroup align="center" justify="space-between">
                   <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
@@ -201,4 +223,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       </div>
     );
   }
-}
+);
+
+DataSourcePicker.displayName = 'DataSourcePicker';

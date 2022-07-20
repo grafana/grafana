@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
-import { Unsubscribable } from 'rxjs';
+import { connect, MapStateToProps } from 'react-redux';
+import { Subscription, Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
@@ -18,9 +19,11 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery } from 'app/core/utils/query';
+import { PanelModel } from 'app/features/dashboard/state';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { QueryGroupOptions } from 'app/types';
+import { QueryGroupOptions, StoreState } from 'app/types';
+import { PanelConfigChangedEvent } from 'app/types/events';
 
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
@@ -29,13 +32,19 @@ import { GroupActionComponents } from './QueryActionComponent';
 import { QueryEditorRows } from './QueryEditorRows';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 
-interface Props {
+interface OwnProps {
   queryRunner: PanelQueryRunner;
   options: QueryGroupOptions;
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onOptionsChange: (options: QueryGroupOptions) => void;
 }
+
+interface ConnectedProps {
+  panel?: PanelModel;
+}
+
+type Props = OwnProps & ConnectedProps;
 
 interface State {
   dataSource?: DataSourceApi;
@@ -51,10 +60,11 @@ interface State {
   scrollElement?: HTMLDivElement;
 }
 
-export class QueryGroup extends PureComponent<Props, State> {
+export class QueryGroupUnconnected extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
   querySubscription: Unsubscribable | null = null;
+  private eventSubs?: Subscription;
 
   state: State = {
     isLoadingHelp: false,
@@ -71,11 +81,16 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { queryRunner, options } = this.props;
+    const { queryRunner, options, panel } = this.props;
 
     this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
+
+    if (!this.eventSubs) {
+      this.eventSubs = new Subscription();
+      this.eventSubs.add(panel?.events.subscribe(PanelConfigChangedEvent, this.onPanelConfigChanged));
+    }
 
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource);
@@ -94,7 +109,13 @@ export class QueryGroup extends PureComponent<Props, State> {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;
     }
+
+    this.eventSubs?.unsubscribe();
   }
+
+  onPanelConfigChanged = () => {
+    this.forceUpdate();
+  };
 
   onPanelDataUpdate(data: PanelData) {
     this.setState({ data });
@@ -169,7 +190,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   renderTopSection(styles: QueriesTabStyles) {
-    const { onOpenQueryInspector, options } = this.props;
+    const { onOpenQueryInspector, options, panel } = this.props;
     const { dataSource, data } = this.state;
 
     return (
@@ -186,6 +207,7 @@ export class QueryGroup extends PureComponent<Props, State> {
               mixed={true}
               dashboard={true}
               variables={true}
+              repeatVariableName={panel?.repeat}
             />
           </div>
           {dataSource && (
@@ -230,20 +252,6 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onCloseHelp = () => {
     this.setState({ isHelpOpen: false });
-  };
-
-  renderMixedPicker = () => {
-    return (
-      <DataSourcePicker
-        mixed={false}
-        onChange={this.onAddMixedQuery}
-        current={null}
-        autoFocus={true}
-        variables={true}
-        onBlur={this.onMixedPickerBlur}
-        openMenuOnFocus={true}
-      />
-    );
   };
 
   onAddMixedQuery = (datasource: any) => {
@@ -370,6 +378,15 @@ export class QueryGroup extends PureComponent<Props, State> {
     );
   }
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
+  const dash = state.dashboard.getModel();
+  return {
+    panel: dash?.panelInEdit,
+  };
+};
+
+export const QueryGroup = connect(mapStateToProps)(QueryGroupUnconnected);
 
 const getStyles = stylesFactory(() => {
   const { theme } = config;

@@ -117,6 +117,10 @@ export class PanelOptionsChangedEvent extends BusEventBase {
   static type = 'panels-options-changed';
 }
 
+export class PanelConfigChangedEvent extends BusEventBase {
+  static type = 'panel-config-changed';
+}
+
 /**
  * Used internally by DashboardModel to commmunicate with DashboardGrid that it needs to re-render
  */

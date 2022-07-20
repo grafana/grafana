@@ -22,6 +22,7 @@ import config from 'app/core/config';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { QueryGroupOptions } from 'app/types';
 import {
+  PanelConfigChangedEvent,
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
   PanelTransformationsChangedEvent,
@@ -607,6 +608,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
         delete this.maxPerRow;
       }
     }
+
+    this.events.publish(new PanelConfigChangedEvent());
+    this.render();
   }
 
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {

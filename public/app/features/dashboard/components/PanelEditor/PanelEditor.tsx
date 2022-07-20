@@ -26,7 +26,7 @@ import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { StoreState } from 'app/types';
-import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
+import { PanelConfigChangedEvent, PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { notifyApp } from '../../../../core/actions';
 import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
@@ -108,6 +108,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     if (initDone && !this.eventSubs) {
       this.eventSubs = new Subscription();
       this.eventSubs.add(panel.events.subscribe(PanelOptionsChangedEvent, this.triggerForceUpdate));
+      this.eventSubs.add(panel.events.subscribe(PanelConfigChangedEvent, this.triggerForceUpdate));
     }
   }
 
@@ -194,9 +195,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onPanelConfigChanged = (configKey: keyof PanelModel, value: any) => {
+    // we do not need to trigger force update here as the function call below
+    // fires PanelConfigChangedEvent which we subscribe to above
     this.props.panel.setProperty(configKey, value);
-    this.props.panel.render();
-    this.forceUpdate();
   };
 
   onDisplayModeChange = (mode?: DisplayMode) => {

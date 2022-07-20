@@ -202,7 +202,7 @@ export class DatasourceSrv implements DataSourceService {
     return Object.values(this.settingsMapByName);
   }
 
-  getList(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
+  getList(filters: GetDataSourceListFilters = {}, repeatVariableName?: string): DataSourceInstanceSettings[] {
     const base = Object.values(this.settingsMapByName).filter((x) => {
       if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
         return false;
@@ -246,10 +246,18 @@ export class DatasourceSrv implements DataSourceService {
 
     if (filters.variables) {
       for (const variable of this.templateSrv.getVariables()) {
-        if (!isDataSource(variable) || variable.multi || variable.includeAll) {
+        if (!isDataSource(variable)) {
           continue;
         }
-        const dsName = variable.current.value === 'default' ? this.defaultName : variable.current.value;
+
+        const isRepeatVar = repeatVariableName === variable.name;
+
+        if (!isRepeatVar && (variable.multi || variable.includeAll)) {
+          continue;
+        }
+
+        const value = isRepeatVar ? variable.options.slice(-1)[0].value : variable.current.value;
+        const dsName = value === 'default' ? this.defaultName : value;
         const dsSettings = !Array.isArray(dsName) && this.settingsMapByName[dsName];
 
         if (dsSettings) {

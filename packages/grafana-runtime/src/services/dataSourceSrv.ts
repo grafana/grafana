@@ -19,7 +19,7 @@ export interface DataSourceSrv {
   /**
    * Get a list of data sources
    */
-  getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[];
+  getList(filters?: GetDataSourceListFilters, repeatVariableName?: string): DataSourceInstanceSettings[];
 
   /**
    * Get settings and plugin metadata by name or uid

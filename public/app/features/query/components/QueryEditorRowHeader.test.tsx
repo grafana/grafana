@@ -1,11 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
 import { openMenu } from 'react-select-event';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { configureStore } from 'app/store/configureStore';
 
 import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
 
@@ -106,8 +108,14 @@ function renderScenario(overrides: Partial<Props>) {
 
   Object.assign(props, overrides);
 
+  const store = configureStore({});
+
   return {
     props,
-    renderResult: render(<QueryEditorRowHeader {...props} />),
+    renderResult: render(
+      <Provider store={store}>
+        <QueryEditorRowHeader {...props} />
+      </Provider>
+    ),
   };
 }
