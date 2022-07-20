@@ -26,7 +26,7 @@ ARG DEBIAN_FRONTEND=noninteractive \
   GOOGLE_SDK_VERSION=325.0.0 \
   GOOGLE_SDK_CHECKSUM=374f960c9f384f88b6fc190b268ceac5dcad777301390107af63782bfb5ecbc7
 
-# Install python 3.7
+# Install python 3.7, as 3.10 is not working (see https://stackoverflow.com/questions/69779995/solving-an-attribute-error-found-while-installing-or-building-on-google-cloud-pl)
 RUN apt update && apt install -y build-essential libsqlite3-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl libbz2-dev && \
     curl -O https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tar.xz && \
     tar -xf Python-3.7.3.tar.xz && \
