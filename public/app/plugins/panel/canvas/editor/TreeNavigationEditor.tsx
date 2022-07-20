@@ -1,16 +1,18 @@
+import { css, cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import Tree from 'rc-tree';
 import React, { Key, useEffect, useState } from 'react';
 import SVG from 'react-inlinesvg';
 
-import { StandardEditorProps } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
+import { LayerName } from '../../../../core/components/Layers/LayerName';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
-import { getTreeData, onNodeDrop } from '../tree';
-import { DragNode, DropNode } from '../types';
+import { getTreeData, onNodeDrop, TreeElement } from '../tree';
+import { DragNode, DropNode, LayerActionID } from '../types';
 import { doSelect } from '../utils';
 
 import { TreeViewEditorProps } from './treeViewEditor';
@@ -22,6 +24,8 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
   const theme = useTheme2();
   const globalCSS = getGlobalStyles(theme);
+  const styles = useStyles2(getStyles);
+
   const selectedBgColor = theme.colors.background.secondary;
   const { settings } = item;
 
@@ -34,6 +38,19 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   if (!settings) {
     return <div>No settings</div>;
   }
+
+  const layer = settings.layer;
+  if (!layer) {
+    return <div>Missing layer?</div>;
+  }
+
+  const getScene = () => {
+    const { settings } = item;
+    if (!settings?.layer) {
+      return;
+    }
+    return settings.layer.scene;
+  };
 
   const onSelect = (selectedKeys: Key[], info: { node: { dataRef: ElementState } }) => {
     if (item.settings?.scene) {
@@ -77,6 +94,64 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     });
   };
 
+  const onDelete = (element: ElementState) => {
+    const elLayer = element.parent ?? layer;
+    elLayer.doAction(LayerActionID.Delete, element);
+  };
+
+  const onDuplicate = (element: ElementState) => {
+    layer.doAction(LayerActionID.Duplicate, element);
+  };
+
+  const onNameChange = (element: ElementState, name: string) => {
+    element.onChange({ ...element.options, name });
+  };
+
+  const verifyLayerNameUniqueness = (nameToVerify: string) => {
+    const scene = getScene();
+
+    return Boolean(scene?.canRename(nameToVerify));
+  };
+
+  const getLayerInfo = (element: ElementState) => {
+    return element.options.type;
+  };
+
+  const renderTreeNode = (nodeData: TreeElement) => {
+    const element = nodeData.dataRef;
+    const name = nodeData.dataRef.getName();
+
+    return (
+      <>
+        <LayerName
+          name={name}
+          onChange={(v) => onNameChange(element, v)}
+          verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined}
+        />
+        <div className={styles.textWrapper}>&nbsp; {getLayerInfo(element)}</div>
+
+        {!nodeData.children && (
+          <>
+            <IconButton
+              name="copy"
+              title={'Duplicate'}
+              className={styles.actionIcon}
+              onClick={() => onDuplicate(element)}
+            />
+            <IconButton
+              name="trash-alt"
+              title={'remove'}
+              className={cx(styles.actionIcon, styles.dragIcon)}
+              onClick={() => onDelete(element)}
+            />
+          </>
+        )}
+
+        <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+      </>
+    );
+  };
+
   return (
     <>
       <Global styles={globalCSS} />
@@ -92,8 +167,28 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         expandedKeys={expandedKeys}
         onExpand={onExpand}
         treeData={treeData}
+        titleRender={renderTreeNode}
         switcherIcon={switcherIcon}
       />
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  actionIcon: css`
+    color: ${theme.colors.text.secondary};
+    &:hover {
+      color: ${theme.colors.text.primary};
+    }
+  `,
+  dragIcon: css`
+    cursor: drag;
+  `,
+  textWrapper: css`
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    overflow: hidden;
+    margin-right: ${theme.v1.spacing.sm};
+  `,
+});

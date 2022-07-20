@@ -16,6 +16,12 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
         border-color: cyan;
       }
 
+      .rc-tree-title {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+      }
+
       .rc-tree-treenode {
         margin: 0;
         padding: 5px;
@@ -23,6 +29,18 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
         white-space: nowrap;
         list-style: none;
         outline: 0;
+
+        border-radius: ${theme.v1.border.radius.sm};
+        background: ${theme.v1.colors.bg2};
+        min-height: ${theme.v1.spacing.formInputHeight}px;
+        display: flex;
+        margin-bottom: 3px;
+        cursor: pointer;
+        border: 1px solid ${theme.v1.colors.formInputBorder};
+        &:hover {
+          border: 1px solid ${theme.v1.colors.formInputBorderHover};
+        }
+
         .draggable {
           color: #333;
           -moz-user-select: none;
@@ -83,7 +101,6 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           cursor: pointer;
         }
         span {
-          &.rc-tree-switcher,
           &.rc-tree-checkbox,
           &.rc-tree-iconEle {
             display: inline-block;
@@ -92,6 +109,21 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             margin-right: 2px;
             line-height: 16px;
             vertical-align: -0.125em;
+            background-color: transparent;
+            background-repeat: no-repeat;
+            background-attachment: scroll;
+            border: 0 none;
+            outline: none;
+            cursor: pointer;
+
+            &.rc-tree-icon__customize {
+              background-image: none;
+            }
+          }
+          &.rc-tree-switcher {
+            display: flex;
+            align-items: center;
+            width: 16px;
             background-color: transparent;
             background-repeat: no-repeat;
             background-attachment: scroll;
