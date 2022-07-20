@@ -27,13 +27,13 @@ export function fetchContactPointsState(alertManagerSourceName: String): Promise
           contactPointpState.errorCount += 1;
         }
         //add integration for this type
-        const type = getIntegrationType(integrationStatusDTO.name);
+        const integrationType = getIntegrationType(integrationStatusDTO.name);
         //if type still does not exist in IntegrationsTypeState we initialize it with an empty array
-        if (!receiverState.integrations[type]) {
-          receiverState.integrations[type] = [];
+        if (!receiverState.integrations[integrationType]) {
+          receiverState.integrations[integrationType] = [];
         }
         // add error status for this type
-        receiverState.integrations[type].push(integrationStatusDTO);
+        receiverState.integrations[integrationType].push(integrationStatusDTO);
       });
     });
     return contactPointpState;
