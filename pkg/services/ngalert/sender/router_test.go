@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -45,7 +48,8 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 		Host:   "localhost",
 	}
 
-	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute)
+	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
+		&fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
@@ -102,7 +106,8 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		Host:   "localhost",
 	}
 
-	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute)
+	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
+		&fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey1.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
@@ -228,7 +233,8 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		Host:   "localhost",
 	}
 
-	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute)
+	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
+		10*time.Minute, &fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
@@ -359,4 +365,61 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 		return true
 	}, 10*time.Second, 100*time.Millisecond)
 	return moa
+}
+
+func TestBuildExternalURL(t *testing.T) {
+	sch := AlertsRouter{
+		secretService: fakes.NewFakeSecretsService(),
+	}
+	tests := []struct {
+		name        string
+		ds          *datasources.DataSource
+		expectedURL string
+	}{
+		{
+			name: "datasource without auth",
+			ds: &datasources.DataSource{
+				Url: "https://localhost:9000",
+			},
+			expectedURL: "https://localhost:9000",
+		},
+		{
+			name: "datasource without auth and with path",
+			ds: &datasources.DataSource{
+				Url: "https://localhost:9000/path/to/am",
+			},
+			expectedURL: "https://localhost:9000/path/to/am",
+		},
+		{
+			name: "datasource with auth",
+			ds: &datasources.DataSource{
+				Url:           "https://localhost:9000",
+				BasicAuth:     true,
+				BasicAuthUser: "johndoe",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("123"),
+				},
+			},
+			expectedURL: "https://johndoe:123@localhost:9000",
+		},
+		{
+			name: "datasource with auth and path",
+			ds: &datasources.DataSource{
+				Url:           "https://localhost:9000/path/to/am",
+				BasicAuth:     true,
+				BasicAuthUser: "johndoe",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("123"),
+				},
+			},
+			expectedURL: "https://johndoe:123@localhost:9000/path/to/am",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			url, err := sch.buildExternalURL(test.ds)
+			require.NoError(t, err)
+			require.Equal(t, test.expectedURL, url)
+		})
+	}
 }
