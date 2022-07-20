@@ -82,7 +82,7 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 
 	if sendAlertsTo == ngmodels.ExternalAlertmanagers &&
 		len(body.Alertmanagers)+len(externalAlertmanagers) < 1 {
-		return response.Error(400, "At least one Alertmanager must be provided to choose this option", nil)
+		return response.Error(400, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
 	}
 
 	cfg := &ngmodels.AdminConfiguration{
