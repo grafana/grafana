@@ -181,5 +181,4 @@ describe('statementPosition', () => {
     ],
     initStatementPositionResolvers
   );
-
 });
