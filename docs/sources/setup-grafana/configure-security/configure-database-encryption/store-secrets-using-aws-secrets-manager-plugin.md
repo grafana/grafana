@@ -32,9 +32,9 @@ grafana-cli plugins install grafana-aws-secretsmanager
 After you install the plugin, you must enable it.
 
 1. Open the Grafana **custom.ini** file.
-2. Locate or create the `[secrets]` section.
-3. Set the key `use_plugin` to `true`.
-4. Save your changes and restart the Grafana server.
+1. Locate or create the `[secrets]` section.
+1. Set the key `use_plugin` to `true`.
+1. Save your changes and restart the Grafana server.
 
 ```
 [secrets]
@@ -52,8 +52,8 @@ Alternatively, you can configure authentication and region selection explicitly 
 ## Configure the plugin
 
 1. Open the **custom.ini** file.
-2. Create a configuration section file called `[plugin.grafana-aws-secretsmanager]`.
-3. Place the following optional configuration settings in the new section.
+1. Create a configuration section file called `[plugin.grafana-aws-secretsmanager]`.
+1. Place the following optional configuration settings in the new section.
 
 | Setting                 | Description                                                                                                                                                 | Example                                      | Default                         |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------- |
