@@ -606,6 +606,11 @@ export const variableUpdated = (
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
     if (node) {
+      // Here we do transitive reduction of the graph starting at the first visited variable.
+      // Cyclic graphs have more than one correct transitive reduction and depending
+      // on where you start you get different results. As variable updates cascade we want to
+      // ensure we're following a consistent path (otherwise some variables might be erroneously
+      // left out).
       const excludedEdges = new Set<Edge>();
       visitedVariables.forEach((nodeName) => {
         const node = g.getNode(nodeName);
