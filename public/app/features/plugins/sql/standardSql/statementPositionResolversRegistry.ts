@@ -113,8 +113,6 @@ export function initStatementPositionResolvers(): StatementPositionResolversRegi
           (previousKeyword?.value.toLowerCase() === FROM && previousNonWhiteSpace?.isDoubleQuotedString()) ||
             (previousKeyword?.value.toLowerCase() === FROM && previousNonWhiteSpace?.isIdentifier()) ||
             (previousKeyword?.value.toLowerCase() === FROM && previousNonWhiteSpace?.isVariable())
-          //  cloudwatch specific
-          // (previousKeyword?.value === SCHEMA && previousNonWhiteSpace?.is(TokenType.Parenthesis, ')'))
         ),
     },
     {
