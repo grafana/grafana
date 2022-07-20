@@ -52,6 +52,7 @@ RUN apt update && apt install -yq git procps && pip3 install -U awscli crcmod &&
     ln -s /opt/google-cloud-sdk/bin/gsutil /usr/bin/gsutil && \
     ln -s /opt/google-cloud-sdk/bin/gcloud /usr/bin/gcloud && \
     mkdir -p /deb-repo /rpm-repo && \
-    ln -s /usr/bin/createrepo_c /usr/bin/createrepo
+    ln -s /usr/bin/createrepo_c /usr/bin/createrepo && \
+    gcloud components update
 
 COPY --from=0 /go/bin/aptly /usr/local/bin/aptly
