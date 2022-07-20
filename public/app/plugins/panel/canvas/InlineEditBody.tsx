@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import { get as lodashGet } from 'lodash';
 import React, { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
-import { PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
+import { GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { useStyles2 } from '@grafana/ui';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
@@ -13,10 +15,13 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
+import { getTreeViewEditor } from './editor/treeViewEditor';
 
 export const InlineEditBody = () => {
   const activePanel = useObservable(activePanelSubject);
   const instanceState = activePanel?.panel.context?.instanceState;
+
+  const styles = useStyles2(getStyles);
 
   const pane = useMemo(() => {
     const state: InstanceState = instanceState;
@@ -25,6 +30,7 @@ export const InlineEditBody = () => {
     }
 
     const supplier = (builder: PanelOptionsEditorBuilder<any>, context: StandardEditorContext<any>) => {
+      builder.addNestedOptions(getTreeViewEditor(state));
       builder.addNestedOptions(getLayerEditor(instanceState));
 
       const selection = state.selected;
@@ -51,9 +57,9 @@ export const InlineEditBody = () => {
       <div>
         {pane.categories.map((c) => {
           return (
-            <div key={c.props.id}>
+            <div key={c.props.id} className={styles.wrap}>
               <h5>{c.props.title}</h5>
-              <div>{c.items.map((s) => s.render())}</div>
+              <div className={styles.item}>{c.items.map((s) => s.render())}</div>
             </div>
           );
         })}
@@ -97,3 +103,13 @@ function getOptionsPaneCategoryDescriptor<T = any>(
   fillOptionsPaneItems(supplier, access, getOptionsPaneCategory, context);
   return root;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrap: css`
+    border-top: 1px solid ${theme.colors.border.strong};
+    padding: 10px;
+  `,
+  item: css`
+    padding-left: 10px;
+  `,
+});

@@ -103,6 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     background: ${theme.v1.colors.panelBg};
+    border: 1px solid ${theme.colors.border.strong};
     box-shadow: 5px 5px 20px -5px #000000;
     z-index: 1000;
     opacity: 1;

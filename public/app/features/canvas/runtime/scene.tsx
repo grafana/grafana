@@ -309,6 +309,7 @@ export class Scene {
 
     this.selecto = new Selecto({
       container: this.div,
+      rootContainer: this.div,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
       selectFromInside: false,

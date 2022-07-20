@@ -77,6 +77,18 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	if rsp != nil {
 		return rsp
 	}
+
+	var (
+		hasPublicDashboard bool
+		err                error
+	)
+	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		hasPublicDashboard, err = hs.PublicDashboardsApi.PublicDashboardService.PublicDashboardEnabled(c.Req.Context(), dash.Uid)
+		if err != nil {
+			return response.Error(500, "Error while retrieving public dashboards", err)
+		}
+	}
+
 	// When dash contains only keys id, uid that means dashboard data is not valid and json decode failed.
 	if dash.Data != nil {
 		isEmptyData := true
@@ -139,6 +151,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		Url:                    dash.GetUrl(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
+		PublicDashboardEnabled: hasPublicDashboard,
 	}
 
 	// lookup folder title

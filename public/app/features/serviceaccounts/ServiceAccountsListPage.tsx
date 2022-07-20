@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
@@ -193,7 +192,7 @@ export const ServiceAccountsListPageUnconnected = ({
             onRemove={onMigrationInfoClose}
           ></Alert>
         )}
-        {!config.featureToggles.topnav && (
+        <Page.OldNavOnly>
           <div className={styles.pageHeader}>
             <h2>Service accounts</h2>
             <div className={styles.apiKeyInfoLabel}>
@@ -207,7 +206,7 @@ export const ServiceAccountsListPageUnconnected = ({
               <span>Looking for API keys?</span>
             </div>
           </div>
-        )}
+        </Page.OldNavOnly>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <FilterInput

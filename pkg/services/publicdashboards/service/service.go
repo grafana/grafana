@@ -189,6 +189,10 @@ func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, da
 	return anonymousUser, nil
 }
 
+func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
+	return pd.store.PublicDashboardEnabled(ctx, dashboardUid)
+}
+
 // generates a uuid formatted without dashes to use as access token
 func GenerateAccessToken() (string, error) {
 	token, err := uuid.NewRandom()
