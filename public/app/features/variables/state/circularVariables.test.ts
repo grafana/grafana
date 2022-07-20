@@ -32,6 +32,16 @@ runtime.setDataSourceSrv({
 } as any);
 
 describe('circularVariables', () => {
+  it('should not result in updates if triggered variable has no dependencies', async () => {
+    const actual = await getVariableEvaluationOrder('A', {
+      A: [],
+      B: ['A'],
+    });
+    const expected: string[] = [];
+
+    expect(actual).toEqual(expected);
+  });
+
   it('should work for bi-directional dependency', async () => {
     const actual = await getVariableEvaluationOrder('A', {
       A: ['B'],
@@ -79,7 +89,7 @@ describe('circularVariables', () => {
     expect(actual).toEqual(expected);
   });
 
-  it('evaluation order should differ depending on which node was triggered', async () => {
+  it('should have different evaluation order depending on which node was triggered', async () => {
     const actual = await getVariableEvaluationOrder('B', {
       A: ['B', 'C', 'D', 'E'],
       B: ['A', 'C', 'D', 'E'],
