@@ -77,7 +77,7 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 
 	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgId)
 	if err != nil {
-		return response.Error(500, "Couldn't fetch the external alertmanagers from datasources", err)
+		return response.Error(500, "Couldn't fetch the external Alertmanagers from datasources", err)
 	}
 
 	if sendAlertsTo == ngmodels.ExternalAlertmanagers &&
