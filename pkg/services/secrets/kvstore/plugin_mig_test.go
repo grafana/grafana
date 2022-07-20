@@ -91,7 +91,6 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 		sqlStore,
 		secretsService,
 		remoteCheck,
-		NewFakeFeatureToggles(t, false),
 		notifier.NewFakeKVStore(t),
 	)
 
