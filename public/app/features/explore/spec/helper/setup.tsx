@@ -56,9 +56,13 @@ export function setupExplore(options?: SetupOptions): {
     getInstanceSettings(ref: DataSourceRef) {
       return dsSettings.map((d) => d.settings).find((x) => x.name === ref || x.uid === ref || x.uid === ref.uid);
     },
-    get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+    get(datasource?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
       return Promise.resolve(
-        (name ? dsSettings.find((d) => d.api.name === name || d.api.uid === name) : dsSettings[0])!.api
+        (datasource
+          ? dsSettings.find(
+              (d) => d.api.name === datasource || d.api.uid === datasource || d.api.uid === datasource.uid
+            )
+          : dsSettings[0])!.api
       );
     },
   } as any);
