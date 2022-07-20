@@ -121,8 +121,8 @@ func (srv AdminSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Resp
 	return response.JSON(http.StatusOK, util.DynMap{"message": "admin configuration deleted"})
 }
 
-// externalAlertmanagers returns the URL of any external datasource. The URL
-// does not contain any auth.
+// externalAlertmanagers returns the URL of any external alertmanager that is
+// configured as datasource. The URL does not contain any auth.
 func (srv AdminSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]string, error) {
 	var alertmanagers []string
 	query := &datasources.GetDataSourcesByTypeQuery{
