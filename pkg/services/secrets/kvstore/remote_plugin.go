@@ -138,12 +138,16 @@ func parseKeys(keys []*smp.Key) []Key {
 	return newKeys
 }
 
-func updateFatalFlag(ctx context.Context, kv secretsKVStorePlugin) {
+func updateFatalFlag(ctx context.Context, skv secretsKVStorePlugin) {
 	fatalFlagOnce.Do(func() {
-		if isFatal, _ := isPluginStartupErrorFatal(ctx, kv.kvstore); !isFatal && kv.backwardsCompatibilityDisabled {
-			setPluginStartupErrorFatal(ctx, kv.kvstore, true)
-		} else if isFatal && !kv.backwardsCompatibilityDisabled {
-			setPluginStartupErrorFatal(ctx, kv.kvstore, false)
+		var err error
+		if isFatal, _ := isPluginStartupErrorFatal(ctx, skv.kvstore); !isFatal && skv.backwardsCompatibilityDisabled {
+			err = setPluginStartupErrorFatal(ctx, skv.kvstore, true)
+		} else if isFatal && !skv.backwardsCompatibilityDisabled {
+			err = setPluginStartupErrorFatal(ctx, skv.kvstore, false)
+		}
+		if err != nil {
+			skv.log.Error("failed to set plugin error fatal flag", err.Error())
 		}
 	})
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,7 +19,6 @@ type PluginSecretMigrationService struct {
 	sqlStore       sqlstore.Store
 	secretsService secrets.Service
 	remoteCheck    UseRemoteSecretsPluginCheck
-	features       featuremgmt.FeatureToggles
 	kvstore        kvstore.KVStore
 }
 
