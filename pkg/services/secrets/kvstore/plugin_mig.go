@@ -82,12 +82,7 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 		// this migrator always gets run, so if backwards compatibility is re-enabled, delete the flag
 		disableSecretsCompatibility := s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility)
 		namespacedKVStore := GetNamespacedKVStore(s.kvstore)
-		if disableSecretsCompatibility {
-			setPluginErrorFatal(ctx, namespacedKVStore, true)
-		} else {
-			setPluginErrorFatal(ctx, namespacedKVStore, false)
-		}
-
+		setPluginErrorFatal(ctx, namespacedKVStore, disableSecretsCompatibility)
 	}
 	return nil
 }

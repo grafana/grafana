@@ -2,18 +2,24 @@ package kvstore
 
 import (
 	"context"
+	"sync"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	smp "github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
+var setOnce sync.Once
+
 // secretsKVStorePlugin provides a key/value store backed by the Grafana plugin gRPC interface
 type secretsKVStorePlugin struct {
-	log            log.Logger
-	secretsPlugin  smp.SecretsManagerPlugin
-	secretsService secrets.Service
+	log                            log.Logger
+	secretsPlugin                  smp.SecretsManagerPlugin
+	secretsService                 secrets.Service
+	kvstore                        *kvstore.NamespacedKVStore
+	backwardsCompatibilityDisabled bool
 }
 
 // Get an item from the store
@@ -36,6 +42,7 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 }
 
 // Set an item in the store
+// If it is the first time a secret has been set and backwards compatibility is disabled, mark plugin startup errors fatal
 func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
 	req := &smp.SetSecretRequest{
 		KeyDescriptor: &smp.Key{
@@ -50,6 +57,12 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 	if err == nil && res.UserFriendlyError != "" {
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
+
+	setOnce.Do(func() {
+		if isFatal, _ := isPluginErrorFatal(ctx, kv.kvstore); !isFatal && kv.backwardsCompatibilityDisabled {
+			setPluginErrorFatal(ctx, kv.kvstore, true)
+		}
+	})
 
 	return err
 }

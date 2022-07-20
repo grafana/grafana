@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -19,6 +20,7 @@ func ProvideService(sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	remoteCheck UseRemoteSecretsPluginCheck,
 	kvstore kvstore.KVStore,
+	features featuremgmt.FeatureManager,
 ) (SecretsKVStore, error) {
 	var store SecretsKVStore
 	logger := log.New("secrets.kvstore")
@@ -33,8 +35,8 @@ func ProvideService(sqlStore sqlstore.Store,
 	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
 		// Attempt to start the plugin
 		secretsPlugin, err := remoteCheck.StartAndReturnPlugin(context.TODO())
+		namespacedKVStore := GetNamespacedKVStore(kvstore)
 		if err != nil || secretsPlugin == nil {
-			namespacedKVStore := GetNamespacedKVStore(kvstore)
 			if isFatal, err2 := isPluginErrorFatal(context.TODO(), namespacedKVStore); isFatal || err2 != nil {
 				// plugin error was fatal or there was an error determining if the error was fatal
 				logger.Error("secrets management plugin is required to start -- exiting app")
@@ -47,9 +49,11 @@ func ProvideService(sqlStore sqlstore.Store,
 			logger.Error("error starting secrets plugin, falling back to SQL implementation")
 		} else {
 			store = &secretsKVStorePlugin{
-				secretsPlugin:  secretsPlugin,
-				secretsService: secretsService,
-				log:            logger,
+				secretsPlugin:                  secretsPlugin,
+				secretsService:                 secretsService,
+				log:                            logger,
+				kvstore:                        namespacedKVStore,
+				backwardsCompatibilityDisabled: features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility),
 			}
 		}
 	} else {
