@@ -243,9 +243,9 @@ roles:
 ### Prevent Viewers from accessing an App Plugin
 
 By default, Viewers, Editors and Admins have access to all App Plugins that their organization role allows them to access.
-To change this default behavior and prevent Viewers from having access to an App plugin, you must [update a basic role permission]({{< relref "./manage-rbac-roles/#update-basic-role-permissions" >}}).
+To change this default behavior and prevent Viewers from accessing an App plugin, you must [update a basic role's permissions]({{< relref "./manage-rbac-roles/#update-basic-role-permissions" >}}).
 
-In this example, three App plugins have been installed:
+In this example, three App plugins have been installed and enabled:
 | Name | ID | Required Org role |
 |--------------------|-----------------------------|-------------------|
 | On Call | grafana-oncall-app | Viewer |
@@ -253,7 +253,7 @@ In this example, three App plugins have been installed:
 | Enterprise logs | grafana-enterprise-logs-app | Admin |
 
 By default, Viewers will hence be able to see both, On Call and Kentik Connect Pro App plugins.
-If you want to revoke their access to the On Call plugins, you need to:
+If you want to revoke their access to the On Call App plugin, you need to:
 
 1. Remove the permission to access all application plugins:
    | Action | Scope |
