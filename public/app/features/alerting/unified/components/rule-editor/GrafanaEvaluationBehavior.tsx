@@ -3,7 +3,8 @@ import React, { FC, useState } from 'react';
 import { useFormContext, RegisterOptions } from 'react-hook-form';
 
 import { parseDuration, durationToMilliseconds, GrafanaTheme2 } from '@grafana/data';
-import { Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Alert, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 import { positiveDurationValidationPattern, durationValidationPattern } from '../../utils/time';
@@ -61,6 +62,13 @@ export const GrafanaEvaluationBehavior: FC = () => {
     watch,
   } = useFormContext<RuleFormValues>();
 
+  const evaluateEveryDuration = parseDuration(watch('evaluateEvery'));
+  const millisEvery = durationToMilliseconds(evaluateEveryDuration);
+  const evaluateEveryGlobalLimitDuration = parseDuration(config.unifiedAlerting.minInterval);
+  const milisGlobalLimit = durationToMilliseconds(evaluateEveryGlobalLimitDuration);
+
+  const exceedsGlobalEvaluationLimit = millisEvery > milisGlobalLimit;
+
   const evaluateEveryId = 'eval-every-input';
   const evaluateForId = 'eval-for-input';
 
@@ -101,6 +109,13 @@ export const GrafanaEvaluationBehavior: FC = () => {
           </Field>
         </div>
       </Field>
+      {exceedsGlobalEvaluationLimit && (
+        <Alert severity="warning" title="Global evalutation interval limit exceeded">
+          A minimum evaluation interval of {config.unifiedAlerting.minInterval} have been configured in Grafana and will
+          be used for this alert rule. <br />
+          Please contact the administrator to configure a lower interval.
+        </Alert>
+      )}
       <CollapseToggle
         isCollapsed={!showErrorHandling}
         onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
