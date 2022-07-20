@@ -72,7 +72,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	})
 
 	if createErr != nil {
-		if errors.Is(createErr, models.ErrUserAlreadyExists) {
+		if errors.Is(createErr, user.ErrUserAlreadyExists) {
 			return nil, ErrServiceAccountAlreadyExists
 		}
 

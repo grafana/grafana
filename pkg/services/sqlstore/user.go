@@ -100,7 +100,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		return usr, err
 	}
 	if exists {
-		return usr, models.ErrUserAlreadyExists
+		return usr, user.ErrUserAlreadyExists
 	}
 
 	// create user

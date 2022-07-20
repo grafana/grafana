@@ -39,13 +39,13 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 		return response.Error(400, "Password is missing or too short", nil)
 	}
 
-	user, err := hs.Login.CreateUser(cmd)
+	usr, err := hs.Login.CreateUser(cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(400, err.Error(), nil)
 		}
 
-		if errors.Is(err, models.ErrUserAlreadyExists) {
+		if errors.Is(err, user.ErrUserAlreadyExists) {
 			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
@@ -56,7 +56,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 
 	result := models.UserIdDTO{
 		Message: "User created",
-		Id:      user.ID,
+		Id:      usr.ID,
 	}
 
 	return response.JSON(http.StatusOK, result)

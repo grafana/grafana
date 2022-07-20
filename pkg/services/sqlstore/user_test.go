@@ -689,7 +689,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			SkipOrgSetup: true,
 		}
 		_, err = ss.CreateUser(context.Background(), createUserCmd)
-		require.Equal(t, err, models.ErrUserAlreadyExists)
+		require.Equal(t, err, user.ErrUserAlreadyExists)
 
 		// When trying to create a new user with the same login, an error is returned
 		createUserCmd = user.CreateUserCommand{
@@ -699,7 +699,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			SkipOrgSetup: true,
 		}
 		_, err = ss.CreateUser(context.Background(), createUserCmd)
-		require.Equal(t, err, models.ErrUserAlreadyExists)
+		require.Equal(t, err, user.ErrUserAlreadyExists)
 	})
 }
 
