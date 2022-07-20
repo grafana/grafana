@@ -17,7 +17,7 @@ weight: 500
 We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
 In order to make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
-Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md)
+Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://grafana.com/docs/grafana/latest/release-notes/) and [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md)
 
 ## Backup
 

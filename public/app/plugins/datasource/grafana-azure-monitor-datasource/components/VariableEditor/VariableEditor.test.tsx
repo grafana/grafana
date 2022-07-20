@@ -33,6 +33,7 @@ const defaultProps = {
     getSubscriptions: jest.fn().mockResolvedValue([{ text: 'Primary Subscription', value: 'sub' }]),
     getResourceGroups: jest.fn().mockResolvedValue([{ text: 'rg', value: 'rg' }]),
     getMetricNamespaces: jest.fn().mockResolvedValue([{ text: 'foo/bar', value: 'foo/bar' }]),
+    getResourceNames: jest.fn().mockResolvedValue([{ text: 'foobar', value: 'foobar' }]),
     getVariablesRaw: jest.fn().mockReturnValue([
       { label: 'query0', name: 'sub0' },
       { label: 'query1', name: 'rg', query: { queryType: AzureQueryType.ResourceGroupsQuery } },
@@ -143,8 +144,24 @@ describe('VariableEditor:', () => {
   });
 
   describe('predefined queries:', () => {
-    it('should show the new query types if feature gate is enabled', async () => {
+    const selectAndRerender = async (
+      label: string,
+      text: string,
+      onChange: jest.Mock,
+      rerender: (ui: React.ReactElement) => void
+    ) => {
+      openMenu(screen.getByLabelText(label));
+      screen.getByText(text).click();
+      // Simulate onChange behavior
+      const newQuery = onChange.mock.calls.at(-1)[0];
+      rerender(<VariableEditor {...defaultProps} query={newQuery} onChange={onChange} />);
+      await waitFor(() => expect(screen.getByText(text)).toBeInTheDocument());
+    };
+    beforeEach(() => {
       grafanaRuntime.config.featureToggles.azTemplateVars = true;
+    });
+
+    it('should show the new query types if feature gate is enabled', async () => {
       render(<VariableEditor {...defaultProps} />);
       openMenu(screen.getByLabelText('select query type'));
       await waitFor(() => expect(screen.getByText('Subscriptions')).toBeInTheDocument());
@@ -158,36 +175,21 @@ describe('VariableEditor:', () => {
     });
 
     it('should run the query if requesting subscriptions', async () => {
-      grafanaRuntime.config.featureToggles.azTemplateVars = true;
       const onChange = jest.fn();
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
-      openMenu(screen.getByLabelText('select query type'));
-      screen.getByText('Subscriptions').click();
-      // Simulate onChange behavior
-      const newQuery = onChange.mock.calls.at(-1)[0];
-      rerender(<VariableEditor {...defaultProps} query={newQuery} onChange={onChange} />);
-      await waitFor(() => expect(screen.getByText('Subscriptions')).toBeInTheDocument());
+      await selectAndRerender('select query type', 'Subscriptions', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({ queryType: AzureQueryType.SubscriptionsQuery, refId: 'A' })
       );
     });
 
     it('should run the query if requesting resource groups', async () => {
-      grafanaRuntime.config.featureToggles.azTemplateVars = true;
       const onChange = jest.fn();
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      // Select RGs variable
-      openMenu(screen.getByLabelText('select query type'));
-      screen.getByText('Resource Groups').click();
-      // Simulate onChange behavior
-      const newQuery = onChange.mock.calls.at(-1)[0];
-      rerender(<VariableEditor {...defaultProps} query={newQuery} onChange={onChange} />);
-      await waitFor(() => expect(screen.getByText('Select subscription')).toBeInTheDocument());
-      // Select a subscription
-      openMenu(screen.getByLabelText('select subscription'));
-      screen.getByText('Primary Subscription').click();
+      await selectAndRerender('select query type', 'Resource Groups', onChange, rerender);
+      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.ResourceGroupsQuery,
@@ -199,17 +201,10 @@ describe('VariableEditor:', () => {
 
     it('should show template variables as options ', async () => {
       const onChange = jest.fn();
-      grafanaRuntime.config.featureToggles.azTemplateVars = true;
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      // Select RGs variable
-      openMenu(screen.getByLabelText('select query type'));
-      screen.getByText('Resource Groups').click();
-      // Simulate onChange behavior
-      const newQuery = onChange.mock.calls.at(-1)[0];
-      rerender(<VariableEditor {...defaultProps} query={newQuery} onChange={onChange} />);
-      await waitFor(() => expect(screen.getByText('Select subscription')).toBeInTheDocument());
+      await selectAndRerender('select query type', 'Resource Groups', onChange, rerender);
       // Select a subscription
       openMenu(screen.getByLabelText('select subscription'));
       await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
@@ -223,21 +218,12 @@ describe('VariableEditor:', () => {
     });
 
     it('should run the query if requesting namespaces', async () => {
-      grafanaRuntime.config.featureToggles.azTemplateVars = true;
       const onChange = jest.fn();
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      // Select RGs variable
-      openMenu(screen.getByLabelText('select query type'));
-      screen.getByText('Namespaces').click();
-      // Simulate onChange behavior
-      const newQuery = onChange.mock.calls.at(-1)[0];
-      rerender(<VariableEditor {...defaultProps} query={newQuery} onChange={onChange} />);
-      await waitFor(() => expect(screen.getByText('Select subscription')).toBeInTheDocument());
-      // Select a subscription
-      openMenu(screen.getByLabelText('select subscription'));
-      screen.getByText('Primary Subscription').click();
+      await selectAndRerender('select query type', 'Namespaces', onChange, rerender);
+      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.NamespacesQuery,
@@ -248,24 +234,53 @@ describe('VariableEditor:', () => {
     });
 
     it('should run the query if requesting resource names', async () => {
-      grafanaRuntime.config.featureToggles.azTemplateVars = true;
       const onChange = jest.fn();
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      // Select RGs variable
-      openMenu(screen.getByLabelText('select query type'));
-      screen.getByText('Resource Names').click();
-      // Simulate onChange behavior
-      const newQuery = onChange.mock.calls.at(-1)[0];
-      rerender(<VariableEditor {...defaultProps} query={newQuery} onChange={onChange} />);
-      await waitFor(() => expect(screen.getByText('Select subscription')).toBeInTheDocument());
-      // Select a subscription
-      openMenu(screen.getByLabelText('select subscription'));
-      screen.getByText('Primary Subscription').click();
+      await selectAndRerender('select query type', 'Resource Names', onChange, rerender);
+      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.ResourceNamesQuery,
+          subscription: 'sub',
+          refId: 'A',
+        })
+      );
+    });
+
+    it('should run the query if requesting metric names', async () => {
+      const onChange = jest.fn();
+      const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
+      // wait for initial load
+      await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
+      await selectAndRerender('select query type', 'Metric Names', onChange, rerender);
+      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('select resource group', 'rg', onChange, rerender);
+      await selectAndRerender('select namespace', 'foo/bar', onChange, rerender);
+      await selectAndRerender('select resource', 'foobar', onChange, rerender);
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryType: AzureQueryType.MetricNamesQuery,
+          subscription: 'sub',
+          resourceGroup: 'rg',
+          namespace: 'foo/bar',
+          resource: 'foobar',
+          refId: 'A',
+        })
+      );
+    });
+
+    it('should run the query if requesting workspaces', async () => {
+      const onChange = jest.fn();
+      const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
+      // wait for initial load
+      await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
+      await selectAndRerender('select query type', 'Workspaces', onChange, rerender);
+      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryType: AzureQueryType.WorkspacesQuery,
           subscription: 'sub',
           refId: 'A',
         })

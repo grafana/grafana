@@ -91,18 +91,12 @@ export const AnnotationQueryEditor = (props: Props) => {
             datasource={datasource}
             query={metricQuery}
           />
-
-          <EditorRow>
-            <EditorField label="Title" htmlFor="annotation-query-title">
-              <Input id="annotation-query-title" value={title} onChange={handleTitleChange} />
-            </EditorField>
-          </EditorRow>
-
-          <EditorRow>
-            <EditorField label="Text" htmlFor="annotation-query-text">
-              <Input id="annotation-query-text" value={text} onChange={handleTextChange} />
-            </EditorField>
-          </EditorRow>
+          <EditorField label="Title" htmlFor="annotation-query-title">
+            <Input id="annotation-query-title" value={title} onChange={handleTitleChange} />
+          </EditorField>
+          <EditorField label="Text" htmlFor="annotation-query-text">
+            <Input id="annotation-query-text" value={text} onChange={handleTextChange} />
+          </EditorField>
         </>
       ) : (
         <>

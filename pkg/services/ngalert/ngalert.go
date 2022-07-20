@@ -35,7 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
+func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
 	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
@@ -43,6 +43,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
+		DataSourceService:   dataSourceService,
 		RouteRegister:       routeRegister,
 		SQLStore:            sqlStore,
 		KVStore:             kvStore,
@@ -75,6 +76,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 type AlertNG struct {
 	Cfg                 *setting.Cfg
 	DataSourceCache     datasources.CacheService
+	DataSourceService   datasources.DataSourceService
 	RouteRegister       routing.RouteRegister
 	SQLStore            *sqlstore.SQLStore
 	KVStore             kvstore.KVStore
@@ -138,7 +140,8 @@ func (ng *AlertNG) init() error {
 
 	clk := clock.New()
 
-	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
+	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
+		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService)
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(); err != nil {
@@ -176,6 +179,7 @@ func (ng *AlertNG) init() error {
 	api := api.API{
 		Cfg:                  ng.Cfg,
 		DatasourceCache:      ng.DataSourceCache,
+		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
 		ExpressionService:    ng.ExpressionService,
 		Schedule:             ng.schedule,
