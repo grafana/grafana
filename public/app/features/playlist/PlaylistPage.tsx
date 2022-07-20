@@ -4,7 +4,7 @@ import { useDebounce } from 'react-use';
 
 import { NavModel } from '@grafana/data';
 import { ConfirmModal } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';

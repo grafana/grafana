@@ -109,10 +109,10 @@ func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) back
 	}
 
 	path := store.RootPublicStatic + "/" + q.Path
-	frame, err := s.store.List(ctx, nil, path)
+	listFrame, err := s.store.List(ctx, nil, path)
 	response.Error = err
-	if frame != nil {
-		response.Frames = data.Frames{frame}
+	if listFrame != nil {
+		response.Frames = data.Frames{listFrame.Frame}
 	}
 	return response
 }

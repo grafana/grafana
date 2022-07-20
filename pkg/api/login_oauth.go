@@ -305,6 +305,11 @@ func (hs *HTTPServer) SyncUser(
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
+		UserLookupParams: models.UserLookupParams{
+			Email:  &extUser.Email,
+			UserID: nil,
+			Login:  nil,
+		},
 	}
 
 	if err := hs.Login.UpsertUser(ctx.Req.Context(), cmd); err != nil {

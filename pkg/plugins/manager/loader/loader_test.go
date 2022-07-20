@@ -344,6 +344,38 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 		{
+			name:  "Load a plugin with manifest which has a file not found in plugin folder",
+			class: plugins.External,
+			cfg: &plugins.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test"},
+			},
+			pluginPaths: []string{"../testdata/invalid-v2-missing-file"},
+			want:        []*plugins.Plugin{},
+			pluginErrors: map[string]*plugins.Error{
+				"test": {
+					PluginID:  "test",
+					ErrorCode: "signatureModified",
+				},
+			},
+		},
+		{
+			name:  "Load a plugin with file which is missing from the manifest",
+			class: plugins.External,
+			cfg: &plugins.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test"},
+			},
+			pluginPaths: []string{"../testdata/invalid-v2-extra-file"},
+			want:        []*plugins.Plugin{},
+			pluginErrors: map[string]*plugins.Error{
+				"test": {
+					PluginID:  "test",
+					ErrorCode: "signatureModified",
+				},
+			},
+		},
+		{
 			name:  "Load an app with includes",
 			class: plugins.External,
 			cfg: &plugins.Cfg{

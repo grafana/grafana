@@ -103,12 +103,9 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       }
       break;
     }
-
     case 'JsonExpressionParser': {
-      // JsonExpressionParser is not supported in query builder
-      const error = 'JsonExpressionParser not supported in visual query builder';
-
-      context.errors.push(createNotSupportedError(expr, node, error));
+      visQuery.operations.push(getJsonExpressionParser(expr, node));
+      break;
     }
 
     case 'LineFormatExpr': {
@@ -216,6 +213,17 @@ function getLabelParser(expr: string, node: SyntaxNode): QueryBuilderOperation {
 
   const string = handleQuotes(getString(expr, node.getChild('String')));
   const params = !!string ? [string] : [];
+  return {
+    id: parser,
+    params,
+  };
+}
+
+function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOperation {
+  const parserNode = node.getChild('Json');
+  const parser = getString(expr, parserNode);
+
+  const params = [...getAllByType(expr, node, 'JsonExpression')];
   return {
     id: parser,
     params,
