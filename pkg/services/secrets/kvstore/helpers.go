@@ -38,7 +38,7 @@ func GetNamespacedKVStore(kv kvstore.KVStore) *kvstore.NamespacedKVStore {
 	return kvstore.WithNamespace(kv, kvstore.AllOrganizations, PluginNamespace)
 }
 
-func isPluginErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
+func isPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
 	_, exists, err := kvstore.Get(ctx, QuitOnPluginStartupFailureKey)
 	if err != nil {
 		return true, errors.New(fmt.Sprint("error retrieving key ", QuitOnPluginStartupFailureKey, " from kvstore. error: ", err.Error()))
@@ -46,7 +46,7 @@ func isPluginErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore)
 	return exists, nil
 }
 
-func setPluginErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore, isFatal bool) error {
+func setPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore, isFatal bool) error {
 	if !isFatal {
 		return kvstore.Del(ctx, QuitOnPluginStartupFailureKey)
 	}

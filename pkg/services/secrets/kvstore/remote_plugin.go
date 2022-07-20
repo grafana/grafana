@@ -59,7 +59,7 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 	}
 
 	setOnce.Do(func() {
-		if isFatal, _ := isPluginErrorFatal(ctx, kv.kvstore); !isFatal && kv.backwardsCompatibilityDisabled {
+		if isFatal, _ := isPluginStartupErrorFatal(ctx, kv.kvstore); !isFatal && kv.backwardsCompatibilityDisabled {
 			setPluginErrorFatal(ctx, kv.kvstore, true)
 		}
 	})
