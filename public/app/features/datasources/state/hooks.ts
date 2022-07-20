@@ -47,14 +47,11 @@ export const useTestDataSource = (uid: string) => {
 };
 
 export const useLoadDataSources = () => {
-  const hasFetched = useSelector(({ dataSources }: StoreState) => dataSources.hasFetched);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!hasFetched) {
-      dispatch(loadDataSources());
-    }
-  }, [dispatch, hasFetched]);
+    dispatch(loadDataSources());
+  }, [dispatch]);
 };
 
 export const useLoadDataSource = (uid: string) => {
