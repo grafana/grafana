@@ -12,9 +12,10 @@ import { PageLayoutType } from 'app/core/components/Page/types';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { KioskMode, StoreState } from 'app/types';
+import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
+import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
@@ -149,28 +150,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    // Update page nav
-    if (!this.pageNav || dashboard.title !== this.pageNav.text) {
-      this.pageNav = {
-        text: dashboard.title,
-        url: locationUtil.getUrlForPartial(this.props.history.location, {
-          editview: null,
-          editPanel: null,
-          viewPanel: null,
-        }),
-      };
-    }
-
-    // Check if folder changed
-    if (
-      dashboard.meta.folderTitle &&
-      (!this.pageNav.parentItem || this.pageNav.parentItem.text !== dashboard.meta.folderTitle)
-    ) {
-      this.pageNav.parentItem = {
-        text: dashboard.meta.folderTitle,
-        url: `/dashboards/f/${dashboard.meta.folderUid}`,
-      };
-    }
+    this.updatePageNav(dashboard);
 
     if (
       prevProps.match.params.uid !== match.params.uid ||
@@ -339,6 +319,45 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return inspectPanel;
   }
 
+  updatePageNav(dashboard: DashboardModel) {
+    if (!this.pageNav || dashboard.title !== this.pageNav.text) {
+      this.pageNav = {
+        text: dashboard.title,
+        url: locationUtil.getUrlForPartial(this.props.history.location, {
+          editview: null,
+          editPanel: null,
+          viewPanel: null,
+        }),
+      };
+    }
+
+    // Check if folder changed
+    if (
+      dashboard.meta.folderTitle &&
+      (!this.pageNav.parentItem || this.pageNav.parentItem.text !== dashboard.meta.folderTitle)
+    ) {
+      this.pageNav.parentItem = {
+        text: dashboard.meta.folderTitle,
+        url: `/dashboards/f/${dashboard.meta.folderUid}`,
+      };
+    }
+
+    if (this.props.route.routeName === DashboardRoutes.Path) {
+      const pageNav = getPageNavFromSlug(this.props.match.params.slug!);
+      if (pageNav?.parentItem) {
+        this.pageNav.parentItem = pageNav.parentItem;
+      }
+    }
+  }
+
+  getPageProps() {
+    if (this.props.route.routeName === DashboardRoutes.Path) {
+      return { navModel: getRootContentNavModel(), pageNav: this.pageNav };
+    } else {
+      return { navId: 'dashboards', pageNav: this.pageNav };
+    }
+  }
+
   render() {
     const { dashboard, initError, queryParams, isPublic } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
@@ -368,8 +387,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     return (
       <Page
-        navId="dashboards"
-        pageNav={this.pageNav}
+        {...this.getPageProps()}
         layout={PageLayoutType.Dashboard}
         toolbar={toolbar}
         className={containerClassNames}

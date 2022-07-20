@@ -198,3 +198,7 @@ func (ac *OSSAccessControlService) DeclareFixedRoles(registrations ...accesscont
 func (ac *OSSAccessControlService) RegisterScopeAttributeResolver(scopePrefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	ac.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 }
+
+func (ac *OSSAccessControlService) DeleteUserPermissions(ctx context.Context, userID int64) error {
+	return ac.store.DeleteUserPermissions(ctx, userID)
+}

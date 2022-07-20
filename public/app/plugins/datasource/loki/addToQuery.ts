@@ -27,15 +27,18 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
 
   const streamSelectorPositions = getStreamSelectorPositions(query);
   const parserPositions = getParserPositions(query);
+  const labelFilterPositions = getLabelFilterPositions(query);
   if (!streamSelectorPositions.length) {
     return query;
   }
 
   const filter = toLabelFilter(key, value, operator);
-  if (!parserPositions.length) {
-    return addFilterToStreamSelector(query, streamSelectorPositions, filter);
+  // If we have label filters or parser, we want to add new label filter after the last one
+  if (labelFilterPositions.length || parserPositions.length) {
+    const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
+    return addFilterAsLabelFilter(query, [positionToAdd], filter);
   } else {
-    return addFilterAsLabelFilter(query, parserPositions, filter);
+    return addFilterToStreamSelector(query, streamSelectorPositions, filter);
   }
 }
 
@@ -111,6 +114,24 @@ export function getParserPositions(query: string): Position[] {
 }
 
 /**
+ * Parse the string and get all LabelFilter positions in the query.
+ * @param query
+ */
+export function getLabelFilterPositions(query: string): Position[] {
+  const tree = parser.parse(query);
+  const positions: Position[] = [];
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'LabelFilter') {
+        positions.push({ from, to });
+        return false;
+      }
+    },
+  });
+  return positions;
+}
+
+/**
  * Parse the string and get all Line filter positions in the query.
  * @param query
  */
@@ -172,17 +193,21 @@ function addFilterToStreamSelector(
 /**
  * Add filter as label filter after the parsers
  * @param query
- * @param parserPositions
+ * @param positionsToAddAfter
  * @param filter
  */
-function addFilterAsLabelFilter(query: string, parserPositions: Position[], filter: QueryBuilderLabelFilter): string {
+function addFilterAsLabelFilter(
+  query: string,
+  positionsToAddAfter: Position[],
+  filter: QueryBuilderLabelFilter
+): string {
   let newQuery = '';
   let prev = 0;
 
-  for (let i = 0; i < parserPositions.length; i++) {
+  for (let i = 0; i < positionsToAddAfter.length; i++) {
     // This is basically just doing splice on a string for each matched vector selector.
-    const match = parserPositions[i];
-    const isLast = i === parserPositions.length - 1;
+    const match = positionsToAddAfter[i];
+    const isLast = i === positionsToAddAfter.length - 1;
 
     const start = query.substring(prev, match.to);
     const end = isLast ? query.substring(match.to) : '';
@@ -226,4 +251,12 @@ function addParser(query: string, queryPartPositions: Position[], parser: string
  */
 function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabelFilter) {
   return labels.find((label) => label.label === filter.label && label.value === filter.value);
+}
+
+/**
+ * Return the last position based on "to" property
+ * @param positions
+ */
+function findLastPosition(positions: Position[]): Position {
+  return positions.reduce((prev, current) => (prev.to > current.to ? prev : current));
 }
