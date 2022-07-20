@@ -170,6 +170,15 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     );
   }
 
+  getMetricNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
+    return this.azureMonitorDatasource.getMetricNames({
+      subscription: subscriptionId,
+      resourceGroup,
+      metricDefinition,
+      resourceName,
+    });
+  }
+
   /*Azure Log Analytics */
   getAzureLogAnalyticsWorkspaces(subscriptionId: string) {
     return this.azureLogAnalyticsDatasource.getWorkspaces(subscriptionId);

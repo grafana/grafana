@@ -24,23 +24,23 @@ type DashboardGuardian interface {
 	CanAdmin() (bool, error)
 	CanDelete() (bool, error)
 	CanCreate(folderID int64, isFolder bool) (bool, error)
-	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error)
+	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardACL) (bool, error)
 
-	// GetAcl returns ACL.
-	GetAcl() ([]*models.DashboardAclInfoDTO, error)
+	// GetACL returns ACL.
+	GetACL() ([]*models.DashboardACLInfoDTO, error)
 
 	// GetACLWithoutDuplicates returns ACL and strips any permission
 	// that already has an inherited permission with higher or equal
 	// permission.
-	GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error)
-	GetHiddenACL(*setting.Cfg) ([]*models.DashboardAcl, error)
+	GetACLWithoutDuplicates() ([]*models.DashboardACLInfoDTO, error)
+	GetHiddenACL(*setting.Cfg) ([]*models.DashboardACL, error)
 }
 
 type dashboardGuardianImpl struct {
 	user             *models.SignedInUser
 	dashId           int64
 	orgId            int64
-	acl              []*models.DashboardAclInfoDTO
+	acl              []*models.DashboardACLInfoDTO
 	teams            []*models.TeamDTO
 	log              log.Logger
 	ctx              context.Context
@@ -101,12 +101,12 @@ func (g *dashboardGuardianImpl) HasPermission(permission models.PermissionType) 
 		return g.logHasPermissionResult(permission, true, nil)
 	}
 
-	acl, err := g.GetAcl()
+	acl, err := g.GetACL()
 	if err != nil {
 		return g.logHasPermissionResult(permission, false, err)
 	}
 
-	result, err := g.checkAcl(permission, acl)
+	result, err := g.checkACL(permission, acl)
 	return g.logHasPermissionResult(permission, result, err)
 }
 
@@ -124,9 +124,9 @@ func (g *dashboardGuardianImpl) logHasPermissionResult(permission models.Permiss
 	return hasPermission, err
 }
 
-func (g *dashboardGuardianImpl) checkAcl(permission models.PermissionType, acl []*models.DashboardAclInfoDTO) (bool, error) {
+func (g *dashboardGuardianImpl) checkACL(permission models.PermissionType, acl []*models.DashboardACLInfoDTO) (bool, error) {
 	orgRole := g.user.OrgRole
-	teamAclItems := []*models.DashboardAclInfoDTO{}
+	teamACLItems := []*models.DashboardACLInfoDTO{}
 
 	for _, p := range acl {
 		// user match
@@ -145,12 +145,12 @@ func (g *dashboardGuardianImpl) checkAcl(permission models.PermissionType, acl [
 
 		// remember this rule for later
 		if p.TeamId > 0 {
-			teamAclItems = append(teamAclItems, p)
+			teamACLItems = append(teamACLItems, p)
 		}
 	}
 
 	// do we have team rules?
-	if len(teamAclItems) == 0 {
+	if len(teamACLItems) == 0 {
 		return false, nil
 	}
 
@@ -172,14 +172,14 @@ func (g *dashboardGuardianImpl) checkAcl(permission models.PermissionType, acl [
 	return false, nil
 }
 
-func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
-	acl := []*models.DashboardAclInfoDTO{}
+func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardACL) (bool, error) {
+	acl := []*models.DashboardACLInfoDTO{}
 	adminRole := models.ROLE_ADMIN
-	everyoneWithAdminRole := &models.DashboardAclInfoDTO{DashboardId: g.dashId, UserId: 0, TeamId: 0, Role: &adminRole, Permission: models.PERMISSION_ADMIN}
+	everyoneWithAdminRole := &models.DashboardACLInfoDTO{DashboardId: g.dashId, UserId: 0, TeamId: 0, Role: &adminRole, Permission: models.PERMISSION_ADMIN}
 
 	// validate that duplicate permissions don't exists
 	for _, p := range updatePermissions {
-		aclItem := &models.DashboardAclInfoDTO{DashboardId: p.DashboardID, UserId: p.UserID, TeamId: p.TeamID, Role: p.Role, Permission: p.Permission}
+		aclItem := &models.DashboardACLInfoDTO{DashboardId: p.DashboardID, UserId: p.UserID, TeamId: p.TeamID, Role: p.Role, Permission: p.Permission}
 		if aclItem.IsDuplicateOf(everyoneWithAdminRole) {
 			return false, ErrGuardianPermissionExists
 		}
@@ -193,7 +193,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission models.Pe
 		acl = append(acl, aclItem)
 	}
 
-	existingPermissions, err := g.GetAcl()
+	existingPermissions, err := g.GetACL()
 	if err != nil {
 		return false, err
 	}
@@ -215,31 +215,31 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission models.Pe
 		return true, nil
 	}
 
-	return g.checkAcl(permission, existingPermissions)
+	return g.checkACL(permission, existingPermissions)
 }
 
-// GetAcl returns dashboard acl
-func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
+// GetACL returns dashboard acl
+func (g *dashboardGuardianImpl) GetACL() ([]*models.DashboardACLInfoDTO, error) {
 	if g.acl != nil {
 		return g.acl, nil
 	}
 
-	query := models.GetDashboardAclInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
-	if err := g.dashboardService.GetDashboardAclInfoList(g.ctx, &query); err != nil {
+	query := models.GetDashboardACLInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
+	if err := g.dashboardService.GetDashboardACLInfoList(g.ctx, &query); err != nil {
 		return nil, err
 	}
 	g.acl = query.Result
 	return g.acl, nil
 }
 
-func (g *dashboardGuardianImpl) GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
-	acl, err := g.GetAcl()
+func (g *dashboardGuardianImpl) GetACLWithoutDuplicates() ([]*models.DashboardACLInfoDTO, error) {
+	acl, err := g.GetACL()
 	if err != nil {
 		return nil, err
 	}
 
-	nonInherited := []*models.DashboardAclInfoDTO{}
-	inherited := []*models.DashboardAclInfoDTO{}
+	nonInherited := []*models.DashboardACLInfoDTO{}
+	inherited := []*models.DashboardACLInfoDTO{}
 	for _, aclItem := range acl {
 		if aclItem.Inherited {
 			inherited = append(inherited, aclItem)
@@ -248,18 +248,18 @@ func (g *dashboardGuardianImpl) GetACLWithoutDuplicates() ([]*models.DashboardAc
 		}
 	}
 
-	result := []*models.DashboardAclInfoDTO{}
-	for _, nonInheritedAclItem := range nonInherited {
+	result := []*models.DashboardACLInfoDTO{}
+	for _, nonInheritedACLItem := range nonInherited {
 		duplicate := false
-		for _, inheritedAclItem := range inherited {
-			if nonInheritedAclItem.IsDuplicateOf(inheritedAclItem) && nonInheritedAclItem.Permission <= inheritedAclItem.Permission {
+		for _, inheritedACLItem := range inherited {
+			if nonInheritedACLItem.IsDuplicateOf(inheritedACLItem) && nonInheritedACLItem.Permission <= inheritedACLItem.Permission {
 				duplicate = true
 				break
 			}
 		}
 
 		if !duplicate {
-			result = append(result, nonInheritedAclItem)
+			result = append(result, nonInheritedACLItem)
 		}
 	}
 
@@ -280,13 +280,13 @@ func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 	return query.Result, err
 }
 
-func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
-	hiddenACL := make([]*models.DashboardAcl, 0)
+func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardACL, error) {
+	hiddenACL := make([]*models.DashboardACL, 0)
 	if g.user.IsGrafanaAdmin {
 		return hiddenACL, nil
 	}
 
-	existingPermissions, err := g.GetAcl()
+	existingPermissions, err := g.GetACL()
 	if err != nil {
 		return hiddenACL, err
 	}
@@ -297,7 +297,7 @@ func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 		}
 
 		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
-			hiddenACL = append(hiddenACL, &models.DashboardAcl{
+			hiddenACL = append(hiddenACL, &models.DashboardACL{
 				OrgID:       item.OrgId,
 				DashboardID: item.DashboardId,
 				UserID:      item.UserId,
@@ -324,8 +324,8 @@ type FakeDashboardGuardian struct {
 	HasPermissionValue               bool
 	CheckPermissionBeforeUpdateValue bool
 	CheckPermissionBeforeUpdateError error
-	GetAclValue                      []*models.DashboardAclInfoDTO
-	GetHiddenAclValue                []*models.DashboardAcl
+	GetACLValue                      []*models.DashboardACLInfoDTO
+	GetHiddenACLValue                []*models.DashboardACL
 }
 
 func (g *FakeDashboardGuardian) CanSave() (bool, error) {
@@ -356,20 +356,20 @@ func (g *FakeDashboardGuardian) HasPermission(permission models.PermissionType) 
 	return g.HasPermissionValue, nil
 }
 
-func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
+func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardACL) (bool, error) {
 	return g.CheckPermissionBeforeUpdateValue, g.CheckPermissionBeforeUpdateError
 }
 
-func (g *FakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
-	return g.GetAclValue, nil
+func (g *FakeDashboardGuardian) GetACL() ([]*models.DashboardACLInfoDTO, error) {
+	return g.GetACLValue, nil
 }
 
-func (g *FakeDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
-	return g.GetAcl()
+func (g *FakeDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardACLInfoDTO, error) {
+	return g.GetACL()
 }
 
-func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
-	return g.GetHiddenAclValue, nil
+func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardACL, error) {
+	return g.GetHiddenACLValue, nil
 }
 
 // nolint:unused

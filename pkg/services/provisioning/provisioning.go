@@ -44,7 +44,7 @@ func ProvideService(
 	alertingService *alerting.AlertNotificationService,
 	pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,
-	quotaService *quota.QuotaService,
+	quotaService quota.Service,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -247,8 +247,7 @@ func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) erro
 func (ps *ProvisioningServiceImpl) ProvisionAlertRules(ctx context.Context) error {
 	alertRulesPath := filepath.Join(ps.Cfg.ProvisioningPath, "alerting")
 	st := store.DBstore{
-		BaseInterval:     ps.Cfg.UnifiedAlerting.BaseInterval,
-		DefaultInterval:  ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
+		Cfg:              ps.Cfg.UnifiedAlerting,
 		SQLStore:         ps.SQLStore,
 		Logger:           ps.log,
 		FolderService:    nil, // we don't use it yet

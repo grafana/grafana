@@ -115,7 +115,7 @@ Requires basic authentication and that the authenticated user is a Grafana Admin
 **Example Response**:
 
 ```http
-HTTP/1.1 200
+HTTP/1.1 201
 Content-Type: application/json
 
 {
@@ -140,9 +140,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action               | Scope              |
-| -------------------- | ------------------ |
-| serviceaccounts:read | serviceaccounts:\* |
+| Action               | Scope                |
+| -------------------- | -------------------- |
+| serviceaccounts:read | serviceaccounts:id:1 |
 
 **Example Request**:
 
@@ -183,14 +183,14 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
+| Action                | Scope                |
+| --------------------- | -------------------- |
+| serviceaccounts:write | serviceaccounts:id:1 |
 
 **Example Request**:
 
 ```http
-PUT /api/serviceaccounts/2 HTTP/1.1
+PATCH /api/serviceaccounts/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
@@ -235,9 +235,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action               | Scope              |
-| -------------------- | ------------------ |
-| serviceaccounts:read | serviceaccounts:\* |
+| Action               | Scope                |
+| -------------------- | -------------------- |
+| serviceaccounts:read | serviceaccounts:id:1 |
 
 **Example Request**:
 
@@ -277,9 +277,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
+| Action                | Scope                |
+| --------------------- | -------------------- |
+| serviceaccounts:write | serviceaccounts:id:1 |
 
 **Example Request**:
 
@@ -318,9 +318,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
+| Action                | Scope                |
+| --------------------- | -------------------- |
+| serviceaccounts:write | serviceaccounts:id:1 |
 
 **Example Request**:
 

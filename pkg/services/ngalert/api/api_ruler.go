@@ -34,7 +34,7 @@ type RulerSrv struct {
 	provenanceStore provisioning.ProvisioningStore
 	store           store.RuleStore
 	DatasourceCache datasources.CacheService
-	QuotaService    *quota.QuotaService
+	QuotaService    quota.Service
 	scheduleService schedule.ScheduleService
 	log             log.Logger
 	cfg             *setting.UnifiedAlertingSettings
@@ -393,8 +393,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 
 		if len(finalChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
-				OrgId:  c.OrgId,
-				UserId: c.UserId,
+				OrgID:  c.OrgId,
+				UserID: c.UserId,
 			}) // alert rule is table name
 			if err != nil {
 				return fmt.Errorf("failed to get alert rules quota: %w", err)
@@ -425,7 +425,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.Existing.UID,
-		})
+		}, rule.Existing.Version+1)
 	}
 
 	for _, rule := range finalChanges.Delete {

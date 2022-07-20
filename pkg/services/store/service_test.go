@@ -16,14 +16,26 @@ import (
 )
 
 var (
-	dummyUser = &models.SignedInUser{OrgId: 1}
-)
-
-func TestListFiles(t *testing.T) {
-	publicRoot, err := filepath.Abs("../../../public")
-	require.NoError(t, err)
-	roots := []storageRuntime{
-		newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
+	dummyUser           = &models.SignedInUser{OrgId: 1}
+	allowAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
+		return map[string]filestorage.PathFilter{
+			ActionFilesDelete: allowAllPathFilter,
+			ActionFilesWrite:  allowAllPathFilter,
+			ActionFilesRead:   allowAllPathFilter,
+		}
+	})
+	denyAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
+		return map[string]filestorage.PathFilter{
+			ActionFilesDelete: denyAllPathFilter,
+			ActionFilesWrite:  denyAllPathFilter,
+			ActionFilesRead:   denyAllPathFilter,
+		}
+	})
+	publicRoot, _            = filepath.Abs("../../../public")
+	publicStaticFilesStorage = newDiskStorage(RootStorageConfig{
+		Prefix: "public",
+		Name:   "Public static files",
+		Disk: &StorageLocalDiskConfig{
 			Path: publicRoot,
 			Roots: []string{
 				"/testdata/",
@@ -33,12 +45,15 @@ func TestListFiles(t *testing.T) {
 				"/maps/",
 				"/upload/",
 			},
-		}).setReadOnly(true).setBuiltin(true),
-	}
+		}}).setReadOnly(true).setBuiltin(true)
+)
+
+func TestListFiles(t *testing.T) {
+	roots := []storageRuntime{publicStaticFilesStorage}
 
 	store := newStandardStorageService(sqlstore.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	})
+	}, allowAllAuthService)
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
@@ -53,22 +68,43 @@ func TestListFiles(t *testing.T) {
 	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata_js_libraries.golden", testDsFrame, true)
 }
 
-func setupUploadStore(t *testing.T) (StorageService, *filestorage.MockFileStorage, string) {
+func TestListFilesWithoutPermissions(t *testing.T) {
+	roots := []storageRuntime{publicStaticFilesStorage}
+
+	store := newStandardStorageService(sqlstore.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
+		return make([]storageRuntime, 0)
+	}, denyAllAuthService)
+	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
+	require.NoError(t, err)
+	rowLen, err := frame.RowLen()
+	require.NoError(t, err)
+	require.Equal(t, 0, rowLen)
+}
+
+func setupUploadStore(t *testing.T, authService storageAuthService) (StorageService, *filestorage.MockFileStorage, string) {
 	t.Helper()
 	storageName := "resources"
 	mockStorage := &filestorage.MockFileStorage{}
-	sqlStorage := newSQLStorage(storageName, "Testing upload", &StorageSQLConfig{orgId: 1}, sqlstore.InitTestDB(t))
+	sqlStorage := newSQLStorage(
+		storageName, "Testing upload", "dummy descr",
+		&StorageSQLConfig{},
+		sqlstore.InitTestDB(t),
+		1, // orgID (prefix init)
+	)
 	sqlStorage.store = mockStorage
 
+	if authService == nil {
+		authService = allowAllAuthService
+	}
 	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	})
+	}, authService)
 
 	return store, mockStorage, storageName
 }
 
 func TestShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("Get", mock.Anything, "/myFile.jpg").Return(nil, nil)
 	mockStorage.On("Upsert", mock.Anything, mock.Anything).Return(nil)
@@ -82,8 +118,20 @@ func TestShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestShouldFailUploadWithoutAccess(t *testing.T) {
+	service, _, storageName := setupUploadStore(t, denyAllAuthService)
+
+	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
+		EntityType: EntityTypeImage,
+		Contents:   make([]byte, 0),
+		Path:       storageName + "/myFile.jpg",
+		MimeType:   "image/jpg",
+	})
+	require.ErrorIs(t, err, ErrAccessDenied)
+}
+
 func TestShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("Get", mock.Anything, "/myFile.jpg").Return(&filestorage.File{Contents: make([]byte, 0)}, nil)
 
@@ -97,7 +145,7 @@ func TestShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
 }
 
 func TestShouldDelegateFileDeletion(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("Delete", mock.Anything, "/myFile.jpg").Return(nil)
 
@@ -106,7 +154,7 @@ func TestShouldDelegateFileDeletion(t *testing.T) {
 }
 
 func TestShouldDelegateFolderCreation(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("CreateFolder", mock.Anything, "/nestedFolder/mostNestedFolder").Return(nil)
 
@@ -115,9 +163,9 @@ func TestShouldDelegateFolderCreation(t *testing.T) {
 }
 
 func TestShouldDelegateFolderDeletion(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
-	mockStorage.On("DeleteFolder", mock.Anything, "/", &filestorage.DeleteFolderOptions{Force: true}).Return(nil)
+	mockStorage.On("DeleteFolder", mock.Anything, "/", mock.Anything).Return(nil)
 
 	err := service.DeleteFolder(context.Background(), dummyUser, &DeleteFolderCmd{
 		Path:  storageName,

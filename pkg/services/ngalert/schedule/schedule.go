@@ -33,7 +33,7 @@ type ScheduleService interface {
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
 	// UpdateAlertRule notifies scheduler that a rule has been changed
-	UpdateAlertRule(key ngmodels.AlertRuleKey)
+	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64)
 	// UpdateAlertRulesByNamespaceUID notifies scheduler that all rules in a namespace should be updated.
 	UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error
 	// DeleteAlertRule notifies scheduler that a rule has been changed
@@ -90,7 +90,6 @@ type schedule struct {
 	metrics *metrics.Scheduler
 
 	alertsSender    AlertsSender
-	disabledOrgs    map[int64]struct{}
 	minRuleInterval time.Duration
 
 	// schedulableAlertRules contains the alert rules that are considered for
@@ -137,7 +136,6 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		appURL:                appURL,
 		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
 		stateManager:          stateManager,
-		disabledOrgs:          cfg.Cfg.DisabledOrgs,
 		minRuleInterval:       cfg.Cfg.MinInterval,
 		schedulableAlertRules: schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.SchedulableAlertRule)},
 		bus:                   bus,
@@ -159,12 +157,12 @@ func (sch *schedule) Run(ctx context.Context) error {
 }
 
 // UpdateAlertRule looks for the active rule evaluation and commands it to update the rule
-func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey) {
+func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64) {
 	ruleInfo, err := sch.registry.get(key)
 	if err != nil {
 		return
 	}
-	ruleInfo.update()
+	ruleInfo.update(ruleVersion(lastVersion))
 }
 
 // UpdateAlertRulesByNamespaceUID looks for the active rule evaluation for every rule in the given namespace and commands it to update the rule.
@@ -181,7 +179,7 @@ func (sch *schedule) UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID i
 		sch.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: orgID,
 			UID:   r.UID,
-		})
+		}, r.Version)
 	}
 
 	return nil
@@ -224,17 +222,11 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			sch.metrics.BehindSeconds.Set(start.Sub(tick).Seconds())
 
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
-			for disabledOrg := range sch.disabledOrgs {
-				disabledOrgs = append(disabledOrgs, disabledOrg)
-			}
 
-			if err := sch.updateSchedulableAlertRules(ctx, disabledOrgs); err != nil {
+			if err := sch.updateSchedulableAlertRules(ctx); err != nil {
 				sch.log.Error("scheduler failed to update alert rules", "err", err)
 			}
 			alertRules := sch.schedulableAlertRules.all()
-
-			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle
@@ -336,7 +328,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 	}
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan struct{}) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
 
@@ -409,7 +401,15 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
-		case <-updateCh:
+		case version := <-updateCh:
+			// sometimes it can happen when, for example, the rule evaluation took so long,
+			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
+			// therefore, at the time when message from updateCh is processed the current rule will have
+			// at least the same version (or greater) and the state created for the new version of the rule.
+			if currentRule != nil && int64(version) <= currentRule.Version {
+				logger.Info("skip updating rule because its current version is actual", "current_version", currentRule.Version, "new_version", version)
+				continue
+			}
 			logger.Info("fetching new version of the rule")
 			err := retryIfError(func(attempt int64) error {
 				newRule, newExtraLabels, err := updateRule(grafanaCtx, currentRule)
