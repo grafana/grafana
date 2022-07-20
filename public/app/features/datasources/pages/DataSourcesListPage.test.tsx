@@ -6,24 +6,14 @@ import { DataSourceSettings, LayoutModes } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { DataSourcesState } from 'app/types';
 
+import { navIndex, getMockDataSources } from '../__mocks__';
+import { initialState } from '../state';
+
 import { DataSourcesListPage } from './DataSourcesListPage';
-import { getMockDataSources } from './__mocks__/dataSourcesMocks';
-import navIndex from './__mocks__/store.navIndex.mock';
-import { initialState } from './state/reducers';
-
-jest.mock('app/core/core', () => {
-  return {
-    contextSrv: {
-      hasPermission: () => true,
-    },
-  };
-});
-
-const getMock = jest.fn().mockResolvedValue([]);
 
 jest.mock('app/core/services/backend_srv', () => ({
   ...jest.requireActual('app/core/services/backend_srv'),
-  getBackendSrv: () => ({ get: getMock }),
+  getBackendSrv: () => ({ get: jest.fn().mockResolvedValue([]) }),
 }));
 
 const setup = (stateOverride?: Partial<DataSourcesState>) => {

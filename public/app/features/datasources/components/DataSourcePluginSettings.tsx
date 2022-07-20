@@ -1,17 +1,10 @@
 import { cloneDeep } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import {
-  DataQuery,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataSourcePlugin,
-  DataSourcePluginMeta,
-  DataSourceSettings,
-} from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 
-export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;
+import { GenericDataSourcePlugin } from '../types';
 
 export interface Props {
   plugin: GenericDataSourcePlugin;
@@ -20,7 +13,7 @@ export interface Props {
   onModelChange: (dataSource: DataSourceSettings) => void;
 }
 
-export class PluginSettings extends PureComponent<Props> {
+export class DataSourcePluginSettings extends PureComponent<Props> {
   element: HTMLDivElement | null = null;
   component?: AngularComponent;
   scopeProps: {
@@ -92,5 +85,3 @@ export class PluginSettings extends PureComponent<Props> {
     );
   }
 }
-
-export default PluginSettings;
