@@ -181,7 +181,9 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		encProvider := encryptionprovider.Provider{}
 		usageStats := &usagestats.UsageStatsMock{}
 
-		encryptionService := encryptionservice.ProvideEncryptionService(encProvider, usageStats, settings)
+		encryptionService, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, settings)
+		require.NoError(t, err)
+
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, settings, features))
 		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))

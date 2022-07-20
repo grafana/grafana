@@ -43,7 +43,9 @@ func setupTestService(tb testing.TB, store secrets.Store, features *featuremgmt.
 	encProvider := encryptionprovider.Provider{}
 	usageStats := &usagestats.UsageStatsMock{}
 
-	encryption := encryptionservice.ProvideEncryptionService(encProvider, usageStats, settings)
+	encryption, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, settings)
+	require.NoError(tb, err)
+
 	secretsService, err := ProvideSecretsService(
 		store,
 		osskmsproviders.ProvideService(encryption, settings, features),

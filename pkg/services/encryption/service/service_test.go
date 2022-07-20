@@ -19,7 +19,8 @@ func Test_Service(t *testing.T) {
 	usageStats := &usagestats.UsageStatsMock{}
 	settings := &setting.OSSImpl{Cfg: setting.NewCfg()}
 
-	svc := ProvideEncryptionService(encProvider, usageStats, settings)
+	svc, err := ProvideEncryptionService(encProvider, usageStats, settings)
+	require.NoError(t, err)
 
 	t.Run("decrypt empty payload should return error", func(t *testing.T) {
 		_, err := svc.Decrypt(context.Background(), []byte(""), "1234")
@@ -70,4 +71,24 @@ func Test_Service(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []byte("grafana"), decrypted)
 	})
+}
+
+func Test_Service_MissingProvider(t *testing.T) {
+	encProvider := fakeProvider{}
+	usageStats := &usagestats.UsageStatsMock{}
+	settings := &setting.OSSImpl{Cfg: setting.NewCfg()}
+
+	service, err := ProvideEncryptionService(encProvider, usageStats, settings)
+	assert.Nil(t, service)
+	assert.Error(t, err)
+}
+
+type fakeProvider struct{}
+
+func (p fakeProvider) ProvideCiphers() map[string]encryption.Cipher {
+	return nil
+}
+
+func (p fakeProvider) ProvideDeciphers() map[string]encryption.Decipher {
+	return nil
 }

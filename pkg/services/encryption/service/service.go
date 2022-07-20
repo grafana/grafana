@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -36,8 +37,8 @@ func ProvideEncryptionService(
 	provider encryption.Provider,
 	usageMetrics usagestats.Service,
 	settingsProvider setting.Provider,
-) *Service {
-	return &Service{
+) (*Service, error) {
+	s := &Service{
 		log: log.New("encryption"),
 
 		ciphers:   provider.ProvideCiphers(),
@@ -46,6 +47,39 @@ func ProvideEncryptionService(
 		usageMetrics:     usageMetrics,
 		settingsProvider: settingsProvider,
 	}
+
+	if err := s.checkEncryptionAlgorithm(); err != nil {
+		return nil, err
+	}
+
+	s.registerUsageMetrics()
+
+	return s, nil
+}
+
+func (s *Service) checkEncryptionAlgorithm() error {
+	algorithm := s.settingsProvider.
+		KeyValue(securitySection, encryptionAlgorithmKey).
+		MustString(defaultEncryptionAlgorithm)
+
+	var err error
+	defer func() {
+		if err != nil {
+			s.log.Error("Wrong security encryption configuration", "algorithm", algorithm, "error", err)
+		}
+	}()
+
+	if _, ok := s.ciphers[algorithm]; !ok {
+		err = errors.New("no cipher registered for encryption algorithm configured")
+		return err
+	}
+
+	if _, ok := s.deciphers[algorithm]; !ok {
+		err = errors.New("no cipher registered for encryption algorithm configured")
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) registerUsageMetrics() {
