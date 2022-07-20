@@ -134,9 +134,10 @@ This allows every GitLab Admin to be an Admin in Grafana.
 
 #### Map roles using groups
 
-Groups can also be used to map roles. For instance,
-if you have a group called 'example-group' you can use the following snippet to
-ensure those members inherit the role 'Editor'.
+Groups can also be used to map roles. Group name (lowercased and unique) is used instead of display name for identifying groups
+
+For instance, if you have a group with display name 'Example-Group' you can use the following snippet to
+ensure those members inherit the role 'Editor'. 
 
 ```bash
 role_attribute_path = contains(groups[*], 'example-group') && 'Editor' || 'Viewer'

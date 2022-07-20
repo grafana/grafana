@@ -105,7 +105,9 @@ allowed_organizations = github google
 
 You can use GitHub OAuth to map roles. During mapping, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
 
-For the path lookup, Grafana uses JSON obtained from querying GitHub's API [`/api/user`](https://docs.github.com/en/rest/users/users#get-the-authenticated-user=) endpoint and a `groups` key containing all of the user's teams. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
+For the path lookup, Grafana uses JSON obtained from querying GitHub's API [`/api/user`](https://docs.github.com/en/rest/users/users#get-the-authenticated-user=) endpoint and a `groups` key containing all of the user's teams (retrieved from `/api/user/teams`).
+
+The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
 An example Query could look like the following:
 
@@ -116,17 +118,17 @@ role_attribute_path = [login==octocat] && 'Admin' || 'Viewer'
 This allows the user with login "octocat" to be mapped to the `Admin` role,
 but all other users to be mapped to the `Viewer` role.
 
-#### Map roles using groups
+#### Map roles using teams
 
-Groups can also be used to map roles. For instance,
-if you have a group called 'example-group' you can use the following snippet to
+Teams can also be used to map roles. For instance,
+if you have a team called 'example-group' you can use the following snippet to
 ensure those members inherit the role 'Editor'.
 
 ```bash
 role_attribute_path = contains(groups[*], '@github/example-group') && 'Editor' || 'Viewer'
 ```
 
-Note: If a match is found in other fields, groups will be ignored.
+Note: If a match is found in other fields, teams will be ignored.
 
 ### Team Sync (Enterprise only)
 
