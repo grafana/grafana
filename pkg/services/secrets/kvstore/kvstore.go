@@ -20,7 +20,7 @@ func ProvideService(sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	remoteCheck UseRemoteSecretsPluginCheck,
 	kvstore kvstore.KVStore,
-	features featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 ) (SecretsKVStore, error) {
 	var store SecretsKVStore
 	logger := log.New("secrets.kvstore")
@@ -37,7 +37,7 @@ func ProvideService(sqlStore sqlstore.Store,
 		secretsPlugin, err := remoteCheck.StartAndReturnPlugin(context.TODO())
 		namespacedKVStore := GetNamespacedKVStore(kvstore)
 		if err != nil || secretsPlugin == nil {
-			if isFatal, err2 := isPluginErrorFatal(context.TODO(), namespacedKVStore); isFatal || err2 != nil {
+			if isFatal, err2 := isPluginStartupErrorFatal(context.TODO(), namespacedKVStore); isFatal || err2 != nil {
 				// plugin error was fatal or there was an error determining if the error was fatal
 				logger.Error("secrets management plugin is required to start -- exiting app")
 				if err2 != nil {
