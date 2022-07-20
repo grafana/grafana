@@ -743,6 +743,10 @@ func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserComman
 	})
 }
 
+func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cmd *models.DeleteUserCommand) error {
+	return deleteUserInTransaction(ss, sess, cmd)
+}
+
 func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
 	// Check if user exists
 	user := user.User{ID: cmd.UserId}
@@ -818,26 +822,66 @@ func UserDeletions() []string {
 	return deletes
 }
 
-func updateAllTablesForFromUser(intoUser user.User, fromUserId int64) error {
+func UserUpdates() []string {
+	deletes := []string{
+		"UPDATE star set email = ?, user_id = ?, login = ? WHERE user_id = ?",
+		"UPDATE team_member set user_id = ? WHERE user_id = ?",
+		"DELETE FROM team_member WHERE user_id = ?",
+		"UPDATE FROM " + dialect.Quote("user") + " WHERE id = ?",
+		"UPDATE FROM org_user WHERE user_id = ?",
+		"DELETE FROM dashboard_acl WHERE user_id = ?",
+		"DELETE FROM preferences WHERE user_id = ?",
+		"DELETE FROM team_member WHERE user_id = ?",
+		"DELETE FROM user_auth WHERE user_id = ?",
+		"DELETE FROM user_auth_token WHERE user_id = ?",
+		"DELETE FROM quota WHERE user_id = ?",
+	}
+	return deletes
+}
+
+func (ss *SQLStore) updateUserIds(intoUser user.User, fromUser user.User, sess *DBSession) error {
 	// TODO:
-	fmt.Printf("merging user %d into user %d", fromUserId, intoUser.ID)
+	sql := `
+	UPDATE team_member
+	SET user_id = ?
+	WHERE user_id = ?;
+
+	UPDATE user_role
+	SET user_id = ?
+	WHERE user_id = ?;
+	`
+	_, err := sess.Exec(sql, intoUser.ID, fromUser.ID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-// UpdateUserPermissions sets the user Server Admin flag
-func (ss *SQLStore) MergeUser(intoUserId int64, fromUserIds []int64) error {
-	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-
+// MergeUser sets the user Server Admin flag
+func (ss *SQLStore) MergeUser(ctx context.Context, intoUserId int64, fromUserIds []int64) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var intoUser user.User
 		if _, err := sess.ID(intoUserId).Where(notServiceAccountFilter(ss)).Get(&intoUser); err != nil {
 			return err
 		}
 
 		for _, fromUserId := range fromUserIds {
+			var fromUser user.User
+			if _, err := sess.ID(fromUserId).Where(notServiceAccountFilter(ss)).Get(&fromUser); err != nil {
+				return err
+			}
 			// update all tables fromUserIds to intoUserIds
-			updateAllTablesForFromUser(intoUser, fromUserId)
-		}
+			err := ss.updateUserIds(intoUser, fromUser, sess)
+			if err != nil {
+				return err
+			}
 
+			// deletes the from user
+			delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
+			if delErr != nil {
+				return delErr
+			}
+		}
 		return nil
 	})
 }

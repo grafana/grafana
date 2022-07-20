@@ -111,32 +111,40 @@ func runConflictingUsersCommand() func(context *cli.Context) error {
 				cUser.Print()
 
 				// waiting for user to choose which user to merge to
-				logger.Infof("Choose which user to merge into:")
-				scanner := bufio.NewScanner(os.Stdin)
-				if ok := scanner.Scan(); !ok {
-					if err := scanner.Err(); err != nil {
-						return fmt.Errorf("can't read conflict option from stdin: %w", err)
-					}
-					return fmt.Errorf("can't read conflict option from stdin")
-				}
-				choosenUserToMergeInto := scanner.Text()
-				if !strings.Contains(cUser.Ids, choosenUserToMergeInto) {
-					return fmt.Errorf("not a conflicting user id")
-				}
-				v, err := strconv.ParseInt(choosenUserToMergeInto, 10, 64)
+				chosenUser, err := promptToMerge(cUser)
 				if err != nil {
-					return fmt.Errorf("could not parse id from string")
+					return err
 				}
+
 				otherUsers := cUser.Ids
-				logger.Infof("this will merge users %d into the choosen user %s\n\n", otherUsers, choosenUserToMergeInto)
+				logger.Infof("this will merge users %s into the chosen user %d\n\n", otherUsers, chosenUser)
 				if confirm() {
-					err = mergeUser(v, cUser, sqlStore)
+					err = mergeUser(context.Context, chosenUser, cUser, sqlStore)
 					if err != nil {
-						return fmt.Errorf("couldnt merge user with error %w", err)
+						return fmt.Errorf("could not merge user with error %w", err)
 					}
 				}
 			case SameIdentification:
-				return fmt.Errorf("have not implemented ways to deal with non mergeable users")
+				// waiting for user to choose which user to merge to
+				chosenUser, err := promptToMerge(cUser)
+				if err != nil {
+					return err
+				}
+				err = sqlStore.UpdateUser(context.Context, &models.UpdateUserCommand{UserId: chosenUser})
+				if err != nil {
+					return fmt.Errorf("could not update user with details %w", err)
+				}
+				otherUsers := strings.Split(cUser.Ids, ",")
+				for _, oUser := range otherUsers {
+					oUser, err := strconv.ParseInt(oUser, 10, 64)
+					if err != nil {
+						return err
+					}
+					err = sqlStore.DeleteUser(context.Context, &models.DeleteUserCommand{UserId: oUser})
+					if err != nil {
+						return fmt.Errorf("could not update user with details %w", err)
+					}
+				}
 			default:
 				logger.Infof("could not identify the conflict resolution for found users %s", cUser.Ids)
 				continue
@@ -237,7 +245,7 @@ func (cUser ConflictingUsers) Conflict() conflictType {
 	return cType
 }
 
-func mergeUser(mergeIntoUser int64, cUser ConflictingUsers, sqlStore *sqlstore.SQLStore) error {
+func mergeUser(ctx context.Context, mergeIntoUser int64, cUser ConflictingUsers, sqlStore *sqlstore.SQLStore) error {
 	stringIds := strings.Split(cUser.Ids, ",")
 	fromUserIds := make([]int64, 0, len(stringIds))
 	for _, raw := range stringIds {
@@ -247,7 +255,7 @@ func mergeUser(mergeIntoUser int64, cUser ConflictingUsers, sqlStore *sqlstore.S
 		}
 		fromUserIds = append(fromUserIds, v)
 	}
-	return sqlStore.MergeUser(mergeIntoUser, fromUserIds)
+	return sqlStore.MergeUser(ctx, mergeIntoUser, fromUserIds)
 }
 
 type ConflictingUsers struct {
