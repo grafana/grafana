@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -176,21 +175,3 @@ func ReplaceEncodedSpace(path string) string {
 var GetBoundary = func() string {
 	return ""
 }
-
-// LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Validate channel url accessibility
-func ValidateNotificationChannelUrl(url *url.URL) error {
-	ips, err := net.LookupIP(url.Host)
-	if err != nil {
-		return errors.New("URL must be reachable")
-	}
-
-	for _, ip := range ips {
-		if ip.IsPrivate() {
-			return errors.New("URL must be reachable")
-		}
-	}
-
-	return nil
-}
-
-// LOGZ.IO GRAFANA CHANGE :: end
