@@ -181,9 +181,6 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
   dash.schemaVersion = 0;
   dash.timezone = 0;
 
-  // ignore iteration property
-  delete dash.iteration;
-
   dash.panels = [];
 
   // ignore template variable values

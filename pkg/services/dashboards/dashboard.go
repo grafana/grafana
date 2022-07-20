@@ -24,6 +24,7 @@ type DashboardService interface {
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
 	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error
+	DeleteACLByUser(ctx context.Context, userID int64) error
 }
 
 // PluginService is a service for operating on plugin dashboards.
