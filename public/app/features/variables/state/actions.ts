@@ -621,6 +621,7 @@ export const variableUpdated = (
           }
         });
       });
+
       promises = node.getOptimizedInputEdges(excludedEdges).map((e) => {
         const variable = variables.find((v) => v.name === e.inputNode?.name);
 
