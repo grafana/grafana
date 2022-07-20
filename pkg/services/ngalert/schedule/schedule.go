@@ -236,14 +236,14 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		externalAlertmanager, err := sch.alertmanagersFromDatasources(cfg.OrgID)
+		externalAlertmanagers, err := sch.alertmanagersFromDatasources(cfg.OrgID)
 		if err != nil {
 			sch.log.Error("failed to get alertmanagers from datasources",
 				"org", cfg.OrgID,
 				"err", err)
 			continue
 		}
-		cfg.Alertmanagers = append(cfg.Alertmanagers, externalAlertmanager...)
+		cfg.Alertmanagers = append(cfg.Alertmanagers, externalAlertmanagers...)
 
 		// We have no running sender and no Alertmanager(s) configured, no-op.
 		if !ok && len(cfg.Alertmanagers) == 0 {
