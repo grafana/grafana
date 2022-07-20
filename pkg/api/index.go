@@ -443,23 +443,23 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 
 	dashboardChildNavs := []*dtos.NavLink{}
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-		Text: "Browse", Id: "manage-dashboards", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
+		Text: "Browse", Id: "dashboards/browse", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
 	})
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-		Text: "Playlists", Id: "playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+		Text: "Playlists", Id: "dashboards/playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 	})
 
 	if c.IsSignedIn {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Snapshots",
-			Id:   "snapshots",
+			Id:   "dashboards/snapshots",
 			Url:  hs.Cfg.AppSubURL + "/dashboard/snapshots",
 			Icon: "camera",
 		})
 
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Library panels",
-			Id:   "library-panels",
+			Id:   "dashboards/library-panels",
 			Url:  hs.Cfg.AppSubURL + "/library-panels",
 			Icon: "library-panel",
 		})
@@ -481,20 +481,20 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-				Text: "New dashboard", Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "new-dashboard", ShowIconInNavbar: true,
+				Text: "New dashboard", Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true,
 			})
 		}
 
 		if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(dashboards.ActionFoldersCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "new-folder",
+				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "dashboards/folder/new",
 				Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboards/folder/new", HideFromTabs: true, ShowIconInNavbar: true,
 			})
 		}
 
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-				Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "plus",
+				Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
 				Url: hs.Cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true,
 			})
 		}

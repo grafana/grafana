@@ -3,21 +3,15 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { Button, Input, Form, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 import { createNewFolder } from '../state/actions';
-
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'manage-dashboards'),
-});
 
 const mapDispatchToProps = {
   createNewFolder,
 };
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(null, mapDispatchToProps);
 
 interface OwnProps {}
 
@@ -47,7 +41,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
 
   render() {
     return (
-      <Page navModel={this.props.navModel}>
+      <Page navId="dashboards/folder/new">
         <Page.Contents>
           <h3>New dashboard folder</h3>
           <Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
