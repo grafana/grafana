@@ -1,8 +1,8 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v9.0.2-security1'
-build_image = 'grafana/build-container:1.5.5'
-publish_image = 'grafana/grafana-ci-deploy:1.3.1'
+grabpl_version = 'v2.9.54'
+build_image = 'grafana/build-container:1.5.8'
+publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
