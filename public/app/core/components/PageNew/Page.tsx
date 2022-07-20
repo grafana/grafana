@@ -76,6 +76,7 @@ export const Page: PageType = ({
 
 Page.Header = PageHeader;
 Page.Contents = PageContents;
+Page.OldNavOnly = () => null;
 
 const getStyles = (theme: GrafanaTheme2) => {
   const shadow = theme.isDark

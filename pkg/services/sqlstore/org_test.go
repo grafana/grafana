@@ -331,7 +331,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					require.True(t, remCmd.UserWasDeleted)
 
 					err = sqlStore.GetSignedInUser(context.Background(), &models.GetSignedInUserQuery{UserId: ac2.ID})
-					require.Equal(t, err, models.ErrUserNotFound)
+					require.Equal(t, err, user.ErrUserNotFound)
 				})
 
 				t.Run("Cannot delete last admin org user", func(t *testing.T) {

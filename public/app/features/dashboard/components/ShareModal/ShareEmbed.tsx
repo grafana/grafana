@@ -1,9 +1,8 @@
 import React, { FormEvent, PureComponent } from 'react';
 
-import { AppEvents, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
 import { ClipboardButton, Field, Modal, RadioButtonGroup, Switch, TextArea } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
 
 import { ShareModalTabProps } from './types';
 import { buildIframeHtml } from './utils';
@@ -62,10 +61,6 @@ export class ShareEmbed extends PureComponent<Props, State> {
     this.setState({ selectedTheme: value }, this.buildIframeHtml);
   };
 
-  onIframeHtmlCopy = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-  };
-
   getIframeHtml = () => {
     return this.state.iframeHtml;
   };
@@ -104,7 +99,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
           />
         </Field>
         <Modal.ButtonRow>
-          <ClipboardButton variant="primary" getText={this.getIframeHtml} onClipboardCopy={this.onIframeHtmlCopy}>
+          <ClipboardButton icon="copy" variant="primary" getText={this.getIframeHtml}>
             Copy to clipboard
           </ClipboardButton>
         </Modal.ButtonRow>
