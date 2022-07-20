@@ -52,7 +52,6 @@ const getTabStyles = (theme: GrafanaTheme2) => {
       margin-right: ${theme.spacing(2)};
       position: relative;
       display: block;
-      margin-bottom: 4px;
     `,
     link: css`
       padding: 6px 12px;
