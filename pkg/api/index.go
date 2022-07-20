@@ -235,7 +235,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		return nil, err
 	}
 
-	// When topnav is enabled we move use new information architecture where plugins live in Apps category
+	// When topnav is enabled we can test new information architecture where plugins live in Apps category
 	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
 		navTree = append(navTree, &dtos.NavLink{
 			Text:        "Apps",
