@@ -1,7 +1,8 @@
-package channels
+package channels_config
 
 import (
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
@@ -900,15 +901,15 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element: alerting.ElementTypeSelect,
 					SelectOptions: []alerting.SelectOption{
 						{
-							Value: OpsgenieSendTags,
+							Value: channels.OpsgenieSendTags,
 							Label: "Tags",
 						},
 						{
-							Value: OpsgenieSendDetails,
+							Value: channels.OpsgenieSendDetails,
 							Label: "Extra Properties",
 						},
 						{
-							Value: OpsgenieSendBoth,
+							Value: channels.OpsgenieSendBoth,
 							Label: "Tags & Extra Properties",
 						},
 					},

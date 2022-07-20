@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 )
 
 // swagger:route GET /api/v1/provisioning/contact-points provisioning stable RouteGetContactpoints
@@ -119,7 +119,7 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 }
 
 func (e *EmbeddedContactPoint) SecretKeys() ([]string, error) {
-	notifiers := notifier.GetAvailableNotifiers()
+	notifiers := channels_config.GetAvailableNotifiers()
 	for _, n := range notifiers {
 		if n.Name == e.Type {
 			secureFields := []string{}
