@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -50,7 +49,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		}
 	} else {
 		// Evaluate permissions for adding an existing user to the organization
-		userIDScope := ac.Scope("users", "id", strconv.Itoa(int(userQuery.Result.ID)))
+		userIDScope := ac.Scope("users", "id", strconv.Itoa(int(userQuery.Result.Id)))
 		hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionOrgUsersAdd, userIDScope))
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
