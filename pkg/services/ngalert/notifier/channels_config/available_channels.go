@@ -1,4 +1,4 @@
-package notifier
+package channels_config
 
 import (
 	"github.com/grafana/grafana/pkg/services/alerting"

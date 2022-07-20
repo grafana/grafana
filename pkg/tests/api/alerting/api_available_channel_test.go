@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -44,7 +44,7 @@ func TestAvailableChannels(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 200, resp.StatusCode)
 
-	expNotifiers := notifier.GetAvailableNotifiers()
+	expNotifiers := channels_config.GetAvailableNotifiers()
 	expJson, err := json.Marshal(expNotifiers)
 	require.NoError(t, err)
 	require.Equal(t, string(expJson), string(b))
