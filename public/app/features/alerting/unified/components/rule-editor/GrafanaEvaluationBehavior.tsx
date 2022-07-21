@@ -67,7 +67,7 @@ export const GrafanaEvaluationBehavior: FC = () => {
   const evaluateEveryGlobalLimitDuration = parseDuration(config.unifiedAlerting.minInterval);
   const milisGlobalLimit = durationToMilliseconds(evaluateEveryGlobalLimitDuration);
 
-  const exceedsGlobalEvaluationLimit = millisEvery > milisGlobalLimit;
+  const exceedsGlobalEvaluationLimit = milisGlobalLimit > millisEvery && millisEvery > 0;
 
   const evaluateEveryId = 'eval-every-input';
   const evaluateForId = 'eval-for-input';
@@ -87,7 +87,15 @@ export const GrafanaEvaluationBehavior: FC = () => {
           >
             Evaluate every
           </InlineLabel>
-          <Input id={evaluateEveryId} width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
+          <Field
+            className={styles.inlineField}
+            error={errors.evaluateEvery?.message}
+            invalid={!!errors.evaluateEvery}
+            validationMessageHorizontalOverflow={true}
+          >
+            <Input id={evaluateEveryId} width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
+          </Field>
+
           <InlineLabel
             htmlFor={evaluateForId}
             width={7}
@@ -111,8 +119,9 @@ export const GrafanaEvaluationBehavior: FC = () => {
       </Field>
       {exceedsGlobalEvaluationLimit && (
         <Alert severity="warning" title="Global evalutation interval limit exceeded">
-          A minimum evaluation interval of {config.unifiedAlerting.minInterval} have been configured in Grafana and will
-          be used for this alert rule. <br />
+          A minimum evaluation interval of{' '}
+          <span className={styles.globalLimitValue}>{config.unifiedAlerting.minInterval}</span> have been configured in
+          Grafana and will be used for this alert rule. <br />
           Please contact the administrator to configure a lower interval.
         </Alert>
       )}
@@ -173,5 +182,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   collapseToggle: css`
     margin: ${theme.spacing(2, 0, 2, -1)};
+  `,
+  globalLimitValue: css`
+    font-weight: ${theme.typography.fontWeightBold};
   `,
 });
