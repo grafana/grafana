@@ -183,11 +183,10 @@ func (s *sqlStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery) 
 
 func (s *sqlStore) GetItems(ctx context.Context, query *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error) {
 	var playlistItems = make([]playlist.PlaylistItem, 0)
+	if query.PlaylistUID == "" || query.OrgId == 0 {
+		return playlistItems, models.ErrCommandValidationFailed
+	}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if query.PlaylistUID == "" || query.OrgId == 0 {
-			return models.ErrCommandValidationFailed
-		}
-
 		// getQuery the playlist Id
 		getQuery := &playlist.GetPlaylistByUidQuery{UID: query.PlaylistUID, OrgId: query.OrgId}
 		p, err := s.Get(ctx, getQuery)

@@ -5,13 +5,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB) playlist.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg) playlist.Service {
+	if cfg.IsFeatureToggleEnabled("NewDBLibrary") {
+		return &Service{
+			store: &sqlxStore{
+				sqlxdb:  db.GetDB(),
+				dialect: db.GetDialect(),
+			},
+		}
+	}
 	return &Service{
 		store: &sqlStore{
 			db: db,

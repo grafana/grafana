@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/xorm"
@@ -177,6 +178,10 @@ func (ss *SQLStore) Quote(value string) string {
 // GetDialect return the dialect
 func (ss *SQLStore) GetDialect() migrator.Dialect {
 	return ss.Dialect
+}
+
+func (ss *SQLStore) GetDB() *sqlx.DB {
+	return sqlx.NewDb(ss.engine.DB().DB, ss.GetDialect().DriverName())
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
