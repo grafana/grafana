@@ -1,11 +1,12 @@
 package validation
 
 import (
+	"testing"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestValidateSavePublicDashboard(t *testing.T) {
