@@ -19,7 +19,7 @@ import (
 //
 // Gets all existing permissions for the folder with the given `uid`.
 //
-// Responses:updateFolderPermissions struc
+// Responses:
 // 200: getFolderPermissionListResponse
 // 401: unauthorisedError
 // 403: forbiddenError
