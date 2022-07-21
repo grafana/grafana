@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 
 import config from 'app/core/config';
 
-import { messages } from '../../locales/en/messages';
+import { messages } from '../../../locales/en/messages';
 
 let i18nInstance: I18n;
 
