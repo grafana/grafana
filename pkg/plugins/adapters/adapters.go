@@ -28,6 +28,7 @@ func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *data
 	}
 
 	return &backend.DataSourceInstanceSettings{
+		Type:                    ds.Type,
 		ID:                      ds.Id,
 		Name:                    ds.Name,
 		URL:                     ds.Url,

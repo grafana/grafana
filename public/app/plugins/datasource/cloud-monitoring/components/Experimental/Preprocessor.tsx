@@ -1,8 +1,7 @@
 import React, { FunctionComponent, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
-import { RadioButtonGroup } from '@grafana/ui';
+import { EditorField, EditorRow, RadioButtonGroup } from '@grafana/ui';
 
 import { getAlignmentPickerData } from '../../functions';
 import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType, ValueTypes } from '../../types';

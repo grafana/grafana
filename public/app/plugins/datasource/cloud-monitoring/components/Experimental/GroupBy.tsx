@@ -1,8 +1,7 @@
 import React, { FunctionComponent, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
-import { MultiSelect } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, MultiSelect } from '@grafana/ui';
 
 import { SYSTEM_LABELS } from '../../constants';
 import { labelsToGroupedOptions } from '../../functions';
