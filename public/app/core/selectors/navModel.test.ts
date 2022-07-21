@@ -36,7 +36,7 @@ describe('getNavModel', () => {
     expect(navModel.node.parentItem?.id).toBe(navModel.main.id);
   });
 
-  test('get nav model for page 2 levels deep', () => {
+  test('returns the correct nav model for a 2nd-level child', () => {
     const navModel = getNavModel(navIndex, 'apps/subapp/child1');
     expect(navModel.main.id).toBe('apps');
     expect(navModel.node.id).toBe('apps/subapp/child1');
