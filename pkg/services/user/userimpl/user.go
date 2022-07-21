@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -87,7 +86,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		Email: cmd.Email,
 	}
 	usr, err = s.store.Get(ctx, usr)
-	if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		return usr, err
 	}
 

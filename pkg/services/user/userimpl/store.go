@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -54,7 +53,7 @@ func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error)
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		exists, err := sess.Where("email=? OR login=?", usr.Email, usr.Login).Get(usr)
 		if !exists {
-			return models.ErrUserNotFound
+			return user.ErrUserNotFound
 		}
 		if err != nil {
 			return err
@@ -80,35 +79,35 @@ func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
 }
 
 func (ss *sqlStore) GetNotServiceAccount(ctx context.Context, userID int64) (*user.User, error) {
-	user := user.User{ID: userID}
+	usr := user.User{ID: userID}
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Where(ss.notServiceAccountFilter()).Get(&user)
+		has, err := sess.Where(ss.notServiceAccountFilter()).Get(&usr)
 		if err != nil {
 			return err
 		}
 		if !has {
-			return models.ErrUserNotFound
+			return user.ErrUserNotFound
 		}
 		return nil
 	})
-	return &user, err
+	return &usr, err
 }
 
 func (ss *sqlStore) GetByID(ctx context.Context, userID int64) (*user.User, error) {
-	var user *user.User
+	var usr *user.User
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		has, err := sess.ID(userID).
 			Where(ss.notServiceAccountFilter()).
-			Get(user)
+			Get(usr)
 
 		if err != nil {
 			return err
 		} else if !has {
-			return models.ErrUserNotFound
+			return user.ErrUserNotFound
 		}
 		return nil
 	})
-	return user, err
+	return usr, err
 }
 
 func (ss *sqlStore) notServiceAccountFilter() string {

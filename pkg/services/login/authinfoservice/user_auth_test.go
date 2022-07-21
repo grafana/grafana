@@ -46,51 +46,51 @@ func TestUserAuth(t *testing.T) {
 				Email: "user1@test.com",
 			}
 			query := &models.GetUserByAuthInfoQuery{UserLookupParams: models.UserLookupParams{Login: &login}}
-			user, err := srv.LookupAndUpdate(context.Background(), query)
+			usr, err := srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, login)
+			require.Equal(t, usr.Login, login)
 
 			// By ID
-			id := user.ID
+			id := usr.ID
 
-			user, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
+			usr, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
 				UserID: &id,
 			})
 
 			require.Nil(t, err)
-			require.Equal(t, user.ID, id)
+			require.Equal(t, usr.ID, id)
 
 			// By Email
 			email := "user1@test.com"
 
-			user, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
+			usr, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
 				Email: &email,
 			})
 
 			require.Nil(t, err)
-			require.Equal(t, user.Email, email)
+			require.Equal(t, usr.Email, email)
 
 			authInfoStore.ExpectedUser = nil
 			// Don't find nonexistent user
 			email = "nonexistent@test.com"
 
-			user, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
+			usr, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
 				Email: &email,
 			})
 
-			require.Equal(t, models.ErrUserNotFound, err)
-			require.Nil(t, user)
+			require.Equal(t, user.ErrUserNotFound, err)
+			require.Nil(t, usr)
 		})
 
 		t.Run("Can set & locate by AuthModule and AuthId", func(t *testing.T) {
 			// get nonexistent user_auth entry
 			authInfoStore.ExpectedUser = &user.User{}
-			authInfoStore.ExpectedError = models.ErrUserNotFound
+			authInfoStore.ExpectedError = user.ErrUserNotFound
 			query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
 			usr, err := srv.LookupAndUpdate(context.Background(), query)
 
-			require.Equal(t, models.ErrUserNotFound, err)
+			require.Equal(t, user.ErrUserNotFound, err)
 			require.Nil(t, usr)
 
 			// create user_auth entry
@@ -136,12 +136,12 @@ func TestUserAuth(t *testing.T) {
 			require.NoError(t, err)
 
 			authInfoStore.ExpectedUser = nil
-			authInfoStore.ExpectedError = models.ErrUserNotFound
+			authInfoStore.ExpectedError = user.ErrUserNotFound
 			// get via user_auth for deleted user
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
 			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
-			require.Equal(t, err, models.ErrUserNotFound)
+			require.Equal(t, err, user.ErrUserNotFound)
 			require.Nil(t, usr)
 		})
 

@@ -1,8 +1,7 @@
 import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
-import { EditorRow, EditorField, EditorSwitch, Space, EditorRows } from '@grafana/experimental';
-import { Input, AutoSizeInput } from '@grafana/ui';
+import { Input, AutoSizeInput, EditorField, EditorRow, EditorRows, EditorSwitch, Space } from '@grafana/ui';
 
 import { PromQueryCodeEditor } from '../querybuilder/components/PromQueryCodeEditor';
 import { PromQuery } from '../types';

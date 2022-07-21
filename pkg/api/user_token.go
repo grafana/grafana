@@ -34,7 +34,7 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 
 	_, err := hs.userService.GetByID(ctx, &userQuery)
 	if err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, "User not found", err)
 		}
 		return response.Error(500, "Could not read user from database", err)
@@ -55,9 +55,9 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 
 	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, "User not found", err)
-		} else if errors.Is(err, models.ErrCaseInsensitive) {
+		} else if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict,
 				"User has conflicting login or email with another user. Please contact server admin", err)
 		}
@@ -126,7 +126,7 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 	userQuery := user.GetUserByIDQuery{ID: userID}
 	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, "User not found", err)
 		}
 		return response.Error(500, "Failed to get user", err)

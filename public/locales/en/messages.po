@@ -202,6 +202,74 @@ msgstr "{queryCount} queries with total query time of {formatted}"
 msgid "dashboard.inspect.title"
 msgstr "Inspect: {panelTitle}"
 
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-arialabel"
+msgstr "Turn off auto refresh"
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-description"
+msgstr "Auto refresh turned off. Choose refresh time interval"
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-label"
+msgstr "Off"
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.on-description"
+msgstr "Choose refresh time interval with current interval {durationAriaLabel} selected"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.add-panel"
+msgstr "Add panel"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.comments-show"
+msgstr "Show dashboard comments"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.mark-favorite"
+msgstr "Mark as favorite"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.open-original"
+msgstr "Open original dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-next"
+msgstr "Go to next dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-previous"
+msgstr "Go to previous dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-stop"
+msgstr "Stop playlist"
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.toolbar.refresh"
+msgstr "Refresh dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.save"
+msgstr "Save dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.settings"
+msgstr "Dashboard settings"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.share"
+msgstr "Share dashboard or panel"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.tv-button"
+msgstr "Cycle view mode"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.unmark-favorite"
+msgstr "Unmark as favorite"
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr "Alerting"
@@ -365,6 +433,10 @@ msgstr "Teams"
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.users"
 msgstr "Users"
+
+#: public/app/core/navigation/kiosk.ts
+msgid "navigation.kiosk.tv-alert"
+msgstr "Press ESC to exit Kiosk mode"
 
 #: public/app/features/dashboard/utils/getPanelMenu.ts
 msgid "panel.header-menu.inspect"

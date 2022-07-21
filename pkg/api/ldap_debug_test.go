@@ -432,7 +432,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 	userServiceMock := usertest.NewUserServiceFake()
-	userServiceMock.ExpectedError = models.ErrUserNotFound
+	userServiceMock.ExpectedError = user.ErrUserNotFound
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
