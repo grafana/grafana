@@ -26,7 +26,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   const globalCSS = getGlobalStyles(theme);
   const styles = useStyles2(getStyles);
 
-  const selectedBgColor = theme.colors.background.secondary;
+  const selectedBgColor = theme.v1.colors.formInputBorderActive;
   const { settings } = item;
 
   useEffect(() => {

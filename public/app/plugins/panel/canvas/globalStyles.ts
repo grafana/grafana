@@ -18,7 +18,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
 
       .rc-tree-title {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: space-between;
       }
 
@@ -99,6 +99,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           text-decoration: none;
           vertical-align: top;
           cursor: pointer;
+          flex-grow: 1;
         }
         span {
           &.rc-tree-checkbox,

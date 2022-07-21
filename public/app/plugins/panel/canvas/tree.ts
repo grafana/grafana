@@ -29,14 +29,14 @@ export function getTreeData(root?: RootElement | FrameState, selection?: string[
 
       const isSelected = isItemSelected(item, selection);
       if (isSelected) {
-        element.style = { backgroundColor: selectedColor };
+        element.style = { border: `1px solid ${selectedColor}` };
       }
 
       if (item instanceof FrameState) {
         element.children = getTreeData(item, selection, selectedColor);
         if (isSelected) {
           element.children.map((child) => {
-            child.style = { backgroundColor: selectedColor };
+            child.style = { border: `1px solid ${selectedColor}` };
           });
         }
       }
