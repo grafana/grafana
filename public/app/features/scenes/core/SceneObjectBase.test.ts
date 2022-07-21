@@ -1,11 +1,11 @@
 import { SceneObjectBase } from './SceneObjectBase';
-import { SceneObject, SceneObjectList, SceneObjectState } from './types';
+import { SceneLayoutChild, SceneObject, SceneObjectStatePlain } from './types';
 
-interface TestSceneState extends SceneObjectState {
+interface TestSceneState extends SceneObjectStatePlain {
   name?: string;
   nested?: SceneObject<TestSceneState>;
-  children?: SceneObjectList;
-  actions?: SceneObjectList;
+  children?: SceneLayoutChild[];
+  actions?: SceneObject[];
 }
 
 class TestScene extends SceneObjectBase<TestSceneState> {}

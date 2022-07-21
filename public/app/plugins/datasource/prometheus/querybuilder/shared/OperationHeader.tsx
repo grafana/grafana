@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { FlexItem } from '@grafana/experimental';
-import { Button, Select, useStyles2 } from '@grafana/ui';
+import { Button, Select, useStyles2, FlexItem } from '@grafana/ui';
 
 import { OperationInfoButton } from './OperationInfoButton';
 import { VisualQueryModeller, QueryBuilderOperation, QueryBuilderOperationDef } from './types';

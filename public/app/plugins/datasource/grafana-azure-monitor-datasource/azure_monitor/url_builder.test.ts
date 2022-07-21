@@ -321,5 +321,25 @@ describe('AzureMonitorUrlBuilder', () => {
         );
       });
     });
+
+    describe('when metric definition does not contain a metric namespace', () => {
+      it('should build the getMetricNames url in the longer format', () => {
+        const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
+          '',
+          '2017-05-01-preview',
+          {
+            subscription: 'sub1',
+            resourceGroup: 'rg',
+            metricDefinition: 'microsoft.compute/virtualmachines',
+            resourceName: 'rn1',
+          },
+          templateSrv
+        );
+        expect(url).toBe(
+          '/subscriptions/sub1/resourceGroups/rg/providers/microsoft.compute/virtualmachines/rn1/' +
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
+        );
+      });
+    });
   });
 });
