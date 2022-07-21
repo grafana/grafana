@@ -102,15 +102,6 @@ type FolderUIDParam struct {
 	FolderUID string `json:"folder_uid"`
 }
 
-// swagger:parameters updateFolderPermissions
-type PostDashboardPermissionsParam struct {
-	// in:path
-	// required:true
-	FolderUID string `json:"folder_uid"`
-	// in:body
-	// required:true
-	Body dtos.UpdateDashboardACLCommand
-}
 
 // swagger:parameters getFolderByID
 type FolderIDParam struct {
