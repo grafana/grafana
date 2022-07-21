@@ -2,6 +2,8 @@ package kvstore
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -16,7 +18,8 @@ const (
 	AllOrganizations = -1
 )
 
-func ProvideService(sqlStore sqlstore.Store,
+func ProvideService(
+	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	remoteCheck UseRemoteSecretsPluginCheck,
 	kvstore kvstore.KVStore,
@@ -34,10 +37,10 @@ func ProvideService(sqlStore sqlstore.Store,
 	}
 	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
 		// Attempt to start the plugin
-		secretsPlugin, err := remoteCheck.StartAndReturnPlugin(context.TODO())
+		secretsPlugin, err := remoteCheck.StartAndReturnPlugin(context.Background())
 		namespacedKVStore := GetNamespacedKVStore(kvstore)
 		if err != nil || secretsPlugin == nil {
-			if isFatal, err2 := isPluginStartupErrorFatal(context.TODO(), namespacedKVStore); isFatal || err2 != nil {
+			if isFatal, err2 := isPluginStartupErrorFatal(context.Background(), namespacedKVStore); isFatal || err2 != nil {
 				// plugin error was fatal or there was an error determining if the error was fatal
 				logger.Error("secrets management plugin is required to start -- exiting app")
 				if err2 != nil {
@@ -113,4 +116,24 @@ func (kv *FixedKVStore) Rename(ctx context.Context, newNamespace string) error {
 	}
 	kv.Namespace = newNamespace
 	return nil
+}
+
+// Helpers to determine whether plugin startup failures are fatal to the app
+func GetNamespacedKVStore(kv kvstore.KVStore) *kvstore.NamespacedKVStore {
+	return kvstore.WithNamespace(kv, kvstore.AllOrganizations, PluginNamespace)
+}
+
+func isPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
+	_, exists, err := kvstore.Get(ctx, QuitOnPluginStartupFailureKey)
+	if err != nil {
+		return false, errors.New(fmt.Sprint("error retrieving key ", QuitOnPluginStartupFailureKey, " from kvstore. error: ", err.Error()))
+	}
+	return exists, nil
+}
+
+func setPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore, isFatal bool) error {
+	if !isFatal {
+		return kvstore.Del(ctx, QuitOnPluginStartupFailureKey)
+	}
+	return kvstore.Set(ctx, QuitOnPluginStartupFailureKey, "true")
 }

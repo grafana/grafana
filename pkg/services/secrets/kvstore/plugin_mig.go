@@ -58,7 +58,10 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 
 		// before we start migrating, check see if plugin startup failures were already fatal
 		namespacedKVStore := GetNamespacedKVStore(s.kvstore)
-		wasFatal, _ := isPluginStartupErrorFatal(ctx, namespacedKVStore)
+		wasFatal, err := isPluginStartupErrorFatal(ctx, namespacedKVStore)
+		if err != nil {
+			s.logger.Warn("unabled to determine whether plugin startup failures are fatal - continuing migration anyway.")
+		}
 
 		allSec, err := secretsSql.GetAll(ctx)
 		if err != nil {

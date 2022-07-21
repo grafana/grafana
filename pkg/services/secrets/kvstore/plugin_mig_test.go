@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -84,14 +84,14 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 	// this is to init the sql secret store inside the migration
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-
+	kvStore := kvstore.ProvideService(sqlStore)
 	migratorService := ProvidePluginSecretMigrationService(
 		secretsStoreForPlugin,
 		cfg,
 		sqlStore,
 		secretsService,
 		remoteCheck,
-		notifier.NewFakeKVStore(t),
+		kvStore,
 	)
 
 	secretsSql := &secretsKVStoreSQL{

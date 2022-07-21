@@ -12,10 +12,14 @@ type UseRemoteSecretsPluginCheck interface {
 	StartAndReturnPlugin(ctx context.Context) (secretsmanagerplugin.SecretsManagerPlugin, error)
 }
 
-type OSSRemoteSecretsPluginCheck struct{}
+type OSSRemoteSecretsPluginCheck struct {
+	log log.Logger
+}
 
 func ProvideRemotePluginCheck() *OSSRemoteSecretsPluginCheck {
-	return &OSSRemoteSecretsPluginCheck{}
+	return &OSSRemoteSecretsPluginCheck{
+		log: log.New("ossremotesecretsplugincheck"),
+	}
 }
 
 func (c OSSRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
@@ -23,7 +27,7 @@ func (c OSSRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
 }
 
 func (c OSSRemoteSecretsPluginCheck) StartAndReturnPlugin(ctx context.Context) (secretsmanagerplugin.SecretsManagerPlugin, error) {
-	log.New("ossremotesecretsplugincheck").Error("OSSRemoteSecretsPluginCheck.StartAndReturnPlugin() should not have been called")
+	c.log.Warn("OSSRemoteSecretsPluginCheck.StartAndReturnPlugin() was called by mistake. Secrets Manager plugins are enterprise only.")
 	return nil, nil
 }
 
