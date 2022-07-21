@@ -1,13 +1,14 @@
-import React from 'react';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/client-api';
+import { Meta, Story } from '@storybook/react';
 
-import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 import mdx from './ColorPicker.mdx';
-import SpectrumPalette from './SpectrumPalette';
+import SpectrumPalette, { SpectrumPaletteProps } from './SpectrumPalette';
 
-export default {
+const meta: Meta = {
   title: 'Pickers and Editors/ColorPicker/Palettes/SpectrumPalette',
   component: SpectrumPalette,
   decorators: [withCenteredStory],
@@ -15,15 +16,24 @@ export default {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['onChange'],
+    },
+  },
+  args: {
+    color: 'red',
   },
 };
 
-export const simple = () => {
-  return (
-    <UseState initialState="red">
-      {(selectedColor, updateSelectedColor) => {
-        return renderComponentWithTheme(SpectrumPalette, { color: selectedColor, onChange: updateSelectedColor });
-      }}
-    </UseState>
-  );
+export const Simple: Story<SpectrumPaletteProps> = ({ color }) => {
+  const [, updateArgs] = useArgs();
+  return renderComponentWithTheme(SpectrumPalette, {
+    color,
+    onChange: (color: string) => {
+      action('Color changed')(color);
+      updateArgs({ color });
+    },
+  });
 };
+
+export default meta;
