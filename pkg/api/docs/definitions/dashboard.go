@@ -115,13 +115,6 @@ type DeleteDashboardByUIDParams struct {
 	UID string `json:"uid"`
 }
 
-// swagger:parameters getDashboardPermissionsWithUid postDashboardPermissionsWithUid getDashboardVersionByUID
-// swagger:parameters getDashboardVersionsByUID restoreDashboardVersionByUID
-type UID struct {
-	// in:path
-	// required:true
-	UID string `json:"uid"`
-}
 
 // swagger:parameters postDashboard
 type PostDashboardParam struct {

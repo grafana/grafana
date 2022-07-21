@@ -542,7 +542,31 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext
 	dash.Set("panels", panels)
 }
 
-// GetDashboardVersions returns all dashboard versions as JSON
+// swagger:route GET /dashboards/id/{DashboardID}/versions dashboard_versions getDashboardVersionsByID
+//
+// Gets all existing versions for the dashboard.
+//
+// Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: dashboardVersionsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /dashboards/uid/{uid}/versions dashboard_versions getDashboardVersionsByUID
+//
+// Gets all existing versions for the dashboard using UID.
+//
+// Responses:
+// 200: dashboardVersionsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Response {
 	var dashID int64
 
@@ -601,7 +625,31 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, res)
 }
 
-// GetDashboardVersion returns the dashboard version with the given ID.
+// swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByID
+//
+// Get a specific dashboard version.
+//
+// Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: dashboardVersionResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByUID
+//
+// Get a specific dashboard version using UID.
+//
+// Responses:
+// 200: dashboardVersionResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Response {
 	var dashID int64
 
@@ -742,7 +790,31 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 	return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "text/html")
 }
 
-// RestoreDashboardVersion restores a dashboard to the given version.
+// swagger:route POST /dashboards/id/{DashboardID}/restore dashboard_versions restoreDashboardVersionByID
+//
+// Restore a dashboard to a given dashboard version.
+//
+// Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: postDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route POST /dashboards/uid/{uid}/restore dashboard_versions restoreDashboardVersionByUID
+//
+// Restore a dashboard to a given dashboard version using UID.
+//
+// Responses:
+// 200: postDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Response {
 	var dashID int64
 
@@ -823,4 +895,87 @@ func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
 		uids = append(uids, q.Result.Uid)
 	}
 	c.JSON(http.StatusOK, uids)
+}
+
+// swagger:parameters getDashboardPermissions
+// swagger:parameters renderReportPDF
+type DashboardIdParam struct {
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters restoreDashboardVersionByID
+type restoreDashboardVersionByIDParams struct {
+	// in:body
+	// required:true
+	Body dtos.RestoreDashboardVersionCommand
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters getDashboardVersionsByID
+type GetDashboardVersionsByIDParams struct {
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters getDashboardVersionsByUID
+type GetDashboardVersionsByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters restoreDashboardVersionByUID
+type RestoreDashboardVersionByUIDParams struct {
+	// in:body
+	// required:true
+	Body dtos.RestoreDashboardVersionCommand
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters getDashboardVersionByID
+type GetDashboardVersionByIDParams struct {
+	// in:path
+	DashboardID int64
+	// in:path
+	DashboardVersionID int64
+}
+
+// swagger:parameters getDashboardVersionByUID
+type DashboardVersionIdParam struct {
+	// in:path
+	DashboardVersionID int64
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters getDashboardVersions getDashboardVersionsByUID
+type GetDashboardVersionsParams struct {
+	// Maximum number of results to return
+	// in:query
+	// required:false
+	// default:0
+	Limit int `json:"limit"`
+
+	// Version to start from when returning queries
+	// in:query
+	// required:false
+	// default:0
+	Start int `json:"start"`
+}
+
+// swagger:response dashboardVersionsResponse
+type DashboardVersionsResponse struct {
+	// in: body
+	Body []*dashver.DashboardVersionDTO `json:"body"`
+}
+
+// swagger:response dashboardVersionResponse
+type DashboardVersionResponse struct {
+	// in: body
+	Body *dashver.DashboardVersionMeta `json:"body"`
 }
