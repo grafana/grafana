@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
 
+	"github.com/blugelabs/bluge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
@@ -33,7 +34,6 @@ type StandardSearchService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
-	extender := &NoopExtender{}
 	s := &StandardSearchService{
 		cfg: cfg,
 		sql: sql,
@@ -42,20 +42,20 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			sql: sql,
 			ac:  ac,
 		},
-		dashboardIndexManager: newOrgIndexManager(
-			"dashboard",
-			getDashboardIndexFactory(
-				newSQLDashboardLoader(sql),
-				extender.GetDocumentExtender(),
-				newFolderIDLookup(sql),
-			),
-			entityEventStore,
-		),
 		logger:                 log.New("searchV2"),
-		dashboardIndexExtender: extender,
+		dashboardIndexExtender: &NoopExtender{},
 		dashboardReIndexCh:     make(chan struct{}, 1),
 	}
+	s.dashboardIndexManager = newOrgIndexManager(
+		"dashboard",
+		s.getDashboardIndexFactory,
+		entityEventStore,
+	)
 	return s
+}
+
+func (s *StandardSearchService) getDashboardIndexFactory(ctx context.Context, orgID int64, writer *bluge.Writer) (Index, error) {
+	return createDashboardIndex(ctx, orgID, writer, newSQLDashboardLoader(s.sql), s.dashboardIndexExtender.GetDocumentExtender(), newFolderIDLookup(s.sql))
 }
 
 func (s *StandardSearchService) IsDisabled() bool {
@@ -89,7 +89,6 @@ func (s *StandardSearchService) TriggerDashboardReIndex() {
 
 func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
 	s.dashboardIndexExtender = ext
-	s.dashboardIndex.extender = ext.GetDocumentExtender()
 }
 
 func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*models.SignedInUser, error) {

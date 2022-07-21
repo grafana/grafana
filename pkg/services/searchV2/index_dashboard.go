@@ -41,12 +41,6 @@ type dashboard struct {
 	info     *extract.DashboardInfo
 }
 
-func getDashboardIndexFactory(dashLoader dashboardLoader, extender DocumentExtender, folderIDs folderUIDLookup) IndexFactory {
-	return func(ctx context.Context, orgID int64, writer *bluge.Writer) (Index, error) {
-		return createDashboardIndex(ctx, orgID, writer, dashLoader, extender, folderIDs)
-	}
-}
-
 func createDashboardIndex(ctx context.Context, orgID int64, writer *bluge.Writer, dashLoader dashboardLoader, extender DocumentExtender, folderIDs folderUIDLookup) (*dashboardIndex, error) {
 	i := &dashboardIndex{
 		orgID:          orgID,
