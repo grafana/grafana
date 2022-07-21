@@ -102,6 +102,17 @@ func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
+
+// swagger:route GET /user/quotas signed_in_user getUserQuotas
+//
+// Fetch user quota.
+//
+// Responses:
+// 200: getQuotaResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
 	if !setting.Quota.Enabled {
 		return response.Error(404, "Quotas not enabled", nil)
