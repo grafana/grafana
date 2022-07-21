@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AccessoryButton, InputGroup } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { AccessoryButton, InputGroup, Select } from '@grafana/ui';
 
 import { QueryBuilderLabelFilter } from './types';
 

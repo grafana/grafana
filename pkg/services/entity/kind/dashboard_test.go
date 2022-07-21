@@ -8,10 +8,10 @@ import (
 )
 
 func TestCreateDashboard(t *testing.T) {
-	d := Dashboard{}
+	d := DashboardEntity{}
 
-	d.Path = "aaa"
-	d.ApiVersion = "v"
+	d.UID = "aaa"
+	d.SchemaVersion = "v"
 
 	d.Body = map[string]interface{}{
 		"aaa": "bbbbbb",

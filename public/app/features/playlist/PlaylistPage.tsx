@@ -1,17 +1,12 @@
-import React, { FC, useState } from 'react';
-import { connect, MapStateToProps } from 'react-redux';
+import React, { useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { NavModel } from '@grafana/data';
 import { ConfirmModal } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
-import { StoreState } from 'app/types';
 
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';
@@ -19,12 +14,7 @@ import { StartModal } from './StartModal';
 import { deletePlaylist, getAllPlaylist } from './api';
 import { PlaylistDTO } from './types';
 
-interface ConnectedProps {
-  navModel: NavModel;
-}
-export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponentProps {}
-
-export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
+export const PlaylistPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [hasFetched, setHasFetched] = useState(false);
@@ -76,7 +66,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const showSearch = playlists.length > 0 || searchQuery.length > 0 || debouncedSearchQuery.length > 0;
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="dashboards/playlists">
       <Page.Contents isLoading={!hasFetched}>
         {showSearch && (
           <PageActionBar
@@ -112,8 +102,4 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   );
 };
 
-const mapStateToProps: MapStateToProps<ConnectedProps, {}, StoreState> = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'playlists'),
-});
-
-export default connect(mapStateToProps)(PlaylistPage);
+export default PlaylistPage;

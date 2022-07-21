@@ -52,9 +52,9 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.12.0
 	github.com/grafana/cuetsy v0.0.3
-	github.com/grafana/grafana-aws-sdk v0.10.7
+	github.com/grafana/grafana-aws-sdk v0.10.8
 	github.com/grafana/grafana-azure-sdk-go v1.3.0
-	github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220719010049-89c1e4dfcd2d
+	github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220721004249-bd226be67f51
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3
@@ -161,7 +161,7 @@ require (
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/loads v0.20.2
 	github.com/go-openapi/runtime v0.19.29 // indirect
-	github.com/go-openapi/spec v0.20.4
+	github.com/go-openapi/spec v0.20.4 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/go-openapi/validate v0.20.2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
