@@ -219,7 +219,7 @@ export const ServiceAccountsListPageUnconnected = ({
           <RadioButtonGroup
             options={[
               { label: 'All', value: ServiceAccountStateFilter.All },
-              { label: 'With expiring tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
+              { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
               { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
             ]}
             onChange={onStateFilterChange}

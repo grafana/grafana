@@ -64,6 +64,29 @@ func (_m *FakePublicDashboardService) BuildPublicDashboardMetricRequest(ctx cont
 	return r0, r1
 }
 
+// GetDashboard provides a mock function with given fields: ctx, dashboardUid
+func (_m *FakePublicDashboardService) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
+	ret := _m.Called(ctx, dashboardUid)
+
+	var r0 *models.Dashboard
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Dashboard); ok {
+		r0 = rf(ctx, dashboardUid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Dashboard)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, dashboardUid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetPublicDashboard provides a mock function with given fields: ctx, accessToken
 func (_m *FakePublicDashboardService) GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error) {
 	ret := _m.Called(ctx, accessToken)

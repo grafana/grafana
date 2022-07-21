@@ -1,4 +1,4 @@
-# Localisation
+# Internationalization
 
 Grafana uses the [LinguiJS](https://github.com/lingui/js-lingui) framework for managing translating phrases in the Grafana frontend.
 
@@ -59,7 +59,7 @@ For components used all over the site, use just two segments:
 
 ### Top-level provider
 
-In [AppWrapper.tsx](/public/app/AppWrapper.tsx) the app is wrapped with `I18nProvider` from `public/app/core/localisation.tsx` where the Lingui instance is created with the user's preferred locale. This sets the appropriate context and allows any component from `@lingui/macro` to use the translations for the user's preferred locale.
+In [AppWrapper.tsx](/public/app/AppWrapper.tsx) the app is wrapped with `I18nProvider` from `public/app/core/internationalization/index.tsx` where the Lingui instance is created with the user's preferred locale. This sets the appropriate context and allows any component from `@lingui/macro` to use the translations for the user's preferred locale.
 
 ### Message format
 

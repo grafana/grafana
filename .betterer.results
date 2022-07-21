@@ -8,9 +8,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Graph/Graph.test.tsx:1664091255": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/Graph/GraphTooltip/MultiModeGraphTooltip.test.tsx:1865444105": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/Logs/LogRowContextProvider.test.tsx:2719724375": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
@@ -1366,10 +1363,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/ClipboardButton/ClipboardButton.story.internal.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/components/ColorPicker/ColorPicker.story.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
