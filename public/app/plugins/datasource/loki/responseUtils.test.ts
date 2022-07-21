@@ -67,6 +67,6 @@ describe('extractLevelLikeLabelFromDataFrame', () => {
   it('returns undefined if no level-like label is present', () => {
     const input = cloneDeep(frame);
     input.fields[1].values = new ArrayVector([{ foo: 'info' }]);
-    expect(extractLevelLikeLabelFromDataFrame(input)).toBe(undefined);
+    expect(extractLevelLikeLabelFromDataFrame(input)).toBe(null);
   });
 });

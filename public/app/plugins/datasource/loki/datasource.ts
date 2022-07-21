@@ -423,8 +423,8 @@ export class LokiDatasource
             renameTo: action.options.renameTo,
             originalLabel: action.options.originalLabel,
           });
-          break;
         }
+        break;
       }
       default:
         break;

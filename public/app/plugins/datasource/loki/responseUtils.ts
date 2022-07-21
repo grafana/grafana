@@ -44,16 +44,16 @@ export function extractHasErrorLabelFromDataFrame(frame: DataFrame): boolean {
   return labels.some((label) => label['__error__']);
 }
 
-export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | undefined {
+export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | null {
   const labelField = frame.fields.find((field) => field.name === 'labels' && field.type === FieldType.other);
   if (labelField == null) {
-    return undefined;
+    return null;
   }
 
   // Depending on number of labels, this can be pretty heavy operation.
   // Let's just look at first 2 lines If needed, we can introduce more later.
   const labelsArray: Array<{ [key: string]: string }> = labelField.values.toArray().slice(0, 2);
-  let levelLikeLabel: string | undefined = undefined;
+  let levelLikeLabel: string | null = null;
 
   // Find first level-like label
   for (let labels of labelsArray) {
