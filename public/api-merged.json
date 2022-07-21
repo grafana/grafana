@@ -17648,7 +17648,7 @@
       }
     },
     "createCorrelationResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/CreateCorrelationResponse"
       }
