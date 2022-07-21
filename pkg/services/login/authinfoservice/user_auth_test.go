@@ -490,14 +490,6 @@ func (f *FakeAuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*
 	return f.ExpectedUser, f.ExpectedError
 }
 
-func (f *FakeAuthInfoStore) decodeAndDecrypt(str string) (string, error) {
-	return "", f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) encryptAndEncode(str string) (string, error) {
-	return "", f.ExpectedError
-}
-
 func (f *FakeAuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]interface{}, error) {
 	var res = make(map[string]interface{})
 	res["stats.users.duplicate_user_entries"] = f.ExpectedDuplicateUserEntries
