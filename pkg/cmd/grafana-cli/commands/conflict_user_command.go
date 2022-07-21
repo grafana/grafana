@@ -20,21 +20,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// listRemoteCommand prints out all plugins in the remote repo with latest version supported on current platform.
-// If there are no supported versions for plugin it is skipped.
-
 /*
-FIXME: wording from Conflicting to multiple as a user might have more than two emails/logins, could be confusing
-to have the word Conflicting for this
-new word for Conflicting : conflicting (prefered now) / multiple
-
-	TODO: also consider same login and email but different ids:
-		login == email, id.login != id.email
-
-	user-manager command listConflictingUsers
-		lists users w. Conflicting emails or logins as
-		`ids   | Conflicting-emails |  Conflicting-logins`
-		`{4,5} | {user@test.com, user@TEST.com} | {user@test.com}`
 	user-manager command merge-Conflicting-users
 	input -> users
 	output -> ids, foundConflictingEmails, foundConflictingLogins, lastActive (maybe)
@@ -43,35 +29,10 @@ new word for Conflicting : conflicting (prefered now) / multiple
 	// IDENTIFIER
 	login = username + email
 
-	# proposal 1 - one command to list and merge
-	type conflictUser struct {
-		ids []int
-		login string
-		conflictEmails []string
-		conflictLogins []string
-	}
-	type conflictUsers []conflictUsers
-
-	users, err := getUsersWithConflictingEmailsOrLogins()
-	if len(users) == 0 {
-		return "no users found"
-	}
-
-	// ask if user want to start merging
-	for u in := range (users) {
-		// they can now quit
-		promptIfUserWantToMerge()
-
-		// recursiveFunction to merge users
-
-		// two options
-		// updateUserDetails(login, newValue, field)
-		//  ||
-		// mergeInto(login)
-		// NOTE: need to update all userIds in all tables for the one you mergeFrom
-		// keep id of the mergeInto <- mergeFrom . update userId to mergeInto in the mergeFrom user
-		mergeUser(u)
-	}
+	TODO:
+- make test verify that before deleting a user, we make sure that that reference is not present in any tables
+- make benefits/tradeoffs for the proposal 1, vs proposal 2 using user stories tied to the functional requirements (timebox this)
+- make sorting of users part of the display for conflicting users by their ids
 */
 
 func runConflictingUsersCommand() func(context *cli.Context) error {
@@ -124,27 +85,20 @@ func runConflictingUsersCommand() func(context *cli.Context) error {
 						return fmt.Errorf("could not merge user with error %w", err)
 					}
 				}
+				logger.Infof(color.GreenString("successfully merged users"))
 			case SameIdentification:
 				// waiting for user to choose which user to merge to
 				chosenUser, err := promptToMerge(cUser)
 				if err != nil {
 					return err
 				}
-				err = sqlStore.UpdateUser(context.Context, &models.UpdateUserCommand{UserId: chosenUser})
-				if err != nil {
-					return fmt.Errorf("could not update user with details %w", err)
-				}
-				otherUsers := strings.Split(cUser.Ids, ",")
-				for _, oUser := range otherUsers {
-					oUser, err := strconv.ParseInt(oUser, 10, 64)
+				if confirm() {
+					err = deDupeSameIdentification(context.Context, chosenUser, cUser, sqlStore)
 					if err != nil {
-						return err
-					}
-					err = sqlStore.DeleteUser(context.Context, &models.DeleteUserCommand{UserId: oUser})
-					if err != nil {
-						return fmt.Errorf("could not update user with details %w", err)
+						return fmt.Errorf("could not merge user with error %w", err)
 					}
 				}
+				logger.Infof(color.GreenString("successfully deduplicated users"))
 			default:
 				logger.Infof("could not identify the conflict resolution for found users %s", cUser.Ids)
 				continue
@@ -258,6 +212,25 @@ func mergeUser(ctx context.Context, mergeIntoUser int64, cUser ConflictingUsers,
 	return sqlStore.MergeUser(ctx, mergeIntoUser, fromUserIds)
 }
 
+func deDupeSameIdentification(ctx context.Context, chosenUser int64, cUser ConflictingUsers, sqlStore *sqlstore.SQLStore) error {
+	err := sqlStore.UpdateUser(ctx, &models.UpdateUserCommand{UserId: chosenUser})
+	if err != nil {
+		return fmt.Errorf("could not update user with details %w", err)
+	}
+	otherUsers := strings.Split(cUser.Ids, ",")
+	for _, oUser := range otherUsers {
+		oUser, err := strconv.ParseInt(oUser, 10, 64)
+		if err != nil {
+			return err
+		}
+		err = sqlStore.DeleteUser(ctx, &models.DeleteUserCommand{UserId: oUser})
+		if err != nil {
+			return fmt.Errorf("could not update user with details %w", err)
+		}
+	}
+	return nil
+}
+
 type ConflictingUsers struct {
 	Ids string `xorm:"ids"`
 	// IDENTIFIER
@@ -293,26 +266,19 @@ func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 	group_concat(u1.id, ',') AS ids,
 	group_concat(u1.email, ',') AS conflicting_emails,
 	group_concat(u1.login, ',') AS conflicting_logins,
-	(
-		SELECT
+		( SELECT
 			u1.email
 		FROM
 			` + userDialect + `
-		WHERE (LOWER(u1.email) = LOWER(u2.email))
-		AND(u1.email != u2.email)) AS conflict_email, (
-		SELECT
+		WHERE (LOWER(u1.email) = LOWER(u2.email)) AND(u1.email != u2.email)) AS conflict_email,
+		( SELECT
 			u1.login
 		FROM
 			` + userDialect + `
-		WHERE (LOWER(u1.login) = LOWER(u2.login)
-			AND(u1.login != u2.login))) AS conflict_login, (
-		SELECT
-			u1.id
-		FROM
-			` + userDialect + `
-		WHERE ((u1.login = u2.login)
-			AND(u1.email = u2.email)
-			AND(u1.id != u2.id))) AS same_identification_conflict_ids
+		WHERE (LOWER(u1.login) = LOWER(u2.login) AND(u1.login != u2.login))) AS conflict_login,
+		( SELECT u1.id
+			FROM ` + userDialect + `
+		WHERE ((u1.login = u2.login) AND(u1.email = u2.email) AND(u1.id != u2.id))) AS same_identification_conflict_ids
 	FROM
 		 ` + userDialect + ` AS u1, ` + userDialect + ` AS u2
 	WHERE (conflict_email IS NOT NULL
