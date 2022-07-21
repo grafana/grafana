@@ -225,7 +225,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 }
 
 func TestSchedulableAlertRulesRegistry(t *testing.T) {
-	r := schedulableAlertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.AlertRule)}
+	r := alertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.AlertRule)}
 	assert.Len(t, r.all(), 0)
 
 	// replace all rules in the registry with foo

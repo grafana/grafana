@@ -97,7 +97,7 @@ type schedule struct {
 	// evaluation in the current tick. The evaluation of an alert rule in the
 	// current tick depends on its evaluation interval and when it was
 	// last evaluated.
-	schedulableAlertRules schedulableAlertRulesRegistry
+	schedulableAlertRules alertRulesRegistry
 
 	// bus is used to hook into events that should cause rule updates.
 	bus bus.Bus
@@ -138,7 +138,7 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.Cfg.MinInterval,
-		schedulableAlertRules: schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
+		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
 		bus:                   bus,
 		alertsSender:          cfg.AlertSender,
 	}

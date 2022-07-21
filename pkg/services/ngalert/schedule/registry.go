@@ -139,13 +139,13 @@ type evaluation struct {
 	rule        *models.AlertRule
 }
 
-type schedulableAlertRulesRegistry struct {
+type alertRulesRegistry struct {
 	rules map[models.AlertRuleKey]*models.AlertRule
 	mu    sync.Mutex
 }
 
 // all returns all rules in the registry.
-func (r *schedulableAlertRulesRegistry) all() []*models.AlertRule {
+func (r *alertRulesRegistry) all() []*models.AlertRule {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	result := make([]*models.AlertRule, 0, len(r.rules))
@@ -155,14 +155,14 @@ func (r *schedulableAlertRulesRegistry) all() []*models.AlertRule {
 	return result
 }
 
-func (r *schedulableAlertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
+func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return r.rules[k]
 }
 
 // set replaces all rules in the registry.
-func (r *schedulableAlertRulesRegistry) set(rules []*models.AlertRule) {
+func (r *alertRulesRegistry) set(rules []*models.AlertRule) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.rules = make(map[models.AlertRuleKey]*models.AlertRule)
@@ -172,16 +172,16 @@ func (r *schedulableAlertRulesRegistry) set(rules []*models.AlertRule) {
 }
 
 // update inserts or replaces a rule in the registry.
-func (r *schedulableAlertRulesRegistry) update(rule *models.AlertRule) {
+func (r *alertRulesRegistry) update(rule *models.AlertRule) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.rules[rule.GetKey()] = rule
 }
 
-// del removes pair that has specific key from schedulableAlertRulesRegistry.
+// del removes pair that has specific key from alertRulesRegistry.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
-func (r *schedulableAlertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool) {
+func (r *alertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	rule, ok := r.rules[k]
