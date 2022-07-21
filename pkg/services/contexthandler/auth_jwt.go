@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const InvalidJWT = "Invalid JWT"
@@ -79,7 +80,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	}
 
 	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			ctx.Logger.Debug(
 				"Failed to find user using JWT claims",
 				"email_claim", query.Email,

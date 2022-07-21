@@ -39,8 +39,9 @@ NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
 
-$(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) ## Merge generated and ngalert API specs
-	go run pkg/api/docs/merge/merge_specs.go -o=$(MERGED_SPEC_TARGET) $(<) $(NGALERT_SPEC_TARGET)
+$(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
+	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
+	$(SWAGGER) mixin $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 --swagger-api-spec: $(API_DEFINITION_FILES) $(SWAGGER) ## Generate API Swagger specification
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o public/api-spec.json \
@@ -94,9 +95,30 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 
 ##@ Testing
 
-test-go: ## Run tests for backend.
-	@echo "test backend"
-	$(GO) test -v ./pkg/...
+.PHONY: test-go
+test-go: test-go-unit test-go-integration
+
+.PHONY: test-go-unit
+test-go-unit: ## Run unit tests for backend with flags.
+	@echo "test backend unit tests"
+	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/...
+
+.PHONY: test-go-integration
+test-go-integration: ## Run integration tests for backend with flags.
+	@echo "test backend integration tests"
+	$(GO) test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+
+.PHONY: test-go-integration-postgres
+test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
+	@echo "test backend integration postgres tests"
+	$(GO) clean -testcache
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=30m {}'
+
+.PHONY: test-go-integration-mysql
+test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
+	@echo "test backend integration mysql tests"
+	$(GO) clean -testcache
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=30m {}'
 
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
@@ -152,6 +174,14 @@ devenv-down: ## Stop optional services.
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;
+
+devenv-postgres:
+	@cd devenv; \
+	sources=postgres_tests
+
+devenv-mysql:
+	@cd devenv; \
+	sources=mysql_tests
 
 ##@ Helpers
 

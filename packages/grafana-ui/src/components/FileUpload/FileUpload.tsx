@@ -21,6 +21,8 @@ export interface Props {
   className?: string;
   /** Button size */
   size?: ComponentSize;
+  /** Show the file name */
+  showFileName?: boolean;
 }
 
 export const FileUpload: FC<Props> = ({

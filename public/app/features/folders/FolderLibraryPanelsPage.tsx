@@ -19,7 +19,7 @@ export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
   const uid = props.match.params.uid;
   return {
-    navModel: getNavModel(state.navIndex, `folder-library-panels-${uid}`, getLoadingNav(1)),
+    pageNav: getNavModel(state.navIndex, `folder-library-panels-${uid}`, getLoadingNav(1)),
     folderUid: uid,
     folder: state.folder,
   };
@@ -33,12 +33,12 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export function FolderLibraryPanelsPage({ navModel, getFolderByUid, folderUid, folder }: Props): JSX.Element {
+export function FolderLibraryPanelsPage({ pageNav, getFolderByUid, folderUid, folder }: Props): JSX.Element {
   const { loading } = useAsync(async () => await getFolderByUid(folderUid), [getFolderByUid, folderUid]);
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="dashboards/browse" pageNav={pageNav.main}>
       <Page.Contents isLoading={loading}>
         <LibraryPanelsSearch
           onClick={setSelected}

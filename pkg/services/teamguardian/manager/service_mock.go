@@ -9,6 +9,11 @@ import (
 
 type TeamGuardianMock struct {
 	mock.Mock
+	ExpectedError error
+}
+
+func NewTeamGuardianMock() *TeamGuardianMock {
+	return &TeamGuardianMock{}
 }
 
 func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *models.SignedInUser) error {
@@ -16,7 +21,6 @@ func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int
 	return args.Error(0)
 }
 
-func (t *TeamGuardianMock) DeleteByUser(context.Context, int64) error {
-	args := t.Called(context.Background(), 0)
-	return args.Error(0)
+func (t *TeamGuardianMock) DeleteByUser(ctx context.Context, userID int64) error {
+	return t.ExpectedError
 }
