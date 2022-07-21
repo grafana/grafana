@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -172,8 +173,8 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 	query := models.GetUserByIdQuery{Id: userId}
 
 	if err := hs.SQLStore.GetUserById(c.Req.Context(), &query); err != nil { // validate the userId exists
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to get user", err)
@@ -181,8 +182,8 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.ID, AuthModule: models.AuthModuleLDAP}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to get user", err)
@@ -220,6 +221,11 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		ReqContext:    c,
 		ExternalUser:  user,
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
+		UserLookupParams: models.UserLookupParams{
+			UserID: &query.Result.ID, // Upsert by ID only
+			Email:  nil,
+			Login:  nil,
+		},
 	}
 
 	err = hs.Login.UpsertUser(c.Req.Context(), upsertCmd)

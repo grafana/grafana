@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -32,8 +33,8 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 	query := models.GetUserProfileQuery{UserId: userID}
 
 	if err := hs.SQLStore.GetUserProfile(c.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to get user", err)
 	}
@@ -56,8 +57,8 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Response {
 	query := models.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
 	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to get user", err)
 	}
@@ -141,7 +142,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd models.UpdateUse
 	}
 
 	if err := hs.SQLStore.UpdateUser(ctx, &cmd); err != nil {
-		if errors.Is(err, models.ErrCaseInsensitive) {
+		if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to update user", err)

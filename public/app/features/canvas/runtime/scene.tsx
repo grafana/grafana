@@ -309,8 +309,11 @@ export class Scene {
 
     this.selecto = new Selecto({
       container: this.div,
+      rootContainer: this.div,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
+      selectFromInside: false,
+      hitRate: 0,
     });
 
     this.moveable = new Moveable(this.div!, {
@@ -420,12 +423,15 @@ export class Scene {
       targets = event.selected;
       this.updateSelection({ targets });
 
-      if (event.isDragStart) {
-        event.inputEvent.preventDefault();
-        setTimeout(() => {
-          this.moveable!.dragStart(event.inputEvent);
-        });
-      }
+      // @TODO Figure out click-drag functionality without phantom mouseup issue
+      // https://github.com/daybrush/moveable/issues/481
+
+      // if (event.isDragStart) {
+      //   event.inputEvent.preventDefault();
+      //   setTimeout(() => {
+      //     this.moveable!.dragStart(event.inputEvent);
+      //   });
+      // }
     });
   };
 

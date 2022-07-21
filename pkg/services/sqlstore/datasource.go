@@ -76,6 +76,9 @@ func (ss *SQLStore) GetDataSourcesByType(ctx context.Context, query *datasources
 
 	query.Result = make([]*datasources.DataSource, 0)
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if query.OrgId > 0 {
+			return sess.Where("type=? AND org_id=?", query.Type, query.OrgId).Asc("id").Find(&query.Result)
+		}
 		return sess.Where("type=?", query.Type).Asc("id").Find(&query.Result)
 	})
 }

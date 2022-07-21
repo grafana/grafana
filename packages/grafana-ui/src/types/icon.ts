@@ -24,6 +24,7 @@ export const getAvailableIcons = () =>
     'arrow-right',
     'arrow-up',
     'arrows-h',
+    'arrows-v',
     'backward',
     'bars',
     'bell',

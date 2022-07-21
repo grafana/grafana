@@ -67,36 +67,42 @@ var exporters = []Exporter{
 		process:     exportDataSources,
 	},
 	{
-		Key:         "services",
-		Name:        "Services",
+		Key:         "system",
+		Name:        "System",
 		Description: "Save service settings",
 		Exporters: []Exporter{
 			{
+				Key:         "system_preferences",
 				Name:        "Preferences",
 				Description: "User and team preferences",
 				process:     exportSystemPreferences,
 			},
 			{
+				Key:         "system_stars",
 				Name:        "Stars",
 				Description: "User stars",
 				process:     exportSystemStars,
 			},
 			{
+				Key:         "system_playlists",
 				Name:        "Playlists",
 				Description: "Playlists",
 				process:     exportSystemPlaylists,
 			},
 			{
+				Key:         "system_kv_store",
 				Name:        "Key Value store",
 				Description: "Internal KV store",
 				process:     exportKVStore,
 			},
 			{
+				Key:         "system_short_url",
 				Name:        "Short URLs",
 				Description: "saved links",
 				process:     exportSystemShortURL,
 			},
 			{
+				Key:         "system_live",
 				Name:        "Grafana live",
 				Description: "archived messages",
 				process:     exportLive,
