@@ -1,12 +1,11 @@
 import { Trans, t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 
-import { AppEvents, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime/src';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, RadioButtonGroup, Switch } from '@grafana/ui';
 import config from 'app/core/config';
-import { appEvents } from 'app/core/core';
 
 import { ShareModalTabProps } from './types';
 import { buildImageUrl, buildShareUrl } from './utils';
@@ -69,10 +68,6 @@ export class ShareLink extends PureComponent<Props, State> {
 
   onThemeChange = (value: string) => {
     this.setState({ selectedTheme: value });
-  };
-
-  onShareUrlCopy = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
   };
 
   getShareUrl = () => {
@@ -163,9 +158,7 @@ export class ShareLink extends PureComponent<Props, State> {
               value={shareUrl}
               readOnly
               addonAfter={
-                <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
-                  <Icon name="copy" />
-                  &nbsp;
+                <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl}>
                   <Trans id="share-modal.link.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }

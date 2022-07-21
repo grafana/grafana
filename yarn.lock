@@ -4657,10 +4657,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.0.36":
-  version: 0.0.36
-  resolution: "@grafana/aws-sdk@npm:0.0.36"
-  checksum: c243f7c900551e98fd23ef805e983d7db3180992e652ef9ad656acc74ac1c1e779e9b500db08a39d5cd0bc02fdb584e4c7dd89be8546e115ae12c085773cd212
+"@grafana/aws-sdk@npm:0.0.37":
+  version: 0.0.37
+  resolution: "@grafana/aws-sdk@npm:0.0.37"
+  checksum: 3994e78182dc181c9ba1b0595551480eb699c34531f582c52badec8da1d930a3198530145ef58a9543f77e424026c6a70a213097e0b56534f44894165db9c4d2
   languageName: node
   linkType: hard
 
@@ -4796,20 +4796,6 @@ __metadata:
     eslint-plugin-react-hooks: 4.3.0
     typescript: 4.6.4
   checksum: ed7dbf3bff5ac38daf57dfd590696d3f48f31f216f2bbcac126c3a37619aea66e856c07677c6387531bb2ae007bdd09caf36b8f289bb88b1ac1c719b6a537ae9
-  languageName: node
-  linkType: hard
-
-"@grafana/experimental@npm:^0.0.2-canary.32":
-  version: 0.0.2-canary.32
-  resolution: "@grafana/experimental@npm:0.0.2-canary.32"
-  dependencies:
-    "@types/uuid": ^8.3.3
-    uuid: ^8.3.2
-  peerDependencies:
-    "@emotion/css": 11.1.3
-    react: 17.0.1
-    react-select: 5.2.1
-  checksum: 71924e6d03335fbedf1553ce08c2bbe95819ad746af48728aa81923f3f8ca0f0e8cf3db979095da5048f2b256e96fbb88aa8efb480e84913d81dd66faefeadec
   languageName: node
   linkType: hard
 
@@ -5024,7 +5010,6 @@ __metadata:
     "@babel/core": 7.18.2
     "@emotion/css": 11.9.0
     "@emotion/react": 11.9.0
-    "@grafana/aws-sdk": 0.0.36
     "@grafana/data": 9.1.0-pre
     "@grafana/e2e-selectors": 9.1.0-pre
     "@grafana/schema": 9.1.0-pre
@@ -11901,13 +11886,6 @@ __metadata:
   version: 8.3.4
   resolution: "@types/uuid@npm:8.3.4"
   checksum: 6f11f3ff70f30210edaa8071422d405e9c1d4e53abbe50fdce365150d3c698fe7bbff65c1e71ae080cbfb8fded860dbb5e174da96fdbbdfcaa3fb3daa474d20f
-  languageName: node
-  linkType: hard
-
-"@types/uuid@npm:^8.3.3":
-  version: 8.3.3
-  resolution: "@types/uuid@npm:8.3.3"
-  checksum: 3f340155bb1161f9ffa7163926d6222fea8f3505c23619b72bcc230883354926672c08a06510c7a543f73553c792a84444cc1744cff631b4ba988763e4bd7a8f
   languageName: node
   linkType: hard
 
@@ -20976,12 +20954,11 @@ __metadata:
     "@grafana/agent-core": ^0.3.0
     "@grafana/agent-web": ^0.3.0
     "@grafana/api-documenter": 7.11.2
-    "@grafana/aws-sdk": 0.0.36
+    "@grafana/aws-sdk": 0.0.37
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 4.0.0
-    "@grafana/experimental": ^0.0.2-canary.32
     "@grafana/google-sdk": 0.0.3
     "@grafana/lezer-logql": ^0.0.14
     "@grafana/runtime": "workspace:*"
