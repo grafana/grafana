@@ -47,7 +47,10 @@ export class KeybindingSrv {
 
     this.bind('t t', () => toggleTheme(false));
     this.bind('t r', () => toggleTheme(true));
-    this.bind('t n', () => this.toggleNav());
+
+    if (process.env.NODE_ENV === 'development') {
+      this.bind('t n', () => this.toggleNav());
+    }
   }
 
   globalEsc() {
