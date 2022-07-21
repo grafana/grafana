@@ -9,7 +9,7 @@ import (
 )
 
 // createCorrelation adds a correlation
-func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (CorrelationDTO, error) {
+func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
 	correlation := Correlation{
 		UID:         util.GenerateShortUID(),
 		SourceUID:   cmd.SourceUID,
@@ -49,18 +49,10 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 	})
 
 	if err != nil {
-		return CorrelationDTO{}, err
+		return Correlation{}, err
 	}
 
-	dto := CorrelationDTO{
-		UID:         correlation.UID,
-		SourceUID:   correlation.SourceUID,
-		TargetUID:   correlation.TargetUID,
-		Label:       correlation.Label,
-		Description: correlation.Description,
-	}
-
-	return dto, nil
+	return correlation, nil
 }
 
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {

@@ -21,7 +21,7 @@ type Store interface {
 type CorrelationsStore interface {
 	DeleteCorrelationsByTargetUID(ctx context.Context, cmd correlations.DeleteCorrelationsByTargetUIDCommand) error
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error
-	CreateCorrelation(ctx context.Context, cmd correlations.CreateCorrelationCommand) (correlations.CorrelationDTO, error)
+	CreateCorrelation(ctx context.Context, cmd correlations.CreateCorrelationCommand) (correlations.Correlation, error)
 }
 
 var (

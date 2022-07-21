@@ -9263,7 +9263,8 @@
         }
       }
     },
-    "CorrelationDTO": {
+    "Correlation": {
+      "description": "Correlation is the model for correlations definitions",
       "type": "object",
       "properties": {
         "description": {
@@ -9358,7 +9359,7 @@
           "example": "Correlation created"
         },
         "result": {
-          "$ref": "#/definitions/CorrelationDTO"
+          "$ref": "#/definitions/Correlation"
         }
       }
     },

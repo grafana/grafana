@@ -14,36 +14,27 @@ var (
 
 // Correlation is the model for correlations definitions
 type Correlation struct {
-	ID          int64  `xorm:"pk autoincr 'id'"`
-	UID         string `xorm:"uid"`
-	SourceUID   string `xorm:"source_uid"`
-	TargetUID   string `xorm:"target_uid"`
-	Label       string `xorm:"label"`
-	Description string `xorm:"description"`
-}
-
-type CorrelationDTO struct {
 	// Unique identifier of the correlation
 	// example: 50xhMlg9k
-	UID string `json:"uid" xorm:"uid"`
+	UID string `json:"uid" xorm:"pk 'uid'"`
 	// UID of the data source the correlation originates from
 	// example:d0oxYRg4z
-	SourceUID string `json:"sourceUid"`
+	SourceUID string `json:"sourceUid" xorm:"pk 'source_uid'"`
 	// UID of the data source the correlation points to
 	// example:PE1C5CBDA0504A6A3
-	TargetUID string `json:"targetUid"`
+	TargetUID string `json:"targetUid" xorm:"target_uid"`
 	// Label identifying the correlation
 	// example: My Label
-	Label string `json:"label"`
+	Label string `json:"label" xorm:"label"`
 	// Description of the correlation
 	// example: Logs to Traces
-	Description string `json:"description"`
+	Description string `json:"description" xorm:"description"`
 }
 
 // CreateCorrelationResponse is a response struct for CorrelationDTO
 // swagger:model
 type CreateCorrelationResponse struct {
-	Result CorrelationDTO `json:"result"`
+	Result Correlation `json:"result"`
 	// example: Correlation created
 	Message string `json:"message"`
 }
