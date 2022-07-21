@@ -179,12 +179,29 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	return response.Success("Preferences updated")
 }
 
-// GET /api/org/preferences
+// swagger:route GET /org/preferences org_preferences getOrgPreferences
+//
+// Get Current Org Prefs.
+//
+// Responses:
+// 200: getPreferencesResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetOrgPreferences(c *models.ReqContext) response.Response {
 	return hs.getPreferencesFor(c.Req.Context(), c.OrgId, 0, 0)
 }
 
-// PUT /api/org/preferences
+// swagger:route PUT /org/preferences org_preferences updateOrgPreferences
+//
+// Update Current Org Prefs.
+//
+// Responses:
+// 200: addOrgUser
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateOrgPreferences(c *models.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
@@ -194,11 +211,27 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *models.ReqContext) response.Respon
 	return hs.updatePreferencesFor(c.Req.Context(), c.OrgId, 0, 0, &dtoCmd)
 }
 
-// PATCH /api/org/preferences
+// swagger:route PATCH /org/preferences org_preferences patchOrgPreferences
+//
+// Patch Current Org Prefs.
+//
+// Responses:
+// 200: addOrgUser
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) PatchOrgPreferences(c *models.ReqContext) response.Response {
 	dtoCmd := dtos.PatchPrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return hs.patchPreferencesFor(c.Req.Context(), c.OrgId, 0, 0, &dtoCmd)
+}
+
+// swagger:parameters updateOrgPreferences
+type UpdateOrgPreferencesParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdatePrefsCmd `json:"body"`
 }
