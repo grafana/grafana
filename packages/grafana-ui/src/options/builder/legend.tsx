@@ -28,6 +28,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
           { value: LegendDisplayMode.Table, label: 'Table' },
         ],
       },
+      showIf: (c) => c.legend.showLegend,
     })
     .addRadio({
       path: 'legend.placement',

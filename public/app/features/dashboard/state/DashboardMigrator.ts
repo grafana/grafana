@@ -777,6 +777,18 @@ export class DashboardMigrator {
       }
     }
 
+    if (oldVersion < 37) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.options?.legend && panel.options.legend.displayMode === 'hidden') {
+          panel.options.legend.displayMode! = 'list';
+          panel.options.legend.showLegend! = false;
+        } else {
+          panel.options.legend.showLegend! = true;
+        }
+        return panel;
+      });
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
