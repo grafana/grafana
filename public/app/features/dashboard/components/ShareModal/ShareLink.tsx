@@ -165,6 +165,7 @@ export class ShareLink extends PureComponent<Props, State> {
               addonAfter={
                 <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
                   <Icon name="copy" />
+                  &nbsp;
                   <Trans id="share-modal.link.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }
@@ -178,6 +179,7 @@ export class ShareLink extends PureComponent<Props, State> {
               <div className="gf-form">
                 <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
                   <Icon name="camera" />
+                  &nbsp;
                   <Trans id="share-modal.link.rendered-image">Direct link rendered image</Trans>
                 </a>
               </div>
@@ -204,7 +206,7 @@ export class ShareLink extends PureComponent<Props, State> {
             bottomSpacing={0}
           >
             <Trans id="share-modal.link.render-instructions">
-              To render a panel image, you must install the &nbsp;
+              To render a panel image, you must install the&nbsp;
               <a
                 href="https://grafana.com/grafana/plugins/grafana-image-renderer"
                 target="_blank"
