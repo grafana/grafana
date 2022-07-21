@@ -291,7 +291,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[2], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
-				err = updateDashboardAcl(t, sqlStore, 1, &models.DashboardAcl{
+				err = updateDashboardACL(t, sqlStore, 1, &models.DashboardACL{
 					DashboardID: 1, OrgID: testOrgID, Permission: models.PERMISSION_EDIT, TeamID: groupId,
 				})
 				require.NoError(t, err)
@@ -302,8 +302,8 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.GetTeamById(context.Background(), query)
 				require.Equal(t, err, models.ErrTeamNotFound)
 
-				permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: testOrgID}
-				err = getDashboardAclInfoList(sqlStore, permQuery)
+				permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: testOrgID}
+				err = getDashboardACLInfoList(sqlStore, permQuery)
 				require.NoError(t, err)
 
 				require.Equal(t, len(permQuery.Result), 0)

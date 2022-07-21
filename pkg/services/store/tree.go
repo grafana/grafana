@@ -11,7 +11,7 @@ import (
 
 type nestedTree struct {
 	rootsByOrgId map[int64][]storageRuntime
-	lookup       map[int64]map[string]filestorage.FileStorage
+	lookup       map[int64]map[string]storageRuntime
 
 	orgInitMutex          sync.Mutex
 	initializeOrgStorages func(orgId int64) []storageRuntime
@@ -21,10 +21,10 @@ var (
 	_ storageTree = (*nestedTree)(nil)
 )
 
-func asNameToFileStorageMap(storages []storageRuntime) map[string]filestorage.FileStorage {
-	lookup := make(map[string]filestorage.FileStorage)
+func asNameToFileStorageMap(storages []storageRuntime) map[string]storageRuntime {
+	lookup := make(map[string]storageRuntime)
 	for _, storage := range storages {
-		lookup[storage.Meta().Config.Prefix] = storage.Store()
+		lookup[storage.Meta().Config.Prefix] = storage
 	}
 	return lookup
 }
@@ -33,7 +33,7 @@ func (t *nestedTree) init() {
 	t.orgInitMutex.Lock()
 	defer t.orgInitMutex.Unlock()
 
-	t.lookup = make(map[int64]map[string]filestorage.FileStorage, len(t.rootsByOrgId))
+	t.lookup = make(map[int64]map[string]storageRuntime, len(t.rootsByOrgId))
 
 	for orgId, storages := range t.rootsByOrgId {
 		t.lookup[orgId] = asNameToFileStorageMap(storages)
@@ -50,7 +50,7 @@ func (t *nestedTree) assureOrgIsInitialized(orgId int64) {
 	}
 }
 
-func (t *nestedTree) getRoot(orgId int64, path string) (filestorage.FileStorage, string) {
+func (t *nestedTree) getRoot(orgId int64, path string) (storageRuntime, string) {
 	t.assureOrgIsInitialized(orgId)
 
 	if path == "" {
@@ -82,10 +82,10 @@ func (t *nestedTree) GetFile(ctx context.Context, orgId int64, path string) (*fi
 	if root == nil {
 		return nil, nil // not found (or not ready)
 	}
-	return root.Get(ctx, path)
+	return root.Store().Get(ctx, path)
 }
 
-func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (*StorageListFrame, error) {
+func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter) (*StorageListFrame, error) {
 	if path == "" || path == "/" {
 		t.assureOrgIsInitialized(orgId)
 
@@ -146,10 +146,11 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 		return nil, nil // not found (or not ready)
 	}
 
-	listResponse, err := root.List(ctx, path, nil, &filestorage.ListOptions{
+	listResponse, err := root.Store().List(ctx, path, nil, &filestorage.ListOptions{
 		Recursive:   false,
 		WithFolders: true,
 		WithFiles:   true,
+		Filter:      accessFilter,
 	})
 
 	if err != nil {

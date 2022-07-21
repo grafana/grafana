@@ -1,20 +1,21 @@
-import { css } from '@emotion/css';
 import classnames from 'classnames';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { locationUtil, NavModelItem, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
-import { CustomScrollbar, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { Branding } from 'app/core/components/Branding/Branding';
+import { Page } from 'app/core/components/Page/Page';
+import { PageLayoutType } from 'app/core/components/Page/types';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { KioskMode, StoreState } from 'app/types';
+import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
+import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
@@ -92,6 +93,7 @@ export interface State {
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
+  pageNav?: NavModelItem;
 
   getCleanState(): State {
     return {
@@ -148,10 +150,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    // if we just got dashboard update title
-    if (prevProps.dashboard !== dashboard) {
-      document.title = dashboard.title + ' - ' + Branding.AppTitle;
-    }
+    this.updatePageNav(dashboard);
 
     if (
       prevProps.match.params.uid !== match.params.uid ||
@@ -320,97 +319,99 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return inspectPanel;
   }
 
+  updatePageNav(dashboard: DashboardModel) {
+    if (!this.pageNav || dashboard.title !== this.pageNav.text) {
+      this.pageNav = {
+        text: dashboard.title,
+        url: locationUtil.getUrlForPartial(this.props.history.location, {
+          editview: null,
+          editPanel: null,
+          viewPanel: null,
+        }),
+      };
+    }
+
+    // Check if folder changed
+    if (
+      dashboard.meta.folderTitle &&
+      (!this.pageNav.parentItem || this.pageNav.parentItem.text !== dashboard.meta.folderTitle)
+    ) {
+      this.pageNav.parentItem = {
+        text: dashboard.meta.folderTitle,
+        url: `/dashboards/f/${dashboard.meta.folderUid}`,
+      };
+    }
+
+    if (this.props.route.routeName === DashboardRoutes.Path) {
+      const pageNav = getPageNavFromSlug(this.props.match.params.slug!);
+      if (pageNav?.parentItem) {
+        this.pageNav.parentItem = pageNav.parentItem;
+      }
+    }
+  }
+
+  getPageProps() {
+    if (this.props.route.routeName === DashboardRoutes.Path) {
+      return { navModel: getRootContentNavModel(), pageNav: this.pageNav };
+    } else {
+      return { navId: 'dashboards', pageNav: this.pageNav };
+    }
+  }
+
   render() {
-    const { dashboard, initError, queryParams, theme, isPublic } = this.props;
+    const { dashboard, initError, queryParams, isPublic } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
     const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
-    const styles = getStyles(theme, kioskMode);
 
     if (!dashboard) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
     }
 
     const inspectPanel = this.getInspectPanel();
-    const containerClassNames = classnames(styles.dashboardContainer, {
-      'panel-in-fullscreen': viewPanel,
-    });
+    const containerClassNames = classnames({ 'panel-in-fullscreen': viewPanel });
+
     const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
+    const toolbar = kioskMode !== KioskMode.Full && (
+      <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+        <DashNav
+          dashboard={dashboard}
+          title={dashboard.title}
+          folderTitle={dashboard.meta.folderTitle}
+          isFullscreen={!!viewPanel}
+          onAddPanel={this.onAddPanel}
+          kioskMode={kioskMode}
+          hideTimePicker={dashboard.timepicker.hidden}
+        />
+      </header>
+    );
 
     return (
-      <div className={containerClassNames}>
-        {kioskMode !== KioskMode.Full && (
-          <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
-            <DashNav
-              dashboard={dashboard}
-              title={dashboard.title}
-              folderTitle={dashboard.meta.folderTitle}
-              isFullscreen={!!viewPanel}
-              onAddPanel={this.onAddPanel}
-              kioskMode={kioskMode}
-              hideTimePicker={dashboard.timepicker.hidden}
-            />
-          </header>
-        )}
-
+      <Page
+        {...this.getPageProps()}
+        layout={PageLayoutType.Dashboard}
+        toolbar={toolbar}
+        className={containerClassNames}
+        scrollRef={this.setScrollRef}
+        scrollTop={updateScrollTop}
+      >
         <DashboardPrompt dashboard={dashboard} />
 
-        <div className={styles.dashboardScroll}>
-          <CustomScrollbar
-            autoHeightMin="100%"
-            scrollRefCallback={this.setScrollRef}
-            scrollTop={updateScrollTop}
-            hideHorizontalTrack={true}
-            updateAfterMountMs={500}
-          >
-            <div className={styles.dashboardContent}>
-              {initError && <DashboardFailed />}
-              {showSubMenu && (
-                <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-                  <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-                </section>
-              )}
+        {initError && <DashboardFailed />}
+        {showSubMenu && (
+          <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+            <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+          </section>
+        )}
 
-              <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
-            </div>
-          </CustomScrollbar>
-        </div>
+        <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
         {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}
-      </div>
+      </Page>
     );
   }
 }
-
-/*
- * Styles
- */
-export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode: KioskMode) => {
-  const contentPadding =
-    kioskMode === KioskMode.Full || config.featureToggles.topnav ? theme.spacing(2) : theme.spacing(0, 2, 2);
-  return {
-    dashboardContainer: css`
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex: 1 1 0;
-      flex-direction: column;
-      min-height: 0;
-    `,
-    dashboardScroll: css`
-      width: 100%;
-      flex-grow: 1;
-      min-height: 0;
-      display: flex;
-    `,
-    dashboardContent: css`
-      padding: ${contentPadding};
-      flex-basis: 100%;
-      flex-grow: 1;
-    `,
-  };
-});
 
 export const DashboardPage = withTheme2(UnthemedDashboardPage);
 DashboardPage.displayName = 'DashboardPage';

@@ -119,6 +119,13 @@
         "tags": ["access_control", "enterprise"],
         "summary": "Get all roles.",
         "operationId": "getAllRoles",
+        "parameters": [
+          {
+            "type": "boolean",
+            "name": "delegatable",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/getAllRolesResponse"
@@ -142,7 +149,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateRoleWithPermissionsCommand"
+              "$ref": "#/definitions/CreateRoleForm"
             }
           }
         ],
@@ -233,6 +240,16 @@
         "summary": "Delete a custom role.",
         "operationId": "deleteCustomRole",
         "parameters": [
+          {
+            "type": "boolean",
+            "name": "force",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "global",
+            "in": "query"
+          },
           {
             "type": "string",
             "name": "roleUID",
@@ -2314,6 +2331,587 @@
         }
       }
     },
+    "/api/v1/provisioning/alert-rules": {
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a new alert rule.",
+        "operationId": "RoutePostAlertRule",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/alert-rules/{UID}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a specific alert rule by UID.",
+        "operationId": "RouteGetAlertRule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing alert rule.",
+        "operationId": "RoutePutAlertRule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["provisioning"],
+        "summary": "Delete a specific alert rule by UID.",
+        "operationId": "RouteDeleteAlertRule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The alert rule was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/contact-points": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the contact points.",
+        "operationId": "RouteGetContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Filter by name",
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ContactPoints",
+            "schema": {
+              "$ref": "#/definitions/ContactPoints"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a contact point.",
+        "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "EmbeddedContactPoint",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/contact-points/{UID}": {
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing contact point.",
+        "operationId": "RoutePutContactpoint",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID is the contact point unique identifier",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Delete a contact point.",
+        "operationId": "RouteDeleteContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID is the contact point unique identifier",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The contact point was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a rule group.",
+        "operationId": "RouteGetAlertRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertRuleGroup",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroup"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update the interval of a rule group.",
+        "operationId": "RoutePutAlertRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroupMetadata"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertRuleGroupMetadata",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroupMetadata"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/mute-timings": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the mute timings.",
+        "operationId": "RouteGetMuteTimings",
+        "responses": {
+          "200": {
+            "description": "MuteTimings",
+            "schema": {
+              "$ref": "#/definitions/MuteTimings"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a new mute timing.",
+        "operationId": "RoutePostMuteTiming",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "MuteTimeInterval",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/mute-timings/{name}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a mute timing.",
+        "operationId": "RouteGetMuteTiming",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MuteTimeInterval",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Replace an existing mute timing.",
+        "operationId": "RoutePutMuteTiming",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MuteTimeInterval",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["provisioning"],
+        "summary": "Delete a mute timing.",
+        "operationId": "RouteDeleteMuteTiming",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The mute timing was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/policies": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get the notification policy tree.",
+        "operationId": "RouteGetPolicyTree",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Sets the notification policy tree.",
+        "operationId": "RoutePutPolicyTree",
+        "parameters": [
+          {
+            "description": "The new notification routing tree to use",
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Clears the notification policy tree.",
+        "operationId": "RouteResetPolicyTree",
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/templates": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all message templates.",
+        "operationId": "RouteGetTemplates",
+        "responses": {
+          "200": {
+            "description": "MessageTemplates",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplates"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/templates/{name}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a message template.",
+        "operationId": "RouteGetTemplate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Template Name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MessageTemplate",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplate"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Updates an existing template.",
+        "operationId": "RoutePutTemplate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Template Name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplateContent"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "MessageTemplate",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplate"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["provisioning"],
+        "summary": "Delete a template.",
+        "operationId": "RouteDeleteTemplate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Template Name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The template was deleted successfully."
+          }
+        }
+      }
+    },
     "/auth/keys": {
       "get": {
         "description": "Will return auth keys.",
@@ -2601,7 +3199,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
             }
           },
           {
@@ -2959,7 +3557,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
             }
           },
           {
@@ -3289,7 +3887,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3337,10 +3935,10 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "(empty)"
           },
           "202": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3380,7 +3978,7 @@
         ],
         "responses": {
           "202": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3423,7 +4021,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3472,10 +4070,10 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "(empty)"
           },
           "202": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3516,7 +4114,7 @@
         ],
         "responses": {
           "202": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -4201,7 +4799,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "$ref": "#/responses/folderResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4351,7 +4949,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
             }
           }
         ],
@@ -4825,7 +5423,7 @@
         "operationId": "getSAMLLogin",
         "responses": {
           "302": {
-            "description": ""
+            "description": "(empty)"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -4843,7 +5441,7 @@
         "operationId": "getSAMLLogout",
         "responses": {
           "302": {
-            "description": ""
+            "description": "(empty)"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -5806,6 +6404,231 @@
         }
       }
     },
+    "/playlists": {
+      "get": {
+        "tags": ["playlists"],
+        "summary": "Get playlists.",
+        "operationId": "searchPlaylists",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "in:limit",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchPlaylistsResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["playlists"],
+        "summary": "Create playlist.",
+        "operationId": "createPlaylist",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreatePlaylistCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createPlaylistResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/playlists/{uid}": {
+      "get": {
+        "tags": ["playlists"],
+        "summary": "Get playlist by UID.",
+        "operationId": "getPlaylist",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPlaylistResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": ["playlists"],
+        "summary": "Update playlist.",
+        "operationId": "updatePlaylist",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePlaylistCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updatePlaylistResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["playlists"],
+        "summary": "Delete pllaylist.",
+        "operationId": "deletePlaylist",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/playlists/{uid}/dashboards": {
+      "get": {
+        "tags": ["playlists"],
+        "summary": "Get playlist dashboards.",
+        "operationId": "getPlaylistDashboards",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPlaylistDashboardsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/playlists/{uid}/items": {
+      "get": {
+        "tags": ["playlists"],
+        "summary": "Get playlist items.",
+        "operationId": "getPlaylistItems",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPlaylistItemsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/query-history": {
       "get": {
         "description": "Returns a list of queries in the query history that matches the search criteria.\nQuery history search supports pagination. Use the `limit` parameter to control the maximum number of queries returned; the default limit is 100.\nYou can also use the `page` query parameter to fetch queries from any page other than the first one.",
@@ -6675,7 +7498,7 @@
         ],
         "responses": {
           "302": {
-            "description": ""
+            "description": "(empty)"
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
@@ -6718,7 +7541,7 @@
         ],
         "responses": {
           "302": {
-            "description": ""
+            "description": "(empty)"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -6844,6 +7667,328 @@
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
+          }
+        }
+      }
+    },
+    "/serviceaccounts": {
+      "post": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:*`\n\nRequires basic authentication and that the authenticated user is a Grafana Admin.",
+        "tags": ["service_accounts"],
+        "summary": "Create service account",
+        "operationId": "createServiceAccount",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CreateServiceAccountForm"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/createServiceAccountResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/serviceaccounts/search": {
+      "get": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:read` scope: `serviceaccounts:*`",
+        "tags": ["service_accounts"],
+        "summary": "Search service accounts with Paging",
+        "operationId": "searchOrgServiceAccountsWithPaging",
+        "parameters": [
+          {
+            "type": "boolean",
+            "name": "Disabled",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "expiredTokens",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "It will return results where the query value is contained in one of the name.\nQuery values with spaces need to be URL encoded.",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "The default value is 1000.",
+            "name": "perpage",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "The default value is 1.",
+            "name": "page",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchOrgServiceAccountsWithPagingResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/serviceaccounts/{serviceAccountId}": {
+      "get": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:read` scope: `serviceaccounts:id:1` (single service account)",
+        "tags": ["service_accounts"],
+        "summary": "Get single serviceaccount by Id",
+        "operationId": "retrieveServiceAccount",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/retrieveServiceAccountResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:delete` scope: `serviceaccounts:id:1` (single service account)",
+        "tags": ["service_accounts"],
+        "summary": "Delete service account",
+        "operationId": "deleteServiceAccount",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)",
+        "tags": ["service_accounts"],
+        "summary": "Update service account",
+        "operationId": "updateServiceAccount",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateServiceAccountForm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updateServiceAccountResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/serviceaccounts/{serviceAccountId}/tokens": {
+      "get": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:read` scope: `global:serviceaccounts:id:1` (single service account)\n\nRequires basic authentication and that the authenticated user is a Grafana Admin.",
+        "tags": ["service_accounts"],
+        "summary": "Get service account tokens",
+        "operationId": "listTokens",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listTokensResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)",
+        "tags": ["service_accounts"],
+        "summary": "Create service account tokens",
+        "operationId": "createToken",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AddServiceAccountTokenCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createTokenResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/serviceaccounts/{serviceAccountId}/tokens/{tokenId}": {
+      "delete": {
+        "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)\n\nRequires basic authentication and that the authenticated user is a Grafana Admin.",
+        "tags": ["service_accounts"],
+        "summary": "Delete service account tokens",
+        "operationId": "deleteToken",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "tokenId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "serviceAccountId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -7149,16 +8294,15 @@
         "operationId": "removeTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
+            "type": "string",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "name": "groupId",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -7303,7 +8447,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/okResponse"
+            "$ref": "#/responses/getTeamMembersResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -8191,535 +9335,6 @@
           }
         }
       }
-    },
-    "/v1/provisioning/alert-rules": {
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Create a new alert rule.",
-        "operationId": "RoutePostAlertRule",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/AlertRule"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "AlertRule",
-            "schema": {
-              "$ref": "#/definitions/AlertRule"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/alert-rules/{UID}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a specific alert rule by UID.",
-        "operationId": "RouteGetAlertRule",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Alert rule UID",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertRule",
-            "schema": {
-              "$ref": "#/definitions/AlertRule"
-            }
-          },
-          "404": {
-            "description": " Not found."
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Update an existing alert rule.",
-        "operationId": "RoutePutAlertRule",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Alert rule UID",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/AlertRule"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertRule",
-            "schema": {
-              "$ref": "#/definitions/AlertRule"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["provisioning"],
-        "summary": "Delete a specific alert rule by UID.",
-        "operationId": "RouteDeleteAlertRule",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Alert rule UID",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The alert rule was deleted successfully."
-          }
-        }
-      }
-    },
-    "/v1/provisioning/contact-points": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all the contact points.",
-        "operationId": "RouteGetContactpoints",
-        "responses": {
-          "200": {
-            "description": "ContactPoints",
-            "schema": {
-              "$ref": "#/definitions/ContactPoints"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Create a contact point.",
-        "operationId": "RoutePostContactpoints",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "EmbeddedContactPoint",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/contact-points/{UID}": {
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Update an existing contact point.",
-        "operationId": "RoutePutContactpoint",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID is the contact point unique identifier",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Delete a contact point.",
-        "operationId": "RouteDeleteContactpoints",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID is the contact point unique identifier",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The contact point was deleted successfully."
-          }
-        }
-      }
-    },
-    "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Update the interval of a rule group.",
-        "operationId": "RoutePutAlertRuleGroup",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "FolderUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Group",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/AlertRuleGroup"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertRuleGroup",
-            "schema": {
-              "$ref": "#/definitions/AlertRuleGroup"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/mute-timings": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all the mute timings.",
-        "operationId": "RouteGetMuteTimings",
-        "responses": {
-          "200": {
-            "description": "MuteTimings",
-            "schema": {
-              "$ref": "#/definitions/MuteTimings"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Create a new mute timing.",
-        "operationId": "RoutePostMuteTiming",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "MuteTimeInterval",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/mute-timings/{name}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a mute timing.",
-        "operationId": "RouteGetMuteTiming",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Mute timing name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "MuteTimeInterval",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          },
-          "404": {
-            "description": " Not found."
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Replace an existing mute timing.",
-        "operationId": "RoutePutMuteTiming",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Mute timing name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "MuteTimeInterval",
-            "schema": {
-              "$ref": "#/definitions/MuteTimeInterval"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["provisioning"],
-        "summary": "Delete a mute timing.",
-        "operationId": "RouteDeleteMuteTiming",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Mute timing name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The mute timing was deleted successfully."
-          }
-        }
-      }
-    },
-    "/v1/provisioning/policies": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get the notification policy tree.",
-        "operationId": "RouteGetPolicyTree",
-        "responses": {
-          "200": {
-            "description": "Route",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Sets the notification policy tree.",
-        "operationId": "RoutePutPolicyTree",
-        "parameters": [
-          {
-            "description": "The new notification routing tree to use",
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/v1/provisioning/templates": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all message templates.",
-        "operationId": "RouteGetTemplates",
-        "responses": {
-          "200": {
-            "description": "MessageTemplates",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplates"
-            }
-          },
-          "404": {
-            "description": " Not found."
-          }
-        }
-      }
-    },
-    "/v1/provisioning/templates/{name}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a message template.",
-        "operationId": "RouteGetTemplate",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Template Name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "MessageTemplate",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplate"
-            }
-          },
-          "404": {
-            "description": " Not found."
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Updates an existing template.",
-        "operationId": "RoutePutTemplate",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Template Name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplateContent"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "MessageTemplate",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplate"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["provisioning"],
-        "summary": "Delete a template.",
-        "operationId": "RouteDeleteTemplate",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Template Name",
-            "name": "name",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The template was deleted successfully."
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -8887,6 +9502,18 @@
           "format": "int64"
         },
         "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "AddServiceAccountTokenCommand": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "secondsToLive": {
           "type": "integer",
           "format": "int64"
         }
@@ -9321,137 +9948,107 @@
     },
     "AlertRule": {
       "type": "object",
-      "required": [
-        "orgID",
-        "folderUID",
-        "ruleGroup",
-        "title",
-        "condition",
-        "data",
-        "noDataState",
-        "execErrState",
-        "for"
-      ],
+      "title": "AlertRule is the model for alert rules in unified alerting.",
       "properties": {
-        "annotations": {
+        "Annotations": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "example": {
-            "runbook_url": "https://supercoolrunbook.com/page/13"
           }
         },
-        "condition": {
-          "type": "string",
-          "example": "A"
+        "Condition": {
+          "type": "string"
         },
-        "data": {
+        "DashboardUID": {
+          "type": "string"
+        },
+        "Data": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertQuery"
-          },
-          "example": [
-            {
-              "datasourceUid": "-100",
-              "model": {
-                "conditions": [
-                  {
-                    "evaluator": {
-                      "params": [0, 0],
-                      "type": "gt"
-                    },
-                    "operator": {
-                      "type": "and"
-                    },
-                    "query": {
-                      "params": null
-                    },
-                    "reducer": {
-                      "params": null,
-                      "type": "avg"
-                    },
-                    "type": "query"
-                  }
-                ],
-                "datasource": {
-                  "type": "__expr__",
-                  "uid": "__expr__"
-                },
-                "expression": "1 == 1",
-                "hide": false,
-                "intervalMs": 1000,
-                "maxDataPoints": 43200,
-                "refId": "A",
-                "type": "math"
-              },
-              "queryType": "",
-              "refId": "A",
-              "relativeTimeRange": {
-                "from": 0,
-                "to": 0
-              }
-            }
-          ]
+          }
         },
-        "execErrState": {
+        "ExecErrState": {
           "type": "string",
           "enum": ["Alerting", "Error", "OK"]
         },
-        "folderUID": {
-          "type": "string",
-          "example": "project_x"
-        },
-        "for": {
+        "For": {
           "$ref": "#/definitions/Duration"
         },
-        "id": {
+        "ID": {
           "type": "integer",
           "format": "int64"
         },
-        "labels": {
+        "IntervalSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "example": {
-            "team": "sre-team-1"
           }
         },
-        "noDataState": {
+        "NamespaceUID": {
+          "type": "string"
+        },
+        "NoDataState": {
           "type": "string",
           "enum": ["Alerting", "NoData", "OK"]
         },
-        "orgID": {
+        "OrgID": {
           "type": "integer",
           "format": "int64"
         },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
+        "PanelID": {
+          "type": "integer",
+          "format": "int64"
         },
-        "ruleGroup": {
-          "type": "string",
-          "maxLength": 190,
-          "minLength": 1,
-          "example": "eval_group_1"
-        },
-        "title": {
-          "type": "string",
-          "maxLength": 190,
-          "minLength": 1,
-          "example": "Always firing"
-        },
-        "uid": {
+        "RuleGroup": {
           "type": "string"
         },
-        "updated": {
+        "RuleGroupIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "UID": {
+          "type": "string"
+        },
+        "Updated": {
           "type": "string",
-          "format": "date-time",
-          "readOnly": true
+          "format": "date-time"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
     "AlertRuleGroup": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertRule"
+          }
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "AlertRuleGroupMetadata": {
       "type": "object",
       "properties": {
         "interval": {
@@ -10025,7 +10622,7 @@
           "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "type": "string"
+          "$ref": "#/definitions/State"
         },
         "templateVars": {
           "type": "object"
@@ -10035,6 +10632,23 @@
     "CreateOrgCommand": {
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "CreatePlaylistCommand": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItemDTO"
+          }
+        },
         "name": {
           "type": "string"
         }
@@ -10055,7 +10669,7 @@
         }
       }
     },
-    "CreateRoleWithPermissionsCommand": {
+    "CreateRoleForm": {
       "type": "object",
       "properties": {
         "description": {
@@ -10063,6 +10677,9 @@
         },
         "displayName": {
           "type": "string"
+        },
+        "global": {
+          "type": "boolean"
         },
         "group": {
           "type": "string"
@@ -10085,6 +10702,24 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "CreateServiceAccountForm": {
+      "type": "object",
+      "properties": {
+        "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "name": {
+          "type": "string",
+          "example": "grafana"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "example": "Admin"
         }
       }
     },
@@ -10146,7 +10781,7 @@
         }
       }
     },
-    "DashboardAclInfoDTO": {
+    "DashboardACLInfoDTO": {
       "type": "object",
       "properties": {
         "created": {
@@ -10221,7 +10856,7 @@
         }
       }
     },
-    "DashboardAclUpdateItem": {
+    "DashboardACLUpdateItem": {
       "type": "object",
       "properties": {
         "permission": {
@@ -10334,6 +10969,9 @@
         },
         "publicDashboardAccessToken": {
           "type": "string"
+        },
+        "publicDashboardEnabled": {
+          "type": "boolean"
         },
         "slug": {
           "type": "string"
@@ -10727,6 +11365,87 @@
         }
       }
     },
+    "DataSourcePermissionRuleDTO": {
+      "type": "object",
+      "properties": {
+        "builtInRole": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "datasourceId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isManaged": {
+          "type": "boolean"
+        },
+        "permission": {
+          "$ref": "#/definitions/DsPermissionType"
+        },
+        "permissionName": {
+          "type": "string"
+        },
+        "team": {
+          "type": "string"
+        },
+        "teamAvatarUrl": {
+          "type": "string"
+        },
+        "teamEmail": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAvatarUrl": {
+          "type": "string"
+        },
+        "userEmail": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userLogin": {
+          "type": "string"
+        }
+      }
+    },
+    "DataSourcePermissionsDTO": {
+      "type": "object",
+      "properties": {
+        "datasourceId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataSourcePermissionRuleDTO"
+          }
+        }
+      }
+    },
+    "DataTopic": {
+      "type": "string",
+      "title": "DataTopic is used to identify which topic the frame should be assigned to."
+    },
     "DateTime": {
       "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
       "type": "string",
@@ -10778,9 +11497,9 @@
       "format": "int64"
     },
     "Duration": {
+      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
-      "format": "int64",
-      "title": "Duration is a type used for marshalling durations."
+      "format": "int64"
     },
     "EmailConfig": {
       "type": "object",
@@ -11016,7 +11735,7 @@
           "$ref": "#/definitions/FieldConfig"
         },
         "labels": {
-          "$ref": "#/definitions/Labels"
+          "$ref": "#/definitions/FrameLabels"
         },
         "name": {
           "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
@@ -11227,6 +11946,13 @@
         }
       }
     },
+    "FrameLabels": {
+      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "FrameMeta": {
       "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
       "type": "object",
@@ -11239,6 +11965,9 @@
         "custom": {
           "description": "Custom datasource specific values.",
           "type": "object"
+        },
+        "dataTopic": {
+          "$ref": "#/definitions/DataTopic"
         },
         "executedQueryString": {
           "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
@@ -12100,6 +12829,82 @@
         "$ref": "#/definitions/Label"
       }
     },
+    "LegacyAlert": {
+      "type": "object",
+      "properties": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "DashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "EvalData": {
+          "$ref": "#/definitions/Json"
+        },
+        "ExecutionError": {
+          "type": "string"
+        },
+        "For": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Frequency": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Handler": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Message": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "NewStateDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "OrgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PanelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "Severity": {
+          "type": "string"
+        },
+        "Silenced": {
+          "type": "boolean"
+        },
+        "State": {
+          "$ref": "#/definitions/AlertStateType"
+        },
+        "StateChanges": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "LibraryElementConnectionDTO": {
       "type": "object",
       "title": "LibraryElementConnectionDTO is the frontend DTO for element connections.",
@@ -12377,6 +13182,9 @@
           "type": "string",
           "example": "now-1h"
         },
+        "publicDashboardAccessToken": {
+          "type": "string"
+        },
         "queries": {
           "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
           "type": "array",
@@ -12496,13 +13304,16 @@
       "properties": {
         "id": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "example": 1
         },
         "key": {
-          "type": "string"
+          "type": "string",
+          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "example": "grafana"
         }
       }
     },
@@ -13001,6 +13812,112 @@
       "type": "integer",
       "format": "int64"
     },
+    "Playlist": {
+      "description": "Playlist model",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "interval": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PlaylistDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "interval": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItemDTO"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PlaylistDashboard": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uri": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "PlaylistDashboardsSlice": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PlaylistDashboard"
+      }
+    },
+    "PlaylistItemDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "playlistid": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "Playlists": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Playlist"
+      }
+    },
     "Point": {
       "type": "object",
       "title": "Point represents a single data point for a given timestamp.",
@@ -13363,6 +14280,138 @@
     },
     "Provenance": {
       "type": "string"
+    },
+    "ProvisionedAlertRule": {
+      "type": "object",
+      "required": [
+        "orgID",
+        "folderUID",
+        "ruleGroup",
+        "title",
+        "condition",
+        "data",
+        "noDataState",
+        "execErrState",
+        "for"
+      ],
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "runbook_url": "https://supercoolrunbook.com/page/13"
+          }
+        },
+        "condition": {
+          "type": "string",
+          "example": "A"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "example": [
+            {
+              "datasourceUid": "-100",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [0, 0],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": []
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "avg"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "1 == 1",
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A",
+                "type": "math"
+              },
+              "queryType": "",
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              }
+            }
+          ]
+        },
+        "execErrState": {
+          "type": "string",
+          "enum": ["Alerting", "Error", "OK"]
+        },
+        "folderUID": {
+          "type": "string",
+          "example": "project_x"
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "team": "sre-team-1"
+          }
+        },
+        "noDataState": {
+          "type": "string",
+          "enum": ["Alerting", "NoData", "OK"]
+        },
+        "orgID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "ruleGroup": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "example": "eval_group_1"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "example": "Always firing"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
     },
     "PushoverConfig": {
       "type": "object",
@@ -13801,7 +14850,7 @@
       }
     },
     "Responses": {
-      "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataRespones' frames based on these RefIDs.",
+      "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
       "type": "object",
       "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses.",
       "additionalProperties": {
@@ -14179,6 +15228,31 @@
         }
       }
     },
+    "SearchServiceAccountsResult": {
+      "description": "swagger: model",
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "serviceAccounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceAccountDTO"
+          }
+        },
+        "totalCount": {
+          "description": "It can be used for pagination of the user list\nE.g. if totalCount is equal to 100 users and\nthe perpage parameter is set to 10 then there are 10 pages of users.",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "SearchTeamQueryResult": {
       "type": "object",
       "properties": {
@@ -14232,6 +15306,119 @@
     "SecretURL": {
       "title": "SecretURL is a URL that must not be revealed on marshaling.",
       "$ref": "#/definitions/URL"
+    },
+    "ServiceAccountDTO": {
+      "description": "swagger: model",
+      "type": "object",
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "example": {
+            "serviceaccounts:delete": true,
+            "serviceaccounts:read": true,
+            "serviceaccounts:write": true
+          }
+        },
+        "avatarUrl": {
+          "type": "string",
+          "example": "/avatar/85ec38023d90823d3e5b43ef35646af9"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "login": {
+          "type": "string",
+          "example": "sa-grafana"
+        },
+        "name": {
+          "type": "string",
+          "example": "grafana"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "role": {
+          "type": "string",
+          "example": "Viewer"
+        },
+        "tokens": {
+          "type": "integer",
+          "format": "int64",
+          "example": 0
+        }
+      }
+    },
+    "ServiceAccountProfileDTO": {
+      "type": "object",
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "avatarUrl": {
+          "type": "string",
+          "example": "/avatar/8ea890a677d6a223c591a1beea6ea9d2"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-21T14:35:33Z"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 2
+        },
+        "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "login": {
+          "type": "string",
+          "example": "sa-grafana"
+        },
+        "name": {
+          "type": "string",
+          "example": "test"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "role": {
+          "type": "string",
+          "example": "Editor"
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "example": []
+        },
+        "tokens": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-21T14:35:33Z"
+        }
+      }
     },
     "SetUserRolesCommand": {
       "type": "object",
@@ -14980,6 +16167,44 @@
         }
       }
     },
+    "TokenDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-23T10:31:02Z"
+        },
+        "expiration": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-23T10:31:02Z"
+        },
+        "hasExpired": {
+          "type": "boolean",
+          "example": false
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-03-23T10:31:02Z"
+        },
+        "name": {
+          "type": "string",
+          "example": "grafana"
+        },
+        "secondsUntilExpiration": {
+          "type": "number",
+          "format": "double",
+          "example": 0
+        }
+      }
+    },
     "TokenStatus": {
       "type": "integer",
       "format": "int64"
@@ -15010,8 +16235,9 @@
       "type": "string"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -15145,13 +16371,13 @@
         }
       }
     },
-    "UpdateDashboardAclCommand": {
+    "UpdateDashboardACLCommand": {
       "type": "object",
       "properties": {
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DashboardAclUpdateItem"
+            "$ref": "#/definitions/DashboardACLUpdateItem"
           }
         }
       }
@@ -15278,6 +16504,26 @@
         }
       }
     },
+    "UpdatePlaylistCommand": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItemDTO"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "UpdatePrefsCmd": {
       "type": "object",
       "properties": {
@@ -15342,6 +16588,21 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "UpdateServiceAccountForm": {
+      "type": "object",
+      "properties": {
+        "isDisabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         }
       }
     },
@@ -15945,6 +17206,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -15991,7 +17253,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -16125,6 +17386,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -16208,7 +17470,7 @@
   },
   "responses": {
     "SMTPNotEnabledError": {
-      "description": ""
+      "description": "(empty)"
     },
     "acceptedResponse": {
       "description": "AcceptedResponse",
@@ -16217,7 +17479,7 @@
       }
     },
     "addOrgUser": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "message"],
@@ -16249,7 +17511,7 @@
       }
     },
     "contentResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16259,7 +17521,7 @@
       }
     },
     "createAnnotationResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "message"],
@@ -16278,7 +17540,7 @@
       }
     },
     "createOrUpdateDatasourceResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "name", "message", "datasource"],
@@ -16306,7 +17568,7 @@
       }
     },
     "createOrgResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["orgId", "message"],
@@ -16325,14 +17587,35 @@
         }
       }
     },
-    "createReportResponse": {
-      "description": "",
+    "createPlaylistResponse": {
+      "description": "(empty)",
       "schema": {
-        "type": "object"
+        "$ref": "#/definitions/Playlist"
+      }
+    },
+    "createReportResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "createServiceAccountResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ServiceAccountDTO"
       }
     },
     "createSnapshotResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -16359,7 +17642,7 @@
       }
     },
     "createTeamResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -16373,8 +17656,14 @@
         }
       }
     },
+    "createTokenResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/NewApiKeyResult"
+      }
+    },
     "createUserResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/UserIdDTO"
       }
@@ -16390,19 +17679,19 @@
       }
     },
     "dashboardResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DashboardFullWithMeta"
       }
     },
     "dashboardVersionResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DashboardVersionMeta"
       }
     },
     "dashboardVersionsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16411,7 +17700,7 @@
       }
     },
     "dashboardsTagsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16420,7 +17709,7 @@
       }
     },
     "deleteAlertNotificationChannelResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "message"],
@@ -16439,7 +17728,7 @@
       }
     },
     "deleteDashboardResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "title", "message"],
@@ -16464,7 +17753,7 @@
       }
     },
     "deleteDatasourceByNameResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "message"],
@@ -16484,7 +17773,7 @@
       }
     },
     "deleteFolderResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id", "title", "message"],
@@ -16509,7 +17798,7 @@
       }
     },
     "folderResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Folder"
       }
@@ -16527,7 +17816,7 @@
       }
     },
     "getAPIkeyResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16536,19 +17825,19 @@
       }
     },
     "getAccessControlStatusResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Status"
       }
     },
     "getAlertNotificationChannelResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/AlertNotification"
       }
     },
     "getAlertNotificationChannelsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16557,16 +17846,13 @@
       }
     },
     "getAlertResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Alert"
-        }
+        "$ref": "#/definitions/LegacyAlert"
       }
     },
     "getAlertsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16575,7 +17861,7 @@
       }
     },
     "getAllRolesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16584,19 +17870,19 @@
       }
     },
     "getAnnotationResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ItemDTO"
       }
     },
     "getAnnotationTagsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/GetAnnotationTagsResponse"
       }
     },
     "getAnnotationsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16605,7 +17891,7 @@
       }
     },
     "getAuthTokensResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16614,7 +17900,7 @@
       }
     },
     "getCustomPermissionsReportResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16623,16 +17909,16 @@
       }
     },
     "getDashboardPermissionsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/DashboardAclInfoDTO"
+          "$ref": "#/definitions/DashboardACLInfoDTO"
         }
       }
     },
     "getDashboardStatesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16641,7 +17927,7 @@
       }
     },
     "getDatasourceIDresponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["id"],
@@ -16656,19 +17942,19 @@
       }
     },
     "getDatasourceResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DataSource"
       }
     },
     "getDatasourcesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DataSourceList"
       }
     },
     "getFoldersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16683,7 +17969,7 @@
       }
     },
     "getInvitesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16692,46 +17978,46 @@
       }
     },
     "getLDAPSyncStatusResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ActiveSyncStatusDTO"
       }
     },
     "getLibraryElementConnectionsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/LibraryElementConnectionsResponse"
       }
     },
     "getLibraryElementResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/LibraryElementResponse"
       }
     },
     "getLibraryElementsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/LibraryElementSearchResponse"
       }
     },
     "getLicenseStatusResponse": {
-      "description": ""
+      "description": "(empty)"
     },
     "getLicenseTokenResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Token"
       }
     },
     "getOrgResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/OrgDetailsDTO"
       }
     },
     "getOrgUsersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16740,43 +18026,64 @@
       }
     },
     "getPermissionseResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/AddPermissionDTO"
+        "$ref": "#/definitions/DataSourcePermissionsDTO"
+      }
+    },
+    "getPlaylistDashboardsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PlaylistDashboardsSlice"
+      }
+    },
+    "getPlaylistItemsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/PlaylistItemDTO"
+        }
+      }
+    },
+    "getPlaylistResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PlaylistDTO"
       }
     },
     "getPreferencesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Prefs"
       }
     },
     "getQueryHistoryDeleteQueryResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryHistoryDeleteQueryResponse"
       }
     },
     "getQueryHistoryMigrationResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryHistoryMigrationResponse"
       }
     },
     "getQueryHistoryResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryHistoryResponse"
       }
     },
     "getQueryHistorySearchResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryHistorySearchResponse"
       }
     },
     "getQuotaResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16785,19 +18092,19 @@
       }
     },
     "getReportResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ConfigDTO"
       }
     },
     "getReportSettingsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SettingsDTO"
       }
     },
     "getReportsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16806,19 +18113,19 @@
       }
     },
     "getRoleResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/RoleDTO"
       }
     },
     "getSettingsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SettingsBag"
       }
     },
     "getSnapshotSharingOptionsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -16835,7 +18142,7 @@
       }
     },
     "getSnapshotsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16844,13 +18151,13 @@
       }
     },
     "getStatsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/AdminStats"
       }
     },
     "getTeamGroupsApiResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16859,7 +18166,7 @@
       }
     },
     "getTeamMembersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16868,13 +18175,13 @@
       }
     },
     "getTeamResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/TeamDTO"
       }
     },
     "getUserOrgListResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16883,7 +18190,7 @@
       }
     },
     "getUserTeamsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16892,7 +18199,7 @@
       }
     },
     "helpFlagResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -16907,7 +18214,7 @@
       }
     },
     "importDashboardResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ImportDashboardResponse"
       }
@@ -16919,7 +18226,7 @@
       }
     },
     "listBuiltinRolesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "additionalProperties": {
@@ -16931,7 +18238,7 @@
       }
     },
     "listRecordingRulesResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16939,8 +18246,14 @@
         }
       }
     },
+    "listTokensResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/TokenDTO"
+      }
+    },
     "lookupAlertNotificationChannelsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16949,7 +18262,7 @@
       }
     },
     "lookupOrgUsersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -16970,7 +18283,7 @@
       }
     },
     "pauseAlertResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["alertId", "message"],
@@ -16990,7 +18303,7 @@
       }
     },
     "pauseAlertsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "required": ["alertsAffected", "message"],
@@ -17011,7 +18324,7 @@
       }
     },
     "postAPIkeyResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/NewApiKeyResult"
       }
@@ -17057,7 +18370,7 @@
       }
     },
     "postRenewLicenseTokenResponse": {
-      "description": ""
+      "description": "(empty)"
     },
     "preconditionFailedError": {
       "description": "PreconditionFailedError",
@@ -17066,31 +18379,37 @@
       }
     },
     "queryDataResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
       }
     },
     "recordingRuleResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/RecordingRuleJSON"
       }
     },
     "recordingRuleWriteTargetResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/PrometheusRemoteWriteTargetJSON"
       }
     },
     "refreshLicenseStatsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ActiveUserStats"
       }
     },
+    "retrieveServiceAccountResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ServiceAccountDTO"
+      }
+    },
     "searchOrgResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "array",
         "items": {
@@ -17098,14 +18417,26 @@
         }
       }
     },
+    "searchOrgServiceAccountsWithPagingResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchServiceAccountsResult"
+      }
+    },
+    "searchPlaylistsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Playlists"
+      }
+    },
     "searchResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/HitList"
       }
     },
     "searchSortingResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "type": "object",
         "properties": {
@@ -17125,22 +18456,22 @@
       }
     },
     "searchTeamsResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchTeamQueryResult"
       }
     },
     "searchUsersResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchUserQueryResult"
       }
     },
     "snapshotResponse": {
-      "description": ""
+      "description": "(empty)"
     },
     "testAlertResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/AlertTestResult"
       }
@@ -17163,8 +18494,35 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "updatePlaylistResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PlaylistDTO"
+      }
+    },
+    "updateServiceAccountResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serviceaccount": {
+            "$ref": "#/definitions/ServiceAccountProfileDTO"
+          }
+        }
+      }
+    },
     "userResponse": {
-      "description": "",
+      "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
       }
@@ -17272,6 +18630,10 @@
     {
       "description": "Grafana Alerting Prometheus-compatible endpoints",
       "name": "prometheus"
+    },
+    {
+      "description": "If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.",
+      "name": "service_accounts"
     }
   ]
 }

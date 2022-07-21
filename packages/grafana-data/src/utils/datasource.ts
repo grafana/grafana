@@ -56,7 +56,7 @@ export const onUpdateDatasourceJsonDataOption =
 
 export const onUpdateDatasourceSecureJsonDataOption =
   <J, S extends {} = KeyValue>(props: DataSourcePluginOptionsEditorProps<J, S>, key: string) =>
-  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     updateDatasourcePluginSecureJsonDataOption(props, key, event.currentTarget.value);
   };
 
