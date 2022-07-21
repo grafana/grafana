@@ -106,7 +106,7 @@ export const RolePicker = ({
   };
 
   const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
-    if (onBuiltinRoleChange && newBuiltInRole) {
+    if (onBuiltinRoleChange && newBuiltInRole && newBuiltInRole !== builtInRole) {
       onBuiltinRoleChange(newBuiltInRole);
     }
     onRolesChange(newRoles);

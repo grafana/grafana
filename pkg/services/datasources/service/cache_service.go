@@ -8,12 +8,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+)
+
+const (
+	DefaultCacheTTL = 5 * time.Second
 )
 
 func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore) *CacheServiceImpl {
 	return &CacheServiceImpl{
 		logger:       log.New("datasources"),
+		cacheTTL:     DefaultCacheTTL,
 		CacheService: cacheService,
 		SQLStore:     sqlStore,
 	}
@@ -21,6 +27,7 @@ func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlsto
 
 type CacheServiceImpl struct {
 	logger       log.Logger
+	cacheTTL     time.Duration
 	CacheService *localcache.CacheService
 	SQLStore     *sqlstore.SQLStore
 }
@@ -30,12 +37,12 @@ func (dc *CacheServiceImpl) GetDatasource(
 	datasourceID int64,
 	user *models.SignedInUser,
 	skipCache bool,
-) (*models.DataSource, error) {
+) (*datasources.DataSource, error) {
 	cacheKey := idKey(datasourceID)
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(cacheKey); found {
-			ds := cached.(*models.DataSource)
+			ds := cached.(*datasources.DataSource)
 			if ds.OrgId == user.OrgId {
 				return ds, nil
 			}
@@ -44,7 +51,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 
 	dc.logger.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 
-	query := &models.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
+	query := &datasources.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
 	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
@@ -55,7 +62,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	if ds.Uid != "" {
 		dc.CacheService.Set(uidKey(ds.OrgId, ds.Uid), ds, time.Second*5)
 	}
-	dc.CacheService.Set(cacheKey, ds, time.Second*5)
+	dc.CacheService.Set(cacheKey, ds, dc.cacheTTL)
 	return ds, nil
 }
 
@@ -64,7 +71,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	datasourceUID string,
 	user *models.SignedInUser,
 	skipCache bool,
-) (*models.DataSource, error) {
+) (*datasources.DataSource, error) {
 	if datasourceUID == "" {
 		return nil, fmt.Errorf("can not get data source by uid, uid is empty")
 	}
@@ -75,7 +82,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(uidCacheKey); found {
-			ds := cached.(*models.DataSource)
+			ds := cached.(*datasources.DataSource)
 			if ds.OrgId == user.OrgId {
 				return ds, nil
 			}
@@ -83,7 +90,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	}
 
 	dc.logger.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
-	query := &models.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
+	query := &datasources.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
 	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
@@ -91,8 +98,8 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	ds := query.Result
 
-	dc.CacheService.Set(uidCacheKey, ds, time.Second*5)
-	dc.CacheService.Set(idKey(ds.Id), ds, time.Second*5)
+	dc.CacheService.Set(uidCacheKey, ds, dc.cacheTTL)
+	dc.CacheService.Set(idKey(ds.Id), ds, dc.cacheTTL)
 	return ds, nil
 }
 

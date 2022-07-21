@@ -16,7 +16,7 @@ import (
 
 var now = time.Now()
 
-func TestPrometheus_timeSeriesQuery_formatLeged(t *testing.T) {
+func TestPrometheus_timeSeriesQuery_formatLegend(t *testing.T) {
 	t.Run("converting metric name", func(t *testing.T) {
 		metric := map[p.LabelName]p.LabelValue{
 			p.LabelName("app"):    p.LabelValue("backend"),

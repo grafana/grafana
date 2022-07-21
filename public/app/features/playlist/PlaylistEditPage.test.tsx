@@ -9,7 +9,7 @@ import { PlaylistEditPage } from './PlaylistEditPage';
 import { Playlist } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -27,10 +27,6 @@ async function getTestContext({ name, interval, items, uid }: Partial<Playlist> 
   const match: any = { params: { uid: 'foo' } };
   const location: any = {};
   const history: any = {};
-  const navModel: any = {
-    node: {},
-    main: {},
-  };
   const getMock = jest.spyOn(backendSrv, 'get');
   const putMock = jest.spyOn(backendSrv, 'put');
   getMock.mockResolvedValue({
@@ -40,14 +36,7 @@ async function getTestContext({ name, interval, items, uid }: Partial<Playlist> 
     uid: 'foo',
   });
   const { rerender } = render(
-    <PlaylistEditPage
-      queryParams={queryParams}
-      route={route}
-      match={match}
-      location={location}
-      history={history}
-      navModel={navModel}
-    />
+    <PlaylistEditPage queryParams={queryParams} route={route} match={match} location={location} history={history} />
   );
   await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 

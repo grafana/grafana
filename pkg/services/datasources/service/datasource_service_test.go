@@ -10,27 +10,27 @@ import (
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/services/secrets"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type dataSourceMockRetriever struct {
-	res []*models.DataSource
+	res []*datasources.DataSource
 }
 
-func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 	for _, datasource := range d.res {
 		idMatch := query.Id != 0 && query.Id == datasource.Id
 		uidMatch := query.Uid != "" && query.Uid == datasource.Uid
@@ -41,11 +41,11 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *mode
 			return nil
 		}
 	}
-	return models.ErrDataSourceNotFound
+	return datasources.ErrDataSourceNotFound
 }
 
 func TestService_NameScopeResolver(t *testing.T) {
-	retriever := &dataSourceMockRetriever{[]*models.DataSource{
+	retriever := &dataSourceMockRetriever{[]*datasources.DataSource{
 		{Name: "test-datasource", Uid: "1"},
 		{Name: "*", Uid: "2"},
 		{Name: ":/*", Uid: "3"},
@@ -88,7 +88,7 @@ func TestService_NameScopeResolver(t *testing.T) {
 			desc:    "unknown datasource",
 			given:   "datasources:name:unknown-datasource",
 			want:    "",
-			wantErr: models.ErrDataSourceNotFound,
+			wantErr: datasources.ErrDataSourceNotFound,
 		},
 		{
 			desc:    "malformed scope",
@@ -122,7 +122,7 @@ func TestService_NameScopeResolver(t *testing.T) {
 }
 
 func TestService_IDScopeResolver(t *testing.T) {
-	retriever := &dataSourceMockRetriever{[]*models.DataSource{
+	retriever := &dataSourceMockRetriever{[]*datasources.DataSource{
 		{Id: 1, Uid: "NnftN9Lnz"},
 	}}
 
@@ -189,7 +189,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		ds := models.DataSource{
+		ds := datasources.DataSource{
 			Id:   1,
 			Url:  "http://k8s:8001",
 			Type: "Kubernetes",
@@ -233,7 +233,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
-		ds := models.DataSource{
+		ds := datasources.DataSource{
 			Id:             1,
 			Url:            "http://k8s:8001",
 			Type:           "Kubernetes",
@@ -281,7 +281,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
-		ds := models.DataSource{
+		ds := datasources.DataSource{
 			Id:       1,
 			OrgId:    1,
 			Name:     "kubernetes",
@@ -326,7 +326,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
-		ds := models.DataSource{
+		ds := datasources.DataSource{
 			Id:       1,
 			OrgId:    1,
 			Name:     "kubernetes",
@@ -368,7 +368,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
-		ds := models.DataSource{
+		ds := datasources.DataSource{
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
@@ -400,7 +400,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
-		ds := models.DataSource{
+		ds := datasources.DataSource{
 			Id:       1,
 			OrgId:    1,
 			Name:     "kubernetes",
@@ -466,7 +466,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
-		ds := models.DataSource{
+		ds := datasources.DataSource{
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
@@ -500,8 +500,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
-		ds := models.DataSource{
-			Type:     models.DS_ES,
+		ds := datasources.DataSource{
+			Type:     datasources.DS_ES,
 			JsonData: sjson,
 		}
 
@@ -537,7 +537,7 @@ func TestService_getTimeout(t *testing.T) {
 	dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 	for _, tc := range testCases {
-		ds := &models.DataSource{
+		ds := &datasources.DataSource{
 			JsonData: tc.jsonData,
 		}
 		assert.Equal(t, tc.expectedTimeout, dsService.getTimeout(ds))
@@ -546,7 +546,7 @@ func TestService_getTimeout(t *testing.T) {
 
 func TestService_GetDecryptedValues(t *testing.T) {
 	t.Run("should migrate and retrieve values from secure json data", func(t *testing.T) {
-		ds := &models.DataSource{
+		ds := &datasources.DataSource{
 			Id:   1,
 			Url:  "https://api.example.com",
 			Type: "prometheus",
@@ -571,7 +571,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 	})
 
 	t.Run("should retrieve values from secret store", func(t *testing.T) {
-		ds := &models.DataSource{
+		ds := &datasources.DataSource{
 			Id:   1,
 			Url:  "https://api.example.com",
 			Type: "prometheus",

@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -26,6 +27,8 @@ SELECT DISTINCT
 	, u2.email AS updated_by_email
 	, (SELECT COUNT(connection_id) FROM ` + models.LibraryElementConnectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
 )
+
+const deleteInvalidConnections = "DELETE FROM library_element_connection WHERE connection_id IN (SELECT connection_id as id FROM library_element_connection WHERE element_id=? EXCEPT SELECT id from dashboard)"
 
 func getFromLibraryElementDTOWithMeta(dialect migrator.Dialect) string {
 	user := dialect.Quote("user")
@@ -179,6 +182,12 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 			return err
 		}
+
+		// Delete any hanging/invalid connections
+		if _, err = session.Exec(deleteInvalidConnections, element.ID); err != nil {
+			return err
+		}
+
 		var connectionIDs []struct {
 			ConnectionID int64 `xorm:"connection_id"`
 		}
@@ -699,7 +708,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 
 		if len(folderUIDs) == 0 {
-			return models.ErrFolderNotFound
+			return dashboards.ErrFolderNotFound
 		}
 
 		if len(folderUIDs) != 1 {

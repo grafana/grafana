@@ -27,7 +27,7 @@ export const NotificationsStep: FC = () => {
         {!hideFlowChart && (
           <img
             className={styles.flowChart}
-            src={`/public/img/alerting/notification_policy_${theme.name.toLowerCase()}.svg`}
+            src={`public/img/alerting/notification_policy_${theme.name.toLowerCase()}.svg`}
             alt="notification policy flow chart"
           />
         )}

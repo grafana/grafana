@@ -34,7 +34,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	mockDatasourcePermissionService := permissions.NewMockDatasourcePermissionService()
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
-		ds := []*models.DataSource{
+		ds := []*datasources.DataSource{
 			{Name: "mmm"},
 			{Name: "ZZZ"},
 			{Name: "BBB"},
@@ -85,7 +85,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	}
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   "Test",
 			Url:    "invalid:url",
 			Access: "direct",
@@ -106,14 +106,14 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{
-			expectedDatasource: &models.DataSource{},
+			expectedDatasource: &datasources.DataSource{},
 		},
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   name,
 			Url:    url,
 			Access: "direct",
@@ -135,7 +135,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   "Test",
 			Url:    "invalid:url",
 			Access: "direct",
@@ -156,14 +156,14 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{
-			expectedDatasource: &models.DataSource{},
+			expectedDatasource: &datasources.DataSource{},
 		},
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   name,
 			Url:    url,
 			Access: "direct",
@@ -178,7 +178,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 }
 
 func TestAPI_Datasources_AccessControl(t *testing.T) {
-	testDatasource := models.DataSource{
+	testDatasource := datasources.DataSource{
 		Id:     3,
 		Uid:    "testUID",
 		OrgId:  testOrgID,
@@ -187,7 +187,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		Type:   "postgresql",
 		Access: "Proxy",
 	}
-	testDatasourceReadOnly := models.DataSource{
+	testDatasourceReadOnly := datasources.DataSource{
 		Id:       4,
 		Uid:      "testUID",
 		OrgId:    testOrgID,
@@ -199,7 +199,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 	}
 
 	addDatasourceBody := func() io.Reader {
-		s, _ := json.Marshal(models.AddDataSourceCommand{
+		s, _ := json.Marshal(datasources.AddDataSourceCommand{
 			Name:   "test",
 			Url:    "http://localhost:5432",
 			Type:   "postgresql",
@@ -212,12 +212,12 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		expectedDatasource: &testDatasource,
 	}
 	dsPermissionService := permissions.NewMockDatasourcePermissionService()
-	dsPermissionService.DsResult = []*models.DataSource{
+	dsPermissionService.DsResult = []*datasources.DataSource{
 		&testDatasource,
 	}
 
 	updateDatasourceBody := func() io.Reader {
-		s, _ := json.Marshal(models.UpdateDataSourceCommand{
+		s, _ := json.Marshal(datasources.UpdateDataSourceCommand{
 			Name:   "test",
 			Url:    "http://localhost:5432",
 			Type:   "postgresql",
@@ -228,7 +228,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 	type acTestCaseWithHandler struct {
 		body func() io.Reader
 		accessControlTestCase
-		expectedDS       *models.DataSource
+		expectedDS       *datasources.DataSource
 		expectedSQLError error
 	}
 	tests := []acTestCaseWithHandler{
@@ -246,7 +246,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
-			expectedSQLError: models.ErrDataSourceNotFound,
+			expectedSQLError: datasources.ErrDataSourceNotFound,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -507,7 +507,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			// mock sqlStore and datasource permission service
 			dsServiceMock.expectedError = test.expectedSQLError
 			dsServiceMock.expectedDatasource = test.expectedDS
-			dsPermissionService.DsResult = []*models.DataSource{test.expectedDS}
+			dsPermissionService.DsResult = []*datasources.DataSource{test.expectedDS}
 			if test.expectedDS == nil {
 				dsPermissionService.DsResult = nil
 			}
@@ -547,44 +547,44 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 type dataSourcesServiceMock struct {
 	datasources.DataSourceService
 
-	expectedDatasources []*models.DataSource
-	expectedDatasource  *models.DataSource
+	expectedDatasources []*datasources.DataSource
+	expectedDatasource  *datasources.DataSource
 	expectedError       error
 }
 
-func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 	query.Result = m.expectedDatasource
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+func (m *dataSourcesServiceMock) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
 	query.Result = m.expectedDatasources
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+func (m *dataSourcesServiceMock) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	cmd.Result = m.expectedDatasource
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
 	cmd.Result = m.expectedDatasource
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) DecryptedValues(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+func (m *dataSourcesServiceMock) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	decryptedValues := make(map[string]string)
 	return decryptedValues, m.expectedError
 }

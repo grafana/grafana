@@ -11,6 +11,7 @@ import (
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -19,13 +20,22 @@ const (
 	ServiceID         = "sa"
 )
 
+// swagger:model
 type TokenDTO struct {
-	Id                     int64      `json:"id"`
-	Name                   string     `json:"name"`
-	Created                *time.Time `json:"created"`
-	Expiration             *time.Time `json:"expiration"`
-	SecondsUntilExpiration *float64   `json:"secondsUntilExpiration"`
-	HasExpired             bool       `json:"hasExpired"`
+	// example: 1
+	Id int64 `json:"id"`
+	// example: grafana
+	Name string `json:"name"`
+	// example: 2022-03-23T10:31:02Z
+	Created *time.Time `json:"created"`
+	// example: 2022-03-23T10:31:02Z
+	LastUsedAt *time.Time `json:"lastUsedAt"`
+	// example: 2022-03-23T10:31:02Z
+	Expiration *time.Time `json:"expiration"`
+	// example: 0
+	SecondsUntilExpiration *float64 `json:"secondsUntilExpiration"`
+	// example: false
+	HasExpired bool `json:"hasExpired"`
 }
 
 func hasExpired(expiration *int64) bool {
@@ -71,6 +81,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 			Expiration:             expiration,
 			SecondsUntilExpiration: &secondsUntilExpiration,
 			HasExpired:             isExpired,
+			LastUsedAt:             t.LastUsedAt,
 		}
 	}
 
@@ -120,10 +131,10 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	cmd.Key = newKeyInfo.HashedKey
 
 	if err := api.store.AddServiceAccountToken(c.Req.Context(), saID, &cmd); err != nil {
-		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
+		if errors.Is(err, database.ErrInvalidTokenExpiration) {
 			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
-		if errors.Is(err, models.ErrDuplicateApiKey) {
+		if errors.Is(err, database.ErrDuplicateToken) {
 			return response.Error(http.StatusConflict, err.Error(), nil)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to add service account token", err)

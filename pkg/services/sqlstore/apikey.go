@@ -46,8 +46,7 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 func (ss *SQLStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
 	result := make([]*models.ApiKey, 0)
 	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		sess := dbSession.
-			Where("(expires IS NULL OR expires >= ?) AND service_account_id IS NULL", timeNow().Unix()).Asc("name")
+		sess := dbSession.Where("service_account_id IS NULL").Asc("name")
 		if orgID != -1 {
 			sess = sess.Where("org_id=?", orgID)
 		}
@@ -163,4 +162,16 @@ func (ss *SQLStore) GetAPIKeyByHash(ctx context.Context, hash string) (*models.A
 	})
 
 	return &apikey, err
+}
+
+// UpdateAPIKeyLastUsedDate updates the last used date of the API key to current time.
+func (ss *SQLStore) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
+	now := timeNow()
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if _, err := sess.Table("api_key").ID(tokenID).Cols("last_used_at").Update(&models.ApiKey{LastUsedAt: &now}); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

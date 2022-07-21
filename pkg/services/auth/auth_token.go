@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -57,7 +58,7 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, err
 	return count, err
 }
 
-func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
+func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
 	token, err := util.RandomHex(16)
 	if err != nil {
 		return nil, err
@@ -72,7 +73,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.Use
 	}
 
 	userAuthToken := userAuthToken{
-		UserId:        user.Id,
+		UserId:        user.ID,
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
 		ClientIp:      clientIPStr,

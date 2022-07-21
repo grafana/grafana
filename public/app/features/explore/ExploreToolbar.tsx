@@ -196,7 +196,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                   const controls = {
                     ...c,
                     start: () => {
-                      reportInteraction('grafana_explore_logs_result_displayed', {
+                      reportInteraction('grafana_explore_logs_live_tailing_clicked', {
                         datasourceType: this.props.datasourceType,
                       });
                       c.start();

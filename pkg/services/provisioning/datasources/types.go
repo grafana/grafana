@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -189,7 +189,7 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	return r
 }
 
-func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCommand {
+func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -197,11 +197,11 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCo
 		}
 	}
 
-	cmd := &models.AddDataSourceCommand{
+	cmd := &datasources.AddDataSourceCommand{
 		OrgId:           ds.OrgID,
 		Name:            ds.Name,
 		Type:            ds.Type,
-		Access:          models.DsAccess(ds.Access),
+		Access:          datasources.DsAccess(ds.Access),
 		Url:             ds.URL,
 		User:            ds.User,
 		Database:        ds.Database,
@@ -228,7 +228,7 @@ func safeUIDFromName(name string) string {
 	return strings.ToUpper(fmt.Sprintf("P%x", bs[:8]))
 }
 
-func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.UpdateDataSourceCommand {
+func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.UpdateDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -236,13 +236,13 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.Updat
 		}
 	}
 
-	return &models.UpdateDataSourceCommand{
+	return &datasources.UpdateDataSourceCommand{
 		Id:              id,
 		Uid:             ds.UID,
 		OrgId:           ds.OrgID,
 		Name:            ds.Name,
 		Type:            ds.Type,
-		Access:          models.DsAccess(ds.Access),
+		Access:          datasources.DsAccess(ds.Access),
 		Url:             ds.URL,
 		User:            ds.User,
 		Database:        ds.Database,

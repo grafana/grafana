@@ -36,7 +36,9 @@ The dashboard previews feature is an opt-in feature that is disabled by default.
 enable = dashboardPreviews
 ```
 
-3. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
+3. If running Grafana Enterprise with RBAC, enable [service accounts]({{< relref "../administration/service-accounts/" >}}).
+
+4. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
 
 The first crawler run should begin approximately five minutes after Grafana server restart.
 

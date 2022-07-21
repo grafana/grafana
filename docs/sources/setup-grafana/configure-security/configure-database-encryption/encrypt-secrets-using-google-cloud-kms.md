@@ -24,7 +24,7 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
 
 4. [Create a service account key and save its JSON file](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating) to you computer, for example, as `~/.config/gcloud/sample-project-credentials.json`.
 
-5. From within Grafana, turn on [envelope encryption]({{< relref "./#envelope-encryption" >}}).
+5. From within Grafana, turn on [envelope encryption]({{< relref "/#envelope-encryption" >}}).
 
 6. Add your Google Cloud KMS details to the Grafana configuration file; depending on your operating system, is usually named `grafana.ini`:
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.azurekv.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.

@@ -6,6 +6,28 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+type fakePluginManager struct {
+	plugins map[string]fakePlugin
+}
+
+type fakePlugin struct {
+	pluginID string
+	version  string
+}
+
+func (pm *fakePluginManager) Add(_ context.Context, pluginID, version string) error {
+	pm.plugins[pluginID] = fakePlugin{
+		pluginID: pluginID,
+		version:  version,
+	}
+	return nil
+}
+
+func (pm *fakePluginManager) Remove(_ context.Context, pluginID string) error {
+	delete(pm.plugins, pluginID)
+	return nil
+}
+
 type fakePluginStore struct {
 	plugins.Store
 

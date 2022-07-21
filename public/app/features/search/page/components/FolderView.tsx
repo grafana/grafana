@@ -5,10 +5,10 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
-import { Spinner, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-import impressionSrv from 'app/core/services/impression_srv';
+import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 
+import { contextSrv } from '../../../../core/services/context_srv';
+import impressionSrv from '../../../../core/services/impression_srv';
 import { GENERAL_FOLDER_UID } from '../../constants';
 import { getGrafanaSearcher } from '../../service';
 import { SearchResultsProps } from '../components/SearchResultsTable';
@@ -36,7 +36,7 @@ export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hi
       if (ids.length) {
         const itemsUIDs = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
         if (itemsUIDs.length) {
-          folders.push({ title: 'Recent', icon: 'clock', kind: 'query-recent', uid: '__recent', itemsUIDs });
+          folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'query-recent', uid: '__recent', itemsUIDs });
         }
       }
     }
@@ -58,41 +58,33 @@ export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hi
     return folders;
   }, []);
 
-  if (results.loading) {
-    return <Spinner />;
-  }
-  if (!results.value) {
-    return <div>?</div>;
-  }
+  const renderResults = () => {
+    if (results.loading) {
+      return <Spinner className={styles.spinner} />;
+    } else if (!results.value) {
+      return <Alert className={styles.error} title={results.error ? results.error.message : 'Something went wrong'} />;
+    } else {
+      return results.value.map((section) => (
+        <div data-testid={selectors.components.Search.sectionV2} className={styles.section} key={section.title}>
+          {section.title && (
+            <FolderSection
+              selection={selection}
+              selectionToggle={selectionToggle}
+              onTagSelected={onTagSelected}
+              section={section}
+              tags={tags}
+            />
+          )}
+        </div>
+      ));
+    }
+  };
 
-  return (
-    <div className={styles.wrapper}>
-      {results.value.map((section) => {
-        return (
-          <div data-testid={selectors.components.Search} className={styles.section} key={section.title}>
-            {section.title && (
-              <FolderSection
-                selection={selection}
-                selectionToggle={selectionToggle}
-                onTagSelected={onTagSelected}
-                section={section}
-                tags={tags}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+  return <div className={styles.wrapper}>{renderResults()}</div>;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { md, sm } = theme.v1.spacing;
-
   return {
-    virtualizedGridItemWrapper: css`
-      padding: 4px;
-    `,
     wrapper: css`
       display: flex;
       flex-direction: column;
@@ -113,40 +105,14 @@ const getStyles = (theme: GrafanaTheme2) => {
         border-bottom: solid 1px ${theme.v1.colors.border2};
       }
     `,
-    sectionItems: css`
-      margin: 0 24px 0 32px;
-    `,
     spinner: css`
+      align-items: center;
       display: flex;
       justify-content: center;
-      align-items: center;
       min-height: 100px;
     `,
-    gridContainer: css`
-      display: grid;
-      gap: ${sm};
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      margin-bottom: ${md};
-    `,
-    resultsContainer: css`
-      position: relative;
-      flex-grow: 10;
-      margin-bottom: ${md};
-      background: ${theme.v1.colors.bg1};
-      border: 1px solid ${theme.v1.colors.border1};
-      border-radius: 3px;
-      height: 100%;
-    `,
-    noResults: css`
-      padding: ${md};
-      background: ${theme.v1.colors.bg2};
-      font-style: italic;
-      margin-top: ${theme.v1.spacing.md};
-    `,
-    listModeWrapper: css`
-      position: relative;
-      height: 100%;
-      padding: ${md};
+    error: css`
+      margin: ${theme.spacing(4)} auto;
     `,
   };
 };

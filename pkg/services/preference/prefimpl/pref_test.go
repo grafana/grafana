@@ -8,14 +8,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestGet_empty(t *testing.T) {
 	prefService := &Service{
-		store: newFake(),
-		cfg:   setting.NewCfg(),
+		store:    newFake(),
+		cfg:      setting.NewCfg(),
+		features: featuremgmt.WithFeatures(),
 	}
 	preference, err := prefService.Get(context.Background(), &pref.GetPreferenceQuery{})
 	require.NoError(t, err)
@@ -27,9 +29,11 @@ func TestGet_empty(t *testing.T) {
 
 func TestGetDefaults(t *testing.T) {
 	prefService := &Service{
-		store: newFake(),
-		cfg:   setting.NewCfg(),
+		store:    newFake(),
+		cfg:      setting.NewCfg(),
+		features: featuremgmt.WithFeatures(),
 	}
+	prefService.cfg.DefaultLocale = "en-US"
 	prefService.cfg.DefaultTheme = "light"
 	prefService.cfg.DateFormats.DefaultTimezone = "UTC"
 
@@ -62,11 +66,40 @@ func TestGetDefaults(t *testing.T) {
 	})
 }
 
+func TestGetDefaultsWithI18nFeatureFlag(t *testing.T) {
+	prefService := &Service{
+		store:    newFake(),
+		cfg:      setting.NewCfg(),
+		features: featuremgmt.WithFeatures(featuremgmt.FlagInternationalization),
+	}
+	prefService.cfg.DefaultLocale = "en-US"
+	prefService.cfg.DefaultTheme = "light"
+	prefService.cfg.DateFormats.DefaultTimezone = "UTC"
+
+	t.Run("GetDefaults", func(t *testing.T) {
+		preference := prefService.GetDefaults()
+		expected := &pref.Preference{
+			Theme:           "light",
+			Timezone:        "UTC",
+			HomeDashboardID: 0,
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-US",
+			},
+		}
+		if diff := cmp.Diff(expected, preference); diff != "" {
+			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+}
+
 func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 	prefService := &Service{
-		store: newFake(),
-		cfg:   setting.NewCfg(),
+		store:    newFake(),
+		cfg:      setting.NewCfg(),
+		features: featuremgmt.WithFeatures(),
 	}
+	prefService.cfg.DefaultLocale = "en-US"
+
 	insertPrefs(t, prefService.store,
 		pref.Preference{
 			OrgID:           1,
@@ -74,6 +107,9 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			Theme:           "dark",
 			Timezone:        "UTC",
 			WeekStart:       "1",
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-GB",
+			},
 		},
 		pref.Preference{
 			OrgID:           1,
@@ -82,6 +118,9 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			Theme:           "light",
 			Timezone:        "browser",
 			WeekStart:       "2",
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-AU",
+			},
 		},
 	)
 
@@ -94,7 +133,9 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			Timezone:        "browser",
 			WeekStart:       "2",
 			HomeDashboardID: 4,
-			JSONData:        &pref.PreferenceJSONData{},
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-AU",
+			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -111,7 +152,9 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			Timezone:        "UTC",
 			WeekStart:       "1",
 			HomeDashboardID: 1,
-			JSONData:        &pref.PreferenceJSONData{},
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-GB",
+			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -158,6 +201,10 @@ func TestGetDefaults_JSONData(t *testing.T) {
 	orgPreferencesJsonData := pref.PreferenceJSONData{
 		Navbar: orgNavbarPreferences,
 	}
+	orgPreferencesWithLocaleJsonData := pref.PreferenceJSONData{
+		Navbar: orgNavbarPreferences,
+		Locale: "en-GB",
+	}
 	team2PreferencesJsonData := pref.PreferenceJSONData{
 		Navbar: team2NavbarPreferences,
 	}
@@ -167,8 +214,9 @@ func TestGetDefaults_JSONData(t *testing.T) {
 
 	t.Run("users have precedence over org", func(t *testing.T) {
 		prefService := &Service{
-			store: newFake(),
-			cfg:   setting.NewCfg(),
+			store:    newFake(),
+			cfg:      setting.NewCfg(),
+			features: featuremgmt.WithFeatures(),
 		}
 
 		insertPrefs(t, prefService.store,
@@ -191,10 +239,42 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		}, preference)
 	})
 
+	t.Run("user JSONData with missing locale does not override org preference", func(t *testing.T) {
+		prefService := &Service{
+			store:    newFake(),
+			cfg:      setting.NewCfg(),
+			features: featuremgmt.WithFeatures(),
+		}
+
+		insertPrefs(t, prefService.store,
+			pref.Preference{
+				OrgID:    1,
+				JSONData: &orgPreferencesWithLocaleJsonData,
+			},
+			pref.Preference{
+				OrgID:    1,
+				UserID:   1,
+				JSONData: &userPreferencesJsonData,
+			},
+		)
+
+		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1}
+		preference, err := prefService.GetWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &pref.Preference{
+			JSONData: &pref.PreferenceJSONData{
+				Locale:       "en-GB",
+				Navbar:       userNavbarPreferences,
+				QueryHistory: queryPreference,
+			},
+		}, preference)
+	})
+
 	t.Run("teams have precedence over org and are read in ascending order", func(t *testing.T) {
 		prefService := &Service{
-			store: newFake(),
-			cfg:   setting.NewCfg(),
+			store:    newFake(),
+			cfg:      setting.NewCfg(),
+			features: featuremgmt.WithFeatures(),
 		}
 
 		insertPrefs(t, prefService.store,
@@ -227,8 +307,9 @@ func TestGetDefaults_JSONData(t *testing.T) {
 
 func TestGetWithDefaults_teams(t *testing.T) {
 	prefService := &Service{
-		store: newFake(),
-		cfg:   setting.NewCfg(),
+		store:    newFake(),
+		cfg:      setting.NewCfg(),
+		features: featuremgmt.WithFeatures(),
 	}
 	insertPrefs(t, prefService.store,
 		pref.Preference{
@@ -273,8 +354,9 @@ func TestGetWithDefaults_teams(t *testing.T) {
 
 func TestPatch_toCreate(t *testing.T) {
 	prefService := &Service{
-		store: newFake(),
-		cfg:   setting.NewCfg(),
+		store:    newFake(),
+		cfg:      setting.NewCfg(),
+		features: featuremgmt.WithFeatures(),
 	}
 
 	themeValue := "light"
@@ -293,8 +375,9 @@ func TestPatch_toCreate(t *testing.T) {
 
 func TestSave(t *testing.T) {
 	prefService := &Service{
-		store: newFake(),
-		cfg:   setting.NewCfg(),
+		store:    newFake(),
+		cfg:      setting.NewCfg(),
+		features: featuremgmt.WithFeatures(),
 	}
 
 	t.Run("insert", func(t *testing.T) {

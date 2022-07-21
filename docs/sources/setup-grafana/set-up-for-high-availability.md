@@ -35,7 +35,7 @@ For instructions on setting up alerting high availability, see [Enable alerting 
 
 **Legacy dashboard alerts**
 
-Legacy Grafana Alerting supports a limited form of high availability. In this model, [alert notifications]({{< ref "/docs/grafana/v8.5/alerting/old-alerting/notifications/" >}}) are deduplicated when running multiple servers. This means all alerts are executed on every server, but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
+Legacy Grafana Alerting supports a limited form of high availability. In this model, alert notifications are deduplicated when running multiple servers. This means all alerts are executed on every server, but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
 
 ## Grafana Live
 

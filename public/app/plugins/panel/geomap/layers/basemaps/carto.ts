@@ -2,7 +2,7 @@ import Map from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
 
 // https://carto.com/help/building-maps/basemap-list/
 
@@ -33,7 +33,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<CartoConfig>, theme: GrafanaTheme2) => ({
+  create: async (map: Map, options: MapLayerOptions<CartoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => ({
     init: () => {
       const cfg = { ...defaultCartoConfig, ...options.config };
       let style = cfg.theme as string;

@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -23,12 +26,15 @@ type FolderServiceImpl struct {
 	searchService    *search.SearchService
 	features         featuremgmt.FeatureToggles
 	permissions      accesscontrol.FolderPermissionsService
+
+	// bus is currently used to publish events that cause scheduler to update rules.
+	bus bus.Bus
 }
 
 func ProvideFolderService(
 	cfg *setting.Cfg, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store,
 	searchService *search.SearchService, features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
-	ac accesscontrol.AccessControl,
+	ac accesscontrol.AccessControl, bus bus.Bus,
 ) *FolderServiceImpl {
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
@@ -41,6 +47,7 @@ func ProvideFolderService(
 		searchService:    searchService,
 		features:         features,
 		permissions:      folderPermissionsService,
+		bus:              bus,
 	}
 }
 
@@ -87,7 +94,7 @@ func (f *FolderServiceImpl) GetFolderByID(ctx context.Context, user *models.Sign
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, models.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	return dashFolder, nil
@@ -104,7 +111,7 @@ func (f *FolderServiceImpl) GetFolderByUID(ctx context.Context, user *models.Sig
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, models.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	return dashFolder, nil
@@ -121,7 +128,7 @@ func (f *FolderServiceImpl) GetFolderByTitle(ctx context.Context, user *models.S
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, models.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	return dashFolder, nil
@@ -133,7 +140,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 
 	trimmedUID := strings.TrimSpace(uid)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
-		return nil, models.ErrFolderInvalidUID
+		return nil, dashboards.ErrFolderInvalidUID
 	}
 
 	dashFolder.SetUid(trimmedUID)
@@ -194,7 +201,7 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 	dashFolder := query.Result
 
 	if !dashFolder.IsFolder {
-		return models.ErrFolderNotFound
+		return dashboards.ErrFolderNotFound
 	}
 
 	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserId)
@@ -222,6 +229,17 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 		return err
 	}
 	cmd.Result = folder
+
+	if err := f.bus.Publish(ctx, &events.FolderUpdated{
+		Timestamp: time.Now(),
+		Title:     folder.Title,
+		ID:        dash.Id,
+		UID:       dash.Uid,
+		OrgID:     orgID,
+	}); err != nil {
+		f.log.Error("failed to publish FolderUpdated event", "folder", folder.Title, "user", user.UserId, "error", err)
+	}
+
 	return nil
 }
 
@@ -236,7 +254,7 @@ func (f *FolderServiceImpl) DeleteFolder(ctx context.Context, user *models.Signe
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, models.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
@@ -253,32 +271,32 @@ func (f *FolderServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, user
 }
 
 func toFolderError(err error) error {
-	if errors.Is(err, models.ErrDashboardTitleEmpty) {
-		return models.ErrFolderTitleEmpty
+	if errors.Is(err, dashboards.ErrDashboardTitleEmpty) {
+		return dashboards.ErrFolderTitleEmpty
 	}
 
-	if errors.Is(err, models.ErrDashboardUpdateAccessDenied) {
-		return models.ErrFolderAccessDenied
+	if errors.Is(err, dashboards.ErrDashboardUpdateAccessDenied) {
+		return dashboards.ErrFolderAccessDenied
 	}
 
-	if errors.Is(err, models.ErrDashboardWithSameNameInFolderExists) {
-		return models.ErrFolderSameNameExists
+	if errors.Is(err, dashboards.ErrDashboardWithSameNameInFolderExists) {
+		return dashboards.ErrFolderSameNameExists
 	}
 
-	if errors.Is(err, models.ErrDashboardWithSameUIDExists) {
-		return models.ErrFolderWithSameUIDExists
+	if errors.Is(err, dashboards.ErrDashboardWithSameUIDExists) {
+		return dashboards.ErrFolderWithSameUIDExists
 	}
 
-	if errors.Is(err, models.ErrDashboardVersionMismatch) {
-		return models.ErrFolderVersionMismatch
+	if errors.Is(err, dashboards.ErrDashboardVersionMismatch) {
+		return dashboards.ErrFolderVersionMismatch
 	}
 
-	if errors.Is(err, models.ErrDashboardNotFound) {
-		return models.ErrFolderNotFound
+	if errors.Is(err, dashboards.ErrDashboardNotFound) {
+		return dashboards.ErrFolderNotFound
 	}
 
-	if errors.Is(err, models.ErrDashboardFailedGenerateUniqueUid) {
-		err = models.ErrFolderFailedGenerateUniqueUid
+	if errors.Is(err, dashboards.ErrDashboardFailedGenerateUniqueUid) {
+		err = dashboards.ErrFolderFailedGenerateUniqueUid
 	}
 
 	return err

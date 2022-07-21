@@ -1,4 +1,4 @@
-import { CloudMonitoringQuery, EditorMode, MetricQuery, QueryType } from '../types';
+import { AlignmentTypes, CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery } from '../types';
 
 export const createMockMetricQuery: (overrides?: Partial<MetricQuery>) => MetricQuery = (
   overrides?: Partial<MetricQuery>
@@ -13,12 +13,29 @@ export const createMockMetricQuery: (overrides?: Partial<MetricQuery>) => Metric
   };
 };
 
-export const createMockQuery: () => CloudMonitoringQuery = () => {
+export const createMockSLOQuery: (overrides?: Partial<SLOQuery>) => SLOQuery = (overrides) => {
+  return {
+    projectName: 'projectName',
+    alignmentPeriod: 'cloud-monitoring-auto',
+    perSeriesAligner: AlignmentTypes.ALIGN_MEAN,
+    aliasBy: '',
+    selectorName: 'select_slo_health',
+    serviceId: '',
+    serviceName: '',
+    sloId: '',
+    sloName: '',
+    ...overrides,
+  };
+};
+
+export const createMockQuery: (overrides?: Partial<CloudMonitoringQuery>) => CloudMonitoringQuery = (overrides) => {
   return {
     refId: 'cloudMonitoringRefId',
     queryType: QueryType.METRICS,
     intervalMs: 0,
     type: 'timeSeriesQuery',
-    metricQuery: createMockMetricQuery(),
+    ...overrides,
+    metricQuery: createMockMetricQuery(overrides?.metricQuery),
+    sloQuery: createMockSLOQuery(overrides?.sloQuery),
   };
 };

@@ -7,6 +7,7 @@ import { Tooltip, useStyles } from '@grafana/ui';
 import { Annotation, annotationLabels } from '../utils/constants';
 
 import { DetailsField } from './DetailsField';
+import { Tokenize } from './Tokenize';
 import { Well } from './Well';
 
 const wellableAnnotationKeys = ['message', 'description'];
@@ -38,8 +39,10 @@ const AnnotationValue: FC<Props> = ({ annotationKey, value }) => {
   const needsWell = wellableAnnotationKeys.includes(annotationKey);
   const needsLink = value && value.startsWith('http');
 
+  const tokenizeValue = <Tokenize input={value} delimiter={['{{', '}}']} />;
+
   if (needsWell) {
-    return <Well className={styles.well}>{value}</Well>;
+    return <Well className={styles.well}>{tokenizeValue}</Well>;
   }
 
   if (needsLink) {
@@ -50,7 +53,7 @@ const AnnotationValue: FC<Props> = ({ annotationKey, value }) => {
     );
   }
 
-  return <>{value}</>;
+  return <>{tokenizeValue}</>;
 };
 
 export const getStyles = (theme: GrafanaTheme) => ({

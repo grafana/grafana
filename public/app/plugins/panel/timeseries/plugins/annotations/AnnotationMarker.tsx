@@ -14,7 +14,10 @@ import { AnnotationTooltip } from './AnnotationTooltip';
 interface Props extends HTMLAttributes<HTMLDivElement> {
   timeZone: TimeZone;
   annotation: AnnotationsDataFrameViewDTO;
+  width: number;
 }
+
+const MIN_REGION_ANNOTATION_WIDTH = 6;
 
 const POPPER_CONFIG = {
   modifiers: [
@@ -29,7 +32,7 @@ const POPPER_CONFIG = {
   ],
 };
 
-export function AnnotationMarker({ annotation, timeZone, style }: Props) {
+export function AnnotationMarker({ annotation, timeZone, width }: Props) {
   const { canAddAnnotations, canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
   const commonStyles = useStyles2(getCommonAnnotationStyles);
   const styles = useStyles2(getStyles);
@@ -98,15 +101,22 @@ export function AnnotationMarker({ annotation, timeZone, style }: Props) {
     );
   }, [canEditAnnotations, canDeleteAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
 
-  const isRegionAnnotation = Boolean(annotation.isRegion);
+  const isRegionAnnotation = Boolean(annotation.isRegion) && width > MIN_REGION_ANNOTATION_WIDTH;
 
+  let left = `${width / 2}px`;
   let marker = (
-    <div className={commonStyles(annotation).markerTriangle} style={{ transform: 'translate3d(-100%,-50%, 0)' }} />
+    <div
+      className={commonStyles(annotation).markerTriangle}
+      style={{ left, position: 'relative', transform: 'translate3d(-100%,-50%, 0)' }}
+    />
   );
 
   if (isRegionAnnotation) {
     marker = (
-      <div className={commonStyles(annotation).markerBar} style={{ ...style, transform: 'translate3d(0,-50%, 0)' }} />
+      <div
+        className={commonStyles(annotation).markerBar}
+        style={{ width: `${width}px`, transform: 'translate3d(0,-50%, 0)' }}
+      />
     );
   }
   return (

@@ -1,7 +1,7 @@
 package definitions
 
 import (
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 )
 
 // swagger:route POST /snapshots snapshots createSnapshot
@@ -68,7 +68,7 @@ import (
 type CreateSnapshotParams struct {
 	// in:body
 	// required:true
-	Body models.CreateDashboardSnapshotCommand `json:"body"`
+	Body dashboardsnapshots.CreateDashboardSnapshotCommand `json:"body"`
 }
 
 // swagger:parameters getSnapshots
@@ -118,7 +118,7 @@ type CreateSnapshotResponse struct {
 // swagger:response getSnapshotsResponse
 type GetSnapshotsResponse struct {
 	// in:body
-	Body []*models.DashboardSnapshotDTO `json:"body"`
+	Body []*dashboardsnapshots.DashboardSnapshotDTO `json:"body"`
 }
 
 // swagger:response snapshotResponse

@@ -5,6 +5,7 @@ import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
   AbsoluteTimeRange,
+  CoreApp,
   DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
@@ -213,10 +214,17 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
+export function addQueryRow(
+  exploreId: ExploreId,
+  index: number,
+  datasource: DataSourceApi | undefined | null
+): ThunkResult<void> {
   return (dispatch, getState) => {
     const queries = getState().explore[exploreId]!.queries;
-    const query = generateEmptyQuery(queries, index);
+    const query = {
+      ...datasource?.getDefaultQuery?.(CoreApp.Explore),
+      ...generateEmptyQuery(queries, index),
+    };
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };

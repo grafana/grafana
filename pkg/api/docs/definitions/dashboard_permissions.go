@@ -73,7 +73,7 @@ type GetDashboardPermissionsParams struct {
 type PostDashboardPermissionsParams struct {
 	// in:body
 	// required:true
-	Body dtos.UpdateDashboardAclCommand
+	Body dtos.UpdateDashboardACLCommand
 	// in:path
 	DashboardID int64
 }
@@ -82,7 +82,7 @@ type PostDashboardPermissionsParams struct {
 type PostDashboardPermissionsWithUIDParams struct {
 	// in:body
 	// required:true
-	Body dtos.UpdateDashboardAclCommand
+	Body dtos.UpdateDashboardACLCommand
 	// in:path
 	// required:true
 	// description: The dashboard UID
@@ -92,5 +92,5 @@ type PostDashboardPermissionsWithUIDParams struct {
 // swagger:response getDashboardPermissionsResponse
 type GetDashboardPermissionsResponse struct {
 	// in: body
-	Body []*models.DashboardAclInfoDTO `json:"body"`
+	Body []*models.DashboardACLInfoDTO `json:"body"`
 }
