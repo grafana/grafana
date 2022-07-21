@@ -110,8 +110,6 @@ Authorization: Basic YWRtaW46YWRtaW4=
 }
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
-
 **Example Response**:
 
 ```http
@@ -152,8 +150,6 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
-
-Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -201,8 +197,6 @@ Authorization: Basic YWRtaW46YWRtaW4=
 }
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
-
 **Example Response**:
 
 ```http
@@ -225,8 +219,6 @@ Content-Type: application/json
 
 ---
 
-## Service account tokens
-
 ## Get service account tokens
 
 `GET /api/serviceaccounts/:id/tokens`
@@ -247,8 +239,6 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
-
-Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -295,8 +285,6 @@ Authorization: Basic YWRtaW46YWRtaW4=
 }
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
-
 **Example Response**:
 
 ```http
@@ -331,8 +319,6 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
-
 **Example Response**:
 
 ```http
@@ -341,5 +327,39 @@ Content-Type: application/json
 
 {
 	"message": "API key deleted"
+}
+```
+
+## Revert service account token to API key
+
+`DELETE /api/serviceaccounts/revert/:keyId`
+
+This operation will delete the service account and create a legacy API Key for the given `keyId`.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                 | Scope |
+| ---------------------- | ----- |
+| serviceaccounts:delete | n/a   |
+
+**Example Request**:
+
+```http
+DELETE /api/serviceaccounts/revert/glsa_VVQjot0nijQ59lun6pMZRtsdBXxnFQ9M_77c34a79 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "Reverted service account to API key"
 }
 ```
