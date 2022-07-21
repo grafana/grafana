@@ -14,6 +14,7 @@ func (s *EntityService) init() error {
 		// Core types
 		//----------------------
 		&kind.DashboardKind{},
+		&kind.DataSourceKind{},
 
 		// Images
 		//----------------------
