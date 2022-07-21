@@ -166,8 +166,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ weekStart: weekStart });
   };
 
-  onHomeDashboardChanged = (dashboardId: string) => {
-    this.setState({ homeDashboardUID: dashboardId });
+  onHomeDashboardChanged = (dashboardUID: string) => {
+    this.setState({ homeDashboardUID: dashboardUID });
   };
 
   onLocaleChanged = (locale: string) => {
