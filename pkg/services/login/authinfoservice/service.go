@@ -25,13 +25,7 @@ func ProvideAuthInfoService(userProtectionService login.UserProtectionService, a
 		authInfoStore:         authInfoStore,
 		logger:                log.New("login.authinfo"),
 	}
-	// collect login stats
-	go func() {
-		err := authInfoStore.RunMetricsCollection(context.Background())
-		if err != nil {
-			s.logger.Info("error running metrics for authinfostore collection %s", err)
-		}
-	}()
+	usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
 	return s
 }
 
@@ -200,4 +194,9 @@ func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInf
 
 func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	return s.authInfoStore.GetExternalUserInfoByLogin(ctx, query)
+}
+
+func (s *Implementation) Run(ctx context.Context) error {
+	s.logger.Debug("Started AuthInfo Metrics collection service")
+	return s.authInfoStore.RunMetricsCollection(ctx)
 }

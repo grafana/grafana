@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type loginStats struct {
+type LoginStats struct {
 	DuplicateUserEntries int `xorm:"duplicate_user_entries"`
 	MixedCasedUsers      int `xorm:"mixed_cased_users"`
 }
@@ -81,12 +81,12 @@ func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
 	}
 }
 
-func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (loginStats, error) {
-	var stats loginStats
+func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (LoginStats, error) {
+	var stats LoginStats
 	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		rawSQL := `SELECT
-			(SELECT COUNT(*) FROM (` + s.duplicateUserEntriesSQL(ctx) + `)) as duplicate_user_entries,
-			(SELECT COUNT(*) FROM (` + s.mixedCasedUsers(ctx) + `)) as mixed_cased_users
+		(SELECT COUNT(*) as duplicate_user_entries FROM (` + s.duplicateUserEntriesSQL(ctx) + `) AS d WHERE (d.dup_login IS NOT NULL OR d.dup_email IS NOT NULL),
+		(SELECT COUNT(*) FROM (` + s.mixedCasedUsers(ctx) + `)) as mixed_cased_users
 		`
 		_, err := dbSession.SQL(rawSQL).Get(&stats)
 		return err
@@ -129,17 +129,14 @@ func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]inter
 }
 
 func (s *AuthInfoStore) duplicateUserEntriesSQL(ctx context.Context) string {
-	userDialect := db.DB.GetDialect(s.sqlStore).Quote("user")
+	userDialect := s.sqlStore.GetDialect().Quote("user")
 	// this query counts how many users have the same login or email.
 	// which might be confusing, but gives a good indication
-	// why: one of the reasons we made it this way is
-	// to not require too much cpu
+	// we want this query to not require too much cpu
 	sqlQuery := `SELECT
 		(SELECT login from ` + userDialect + ` WHERE (LOWER(login) = LOWER(u.login)) AND (login != u.login)) AS dup_login,
 		(SELECT email from ` + userDialect + ` WHERE (LOWER(email) = LOWER(u.email)) AND (email != u.email)) AS dup_email
-	FROM ` + userDialect + ` AS u
-	WHERE (dup_login IS NOT NULL OR dup_email IS NOT NULL)
-	`
+	FROM ` + userDialect + ` AS u`
 	return sqlQuery
 }
 

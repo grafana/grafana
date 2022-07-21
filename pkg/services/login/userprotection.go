@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -23,4 +24,5 @@ type Store interface {
 	GetUserByEmail(ctx context.Context, email string) (*user.User, error)
 	CollectLoginStats(ctx context.Context) (map[string]interface{}, error)
 	RunMetricsCollection(ctx context.Context) error
+	GetLoginStats(ctx context.Context) (database.LoginStats, error)
 }
