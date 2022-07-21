@@ -34,6 +34,8 @@ const GroupedModeView: FC<GroupedModeProps> = ({ rules, options }) => {
       });
     });
 
+    // Remove groups having no instances
+    // This is different from filtering Rules without instances that we do in UnifiedAlertList
     const filteredGroupedRules = Array.from(groupedRules.entries()).reduce((acc, [groupKey, groupAlerts]) => {
       const filteredAlerts = filterAlerts(options, groupAlerts);
       if (filteredAlerts.length > 0) {

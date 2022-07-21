@@ -144,13 +144,13 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
     const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
     const matchers = parseMatchers(replacedLabelFilter);
     // Reduce rules and instances to only those that match
-    filteredRules = filteredRules.reduce((rules, rule) => {
+    filteredRules = filteredRules.reduce<PromRuleWithLocation[]>((rules, rule) => {
       const filteredAlerts = (rule.rule.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
       if (filteredAlerts.length) {
         rules.push({ ...rule, rule: { ...rule.rule, alerts: filteredAlerts } });
       }
       return rules;
-    }, [] as PromRuleWithLocation[]);
+    }, []);
   }
 
   if (options.folder) {
@@ -168,6 +168,9 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
     );
   }
 
+  // Remove rules having 0 instances
+  // AlertInstances filters instances and we need to prevent situation
+  // when we display a rule with 0 instances
   filteredRules = filteredRules.reduce<PromRuleWithLocation[]>((rules, rule) => {
     const filteredAlerts = filterAlerts(options, rule.rule.alerts ?? []);
     if (filteredAlerts.length) {
