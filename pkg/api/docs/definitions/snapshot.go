@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 )
 
@@ -122,7 +123,7 @@ type GetSnapshotsResponse struct {
 }
 
 // swagger:response snapshotResponse
-type SnapshotResponse DashboardResponse
+type SnapshotResponse api.DashboardResponse
 
 // swagger:response getSnapshotSharingOptionsResponse
 type GetSnapshotSharingOptionsResponse struct {
