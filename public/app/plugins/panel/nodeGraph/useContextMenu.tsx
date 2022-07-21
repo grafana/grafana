@@ -172,9 +172,20 @@ function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
 function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const index = props.edge.dataFrameRowIndex;
   const fields = getEdgeFields(props.edges);
+  const styles = getLabelStyles(useTheme());
+  const valueSource = fields.source?.values.get(index) || '';
+  const valueTarget = fields.target?.values.get(index) || '';
+
   return (
     <div>
-      {fields.title && <Label field={fields.title} index={index} />}
+      {fields.title && (
+        <div className={styles.label}>
+          <div>Source → Target</div>
+          <span className={styles.value}>
+            {valueSource} → {valueTarget}
+          </span>
+        </div>
+      )}
       {fields.details.map((f) => (
         <Label key={f.name} field={f} index={index} />
       ))}
