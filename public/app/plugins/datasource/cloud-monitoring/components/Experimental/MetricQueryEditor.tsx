@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRows } from '@grafana/experimental';
+import { EditorRows } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../../datasource';
 import { getAlignmentPickerData } from '../../functions';

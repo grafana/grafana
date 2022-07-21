@@ -22,7 +22,7 @@ import (
 // Get folder by uid.
 //
 // Responses:
-// 200:
+// 200: folderResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError

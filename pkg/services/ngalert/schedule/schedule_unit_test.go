@@ -16,6 +16,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	prometheusModel "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	busmock "github.com/grafana/grafana/pkg/bus/mock"
@@ -23,13 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -38,317 +39,20 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestSendingToExternalAlertmanager(t *testing.T) {
-	fakeAM := store.NewFakeExternalAlertmanager(t)
-	defer fakeAM.Close()
-	fakeRuleStore := store.NewFakeRuleStore(t)
-	fakeInstanceStore := &store.FakeInstanceStore{}
-	fakeAdminConfigStore := store.NewFakeAdminConfigStore(t)
-
-	// create alert rule with one second interval
-	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1, eval.Alerting)
-
-	// First, let's create an admin configuration that holds an alertmanager.
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers}
-	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	sched, mockedClock, alertsRouter := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore, nil)
-
-	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
-	// when the first alert triggers.
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	alertsRouter.AdminConfigMtx.Lock()
-	require.Equal(t, 1, len(alertsRouter.Senders))
-	require.Equal(t, 1, len(alertsRouter.SendersCfgHash))
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Then, ensure we've discovered the Alertmanager.
-	require.Eventually(t, func() bool {
-		return len(alertsRouter.AlertmanagersFor(1)) == 1 && len(alertsRouter.DroppedAlertmanagersFor(1)) == 0
-	}, 10*time.Second, 200*time.Millisecond)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(func() {
-		cancel()
-	})
-	go func() {
-		err := sched.Run(ctx)
-		require.NoError(t, err)
-	}()
-
-	// With everything up and running, let's advance the time to make sure we get at least one alert iteration.
-	mockedClock.Add(2 * time.Second)
-
-	// Eventually, our Alertmanager should have received at least one alert.
-	require.Eventually(t, func() bool {
-		return fakeAM.AlertsCount() >= 1 && fakeAM.AlertNamesCompare([]string{alertRule.Title})
-	}, 10*time.Second, 200*time.Millisecond)
-
-	// Now, let's remove the Alertmanager from the admin configuration.
-	adminConfig.Alertmanagers = []string{}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	// Again, make sure we sync and verify the senders.
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	alertsRouter.AdminConfigMtx.Lock()
-	require.Equal(t, 0, len(alertsRouter.Senders))
-	require.Equal(t, 0, len(alertsRouter.SendersCfgHash))
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Then, ensure we've dropped the Alertmanager.
-	require.Eventually(t, func() bool {
-		return len(alertsRouter.AlertmanagersFor(1)) == 0 && len(alertsRouter.DroppedAlertmanagersFor(1)) == 0
-	}, 10*time.Second, 200*time.Millisecond)
-}
-
-func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
-	fakeAM := store.NewFakeExternalAlertmanager(t)
-	defer fakeAM.Close()
-	fakeRuleStore := store.NewFakeRuleStore(t)
-	fakeInstanceStore := &store.FakeInstanceStore{}
-	fakeAdminConfigStore := store.NewFakeAdminConfigStore(t)
-
-	// First, let's create an admin configuration that holds an alertmanager.
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.Server.URL}}
-	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	sched, mockedClock, alertsRouter := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore, nil)
-
-	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
-	// when the first alert triggers.
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	alertsRouter.AdminConfigMtx.Lock()
-	require.Equal(t, 1, len(alertsRouter.Senders))
-	require.Equal(t, 1, len(alertsRouter.SendersCfgHash))
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Then, ensure we've discovered the Alertmanager.
-	require.Eventuallyf(t, func() bool {
-		return len(alertsRouter.AlertmanagersFor(1)) == 1 && len(alertsRouter.DroppedAlertmanagersFor(1)) == 0
-	}, 10*time.Second, 200*time.Millisecond, "Alertmanager for org 1 was never discovered")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(func() {
-		cancel()
-	})
-	go func() {
-		err := sched.Run(ctx)
-		require.NoError(t, err)
-	}()
-
-	// 1. Now, let's assume a new org comes along.
-	adminConfig2 := &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.Server.URL}}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	// If we sync again, new senders must have spawned.
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	alertsRouter.AdminConfigMtx.Lock()
-	require.Equal(t, 2, len(alertsRouter.Senders))
-	require.Equal(t, 2, len(alertsRouter.SendersCfgHash))
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Then, ensure we've discovered the Alertmanager for the new organization.
-	require.Eventuallyf(t, func() bool {
-		return len(alertsRouter.AlertmanagersFor(2)) == 1 && len(alertsRouter.DroppedAlertmanagersFor(2)) == 0
-	}, 10*time.Second, 200*time.Millisecond, "Alertmanager for org 2 was never discovered")
-
-	// With everything up and running, let's advance the time to make sure we get at least one alert iteration.
-	mockedClock.Add(10 * time.Second)
-
-	// TODO(gotjosh): Disabling this assertion as for some reason even after advancing the clock the alert is not being delivered.
-	// the check previous to this assertion would ensure that the sender is up and running before sending the notification.
-	// However, sometimes this does not happen.
-
-	// Create two alert rules with one second interval.
-	// alertRuleOrgOne := CreateTestAlertRule(t, FakeRuleStore, 1, 1)
-	// alertRuleOrgTwo := CreateTestAlertRule(t, FakeRuleStore, 1, 2)
-	// Eventually, our Alertmanager should have received at least two alerts.
-	// var count int
-	// require.Eventuallyf(t, func() bool {
-	//	count := fakeAM.AlertsCount()
-	//	return count == 2 && fakeAM.AlertNamesCompare([]string{alertRuleOrgOne.Title, alertRuleOrgTwo.Title})
-	// }, 20*time.Second, 200*time.Millisecond, "Alertmanager never received an '%s' from org 1 or '%s' from org 2, the alert count was: %d", alertRuleOrgOne.Title, alertRuleOrgTwo.Title, count)
-
-	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
-	fakeAM2 := store.NewFakeExternalAlertmanager(t)
-	adminConfig2 = &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.Server.URL, fakeAM2.Server.URL}}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	// Before we sync, let's grab the existing hash of this particular org.
-	alertsRouter.AdminConfigMtx.Lock()
-	currentHash := alertsRouter.SendersCfgHash[2]
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Now, sync again.
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-
-	// The hash for org two should not be the same and we should still have two senders.
-	alertsRouter.AdminConfigMtx.Lock()
-	require.NotEqual(t, alertsRouter.SendersCfgHash[2], currentHash)
-	require.Equal(t, 2, len(alertsRouter.Senders))
-	require.Equal(t, 2, len(alertsRouter.SendersCfgHash))
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Wait for the discovery of the new Alertmanager for orgID = 2.
-	require.Eventuallyf(t, func() bool {
-		return len(alertsRouter.AlertmanagersFor(2)) == 2 && len(alertsRouter.DroppedAlertmanagersFor(2)) == 0
-	}, 10*time.Second, 200*time.Millisecond, "Alertmanager for org 2 was never re-discovered after fix")
-
-	// 3. Now, let's provide a configuration that fails for OrgID = 1.
-	adminConfig2 = &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{"123://invalid.org"}}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	// Before we sync, let's get the current config hash.
-	alertsRouter.AdminConfigMtx.Lock()
-	currentHash = alertsRouter.SendersCfgHash[1]
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Now, sync again.
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-
-	// The old configuration should still be running.
-	alertsRouter.AdminConfigMtx.Lock()
-	require.Equal(t, alertsRouter.SendersCfgHash[1], currentHash)
-	alertsRouter.AdminConfigMtx.Unlock()
-	require.Equal(t, 1, len(alertsRouter.AlertmanagersFor(1)))
-
-	// If we fix it - it should be applied.
-	adminConfig2 = &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{"notarealalertmanager:3030"}}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	alertsRouter.AdminConfigMtx.Lock()
-	require.NotEqual(t, alertsRouter.SendersCfgHash[1], currentHash)
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Finally, remove everything.
-	require.NoError(t, fakeAdminConfigStore.DeleteAdminConfiguration(1))
-	require.NoError(t, fakeAdminConfigStore.DeleteAdminConfiguration(2))
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	alertsRouter.AdminConfigMtx.Lock()
-	require.Equal(t, 0, len(alertsRouter.Senders))
-	require.Equal(t, 0, len(alertsRouter.SendersCfgHash))
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	require.Eventuallyf(t, func() bool {
-		NoAlertmanagerOrgOne := len(alertsRouter.AlertmanagersFor(1)) == 0 && len(alertsRouter.DroppedAlertmanagersFor(1)) == 0
-		NoAlertmanagerOrgTwo := len(alertsRouter.AlertmanagersFor(2)) == 0 && len(alertsRouter.DroppedAlertmanagersFor(2)) == 0
-
-		return NoAlertmanagerOrgOne && NoAlertmanagerOrgTwo
-	}, 10*time.Second, 200*time.Millisecond, "Alertmanager for org 1 and 2 were never removed")
-}
-
-func TestChangingAlertmanagersChoice(t *testing.T) {
-	fakeAM := store.NewFakeExternalAlertmanager(t)
-	defer fakeAM.Close()
-	fakeRuleStore := store.NewFakeRuleStore(t)
-	fakeInstanceStore := &store.FakeInstanceStore{}
-	fakeAdminConfigStore := store.NewFakeAdminConfigStore(t)
-
-	// create alert rule with one second interval and an Alertmanagers choice.
-	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1, eval.Alerting)
-
-	// First, let's create an admin configuration that holds an alertmanager
-	// and sends alerts to both internal and external alertmanagers (default).
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.Server.URL}}
-	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	sched, mockedClock, alertsRouter := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore, nil)
-
-	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
-	// when the first alert triggers.
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	alertsRouter.AdminConfigMtx.Lock()
-	require.Equal(t, 1, len(alertsRouter.Senders))
-	require.Equal(t, 1, len(alertsRouter.SendersCfgHash))
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Then, ensure we've discovered the Alertmanager and the Alertmanagers choice is correct.
-	require.Eventually(t, func() bool {
-		return len(alertsRouter.AlertmanagersFor(1)) == 1 &&
-			len(alertsRouter.DroppedAlertmanagersFor(1)) == 0 &&
-			alertsRouter.SendAlertsTo[1] == adminConfig.SendAlertsTo
-	}, 10*time.Second, 200*time.Millisecond)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(func() {
-		cancel()
-	})
-	go func() {
-		err := sched.Run(ctx)
-		require.NoError(t, err)
-	}()
-
-	// With everything up and running, let's advance the time to make sure we get at least one alert iteration.
-	mockedClock.Add(2 * time.Second)
-
-	// Eventually, our Alertmanager should have received alerts.
-	require.Eventuallyf(t, func() bool {
-		return fakeAM.AlertsCount() >= 1 &&
-			fakeAM.AlertNamesCompare([]string{alertRule.Title})
-	}, 10*time.Second, 200*time.Millisecond, "expected at least one alert to be received and the title of the first one to be '%s'. but got [%d]: [%v]", alertRule.Title, fakeAM.AlertsCount(), fakeAM.Alerts())
-
-	// Now, let's change the Alertmanagers choice to send only to the external Alertmanager.
-	adminConfig.SendAlertsTo = models.ExternalAlertmanagers
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	// Again, make sure we sync and verify the senders.
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	alertsRouter.AdminConfigMtx.Lock()
-	require.Equal(t, 1, len(alertsRouter.Senders))
-	require.Equal(t, 1, len(alertsRouter.SendersCfgHash))
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Then, ensure we still have the Alertmanager but the Alertmanagers choice has changed.
-	require.Eventually(t, func() bool {
-		return len(alertsRouter.AlertmanagersFor(1)) == 1 &&
-			len(alertsRouter.DroppedAlertmanagersFor(1)) == 0 &&
-			alertsRouter.SendAlertsTo[1] == adminConfig.SendAlertsTo
-	}, 10*time.Second, 200*time.Millisecond)
-
-	// Finally, let's change the Alertmanagers choice to send only to the internal Alertmanager.
-	adminConfig.SendAlertsTo = models.InternalAlertmanager
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	// Again, make sure we sync and verify the senders.
-	// Senders should be running even though alerts are being handled externally.
-	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	alertsRouter.AdminConfigMtx.Lock()
-	require.Equal(t, 1, len(alertsRouter.Senders))
-	require.Equal(t, 1, len(alertsRouter.SendersCfgHash))
-	alertsRouter.AdminConfigMtx.Unlock()
-
-	// Then, ensure the Alertmanager is still listed and the Alertmanagers choice has changed.
-	require.Eventually(t, func() bool {
-		return len(alertsRouter.AlertmanagersFor(1)) == 1 &&
-			len(alertsRouter.DroppedAlertmanagersFor(1)) == 0 &&
-			alertsRouter.SendAlertsTo[1] == adminConfig.SendAlertsTo
-	}, 10*time.Second, 200*time.Millisecond)
-}
-
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, *store.FakeAdminConfigStore, prometheus.Gatherer, *sender.AlertsRouter) {
+		senderMock *AlertsSenderMock,
+	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, prometheus.Gatherer) {
 		ruleStore := store.NewFakeRuleStore(t)
 		instanceStore := &store.FakeInstanceStore{}
-		adminConfigStore := store.NewFakeAdminConfigStore(t)
 
 		registry := prometheus.NewPedanticRegistry()
-		sch, _, alertsRouter := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, registry)
+		sch, _ := setupScheduler(t, ruleStore, instanceStore, registry, senderMock)
 		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
 			evalAppliedChan <- t
 		}
-		return sch, ruleStore, instanceStore, adminConfigStore, registry, alertsRouter
+		return sch, ruleStore, instanceStore, registry
 	}
 
 	// normal states do not include NoData and Error because currently it is not possible to perform any sensible test
@@ -364,7 +68,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		t.Run(fmt.Sprintf("when rule evaluation happens (evaluation state %s)", evalState), func(t *testing.T) {
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
-			sch, ruleStore, instanceStore, _, reg, _ := createSchedule(evalAppliedChan)
+			sch, ruleStore, instanceStore, reg := createSchedule(evalAppliedChan, nil)
 
 			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), evalState)
 
@@ -483,7 +187,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	t.Run("should exit", func(t *testing.T) {
 		t.Run("when context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
-			sch, _, _, _, _, _ := createSchedule(make(chan time.Time))
+			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
@@ -502,7 +206,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
 
 		ctx := context.Background()
-		sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, nil)
 
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
@@ -554,7 +258,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
 
-		sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, nil)
 
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
@@ -606,7 +310,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
 			updateChan := make(chan ruleVersion)
 
-			sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, nil)
 
 			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), eval.Alerting) // we want the alert to fire
 
@@ -649,7 +353,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
 			updateChan := make(chan ruleVersion)
 
-			sch, ruleStore, _, _, _, _ := createSchedule(evalAppliedChan)
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, nil)
 			sch.maxAttempts = rand.Int63n(4) + 1
 
 			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
@@ -681,32 +385,20 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 	t.Run("when rule version is updated", func(t *testing.T) {
 		t.Run("should clear the state and expire firing alerts", func(t *testing.T) {
-			fakeAM := store.NewFakeExternalAlertmanager(t)
-			defer fakeAM.Close()
-
 			orgID := rand.Int63()
-			s, err := sender.New()
-			require.NoError(t, err)
-			adminConfig := &models.AdminConfiguration{OrgID: orgID, Alertmanagers: []string{fakeAM.Server.URL}}
-			err = s.ApplyConfig(adminConfig)
-			require.NoError(t, err)
-			s.Run()
-			defer s.Stop()
-
-			require.Eventuallyf(t, func() bool {
-				return len(s.Alertmanagers()) == 1
-			}, 20*time.Second, 200*time.Millisecond, "external Alertmanager was not discovered.")
 
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
 			updateChan := make(chan ruleVersion)
 
-			ctx := context.Background()
-			sch, ruleStore, _, _, _, alertsRouter := createSchedule(evalAppliedChan)
-			alertsRouter.Senders[orgID] = s
+			sender := AlertsSenderMock{}
 
-			var rulePtr = CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting) // we want the alert to fire
-			var rule = *rulePtr
+			ctx := context.Background()
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+
+			var rule = CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting) // we want the alert to fire
+
+			sender.EXPECT().Send(rule.GetKey(), mock.Anything)
 
 			// define some state
 			states := make([]*state.State, 0, len(allStates))
@@ -754,26 +446,23 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			updateChan <- ruleVersion(rule.Version)
 
 			wg.Wait()
-			newRule := rule
+			newRule := models.CopyRule(rule)
 			newRule.Version++
-			ruleStore.PutRule(ctx, &newRule)
+			ruleStore.PutRule(ctx, newRule)
 			wg.Add(1)
 			updateChan <- ruleVersion(newRule.Version)
 			wg.Wait()
 
 			require.Eventually(t, func() bool {
-				return len(sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)) == 0
+				return len(sender.Calls) > 0
 			}, 5*time.Second, 100*time.Millisecond)
 
-			var count int
-			require.Eventuallyf(t, func() bool {
-				count = fakeAM.AlertsCount()
-				return count == expectedToBeSent
-			}, 20*time.Second, 200*time.Millisecond, "Alertmanager was expected to receive %d alerts, but received only %d", expectedToBeSent, count)
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
-			for _, alert := range fakeAM.Alerts() {
-				require.Equalf(t, sch.clock.Now().UTC(), time.Time(alert.EndsAt).UTC(), "Alert received by Alertmanager should be expired as of now")
-			}
+			sender.AssertExpectations(t)
+			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
+			require.Len(t, args.PostableAlerts, expectedToBeSent)
 		})
 	})
 
@@ -789,34 +478,21 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	})
 
 	t.Run("when there are alerts that should be firing", func(t *testing.T) {
-		t.Run("it should send to local alertmanager if configured for organization", func(t *testing.T) {
-			// TODO figure out how to simulate multiorg alertmanager
-			t.Skip()
-		})
-		t.Run("it should send to external alertmanager if configured for organization", func(t *testing.T) {
-			fakeAM := store.NewFakeExternalAlertmanager(t)
-			defer fakeAM.Close()
-
+		t.Run("it should call sender", func(t *testing.T) {
 			orgID := rand.Int63()
-			s, err := sender.New()
-			require.NoError(t, err)
-			adminConfig := &models.AdminConfiguration{OrgID: orgID, Alertmanagers: []string{fakeAM.Server.URL}}
-			err = s.ApplyConfig(adminConfig)
-			require.NoError(t, err)
-			s.Run()
-			defer s.Stop()
-
-			require.Eventuallyf(t, func() bool {
-				return len(s.Alertmanagers()) == 1
-			}, 20*time.Second, 200*time.Millisecond, "external Alertmanager was not discovered.")
 
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
 
-			sch, ruleStore, _, _, _, alertsRouter := createSchedule(evalAppliedChan)
-			alertsRouter.Senders[orgID] = s
+			sender := AlertsSenderMock{}
+
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+
 			// eval.Alerting makes state manager to create notifications for alertmanagers
 			rule := CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting)
+			folder, _ := ruleStore.GetNamespaceByUID(context.Background(), rule.NamespaceUID, orgID, nil)
+
+			sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
@@ -828,13 +504,22 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				scheduledAt: time.Now(),
 				version:     rule.Version,
 			}
+
 			waitForTimeChannel(t, evalAppliedChan)
 
-			var count int
-			require.Eventuallyf(t, func() bool {
-				count = fakeAM.AlertsCount()
-				return count == 1 && fakeAM.AlertNamesCompare([]string{rule.Title})
-			}, 20*time.Second, 200*time.Millisecond, "Alertmanager never received an '%s', received alerts count: %d", rule.Title, count)
+			sender.AssertExpectations(t)
+			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
+
+			require.Len(t, args.PostableAlerts, 1)
+
+			t.Run("should add extra labels", func(t *testing.T) {
+				alert := args.PostableAlerts[0]
+				assert.Equal(t, rule.UID, alert.Labels[models.RuleUIDLabel])
+				assert.Equal(t, rule.NamespaceUID, alert.Labels[models.NamespaceUIDLabel])
+				assert.Equal(t, rule.Title, alert.Labels[prometheusModel.AlertNameLabel])
+				assert.Equal(t, folder.Title, alert.Labels[models.FolderTitleLabel])
+			})
 		})
 	})
 
@@ -925,12 +610,11 @@ func setupSchedulerWithFakeStores(t *testing.T) *schedule {
 	t.Helper()
 	ruleStore := store.NewFakeRuleStore(t)
 	instanceStore := &store.FakeInstanceStore{}
-	adminConfigStore := store.NewFakeAdminConfigStore(t)
-	sch, _, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, nil)
+	sch, _ := setupScheduler(t, ruleStore, instanceStore, nil, nil)
 	return sch
 }
 
-func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock, *sender.AlertsRouter) {
+func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock) (*schedule, *clock.Mock) {
 	t.Helper()
 
 	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
@@ -942,16 +626,16 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	}
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
-	require.NoError(t, err)
 
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
 
-	alertsRouter := sender.NewAlertsRouter(moa, acs, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute) // do not poll in unit tests.
+	if senderMock == nil {
+		senderMock = &AlertsSenderMock{}
+		senderMock.EXPECT().Send(mock.Anything, mock.Anything).Return()
+	}
 
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval:            time.Second,
@@ -967,10 +651,10 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		InstanceStore: is,
 		Logger:        logger,
 		Metrics:       m.GetSchedulerMetrics(),
-		AlertSender:   alertsRouter,
+		AlertSender:   senderMock,
 	}
 	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
-	return NewScheduler(schedCfg, appUrl, st, busmock.New()), mockedClock, alertsRouter
+	return NewScheduler(schedCfg, appUrl, st, busmock.New()), mockedClock
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
