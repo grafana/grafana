@@ -30,49 +30,64 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   const clearPrevious = true;
   const showSegments = false;
 
+  function toggleMenu() {
+    setMenuActive(!menuActive);
+    // Lift menu state
+    // TODO: consolidate into one state
+    menuActiveState(!menuActive);
+    if (menuActive) {
+      map.removeInteraction(draw);
+      vector.set('visible', false);
+    } else {
+      if (firstLoad) {
+        // Initialize on first load
+        setFirstLoad(false);
+        map.addLayer(vector);
+        map.addInteraction(modify);
+      }
+      vector.set('visible', true);
+      map.removeInteraction(draw); // Remove last interaction
+      addInteraction(map, typeSelect, showSegments, clearPrevious);
+    }
+  }
+
   return (
-    <div className={measureStyle.infoWrap} style={{ paddingBottom: '4px' }}>
-      {menuActive ? (
-        <RadioButtonGroup
-          value={typeSelect}
-          options={[
-            { label: 'Length', value: 'LineString' },
-            { label: 'Area', value: 'Polygon' },
-          ]}
-          size="sm"
-          onChange={(e) => {
-            map.removeInteraction(draw);
-            setTypeSelect(e);
-            addInteraction(map, e, showSegments, clearPrevious);
-          }}
-        />
-      ) : null}
+    <div className={`${measureStyle.infoWrap} ol-unselectable ol-control`} style={{ backgroundColor: '#22252b' }}>
       <IconButton
         name="ruler-combined"
-        style={{ marginLeft: '5px' }}
+        style={{ backgroundColor: 'rgba(204, 204, 220, 0.16)', display: 'inline-block', marginRight: '5px' }}
         tooltip={`${menuActive ? 'hide' : 'show'} measure tools`}
         tooltipPlacement="right"
         onClick={() => {
-          setMenuActive(!menuActive);
-          // Lift menu state
-          // TODO: consolidate into one state
-          menuActiveState(!menuActive);
-          if (menuActive) {
-            map.removeInteraction(draw);
-            vector.set('visible', false);
-          } else {
-            if (firstLoad) {
-              // Initialize on first load
-              setFirstLoad(false);
-              map.addLayer(vector);
-              map.addInteraction(modify);
-            }
-            vector.set('visible', true);
-            map.removeInteraction(draw); // Remove last interaction
-            addInteraction(map, typeSelect, showSegments, clearPrevious);
-          }
+          toggleMenu();
         }}
       />
+      {menuActive ? (
+        <>
+          <IconButton
+            name="angle-left"
+            style={{ float: 'right' }}
+            tooltip="hide measure tools"
+            tooltipPlacement="right"
+            onClick={() => {
+              toggleMenu();
+            }}
+          />
+          <RadioButtonGroup
+            value={typeSelect}
+            options={[
+              { label: 'length', value: 'LineString' },
+              { label: 'area', value: 'Polygon' },
+            ]}
+            size="sm"
+            onChange={(e) => {
+              map.removeInteraction(draw);
+              setTypeSelect(e);
+              addInteraction(map, e, showSegments, clearPrevious);
+            }}
+          />
+        </>
+      ) : null}
     </div>
   );
 };
