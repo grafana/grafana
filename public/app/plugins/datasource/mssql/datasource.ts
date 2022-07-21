@@ -1,9 +1,14 @@
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import { AGGREGATE_FNS } from 'app/features/plugins/sql/constants';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import { DB, ResponseParser, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
+import {
+  DB,
+  LanguageCompletionProvider,
+  ResponseParser,
+  SQLQuery,
+  SQLSelectableValue,
+} from 'app/features/plugins/sql/types';
 
 import { getSchema, showDatabases, showTables } from './MSSqlMetaQuery';
 import { MSSqlQueryModel } from './MSSqlQueryModel';

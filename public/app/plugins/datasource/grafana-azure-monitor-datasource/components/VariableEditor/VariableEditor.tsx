@@ -34,6 +34,8 @@ const VariableEditor = (props: Props) => {
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery });
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Namespaces', value: AzureQueryType.NamespacesQuery });
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Names', value: AzureQueryType.ResourceNamesQuery });
+    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Metric Names', value: AzureQueryType.MetricNamesQuery });
+    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Workspaces', value: AzureQueryType.WorkspacesQuery });
   }
   const [variableOptionGroup, setVariableOptionGroup] = useState<{ label: string; options: AzureMonitorOption[] }>({
     label: 'Template Variables',
@@ -42,9 +44,13 @@ const VariableEditor = (props: Props) => {
   const [requireSubscription, setRequireSubscription] = useState(false);
   const [hasResourceGroup, setHasResourceGroup] = useState(false);
   const [hasNamespace, setHasNamespace] = useState(false);
+  const [requireResourceGroup, setRequireResourceGroup] = useState(false);
+  const [requireNamespace, setRequireNamespace] = useState(false);
+  const [requireResource, setRequireResource] = useState(false);
   const [subscriptions, setSubscriptions] = useState<SelectableValue[]>([]);
   const [resourceGroups, setResourceGroups] = useState<SelectableValue[]>([]);
   const [namespaces, setNamespaces] = useState<SelectableValue[]>([]);
+  const [resources, setResources] = useState<SelectableValue[]>([]);
   const [errorMessage, setError] = useLastError();
   const queryType = typeof query === 'string' ? '' : query.queryType;
 
@@ -58,8 +64,12 @@ const VariableEditor = (props: Props) => {
     setRequireSubscription(false);
     setHasResourceGroup(false);
     setHasNamespace(false);
+    setRequireResourceGroup(false);
+    setRequireNamespace(false);
+    setRequireResource(false);
     switch (queryType) {
       case AzureQueryType.ResourceGroupsQuery:
+      case AzureQueryType.WorkspacesQuery:
         setRequireSubscription(true);
         break;
       case AzureQueryType.NamespacesQuery:
@@ -70,6 +80,12 @@ const VariableEditor = (props: Props) => {
         setRequireSubscription(true);
         setHasResourceGroup(true);
         setHasNamespace(true);
+        break;
+      case AzureQueryType.MetricNamesQuery:
+        setRequireSubscription(true);
+        setRequireResourceGroup(true);
+        setRequireNamespace(true);
+        setRequireResource(true);
         break;
     }
   }, [queryType]);
@@ -111,6 +127,15 @@ const VariableEditor = (props: Props) => {
     }
   }, [datasource, subscription, resourceGroup]);
 
+  const namespace = (typeof query === 'object' && query.namespace) || '';
+  useEffect(() => {
+    if (subscription) {
+      datasource.getResourceNames(subscription, resourceGroup, namespace).then((rgs) => {
+        setResources(rgs.map((s) => ({ label: s.text, value: s.value })));
+      });
+    }
+  }, [datasource, subscription, resourceGroup, namespace]);
+
   if (typeof query === 'string') {
     // still migrating the query
     return null;
@@ -145,6 +170,13 @@ const VariableEditor = (props: Props) => {
     onChange({
       ...query,
       namespace: selectableValue.value,
+    });
+  };
+
+  const onChangeResource = (selectableValue: SelectableValue) => {
+    onChange({
+      ...query,
+      resource: selectableValue.value,
     });
   };
 
@@ -198,27 +230,46 @@ const VariableEditor = (props: Props) => {
           />
         </InlineField>
       )}
-      {hasResourceGroup && (
-        <InlineField label="Select Resource Group" labelWidth={20}>
+      {(requireResourceGroup || hasResourceGroup) && (
+        <InlineField label="Select resource group" labelWidth={20}>
           <Select
             aria-label="select resource group"
             onChange={onChangeResourceGroup}
-            options={resourceGroups.concat(variableOptionGroup, removeOption)}
+            options={
+              requireResourceGroup
+                ? resourceGroups.concat(variableOptionGroup)
+                : resourceGroups.concat(variableOptionGroup, removeOption)
+            }
             width={25}
             value={query.resourceGroup}
-            placeholder="Optional"
+            placeholder={requireResourceGroup ? '' : 'Optional'}
           />
         </InlineField>
       )}
-      {hasNamespace && (
-        <InlineField label="Select Namespace" labelWidth={20}>
+      {(requireNamespace || hasNamespace) && (
+        <InlineField label="Select namespace" labelWidth={20}>
           <Select
             aria-label="select namespace"
             onChange={onChangeNamespace}
-            options={namespaces.concat(variableOptionGroup, removeOption)}
+            options={
+              requireNamespace
+                ? namespaces.concat(variableOptionGroup)
+                : namespaces.concat(variableOptionGroup, removeOption)
+            }
             width={25}
             value={query.namespace}
-            placeholder="Optional"
+            placeholder={requireNamespace ? '' : 'Optional'}
+          />
+        </InlineField>
+      )}
+      {requireResource && (
+        <InlineField label="Select resource" labelWidth={20}>
+          <Select
+            aria-label="select resource"
+            onChange={onChangeResource}
+            options={resources.concat(variableOptionGroup)}
+            width={25}
+            value={query.resource}
           />
         </InlineField>
       )}
