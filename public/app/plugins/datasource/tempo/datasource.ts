@@ -481,39 +481,6 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
   );
 }
 
-function getFieldConfig(
-  datasourceUid: string,
-  tempoDatasourceUid: string,
-  targetField: string,
-  tempoField: string,
-  sourceField?: string
-) {
-  sourceField = sourceField ? `client="\${${sourceField}}",` : '';
-  return {
-    links: [
-      makePromLink(
-        'Request rate',
-        `sum by (client, server)(rate(${totalsMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
-        datasourceUid,
-        false
-      ),
-      makePromLink(
-        'Request histogram',
-        `histogram_quantile(0.9, sum(rate(${histogramMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval])) by (le, client, server))`,
-        datasourceUid,
-        false
-      ),
-      makePromLink(
-        'Failed request rate',
-        `sum by (client, server)(rate(${failedMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
-        datasourceUid,
-        false
-      ),
-      makeTempoLink('View traces', `\${${tempoField}}`, '', tempoDatasourceUid),
-    ],
-  };
-}
-
 function rateQuery(
   request: DataQueryRequest<TempoQuery>,
   serviceMapResponse: DataQueryResponse,
@@ -611,6 +578,39 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
       datasourceUid,
       datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
+  };
+}
+
+export function getFieldConfig(
+  datasourceUid: string,
+  tempoDatasourceUid: string,
+  targetField: string,
+  tempoField: string,
+  sourceField?: string
+) {
+  sourceField = sourceField ? `client="\${${sourceField}}",` : '';
+  return {
+    links: [
+      makePromLink(
+        'Request rate',
+        `sum by (client, server)(rate(${totalsMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
+        datasourceUid,
+        false
+      ),
+      makePromLink(
+        'Request histogram',
+        `histogram_quantile(0.9, sum(rate(${histogramMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval])) by (le, client, server))`,
+        datasourceUid,
+        false
+      ),
+      makePromLink(
+        'Failed request rate',
+        `sum by (client, server)(rate(${failedMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
+        datasourceUid,
+        false
+      ),
+      makeTempoLink('View traces', `\${${tempoField}}`, '', tempoDatasourceUid),
+    ],
   };
 }
 
