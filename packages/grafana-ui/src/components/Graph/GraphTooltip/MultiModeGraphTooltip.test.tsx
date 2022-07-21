@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createDimension, ArrayVector, FieldType, DisplayProcessor } from '@grafana/data';
+import { createDimension, createTheme, ArrayVector, FieldType, DisplayProcessor } from '@grafana/data';
 
 import { ActiveDimensions } from '../../VizTooltip';
 
@@ -12,6 +12,7 @@ let dimensions: GraphDimensions;
 
 describe('MultiModeGraphTooltip', () => {
   const display: DisplayProcessor = (v) => ({ numeric: v, text: String(v), color: 'red' });
+  const theme = createTheme();
 
   describe('when shown when hovering over a datapoint', () => {
     beforeEach(() => {
@@ -70,10 +71,10 @@ describe('MultiModeGraphTooltip', () => {
       const rows = screen.getAllByTestId('SeriesTableRow');
       expect(rows.length).toEqual(2);
 
-      // We expect A-series(1st row) to be highlighted
-      expect(rows[0]).toHaveStyle('font-weight: 500');
+      // We expect A-series(1st row) not to be highlighted
+      expect(rows[0]).toHaveStyle(`font-weight: ${theme.typography.fontWeightMedium}`);
       // We expect B-series(2nd row) not to be highlighted
-      expect(rows[1]).not.toHaveStyle('font-weight: 500');
+      expect(rows[1]).not.toHaveStyle(`font-weight: ${theme.typography.fontWeightMedium}`);
     });
 
     it("doesn't highlight series when not hovering over datapoint", () => {
@@ -97,9 +98,9 @@ describe('MultiModeGraphTooltip', () => {
       expect(rows.length).toEqual(2);
 
       // We expect A-series(1st row) not to be highlighted
-      expect(rows[0]).not.toHaveStyle('font-weight: 500');
+      expect(rows[0]).not.toHaveStyle(`font-weight: ${theme.typography.fontWeightMedium}`);
       // We expect B-series(2nd row) not to be highlighted
-      expect(rows[1]).not.toHaveStyle('font-weight: 500');
+      expect(rows[1]).not.toHaveStyle(`font-weight: ${theme.typography.fontWeightMedium}`);
     });
   });
 });
