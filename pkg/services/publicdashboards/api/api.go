@@ -25,7 +25,6 @@ import (
 
 type Api struct {
 	PublicDashboardService publicdashboards.Service
-	DashboardService       dashboards.DashboardService
 	RouteRegister          routing.RouteRegister
 	AccessControl          accesscontrol.AccessControl
 	QueryDataService       *query.Service
@@ -34,7 +33,6 @@ type Api struct {
 
 func ProvideApi(
 	pd publicdashboards.Service,
-	ds dashboards.DashboardService,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	qds *query.Service,
@@ -42,7 +40,6 @@ func ProvideApi(
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
-		DashboardService:       ds,
 		RouteRegister:          rr,
 		AccessControl:          ac,
 		QueryDataService:       qds,
