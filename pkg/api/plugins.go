@@ -140,9 +140,9 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	// In a first iteration, we only have one permission for app plugins.
 	// We will need a different permission to allow users to configure the plugin without needing access to it.
 	if plugin.IsApp() {
-		hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-		if !hasAccess(accesscontrol.ReqSignedIn,
-			accesscontrol.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+		hasAccess := ac.HasAccess(hs.AccessControl, c)
+		if !hasAccess(ac.ReqSignedIn,
+			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
 			return response.Error(http.StatusForbidden, "Access Denied", nil)
 		}
 	}
