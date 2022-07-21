@@ -1,7 +1,7 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 
 import { NewDataSource } from 'app/features/datasources/components/NewDataSource';
 
-export function DataSourcesNew(): ReactElement | null {
+export function DataSourcesNew() {
   return <NewDataSource />;
 }

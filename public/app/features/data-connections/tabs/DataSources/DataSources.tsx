@@ -1,7 +1,7 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 
 import { DataSourcesList } from 'app/features/datasources/components/DataSourcesList';
 
-export function DataSources(): ReactElement | null {
+export function DataSources() {
   return <DataSourcesList />;
 }

@@ -11,7 +11,7 @@ import { DataSources, DataSourcesNew, DataSourcesEdit } from './tabs/DataSources
 import { Plugins } from './tabs/Plugins';
 import { RecordedQueries } from './tabs/RecordedQueries';
 
-export default function DataConnectionsPage(): React.ReactElement | null {
+export default function DataConnectionsPage() {
   const navModel = useNavModel();
 
   return (
