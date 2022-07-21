@@ -9,22 +9,22 @@ export function fetchContactPointsState(alertManagerSourceName: String): Promise
   const getIntegrationType = (integrationName: string): string =>
     integrationName.indexOf('[') !== -1 ? integrationName.substring(0, integrationName.indexOf('[')) : integrationName;
 
-  const contactPointsStateDtoToModel = (receiversSateDto: ReceiversStateDTO[]): ContactPointsState => {
+  const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDTO[]): ContactPointsState => {
     // init object to return
-    const contactPointpState: ContactPointsState = { receivers: {}, errorCount: 0 };
+    const contactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
 
     // for each receiver from response
-    receiversSateDto.forEach((cpState) => {
+    receiversStateDto.forEach((cpState) => {
       //init receiver state
-      contactPointpState.receivers[cpState.name] = { active: cpState.active, integrations: {}, errorCount: 0 };
-      const receiverState = contactPointpState.receivers[cpState.name];
+      contactPointsState.receivers[cpState.name] = { active: cpState.active, integrations: {}, errorCount: 0 };
+      const receiverState = contactPointsState.receivers[cpState.name];
       //update integrations in response
       cpState.integrations.forEach((integrationStatusDTO) => {
         //update errorcount
         const hasError = Boolean(integrationStatusDTO?.lastError);
         if (hasError) {
           receiverState.errorCount += 1;
-          contactPointpState.errorCount += 1;
+          contactPointsState.errorCount += 1;
         }
         //add integration for this type
         const integrationType = getIntegrationType(integrationStatusDTO.name);
@@ -36,7 +36,7 @@ export function fetchContactPointsState(alertManagerSourceName: String): Promise
         receiverState.integrations[integrationType].push(integrationStatusDTO);
       });
     });
-    return contactPointpState;
+    return contactPointsState;
   };
   return new Promise<ContactPointsState>((resolve) => {
     // Response EXAMPLE
