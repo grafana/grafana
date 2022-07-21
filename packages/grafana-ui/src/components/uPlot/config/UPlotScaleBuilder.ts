@@ -17,7 +17,7 @@ export interface ScaleProps {
   orientation: ScaleOrientation;
   direction: ScaleDirection;
   log?: number;
-  symmetrical?: boolean;
+  centeredZero?: boolean;
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -37,7 +37,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       range,
       direction,
       orientation,
-      symmetrical,
+      centeredZero,
     } = this.props;
     const distribution = !isTime
       ? {
@@ -80,7 +80,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
       if (scale.distr === 1 || scale.distr === 2) {
-        if (symmetrical) {
+        if (centeredZero) {
           let absMin = Math.abs(dataMin);
           let absMax = Math.abs(dataMax);
           let max = Math.max(absMin, absMax);

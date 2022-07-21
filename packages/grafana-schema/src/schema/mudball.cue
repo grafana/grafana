@@ -95,7 +95,7 @@ AxisConfig: {
 	axisSoftMax?:       number
 	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
-	axisSymmetrical?:   bool
+	axisCenteredZero?:   bool
 } @cuetsy(kind="interface")
 
 // TODO docs

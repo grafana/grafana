@@ -123,13 +123,13 @@ export interface ScaleDistributionConfig {
 }
 
 export interface AxisConfig {
+  axisCenteredZero?: boolean;
   axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
   axisSoftMax?: number;
   axisSoftMin?: number;
-  axisSymmetrical?: boolean;
   axisWidth?: number;
   scaleDistribution?: ScaleDistributionConfig;
 }
