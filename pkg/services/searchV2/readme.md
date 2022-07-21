@@ -15,6 +15,7 @@ type StandardSearchService struct {
 // re-indexing, making backups, polling entity_events (actually this is our 
 // current `run` method).
 type orgIndexManager struct {
+  indexFactory func(ctx context.Context, orgID int64, writer *bluge.Writer) (Index, error)
   indexes map[int64]Index
 }
 
@@ -24,10 +25,9 @@ func (*orgIndexManager) run(ctx) error {
 }
 
 type Index interface {
-  Init(ctx) error // Index initially or load from existing backup.
   ReIndex(ctx) error
   ApplyUpdates(ctx, []EntityEvent) (newEventID, error)
-  BackupTo(ctx, currentEventID) error
+  BackupTo(ctx, directory) error
 }
 
 type dashboardIndex struct {
