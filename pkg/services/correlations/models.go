@@ -31,7 +31,7 @@ type Correlation struct {
 	Description string `json:"description" xorm:"description"`
 }
 
-// CreateCorrelationResponse is a response struct for CorrelationDTO
+// CreateCorrelationResponse is the response struct for CreateCorrelationCommand
 // swagger:model
 type CreateCorrelationResponse struct {
 	Result Correlation `json:"result"`

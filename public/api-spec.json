@@ -9625,7 +9625,7 @@
       }
     },
     "CreateCorrelationResponse": {
-      "description": "CreateCorrelationResponse is a response struct for CorrelationDTO",
+      "description": "CreateCorrelationResponse is the response struct for CreateCorrelationCommand",
       "type": "object",
       "properties": {
         "message": {

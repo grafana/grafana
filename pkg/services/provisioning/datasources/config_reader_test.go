@@ -345,9 +345,9 @@ type mockCorrelationsStore struct {
 	items              []correlations.Correlation
 }
 
-func (m *mockCorrelationsStore) CreateCorrelation(c context.Context, cmd correlations.CreateCorrelationCommand) (correlations.CorrelationDTO, error) {
+func (m *mockCorrelationsStore) CreateCorrelation(c context.Context, cmd correlations.CreateCorrelationCommand) (correlations.Correlation, error) {
 	m.created = append(m.created, cmd)
-	return correlations.CorrelationDTO{}, nil
+	return correlations.Correlation{}, nil
 }
 
 func (m *mockCorrelationsStore) DeleteCorrelationsBySourceUID(c context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error {
