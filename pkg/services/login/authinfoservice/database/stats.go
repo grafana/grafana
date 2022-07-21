@@ -85,7 +85,7 @@ func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (LoginStats, error) {
 	var stats LoginStats
 	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		rawSQL := `SELECT
-		(SELECT COUNT(*) as duplicate_user_entries FROM (` + s.duplicateUserEntriesSQL(ctx) + `) AS d WHERE (d.dup_login IS NOT NULL OR d.dup_email IS NOT NULL)),
+		(SELECT COUNT(*) FROM (` + s.duplicateUserEntriesSQL(ctx) + `) AS d WHERE (d.dup_login IS NOT NULL OR d.dup_email IS NOT NULL)) as duplicate_user_entries,
 		(SELECT COUNT(*) FROM (` + s.mixedCasedUsers(ctx) + `) AS mcu) AS mixed_cased_users
 		`
 		_, err := dbSession.SQL(rawSQL).Get(&stats)
