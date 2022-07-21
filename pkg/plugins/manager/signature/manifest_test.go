@@ -176,7 +176,7 @@ func fileList(manifest *pluginManifest) []string {
 	return keys
 }
 
-func Test_urlMatch(t *testing.T) {
+func Test_urlMatch_privateGlob(t *testing.T) {
 	type args struct {
 		specs  []string
 		target string
@@ -246,7 +246,7 @@ func Test_urlMatch(t *testing.T) {
 			name: "Do not support subdomain mismatch",
 			args: args{
 				specs:  []string{"https://www.test.example.com/grafana/docs"},
-				target: "https://www.test.example.com/grafana/grafana/docs",
+				target: "https://www.dev.example.com/grafana/docs",
 			},
 			shouldMatch: false,
 		},
@@ -325,7 +325,123 @@ func Test_urlMatch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := urlMatch(tt.args.specs, tt.args.target)
+			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.PrivateGlobSignature)
+			require.NoError(t, err)
+			require.Equal(t, tt.shouldMatch, got)
+		})
+	}
+}
+
+func Test_urlMatch_private(t *testing.T) {
+	type args struct {
+		specs  []string
+		target string
+	}
+	tests := []struct {
+		name        string
+		args        args
+		shouldMatch bool
+	}{
+		{
+			name: "Support exact match",
+			args: args{
+				specs:  []string{"https://example.com/test"},
+				target: "https://example.com/test",
+			},
+			shouldMatch: true,
+		},
+		{
+			name: "Support trailing slash in spec",
+			args: args{
+				specs:  []string{"https://example.com/test/"},
+				target: "https://example.com/test",
+			},
+			shouldMatch: true,
+		},
+		{
+			name: "Support trailing slash in target",
+			args: args{
+				specs:  []string{"https://example.com/test"},
+				target: "https://example.com/test/",
+			},
+			shouldMatch: true,
+		},
+		{
+			name: "Do not support single wildcard matching single subdomain",
+			args: args{
+				specs:  []string{"https://*.example.com"},
+				target: "https://test.example.com",
+			},
+			shouldMatch: false,
+		},
+		{
+			name: "Do not support multiple wildcards matching multiple subdomains",
+			args: args{
+				specs:  []string{"https://**.example.com"},
+				target: "https://more.test.example.com",
+			},
+			shouldMatch: false,
+		},
+		{
+			name: "Do not support single wildcard matching single paths",
+			args: args{
+				specs:  []string{"https://www.example.com/*"},
+				target: "https://www.example.com/grafana1",
+			},
+			shouldMatch: false,
+		},
+		{
+			name: "Do not support double wildcard matching multiple paths",
+			args: args{
+				specs:  []string{"https://www.example.com/**"},
+				target: "https://www.example.com/other/grafana",
+			},
+			shouldMatch: false,
+		},
+		{
+			name: "Do not support subdomain mismatch",
+			args: args{
+				specs:  []string{"https://www.test.example.com/grafana/docs"},
+				target: "https://www.dev.example.com/grafana/docs",
+			},
+			shouldMatch: false,
+		},
+		{
+			name: "Do not support path mismatch",
+			args: args{
+				specs:  []string{"https://example.com/grafana"},
+				target: "https://example.com/grafana1",
+			},
+			shouldMatch: false,
+		},
+		{
+			name: "Do not support both domain and path wildcards",
+			args: args{
+				specs:  []string{"https://*.example.com/*"},
+				target: "https://www.example.com/grafana1",
+			},
+			shouldMatch: false,
+		},
+		{
+			name: "Do not support wildcards without TLDs",
+			args: args{
+				specs:  []string{"https://example.*"},
+				target: "https://www.example.com/grafana1",
+			},
+			shouldMatch: false,
+		},
+		{
+			name: "Do not support scheme mismatch",
+			args: args{
+				specs:  []string{"https://test.example.com/grafana"},
+				target: "http://test.example.com/grafana",
+			},
+			shouldMatch: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.PrivateSignature)
 			require.NoError(t, err)
 			require.Equal(t, tt.shouldMatch, got)
 		})

@@ -145,9 +145,9 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		}, nil
 	}
 
-	// Validate that private is running within defined root URLs
-	if manifest.SignatureType == plugins.PrivateSignature || len(manifest.RootURLs) > 0 {
-		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl); err != nil {
+	// Validate that plugin is running within defined root URLs
+	if len(manifest.RootURLs) > 0 {
+		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl, manifest.SignatureType); err != nil {
 			mlog.Warn("Could not verify if root URLs match", "plugin", plugin.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err
 		} else if !match {
@@ -283,7 +283,7 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 	return files, err
 }
 
-func urlMatch(specs []string, target string) (bool, error) {
+func urlMatch(specs []string, target string, signatureType plugins.SignatureType) (bool, error) {
 	targetURL, err := url.Parse(target)
 	if err != nil {
 		return false, err
@@ -298,6 +298,10 @@ func urlMatch(specs []string, target string) (bool, error) {
 		if specURL.Scheme == targetURL.Scheme && specURL.Host == targetURL.Host &&
 			path.Clean(specURL.RequestURI()) == path.Clean(targetURL.RequestURI()) {
 			return true, nil
+		}
+
+		if signatureType != plugins.PrivateGlobSignature {
+			continue
 		}
 
 		sp, err := glob.Compile(spec, '/', '.')
