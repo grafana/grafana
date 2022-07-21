@@ -16,7 +16,7 @@ export interface SeriesTableRowProps {
   isActive?: boolean;
 }
 
-export const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
+const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css`
       margin-right: ${theme.spacing(1)};
