@@ -1,12 +1,16 @@
 import React from 'react';
 
+import { config } from '@grafana/runtime';
 import { PageToolbar, ToolbarButton } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { Page } from 'app/core/components/Page/Page';
+import { PageLayoutType } from 'app/core/components/Page/types';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneComponentProps, SceneObjectState, SceneObject } from '../core/types';
+import { SceneComponentProps, SceneObjectStatePlain, SceneObject } from '../core/types';
 import { UrlSyncManager } from '../services/UrlSyncManager';
 
-interface SceneState extends SceneObjectState {
+interface SceneState extends SceneObjectStatePlain {
   title: string;
   layout: SceneObject;
   actions?: SceneObject[];
@@ -31,24 +35,30 @@ export class Scene extends SceneObjectBase<SceneState> {
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { title, layout, actions = [], isEditing, $editor } = model.useState();
 
+  const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
+
+  if ($editor) {
+    toolbarActions.push(
+      <ToolbarButton
+        icon="cog"
+        variant={isEditing ? 'primary' : 'default'}
+        onClick={() => model.setState({ isEditing: !model.state.isEditing })}
+      />
+    );
+  }
+
+  const pageToolbar = config.featureToggles.topnav ? (
+    <AppChromeUpdate pageNav={{ text: title }} actions={toolbarActions} />
+  ) : (
+    <PageToolbar title={title}>{toolbarActions}</PageToolbar>
+  );
+
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0 }}>
-      <PageToolbar title={title}>
-        {actions.map((action) => (
-          <action.Component key={action.state.key} model={action} />
-        ))}
-        {$editor && (
-          <ToolbarButton
-            icon="cog"
-            variant={isEditing ? 'primary' : 'default'}
-            onClick={() => model.setState({ isEditing: !model.state.isEditing })}
-          />
-        )}
-      </PageToolbar>
-      <div style={{ flexGrow: 1, display: 'flex', padding: '16px', gap: '8px', paddingTop: 0, overflow: 'auto' }}>
+    <Page navId="scenes" layout={PageLayoutType.Dashboard} toolbar={pageToolbar}>
+      <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
         <layout.Component model={layout} isEditing={isEditing} />
         {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
       </div>
-    </div>
+    </Page>
   );
 }

@@ -23,6 +23,10 @@ func (f *FakeOrgService) Insert(ctx context.Context, cmd *org.OrgUser) (int64, e
 	return f.ExpectedOrgUserID, f.ExpectedError
 }
 
-func (f *FakeOrgService) InsertUser(ctx context.Context, cmd *org.OrgUser) (int64, error) {
+func (f *FakeOrgService) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (int64, error) {
 	return f.ExpectedOrgUserID, f.ExpectedError
+}
+
+func (f *FakeOrgService) DeleteUserFromAll(ctx context.Context, userID int64) error {
+	return f.ExpectedError
 }

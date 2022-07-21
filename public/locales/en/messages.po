@@ -34,6 +34,242 @@ msgstr "French"
 msgid "common.save"
 msgstr "Save"
 
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.data-options"
+msgstr "Data options"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.dataframe-aria-label"
+msgstr "Select dataframe"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.dataframe-label"
+msgstr "Show data frame"
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.download-csv"
+msgstr "Download CSV"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.download-excel-description"
+msgstr "Adds header to CSV for use with Excel"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.download-excel-label"
+msgstr "Download for Excel"
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.download-logs"
+msgstr "Download logs"
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.download-service"
+msgstr "Download service graph"
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.download-traces"
+msgstr "Download traces"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.excel-header"
+msgstr "Excel header"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.formatted"
+msgstr "Formatted data"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.formatted-data-description"
+msgstr "Table data is formatted with options defined in the Field and Override tabs."
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.formatted-data-label"
+msgstr "Formatted data"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.panel-transforms"
+msgstr "Panel transforms"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.series-to-columns"
+msgstr "Series joined by time"
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.transformation"
+msgstr "Series joined by time"
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.transformations-description"
+msgstr "Table data is displayed with transformations defined in the panel Transform tab."
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.transformations-label"
+msgstr "Apply panel transformations"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.dataframe-description"
+msgstr "JSON formatted DataFrames"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.dataframe-label"
+msgstr "DataFrame JSON"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-data-description"
+msgstr "The raw model passed to the panel visualization"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-data-label"
+msgstr "Panel data"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-json-description"
+msgstr "The model saved in the dashboard JSON that configures how everything works."
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-json-label"
+msgstr "Panel JSON"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.select-source"
+msgstr "Select source"
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.unknown"
+msgstr "Unknown Object: {show}"
+
+#: public/app/features/inspector/InspectMetadataTab.tsx
+msgid "dashboard.inspect-meta.no-inspector"
+msgstr "No Metadata Inspector"
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.data-title"
+msgstr "Data source stats"
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.processing-time"
+msgstr "Data processing time"
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.queries"
+msgstr "Number of queries"
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.request-time"
+msgstr "Total request time"
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.rows"
+msgstr "Total number rows"
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.table-title"
+msgstr "Stats"
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.actions-tab"
+msgstr "Actions"
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.data-tab"
+msgstr "Data"
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.error-tab"
+msgstr "Error"
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.json-tab"
+msgstr "JSON"
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.meta-tab"
+msgstr "Meta Data"
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.query-tab"
+msgstr "Query"
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.stats-tab"
+msgstr "Stats"
+
+#: public/app/features/dashboard/components/Inspector/InspectContent.tsx
+msgid "dashboard.inspect.subtitle"
+msgstr "{queryCount} queries with total query time of {formatted}"
+
+#: public/app/features/dashboard/components/Inspector/InspectContent.tsx
+msgid "dashboard.inspect.title"
+msgstr "Inspect: {panelTitle}"
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-arialabel"
+msgstr "Turn off auto refresh"
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-description"
+msgstr "Auto refresh turned off. Choose refresh time interval"
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-label"
+msgstr "Off"
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.on-description"
+msgstr "Choose refresh time interval with current interval {durationAriaLabel} selected"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.add-panel"
+msgstr "Add panel"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.comments-show"
+msgstr "Show dashboard comments"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.mark-favorite"
+msgstr "Mark as favorite"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.open-original"
+msgstr "Open original dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-next"
+msgstr "Go to next dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-previous"
+msgstr "Go to previous dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-stop"
+msgstr "Stop playlist"
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.toolbar.refresh"
+msgstr "Refresh dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.save"
+msgstr "Save dashboard"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.settings"
+msgstr "Dashboard settings"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.share"
+msgstr "Share dashboard or panel"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.tv-button"
+msgstr "Cycle view mode"
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.unmark-favorite"
+msgstr "Unmark as favorite"
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr "Alerting"
@@ -75,10 +311,6 @@ msgid "nav.api-keys"
 msgstr "API keys"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
-msgid "nav.change-password"
-msgstr "Change password"
-
-#: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.config"
 msgstr "Configuration"
 
@@ -114,10 +346,6 @@ msgstr "Data sources"
 msgid "nav.explore"
 msgstr "Explore"
 
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.folder"
-#~ msgstr "New folder"
-
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.help"
 msgstr "Help"
@@ -125,10 +353,6 @@ msgstr "Help"
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.home"
 msgstr "Home"
-
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.import"
-#~ msgstr "Import"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.library-panels"
@@ -175,7 +399,11 @@ msgid "nav.plugins"
 msgstr "Plugins"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
-msgid "nav.profile-settings"
+msgid "nav.profile/password"
+msgstr "Change password"
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.profile/settings"
 msgstr "Preferences"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
@@ -205,6 +433,38 @@ msgstr "Teams"
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.users"
 msgstr "Users"
+
+#: public/app/core/navigation/kiosk.ts
+msgid "navigation.kiosk.tv-alert"
+msgstr "Press ESC to exit Kiosk mode"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect"
+msgstr "Inspect"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-data"
+msgstr "Data"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-json"
+msgstr "Panel JSON"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.more"
+msgstr "More..."
+
+#: public/app/plugins/panel/graph/module.ts
+msgid "panel.header-menu.more-toggle"
+msgstr "Toggle legend"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.share"
+msgstr "Share"
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.view"
+msgstr "View"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"

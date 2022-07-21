@@ -3,7 +3,7 @@ import Prism from 'prismjs';
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Node } from 'slate';
 
-import { GrafanaTheme2, isValidGoDuration, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, isValidGoDuration, SelectableValue, toOption } from '@grafana/data';
 import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import {
   InlineFieldRow,
@@ -90,7 +90,13 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     const fetchOptions = async () => {
       try {
         const [services, spans] = await Promise.all([loadOptions('serviceName'), loadOptions('spanName')]);
+        if (query.serviceName && getTemplateSrv().containsTemplate(query.serviceName)) {
+          services.push(toOption(query.serviceName));
+        }
         setServiceOptions(services);
+        if (query.spanName && getTemplateSrv().containsTemplate(query.spanName)) {
+          spans.push(toOption(query.spanName));
+        }
         setSpanOptions(spans);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
@@ -102,7 +108,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       }
     };
     fetchOptions();
-  }, [languageProvider, loadOptions]);
+  }, [languageProvider, loadOptions, query.serviceName, query.spanName]);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -161,6 +167,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               isClearable
               onKeyDown={onKeyDown}
               aria-label={'select-service-name'}
+              allowCustomValue={true}
             />
           </InlineField>
         </InlineFieldRow>
@@ -184,6 +191,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               isClearable
               onKeyDown={onKeyDown}
               aria-label={'select-span-name'}
+              allowCustomValue={true}
             />
           </InlineField>
         </InlineFieldRow>

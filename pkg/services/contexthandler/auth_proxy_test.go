@@ -95,7 +95,7 @@ type FakeGetSignUserStore struct {
 
 func (f *FakeGetSignUserStore) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	if query.UserId != userID {
-		return models.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
 
 	query.Result = &models.SignedInUser{
