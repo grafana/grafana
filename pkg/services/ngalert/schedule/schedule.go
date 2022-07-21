@@ -3,7 +3,6 @@ package schedule
 import (
 	"context"
 	"fmt"
-	"math"
 	"net/url"
 	"time"
 
@@ -241,8 +240,6 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 
 			type readyToRunItem struct {
-				key      ngmodels.AlertRuleKey
-				ruleName string
 				ruleInfo *alertRuleInfo
 				rule     *ngmodels.AlertRule
 			}
@@ -275,7 +272,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleName: item.Title, ruleInfo: ruleInfo, rule: item})
+					readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, rule: item})
 				}
 
 				// remove the alert rule from the registered alert rules
@@ -291,15 +288,16 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
+					key := item.rule.GetKey()
 					success, dropped := item.ruleInfo.eval(tick, item.rule)
 					if !success {
-						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", key.UID, "org", key.OrgID, "time", tick)
 						return
 					}
 					if dropped != nil {
-						sch.log.Warn("Alert rule evaluation is too slow - dropped tick", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
-						orgID := fmt.Sprint(item.key.OrgID)
-						sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.ruleName).Inc()
+						sch.log.Warn("Alert rule evaluation is too slow - dropped tick", "uid", key.UID, "org", key.OrgID, "time", tick)
+						orgID := fmt.Sprint(key.OrgID)
+						sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
 					}
 				})
 			}
@@ -382,7 +380,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	}
 
 	evalRunning := false
-	var currentRuleVersion int64 = math.MinInt64
+	var currentRuleVersion int64 = 0
 	var extraLabels map[string]string
 	defer sch.stopApplied(key)
 	for {
@@ -421,7 +419,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					newVersion := ctx.rule.Version
 					// fetch latest alert rule version
 					if currentRuleVersion != newVersion {
-						if currentRuleVersion > math.MinInt64 { // do not clean up state if the eval loop has just started.
+						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
 							logger.Debug("got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "new_version", newVersion)
 							clearState()
 						}
