@@ -6,14 +6,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-type loginStats struct {
+type LoginStats struct {
 	DuplicateUserEntries int `xorm:"duplicate_user_entries"`
 }
 
-func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (loginStats, error) {
-	var stats loginStats
+func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (LoginStats, error) {
+	var stats LoginStats
 	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		rawSQL := `SELECT COUNT(*) as duplicate_user_entries FROM (` + s.duplicateUserEntriesSQL(ctx) + `)`
+		rawSQL := `SELECT COUNT(*) as duplicate_user_entries FROM (` + s.duplicateUserEntriesSQL(ctx) + `) AS d
+	WHERE (d.dup_login IS NOT NULL OR d.dup_email IS NOT NULL)`
 		_, err := dbSession.SQL(rawSQL).Get(&stats)
 		return err
 	})
@@ -49,8 +50,6 @@ func (s *AuthInfoStore) duplicateUserEntriesSQL(ctx context.Context) string {
 	sqlQuery := `SELECT
 		(SELECT login from ` + userDialect + ` WHERE (LOWER(login) = LOWER(u.login)) AND (login != u.login)) AS dup_login,
 		(SELECT email from ` + userDialect + ` WHERE (LOWER(email) = LOWER(u.email)) AND (email != u.email)) AS dup_email
-	FROM ` + userDialect + ` AS u
-	WHERE (dup_login IS NOT NULL OR dup_email IS NOT NULL)
-	`
+	FROM ` + userDialect + ` AS u`
 	return sqlQuery
 }
