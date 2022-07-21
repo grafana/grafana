@@ -68,6 +68,13 @@ func (f *ForkedProvisioningApi) forkRouteInternalDeleteContactpoints(ctx *models
 
 // LOGZ.IO GRAFANA CHANGE :: end
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-33330 - API to return all alert rules
+func (f *ForkedProvisioningApi) forkRouteGetAlertRules(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteRouteGetAlertRules(ctx)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func (f *ForkedProvisioningApi) forkRouteGetAlertRule(ctx *models.ReqContext, UID string) response.Response {
 	return f.svc.RouteRouteGetAlertRule(ctx, UID)
 }

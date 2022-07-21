@@ -23,6 +23,7 @@ type ProvisioningApiForkingService interface {
 	RouteDeleteAlertRule(*models.ReqContext) response.Response
 	RouteDeleteContactpoints(*models.ReqContext) response.Response
 	RouteInternalDeleteContactpoints(*models.ReqContext) response.Response // LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+	RouteGetAlertRules(*models.ReqContext) response.Response               // LOGZ.IO GRAFANA CHANGE :: DEV-33330 - API to return all alert rules
 	RouteGetAlertRule(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
 	RouteInternalGetContactpoints(*models.ReqContext) response.Response // LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
@@ -49,6 +50,13 @@ func (f *ForkedProvisioningApi) RouteDeleteContactpoints(ctx *models.ReqContext)
 // LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
 func (f *ForkedProvisioningApi) RouteInternalDeleteContactpoints(ctx *models.ReqContext) response.Response {
 	return f.forkRouteInternalDeleteContactpoints(ctx)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-33330 - API to return all alert rules
+func (f *ForkedProvisioningApi) RouteGetAlertRules(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetAlertRules(ctx)
 }
 
 // LOGZ.IO GRAFANA CHANGE :: end
@@ -170,6 +178,18 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodDelete,
 				"/api/internal/v1/provisioning/contact-points/{ID}",
 				srv.RouteInternalDeleteContactpoints,
+				m,
+			),
+		)
+		// LOGZ.IO GRAFANA CHANGE :: end
+		// LOGZ.IO GRAFANA CHANGE :: DEV-33330 - API to return all alert rules
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/alert-rules"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/alert-rules",
+				srv.RouteGetAlertRules,
 				m,
 			),
 		)

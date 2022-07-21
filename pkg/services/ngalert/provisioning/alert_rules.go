@@ -37,6 +37,29 @@ func NewAlertRuleService(ruleStore RuleStore,
 	}
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-33330 - API to return all alert rules
+func (service *AlertRuleService) GetAlertRules(ctx context.Context, orgID int64, dashboardUid string, panelId int64) ([]models.AlertRule, error) {
+	query := &models.ListAlertRulesQuery{
+		OrgID:        orgID,
+		DashboardUID: dashboardUid,
+		PanelID:      panelId,
+	}
+
+	err := service.ruleStore.ListAlertRules(ctx, query)
+	if err != nil {
+		return []models.AlertRule{}, fmt.Errorf("failed to list alert rules")
+	}
+
+	results := []models.AlertRule{}
+	for _, alertRule := range query.Result {
+		results = append(results, *alertRule)
+	}
+
+	return results, nil
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (models.AlertRule, models.Provenance, error) {
 	query := &models.GetAlertRuleByUIDQuery{
 		OrgID: orgID,
