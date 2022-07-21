@@ -1073,24 +1073,40 @@ export class DashboardModel implements TimeModel {
     return this.getVariablesFromState(this.uid);
   }
 
-  canEditAnnotations(dashboardId: number) {
+  canEditAnnotations(dashboardUID?: string) {
     let canEdit = true;
 
     // if RBAC is enabled there are additional conditions to check
     if (contextSrv.accessControlEnabled()) {
-      if (dashboardId === 0) {
+      // dashboardUID is falsy when it is an organizational annotation
+      if (!dashboardUID) {
         canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
       } else {
         canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
       }
     }
-    return this.canEditDashboard() && canEdit;
+    return Boolean(this.canEditDashboard() && canEdit);
+  }
+
+  canDeleteAnnotations(dashboardUID?: string) {
+    let canDelete = true;
+
+    if (contextSrv.accessControlEnabled()) {
+      // dashboardUID is falsy when it is an organizational annotation
+      if (!dashboardUID) {
+        canDelete = !!this.meta.annotationsPermissions?.organization.canDelete;
+      } else {
+        canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
+      }
+    }
+    return Boolean(canDelete && this.canEditDashboard());
   }
 
   canAddAnnotations() {
-    // If RBAC is enabled there are additional conditions to check
-    const canAdd = !contextSrv.accessControlEnabled() || this.meta.annotationsPermissions?.dashboard.canAdd;
-    return this.canEditDashboard() && canAdd;
+    // If RBAC is enabled there are additional conditions to check.
+    const canAdd = contextSrv.accessControlEnabled() && this.meta.annotationsPermissions?.dashboard.canAdd;
+
+    return Boolean(this.canEditDashboard() && canAdd);
   }
 
   canEditDashboard() {
