@@ -6,14 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/blugelabs/bluge"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
-	"github.com/grafana/grafana/pkg/services/store"
-
-	"github.com/blugelabs/bluge"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,48 +34,50 @@ var testDisallowAllFilter = func(uid string) bool {
 
 var testOrgID int64 = 1
 
-func initTestOrgIndexFromDashes(t *testing.T, dashboards []dashboard) *orgIndex {
+func initDashboardIndexFromDashes(t *testing.T, dashboards []dashboard) *dashboardIndex {
 	t.Helper()
-	searchIdx := initTestIndexFromDashesExtended(t, dashboards, &NoopDocumentExtender{})
-	return searchIdx.perOrgIndex[testOrgID]
+	return initTestIndexFromDashesExtended(t, testOrgID, dashboards, &NoopDocumentExtender{})
 }
 
-func initTestOrgIndexFromDashesExtended(t *testing.T, dashboards []dashboard, extender DocumentExtender) *orgIndex {
+func initDashboardIndexFromDashesExtended(t *testing.T, dashboards []dashboard, extender DocumentExtender) *dashboardIndex {
 	t.Helper()
-	searchIdx := initTestIndexFromDashesExtended(t, dashboards, extender)
-	return searchIdx.perOrgIndex[testOrgID]
+	return initTestIndexFromDashesExtended(t, testOrgID, dashboards, extender)
 }
 
-func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) *searchIndex {
+func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) *dashboardIndex {
 	t.Helper()
-	return initTestIndexFromDashesExtended(t, dashboards, &NoopDocumentExtender{})
+	return initTestIndexFromDashesExtended(t, testOrgID, dashboards, &NoopDocumentExtender{})
 }
 
-func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, extender DocumentExtender) *searchIndex {
+func initTestIndexFromDashesExtended(t *testing.T, orgID int64, dashboards []dashboard, extender DocumentExtender) *dashboardIndex {
 	t.Helper()
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(
+	index, err := createDashboardIndex(
+		context.Background(),
+		orgID,
+		nil,
 		dashboardLoader,
-		&store.MockEntityEventsService{},
 		extender,
-		func(ctx context.Context, folderId int64) (string, error) { return "x", nil })
-	require.NotNil(t, index)
-	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
+		func(ctx context.Context, folderId int64) (string, error) { return "x", nil },
+	)
 	require.NoError(t, err)
-	require.Equal(t, len(dashboardLoader.dashboards), numDashboards)
+	require.NotNil(t, index)
 	return index
 }
 
-func checkSearchResponse(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery) {
+func checkSearchResponse(t *testing.T, fileName string, index *dashboardIndex, filter ResourceFilter, query DashboardQuery) {
 	t.Helper()
 	checkSearchResponseExtended(t, fileName, index, filter, query, &NoopQueryExtender{})
 }
 
-func checkSearchResponseExtended(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery, extender QueryExtender) {
+func checkSearchResponseExtended(t *testing.T, fileName string, index *dashboardIndex, filter ResourceFilter, query DashboardQuery, extender QueryExtender) {
 	t.Helper()
-	resp := doSearchQuery(context.Background(), testLogger, index, filter, query, extender, "/pfix")
+	reader, cancel, err := index.Reader()
+	require.NoError(t, err)
+	defer cancel()
+	resp := doSearchQuery(context.Background(), testLogger, reader, filter, query, extender, "/pfix")
 	experimental.CheckGoldenJSONResponse(t, "testdata", fileName, resp, true)
 }
 
@@ -101,14 +100,14 @@ var testDashboards = []dashboard{
 
 func TestDashboardIndex(t *testing.T) {
 	t.Run("basic-search", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testDashboards)
+		index := initDashboardIndexFromDashes(t, testDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "boom"},
 		)
 	})
 
 	t.Run("basic-filter", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testDashboards)
+		index := initDashboardIndexFromDashes(t, testDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testDisallowAllFilter,
 			DashboardQuery{Query: "boom"},
 		)
@@ -118,21 +117,16 @@ func TestDashboardIndex(t *testing.T) {
 func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-delete", func(t *testing.T) {
 		index := initTestIndexFromDashes(t, testDashboards)
-		orgIdx, ok := index.getOrgIndex(testOrgID)
-		require.True(t, ok)
-		err := index.removeDashboard(context.Background(), orgIdx, "2")
+		err := index.removeDashboard(context.Background(), "2")
 		require.NoError(t, err)
-		checkSearchResponse(t, filepath.Base(t.Name()), orgIdx, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "boom"},
 		)
 	})
 
 	t.Run("dashboard-create", func(t *testing.T) {
 		index := initTestIndexFromDashes(t, testDashboards)
-		orgIdx, ok := index.getOrgIndex(testOrgID)
-		require.True(t, ok)
-
-		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
+		err := index.updateDashboard(context.Background(), dashboard{
 			id:  3,
 			uid: "3",
 			info: &extract.DashboardInfo{
@@ -141,17 +135,14 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		checkSearchResponse(t, filepath.Base(t.Name()), orgIdx, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "created"},
 		)
 	})
 
 	t.Run("dashboard-update", func(t *testing.T) {
 		index := initTestIndexFromDashes(t, testDashboards)
-		orgIdx, ok := index.getOrgIndex(testOrgID)
-		require.True(t, ok)
-
-		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
+		err := index.updateDashboard(context.Background(), dashboard{
 			id:  2,
 			uid: "2",
 			info: &extract.DashboardInfo{
@@ -160,7 +151,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		checkSearchResponse(t, filepath.Base(t.Name()), orgIdx, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "nginx"},
 		)
 	})
@@ -243,14 +234,14 @@ func TestDashboardIndexSort(t *testing.T) {
 	}
 
 	t.Run("sort-asc", func(t *testing.T) {
-		index := initTestOrgIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
+		index := initDashboardIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
 		checkSearchResponseExtended(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "*", Sort: "test"}, extender.GetQueryExtender(),
 		)
 	})
 
 	t.Run("sort-desc", func(t *testing.T) {
-		index := initTestOrgIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
+		index := initDashboardIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
 		checkSearchResponseExtended(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "*", Sort: "-test"}, extender.GetQueryExtender(),
 		)
@@ -276,28 +267,28 @@ var testPrefixDashboards = []dashboard{
 
 func TestDashboardIndex_PrefixSearch(t *testing.T) {
 	t.Run("prefix-search-beginning", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
+		index := initDashboardIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "Arch"},
 		)
 	})
 
 	t.Run("prefix-search-middle", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
+		index := initDashboardIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "Syn"},
 		)
 	})
 
 	t.Run("prefix-search-beginning-lower", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
+		index := initDashboardIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "arch"},
 		)
 	})
 
 	t.Run("prefix-search-middle-lower", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
+		index := initDashboardIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "syn"},
 		)
@@ -306,14 +297,14 @@ func TestDashboardIndex_PrefixSearch(t *testing.T) {
 
 func TestDashboardIndex_MultipleTokensInRow(t *testing.T) {
 	t.Run("multiple-tokens-beginning", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
+		index := initDashboardIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "Archer da"},
 		)
 	})
 
 	t.Run("multiple-tokens-beginning-lower", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
+		index := initDashboardIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "da archer"},
 		)
@@ -321,14 +312,14 @@ func TestDashboardIndex_MultipleTokensInRow(t *testing.T) {
 
 	// Not sure it is great this matches, but
 	t.Run("multiple-tokens-middle", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
+		index := initDashboardIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "ar Da"},
 		)
 	})
 
 	t.Run("multiple-tokens-middle-lower", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
+		index := initDashboardIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "doc sy"},
 		)
@@ -347,7 +338,7 @@ var longPrefixDashboards = []dashboard{
 
 func TestDashboardIndex_PrefixNgramExceeded(t *testing.T) {
 	t.Run("prefix-search-ngram-exceeded", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, longPrefixDashboards)
+		index := initDashboardIndexFromDashes(t, longPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "Eyjafjallajöku"},
 		)
@@ -373,13 +364,13 @@ var scatteredTokensDashboards = []dashboard{
 
 func TestDashboardIndex_MultipleTokensScattered(t *testing.T) {
 	t.Run("scattered-tokens-match", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, scatteredTokensDashboards)
+		index := initDashboardIndexFromDashes(t, scatteredTokensDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "dead secret"},
 		)
 	})
 	t.Run("scattered-tokens-match-reversed", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, scatteredTokensDashboards)
+		index := initDashboardIndexFromDashes(t, scatteredTokensDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "powerful secret"},
 		)
@@ -444,15 +435,18 @@ var dashboardsWithFolders = []dashboard{
 
 func TestDashboardIndex_Folders(t *testing.T) {
 	t.Run("folders-indexed", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, dashboardsWithFolders)
+		index := initDashboardIndexFromDashes(t, dashboardsWithFolders)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "My folder", Kind: []string{string(entityKindFolder)}},
 		)
 	})
 	t.Run("folders-dashboard-has-folder", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, dashboardsWithFolders)
+		index := initDashboardIndexFromDashes(t, dashboardsWithFolders)
 		// TODO: golden file compare does not work here.
-		resp := doSearchQuery(context.Background(), testLogger, index, testAllowAllFilter,
+		reader, cancel, err := index.Reader()
+		require.NoError(t, err)
+		defer cancel()
+		resp := doSearchQuery(context.Background(), testLogger, reader, testAllowAllFilter,
 			DashboardQuery{Query: "Dashboard in folder", Kind: []string{string(entityKindDashboard)}},
 			&NoopQueryExtender{}, "")
 		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
@@ -462,22 +456,21 @@ func TestDashboardIndex_Folders(t *testing.T) {
 	})
 	t.Run("folders-dashboard-removed-on-folder-removed", func(t *testing.T) {
 		index := initTestIndexFromDashes(t, dashboardsWithFolders)
-		orgIdx, ok := index.getOrgIndex(testOrgID)
-		require.True(t, ok)
-		err := index.removeFolder(context.Background(), orgIdx, "1")
+		err := index.removeFolder(context.Background(), "1")
 		require.NoError(t, err)
-		// In response we expect one dashboard which does not belong to removed folder.
-		checkSearchResponse(t, filepath.Base(t.Name()), orgIdx, testAllowAllFilter,
+		// Inside a response we expect one dashboard which does not belong to removed folder.
+		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "dash", Kind: []string{string(entityKindDashboard)}},
 		)
 	})
 	t.Run("folders-panels-removed-on-folder-removed", func(t *testing.T) {
 		index := initTestIndexFromDashes(t, dashboardsWithFolders)
-		orgIdx, ok := index.getOrgIndex(testOrgID)
-		require.True(t, ok)
-		err := index.removeFolder(context.Background(), orgIdx, "1")
+		err := index.removeFolder(context.Background(), "1")
 		require.NoError(t, err)
-		resp := doSearchQuery(context.Background(), testLogger, orgIdx, testAllowAllFilter,
+		reader, cancel, err := index.Reader()
+		require.NoError(t, err)
+		defer cancel()
+		resp := doSearchQuery(context.Background(), testLogger, reader, testAllowAllFilter,
 			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
 			&NoopQueryExtender{}, "")
 		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
@@ -508,10 +501,13 @@ var dashboardsWithPanels = []dashboard{
 
 func TestDashboardIndex_Panels(t *testing.T) {
 	t.Run("panels-indexed", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, dashboardsWithPanels)
+		index := initDashboardIndexFromDashes(t, dashboardsWithPanels)
 		// TODO: golden file compare does not work here.
+		reader, cancel, err := index.Reader()
+		require.NoError(t, err)
+		defer cancel()
 		resp := doSearchQuery(
-			context.Background(), testLogger, index, testAllowAllFilter,
+			context.Background(), testLogger, reader, testAllowAllFilter,
 			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
 			&NoopQueryExtender{}, "")
 		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
@@ -521,11 +517,9 @@ func TestDashboardIndex_Panels(t *testing.T) {
 	})
 	t.Run("panels-panel-removed-on-dashboard-removed", func(t *testing.T) {
 		index := initTestIndexFromDashes(t, dashboardsWithPanels)
-		orgIdx, ok := index.getOrgIndex(testOrgID)
-		require.True(t, ok)
-		err := index.removeDashboard(context.Background(), orgIdx, "1")
+		err := index.removeDashboard(context.Background(), "1")
 		require.NoError(t, err)
-		checkSearchResponse(t, filepath.Base(t.Name()), orgIdx, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
 		)
 	})
@@ -550,14 +544,14 @@ var punctuationSplitNgramDashboards = []dashboard{
 
 func TestDashboardIndex_PunctuationNgram(t *testing.T) {
 	t.Run("ngram-punctuation-split", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, punctuationSplitNgramDashboards)
+		index := initDashboardIndexFromDashes(t, punctuationSplitNgramDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "tork he"},
 		)
 	})
 
 	t.Run("ngram-simple", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, punctuationSplitNgramDashboards)
+		index := initDashboardIndexFromDashes(t, punctuationSplitNgramDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "hea"},
 		)
@@ -576,7 +570,7 @@ var camelCaseNgramDashboards = []dashboard{
 
 func TestDashboardIndex_CamelCaseNgram(t *testing.T) {
 	t.Run("ngram-camel-case-split", func(t *testing.T) {
-		index := initTestOrgIndexFromDashes(t, camelCaseNgramDashboards)
+		index := initDashboardIndexFromDashes(t, camelCaseNgramDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "tork"},
 		)

@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -55,6 +57,44 @@ type SaveEventCmd struct {
 }
 
 type EventHandler func(ctx context.Context, e *EntityEvent) error
+
+type ResourceEvent struct {
+	ID        int64
+	OrgID     int64
+	EventType EntityEventType
+	Storage   string
+	Kind      EntityType
+	UID       string
+}
+
+func GetResourceEvents(events []*EntityEvent) ([]ResourceEvent, error) {
+	m := make([]ResourceEvent, 0, len(events))
+	for _, e := range events {
+		// database/org/entityType/path*
+		parts := strings.SplitN(e.EntityId, "/", 4)
+		if len(parts) != 4 {
+			return nil, fmt.Errorf("invalid number of segments: %s", e.EntityId)
+		}
+		storage := parts[0]
+		orgIDStr := parts[1]
+		orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("can't extract org ID: %s", e.EntityId)
+		}
+		kind := EntityType(parts[2])
+		uid := parts[3]
+		re := ResourceEvent{
+			ID:        e.Id,
+			OrgID:     orgID,
+			EventType: e.EventType,
+			Storage:   storage,
+			Kind:      kind,
+			UID:       uid,
+		}
+		m = append(m, re)
+	}
+	return m, nil
+}
 
 // EntityEventsService is a temporary solution to support change notifications in an HA setup
 // With this service each system can query for any events that have happened since a fixed time

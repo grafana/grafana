@@ -10,7 +10,7 @@ import (
 type stubSearchService struct {
 }
 
-func (s *stubSearchService) TriggerReIndex() {
+func (s *stubSearchService) TriggerDashboardReIndex() {
 	// noop.
 }
 

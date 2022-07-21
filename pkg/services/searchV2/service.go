@@ -25,10 +25,11 @@ type StandardSearchService struct {
 	auth FutureAuthService // eventually injected from elsewhere
 	ac   accesscontrol.AccessControl
 
-	logger         log.Logger
-	dashboardIndex *searchIndex
-	extender       DashboardIndexExtender
-	reIndexCh      chan struct{}
+	logger log.Logger
+
+	dashboardIndexExtender DashboardIndexExtender
+	dashboardIndexManager  *orgIndexManager
+	dashboardReIndexCh     chan struct{}
 }
 
 func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
@@ -41,15 +42,18 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			sql: sql,
 			ac:  ac,
 		},
-		dashboardIndex: newSearchIndex(
-			newSQLDashboardLoader(sql),
+		dashboardIndexManager: newOrgIndexManager(
+			"dashboard",
+			getDashboardIndexFactory(
+				newSQLDashboardLoader(sql),
+				extender.GetDocumentExtender(),
+				newFolderIDLookup(sql),
+			),
 			entityEventStore,
-			extender.GetDocumentExtender(),
-			newFolderIDLookup(sql),
 		),
-		logger:    log.New("searchV2"),
-		extender:  extender,
-		reIndexCh: make(chan struct{}, 1),
+		logger:                 log.New("searchV2"),
+		dashboardIndexExtender: extender,
+		dashboardReIndexCh:     make(chan struct{}, 1),
 	}
 	return s
 }
@@ -71,19 +75,20 @@ func (s *StandardSearchService) Run(ctx context.Context) error {
 	for _, org := range orgQuery.Result {
 		orgIDs = append(orgIDs, org.Id)
 	}
-	return s.dashboardIndex.run(ctx, orgIDs, s.reIndexCh)
+	// At this moment we only have dashboard manager, so just run it.
+	return s.dashboardIndexManager.run(ctx, orgIDs, s.dashboardReIndexCh)
 }
 
-func (s *StandardSearchService) TriggerReIndex() {
+func (s *StandardSearchService) TriggerDashboardReIndex() {
 	select {
-	case s.reIndexCh <- struct{}{}:
+	case s.dashboardReIndexCh <- struct{}{}:
 	default:
 		// channel is full => re-index will happen soon anyway.
 	}
 }
 
 func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
-	s.extender = ext
+	s.dashboardIndexExtender = ext
 	s.dashboardIndex.extender = ext.GetDocumentExtender()
 }
 
@@ -163,17 +168,24 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	index, err := s.dashboardIndex.getOrCreateOrgIndex(ctx, orgID)
+	index, err := s.dashboardIndexManager.getOrCreateOrgIndex(ctx, orgID)
 	if err != nil {
 		rsp.Error = err
 		return rsp
 	}
 
-	err = s.dashboardIndex.sync(ctx)
+	err = s.dashboardIndexManager.sync(ctx)
 	if err != nil {
 		rsp.Error = err
 		return rsp
 	}
 
-	return doSearchQuery(ctx, s.logger, index, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
+	reader, cancel, err := index.Reader()
+	if err != nil {
+		rsp.Error = err
+		return rsp
+	}
+	defer cancel()
+
+	return doSearchQuery(ctx, s.logger, reader, filter, q, s.dashboardIndexExtender.GetQueryExtender(q), s.cfg.AppSubURL)
 }

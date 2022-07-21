@@ -34,7 +34,7 @@ const (
 	DocumentFieldUpdatedAt   = "updated_at"
 )
 
-func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*orgIndex, error) {
+func initDashboardWriter(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*bluge.Writer, error) {
 	dashboardWriter, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
 	if err != nil {
 		return nil, fmt.Errorf("error opening writer: %v", err)
@@ -125,11 +125,7 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 
 	logger.Info("Finish inserting docs into index", "elapsed", time.Since(label))
 	logger.Info("Finish building index", "totalElapsed", time.Since(start))
-	return &orgIndex{
-		writers: map[indexType]*bluge.Writer{
-			indexTypeDashboard: dashboardWriter,
-		},
-	}, err
+	return dashboardWriter, err
 }
 
 func getFolderDashboardDoc(dash dashboard) *bluge.Document {
@@ -246,14 +242,8 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 	return doc
 }
 
-func getDashboardPanelIDs(index *orgIndex, panelLocation string) ([]string, error) {
+func getDashboardPanelIDs(reader *bluge.Reader, panelLocation string) ([]string, error) {
 	var panelIDs []string
-
-	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
 
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(bluge.NewTermQuery(panelLocation).SetField(documentFieldLocation))
@@ -281,14 +271,8 @@ func getDashboardPanelIDs(index *orgIndex, panelLocation string) ([]string, erro
 	return panelIDs, err
 }
 
-func getDocsIDsByLocationPrefix(index *orgIndex, prefix string) ([]string, error) {
+func getDocsIDsByLocationPrefix(reader *bluge.Reader, prefix string) ([]string, error) {
 	var ids []string
-
-	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
-	if err != nil {
-		return nil, fmt.Errorf("error getting reader: %w", err)
-	}
-	defer cancel()
 
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(bluge.NewPrefixQuery(prefix).SetField(documentFieldLocation))
@@ -315,15 +299,9 @@ func getDocsIDsByLocationPrefix(index *orgIndex, prefix string) ([]string, error
 	return ids, err
 }
 
-func getDashboardLocation(index *orgIndex, dashboardUID string) (string, bool, error) {
+func getDashboardLocation(reader *bluge.Reader, dashboardUID string) (string, bool, error) {
 	var dashboardLocation string
 	var found bool
-
-	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
-	if err != nil {
-		return "", false, err
-	}
-	defer cancel()
 
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldUID))
@@ -357,7 +335,7 @@ func getDashboardLocation(index *orgIndex, dashboardUID string) (string, bool, e
 func doSearchQuery(
 	ctx context.Context,
 	logger log.Logger,
-	index *orgIndex,
+	reader *bluge.Reader,
 	filter ResourceFilter,
 	q DashboardQuery,
 	extender QueryExtender,
@@ -365,14 +343,6 @@ func doSearchQuery(
 ) *backend.DataResponse {
 	response := &backend.DataResponse{}
 	header := &customMeta{}
-
-	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
-	if err != nil {
-		logger.Error("error getting reader for dashboard index: %v", err)
-		response.Error = err
-		return response
-	}
-	defer cancel()
 
 	hasConstraints := false
 	fullQuery := bluge.NewBooleanQuery()
