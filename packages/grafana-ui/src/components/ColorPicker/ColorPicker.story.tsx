@@ -12,7 +12,7 @@ import mdx from './ColorPicker.mdx';
 import { ColorPickerInput, ColorPickerInputProps } from './ColorPickerInput';
 import { ColorPickerProps } from './ColorPickerPopover';
 
-export default {
+const meta: Meta = {
   title: 'Pickers and Editors/ColorPicker',
   component: ColorPicker,
   subcomponents: { SeriesColorPicker, ColorPickerInput },
@@ -29,7 +29,7 @@ export default {
     enableNamedColors: false,
     color: '#00ff00',
   },
-} as Meta;
+};
 
 export const Basic: Story<ColorPickerProps> = ({ color, enableNamedColors }) => {
   const [, updateArgs] = useArgs();
@@ -77,3 +77,5 @@ export const Input: Story<ColorPickerInputProps> = ({ color }) => {
     />
   );
 };
+
+export default meta;
