@@ -1,7 +1,10 @@
+import { set, get } from 'lodash';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import createMockQuery from '../__mocks__/query';
+import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureQueryType } from '../types';
@@ -13,7 +16,6 @@ const templateSrv = new TemplateSrv({
   getVariableWithName: jest.fn(),
   getFilteredVariables: jest.fn(),
 });
-templateSrv.init([subscriptionsVariable, singleVariable, multiVariable]);
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
@@ -41,7 +43,48 @@ describe('AzureResourceGraphDatasource', () => {
     ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings);
   });
 
+  describe('When performing interpolateVariablesInQueries for azure_resource_graph', () => {
+    beforeEach(() => {
+      templateSrv.init([]);
+    });
+
+    it('should return a query unchanged if no template variables are provided', () => {
+      const query = createMockQuery();
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toEqual(query);
+    });
+
+    it('should return a query with any template variables replaced', () => {
+      const templateableProps = ['query'];
+      const templateVariables = createTemplateVariables(templateableProps);
+      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const query = createMockQuery();
+      const azureResourceGraph: { [index: string]: any } = {};
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        set(azureResourceGraph, path, `$${templateVariable.variableName}`);
+      }
+
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      query.azureResourceGraph = {
+        ...query.azureResourceGraph,
+        ...azureResourceGraph,
+      };
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        expect(get(templatedQuery[0].azureResourceGraph, path)).toEqual(
+          templateVariable.templateVariable.current.value
+        );
+      }
+    });
+  });
+
   describe('When applying template variables', () => {
+    beforeEach(() => {
+      templateSrv.init([subscriptionsVariable, singleVariable, multiVariable]);
+    });
+
     it('should expand single value template variable', () => {
       const target = {
         azureResourceGraph: {
@@ -52,7 +95,6 @@ describe('AzureResourceGraphDatasource', () => {
       expect(ctx.ds.applyTemplateVariables(target)).toStrictEqual({
         azureResourceGraph: { query: 'Resources | var1-foo', resultFormat: 'table' },
         queryType: 'Azure Resource Graph',
-        refId: undefined,
         subscriptions: [],
       });
     });
@@ -70,7 +112,6 @@ describe('AzureResourceGraphDatasource', () => {
           resultFormat: 'table',
         },
         queryType: 'Azure Resource Graph',
-        refId: undefined,
         subscriptions: [],
       });
     });
@@ -90,7 +131,6 @@ describe('AzureResourceGraphDatasource', () => {
         resultFormat: 'table',
       },
       queryType: 'Azure Resource Graph',
-      refId: undefined,
       subscriptions: ['sub-foo', 'sub-baz'],
     });
   });

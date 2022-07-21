@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -47,7 +48,7 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 	}
 	query := models.ValidateResetPasswordCodeQuery{Code: form.Code}
 
-	getUserByLogin := func(ctx context.Context, login string) (*models.User, error) {
+	getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
 		userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
 		err := hs.SQLStore.GetUserByLogin(ctx, &userQuery)
 		return userQuery.Result, err
@@ -64,8 +65,13 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 		return response.Error(400, "Passwords do not match", nil)
 	}
 
+	password := models.Password(form.NewPassword)
+	if password.IsWeak() {
+		return response.Error(400, "New password is too short", nil)
+	}
+
 	cmd := models.ChangeUserPasswordCommand{}
-	cmd.UserId = query.Result.Id
+	cmd.UserId = query.Result.ID
 	var err error
 	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, query.Result.Salt)
 	if err != nil {

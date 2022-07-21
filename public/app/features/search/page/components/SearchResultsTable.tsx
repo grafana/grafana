@@ -1,15 +1,17 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
+import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
+import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { QueryResponse } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
@@ -21,8 +23,10 @@ export type SearchResultsProps = {
   height: number;
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
+  clearSelection: () => void;
   onTagSelected: (tag: string) => void;
   onDatasourceChange?: (datasource?: string) => void;
+  keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
 export type TableColumn = Column & {
@@ -32,24 +36,59 @@ export type TableColumn = Column & {
 const HEADER_HEIGHT = 36; // pixels
 
 export const SearchResultsTable = React.memo(
-  ({ response, width, height, selection, selectionToggle, onTagSelected, onDatasourceChange }: SearchResultsProps) => {
+  ({
+    response,
+    width,
+    height,
+    selection,
+    selectionToggle,
+    clearSelection,
+    onTagSelected,
+    onDatasourceChange,
+    keyboardEvents,
+  }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
+    const columnStyles = useStyles2(getColumnStyles);
     const tableStyles = useStyles2(getTableStyles);
+    const infiniteLoaderRef = useRef<InfiniteLoader>(null);
+    const [listEl, setListEl] = useState<FixedSizeList | null>(null);
+    const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
         return [];
       }
+
       // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
       // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
       // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
       return Array(response.totalRows).fill(0);
     }, [response]);
 
+    // Scroll to the top and clear loader cache when the query results change
+    useEffect(() => {
+      if (infiniteLoaderRef.current) {
+        infiniteLoaderRef.current.resetloadMoreItemsCache();
+      }
+      if (listEl) {
+        listEl.scrollTo(0);
+      }
+    }, [memoizedData, listEl]);
+
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
-      return generateColumns(response, width, selection, selectionToggle, styles, onTagSelected, onDatasourceChange);
-    }, [response, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
+      return generateColumns(
+        response,
+        width,
+        selection,
+        selectionToggle,
+        clearSelection,
+        columnStyles,
+        onTagSelected,
+        onDatasourceChange,
+        response.view?.length >= response.totalRows
+      );
+    }, [response, width, columnStyles, selection, selectionToggle, clearSelection, onTagSelected, onDatasourceChange]);
 
     const options: TableOptions<{}> = useMemo(
       () => ({
@@ -61,14 +100,19 @@ export const SearchResultsTable = React.memo(
 
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useAbsoluteLayout);
 
-    const RenderRow = React.useCallback(
+    const RenderRow = useCallback(
       ({ index: rowIndex, style }) => {
         const row = rows[rowIndex];
         prepareRow(row);
 
         const url = response.view.fields.url?.values.get(rowIndex);
+        let className = styles.rowContainer;
+        if (rowIndex === highlightIndex.y) {
+          className += ' ' + styles.selectedRow;
+        }
+
         return (
-          <div {...row.getRowProps({ style })} className={styles.rowContainer}>
+          <div {...row.getRowProps({ style })} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
               return (
                 <TableCell
@@ -84,7 +128,7 @@ export const SearchResultsTable = React.memo(
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, styles.rowContainer, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles]
     );
 
     if (!rows.length) {
@@ -92,7 +136,7 @@ export const SearchResultsTable = React.memo(
     }
 
     return (
-      <div {...getTableProps()} aria-label="Search result table" role="table">
+      <div {...getTableProps()} aria-label="Search results table" role="table">
         <div>
           {headerGroups.map((headerGroup) => {
             const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
@@ -114,13 +158,17 @@ export const SearchResultsTable = React.memo(
 
         <div {...getTableBodyProps()}>
           <InfiniteLoader
+            ref={infiniteLoaderRef}
             isItemLoaded={response.isItemLoaded}
             itemCount={rows.length}
             loadMoreItems={response.loadMoreItems}
           >
             {({ onItemsRendered, ref }) => (
               <FixedSizeList
-                ref={ref}
+                ref={(innerRef) => {
+                  ref(innerRef);
+                  setListEl(innerRef);
+                }}
                 onItemsRendered={onItemsRendered}
                 height={height - HEADER_HEIGHT}
                 itemCount={rows.length}
@@ -150,27 +198,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: center;
       height: 100%;
     `,
-    table: css`
-      width: 100%;
-    `,
-    cellIcon: css`
-      display: flex;
-      align-items: center;
-    `,
-    cellWrapper: css`
-      border-right: none;
-      &:hover {
-        box-shadow: none;
-      }
-    `,
     headerCell: css`
-      padding-top: 2px;
-      padding-left: 10px;
+      padding: ${theme.spacing(1)};
     `,
     headerRow: css`
       background-color: ${theme.colors.background.secondary};
       height: ${HEADER_HEIGHT}px;
       align-items: center;
+    `,
+    selectedRow: css`
+      background-color: ${rowHoverBg};
+      box-shadow: inset 3px 0px ${theme.colors.primary.border};
     `,
     rowContainer: css`
       label: row;
@@ -184,6 +222,27 @@ const getStyles = (theme: GrafanaTheme2) => {
         text-overflow: ellipsis;
       }
     `,
+  };
+};
+
+// CSS for columns from react table
+const getColumnStyles = (theme: GrafanaTheme2) => {
+  return {
+    nameCellStyle: css`
+      border-right: none;
+      padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(2)};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      white-space: nowrap;
+      &:hover {
+        box-shadow: none;
+      }
+    `,
+    headerNameStyle: css`
+      padding-left: ${theme.spacing(1)};
+    `,
+
     typeIcon: css`
       margin-left: 5px;
       margin-right: 9.5px;
@@ -199,33 +258,49 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
+    missingTitleText: css`
+      color: ${theme.colors.text.disabled};
+      font-style: italic;
+    `,
     invalidDatasourceItem: css`
       color: ${theme.colors.error.main};
       text-decoration: line-through;
     `,
     typeText: css`
       color: ${theme.colors.text.secondary};
+      padding-top: ${theme.spacing(1)};
     `,
     locationItem: css`
       color: ${theme.colors.text.secondary};
       margin-right: 12px;
     `,
+    sortedHeader: css`
+      text-align: right;
+      padding-right: ${theme.spacing(2)};
+    `,
+    sortedItems: css`
+      text-align: right;
+      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
+    `,
+    explainItem: css`
+      text-align: right;
+      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
+      cursor: pointer;
+    `,
+    locationCellStyle: css`
+      padding-top: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(1)};
+    `,
     checkboxHeader: css`
-      // display: flex;
-      // justify-content: flex-start;
+      margin-left: 2px;
     `,
     checkbox: css`
       margin-left: 10px;
       margin-right: 10px;
       margin-top: 5px;
     `,
-    infoWrap: css`
-      color: ${theme.colors.text.secondary};
-      span {
-        margin-right: 10px;
-      }
-    `,
     tagList: css`
+      padding-top: ${theme.spacing(0.5)};
       justify-content: flex-start;
       flex-wrap: nowrap;
     `,

@@ -26,4 +26,5 @@ export type RichHistorySearchFilters = {
   from: number;
   to: number;
   starred: boolean;
+  page?: number;
 };

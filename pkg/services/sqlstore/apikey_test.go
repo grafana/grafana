@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -16,7 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func TestApiKeyDataAccess(t *testing.T) {
+func TestIntegrationApiKeyDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -34,6 +34,13 @@ func TestApiKeyDataAccess(t *testing.T) {
 
 				assert.Nil(t, err)
 				assert.NotNil(t, query.Result)
+			})
+
+			t.Run("Should be able to get key by hash", func(t *testing.T) {
+				key, err := ss.GetAPIKeyByHash(context.Background(), cmd.Key)
+
+				assert.Nil(t, err)
+				assert.NotNil(t, key)
 			})
 		})
 
@@ -67,6 +74,24 @@ func TestApiKeyDataAccess(t *testing.T) {
 			then := timeNow().Add(-2 * time.Second)
 			expected := then.Add(1 * time.Hour).UTC().Unix()
 			assert.Equal(t, *query.Result.Expires, expected)
+		})
+
+		t.Run("Last Used At datetime update", func(t *testing.T) {
+			// expires in one hour
+			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "last-update-at", Key: "asd3", SecondsToLive: 3600}
+			err := ss.AddAPIKey(context.Background(), &cmd)
+			require.NoError(t, err)
+
+			assert.Nil(t, cmd.Result.LastUsedAt)
+
+			err = ss.UpdateAPIKeyLastUsedDate(context.Background(), cmd.Result.Id)
+			require.NoError(t, err)
+
+			query := models.GetApiKeyByNameQuery{KeyName: "last-update-at", OrgId: 1}
+			err = ss.GetApiKeyByName(context.Background(), &query)
+			assert.Nil(t, err)
+
+			assert.NotNil(t, query.Result.LastUsedAt)
 		})
 
 		t.Run("Add a key with negative lifespan", func(t *testing.T) {
@@ -130,7 +155,10 @@ func TestApiKeyDataAccess(t *testing.T) {
 	})
 }
 
-func TestApiKeyErrors(t *testing.T) {
+func TestIntegrationApiKeyErrors(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -166,7 +194,10 @@ type getApiKeysTestCase struct {
 	expectedNumKeys int
 }
 
-func TestSQLStore_GetAPIKeys(t *testing.T) {
+func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []getApiKeysTestCase{
 		{
 			desc: "expect all keys for wildcard scope",

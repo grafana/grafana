@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { mount } from 'enzyme';
+import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import AccordianText from './AccordianText';
-import TextList from './TextList';
 
 const warnings = ['Duplicated tag', 'Duplicated spanId'];
 
 describe('<AccordianText>', () => {
-  let wrapper;
-
   const props = {
     compact: false,
     data: warnings,
@@ -32,25 +29,22 @@ describe('<AccordianText>', () => {
     onToggle: jest.fn(),
   };
 
-  beforeEach(() => {
-    wrapper = mount(<AccordianText {...props} />);
-  });
-
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper.exists()).toBe(true);
+    render(<AccordianText {...props} />);
+    expect(() => render(<AccordianText {...props} />)).not.toThrow();
   });
 
   it('renders the label', () => {
-    const header = wrapper.find(`[data-test-id="AccordianText--header"] > strong`);
-    expect(header.length).toBe(1);
-    expect(header.text()).toBe(props.label);
+    render(<AccordianText {...props} />);
+    const { getByText } = within(screen.getByTestId('AccordianText--header'));
+    expect(getByText(props.label)).toBeInTheDocument();
   });
 
   it('renders the content when it is expanded', () => {
-    wrapper.setProps({ isOpen: true });
-    const content = wrapper.find(TextList);
-    expect(content.length).toBe(1);
-    expect(content.prop('data')).toBe(warnings);
+    props.isOpen = true;
+    render(<AccordianText {...props} />);
+    warnings.forEach((warning) => {
+      expect(screen.getByText(warning)).toBeInTheDocument();
+    });
   });
 });

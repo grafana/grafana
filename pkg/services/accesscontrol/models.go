@@ -222,20 +222,21 @@ type ScopeParams struct {
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
 // can perform against specific resource.
 type ResourcePermission struct {
-	ID          int64
-	RoleName    string
-	Actions     []string
-	Scope       string
-	UserId      int64
-	UserLogin   string
-	UserEmail   string
-	TeamId      int64
-	TeamEmail   string
-	Team        string
-	BuiltInRole string
-	IsManaged   bool
-	Created     time.Time
-	Updated     time.Time
+	ID                   int64
+	RoleName             string
+	Actions              []string
+	Scope                string
+	UserId               int64
+	UserLogin            string
+	UserEmail            string
+	UserIsServiceAccount bool
+	TeamId               int64
+	TeamEmail            string
+	Team                 string
+	BuiltInRole          string
+	IsManaged            bool
+	Created              time.Time
+	Updated              time.Time
 }
 
 func (p *ResourcePermission) Contains(targetActions []string) bool {
@@ -285,32 +286,31 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead     = "users:read"
-	ActionUsersWrite    = "users:write"
-	ActionUsersTeamRead = "users.teams:read"
+	ActionUsersRead  = "users:read"
+	ActionUsersWrite = "users:write"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersAuthTokenList = "users.authtoken:list"
+	ActionUsersAuthTokenList = "users.authtoken:read"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersAuthTokenUpdate = "users.authtoken:update"
+	ActionUsersAuthTokenUpdate = "users.authtoken:write"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersPasswordUpdate    = "users.password:update"
+	ActionUsersPasswordUpdate    = "users.password:write"
 	ActionUsersDelete            = "users:delete"
 	ActionUsersCreate            = "users:create"
 	ActionUsersEnable            = "users:enable"
 	ActionUsersDisable           = "users:disable"
-	ActionUsersPermissionsUpdate = "users.permissions:update"
+	ActionUsersPermissionsUpdate = "users.permissions:write"
 	ActionUsersLogout            = "users:logout"
-	ActionUsersQuotasList        = "users.quotas:list"
-	ActionUsersQuotasUpdate      = "users.quotas:update"
+	ActionUsersQuotasList        = "users.quotas:read"
+	ActionUsersQuotasUpdate      = "users.quotas:write"
 
 	// Org actions
-	ActionOrgUsersRead       = "org.users:read"
-	ActionOrgUsersAdd        = "org.users:add"
-	ActionOrgUsersRemove     = "org.users:remove"
-	ActionOrgUsersRoleUpdate = "org.users.role:update"
+	ActionOrgUsersRead   = "org.users:read"
+	ActionOrgUsersAdd    = "org.users:add"
+	ActionOrgUsersRemove = "org.users:remove"
+	ActionOrgUsersWrite  = "org.users:write"
 
 	// LDAP actions
 	ActionLDAPUsersRead    = "ldap.user:read"
@@ -326,9 +326,6 @@ const (
 
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
-
-	// Plugin actions
-	ActionPluginsManage = "plugins:manage"
 
 	// Global Scopes
 	ScopeGlobalUsersAll = "global.users:*"
@@ -366,19 +363,17 @@ const (
 	// Alerting rules actions
 	ActionAlertingRuleCreate = "alert.rules:create"
 	ActionAlertingRuleRead   = "alert.rules:read"
-	ActionAlertingRuleUpdate = "alert.rules:update"
+	ActionAlertingRuleUpdate = "alert.rules:write"
 	ActionAlertingRuleDelete = "alert.rules:delete"
 
 	// Alerting instances (+silences) actions
 	ActionAlertingInstanceCreate = "alert.instances:create"
-	ActionAlertingInstanceUpdate = "alert.instances:update"
+	ActionAlertingInstanceUpdate = "alert.instances:write"
 	ActionAlertingInstanceRead   = "alert.instances:read"
 
 	// Alerting Notification policies actions
-	ActionAlertingNotificationsCreate = "alert.notifications:create"
-	ActionAlertingNotificationsRead   = "alert.notifications:read"
-	ActionAlertingNotificationsUpdate = "alert.notifications:update"
-	ActionAlertingNotificationsDelete = "alert.notifications:delete"
+	ActionAlertingNotificationsRead  = "alert.notifications:read"
+	ActionAlertingNotificationsWrite = "alert.notifications:write"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
@@ -391,6 +386,10 @@ const (
 	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
+
+	// Alerting provisioning actions
+	ActionAlertingProvisioningRead  = "alert.provisioning:read"
+	ActionAlertingProvisioningWrite = "alert.provisioning:write"
 )
 
 var (

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CanvasFrameOptions, CanvasElementOptions } from 'app/features/canvas';
+import { CanvasElementOptions, CanvasFrameOptions } from 'app/features/canvas';
 
 import { FrameState } from './frame';
 import { Scene } from './scene';
@@ -41,7 +41,12 @@ export class RootElement extends FrameState {
 
   render() {
     return (
-      <div key={this.UID} ref={this.setRootRef} style={{ ...this.sizeStyle, ...this.dataStyle }}>
+      <div
+        onContextMenu={(event) => event.preventDefault()}
+        key={this.UID}
+        ref={this.setRootRef}
+        style={{ ...this.sizeStyle, ...this.dataStyle }}
+      >
         {this.elements.map((v) => v.render())}
       </div>
     );

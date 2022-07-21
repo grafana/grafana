@@ -9,23 +9,26 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
+	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
-
-	"github.com/benbjohnson/clock"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
@@ -39,7 +42,7 @@ func TestWarmStateCache(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	require.NoError(t, err)
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	const mainOrgID int64 = 1
 	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrgID)
@@ -97,17 +100,20 @@ func TestWarmStateCache(t *testing.T) {
 	}
 	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
 
-	schedCfg := schedule.SchedulerCfg{
-		C:            clock.NewMock(),
-		BaseInterval: time.Second,
-		Logger:       log.New("ngalert cache warming test"),
-
-		RuleStore:               dbstore,
-		InstanceStore:           dbstore,
-		Metrics:                 testMetrics.GetSchedulerMetrics(),
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval:            time.Second,
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, ng.SQLStore, &dashboards.FakeDashboardService{})
+
+	schedCfg := schedule.SchedulerCfg{
+		Cfg:           cfg,
+		C:             clock.NewMock(),
+		Logger:        log.New("ngalert cache warming test"),
+		RuleStore:     dbstore,
+		InstanceStore: dbstore,
+		Metrics:       testMetrics.GetSchedulerMetrics(),
+	}
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	st.Warm(ctx)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -125,7 +131,7 @@ func TestWarmStateCache(t *testing.T) {
 
 func TestAlertingTicker(t *testing.T) {
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	alerts := make([]*models.AlertRule, 0)
 
@@ -133,38 +139,40 @@ func TestAlertingTicker(t *testing.T) {
 	// create alert rule under main org with one second interval
 	alerts = append(alerts, tests.CreateTestAlertRule(t, ctx, dbstore, 1, mainOrgID))
 
-	const disabledOrgID int64 = 3
-
 	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
 	stopAppliedCh := make(chan models.AlertRuleKey, len(alerts))
 
 	mockedClock := clock.NewMock()
-	baseInterval := time.Second
+
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval:            time.Second,
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+	}
+
+	notifier := &schedule.AlertsSenderMock{}
+	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return()
 
 	schedCfg := schedule.SchedulerCfg{
-		C:            mockedClock,
-		BaseInterval: baseInterval,
+		Cfg: cfg,
+		C:   mockedClock,
 		EvalAppliedFunc: func(alertDefKey models.AlertRuleKey, now time.Time) {
 			evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
 		},
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		RuleStore:               dbstore,
-		InstanceStore:           dbstore,
-		Logger:                  log.New("ngalert schedule test"),
-		Metrics:                 testMetrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
-		DisabledOrgs: map[int64]struct{}{
-			disabledOrgID: {},
-		},
+		RuleStore:     dbstore,
+		InstanceStore: dbstore,
+		Logger:        log.New("ngalert schedule test"),
+		Metrics:       testMetrics.GetSchedulerMetrics(),
+		AlertSender:   notifier,
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, ng.SQLStore, &dashboards.FakeDashboardService{})
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := schedule.NewScheduler(schedCfg, nil, appUrl, st)
+	sched := schedule.NewScheduler(schedCfg, appUrl, st, busmock.New())
 
 	go func() {
 		err := sched.Run(ctx)
@@ -227,15 +235,6 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 7th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
-	})
-
-	// create alert rule with one second interval under disabled org
-	alerts = append(alerts, tests.CreateTestAlertRule(t, ctx, dbstore, 1, disabledOrgID))
-
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
-	t.Run(fmt.Sprintf("on 8th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})

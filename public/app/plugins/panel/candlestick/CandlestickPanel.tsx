@@ -46,7 +46,9 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
 
   const theme = useTheme2();
 
-  const info = useMemo(() => prepareCandlestickFields(data?.series, options, theme), [data, options, theme]);
+  const info = useMemo(() => {
+    return prepareCandlestickFields(data?.series, options, theme, timeRange);
+  }, [data, options, theme, timeRange]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;
@@ -316,7 +318,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
               />
             )}
 
-            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
+            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

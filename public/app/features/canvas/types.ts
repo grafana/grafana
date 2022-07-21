@@ -49,3 +49,12 @@ export interface LineConfig {
   color?: ColorDimensionConfig;
   width?: number;
 }
+
+export enum QuickPlacement {
+  Top = 'top',
+  Bottom = 'bottom',
+  Left = 'left',
+  Right = 'right',
+  HorizontalCenter = 'hcenter',
+  VerticalCenter = 'vcenter',
+}

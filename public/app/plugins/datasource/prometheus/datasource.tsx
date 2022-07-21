@@ -22,6 +22,7 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
+  QueryFixAction,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -31,6 +32,7 @@ import {
   DataSourceWithBackend,
   BackendDataSourceResponse,
   toDataQueryResponse,
+  isFetchError,
 } from '@grafana/runtime';
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -40,6 +42,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { PromApplication, PromApiFeatures } from 'app/types/unified-alerting-dto';
 
 import { addLabelToQuery } from './add_label_to_query';
+import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { renderLegendFormat } from './legend';
@@ -61,7 +64,7 @@ import {
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 
-export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
+const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource
@@ -108,7 +111,7 @@ export class PrometheusDatasource
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
-    this.httpMethod = instanceSettings.jsonData.httpMethod || 'POST';
+    this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     // `directUrl` is never undefined, we set it at https://github.com/grafana/grafana/blob/main/pkg/api/frontendsettings.go#L108
     // here we "fall back" to this.url to make typescript happy, but it should never happen
     this.directUrl = instanceSettings.jsonData.directUrl ?? this.url;
@@ -119,6 +122,14 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
+
+    // This needs to be here and cannot be static because of how annotations typing affects casting of data source
+    // objects to DataSourceApi types.
+    // We don't use the default processing for prometheus.
+    // See standardAnnotationSupport.ts/[shouldUseMappingUI|shouldUseLegacyRunner]
+    this.annotations = {
+      QueryEditor: AnnotationQueryEditor,
+    };
   }
 
   init = async () => {
@@ -156,8 +167,14 @@ export class PrometheusDatasource
       }
     }
 
+    let queryUrl = this.url + url;
+    if (url.startsWith(`/api/datasources/${this.id}`)) {
+      // This url is meant to be a replacement for the whole URL. Replace the entire URL
+      queryUrl = url;
+    }
+
     const options: BackendSrvRequest = defaults(overrides, {
-      url: this.url + url,
+      url: queryUrl,
       method: this.httpMethod,
       headers: {},
     });
@@ -200,10 +217,16 @@ export class PrometheusDatasource
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
-        return await lastValueFrom(this._request<T>(url, params, { method: this.httpMethod, hideFromInspector: true }));
+        return await lastValueFrom(
+          this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
+            method: this.httpMethod,
+            hideFromInspector: true,
+            showErrorAlert: false,
+          })
+        );
       } catch (err) {
         // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
-        if (this.httpMethod === 'POST' && err.status === 405) {
+        if (this.httpMethod === 'POST' && isFetchError(err) && (err.status === 405 || err.status === 400)) {
           console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
         } else {
           throw err;
@@ -211,7 +234,12 @@ export class PrometheusDatasource
       }
     }
 
-    return await lastValueFrom(this._request<T>(url, params, { method: 'GET', hideFromInspector: true })); // toPromise until we change getTagValues, getTagKeys to Observable
+    return await lastValueFrom(
+      this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
+        method: 'GET',
+        hideFromInspector: true,
+      })
+    ); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -327,7 +355,7 @@ export class PrometheusDatasource
       const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
       // Remove targets that weren't processed yet (in targets array they are after current target)
       const currentTargetIdx = request.targets.findIndex((t) => t.refId === target.refId);
-      const targets = request.targets.slice(0, currentTargetIdx);
+      const targets = request.targets.slice(0, currentTargetIdx).filter((t) => !t.hide);
 
       if (!metricName || (metricName && !targets.some((t) => t.expr.includes(metricName)))) {
         return true;
@@ -811,7 +839,10 @@ export class PrometheusDatasource
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
         options.series.map((series: string) => this.languageProvider.fetchSeriesLabels(series))
       );
-      const uniqueLabels = [...new Set(...seriesLabels.map((value) => Object.keys(value)))];
+      // Combines tags from all options.series provided
+      let tags: string[] = [];
+      seriesLabels.map((value) => (tags = tags.concat(Object.keys(value))));
+      const uniqueLabels = [...new Set(tags)];
       return uniqueLabels.map((value: any) => ({ text: value }));
     } else {
       // Get all tags
@@ -986,7 +1017,11 @@ export class PrometheusDatasource
 
   async areExemplarsAvailable() {
     try {
-      const res = await this.metadataRequest('/api/v1/query_exemplars', { query: 'test' });
+      const res = await this.getResource('/api/v1/query_exemplars', {
+        query: 'test',
+        start: dateTime().subtract(30, 'minutes').valueOf(),
+        end: dateTime().valueOf(),
+      });
       if (res.data.status === 'success') {
         return true;
       }
@@ -996,15 +1031,22 @@ export class PrometheusDatasource
     }
   }
 
-  modifyQuery(query: PromQuery, action: any): PromQuery {
+  modifyQuery(query: PromQuery, action: QueryFixAction): PromQuery {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value);
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value);
+        }
+
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = addLabelToQuery(expression, action.key, action.value, '!=');
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value, '!=');
+        }
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
@@ -1020,8 +1062,8 @@ export class PrometheusDatasource
         break;
       }
       case 'EXPAND_RULES': {
-        if (action.mapping) {
-          expression = expandRecordingRules(expression, action.mapping);
+        if (action.options) {
+          expression = expandRecordingRules(expression, action.options);
         }
         break;
       }

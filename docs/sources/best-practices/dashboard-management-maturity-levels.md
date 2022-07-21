@@ -1,9 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/best-practices/dashboard-management-maturity-levels/"]
-description = "Explanation of dashboard management maturity model"
-title = "Dashboard management maturity model"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/best-practices/dashboard-management-maturity-levels/
+description: Explanation of dashboard management maturity model
+title: Dashboard management maturity model
+weight: 400
+---
 
 # Dashboard management maturity model
 
@@ -34,9 +35,9 @@ How can you tell you are here?
 
 - Prevent sprawl by using template variables. For example, you don't need a separate dashboard for each node, you can use query variables. Even better, you can make the data source a template variable too, so you can reuse the same dashboard across different clusters and monitoring backends.
 
-  Refer to the list of [Variable examples]({{< relref "../variables/variable-examples.md" >}}) if you want some ideas.
+  Refer to the list of [Variable examples]({{< relref "../variables/variable-examples/" >}}) if you want some ideas.
 
-- Methodical dashboards according to an [observability strategy]({{< relref "common-observability-strategies.md" >}}).
+- Methodical dashboards according to an [observability strategy]({{< relref "common-observability-strategies/" >}}).
 - Hierarchical dashboards with drill-downs to the next level.
 
   {{< figure class="float-right"  max-width="100%" src="/static/img/docs/best-practices/drill-down-example.png" caption="Example of using drill-down" >}}
@@ -47,12 +48,12 @@ How can you tell you are here?
 
 - Compare like to like: split service dashboards when the magnitude differs. Make sure aggregated metrics don't drown out important information.
 - Expressive charts with meaningful use of color and normalizing axes where you can.
-  - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds]({{< relref "../panels/configure-thresholds" >}}) can help with that.
+  - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds]({{< relref "../panels/configure-thresholds/" >}}) can help with that.
   - Example of normalizing axes: When comparing CPU usage, measure by percentage rather than raw number, because machines can have a different number of cores. Normalizing CPU usage by the number of cores reduces cognitive load because the viewer can trust that at 100% all cores are being used, without having to know the number of CPUs.
 - Directed browsing cuts down on "guessing."
   - Template variables make it harder to “just browse” randomly or aimlessly.
   - Most dashboards should be linked to by alerts.
-  - Browsing is directed with links. For more information, refer to [Linking]({{< relref "../linking/_index.md" >}}).
+  - Browsing is directed with links. For more information, refer to [Manage dashboard links]({{< relref "../dashboards/manage-dashboard-links/" >}}).
 - Version-controlled dashboard JSON.
 
 ## High - optimized use
@@ -62,7 +63,7 @@ At this stage, you have optimized your dashboard management use with a consisten
 - Actively reducing sprawl.
   - Regularly review existing dashboards to make sure they are still relevant.
   - Only approved dashboards added to master dashboard list.
-  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights]({{< relref "../enterprise/usage-insights/_index.md" >}}).
+  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights]({{< relref "../enterprise/usage-insights/" >}}).
 - Consistency by design.
 - Use scripting libraries to generate dashboards, ensure consistency in pattern and style.
   - grafonnet (Jsonnet)

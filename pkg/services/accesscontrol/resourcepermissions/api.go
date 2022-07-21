@@ -29,30 +29,6 @@ func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manage
 	return &api{ac, router, manager, permissions}
 }
 
-func (a *api) getEvaluators(actionRead, actionWrite, scope string) (read, write accesscontrol.Evaluator) {
-	if a.service.options.InheritedScopesSolver == nil || a.service.options.InheritedScopePrefixes == nil {
-		read = accesscontrol.EvalPermission(actionRead, scope)
-		write = accesscontrol.EvalPermission(actionWrite, scope)
-	} else {
-		// Add inherited scopes to the evaluators protecting the endpoint.
-		// Scopes in the request context parameters are to be added by solveInheritedScopes.
-		// If a user got actionRead on any of the inherited scopes, they will be granted access to the endpoint.
-		// Ex: a user inherits dashboards:read from the containing folder (folders:uid:BCeknZL7k)
-		inheritedRead := []accesscontrol.Evaluator{accesscontrol.EvalPermission(actionRead, scope)}
-		inheritedWrite := []accesscontrol.Evaluator{accesscontrol.EvalPermission(actionWrite, scope)}
-		for _, scopePrefix := range a.service.options.InheritedScopePrefixes {
-			inheritedRead = append(inheritedRead,
-				accesscontrol.EvalPermission(actionRead, accesscontrol.Parameter(scopePrefix)))
-			inheritedWrite = append(inheritedWrite,
-				accesscontrol.EvalPermission(actionWrite, accesscontrol.Parameter(scopePrefix)))
-		}
-
-		read = accesscontrol.EvalAny(inheritedRead...)
-		write = accesscontrol.EvalAny(inheritedWrite...)
-	}
-	return
-}
-
 func (a *api) registerEndpoints() {
 	auth := accesscontrol.Middleware(a.ac)
 	disable := disableMiddleware(a.ac.IsDisabled())
@@ -62,25 +38,25 @@ func (a *api) registerEndpoints() {
 		actionRead := fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		actionWrite := fmt.Sprintf("%s.permissions:write", a.service.options.Resource)
 		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
-		readEvaluator, writeEvaluator := a.getEvaluators(actionRead, actionWrite, scope)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", inheritanceSolver, auth(disable, readEvaluator), routing.Wrap(a.getPermissions))
-		if a.service.options.Assignments.Users {
-			r.Post("/:resourceID/users/:userID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setUserPermission))
+		r.Get("/:resourceID", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
+		if a.service.options.Assignments.Users || a.service.options.Assignments.ServiceAccounts {
+			r.Post("/:resourceID/users/:userID", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
 		}
 		if a.service.options.Assignments.Teams {
-			r.Post("/:resourceID/teams/:teamID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setTeamPermission))
+			r.Post("/:resourceID/teams/:teamID", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
 		}
 		if a.service.options.Assignments.BuiltInRoles {
-			r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setBuiltinRolePermission))
+			r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setBuiltinRolePermission))
 		}
 	})
 }
 
 type Assignments struct {
-	Users        bool `json:"users"`
-	Teams        bool `json:"teams"`
-	BuiltInRoles bool `json:"builtInRoles"`
+	Users           bool `json:"users"`
+	Teams           bool `json:"teams"`
+	BuiltInRoles    bool `json:"builtInRoles"`
+	ServiceAccounts bool `json:"serviceAccounts"`
 }
 
 type Description struct {
@@ -96,18 +72,19 @@ func (a *api) getDescription(c *models.ReqContext) response.Response {
 }
 
 type resourcePermissionDTO struct {
-	ID            int64    `json:"id"`
-	RoleName      string   `json:"roleName"`
-	IsManaged     bool     `json:"isManaged"`
-	UserID        int64    `json:"userId,omitempty"`
-	UserLogin     string   `json:"userLogin,omitempty"`
-	UserAvatarUrl string   `json:"userAvatarUrl,omitempty"`
-	Team          string   `json:"team,omitempty"`
-	TeamID        int64    `json:"teamId,omitempty"`
-	TeamAvatarUrl string   `json:"teamAvatarUrl,omitempty"`
-	BuiltInRole   string   `json:"builtInRole,omitempty"`
-	Actions       []string `json:"actions"`
-	Permission    string   `json:"permission"`
+	ID                   int64    `json:"id"`
+	RoleName             string   `json:"roleName"`
+	IsManaged            bool     `json:"isManaged"`
+	UserID               int64    `json:"userId,omitempty"`
+	UserLogin            string   `json:"userLogin,omitempty"`
+	UserAvatarUrl        string   `json:"userAvatarUrl,omitempty"`
+	UserIsServiceAccount bool     `json:"userIsServiceAccount,omitempty"`
+	Team                 string   `json:"team,omitempty"`
+	TeamID               int64    `json:"teamId,omitempty"`
+	TeamAvatarUrl        string   `json:"teamAvatarUrl,omitempty"`
+	BuiltInRole          string   `json:"builtInRole,omitempty"`
+	Actions              []string `json:"actions"`
+	Permission           string   `json:"permission"`
 }
 
 func (a *api) getPermissions(c *models.ReqContext) response.Response {
@@ -118,7 +95,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
 	}
 
-	if a.service.options.Assignments.BuiltInRoles && !a.service.cfg.IsEnterprise {
+	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
 		permissions = append(permissions, accesscontrol.ResourcePermission{
 			Actions:     a.service.actions,
 			Scope:       "*",
@@ -135,18 +112,19 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 			}
 
 			dto = append(dto, resourcePermissionDTO{
-				ID:            p.ID,
-				RoleName:      p.RoleName,
-				UserID:        p.UserId,
-				UserLogin:     p.UserLogin,
-				UserAvatarUrl: dtos.GetGravatarUrl(p.UserEmail),
-				Team:          p.Team,
-				TeamID:        p.TeamId,
-				TeamAvatarUrl: teamAvatarUrl,
-				BuiltInRole:   p.BuiltInRole,
-				Actions:       p.Actions,
-				Permission:    permission,
-				IsManaged:     p.IsManaged,
+				ID:                   p.ID,
+				RoleName:             p.RoleName,
+				UserID:               p.UserId,
+				UserLogin:            p.UserLogin,
+				UserAvatarUrl:        dtos.GetGravatarUrl(p.UserEmail),
+				UserIsServiceAccount: p.UserIsServiceAccount,
+				Team:                 p.Team,
+				TeamID:               p.TeamId,
+				TeamAvatarUrl:        teamAvatarUrl,
+				BuiltInRole:          p.BuiltInRole,
+				Actions:              p.Actions,
+				Permission:           permission,
+				IsManaged:            p.IsManaged,
 			})
 		}
 	}

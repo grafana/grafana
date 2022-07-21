@@ -5,12 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/mwitkow/go-conntrack"
 )
@@ -28,6 +27,7 @@ func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer traci
 		SetUserAgentMiddleware(userAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
+		sdkhttpclient.ContextualMiddleware(),
 		ResponseLimitMiddleware(cfg.ResponseLimit),
 		RedirectLimitMiddleware(validator),
 	}

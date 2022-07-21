@@ -23,6 +23,8 @@ export const RowOptionsButton: FC<RowOptionsButtonProps> = ({ repeat, title, onU
         return (
           <a
             className="pointer"
+            role="button"
+            aria-label="Row options"
             onClick={() => {
               showModal(RowOptionsModal, { title, repeat, onDismiss: hideModal, onUpdate: onUpdateChange(hideModal) });
             }}

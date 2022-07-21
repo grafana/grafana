@@ -1,10 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/panels/visualizations/state-timeline/", "/docs/grafana/latest/visualizations/state-timeline/"]
-description = "State timeline visualization"
-keywords = ["grafana", "docs", "state timeline", "panel"]
-title = "State timeline"
-weight = 900
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/state-timeline/
+  - /docs/grafana/latest/visualizations/state-timeline/
+description: State timeline visualization
+keywords:
+  - grafana
+  - docs
+  - state timeline
+  - panel
+title: State timeline
+weight: 900
+---
 
 # State timeline
 
@@ -42,7 +48,7 @@ Controls the opacity of state regions.
 
 ## Value mappings
 
-To assign colors to boolean or string values, use [Value mappings]({{< relref "../panels/format-data/about-value-mapping.md" >}}).
+To assign colors to boolean or string values, use [Value mappings]({{< relref "../panels/format-data/about-value-mapping/" >}}).
 
 {{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 
@@ -54,6 +60,6 @@ The panel can be used with time series data as well. In this case, the threshold
 
 ## Legend options
 
-When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` as referenced in [Apply color to a series and fields]({{< relref "../panels/working-with-panels/apply-color-to-series.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
+When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` as referenced in [Color scheme]({{< relref "../panels/configure-standard-options/#color-scheme" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
 
 {{< docs/shared "visualizations/legend-mode.md" >}}

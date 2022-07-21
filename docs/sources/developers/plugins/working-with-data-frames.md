@@ -1,7 +1,8 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/working-with-data-frames/"]
-title = "Working with data frames"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/working-with-data-frames/
+title: Working with data frames
+---
 
 # Working with data frames
 
@@ -9,7 +10,7 @@ The data frame is a columnar data structure which allows efficient querying of l
 
 The DataFrame interface contains a `name` and an array of `fields` where each field contains the name, type, and the values for the field.
 
-> **Note:** If you're looking to migrate an existing plugin to use the data frame format, refer to [Migrate to data frames]({{< relref "migration-guide.md#migrate-to-data-frames" >}}).
+> **Note:** If you're looking to migrate an existing plugin to use the data frame format, refer to [Migrate to data frames]({{< relref "migration-guide/#migrate-to-data-frames" >}}).
 
 ## Create a data frame
 

@@ -26,11 +26,12 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 			Id:    dashboardId,
 			OrgId: c.OrgId,
 		}
-		err := hs.dashboardService.GetDashboard(c.Req.Context(), query)
-		if err != nil {
-			return response.Error(500, "Failed to get dashboard", err)
+		err := hs.DashboardService.GetDashboard(c.Req.Context(), query)
+
+		// Grafana admin users may have starred dashboards in multiple orgs.  This will avoid returning errors when the dashboard is in another org
+		if err == nil {
+			uids = append(uids, query.Result.Uid)
 		}
-		uids = append(uids, query.Result.Uid)
 	}
 	return response.JSON(200, uids)
 }

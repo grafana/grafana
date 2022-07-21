@@ -50,6 +50,7 @@ export const ConstraintSelectionBox = ({
       height="75.000000pt"
       viewBox="0 0 228.000000 228.000000"
       preserveAspectRatio="xMidYMid meet"
+      style={{ marginBottom: '4.8px' }}
     >
       <g transform="translate(0.000000,228.000000) scale(0.100000,-0.100000)" fill="#000000" stroke="none">
         <path

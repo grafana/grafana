@@ -5,6 +5,7 @@ import {
   PanelData,
   GrafanaTheme2,
   FrameGeometrySourceMode,
+  EventBus,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
@@ -53,6 +54,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   description: 'Use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
+  hideOpacity: true,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -60,7 +62,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,

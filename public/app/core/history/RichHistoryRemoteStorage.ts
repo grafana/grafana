@@ -4,6 +4,7 @@ import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { DataQuery } from '../../../../packages/grafana-data';
+import { PreferencesService } from '../services/PreferencesService';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
@@ -33,10 +34,21 @@ type RichHistoryRemoteStorageMigrationPayloadDTO = {
 type RichHistoryRemoteStorageResultsPayloadDTO = {
   result: {
     queryHistory: RichHistoryRemoteStorageDTO[];
+    totalCount: number;
   };
 };
 
+type RichHistoryRemoteStorageUpdatePayloadDTO = {
+  result: RichHistoryRemoteStorageDTO;
+};
+
 export default class RichHistoryRemoteStorage implements RichHistoryStorage {
+  private readonly preferenceService: PreferencesService;
+
+  constructor() {
+    this.preferenceService = new PreferencesService('user');
+  }
+
   async addToRichHistory(
     newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>
   ): Promise<{ warning?: RichHistoryStorageWarningDetails; richHistoryQuery: RichHistoryQuery }> {
@@ -54,11 +66,12 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   }
 
   async deleteRichHistory(id: string): Promise<void> {
-    throw new Error('not supported yet');
+    getBackendSrv().delete(`/api/query-history/${id}`);
   }
 
-  async getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+  async getRichHistory(filters: RichHistorySearchFilters) {
     const params = buildQueryParams(filters);
+
     const queryHistory = await lastValueFrom(
       getBackendSrv().fetch({
         method: 'GET',
@@ -67,28 +80,47 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
         requestId: 'query-history-get-all',
       })
     );
-    return ((queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO).result.queryHistory || []).map(fromDTO);
+
+    const data = queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO;
+    const richHistory = (data.result.queryHistory || []).map(fromDTO);
+    const total = data.result.totalCount || 0;
+
+    return { richHistory, total };
   }
 
   async getSettings(): Promise<RichHistorySettings> {
+    const preferences = await this.preferenceService.load();
     return {
       activeDatasourceOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
-      starredTabAsFirstTab: false,
+      starredTabAsFirstTab: preferences.queryHistory?.homeTab === 'starred',
     };
   }
 
   async updateComment(id: string, comment: string | undefined): Promise<RichHistoryQuery> {
-    throw new Error('not supported yet');
+    const dto: RichHistoryRemoteStorageUpdatePayloadDTO = await getBackendSrv().patch(`/api/query-history/${id}`, {
+      comment: comment,
+    });
+    return fromDTO(dto.result);
   }
 
-  async updateSettings(settings: RichHistorySettings): Promise<void> {
-    throw new Error('not supported yet');
+  updateSettings(settings: RichHistorySettings): Promise<void> {
+    return this.preferenceService.patch({
+      queryHistory: {
+        homeTab: settings.starredTabAsFirstTab ? 'starred' : 'query',
+      },
+    });
   }
 
   async updateStarred(id: string, starred: boolean): Promise<RichHistoryQuery> {
-    throw new Error('not supported yet');
+    let dto: RichHistoryRemoteStorageUpdatePayloadDTO;
+    if (starred) {
+      dto = await getBackendSrv().post(`/api/query-history/star/${id}`);
+    } else {
+      dto = await getBackendSrv().delete(`/api/query-history/star/${id}`);
+    }
+    return fromDTO(dto.result);
   }
 
   /**
@@ -125,7 +157,7 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
   params = params + `&to=${relativeFrom}`;
   params = params + `&from=${relativeTo}`;
   params = params + `&limit=100`;
-  params = params + `&page=1`;
+  params = params + `&page=${filters.page || 1}`;
   if (filters.starred) {
     params = params + `&onlyStarred=${filters.starred}`;
   }

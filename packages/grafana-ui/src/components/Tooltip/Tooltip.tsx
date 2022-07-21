@@ -187,11 +187,12 @@ function getStyles(theme: GrafanaTheme2) {
       }
 
       a {
-        color: ${theme.colors.text.link};
+        color: ${tooltipText};
+        text-decoration: underline;
       }
 
       a:hover {
-        text-decoration: underline;
+        text-decoration: none;
       }
     `;
   }

@@ -19,10 +19,13 @@
 package web
 
 import (
+	_ "unsafe"
+
 	"context"
 	"net/http"
-	"reflect"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const _VERSION = "1.3.4.0805"
@@ -47,37 +50,20 @@ func Version() string {
 // and panics if an argument could not be fulfilled via dependency injection.
 type Handler interface{}
 
-// handlerFuncInvoker is an inject.FastInvoker wrapper of func(http.ResponseWriter, *http.Request).
-type handlerFuncInvoker func(http.ResponseWriter, *http.Request)
-
-func (invoke handlerFuncInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
-	invoke(params[0].(http.ResponseWriter), params[1].(*http.Request))
-	return nil, nil
-}
+//go:linkname hack_wrap github.com/grafana/grafana/pkg/api/response.wrap_handler
+func hack_wrap(Handler) http.HandlerFunc
 
 // validateAndWrapHandler makes sure a handler is a callable function, it panics if not.
 // When the handler is also potential to be any built-in inject.FastInvoker,
 // it wraps the handler automatically to have some performance gain.
-func validateAndWrapHandler(h Handler) Handler {
-	if reflect.TypeOf(h).Kind() != reflect.Func {
-		panic("Macaron handler must be a callable function")
-	}
-
-	if !IsFastInvoker(h) {
-		switch v := h.(type) {
-		case func(*Context):
-			return ContextInvoker(v)
-		case func(http.ResponseWriter, *http.Request):
-			return handlerFuncInvoker(v)
-		}
-	}
-	return h
+func validateAndWrapHandler(h Handler) http.Handler {
+	return hack_wrap(h)
 }
 
 // validateAndWrapHandlers preforms validation and wrapping for each input handler.
 // It accepts an optional wrapper function to perform custom wrapping on handlers.
-func validateAndWrapHandlers(handlers []Handler) []Handler {
-	wrappedHandlers := make([]Handler, len(handlers))
+func validateAndWrapHandlers(handlers []Handler) []http.Handler {
+	wrappedHandlers := make([]http.Handler, len(handlers))
 	for i, h := range handlers {
 		wrappedHandlers[i] = validateAndWrapHandler(h)
 	}
@@ -88,7 +74,7 @@ func validateAndWrapHandlers(handlers []Handler) []Handler {
 // Macaron represents the top level web application.
 // Injector methods can be invoked to map services on a global level.
 type Macaron struct {
-	handlers []Handler
+	handlers []http.Handler
 
 	urlPrefix string // For suburl support.
 	*Router
@@ -150,34 +136,29 @@ func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
 		} else {
 			c.Resp = NewResponseWriter(req.Method, rw)
 		}
-		c.Map(req)
-		c.MapTo(rw, (*http.ResponseWriter)(nil))
 		c.Next()
 	})
-	m.handlers = append(m.handlers, Handler(middleware(next)))
+	m.handlers = append(m.handlers, middleware(next))
 }
 
 // Use adds a middleware Handler to the stack,
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
 func (m *Macaron) Use(handler Handler) {
-	handler = validateAndWrapHandler(handler)
-	m.handlers = append(m.handlers, handler)
+	h := validateAndWrapHandler(handler)
+	m.handlers = append(m.handlers, h)
 }
 
 func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {
 	c := &Context{
-		Injector: NewInjector(),
 		handlers: m.handlers,
 		index:    0,
 		Router:   m.Router,
 		Resp:     NewResponseWriter(req.Method, rw),
+		logger:   log.New("macaron.context"),
 	}
-	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
-	c.Map(c)
-	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
-	c.Map(req)
-	c.Req = req
+
+	c.Req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
 	return c
 }
 

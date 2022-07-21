@@ -1,30 +1,26 @@
 package definitions
 
 import (
-	"fmt"
-	"regexp"
-	"strings"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// swagger:route GET /api/provisioning/templates provisioning RouteGetTemplates
+// swagger:route GET /api/v1/provisioning/templates provisioning stable RouteGetTemplates
 //
 // Get all message templates.
 //
 //     Responses:
-//       200: []MessageTemplate
-//       400: ValidationError
+//       200: MessageTemplates
+//       404: description: Not found.
 
-// swagger:route GET /api/provisioning/templates/{name} provisioning RouteGetTemplate
+// swagger:route GET /api/v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
 // Get a message template.
 //
 //     Responses:
 //       200: MessageTemplate
-//       404: NotFound
+//       404: description: Not found.
 
-// swagger:route PUT /api/provisioning/templates/{name} provisioning RoutePutTemplate
+// swagger:route PUT /api/v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
 // Updates an existing template.
 //
@@ -32,24 +28,35 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Accepted
+//       202: MessageTemplate
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/templates/{name} provisioning RouteDeleteTemplate
+// swagger:route DELETE /api/v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
 //
 // Delete a template.
 //
 //     Responses:
-//       204: Accepted
+//       204: description: The template was deleted successfully.
 
+// swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate
+type RouteGetTemplateParam struct {
+	// Template Name
+	// in:path
+	Name string `json:"name"`
+}
+
+// swagger:model
 type MessageTemplate struct {
-	Name       string
-	Template   string
+	Name       string            `json:"name"`
+	Template   string            `json:"template"`
 	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
+// swagger:model
+type MessageTemplates []MessageTemplate
+
 type MessageTemplateContent struct {
-	Template string
+	Template string `json:"template"`
 }
 
 // swagger:parameters RoutePutTemplate
@@ -64,30 +71,4 @@ func (t *MessageTemplate) ResourceType() string {
 
 func (t *MessageTemplate) ResourceID() string {
 	return t.Name
-}
-
-func (t *MessageTemplate) Validate() error {
-	if t.Name == "" {
-		return fmt.Errorf("template must have a name")
-	}
-	if t.Template == "" {
-		return fmt.Errorf("template must have content")
-	}
-
-	content := strings.TrimSpace(t.Template)
-	found, err := regexp.MatchString(`\{\{\s*define`, content)
-	if err != nil {
-		return fmt.Errorf("failed to match regex: %w", err)
-	}
-	if !found {
-		lines := strings.Split(content, "\n")
-		for i, s := range lines {
-			lines[i] = "  " + s
-		}
-		content = strings.Join(lines, "\n")
-		content = fmt.Sprintf("{{ define \"%s\" }}\n%s\n{{ end }}", t.Name, content)
-	}
-	t.Template = content
-
-	return nil
 }

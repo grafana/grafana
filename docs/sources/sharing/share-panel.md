@@ -1,9 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/dashboards/share-dashboard/", "/docs/grafana/latest/reference/share_panel/", "/docs/grafana/latest/sharing/share-panel/"]
-keywords = ["grafana", "dashboard", "documentation", "sharing", "library panel"]
-title = "Share a panel"
-weight = 6
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/share-dashboard/
+  - /docs/grafana/latest/reference/share_panel/
+  - /docs/grafana/latest/sharing/share-panel/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - sharing
+  - library panel
+title: Share a panel
+weight: 6
+---
 
 # Share a panel
 
@@ -26,7 +34,7 @@ To share a direct link:
 1. Send the copied URL to a Grafana user with authorization to view the link.
 1. You also optionally click **Direct link rendered image** to share an image of the panel.
 
-For more information, refer to the topic [Image rendering]({{< relref "../image-rendering/" >}}).
+For more information, refer to the topic [Image rendering]({{< relref "../setup-grafana/image-rendering/" >}}).
 
 Here is an example of a link to a server-side rendered PNG:
 

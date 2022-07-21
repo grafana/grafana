@@ -1,60 +1,95 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { Field } from '@grafana/data';
+import { Field, FieldType, formattedValueToString, getDisplayProcessor, getFieldDisplayName } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
+import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { PluginIconName } from 'app/features/plugins/admin/types';
+import { ShowModalReactEvent } from 'app/types/events';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
+import { ExplainScorePopup } from './ExplainScorePopup';
 import { TableColumn } from './SearchResultsTable';
 
-const TYPE_COLUMN_WIDTH = 250;
+const TYPE_COLUMN_WIDTH = 175;
 const DATASOURCE_COLUMN_WIDTH = 200;
-const LOCATION_COLUMN_WIDTH = 200;
-const TAGS_COLUMN_WIDTH = 300;
 
 export const generateColumns = (
   response: QueryResponse,
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
+  clearSelection: () => void,
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
-  onDatasourceChange?: (datasource?: string) => void
+  onDatasourceChange?: (datasource?: string) => void,
+  showingEverything?: boolean
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
+  let sortFieldWith = 0;
+  const sortField = (access as any)[response.view.dataFrame.meta?.custom?.sortBy] as Field;
+  if (sortField) {
+    sortFieldWith = 175;
+    if (sortField.type === FieldType.time) {
+      sortFieldWith += 25;
+    }
+    availableWidth -= sortFieldWith; // pre-allocate the space for the last column
+  }
+
+  if (access.explain && access.score) {
+    availableWidth -= 100; // pre-allocate the space for the last column
+  }
 
   let width = 50;
-
   if (selection && selectionToggle) {
     width = 30;
     columns.push({
       id: `column-checkbox`,
       width,
-      Header: () => (
-        <div className={styles.checkboxHeader}>
-          <Checkbox
-            onChange={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              alert('SELECT ALL!!!');
-            }}
-          />
-        </div>
-      ),
+      Header: () => {
+        if (selection('*', '*')) {
+          return (
+            <div className={styles.checkboxHeader}>
+              <IconButton name={'check-square' as any} onClick={clearSelection} />
+            </div>
+          );
+        }
+        return (
+          <div className={styles.checkboxHeader}>
+            <Checkbox
+              checked={false}
+              onChange={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const { view } = response;
+                const count = Math.min(view.length, 50);
+                for (let i = 0; i < count; i++) {
+                  const item = view.get(i);
+                  if (item.uid && item.kind) {
+                    if (!selection(item.kind, item.uid)) {
+                      selectionToggle(item.kind, item.uid);
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        );
+      },
       Cell: (p) => {
         const uid = uidField.values.get(p.row.index);
         const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
         const selected = selection(kind, uid);
         const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
         return (
-          <div {...p.cellProps} className={p.cellStyle}>
+          <div {...p.cellProps}>
             <div className={styles.checkbox}>
               <Checkbox
                 disabled={!hasUID}
@@ -76,16 +111,24 @@ export const generateColumns = (
   width = Math.max(availableWidth * 0.2, 300);
   columns.push({
     Cell: (p) => {
-      const name = access.name.values.get(p.row.index);
+      let classNames = cx(styles.nameCellStyle);
+      let name = access.name.values.get(p.row.index);
+      if (!name?.length) {
+        const loading = p.row.index >= response.view.dataFrame.length;
+        name = loading ? 'Loading...' : 'Missing title'; // normal for panels
+        classNames += ' ' + styles.missingTitleText;
+      }
       return (
-        <a {...p.cellProps} href={p.userProps.href} className={cx(p.cellStyle, styles.cellWrapper)}>
+        <a {...p.cellProps} href={p.userProps.href} className={classNames} title={name}>
           {name}
         </a>
       );
     },
     id: `column-name`,
     field: access.name!,
-    Header: 'Name',
+    Header: () => {
+      return <div className={styles.headerNameStyle}>Name</div>;
+    },
     width,
   });
   availableWidth -= width;
@@ -96,7 +139,7 @@ export const generateColumns = (
 
   // Show datasources if we have any
   if (access.ds_uid && onDatasourceChange) {
-    width = DATASOURCE_COLUMN_WIDTH;
+    width = Math.min(availableWidth / 2.5, DATASOURCE_COLUMN_WIDTH);
     columns.push(
       makeDataSourceColumn(
         access.ds_uid,
@@ -110,22 +153,16 @@ export const generateColumns = (
     availableWidth -= width;
   }
 
-  width = Math.max(availableWidth - TAGS_COLUMN_WIDTH, LOCATION_COLUMN_WIDTH);
+  const showTags = !showingEverything || hasValue(response.view.fields.tags);
   const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-  if (meta?.locationInfo) {
+  if (meta?.locationInfo && availableWidth > 0) {
+    width = showTags ? Math.max(availableWidth / 1.75, 300) : availableWidth;
+    availableWidth -= width;
     columns.push({
       Cell: (p) => {
         const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
         return (
-          <div
-            {...p.cellProps}
-            className={cx(
-              p.cellStyle,
-              css`
-                padding-right: 10px;
-              `
-            )}
-          >
+          <div {...p.cellProps} className={cx(styles.locationCellStyle)}>
             {parts.map((p) => {
               const info = meta.locationInfo[p];
               return info ? (
@@ -144,10 +181,59 @@ export const generateColumns = (
       Header: 'Location',
       width,
     });
-    availableWidth -= width;
   }
 
-  columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
+  if (availableWidth > 0 && showTags) {
+    columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
+  }
+
+  if (sortField && sortFieldWith) {
+    const disp = sortField.display ?? getDisplayProcessor({ field: sortField, theme: config.theme2 });
+    columns.push({
+      Header: () => <div className={styles.sortedHeader}>{getFieldDisplayName(sortField)}</div>,
+      Cell: (p) => {
+        return (
+          <div {...p.cellProps} className={styles.sortedItems}>
+            {formattedValueToString(disp(sortField.values.get(p.row.index)))}
+          </div>
+        );
+      },
+      id: `column-sort-field`,
+      field: sortField,
+      width: sortFieldWith,
+    });
+  }
+
+  if (access.explain && access.score) {
+    const vals = access.score.values;
+    const showExplainPopup = (row: number) => {
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: ExplainScorePopup,
+          props: {
+            name: access.name.values.get(row),
+            explain: access.explain.values.get(row),
+            frame: response.view.dataFrame,
+            row: row,
+          },
+        })
+      );
+    };
+
+    columns.push({
+      Header: () => <div className={styles.sortedHeader}>Score</div>,
+      Cell: (p) => {
+        return (
+          <div {...p.cellProps} className={styles.explainItem} onClick={() => showExplainPopup(p.row.index)}>
+            {vals.get(p.row.index)}
+          </div>
+        );
+      },
+      id: `column-score-field`,
+      field: access.score,
+      width: 100,
+    });
+  }
 
   return columns;
 };
@@ -160,6 +246,15 @@ function getIconForKind(v: string): IconName {
     return 'folder';
   }
   return 'question-circle';
+}
+
+function hasValue(f: Field): boolean {
+  for (let i = 0; i < f.values.length; i++) {
+    if (f.values.get(i) != null) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function makeDataSourceColumn(
@@ -181,7 +276,7 @@ function makeDataSourceColumn(
         return null;
       }
       return (
-        <div {...p.cellProps} className={cx(p.cellStyle, datasourceItemClass)}>
+        <div {...p.cellProps} className={cx(datasourceItemClass)}>
           {dslist.map((v, i) => {
             const settings = srv.getInstanceSettings(v);
             const icon = settings?.meta?.info?.logos?.small;
@@ -241,19 +336,25 @@ function makeTypeColumn(
             break;
 
           case 'panel':
-            icon = 'public/img/icons/unicons/graph-bar.svg';
+            icon = `public/img/icons/unicons/${PluginIconName.panel}.svg`;
             const type = typeField.values.get(i);
             if (type) {
               txt = type;
               const info = config.panels[txt];
               if (info?.name) {
-                const v = info.info?.logos.small;
-                if (v && v.endsWith('.svg')) {
-                  icon = v;
-                }
                 txt = info.name;
               } else {
-                icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                switch (type) {
+                  case 'row':
+                    txt = 'Row';
+                    icon = `public/img/icons/unicons/bars.svg`;
+                    break;
+                  case 'singlestat': // auto-migration
+                    txt = 'Singlestat';
+                    break;
+                  default:
+                    icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                }
               }
             }
             break;
@@ -280,7 +381,7 @@ function makeTagsColumn(
     Cell: (p) => {
       const tags = field.values.get(p.row.index);
       return tags ? (
-        <div {...p.cellProps} className={p.cellStyle}>
+        <div {...p.cellProps}>
           <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
         </div>
       ) : null;

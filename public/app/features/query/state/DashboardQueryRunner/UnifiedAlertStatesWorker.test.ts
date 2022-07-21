@@ -2,7 +2,9 @@ import { lastValueFrom } from 'rxjs';
 
 import { AlertState, getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { disableRBAC, enableRBAC, grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleDTO, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
@@ -34,6 +36,10 @@ function getTestContext() {
 
 describe('UnifiedAlertStatesWorker', () => {
   const worker = new UnifiedAlertStatesWorker();
+
+  beforeAll(() => {
+    disableRBAC();
+  });
 
   describe('when canWork is called with correct props', () => {
     it('then it should return true', () => {
@@ -198,5 +204,27 @@ describe('UnifiedAlertStatesWorker', () => {
         expect(dispatchMock).not.toHaveBeenCalled();
       });
     });
+  });
+});
+
+describe('UnifiedAlertStateWorker with RBAC', () => {
+  beforeAll(() => {
+    enableRBAC();
+    grantUserPermissions([]);
+  });
+
+  it('should not do work with insufficient permissions', () => {
+    const worker = new UnifiedAlertStatesWorker();
+    const options = getDefaultOptions();
+
+    expect(worker.canWork(options)).toBe(false);
+  });
+
+  it('should do work with correct permissions', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]);
+    const workerWithPermissions = new UnifiedAlertStatesWorker();
+
+    const options = getDefaultOptions();
+    expect(workerWithPermissions.canWork(options)).toBe(true);
   });
 });

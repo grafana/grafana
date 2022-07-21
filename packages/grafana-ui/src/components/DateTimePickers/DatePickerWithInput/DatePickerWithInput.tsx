@@ -12,6 +12,7 @@ export const formatDate = (date: Date | string) => dateTime(date).format('L');
 /** @public */
 export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'value' | 'onChange'> {
   value?: Date | string;
+  minDate?: Date;
   onChange: (value: Date | string) => void;
   /** Hide the calendar when date is selected */
   closeOnSelect?: boolean;
@@ -21,6 +22,7 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'valu
 /** @public */
 export const DatePickerWithInput = ({
   value,
+  minDate,
   onChange,
   closeOnSelect,
   placeholder = 'Date',
@@ -49,6 +51,7 @@ export const DatePickerWithInput = ({
       <DatePicker
         isOpen={open}
         value={value && typeof value !== 'string' ? value : dateTime().toDate()}
+        minDate={minDate}
         onChange={(ev) => {
           onChange(ev);
           if (closeOnSelect) {

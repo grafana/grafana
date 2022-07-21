@@ -10,6 +10,7 @@ import {
   optionalPositiveInteger,
   stringToSelectableValue,
   stringsToSelectableValues,
+  commonGroupByOptions,
 } from '../../utils/amroutes';
 import { makeAMLink } from '../../utils/misc';
 import { timeOptions } from '../../utils/time';
@@ -36,7 +37,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
 
   return (
-    <Form defaultValues={{ ...routes, overrideTimings: true }} onSubmit={onSave}>
+    <Form defaultValues={{ ...routes, overrideTimings: true, overrideGrouping: true }} onSubmit={onSave}>
       {({ control, errors, setValue }) => (
         <>
           <Field label="Default contact point" invalid={!!errors.receiver} error={errors.receiver?.message}>
@@ -86,7 +87,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                     setValue('groupBy', [...field.value, opt]);
                   }}
                   onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-                  options={groupByOptions}
+                  options={[...commonGroupByOptions, groupByOptions]}
                 />
               )}
               control={control}

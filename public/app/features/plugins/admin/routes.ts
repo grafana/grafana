@@ -7,16 +7,19 @@ import { PluginAdminRoutes } from './types';
 const DEFAULT_ROUTES = [
   {
     path: '/plugins',
+    navId: 'plugins',
     routeName: PluginAdminRoutes.Home,
     component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginListPage" */ './pages/Browse')),
   },
   {
     path: '/plugins/browse',
+    navId: 'plugins',
     routeName: PluginAdminRoutes.Browse,
     component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginListPage" */ './pages/Browse')),
   },
   {
     path: '/plugins/:pluginId/',
+    navId: 'plugins',
     routeName: PluginAdminRoutes.Details,
     component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginPage" */ './pages/PluginDetails')),
   },
@@ -25,16 +28,19 @@ const DEFAULT_ROUTES = [
 const ADMIN_ROUTES = [
   {
     path: '/admin/plugins',
+    navId: 'admin-plugins',
     routeName: PluginAdminRoutes.HomeAdmin,
     component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginListPage" */ './pages/Browse')),
   },
   {
     path: '/admin/plugins/browse',
+    navId: 'admin-plugins',
     routeName: PluginAdminRoutes.BrowseAdmin,
     component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginListPage" */ './pages/Browse')),
   },
   {
     path: '/admin/plugins/:pluginId/',
+    navId: 'admin-plugins',
     routeName: PluginAdminRoutes.DetailsAdmin,
     component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginPage" */ './pages/PluginDetails')),
   },

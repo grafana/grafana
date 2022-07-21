@@ -55,7 +55,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
         <Button
           size="xs"
           icon="trash-alt"
-          variant="link"
+          fill="text"
           className={styles.clear}
           onClick={() => onChange([])}
           aria-label="Clear types"

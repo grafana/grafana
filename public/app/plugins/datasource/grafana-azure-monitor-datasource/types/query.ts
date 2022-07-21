@@ -6,6 +6,13 @@ export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   LogAnalytics = 'Azure Log Analytics',
   AzureResourceGraph = 'Azure Resource Graph',
+  SubscriptionsQuery = 'Azure Subscriptions',
+  ResourceGroupsQuery = 'Azure Resource Groups',
+  NamespacesQuery = 'Azure Namespaces',
+  ResourceNamesQuery = 'Azure Resource Names',
+  MetricNamesQuery = 'Azure Metric Names',
+  WorkspacesQuery = 'Azure Workspaces',
+  /** Deprecated */
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
 }
 
@@ -25,6 +32,11 @@ export interface AzureMonitorQuery extends DataQuery {
   azureLogAnalytics?: AzureLogsQuery;
   azureResourceGraph?: AzureResourceGraphQuery;
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
+
+  /** Template variables params */
+  resourceGroup?: string;
+  namespace?: string;
+  resource?: string;
 }
 
 /**
@@ -45,12 +57,10 @@ export interface AzureMetricQuery {
   dimensionFilters?: AzureMetricDimension[];
   alias?: string;
   top?: string;
+  allowedTimeGrainsMs?: number[];
 
   /** @deprecated */
   timeGrainUnit?: string;
-
-  /** @deprecated Remove this once angular is removed */
-  allowedTimeGrainsMs?: number[];
 
   /** @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration */
   dimension?: string;

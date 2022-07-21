@@ -39,14 +39,14 @@ import (
 // 500: internalServerError
 
 // swagger:parameters addInvite
-type AddInviteParam struct {
+type AddInviteParams struct {
 	// in:body
 	// required:true
 	Body dtos.AddInviteForm `json:"body"`
 }
 
 // swagger:parameters revokeInvite
-type RevokeInviteParam struct {
+type RevokeInviteParams struct {
 	// in:path
 	// required:true
 	Code string `json:"invitation_code"`

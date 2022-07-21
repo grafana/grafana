@@ -6,6 +6,7 @@ import { Provider } from 'react-redux';
 import { DataQuery } from '@grafana/data';
 import { locationService, setEchoSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import * as initDashboard from 'app/features/dashboard/state/initDashboard';
 import { DashboardSearchItemType } from 'app/features/search/types';
@@ -31,10 +32,16 @@ const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => 
   return render(<Provider store={store}>{children}</Provider>);
 };
 
-const openModal = async () => {
+jest.mock('app/core/services/context_srv');
+
+const mocks = {
+  contextSrv: jest.mocked(contextSrv),
+};
+
+const openModal = async (nameOverride?: string) => {
   await userEvent.click(screen.getByRole('button', { name: /add to dashboard/i }));
 
-  expect(await screen.findByRole('dialog', { name: 'Add panel to dashboard' })).toBeInTheDocument();
+  expect(await screen.findByRole('dialog', { name: nameOverride || 'Add panel to dashboard' })).toBeInTheDocument();
 };
 
 describe('AddToDashboardButton', () => {
@@ -64,6 +71,7 @@ describe('AddToDashboardButton', () => {
 
     beforeEach(() => {
       jest.spyOn(api, 'setDashboardInLocalStorage').mockReturnValue(addToDashboardResponse);
+      mocks.contextSrv.hasAccess.mockImplementation(() => true);
     });
 
     afterEach(() => {
@@ -271,7 +279,43 @@ describe('AddToDashboardButton', () => {
     });
   });
 
+  describe('Permissions', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('Should only show existing dashboard option with no access to create', async () => {
+      mocks.contextSrv.hasAccess.mockImplementation((action) => {
+        if (action === 'dashboards:create') {
+          return false;
+        } else {
+          return true;
+        }
+      });
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
+      await openModal('Add panel to existing dashboard');
+      expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    });
+
+    it('Should only show new dashboard option with no access to write', async () => {
+      mocks.contextSrv.hasAccess.mockImplementation((action) => {
+        if (action === 'dashboards:write') {
+          return false;
+        } else {
+          return true;
+        }
+      });
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
+      await openModal('Add panel to new dashboard');
+      expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Error handling', () => {
+    beforeEach(() => {
+      mocks.contextSrv.hasAccess.mockImplementation(() => true);
+    });
+
     afterEach(() => {
       jest.restoreAllMocks();
     });

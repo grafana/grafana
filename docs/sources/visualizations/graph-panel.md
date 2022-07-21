@@ -1,13 +1,22 @@
-+++
-aliases = ["/docs/grafana/latest/features/panels/graph/", "/docs/grafana/latest/panels/visualizations/graph-panel/", "/docs/grafana/latest/reference/graph/", "/docs/grafana/latest/visualizations/graph-panel/"]
-keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
-title = "Graph (old)"
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/panels/graph/
+  - /docs/grafana/latest/panels/visualizations/graph-panel/
+  - /docs/grafana/latest/reference/graph/
+  - /docs/grafana/latest/visualizations/graph-panel/
+keywords:
+  - grafana
+  - graph panel
+  - documentation
+  - guide
+  - graph
+title: Graph (old)
+weight: 500
+---
 
 # Graph panel (old)
 
-> **Note:** [Time series panel]({{< relref "./time-series/_index.md" >}}) visualization is going to replace the Graph panel visualization in a future release.
+> **Note:** [Time series panel]({{< relref "time-series/" >}}) visualization is going to replace the Graph panel visualization in a future release.
 
 The graph panel can render metrics as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
 
@@ -15,9 +24,9 @@ The graph panel can render metrics as a line, a path of dots, or a series of bar
 
 Graph visualizations allow you to apply:
 
-- [Alerts]({{< relref "../alerting/_index.md" >}}) - This is the only type of visualization that allows you to set alerts.
-- [Transform data]({{< relref "../panels/transform-data/add-transformation-to-data.md" >}})
-- [Add a field override]({{< relref "../panels/override-field-values/add-a-field-override.md" >}})
+- [Alerts]({{< relref "../alerting/" >}}) - This is the only type of visualization that allows you to set alerts.
+- [Transform data]({{< relref "../panels/transform-data/add-transformation-to-data/" >}})
+- [Add a field override]({{< relref "../panels/override-field-values/add-a-field-override/" >}})
 - [Configure thresholds]({{< relref "../panels/configure-thresholds/" >}})
 
 ## Display options
@@ -125,7 +134,7 @@ Options are identical for both Y-axes.
     - **Value -** The aggregation type to use for the values. The default is total (summing the values together).
   - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range.
 
-    For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../basics/intro-histograms.md" >}}).
+    For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../basics/intro-histograms/" >}}).
 
     - **Buckets -** The number of buckets to group the values by. If left empty, then Grafana tries to calculate a suitable number of buckets.
     - **X-Min -** Filters out values from the histogram that are under this minimum limit.

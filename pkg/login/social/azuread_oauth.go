@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -57,12 +57,12 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
 	if err != nil {
-		return nil, errutil.Wrapf(err, "error parsing id token")
+		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
 
 	var claims azureClaims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, errutil.Wrapf(err, "error getting claims from id token")
+		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
 	email := extractEmail(claims)
@@ -81,7 +81,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
 
-	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", groups)
+	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
@@ -185,12 +185,12 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 		// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
 		parsedToken, err := jwt.ParseSigned(token.AccessToken)
 		if err != nil {
-			return nil, errutil.Wrapf(err, "error parsing id token")
+			return nil, fmt.Errorf("error parsing id token: %w", err)
 		}
 
 		var accessClaims azureAccessClaims
 		if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
-			return nil, errutil.Wrapf(err, "error getting claims from access token")
+			return nil, fmt.Errorf("error getting claims from access token: %w", err)
 		}
 		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", accessClaims.TenantID, claims.ID)
 	}
@@ -213,9 +213,12 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 
 	if res.StatusCode != http.StatusOK {
 		if res.StatusCode == http.StatusForbidden {
-			logger.Error("AzureAD OAuth: failed to fetch user groups. Token need User.Read and GroupMember.Read.All permission")
+			logger.Warn("AzureAD OAuh: Token need GroupMember.Read.All permission to fetch all groups")
+		} else {
+			body, _ := io.ReadAll(res.Body)
+			logger.Warn("AzureAD OAuh: could not fetch user groups", "code", res.StatusCode, "body", string(body))
 		}
-		return nil, errors.New("error fetching groups")
+		return []string{}, nil
 	}
 
 	var body getAzureGroupResponse

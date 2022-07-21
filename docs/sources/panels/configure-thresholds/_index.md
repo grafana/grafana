@@ -21,17 +21,17 @@ This section includes information about using thresholds in your visualizations.
 
 A threshold is a value that you specify for a metric that is visually reflected in a dashboard when the threshold value is met or exceeded.
 
-Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels]({{< relref "../../visualizations" >}}).
+Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels]({{< relref "../../visualizations/" >}}).
 
 You can use thresholds to:
 
-- Color grid lines or grid ares areas in the [Time-series visualization]({{< relref "../../visualizations/time-series" >}})
+- Color grid lines or grid ares areas in the [Time-series visualization]({{< relref "../../visualizations/time-series/" >}})
 - Color lines in the [Time-series visualization]({{< relref "../../visualizations/time-series/graph-color-scheme/#from-thresholds" >}})
-- Color the background or value text in the [Stat visualization]({{< relref "../../visualizations/stat-panel" >}})
-- Color the gauge and threshold markers in the [Gauge visualization]({{< relref "../../visualizations/gauge-panel" >}})
-- Color markers in the [Geomap visualization]({{< relref "../../visualizations/geomap" >}})
-- Color cell text or background in the [Table visualization]({{< relref "../../visualizations/table" >}})
-- Define regions and region colors in the [State timeline visualization]({{< relref "../../visualizations/state-timeline" >}})
+- Color the background or value text in the [Stat visualization]({{< relref "../../visualizations/stat-panel/" >}})
+- Color the gauge and threshold markers in the [Gauge visualization]({{< relref "../../visualizations/gauge-panel/" >}})
+- Color markers in the [Geomap visualization]({{< relref "../../visualizations/geomap/" >}})
+- Color cell text or background in the [Table visualization]({{< relref "../../visualizations/table/" >}})
+- Define regions and region colors in the [State timeline visualization]({{< relref "../../visualizations/state-timeline/" >}})
 
 There are two types of thresholds:
 

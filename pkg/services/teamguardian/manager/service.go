@@ -11,7 +11,7 @@ type Service struct {
 	store teamguardian.Store
 }
 
-func ProvideService(store teamguardian.Store) *Service {
+func ProvideService(store teamguardian.Store) teamguardian.TeamGuardian {
 	return &Service{store: store}
 }
 
@@ -43,4 +43,8 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 	}
 
 	return models.ErrNotAllowedToUpdateTeam
+}
+
+func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
+	return s.store.DeleteByUser(ctx, userID)
 }

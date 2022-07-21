@@ -14,19 +14,26 @@
 
 package grafanaschema
 
-import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+import (
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+)
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    ui.SingleStatBaseOptions
-                    displayMode: ui.BarGaugeDisplayMode
-                    showUnfilled: bool
-                } @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "bargauge"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						ui.SingleStatBaseOptions
+						displayMode:  ui.BarGaugeDisplayMode | *"gradient"
+						showUnfilled: bool | *true
+						minVizWidth:  uint32 | *0
+						minVizHeight: uint32 | *10
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

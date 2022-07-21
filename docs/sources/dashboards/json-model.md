@@ -1,9 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/dashboards/json-model/", "/docs/grafana/latest/reference/dashboard/"]
-keywords = ["grafana", "dashboard", "documentation", "json", "model"]
-title = "JSON model"
-weight = 1200
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/json-model/
+  - /docs/grafana/latest/reference/dashboard/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - json
+  - model
+title: JSON model
+weight: 1200
+---
 
 # Dashboard JSON model
 
@@ -30,7 +37,6 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
   "style": "dark",
   "timezone": "browser",
   "editable": true,
-  "hideControls": false,
   "graphTooltip": 1,
   "panels": [],
   "time": {

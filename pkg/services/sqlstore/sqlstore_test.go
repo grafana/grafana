@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -77,7 +74,10 @@ var sqlStoreTestCases = []sqlStoreTest{
 	},
 }
 
-func TestSQLConnectionString(t *testing.T) {
+func TestIntegrationSQLConnectionString(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	for _, testCase := range sqlStoreTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			sqlstore := &SQLStore{}

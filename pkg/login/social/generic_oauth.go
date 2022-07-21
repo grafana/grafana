@@ -14,7 +14,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/oauth2"
 )
 
@@ -388,7 +387,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
 		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
-		return "", errutil.Wrap("Error getting email address", err)
+		return "", fmt.Errorf("%v: %w", "Error getting email address", err)
 	}
 
 	var records []Record
@@ -402,7 +401,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 		err = json.Unmarshal(response.Body, &data)
 		if err != nil {
 			s.log.Error("Error decoding email addresses response", "raw_json", string(response.Body), "error", err)
-			return "", errutil.Wrap("Error decoding email addresses response", err)
+			return "", fmt.Errorf("%v: %w", "Error decoding email addresses response", err)
 		}
 
 		records = data.Values

@@ -187,16 +187,20 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
-  it('returns error for query with JSON expression parser', () => {
+  it('parses query with JSON parser with expression', () => {
     const context = buildVisualQueryFromString('{app="frontend"} | json label="value" ');
-    expect(context.errors).toEqual([
-      {
-        text: 'JsonExpressionParser not supported in visual query builder: json label="value"',
-        from: 19,
-        to: 37,
-        parentType: 'PipelineStage',
-      },
-    ]);
+    expect(context.query).toEqual({
+      labels: [{ label: 'app', op: '=', value: 'frontend' }],
+      operations: [{ id: 'json', params: ['label="value"'] }],
+    });
+  });
+
+  it('parses query with JSON parser with multiple expressions', () => {
+    const context = buildVisualQueryFromString('{app="frontend"} | json label="value", bar="baz", foo="bar" ');
+    expect(context.query).toEqual({
+      labels: [{ label: 'app', op: '=', value: 'frontend' }],
+      operations: [{ id: 'json', params: ['label="value"', 'bar="baz"', 'foo="bar"'] }],
+    });
   });
 
   it('parses query with with simple unwrap', () => {
@@ -214,6 +218,50 @@ describe('buildVisualQueryFromString', () => {
         operations: [
           { id: 'logfmt', params: [] },
           { id: 'unwrap', params: ['bytes_processed'] },
+          { id: 'sum_over_time', params: ['1m'] },
+        ],
+      })
+    );
+  });
+
+  it('parses query with with unwrap and error filter', () => {
+    expect(
+      buildVisualQueryFromString('sum_over_time({app="frontend"} | logfmt | unwrap duration | __error__="" [1m])')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: 'unwrap', params: ['duration'] },
+          { id: '__label_filter_no_errors', params: [] },
+          { id: 'sum_over_time', params: ['1m'] },
+        ],
+      })
+    );
+  });
+
+  it('parses query with with unwrap and label filter', () => {
+    expect(
+      buildVisualQueryFromString('sum_over_time({app="frontend"} | logfmt | unwrap duration | label="value" [1m])')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: 'unwrap', params: ['duration'] },
+          { id: '__label_filter', params: ['label', '=', 'value'] },
           { id: 'sum_over_time', params: ['1m'] },
         ],
       })
@@ -325,6 +373,29 @@ describe('buildVisualQueryFromString', () => {
           { id: '__label_filter', params: ['bar', '=', 'baz'] },
           { id: 'rate', params: ['5m'] },
           { id: 'sum', params: [] },
+        ],
+      })
+    );
+  });
+
+  it('parses metrics query with vector aggregation with number', () => {
+    expect(
+      buildVisualQueryFromString('topk(10, sum(count_over_time({app="frontend"} | logfmt | __error__=`` [5m])))')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: '__label_filter_no_errors', params: [] },
+          { id: 'count_over_time', params: ['5m'] },
+          { id: 'sum', params: [] },
+          { id: 'topk', params: [10] },
         ],
       })
     );

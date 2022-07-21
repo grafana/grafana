@@ -10,10 +10,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestEmailNotifier(t *testing.T) {
@@ -52,7 +50,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		})
 		require.NoError(t, err)
-		emailNotifier := NewEmailNotifier(cfg, emailSender, tmpl)
+		emailNotifier := NewEmailNotifier(cfg, emailSender, &UnavailableImageStore{}, tmpl)
 
 		alerts := []*types.Alert{
 			{
@@ -106,7 +104,7 @@ func TestEmailNotifier(t *testing.T) {
 }
 
 func TestEmailNotifierIntegration(t *testing.T) {
-	ns := createCoreEmailService(t)
+	ns := CreateNotificationService(t)
 
 	emailTmpl := templateForTests(t)
 	externalURL, err := url.Parse("http://localhost/base")
@@ -117,6 +115,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 		name        string
 		alerts      []*types.Alert
 		messageTmpl string
+		subjectTmpl string
 		expSubject  string
 		expSnippets []string
 	}{
@@ -220,11 +219,25 @@ func TestEmailNotifierIntegration(t *testing.T) {
 				"&lt;li&gt;Firing: AlwaysFiring at warning &lt;/li&gt;",
 			},
 		},
+		{
+			name: "single alert with templated subject",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
+						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
+					},
+				},
+			},
+			subjectTmpl: `This notification is {{ .Status }}!`,
+			expSubject:  "This notification is firing!",
+			expSnippets: []string{},
+		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			emailNotifier := createSut(t, c.messageTmpl, emailTmpl, ns)
+			emailNotifier := createSut(t, c.messageTmpl, c.subjectTmpl, emailTmpl, ns)
 
 			ok, err := emailNotifier.Notify(context.Background(), c.alerts...)
 			require.NoError(t, err)
@@ -250,28 +263,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 	}
 }
 
-func createCoreEmailService(t *testing.T) *notifications.NotificationService {
-	t.Helper()
-
-	bus := bus.New()
-	cfg := setting.NewCfg()
-	cfg.StaticRootPath = "../../../../../public/"
-	cfg.BuildVersion = "4.0.0"
-	cfg.Smtp.Enabled = true
-	cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
-	cfg.Smtp.FromAddress = "from@address.com"
-	cfg.Smtp.FromName = "Grafana Admin"
-	cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
-	cfg.Smtp.Host = "localhost:1234"
-	mailer := notifications.NewFakeMailer()
-
-	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
-	require.NoError(t, err)
-
-	return ns
-}
-
-func createSut(t *testing.T, messageTmpl string, emailTmpl *template.Template, ns notifications.EmailSender) *EmailNotifier {
+func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns notifications.EmailSender) *EmailNotifier {
 	t.Helper()
 
 	json := `{
@@ -282,6 +274,11 @@ func createSut(t *testing.T, messageTmpl string, emailTmpl *template.Template, n
 	if messageTmpl != "" {
 		settingsJSON.Set("message", messageTmpl)
 	}
+
+	if subjectTmpl != "" {
+		settingsJSON.Set("subject", subjectTmpl)
+	}
+
 	require.NoError(t, err)
 	cfg, err := NewEmailConfig(&NotificationChannelConfig{
 		Name:     "ops",
@@ -289,7 +286,7 @@ func createSut(t *testing.T, messageTmpl string, emailTmpl *template.Template, n
 		Settings: settingsJSON,
 	})
 	require.NoError(t, err)
-	emailNotifier := NewEmailNotifier(cfg, ns, emailTmpl)
+	emailNotifier := NewEmailNotifier(cfg, ns, &UnavailableImageStore{}, emailTmpl)
 
 	return emailNotifier
 }

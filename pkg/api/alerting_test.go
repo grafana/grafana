@@ -7,14 +7,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -23,7 +26,7 @@ var (
 )
 
 type setUpConf struct {
-	aclMockResp []*models.DashboardAclInfoDTO
+	aclMockResp []*models.DashboardACLInfoDTO
 }
 
 type mockSearchService struct{ ExpectedResult models.HitList }
@@ -40,15 +43,19 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
 	store.ExpectedAlert = singleAlert
 
-	aclMockResp := []*models.DashboardAclInfoDTO{}
+	aclMockResp := []*models.DashboardACLInfoDTO{}
 	for _, c := range confs {
 		if c.aclMockResp != nil {
 			aclMockResp = c.aclMockResp
 		}
 	}
-	store.ExpectedDashboardAclInfoList = aclMockResp
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
-	guardian.InitLegacyGuardian(store)
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
+		q.Result = aclMockResp
+	}).Return(nil)
+	guardian.InitLegacyGuardian(store, dashSvc)
 	return hs
 }
 
@@ -77,7 +84,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 		postAlertScenario(t, hs, "When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause",
 			models.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
 				setUp(setUpConf{
-					aclMockResp: []*models.DashboardAclInfoDTO{
+					aclMockResp: []*models.DashboardACLInfoDTO{
 						{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 						{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 					},
@@ -138,7 +145,9 @@ func postAlertScenario(t *testing.T, hs *HTTPServer, desc string, url string, ro
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return hs.PauseAlert(c)
+			legacyAlertingEnabled := new(bool)
+			*legacyAlertingEnabled = true
+			return hs.PauseAlert(legacyAlertingEnabled)(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)

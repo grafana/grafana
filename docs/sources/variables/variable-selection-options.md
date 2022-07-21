@@ -1,8 +1,9 @@
-+++
-aliases = ["/docs/grafana/latest/variables/variable-selection-options/"]
-title = "Variable selection options"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/variables/variable-selection-options/
+title: Variable selection options
+weight: 400
+---
 
 # Configure variable selection options
 
@@ -10,7 +11,7 @@ weight = 400
 
 ## Multi-value
 
-If you turn this on, then the variable dropdown list allows users to select multiple options at the same time. For more information, refer to [Formatting multi-value variables]({{< relref "formatting-multi-value-variables.md" >}}).
+If you turn this on, then the variable dropdown list allows users to select multiple options at the same time. For more information, refer to [Formatting multi-value variables]({{< relref "formatting-multi-value-variables/" >}}).
 
 ## Include All option
 

@@ -8,8 +8,6 @@ import { PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
 import { PromQuery } from './types';
 
-import Mock = jest.Mock;
-
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = {
     metadataRequest: () => ({ data: { data: [] as any[] } }),
@@ -582,6 +580,8 @@ describe('Language completion provider', () => {
         interpolateString: (string: string) => string,
       } as any as PrometheusDatasource;
 
+      const mockedMetadataRequest = jest.mocked(datasource.metadataRequest);
+
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{}');
       const ed = new SlateEditor({ value });
@@ -594,11 +594,11 @@ describe('Language completion provider', () => {
       };
       const promise1 = instance.provideCompletionItems(args);
       // one call for 2 default labels job, instance
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(2);
       const promise2 = instance.provideCompletionItems(args);
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(2);
       await Promise.all([promise1, promise2]);
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(2);
     });
   });
   describe('disabled metrics lookup', () => {
@@ -609,6 +609,7 @@ describe('Language completion provider', () => {
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: true,
       } as any as PrometheusDatasource;
+      const mockedMetadataRequest = jest.mocked(datasource.metadataRequest);
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{}');
       const ed = new SlateEditor({ value });
@@ -620,11 +621,11 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       };
 
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(0);
       await instance.start();
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(0);
       await instance.provideCompletionItems(args);
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(0);
       expect(console.warn).toHaveBeenCalledWith('Server did not return any values for selector = {}');
     });
     it('issues metadata requests when lookup is not disabled', async () => {
@@ -634,11 +635,12 @@ describe('Language completion provider', () => {
         lookupsDisabled: false,
         interpolateString: (string: string) => string,
       } as any as PrometheusDatasource;
+      const mockedMetadataRequest = jest.mocked(datasource.metadataRequest);
       const instance = new LanguageProvider(datasource);
 
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(0);
       await instance.start();
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBeGreaterThan(0);
+      expect(mockedMetadataRequest.mock.calls.length).toBeGreaterThan(0);
     });
   });
 

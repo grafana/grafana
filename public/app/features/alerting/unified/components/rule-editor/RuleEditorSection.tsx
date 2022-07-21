@@ -45,6 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   description: css`
     margin-top: -${theme.spacing(2)};
+    color: ${theme.colors.text.secondary};
   `,
   stepNo: css`
     display: inline-block;

@@ -2,12 +2,12 @@ import React from 'react';
 
 import {
   FieldConfigEditorBuilder,
-  FieldOverrideEditorProps,
   FieldType,
   identityOverrideProcessor,
   SelectableValue,
+  StandardEditorProps,
 } from '@grafana/data';
-import { AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
 import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
 
@@ -81,6 +81,18 @@ export function addAxisConfig(
           { value: false, label: 'Off' },
         ],
       },
+    })
+    .addRadio({
+      path: 'axisColorMode',
+      name: 'Color',
+      category,
+      defaultValue: AxisColorMode.Text,
+      settings: {
+        options: [
+          { value: AxisColorMode.Text, label: 'Text' },
+          { value: AxisColorMode.Series, label: 'Series' },
+        ],
+      },
     });
 
   if (!hideScale) {
@@ -89,8 +101,8 @@ export function addAxisConfig(
       path: 'scaleDistribution',
       name: 'Scale',
       category,
-      editor: ScaleDistributionEditor,
-      override: ScaleDistributionEditor,
+      editor: ScaleDistributionEditor as any,
+      override: ScaleDistributionEditor as any,
       defaultValue: { type: ScaleDistribution.Linear },
       shouldApply: (f) => f.type === FieldType.number,
       process: identityOverrideProcessor,
@@ -121,19 +133,16 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
 ];
 
 /**
- * @alpha
+ * @internal
  */
-const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDistributionConfig, any>> = ({
-  value,
-  onChange,
-}) => {
+export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps<ScaleDistributionConfig>) => {
+  const type = value?.type ?? ScaleDistribution.Linear;
   return (
     <HorizontalGroup>
       <RadioButtonGroup
-        value={value.type || ScaleDistribution.Linear}
+        value={type}
         options={DISTRIBUTION_OPTIONS}
         onChange={(v) => {
-          console.log(v, value);
           onChange({
             ...value,
             type: v!,
@@ -141,9 +150,8 @@ const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDistributi
           });
         }}
       />
-      {value.type === ScaleDistribution.Log && (
+      {type === ScaleDistribution.Log && (
         <Select
-          allowCustomValue={false}
           options={LOG_DISTRIBUTION_OPTIONS}
           value={value.log || 2}
           prefix={'base'}

@@ -266,7 +266,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
 	data cloudMonitoringResponse, title, text string) error {
-	annotations := make([]map[string]string, 0)
+	annotations := make([]*annotationEvent, 0)
 
 	for _, series := range data.TimeSeriesData {
 		metricLabels := make(map[string]string)
@@ -302,12 +302,12 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 				if d.ValueType == "STRING" {
 					value = point.Values[n].StringValue
 				}
-				annotation := make(map[string]string)
-				annotation["time"] = point.TimeInterval.EndTime.UTC().Format(time.RFC3339)
-				annotation["title"] = formatAnnotationText(title, value, d.MetricKind, metricLabels, resourceLabels)
-				annotation["tags"] = ""
-				annotation["text"] = formatAnnotationText(text, value, d.MetricKind, metricLabels, resourceLabels)
-				annotations = append(annotations, annotation)
+				annotations = append(annotations, &annotationEvent{
+					Time:  point.TimeInterval.EndTime,
+					Title: formatAnnotationText(title, value, d.MetricKind, metricLabels, resourceLabels),
+					Tags:  "",
+					Text:  formatAnnotationText(text, value, d.MetricKind, metricLabels, resourceLabels),
+				})
 			}
 		}
 	}

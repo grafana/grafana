@@ -1,9 +1,0 @@
-{
-  "type": "panel",
-  "name": "Sample plugin with lineage",
-  "id": "with-lineage",
-
-  "info": {
-    "description": "Show how complex history may work"
-  }
-}

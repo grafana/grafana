@@ -76,21 +76,23 @@ export const getStyleLoaders = () => {
 
   const cssLoaders = [
     {
-      loader: 'css-loader',
+      loader: require.resolve('css-loader'),
       options: {
         importLoaders: 1,
         sourceMap: true,
       },
     },
     {
-      loader: 'postcss-loader',
+      loader: require.resolve('postcss-loader'),
       options: {
-        plugins: () => [
-          require('postcss-flexbugs-fixes'),
-          require('postcss-preset-env')({
-            autoprefixer: { flexbox: 'no-2009', grid: true },
-          }),
-        ],
+        postcssOptions: {
+          plugins: () => [
+            require('postcss-flexbugs-fixes'),
+            require('postcss-preset-env')({
+              autoprefixer: { flexbox: 'no-2009', grid: true },
+            }),
+          ],
+        },
       },
     },
   ];
@@ -103,27 +105,27 @@ export const getStyleLoaders = () => {
     },
     {
       test: /(dark|light)\.scss$/,
-      use: [extractionLoader, ...cssLoaders, 'sass-loader'],
+      use: [extractionLoader, ...cssLoaders, require.resolve('sass-loader')],
     },
     {
       test: /\.css$/,
-      use: ['style-loader', ...cssLoaders, 'sass-loader'],
+      use: ['style-loader', ...cssLoaders, require.resolve('sass-loader')],
       exclude: [`${styleDir}light.css`, `${styleDir}dark.css`],
     },
     {
       test: /\.s[ac]ss$/,
-      use: ['style-loader', ...cssLoaders, 'sass-loader'],
+      use: ['style-loader', ...cssLoaders, require.resolve('sass-loader')],
       exclude: [`${styleDir}light.scss`, `${styleDir}dark.scss`],
     },
     {
       test: /\.less$/,
       use: [
         {
-          loader: 'style-loader',
+          loader: require.resolve('style-loader'),
         },
         ...cssLoaders,
         {
-          loader: 'less-loader',
+          loader: require.resolve('less-loader'),
           options: {
             javascriptEnabled: true,
           },

@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore_test
 
 import (
@@ -20,7 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func TestAnnotations(t *testing.T) {
+func TestIntegrationAnnotations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sql := sqlstore.InitTestDB(t)
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 
@@ -382,7 +382,10 @@ func TestAnnotations(t *testing.T) {
 	})
 }
 
-func TestAnnotationListingWithRBAC(t *testing.T) {
+func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql)

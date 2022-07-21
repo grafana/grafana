@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
+import { Button, FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
@@ -19,10 +19,12 @@ import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
+  totalQueries: number;
   loading: boolean;
   activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
+  loadMoreRichHistory: () => void;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
   exploreId: ExploreId;
@@ -121,10 +123,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
 export function RichHistoryQueriesTab(props: Props) {
   const {
     queries,
+    totalQueries,
     loading,
     richHistorySearchFilters,
     updateFilters,
     clearRichHistoryResults,
+    loadMoreRichHistory,
     richHistorySettings,
     exploreId,
     height,
@@ -166,6 +170,7 @@ export function RichHistoryQueriesTab(props: Props) {
    */
   const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
   const sortOrderOptions = getSortOrderOptions();
+  const partialResults = queries.length && queries.length !== totalQueries;
 
   return (
     <div className={styles.container}>
@@ -231,7 +236,11 @@ export function RichHistoryQueriesTab(props: Props) {
             return (
               <div key={heading}>
                 <div className={styles.heading}>
-                  {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
+                  {heading}{' '}
+                  <span className={styles.queries}>
+                    {partialResults ? 'Displaying ' : ''}
+                    {mappedQueriesToHeadings[heading].length} queries
+                  </span>
                 </div>
                 {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
                   const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
@@ -248,6 +257,11 @@ export function RichHistoryQueriesTab(props: Props) {
               </div>
             );
           })}
+        {partialResults ? (
+          <div>
+            Showing {queries.length} of {totalQueries} <Button onClick={loadMoreRichHistory}>Load more</Button>
+          </div>
+        ) : null}
         <div className={styles.footer}>
           {!config.queryHistoryEnabled ? 'The history is local to your browser and is not shared with others.' : ''}
         </div>

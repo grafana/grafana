@@ -41,7 +41,7 @@ func (s *ScopeResolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMut
 		// Check cache before computing the scope
 		if cachedScope, ok := s.cache.Get(key); ok {
 			scopes := cachedScope.([]string)
-			s.log.Debug("used cache to resolve '%v' to '%v'", scope, scopes)
+			s.log.Debug("used cache to resolve scope", "scope", scope, "resolved_scopes", scopes)
 			return scopes, nil
 		}
 
@@ -53,7 +53,7 @@ func (s *ScopeResolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMut
 			}
 			// Cache result
 			s.cache.Set(key, scopes, ttl)
-			s.log.Debug("resolved '%v' to '%v'", scope, scopes)
+			s.log.Debug("resolved scope", "scope", scope, "resolved_scopes", scopes)
 			return scopes, nil
 		}
 		return []string{scope}, nil
@@ -67,7 +67,7 @@ func (s *ScopeResolvers) GetScopeKeywordMutator(user *models.SignedInUser) Scope
 			if err != nil {
 				return "", fmt.Errorf("could not resolve %v: %w", scope, err)
 			}
-			s.log.Debug("resolved '%v' to '%v'", scope, scopes)
+			s.log.Debug("resolved scope", "scope", scope, "resolved_scopes", scopes)
 			return scopes, nil
 		}
 		// By default, the scope remains unchanged

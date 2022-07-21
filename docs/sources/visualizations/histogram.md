@@ -1,10 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/features/panels/histogram/", "/docs/grafana/latest/panels/visualizations/histogram/", "/docs/grafana/latest/visualizations/histogram/"]
-description = "Histogram visualization"
-keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
-title = "Histogram"
-weight = 605
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/panels/histogram/
+  - /docs/grafana/latest/panels/visualizations/histogram/
+  - /docs/grafana/latest/visualizations/histogram/
+description: Histogram visualization
+keywords:
+  - grafana
+  - docs
+  - bar chart
+  - panel
+  - barchart
+title: Histogram
+weight: 605
+---
 
 # Histogram
 
@@ -42,7 +50,7 @@ Controls the fill opacity bars.
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../panels/working-with-panels/apply-color-to-series.md" >}}) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../panels/configure-standard-options/#color-scheme" >}}) field option.
 
 Gradient display is influenced by the **Fill opacity** setting.
 
@@ -64,4 +72,4 @@ Gradient color is generated based on the hue of the line color.
 
 ### Legend calculations
 
-Choose a [standard calculations]({{< relref "../panels/calculation-types.md">}}) to show in the legend. You can select more than one.
+Choose a [standard calculations]({{< relref "../panels/calculation-types/" >}}) to show in the legend. You can select more than one.

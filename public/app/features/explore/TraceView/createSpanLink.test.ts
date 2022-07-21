@@ -478,6 +478,40 @@ describe('createSpanLinkFactory', () => {
     });
   });
 
+  it('correctly interpolates span attributes', () => {
+    const splitOpenFn = jest.fn();
+    const createLink = createSpanLinkFactory({
+      splitOpenFn,
+      traceToMetricsOptions: {
+        datasourceUid: 'prom1',
+        queries: [{ name: 'Named Query', query: 'metric{$__tags}[5m]' }],
+        tags: [
+          { key: 'job', value: '' },
+          { key: 'k8s.pod', value: 'pod' },
+        ],
+      } as TraceToMetricsOptions,
+    });
+    expect(createLink).toBeDefined();
+
+    const links = createLink!(
+      createTraceSpan({
+        process: {
+          serviceName: 'service',
+          tags: [
+            { key: 'job', value: 'tns/app' },
+            { key: 'k8s.pod', value: 'sample-pod' },
+          ],
+        },
+      })
+    );
+    expect(links).toBeDefined();
+    expect(links!.metricLinks![0]!.href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1","queries":[{"expr":"metric{job=\\"tns/app\\", pod=\\"sample-pod\\"}[5m]","refId":"A"}],"panelsState":{}}'
+      )}`
+    );
+  });
+
   describe('should return span links', () => {
     beforeAll(() => {
       setDataSourceSrv(new DatasourceSrv());

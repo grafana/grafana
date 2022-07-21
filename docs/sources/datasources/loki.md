@@ -1,16 +1,22 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/loki/", "/docs/grafana/latest/features/datasources/loki/"]
-description = "Guide for using Loki in Grafana"
-keywords = ["grafana", "loki", "logging", "guide"]
-title = "Loki"
-weight = 800
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/loki/
+  - /docs/grafana/latest/features/datasources/loki/
+description: Guide for using Loki in Grafana
+keywords:
+  - grafana
+  - loki
+  - logging
+  - guide
+title: Loki
+weight: 800
+---
 
 # Using Loki in Grafana
 
 Grafana ships with built-in support for Loki, an open source log aggregation system by Grafana Labs. This topic explains options, variables, querying, and other options specific to this data source.
 
-Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore" >}}). Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore/" >}}). Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## Hosted Loki
 
@@ -57,7 +63,9 @@ The new field with the link shown in log details:
 
 Loki query editor is separated into 3 distinct modes that you can switch between. See docs for each section below.
 
-At the top of the editor there is `Run query` button that will run the query and `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode there are additional elements explained in the Builder section.
+At the top of the editor, select `Run queries` to run a query. Select `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode, there are additional elements explained in the Builder section.
+
+> **Note:** In Explore, to run Loki queries, select `Run query`.
 
 Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations. Some more complex queries are not yet supported in the builder mode. If you try to switch from `Code` to `Builder` with such query, editor will show a popup explaining that you can lose some parts of the query, and you can decide if you still want to continue to `Builder` mode or not.
 
@@ -115,6 +123,10 @@ Operation can have additional parameters under the operation header. See the ope
 
 Some operations make sense only in specific order, if adding an operation would result in nonsensical query, operation will be added to the correct place. To order operations manually drag operation box by the operation name and drop in appropriate place.
 
+##### Hints
+
+In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
+
 #### Raw query
 
 This section is shown only if the `Raw query` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.
@@ -132,7 +144,7 @@ There are two types of LogQL queries:
 
 ### Log queries
 
-Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/)
+Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore/" >}}), and with the [logs panel]({{< relref "../visualizations/logs-panel/" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/)
 
 #### Log context
 
@@ -193,7 +205,7 @@ LogQL supports wrapping a log query with functions that allow for creating metri
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Query variable
 
@@ -212,11 +224,11 @@ Loki supports the special ad hoc filters variable type. It allows you to specify
 
 ### Using interval and range variables
 
-You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
+You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}).
 
 ## Annotations
 
-You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
+You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations/" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
 
 ## Configure the data source with provisioning
 
@@ -249,7 +261,6 @@ datasources:
     url: http://localhost:3100
     basicAuth: true
     basicAuthUser: my_user
-    basicAuthPassword: test_password
     jsonData:
       maxLines: 1000
       derivedFields:
@@ -266,6 +277,8 @@ datasources:
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: 'http://localhost:16686/trace/$${__value.raw}'
+    secureJsonData:
+      basicAuthPassword: test_password
 ```
 
 Here's an example of a Jaeger data source corresponding to the above example. Note that the Jaeger `uid` value does match the Loki `datasourceUid` value.

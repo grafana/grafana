@@ -52,8 +52,7 @@ func TestPermission_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}
@@ -123,8 +122,7 @@ func TestPermission_Inject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			injected, err := test.evaluator.MutateScopes(context.TODO(), ScopeInjector(test.params))
 			assert.NoError(t, err)
-			ok, err := injected.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := injected.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}
@@ -172,8 +170,7 @@ func TestAll_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}
@@ -236,7 +233,7 @@ func TestAll_Inject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			injected, err := test.evaluator.MutateScopes(context.TODO(), ScopeInjector(test.params))
 			assert.NoError(t, err)
-			ok, err := injected.Evaluate(test.permissions)
+			ok := injected.Evaluate(test.permissions)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, ok)
 		})
@@ -283,8 +280,7 @@ func TestAny_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}
@@ -347,7 +343,7 @@ func TestAny_Inject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			injected, err := test.evaluator.MutateScopes(context.TODO(), ScopeInjector(test.params))
 			assert.NoError(t, err)
-			ok, err := injected.Evaluate(test.permissions)
+			ok := injected.Evaluate(test.permissions)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, ok)
 		})
@@ -409,8 +405,7 @@ func TestEval(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}

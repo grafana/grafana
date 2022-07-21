@@ -52,6 +52,7 @@ export function setupMockedDataSource({
 
   datasource.getNamespaces = jest.fn().mockResolvedValue([]);
   datasource.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.defaultLogGroups = [];
   const fetchMock = jest.fn().mockReturnValue(of({ data }));
   setBackendSrv({ fetch: fetchMock } as any);
 
@@ -147,5 +148,47 @@ export const dimensionVariable: CustomVariableModel = {
     { value: 'env', text: 'env', selected: false },
     { value: 'tag', text: 'tag', selected: false },
   ],
+  multi: false,
+};
+
+export const logGroupNamesVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'groups',
+  name: 'groups',
+  current: {
+    value: ['templatedGroup-1', 'templatedGroup-2'],
+    text: ['templatedGroup-1', 'templatedGroup-2'],
+    selected: true,
+  },
+  options: [
+    { value: 'templatedGroup-1', text: 'templatedGroup-1', selected: true },
+    { value: 'templatedGroup-2', text: 'templatedGroup-2', selected: true },
+  ],
+  multi: true,
+};
+
+export const regionVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'region',
+  name: 'region',
+  current: {
+    value: 'templatedRegion',
+    text: 'templatedRegion',
+    selected: true,
+  },
+  options: [{ value: 'templatedRegion', text: 'templatedRegion', selected: true }],
+  multi: false,
+};
+
+export const expressionVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'fields',
+  name: 'fields',
+  current: {
+    value: 'templatedField',
+    text: 'templatedField',
+    selected: true,
+  },
+  options: [{ value: 'templatedField', text: 'templatedField', selected: true }],
   multi: false,
 };

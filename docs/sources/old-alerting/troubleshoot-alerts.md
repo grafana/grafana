@@ -1,11 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/troubleshoot-alerts/", "/docs/grafana/latest/old-alerting/troubleshoot-alerts/"]
-description = "Troubleshoot alert rules"
-draft = true
-keywords = ["grafana", "alerting", "guide", "rules", "troubleshoot"]
-title = "Troubleshoot alerts"
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/troubleshoot-alerts/
+  - /docs/grafana/latest/old-alerting/troubleshoot-alerts/
+description: Troubleshoot alert rules
+draft: true
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - troubleshoot
+title: Troubleshoot alerts
+weight: 500
+---
 
 # Troubleshoot alerts
 

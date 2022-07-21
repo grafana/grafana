@@ -1,5 +1,7 @@
 package definitions
 
+import "github.com/grafana/grafana/pkg/api/dtos"
+
 // swagger:route GET /org/preferences org_preferences getOrgPreferences
 //
 // Get Current Org Prefs.
@@ -31,3 +33,10 @@ package definitions
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
+
+// swagger:parameters updateOrgPreferences
+type UpdateOrgPreferencesParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdatePrefsCmd `json:"body"`
+}

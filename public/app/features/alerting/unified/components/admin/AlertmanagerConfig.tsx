@@ -112,7 +112,7 @@ export default function AlertmanagerConfig(): JSX.Element {
                           JSON.parse(v);
                           return true;
                         } catch (e) {
-                          return e.message;
+                          return e instanceof Error ? e.message : 'Invalid JSON.';
                         }
                       },
                     })}

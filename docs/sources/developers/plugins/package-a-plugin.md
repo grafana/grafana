@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/package-a-plugin/", "/docs/grafana/latest/developers/plugins/share-a-plugin/"]
-title = "Package a plugin"
-type = "docs"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/package-a-plugin/
+  - /docs/grafana/latest/developers/plugins/share-a-plugin/
+title: Package a plugin
+type: docs
+---
 
 # Package a plugin
 
@@ -31,7 +33,7 @@ There are three steps needed to package a plugin:
    mage
    ```
 
-1. [Sign the plugin]({{< relref "sign-a-plugin.md" >}}).
+1. [Sign the plugin]({{< relref "sign-a-plugin/" >}}).
 
 1. Create a ZIP archive of the `dist` directory.
 

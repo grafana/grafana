@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { TimeZone } from '@grafana/data';
+import { CoreApp, TimeZone } from '@grafana/data';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -51,6 +51,7 @@ export function ExploreQueryInspector(props: Props) {
         isLoading={loading}
         options={{ withTransforms: false, withFieldConfig: false }}
         timeZone={timeZone}
+        app={CoreApp.Explore}
       />
     ),
   };

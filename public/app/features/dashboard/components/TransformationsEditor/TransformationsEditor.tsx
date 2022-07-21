@@ -233,7 +233,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           {filtered.length} / {xforms.length} &nbsp;&nbsp;
           <IconButton
             name="times"
-            surface="header"
             onClick={() => {
               this.setState({ search: '' });
             }}
@@ -251,7 +250,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       suffix = (
         <IconButton
           name="times"
-          surface="header"
           onClick={() => {
             this.setState({ showPicker: false });
           }}

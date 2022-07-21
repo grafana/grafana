@@ -72,7 +72,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
             {query.data ? (
               <div style={{ alignSelf: 'center' }}>{describeDataFrame(query.data)}</div>
             ) : (
-              <LinkButton variant="link" href={`datasources/edit/${uid}/`}>
+              <LinkButton fill="text" href={`datasources/edit/${uid}/`}>
                 {name}: {describeDataFrame(datasource.data)} &nbsp;&nbsp;
                 <Icon name="pen" />
               </LinkButton>

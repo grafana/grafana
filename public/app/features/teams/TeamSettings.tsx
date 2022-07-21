@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Team } from 'app/types';
 
 import { updateTeam } from './state/actions';
@@ -32,9 +32,15 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           }}
           disabled={!canWriteTeamSettings}
         >
-          {({ register }) => (
+          {({ register, errors }) => (
             <>
-              <Field label="Name" disabled={!canWriteTeamSettings}>
+              <Field
+                label="Name"
+                disabled={!canWriteTeamSettings}
+                required
+                invalid={!!errors.name}
+                error="Name is required"
+              >
                 <Input {...register('name', { required: true })} id="name-input" />
               </Field>
 

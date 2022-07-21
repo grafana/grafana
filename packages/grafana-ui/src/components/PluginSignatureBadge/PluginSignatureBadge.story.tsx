@@ -6,6 +6,8 @@ import { PluginSignatureBadge } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
+import mdx from './PluginSignatureBadge.mdx';
+
 export default {
   title: 'Data Display/PluginSignatureBadge',
   decorators: [withCenteredStory],
@@ -22,6 +24,11 @@ export default {
         PluginSignatureStatus.valid,
         PluginSignatureStatus.internal,
       ],
+    },
+  },
+  parameters: {
+    docs: {
+      page: mdx,
     },
   },
 };

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -191,18 +192,18 @@ func shouldForceLogin(c *models.ReqContext) bool {
 	return forceLogin
 }
 
-func OrgAdminFolderAdminOrTeamAdmin(ss sqlstore.Store) func(c *models.ReqContext) {
+func OrgAdminDashOrFolderAdminOrTeamAdmin(ss sqlstore.Store, ds dashboards.DashboardService) func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
 		if c.OrgRole == models.ROLE_ADMIN {
 			return
 		}
 
-		hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-		if err := ss.HasAdminPermissionInFolders(c.Req.Context(), &hasAdminPermissionInFoldersQuery); err != nil {
+		hasAdminPermissionInDashOrFoldersQuery := models.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
+		if err := ds.HasAdminPermissionInDashboardsOrFolders(c.Req.Context(), &hasAdminPermissionInDashOrFoldersQuery); err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
 		}
 
-		if hasAdminPermissionInFoldersQuery.Result {
+		if hasAdminPermissionInDashOrFoldersQuery.Result {
 			return
 		}
 

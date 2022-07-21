@@ -42,7 +42,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
-import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/editors/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
@@ -53,6 +53,7 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
+import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -80,8 +81,8 @@ import { configureStore } from './store/configureStore';
 _.move = arrayMove;
 
 // import symlinked extensions
-const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
-const extensionsExports = extensionsIndex.keys().map((key: any) => {
+const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
+const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
 
@@ -152,7 +153,7 @@ export class GrafanaApp {
         }),
         document.getElementById('reactRoot')
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
     }
@@ -203,23 +204,39 @@ function initEchoSrv() {
       })
     );
   }
-
-  if ((config as any).googleAnalyticsId) {
+  if (config.grafanaJavascriptAgent.enabled) {
     registerEchoBackend(
-      new GAEchoBackend({
-        googleAnalyticsId: (config as any).googleAnalyticsId,
+      new GrafanaJavascriptAgentBackend({
+        ...config.grafanaJavascriptAgent,
+        app: {
+          version: config.buildInfo.version,
+          environment: config.buildInfo.env,
+        },
+        buildInfo: config.buildInfo,
+        user: {
+          id: String(config.bootData.user?.id),
+          email: config.bootData.user?.email,
+        },
       })
     );
   }
 
-  if ((config as any).rudderstackWriteKey && (config as any).rudderstackDataPlaneUrl) {
+  if (config.googleAnalyticsId) {
+    registerEchoBackend(
+      new GAEchoBackend({
+        googleAnalyticsId: config.googleAnalyticsId,
+      })
+    );
+  }
+
+  if (config.rudderstackWriteKey && config.rudderstackDataPlaneUrl) {
     registerEchoBackend(
       new RudderstackBackend({
-        writeKey: (config as any).rudderstackWriteKey,
-        dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
+        writeKey: config.rudderstackWriteKey,
+        dataPlaneUrl: config.rudderstackDataPlaneUrl,
         user: config.bootData.user,
-        sdkUrl: (config as any).rudderstackSdkUrl,
-        configUrl: (config as any).rudderstackConfigUrl,
+        sdkUrl: config.rudderstackSdkUrl,
+        configUrl: config.rudderstackConfigUrl,
       })
     );
   }

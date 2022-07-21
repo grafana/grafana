@@ -82,7 +82,6 @@ export const LayerDragDropList = <T extends LayerElement>({
                                 title={'Duplicate'}
                                 className={style.actionIcon}
                                 onClick={() => onDuplicate(element)}
-                                surface="header"
                               />
                             ) : null}
 
@@ -91,7 +90,6 @@ export const LayerDragDropList = <T extends LayerElement>({
                               title={'remove'}
                               className={cx(style.actionIcon, style.dragIcon)}
                               onClick={() => onDelete(element)}
-                              surface="header"
                             />
                           </>
                         )}

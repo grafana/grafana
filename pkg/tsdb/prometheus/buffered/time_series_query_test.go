@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
@@ -14,7 +16,7 @@ import (
 
 var now = time.Now()
 
-func TestPrometheus_timeSeriesQuery_formatLeged(t *testing.T) {
+func TestPrometheus_timeSeriesQuery_formatLegend(t *testing.T) {
 	t.Run("converting metric name", func(t *testing.T) {
 		metric := map[p.LabelName]p.LabelValue{
 			p.LabelName("app"):    p.LabelValue("backend"),
@@ -592,6 +594,66 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, res[0].Fields[1].Len(), 2)
 		require.Equal(t, res[0].Fields[1].At(0), 0.009545445)
 		require.Equal(t, res[0].Fields[1].At(1), 0.003535405)
+	})
+
+	t.Run("exemplars response with inconsistent labels should marshal json ok", func(t *testing.T) {
+		value := make(map[TimeSeriesQueryType]interface{})
+		exemplars := []apiv1.ExemplarQueryResult{
+			{
+				SeriesLabels: p.LabelSet{
+					"__name__": "tns_request_duration_seconds_bucket",
+					"instance": "app:80",
+					"service":  "example",
+				},
+				Exemplars: []apiv1.Exemplar{
+					{
+						Labels:    p.LabelSet{"traceID": "test1"},
+						Value:     0.003535405,
+						Timestamp: 1,
+					},
+				},
+			},
+			{
+				SeriesLabels: p.LabelSet{
+					"__name__":         "tns_request_duration_seconds_bucket",
+					"instance":         "app:80",
+					"service":          "example2",
+					"additional_label": "foo",
+				},
+				Exemplars: []apiv1.Exemplar{
+					{
+						Labels:    p.LabelSet{"traceID": "test2", "userID": "test3"},
+						Value:     0.003535405,
+						Timestamp: 10,
+					},
+				},
+			},
+		}
+
+		value[ExemplarQueryType] = exemplars
+		query := &PrometheusQuery{
+			LegendFormat: "legend {{app}}",
+		}
+		res, err := parseTimeSeriesResponse(value, query)
+		require.NoError(t, err)
+
+		// Test frame marshal json no error.
+		_, err = res[0].MarshalJSON()
+		require.NoError(t, err)
+
+		fields := []*data.Field{
+			data.NewField("Time", map[string]string{}, []time.Time{time.UnixMilli(1), time.UnixMilli(10)}),
+			data.NewField("Value", map[string]string{}, []float64{0.003535405, 0.003535405}),
+			data.NewField("__name__", map[string]string{}, []string{"tns_request_duration_seconds_bucket", "tns_request_duration_seconds_bucket"}),
+			data.NewField("additional_label", map[string]string{}, []string{"", "foo"}),
+			data.NewField("instance", map[string]string{}, []string{"app:80", "app:80"}),
+			data.NewField("service", map[string]string{}, []string{"example", "example2"}),
+			data.NewField("traceID", map[string]string{}, []string{"test1", "test2"}),
+			data.NewField("userID", map[string]string{}, []string{"", "test3"}),
+		}
+		if diff := cmp.Diff(newDataFrame("exemplar", "exemplar", fields...), res[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("matrix response should be parsed normally", func(t *testing.T) {

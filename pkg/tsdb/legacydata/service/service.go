@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -21,7 +21,7 @@ const (
 	headerValue = "httpHeaderValue"
 )
 
-var oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *models.DataSource) bool {
+var oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *datasources.DataSource) bool {
 	return oAuthTokenService.IsOAuthPassThruEnabled(ds)
 }
 
@@ -41,7 +41,7 @@ func ProvideService(pluginsClient plugins.Client, oAuthTokenService oauthtoken.O
 }
 
 //nolint: staticcheck // legacydata.DataResponse deprecated
-func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
+func (h *Service) HandleRequest(ctx context.Context, ds *datasources.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
 	decryptedJsonData, err := h.dataSourcesService.DecryptedValues(ctx, ds)
 	if err != nil {
 		return legacydata.DataResponse{}, err
@@ -91,7 +91,7 @@ func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 	return tR, nil
 }
 
-func generateRequest(ctx context.Context, ds *models.DataSource, decryptedJsonData map[string]string, query legacydata.DataQuery) (*backend.QueryDataRequest, error) {
+func generateRequest(ctx context.Context, ds *datasources.DataSource, decryptedJsonData map[string]string, query legacydata.DataQuery) (*backend.QueryDataRequest, error) {
 	jsonDataBytes, err := ds.JsonData.MarshalJSON()
 	if err != nil {
 		return nil, err

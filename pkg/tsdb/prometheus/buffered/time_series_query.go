@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
@@ -13,13 +14,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered/promclient"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -57,17 +55,24 @@ var (
 type Buffered struct {
 	intervalCalculator intervalv2.Calculator
 	tracer             tracing.Tracer
-	getClient          clientGetter
+	client             apiv1.API
 	log                log.Logger
 	ID                 int64
 	URL                string
 	TimeInterval       string
 }
 
-func New(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, settings backend.DataSourceInstanceSettings, plog log.Logger) (*Buffered, error) {
-	var jsonData map[string]interface{}
-	if err := json.Unmarshal(settings.JSONData, &jsonData); err != nil {
-		return nil, fmt.Errorf("error reading settings: %w", err)
+// New creates and object capable of executing and parsing a Prometheus queries. It's "buffered" because there is
+// another implementation capable of streaming parse the response.
+func New(roundTripper http.RoundTripper, tracer tracing.Tracer, settings backend.DataSourceInstanceSettings, plog log.Logger) (*Buffered, error) {
+	promClient, err := CreateClient(roundTripper, settings.URL)
+	if err != nil {
+		return nil, fmt.Errorf("error creating prom client: %v", err)
+	}
+
+	jsonData, err := utils.GetJsonData(settings)
+	if err != nil {
+		return nil, fmt.Errorf("error getting jsonData: %w", err)
 	}
 
 	timeInterval, err := maputil.GetStringOptional(jsonData, "timeInterval")
@@ -75,23 +80,30 @@ func New(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features feat
 		return nil, err
 	}
 
-	p := promclient.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-	pc, err := promclient.NewProviderCache(p)
-	if err != nil {
-		return nil, err
-	}
 	return &Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		log:                plog,
-		getClient:          pc.GetClient,
+		client:             promClient,
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
 	}, nil
 }
 
-func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
+func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	queries, err := b.parseTimeSeriesQuery(req)
+	if err != nil {
+		result := backend.QueryDataResponse{
+			Responses: backend.Responses{},
+		}
+		return &result, fmt.Errorf("error parsing time series query: %v", err)
+	}
+
+	return b.runQueries(ctx, queries)
+}
+
+func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -99,11 +111,12 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 	for _, query := range queries {
 		b.log.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
-		ctx, span := b.tracer.Start(ctx, "datasource.prometheus")
-		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
-		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
-		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
-		defer span.End()
+		ctx, endSpan := utils.StartTrace(ctx, b.tracer, "datasource.prometheus", []utils.Attribute{
+			{Key: "expr", Value: query.Expr, Kv: attribute.Key("expr").String(query.Expr)},
+			{Key: "start_unixnano", Value: query.Start, Kv: attribute.Key("start_unixnano").Int64(query.Start.UnixNano())},
+			{Key: "stop_unixnano", Value: query.End, Kv: attribute.Key("stop_unixnano").Int64(query.End.UnixNano())},
+		})
+		defer endSpan()
 
 		response := make(map[TimeSeriesQueryType]interface{})
 
@@ -115,7 +128,7 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 		}
 
 		if query.RangeQuery {
-			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
+			rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
 				b.log.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
@@ -125,7 +138,7 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 		}
 
 		if query.InstantQuery {
-			instantResponse, _, err := client.Query(ctx, query.Expr, query.End)
+			instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
 			if err != nil {
 				b.log.Error("Instant query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
@@ -137,7 +150,7 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 		// This is a special case
 		// If exemplar query returns error, we want to only log it and continue with other results processing
 		if query.ExemplarQuery {
-			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
+			exemplarResponse, err := b.client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
 				b.log.Error("Exemplar query failed", "query", query.Expr, "err", err)
 			} else {
@@ -161,23 +174,6 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 	}
 
 	return &result, nil
-}
-
-func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	client, err := b.getClient(req.Headers)
-	if err != nil {
-		return nil, err
-	}
-
-	queries, err := b.parseTimeSeriesQuery(req)
-	if err != nil {
-		result := backend.QueryDataResponse{
-			Responses: backend.Responses{},
-		}
-		return &result, err
-	}
-
-	return b.runQueries(ctx, client, queries)
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
@@ -209,18 +205,18 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return legend
 }
 
-func (b *Buffered) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest) ([]*PrometheusQuery, error) {
+func (b *Buffered) parseTimeSeriesQuery(req *backend.QueryDataRequest) ([]*PrometheusQuery, error) {
 	qs := []*PrometheusQuery{}
-	for _, query := range queryContext.Queries {
+	for _, query := range req.Queries {
 		model := &QueryModel{}
 		err := json.Unmarshal(query.JSON, model)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error unmarshaling query model: %v", err)
 		}
 		//Final interval value
 		interval, err := calculatePrometheusInterval(model, b.TimeInterval, query, b.intervalCalculator)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error calculating interval: %v", err)
 		}
 
 		// Interpolate variables in expr
@@ -234,7 +230,7 @@ func (b *Buffered) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest) 
 
 		// We never want to run exemplar query for alerting
 		exemplarQuery := model.ExemplarQuery
-		if queryContext.Headers["FromAlert"] == "true" {
+		if req.Headers["FromAlert"] == "true" {
 			exemplarQuery = false
 		}
 
@@ -326,7 +322,7 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 		return time.Duration(0)
 	}
 
-	rateInterval := time.Duration(int(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
+	rateInterval := time.Duration(int64(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
 	return rateInterval
 }
 
@@ -434,10 +430,38 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data
 	return frames
 }
 
-func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, frames data.Frames) data.Frames {
+// normalizeExemplars transforms the exemplar results into a single list of events. At the same time we make sure
+// that all exemplar events have the same labels which is important when converting to dataFrames so that we have
+// the same length of each field (each label will be a separate field). Exemplars can have different label either
+// because the exemplar event have different labels or because they are from different series.
+// Reason why we merge exemplars into single list even if they are from different series is that for example in case
+// of a histogram query, like histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))
+// Prometheus still returns all the exemplars for all the series of metric traces_spanmetrics_duration_seconds_bucket.
+// Which makes sense because each histogram bucket is separate series but we still want to show all the exemplars for
+// the metric and we don't specifically care which buckets they are from.
+// For non histogram queries or if you split by some label it would probably be nicer to then split also exemplars to
+// multiple frames (so they will have different symbols in the UI) but that would require understanding the query so it
+// is not implemented now.
+func normalizeExemplars(response []apiv1.ExemplarQueryResult) []ExemplarEvent {
 	// TODO: this preallocation is very naive.
 	// We should figure out a better approximation here.
 	events := make([]ExemplarEvent, 0, len(response)*2)
+
+	// Get all the labels across all exemplars both from the examplars and their series labels. We will use this to make
+	// sure the resulting data frame has consistent number of values in each column.
+	eventLabels := make(map[string]struct{})
+	for _, exemplarData := range response {
+		// Check each exemplar labels as there isn't a guarantee they are consistent
+		for _, exemplar := range exemplarData.Exemplars {
+			for label := range exemplar.Labels {
+				eventLabels[string(label)] = struct{}{}
+			}
+		}
+
+		for label := range exemplarData.SeriesLabels {
+			eventLabels[string(label)] = struct{}{}
+		}
+	}
 
 	for _, exemplarData := range response {
 		for _, exemplar := range exemplarData.Exemplars {
@@ -447,17 +471,26 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 			event.Value = float64(exemplar.Value)
 			event.Labels = make(map[string]string)
 
-			for label, value := range exemplar.Labels {
-				event.Labels[string(label)] = string(value)
-			}
-
-			for seriesLabel, seriesValue := range exemplarData.SeriesLabels {
-				event.Labels[string(seriesLabel)] = string(seriesValue)
+			// Fill in all the labels from eventLabels with values from exemplar labels or series labels or fill with
+			// empty string
+			for label := range eventLabels {
+				if _, ok := exemplar.Labels[model.LabelName(label)]; ok {
+					event.Labels[label] = string(exemplar.Labels[model.LabelName(label)])
+				} else if _, ok := exemplarData.SeriesLabels[model.LabelName(label)]; ok {
+					event.Labels[label] = string(exemplarData.SeriesLabels[model.LabelName(label)])
+				} else {
+					event.Labels[label] = ""
+				}
 			}
 
 			events = append(events, event)
 		}
 	}
+	return events
+}
+
+func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, frames data.Frames) data.Frames {
+	events := normalizeExemplars(response)
 
 	// Sampling of exemplars
 	bucketedExemplars := make(map[string][]ExemplarEvent)
@@ -544,11 +577,25 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 
 	dataFields := make([]*data.Field, 0, len(labelsVector)+2)
 	dataFields = append(dataFields, timeField, valueField)
-	for label, vector := range labelsVector {
-		dataFields = append(dataFields, data.NewField(label, nil, vector))
+
+	// Sort the labels/fields so that it is consistent (mainly for easier testing)
+	allLabels := sortedLabels(labelsVector)
+	for _, label := range allLabels {
+		dataFields = append(dataFields, data.NewField(label, nil, labelsVector[label]))
 	}
 
 	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
+}
+
+func sortedLabels(labelsVector map[string][]string) []string {
+	allLabels := make([]string, len(labelsVector))
+	i := 0
+	for key := range labelsVector {
+		allLabels[i] = key
+		i++
+	}
+	sort.Strings(allLabels)
+	return allLabels
 }
 
 func deviation(values []float64) float64 {
@@ -569,7 +616,7 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 	frame.Meta = &data.FrameMeta{
 		Type: data.FrameTypeTimeSeriesMany,
 		Custom: map[string]string{
-			"resultType": typ,
+			"resultType": typ, // Note: SSE depends on this property and map type
 		},
 	}
 
@@ -577,7 +624,9 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 }
 
 func alignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
-	return time.Unix(int64(math.Floor((float64(t.Unix()+offset)/step.Seconds()))*step.Seconds()-float64(offset)), 0)
+	offsetNano := float64(offset * 1e9)
+	stepNano := float64(step.Nanoseconds())
+	return time.Unix(0, int64(math.Floor((float64(t.UnixNano())+offsetNano)/stepNano)*stepNano-offsetNano))
 }
 
 func isVariableInterval(interval string) bool {

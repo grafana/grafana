@@ -20,14 +20,14 @@ func ProvideService(
 		// TODO: Fix this hack, see https://github.com/grafana/grafana-enterprise/issues/2935
 		InitAccessControlGuardian(store, ac, folderPermissionsService, dashboardPermissionsService, dashboardService)
 	} else {
-		InitLegacyGuardian(store)
+		InitLegacyGuardian(store, dashboardService)
 	}
 	return &Provider{}
 }
 
-func InitLegacyGuardian(store sqlstore.Store) {
+func InitLegacyGuardian(store sqlstore.Store, dashSvc dashboards.DashboardService) {
 	New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
-		return newDashboardGuardian(ctx, dashId, orgId, user, store)
+		return newDashboardGuardian(ctx, dashId, orgId, user, store, dashSvc)
 	}
 }
 

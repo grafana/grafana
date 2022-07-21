@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
@@ -37,7 +36,7 @@ var (
 	resourceNameLandmark = regexp.MustCompile(`(?i)(/(?P<resourceName>[\w-\.]+)/providers/Microsoft\.Insights/metrics)`)
 )
 
-const azureMonitorAPIVersion = "2018-01-01"
+const AzureMonitorAPIVersion = "2018-01-01"
 
 func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
 	e.Proxy.Do(rw, req, cli)
@@ -106,6 +105,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 
 		timeGrain := azJSONModel.TimeGrain
 		timeGrains := azJSONModel.AllowedTimeGrainsMs
+
 		if timeGrain == "auto" {
 			timeGrain, err = azTime.SetAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
 			if err != nil {
@@ -114,7 +114,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		}
 
 		params := url.Values{}
-		params.Add("api-version", azureMonitorAPIVersion)
+		params.Add("api-version", AzureMonitorAPIVersion)
 		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
 		params.Add("aggregation", azJSONModel.Aggregation)
@@ -230,7 +230,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo types
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("Failed to create request", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to create request", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 

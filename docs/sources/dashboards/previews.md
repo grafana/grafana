@@ -1,9 +1,15 @@
-+++
-title = "Dashboard previews"
-keywords = ["grafana", "dashboard", "documentation", "previews"]
-aliases = ["/docs/grafana/latest/reference/previews/"]
-weight = 9
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/previews/
+  - /docs/grafana/latest/reference/previews/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - previews
+title: Dashboard previews
+weight: 9
+---
 
 # Dashboard previews
 
@@ -13,7 +19,7 @@ Dashboard previews provide an overview of all available dashboards. They help yo
 
 > **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Data source permissions are not yet taken into the account when displaying the dashboard previews - refer to the [permissions]({{< relref "#preview-visibility">}}) to learn more before enabling the feature.
 
-You can view dashboard previews only when the feature is enabled for your instance. It is an opt-in feature that is, by default, disabled. You can view the previews in the Grafana UI after clicking on the _Show previews_ toggle once the administrator enables the feature following the procedure described below.
+The dashboard previews feature is an opt-in feature that is disabled by default. You can view dashboard previews after an administrator enables the feature, and after you select the new grid layout. The feature-enablement procedure is outlined in the following section.
 
 - [Enable dashboard previews](#enable-dashboard-previews)
 - [About the dashboard previews crawler](#about-the-dashboard-previews-crawler)
@@ -21,8 +27,8 @@ You can view dashboard previews only when the feature is enabled for your instan
 
 ## Enable dashboard previews
 
-1. Install the Image Renderer plugin or set up a remote rendering service. The minimum version of Image Renderer required for the dashboard preview feature `3.4.0`. Refer to [Image rendering]({{< relref "../image-rendering/" >}}) for more information.
-2. Modify the [configuration file]({{< relref "../administration/configuration.md#configuration-file-location" >}}) to enable the `dashboardPreviews` [feature toggle]({{< relref "../administration/configuration.md#feature_toggles" >}}).
+1. Install the Image Renderer plugin or set up a remote rendering service. The minimum version of Image Renderer required for the dashboard preview feature `3.4.0`. Refer to [Image rendering]({{< relref "../setup-grafana/image-rendering/" >}}) for more information.
+2. Modify the [configuration file]({{< relref "../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `dashboardPreviews` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}).
 
 ```
 [feature_toggles]
@@ -30,15 +36,17 @@ You can view dashboard previews only when the feature is enabled for your instan
 enable = dashboardPreviews
 ```
 
-3. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
+3. If running Grafana Enterprise with RBAC, enable [service accounts]({{< relref "../administration/service-accounts/" >}}).
 
-Verify that your setup was successful in the dashboard search page. You should see dashboard preview placeholders for all your existing dashboards after clicking on the _Show previews_ toggle at the top of the page.
+4. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
+
+The first crawler run should begin approximately five minutes after Grafana server restart.
+
+To determine that your setup is successful, select the new grid layout and verify that the dashboard preview placeholders appear.
 
 {{< video-embed src="/static/img/docs/dashboards/previews-successful-setup.webm" max-width="950px" >}}
 
-The first crawler run should begin approximately five minutes after restarting the Grafana instance.
-
-In case you see any warnings after clicking on the toggle, check [Grafana server logs]({{< relref "../administration/configuration.md#log" >}}) for more context. The logger used by the Previews Service is named `previews_service`.
+If the dashboard preview placeholders do not appear or if you see any warning messages, check [Grafana server logs]({{< relref "../setup-grafana/configure-grafana/#log" >}}) for more context. The logger used by the Previews Service is named `previews_service`.
 
 {{< figure src="/static/img/docs/dashboards/previews-unsuccessful-setup.png" max-width="950px" >}}
 
@@ -50,7 +58,7 @@ The dashboard previews crawler is a background process that:
 - [Visits and takes a screenshot of each dashboard](#rendering-previews)
 - [Saves the screenshots in persistent storage](#saving-previews)
 
-The crawler can be configured via the main config file. Check the [dashboard previews section]({{< relref "../administration/configuration.md#dashboard_previews" >}}) for more details.
+The crawler can be configured via the main config file. Check the [dashboard previews section]({{< relref "../setup-grafana/configure-grafana/#dashboard_previews" >}}) for more details.
 
 ### Preparing the dashboard list
 
@@ -68,11 +76,11 @@ Modifying a dashboard is the only way of refreshing that dashboard's preview; pr
 The crawler sends a render request to the Image Renderer for each dashboard in the list. The renderer is then instructed to open the dashboard in kiosk mode, take a screenshot, and scale it down to a small, 320 x 240px thumbnail. The following dashboard in Grafana Play is an example of kiosk mode: https://play.grafana.org/playlists/play/1?kiosk.
 
 Multiple render requests are issued concurrently to improve performance. The maximum number of concurrent requests can be configured via the `dashboard_previews.crawler.thread_count` config option.
-Use the new [contextPerRenderKey]({{< relref "../image-rendering/#rendering-mode" >}}) clustering mode in Image Renderer to further optimize crawler's resource usage.
+Use the new [contextPerRenderKey]({{< relref "../setup-grafana/image-rendering/#rendering-mode" >}}) clustering mode in Image Renderer to further optimize crawler's resource usage.
 
 ### Saving previews
 
-The crawler saves previews and their metadata in Grafana's DB. Preview's metadata contains, among other things, the [dashboard version]({{< relref "./dashboard-history" >}}) from the time of taking the screenshot. During subsequent runs, the crawler uses the saved version to find stale dashboard previews.
+The crawler saves previews and their metadata in Grafana's DB. Preview's metadata contains, among other things, the [dashboard version]({{< relref "dashboard-history/" >}}) from the time of taking the screenshot. During subsequent runs, the crawler uses the saved version to find stale dashboard previews.
 
 ## Permissions
 
@@ -81,7 +89,7 @@ The crawler saves previews and their metadata in Grafana's DB. Preview's metadat
 The crawler is set up with the required permissions to display all dashboards and query all data sources. The way the permissions are set up depends on the version of Grafana.
 
 In OSS and Enterprise Grafana instances without RBAC enabled, the crawler uses a special user with an `Admin` role.
-In an Enterprise Grafana instance with RBAC enabled, the crawler uses [service accounts]({{< relref "../administration/service-accounts" >}}) with three fixed roles:
+In an Enterprise Grafana instance with RBAC enabled, the crawler uses [service accounts]({{< relref "../administration/service-accounts/" >}}) with three fixed roles:
 
 - `fixed:dashboards:reader`
 - `fixed:datasources:reader`

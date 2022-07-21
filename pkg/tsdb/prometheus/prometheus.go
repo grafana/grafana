@@ -2,7 +2,6 @@ package prometheus
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
@@ -29,6 +29,7 @@ type Service struct {
 type instance struct {
 	buffered  *buffered.Buffered
 	queryData *querydata.QueryData
+	resource  *resource.Resource
 }
 
 func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
@@ -41,18 +42,29 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]interface{}
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		// Creates a http roundTripper. Probably should be used for both buffered and streaming/querydata instances.
+		opts, err := buffered.CreateTransportOptions(settings, cfg.Azure, features, plog)
 		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
+			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
-
-		b, err := buffered.New(httpClientProvider, cfg, features, tracer, settings, plog)
+		httpClient, err := httpClientProvider.New(*opts)
+		if err != nil {
+			return nil, fmt.Errorf("error creating http client: %v", err)
+		}
+		// Older version using standard Go Prometheus client
+		b, err := buffered.New(httpClient.Transport, tracer, settings, plog)
 		if err != nil {
 			return nil, err
 		}
 
-		qd, err := querydata.New(httpClientProvider, cfg, features, tracer, settings, plog)
+		// New version using custom client and better response parsing
+		qd, err := querydata.New(httpClient, features, tracer, settings, plog)
+		if err != nil {
+			return nil, err
+		}
+
+		// Resource call management using new custom client same as querydata
+		r, err := resource.New(httpClient, settings, plog)
 		if err != nil {
 			return nil, err
 		}
@@ -60,6 +72,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 		return instance{
 			buffered:  b,
 			queryData: qd,
+			resource:  r,
 		}, nil
 	}
 }
@@ -74,11 +87,25 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagPrometheusStreamingJSONParser) {
+	if s.features.IsEnabled(featuremgmt.FlagPrometheusStreamingJSONParser) || s.features.IsEnabled(featuremgmt.FlagPrometheusWideSeries) {
 		return i.queryData.Execute(ctx, req)
 	}
 
 	return i.buffered.ExecuteTimeSeriesQuery(ctx, req)
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	i, err := s.getInstance(req.PluginContext)
+	if err != nil {
+		return err
+	}
+
+	resp, err := i.resource.Execute(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return sender.Send(resp)
 }
 
 func (s *Service) getInstance(pluginCtx backend.PluginContext) (*instance, error) {

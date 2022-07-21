@@ -1,17 +1,23 @@
-+++
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-points/", "/docs/grafana/latest/visualizations/time-series/graph-time-series-as-points/"]
-keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-title = "Graph time series as points"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-points/
+  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-points/
+keywords:
+  - grafana
+  - time series panel
+  - documentation
+  - guide
+  - graph
+title: Graph time series as points
+weight: 300
+---
 
 # Graph time series as points
 
 This section explains how to use Time series field options to visualize time series data as points and illustrates what the options do.
 
-## Create the panel
-
-1. [Add a panel]({{< relref "../../panels/working-with-panels/add-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
+1. [Create a dashboard and add a panel]({{< relref "../../dashboards/add-organize-panels/#create-a-dashboard-and-add-a-panel" >}}).
+1. Select the [Time series]({{< relref "_index.md" >}}) visualization.
 1. In the Panel editor side pane, click **Graph styles** to expand it.
 1. In Style, click **Points**.
 

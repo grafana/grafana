@@ -2,7 +2,7 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { LegendDisplayMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { addStandardDataReduceOptions } from '../stat/types';
+import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartPanelChangedHandler } from './migrations';

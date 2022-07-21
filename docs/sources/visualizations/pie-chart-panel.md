@@ -1,9 +1,13 @@
-+++
-aliases = ["/docs/grafana/latest/panels/visualizations/pie-chart-pane/", "/docs/grafana/latest/visualizations/pie-chart-panel/"]
-keywords = ["grafana", "pie chart"]
-title = "Pie chart"
-weight = 850
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/pie-chart-pane/
+  - /docs/grafana/latest/visualizations/pie-chart-panel/
+keywords:
+  - grafana
+  - pie chart
+title: Pie chart
+weight: 850
+---
 
 # Pie chart
 
@@ -24,7 +28,7 @@ Choose how much information to show.
 
 ### Calculation
 
-Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types]({{< relref "../panels/calculation-types.md" >}}).
+Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types]({{< relref "../panels/calculation-types/" >}}).
 
 ### Limit
 

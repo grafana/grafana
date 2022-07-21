@@ -6,20 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -37,6 +33,7 @@ type Service struct {
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.DatasourcePermissionsService
 	ac                 accesscontrol.AccessControl
+	logger             log.Logger
 
 	ptc proxyTransportCache
 }
@@ -66,6 +63,7 @@ func ProvideService(
 		features:           features,
 		permissionsService: datasourcePermissionsService,
 		ac:                 ac,
+		logger:             log.New("datasources"),
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -77,7 +75,7 @@ func ProvideService(
 // DataSourceRetriever interface for retrieving a datasource.
 type DataSourceRetriever interface {
 	// GetDataSource gets a datasource.
-	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
 }
 
 const secretType = "datasource"
@@ -96,7 +94,7 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAt
 			return nil, accesscontrol.ErrInvalidScope
 		}
 
-		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
+		query := datasources.GetDataSourceQuery{Name: dsName, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
 			return nil, err
 		}
@@ -124,7 +122,7 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 			return nil, accesscontrol.ErrInvalidScope
 		}
 
-		query := models.GetDataSourceQuery{Id: dsID, OrgId: orgID}
+		query := datasources.GetDataSourceQuery{Id: dsID, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
 			return nil, err
 		}
@@ -133,105 +131,124 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 	})
 }
 
-func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 	return s.SQLStore.GetDataSource(ctx, query)
 }
 
-func (s *Service) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
 	return s.SQLStore.GetDataSources(ctx, query)
 }
 
-func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
+	return s.SQLStore.GetAllDataSources(ctx, query)
+}
+
+func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
 
-func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
-	var err error
-	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
-		return err
-	}
+func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
+	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+		var err error
 
-	secret, err := json.Marshal(cmd.SecureJsonData)
-	if err != nil {
-		return err
-	}
-
-	err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
-	if err != nil {
-		return err
-	}
-
-	if !s.ac.IsDisabled() {
-		// This belongs in Data source permissions, and we probably want
-		// to do this with a hook in the store and rollback on fail.
-		// We can't use events, because there's no way to communicate
-		// failure, and we want "not being able to set default perms"
-		// to fail the creation.
-		permissions := []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: "Viewer", Permission: "Query"},
-			{BuiltinRole: "Editor", Permission: "Query"},
+		cmd.EncryptedSecureJsonData = make(map[string][]byte)
+		if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+			cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+			if err != nil {
+				return err
+			}
 		}
-		if cmd.UserId != 0 {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Edit"})
+
+		cmd.UpdateSecretFn = func() error {
+			secret, err := json.Marshal(cmd.SecureJsonData)
+			if err != nil {
+				return err
+			}
+
+			return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
 		}
-		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, cmd.Result.Uid, permissions...); err != nil {
+
+		if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
 			return err
 		}
-	}
 
-	return nil
+		if !s.ac.IsDisabled() {
+			// This belongs in Data source permissions, and we probably want
+			// to do this with a hook in the store and rollback on fail.
+			// We can't use events, because there's no way to communicate
+			// failure, and we want "not being able to set default perms"
+			// to fail the creation.
+			permissions := []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: "Viewer", Permission: "Query"},
+				{BuiltinRole: "Editor", Permission: "Query"},
+			}
+			if cmd.UserId != 0 {
+				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Edit"})
+			}
+			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, cmd.Result.Uid, permissions...); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
-func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
-	err := s.SQLStore.DeleteDataSource(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
+func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
+	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+		cmd.UpdateSecretFn = func() error {
+			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
+		}
+
+		return s.SQLStore.DeleteDataSource(ctx, cmd)
+	})
 }
 
-func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
-	var err error
+func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
+	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+		var err error
 
-	query := &models.GetDataSourceQuery{
-		Id:    cmd.Id,
-		OrgId: cmd.OrgId,
-	}
-	err = s.SQLStore.GetDataSource(ctx, query)
-	if err != nil {
-		return err
-	}
-
-	err = s.fillWithSecureJSONData(ctx, cmd, query.Result)
-	if err != nil {
-		return err
-	}
-
-	err = s.SQLStore.UpdateDataSource(ctx, cmd)
-	if err != nil {
-		return err
-	}
-
-	if query.Result.Name != cmd.Name {
-		err = s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+		query := &datasources.GetDataSourceQuery{
+			Id:    cmd.Id,
+			OrgId: cmd.OrgId,
+		}
+		err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
 			return err
 		}
-	}
 
-	secret, err := json.Marshal(cmd.SecureJsonData)
-	if err != nil {
-		return err
-	}
+		err = s.fillWithSecureJSONData(ctx, cmd, query.Result)
+		if err != nil {
+			return err
+		}
 
-	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+		if cmd.OrgId > 0 && cmd.Name != "" {
+			cmd.UpdateSecretFn = func() error {
+				secret, err := json.Marshal(cmd.SecureJsonData)
+				if err != nil {
+					return err
+				}
+
+				if query.Result.Name != cmd.Name {
+					err := s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+					if err != nil {
+						return err
+					}
+				}
+
+				return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+			}
+		}
+
+		return s.SQLStore.UpdateDataSource(ctx, cmd)
+	})
 }
 
-func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+func (s *Service) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
 	return s.SQLStore.GetDefaultDataSource(ctx, query)
 }
 
-func (s *Service) GetHTTPClient(ctx context.Context, ds *models.DataSource, provider httpclient.Provider) (*http.Client, error) {
+func (s *Service) GetHTTPClient(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider) (*http.Client, error) {
 	transport, err := s.GetHTTPTransport(ctx, ds, provider)
 	if err != nil {
 		return nil, err
@@ -243,7 +260,7 @@ func (s *Service) GetHTTPClient(ctx context.Context, ds *models.DataSource, prov
 	}, nil
 }
 
-func (s *Service) GetHTTPTransport(ctx context.Context, ds *models.DataSource, provider httpclient.Provider,
+func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider,
 	customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	s.ptc.Lock()
 	defer s.ptc.Unlock()
@@ -272,7 +289,7 @@ func (s *Service) GetHTTPTransport(ctx context.Context, ds *models.DataSource, p
 	return rt, nil
 }
 
-func (s *Service) GetTLSConfig(ctx context.Context, ds *models.DataSource, httpClientProvider httpclient.Provider) (*tls.Config, error) {
+func (s *Service) GetTLSConfig(ctx context.Context, ds *datasources.DataSource, httpClientProvider httpclient.Provider) (*tls.Config, error) {
 	opts, err := s.httpClientOptions(ctx, ds)
 	if err != nil {
 		return nil, err
@@ -280,7 +297,7 @@ func (s *Service) GetTLSConfig(ctx context.Context, ds *models.DataSource, httpC
 	return httpClientProvider.GetTLSConfig(*opts)
 }
 
-func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	decryptedValues := make(map[string]string)
 	secret, exist, err := s.SecretsStore.Get(ctx, ds.OrgId, ds.Name, secretType)
 	if err != nil {
@@ -288,12 +305,14 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 	}
 
 	if exist {
-		err := json.Unmarshal([]byte(secret), &decryptedValues)
+		err = json.Unmarshal([]byte(secret), &decryptedValues)
 		if err != nil {
-			return nil, err
+			s.logger.Debug("failed to unmarshal secret value, using legacy secrets", "err", err)
 		}
-	} else if len(ds.SecureJsonData) > 0 {
-		decryptedValues, err = s.MigrateSecrets(ctx, ds)
+	}
+
+	if !exist || err != nil {
+		decryptedValues, err = s.decryptLegacySecrets(ctx, ds)
 		if err != nil {
 			return nil, err
 		}
@@ -302,22 +321,19 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 	return decryptedValues, nil
 }
 
-func (s *Service) MigrateSecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
-	secureJsonData, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
-	if err != nil {
-		return nil, err
+func (s *Service) decryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	secureJsonData := make(map[string]string)
+	for k, v := range ds.SecureJsonData {
+		decrypted, err := s.SecretsService.Decrypt(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		secureJsonData[k] = string(decrypted)
 	}
-
-	jsonData, err := json.Marshal(secureJsonData)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.SecretsStore.Set(ctx, ds.OrgId, ds.Name, secretType, string(jsonData))
-	return secureJsonData, err
+	return secureJsonData, nil
 }
 
-func (s *Service) DecryptedValue(ctx context.Context, ds *models.DataSource, key string) (string, bool, error) {
+func (s *Service) DecryptedValue(ctx context.Context, ds *datasources.DataSource, key string) (string, bool, error) {
 	values, err := s.DecryptedValues(ctx, ds)
 	if err != nil {
 		return "", false, err
@@ -326,25 +342,25 @@ func (s *Service) DecryptedValue(ctx context.Context, ds *models.DataSource, key
 	return value, exists, nil
 }
 
-func (s *Service) DecryptedBasicAuthPassword(ctx context.Context, ds *models.DataSource) (string, error) {
+func (s *Service) DecryptedBasicAuthPassword(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	value, ok, err := s.DecryptedValue(ctx, ds, "basicAuthPassword")
 	if ok {
 		return value, nil
 	}
 
-	return ds.BasicAuthPassword, err
+	return "", err
 }
 
-func (s *Service) DecryptedPassword(ctx context.Context, ds *models.DataSource) (string, error) {
+func (s *Service) DecryptedPassword(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	value, ok, err := s.DecryptedValue(ctx, ds, "password")
 	if ok {
 		return value, nil
 	}
 
-	return ds.Password, err
+	return "", err
 }
 
-func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) (*sdkhttpclient.Options, error) {
+func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSource) (*sdkhttpclient.Options, error) {
 	tlsOptions, err := s.dsTLSOptions(ctx, ds)
 	if err != nil {
 		return nil, err
@@ -403,33 +419,6 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 		}
 	}
 
-	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagHttpclientproviderAzureAuth) {
-		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), decryptedValues)
-		if err != nil {
-			err = fmt.Errorf("invalid Azure credentials: %s", err)
-			return nil, err
-		}
-
-		if credentials != nil {
-			resourceIdStr := ds.JsonData.Get("azureEndpointResourceId").MustString()
-			if resourceIdStr == "" {
-				err := fmt.Errorf("endpoint resource ID (audience) not provided")
-				return nil, err
-			}
-
-			resourceId, err := url.Parse(resourceIdStr)
-			if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
-				err := fmt.Errorf("endpoint resource ID (audience) '%s' invalid", resourceIdStr)
-				return nil, err
-			}
-
-			resourceId.Path = path.Join(resourceId.Path, ".default")
-			scopes := []string{resourceId.String()}
-
-			azhttpclient.AddAzureAuthentication(opts, s.cfg.Azure, credentials, scopes)
-		}
-	}
-
 	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && setting.SigV4AuthEnabled {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
 			Service:       awsServiceNamespace(ds.Type),
@@ -460,7 +449,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 	return opts, nil
 }
 
-func (s *Service) dsTLSOptions(ctx context.Context, ds *models.DataSource) (sdkhttpclient.TLSOptions, error) {
+func (s *Service) dsTLSOptions(ctx context.Context, ds *datasources.DataSource) (sdkhttpclient.TLSOptions, error) {
 	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
 	var serverName string
 
@@ -509,7 +498,7 @@ func (s *Service) dsTLSOptions(ctx context.Context, ds *models.DataSource) (sdkh
 	return opts, nil
 }
 
-func (s *Service) getTimeout(ds *models.DataSource) time.Duration {
+func (s *Service) getTimeout(ds *datasources.DataSource) time.Duration {
 	timeout := 0
 	if ds.JsonData != nil {
 		timeout = ds.JsonData.Get("timeout").MustInt()
@@ -558,16 +547,16 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 
 func awsServiceNamespace(dsType string) string {
 	switch dsType {
-	case models.DS_ES, models.DS_ES_OPEN_DISTRO, models.DS_ES_OPENSEARCH:
+	case datasources.DS_ES, datasources.DS_ES_OPEN_DISTRO, datasources.DS_ES_OPENSEARCH:
 		return "es"
-	case models.DS_PROMETHEUS:
+	case datasources.DS_PROMETHEUS, datasources.DS_ALERTMANAGER:
 		return "aps"
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
 	}
 }
 
-func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.UpdateDataSourceCommand, ds *models.DataSource) error {
+func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.UpdateDataSourceCommand, ds *datasources.DataSource) error {
 	decrypted, err := s.DecryptedValues(ctx, ds)
 	if err != nil {
 		return err
@@ -580,6 +569,14 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.Update
 	for k, v := range decrypted {
 		if _, ok := cmd.SecureJsonData[k]; !ok {
 			cmd.SecureJsonData[k] = v
+		}
+	}
+
+	cmd.EncryptedSecureJsonData = make(map[string][]byte)
+	if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+		if err != nil {
+			return err
 		}
 	}
 

@@ -1,6 +1,6 @@
-import { DataFrame, FieldType, DataQueryRequest, DataQueryResponse, MutableDataFrame } from '@grafana/data';
+import { DataFrame, DataQueryRequest, DataQueryResponse, FieldType, MutableDataFrame } from '@grafana/data';
 
-import { transform, transformV2, transformDFToTable, parseSampleValue } from './result_transformer';
+import { parseSampleValue, transform, transformDFToTable, transformV2 } from './result_transformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -9,8 +9,9 @@ jest.mock('@grafana/runtime', () => ({
   }),
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: () => {
-        return { name: 'Tempo' };
+      getInstanceSettings: (uid: string) => {
+        const uids = ['Tempo', 'jaeger'];
+        return uids.find((u) => u === uid) ? { name: uid } : undefined;
       },
     };
   },
@@ -354,7 +355,75 @@ describe('Prometheus Result Transformer', () => {
       ]);
       expect(series.data[1].fields.length).toEqual(3);
     });
+
+    it('should not add a link with an error when exemplarTraceIdDestinations is not configured properly', () => {
+      const response = {
+        state: 'Done',
+        data: [
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            name: 'exemplar',
+            meta: {
+              custom: {
+                resultType: 'exemplar',
+              },
+            },
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40, 90, 14, 21],
+                labels: { le: '6' },
+              },
+              {
+                name: 'traceID',
+                type: FieldType.string,
+                values: ['unknown'],
+                labels: { le: '6' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+      const request = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const testOptions: any = {
+        exemplarTraceIdDestinations: [
+          {
+            name: 'traceID',
+            datasourceUid: 'unknown',
+          },
+        ],
+      };
+
+      const series = transformV2(response, request, testOptions);
+      expect(series.data[1].fields.length).toEqual(3);
+      expect(series.data[1].name).toEqual('exemplar');
+      const traceField = series.data[1].fields.find((f) => f.name === 'traceID');
+      expect(traceField).toBeDefined();
+      expect(traceField!.config.links?.length).toBe(0);
+    });
   });
+
   describe('transformDFToTable', () => {
     it('transforms dataFrame with response length 1 to table dataFrame', () => {
       const df = new MutableDataFrame({
@@ -960,6 +1029,24 @@ describe('Prometheus Result Transformer', () => {
           const result = transform({ data: exemplarsResponse } as any, options);
 
           expect(result[0].fields.some((f) => f.config.links?.length)).toBe(false);
+        });
+
+        it('should not add a datalink with an error when exemplarTraceIdDestinations is not configured', () => {
+          const testOptions: any = {
+            target: {},
+            query: {},
+            exemplarTraceIdDestinations: [
+              {
+                name: 'traceID',
+                datasourceUid: 'unknown',
+              },
+            ],
+          };
+
+          const result = transform({ data: exemplarsResponse } as any, testOptions);
+          const traceField = result[0].fields.find((f) => f.name === 'traceID');
+          expect(traceField).toBeDefined();
+          expect(traceField!.config.links?.length).toBe(0);
         });
       });
     });

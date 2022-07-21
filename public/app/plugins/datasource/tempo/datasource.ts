@@ -1,14 +1,16 @@
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { EMPTY, from, merge, Observable, of, throwError } from 'rxjs';
-import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
+import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
+  FieldType,
   isValidGoDuration,
   LoadingState,
   ScopedVars,
@@ -18,9 +20,11 @@ import {
   BackendSrvRequest,
   DataSourceWithBackend,
   getBackendSrv,
+  reportInteraction,
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
+import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
@@ -36,6 +40,9 @@ import {
   mapPromMetricsToServiceMap,
   serviceMapMetrics,
   totalsMetric,
+  rateMetric,
+  durationMetric,
+  errorRateMetric,
 } from './graphTransform';
 import {
   transformTrace,
@@ -58,6 +65,9 @@ export interface TempoJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
   lokiSearch?: {
     datasourceUid?: string;
+  };
+  spanBar?: {
+    tag: string;
   };
 }
 
@@ -99,6 +109,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     datasourceUid?: string;
   };
   uploadedJson?: string | ArrayBuffer | null = null;
+  spanBar?: SpanBarOptions;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -125,6 +136,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     // Run search queries on linked datasource
     if (logsDatasourceUid && targets.search?.length > 0) {
+      reportInteraction('grafana_traces_loki_search_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        linkedQueryExpr: targets.search[0].linkedQuery?.expr ?? '',
+      });
+
       const dsSrv = getDatasourceSrv();
       subQueries.push(
         from(dsSrv.get(logsDatasourceUid)).pipe(
@@ -159,9 +176,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.nativeSearch?.length) {
       try {
-        const timeRange = config.featureToggles.tempoBackendSearch
-          ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
-          : undefined;
+        reportInteraction('grafana_traces_search_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+          serviceName: targets.nativeSearch[0].serviceName ?? '',
+          spanName: targets.nativeSearch[0].spanName ?? '',
+          resultLimit: targets.nativeSearch[0].limit ?? '',
+          search: targets.nativeSearch[0].search ?? '',
+        });
+
+        const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
         const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
         const searchQuery = this.buildSearchQuery(query, timeRange);
         subQueries.push(
@@ -177,17 +201,28 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           )
         );
       } catch (error) {
-        return of({ error: { message: error.message }, data: [] });
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
 
     if (targets.upload?.length) {
       if (this.uploadedJson) {
-        const otelTraceData = JSON.parse(this.uploadedJson as string);
-        if (!otelTraceData.batches) {
-          subQueries.push(of({ error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] }));
+        reportInteraction('grafana_traces_json_file_uploaded', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+        });
+
+        const jsonData = JSON.parse(this.uploadedJson as string);
+        const isTraceData = jsonData.batches;
+        const isServiceGraphData =
+          Array.isArray(jsonData) && jsonData.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
+
+        if (isTraceData) {
+          subQueries.push(of(transformFromOTEL(jsonData.batches, this.nodeGraph?.enabled)));
+        } else if (isServiceGraphData) {
+          subQueries.push(of({ data: jsonData, state: LoadingState.Done }));
         } else {
-          subQueries.push(of(transformFromOTEL(otelTraceData.batches, this.nodeGraph?.enabled)));
+          subQueries.push(of({ error: { message: 'Unable to parse uploaded data.' }, data: [] }));
         }
       } else {
         subQueries.push(of({ data: [], state: LoadingState.Done }));
@@ -195,10 +230,36 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
-      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
+      reportInteraction('grafana_traces_service_graph_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        serviceMapQuery: targets.serviceMap[0].serviceMapQuery ?? '',
+      });
+
+      const dsId = this.serviceMap.datasourceUid;
+      const tempoDsUid = this.uid;
+      if (config.featureToggles.tempoApmTable) {
+        subQueries.push(
+          serviceMapQuery(options, dsId, tempoDsUid).pipe(
+            concatMap((result) =>
+              rateQuery(options, result, dsId).pipe(
+                concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
+              )
+            )
+          )
+        );
+      } else {
+        subQueries.push(serviceMapQuery(options, dsId, tempoDsUid));
+      }
     }
 
     if (targets.traceId?.length > 0) {
+      reportInteraction('grafana_traces_traceID_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        query: targets.traceId[0].query ?? '',
+      });
+
       subQueries.push(this.handleTraceIdQuery(options, targets.traceId));
     }
 
@@ -236,6 +297,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return {
       ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', scopedVars),
+      serviceName: this.templateSrv.replace(query.serviceName ?? '', scopedVars),
+      spanName: this.templateSrv.replace(query.spanName ?? '', scopedVars),
       search: this.templateSrv.replace(query.search ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
@@ -375,7 +438,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
 }
 
-function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
+function queryPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
   return from(getDatasourceSrv().get(datasourceUid)).pipe(
     mergeMap((ds) => {
       return (ds as PrometheusDatasource).query(request);
@@ -383,8 +446,10 @@ function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasou
   );
 }
 
-function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
-  return queryServiceMapPrometheus(makePromServiceMapRequest(request), datasourceUid).pipe(
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string, tempoDatasourceUid: string) {
+  const serviceMapRequest = makePromServiceMapRequest(request);
+
+  return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
     toArray(),
     map((responses: DataQueryResponse[]) => {
@@ -398,19 +463,23 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         links: [
           makePromLink(
             'Request rate',
-            `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
-            datasourceUid
+            `sum by (client, server)(rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
+            datasourceUid,
+            false
           ),
           makePromLink(
             'Request histogram',
             `histogram_quantile(0.9, sum(rate(${histogramMetric}{server="\${__data.fields.id}"}[$__rate_interval])) by (le, client, server))`,
-            datasourceUid
+            datasourceUid,
+            false
           ),
           makePromLink(
             'Failed request rate',
-            `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
-            datasourceUid
+            `sum by (client, server)(rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
+            datasourceUid,
+            false
           ),
+          makeTempoLink('View traces', `\${__data.fields[0]}`, '', tempoDatasourceUid),
         ],
       };
 
@@ -422,16 +491,122 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
   );
 }
 
-function makePromLink(title: string, metric: string, datasourceUid: string) {
+function rateQuery(
+  request: DataQueryRequest<TempoQuery>,
+  serviceMapResponse: DataQueryResponse,
+  datasourceUid: string
+) {
+  const serviceMapRequest = makePromServiceMapRequest(request);
+  serviceMapRequest.targets = makeApmRequest([buildExpr(rateMetric, '', request)]);
+
+  return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
+    toArray(),
+    map((responses: DataQueryResponse[]) => {
+      const errorRes = responses.find((res) => !!res.error);
+      if (errorRes) {
+        throw new Error(errorRes.error!.message);
+      }
+      return {
+        data: [responses[0]?.data ?? [], serviceMapResponse.data[0], serviceMapResponse.data[1]],
+        state: LoadingState.Done,
+      };
+    })
+  );
+}
+
+// we need the response from the rate query to get the rate span_name(s),
+// -> which determine the errorRate/duration span_name(s) we need to query
+function errorAndDurationQuery(
+  request: DataQueryRequest<TempoQuery>,
+  rateResponse: DataQueryResponse,
+  datasourceUid: string,
+  tempoDatasourceUid: string
+) {
+  let apmMetrics = [];
+  let errorRateBySpanName = '';
+  let durationsBySpanName: string[] = [];
+  const spanNames = rateResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
+
+  if (spanNames.length > 0) {
+    errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
+    apmMetrics.push(errorRateBySpanName);
+    spanNames.map((name: string) => {
+      const metric = buildExpr(durationMetric, 'span_name=~"' + name + '"', request);
+      durationsBySpanName.push(metric);
+      apmMetrics.push(metric);
+    });
+  }
+
+  const serviceMapRequest = makePromServiceMapRequest(request);
+  serviceMapRequest.targets = makeApmRequest(apmMetrics);
+
+  return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
+    // Just collect all the responses first before processing into node graph data
+    toArray(),
+    map((errorAndDurationResponse: DataQueryResponse[]) => {
+      const errorRes = errorAndDurationResponse.find((res) => !!res.error);
+      if (errorRes) {
+        throw new Error(errorRes.error!.message);
+      }
+
+      const apmTable = getApmTable(
+        request,
+        rateResponse,
+        errorAndDurationResponse[0],
+        errorRateBySpanName,
+        durationsBySpanName,
+        datasourceUid,
+        tempoDatasourceUid
+      );
+
+      if (apmTable.fields.length === 0) {
+        return {
+          data: [rateResponse.data[1], rateResponse.data[2]],
+          state: LoadingState.Done,
+        };
+      }
+
+      return {
+        data: [apmTable, rateResponse.data[1], rateResponse.data[2]],
+        state: LoadingState.Done,
+      };
+    })
+  );
+}
+
+function makePromLink(title: string, expr: string, datasourceUid: string, instant: boolean) {
   return {
     url: '',
     title,
     internal: {
       query: {
-        expr: metric,
+        expr: expr,
+        range: !instant,
+        exemplar: !instant,
+        instant: instant,
       } as PromQuery,
       datasourceUid,
-      datasourceName: 'Prometheus',
+      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
+    },
+  };
+}
+
+export function makeTempoLink(title: string, serviceName: string, spanName: string, datasourceUid: string) {
+  let query = { queryType: 'nativeSearch' } as TempoQuery;
+  if (serviceName !== '') {
+    query.serviceName = serviceName;
+  }
+  if (spanName !== '') {
+    query.spanName = spanName;
+  }
+
+  return {
+    url: '',
+    title,
+    internal: {
+      query,
+      datasourceUid,
+      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
   };
 }
@@ -444,9 +619,221 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
-        expr: `delta(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
+        expr: `rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
         instant: true,
       };
     }),
   };
+}
+
+function getApmTable(
+  request: DataQueryRequest<TempoQuery>,
+  rateResponse: DataQueryResponse,
+  secondResponse: DataQueryResponse,
+  errorRateBySpanName: string,
+  durationsBySpanName: string[],
+  datasourceUid: string,
+  tempoDatasourceUid: string
+) {
+  let df: any = { fields: [] };
+  const rate = rateResponse.data[0]?.filter((x: { refId: string }) => {
+    return x.refId === buildExpr(rateMetric, '', request);
+  });
+  const errorRate = secondResponse.data.filter((x) => {
+    return x.refId === errorRateBySpanName;
+  });
+  const duration = secondResponse.data.filter((x) => {
+    return durationsBySpanName.includes(x.refId);
+  });
+
+  if (rate.length > 0 && rate[0].fields?.length > 2) {
+    df.fields.push({
+      ...rate[0].fields[1],
+      name: 'Name',
+      config: {
+        filterable: false,
+      },
+    });
+
+    df.fields.push({
+      ...rate[0].fields[2],
+      name: 'Rate',
+      config: {
+        links: [
+          makePromLink(
+            'Rate',
+            buildLinkExpr(buildExpr(rateMetric, 'span_name="${__data.fields[0]}"', request)),
+            datasourceUid,
+            false
+          ),
+        ],
+        decimals: 2,
+      },
+    });
+
+    df.fields.push({
+      ...rate[0].fields[2],
+      name: ' ',
+      labels: null,
+      config: {
+        color: {
+          mode: 'continuous-BlPu',
+        },
+        custom: {
+          displayMode: 'lcd-gauge',
+        },
+        decimals: 3,
+      },
+    });
+  }
+
+  if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
+    const errorRateNames = errorRate[0].fields[1]?.values.toArray() ?? [];
+    const errorRateValues = errorRate[0].fields[2]?.values.toArray() ?? [];
+    let errorRateObj: any = {};
+    errorRateNames.map((name: string, index: number) => {
+      errorRateObj[name] = { name: name, value: errorRateValues[index] };
+    });
+
+    const values = getRateAlignedValues(rate, errorRateObj);
+
+    df.fields.push({
+      ...errorRate[0].fields[2],
+      name: 'Error Rate',
+      values: values,
+      config: {
+        links: [
+          makePromLink(
+            'Error Rate',
+            buildLinkExpr(buildExpr(errorRateMetric, 'span_name="${__data.fields[0]}"', request)),
+            datasourceUid,
+            false
+          ),
+        ],
+        decimals: 2,
+      },
+    });
+
+    df.fields.push({
+      ...errorRate[0].fields[2],
+      name: '  ',
+      values: values,
+      labels: null,
+      config: {
+        color: {
+          mode: 'continuous-RdYlGr',
+        },
+        custom: {
+          displayMode: 'lcd-gauge',
+        },
+        decimals: 3,
+      },
+    });
+  }
+
+  if (duration.length > 0 && duration[0].fields?.length > 1) {
+    let durationObj: any = {};
+    duration.map((d) => {
+      const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
+      const name = d.refId?.split(delimiter)[1].split('"}')[0];
+      durationObj[name] = { name: name, value: d.fields[1].values.toArray()[0] };
+    });
+
+    df.fields.push({
+      ...duration[0].fields[1],
+      name: 'Duration (p90)',
+      values: getRateAlignedValues(rate, durationObj),
+      config: {
+        links: [
+          makePromLink(
+            'Duration',
+            buildLinkExpr(buildExpr(durationMetric, 'span_name="${__data.fields[0]}"', request)),
+            datasourceUid,
+            false
+          ),
+        ],
+        unit: 's',
+      },
+    });
+  }
+
+  if (df.fields.length > 0 && df.fields[0].values) {
+    df.fields.push({
+      name: 'Links',
+      type: FieldType.string,
+      values: df.fields[0].values.map(() => {
+        return 'Tempo';
+      }),
+      config: {
+        links: [makeTempoLink('Tempo', '', `\${__data.fields[0]}`, tempoDatasourceUid)],
+      },
+    });
+  }
+
+  return df;
+}
+
+export function buildExpr(
+  metric: { expr: string; params: string[] },
+  extraParams: string,
+  request: DataQueryRequest<TempoQuery>
+) {
+  let serviceMapQuery = request.targets[0]?.serviceMapQuery?.replace('{', '').replace('}', '') ?? '';
+  // map serviceGraph metric tags to APM metric tags
+  serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
+  const metricParams = serviceMapQuery.includes('span_name')
+    ? metric.params.concat(serviceMapQuery)
+    : metric.params
+        .concat(serviceMapQuery)
+        .concat(extraParams)
+        .filter((item: string) => item);
+  return metric.expr.replace('{}', '{' + metricParams.join(',') + '}');
+}
+
+export function buildLinkExpr(expr: string) {
+  // don't want top 5 or by span name in links
+  expr = expr.replace('topk(5, ', '').replace(' by (span_name))', '');
+  return expr.replace('__range', '__rate_interval');
+}
+
+// query result frames can come back in any order
+// here we align the table col values to the same row name (rateName) across the table
+export function getRateAlignedValues(
+  rateResp: DataQueryResponseData[],
+  objToAlign: { [x: string]: { value: string } }
+) {
+  const rateNames = rateResp[0]?.fields[1]?.values.toArray().sort() ?? [];
+  let tempRateNames = rateNames;
+  let values: string[] = [];
+
+  objToAlign = Object.keys(objToAlign)
+    .sort()
+    .reduce((obj: any, key) => {
+      obj[key] = objToAlign[key];
+      return obj;
+    }, {});
+
+  for (let i = 0; i < rateNames.length; i++) {
+    if (tempRateNames[i]) {
+      if (tempRateNames[i] === Object.keys(objToAlign)[i]) {
+        values.push(objToAlign[Object.keys(objToAlign)[i]].value);
+      } else {
+        i--;
+        tempRateNames = tempRateNames.slice(1);
+        values.push('0');
+      }
+    }
+  }
+
+  return values;
+}
+
+export function makeApmRequest(metrics: any[]) {
+  return metrics.map((metric) => {
+    return {
+      refId: metric,
+      expr: metric,
+      instant: true,
+    };
+  });
 }

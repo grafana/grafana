@@ -1,10 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/alert-groups/", "/docs/grafana/latest/alerting/unified-alerting/alert-groups/"]
-description = "Alert groups"
-keywords = ["grafana", "alerting", "alerts", "groups"]
-title = "Alert groups"
-weight = 445
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/alert-groups/
+  - /docs/grafana/latest/alerting/alert-groups/view-alert-grouping/
+  - /docs/grafana/latest/alerting/unified-alerting/alert-groups/
+description: Alert groups
+keywords:
+  - grafana
+  - alerting
+  - alerts
+  - groups
+title: View alert groupings
+weight: 445
+---
 
 # View alert groupings
 
