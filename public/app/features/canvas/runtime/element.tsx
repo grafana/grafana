@@ -81,7 +81,10 @@ export class ElementState implements LayerElement {
     const { vertical, horizontal } = constraint ?? {};
     const placement = this.options.placement ?? ({} as Placement);
 
+    const editingEnabled = this.getScene()?.isEditingEnabled;
+
     const style: React.CSSProperties = {
+      cursor: editingEnabled ? 'grab' : 'auto',
       position: 'absolute',
       // Minimum element size is 10x10
       minWidth: '10px',
