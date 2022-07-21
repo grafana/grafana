@@ -283,7 +283,6 @@ describe('processNodes', () => {
       refId: 'nodes',
       fields: [
         { name: 'id', type: FieldType.string, values: ['id'] },
-        { name: 'title', type: FieldType.string, values: ['title'] },
         { name: 'source', type: FieldType.string, values: ['title'] },
         { name: 'TARGET', type: FieldType.string, values: ['subTitle'] },
         { name: 'mainstat', type: FieldType.string, values: ['mainStat'] },
@@ -292,7 +291,6 @@ describe('processNodes', () => {
     });
     const edgeFields = getEdgeFields(edgeFrame);
     expect(edgeFields.id).toBeDefined();
-    expect(edgeFields.title).toBeDefined();
     expect(edgeFields.source).toBeDefined();
     expect(edgeFields.target).toBeDefined();
     expect(edgeFields.mainStat).toBeDefined();

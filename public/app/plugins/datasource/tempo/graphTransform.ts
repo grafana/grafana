@@ -205,7 +205,6 @@ function createServiceMapDataFrames() {
   ]);
   const edges = createDF('Edges', [
     { name: Fields.id },
-    { name: Fields.title, config: { displayName: 'Service name' } },
     { name: Fields.source },
     { name: Fields.target },
     { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
@@ -326,7 +325,6 @@ function convertToDataFrames(
     const edge = edgesMap[edgeId];
     edges.add({
       [Fields.id]: edgeId,
-      [Fields.title]: edge.target,
       [Fields.source]: edge.source,
       [Fields.target]: edge.target,
       [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time

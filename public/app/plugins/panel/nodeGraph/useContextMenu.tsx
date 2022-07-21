@@ -178,7 +178,7 @@ function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
 
   return (
     <div>
-      {fields.title && (
+      {fields.source && fields.target && (
         <div className={styles.label}>
           <div>Source → Target</div>
           <span className={styles.value}>
