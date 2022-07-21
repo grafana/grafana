@@ -261,6 +261,7 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 	}
 
 	replaceDatasourceVariables(dash, datasourceVariablesLookup)
+	fillDefaultDatasources(dash, lookup)
 	filterOutSpecialDatasources(dash)
 
 	targets := newTargetInfo(lookup)
@@ -270,6 +271,23 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 	dash.Datasource = targets.GetDatasourceInfo()
 
 	return dash, iter.Error
+}
+
+func panelRequiresDatasource(panel PanelInfo) bool {
+	return panel.Type != "row"
+}
+
+func fillDefaultDatasources(dash *DashboardInfo, lookup DatasourceLookup) {
+	for i, panel := range dash.Panels {
+		if len(panel.Datasource) != 0 || !panelRequiresDatasource(panel) {
+			continue
+		}
+
+		defaultDs := lookup.ByRef(nil)
+		if defaultDs != nil {
+			dash.Panels[i].Datasource = []DataSourceRef{*defaultDs}
+		}
+	}
 }
 
 func filterOutSpecialDatasources(dash *DashboardInfo) {

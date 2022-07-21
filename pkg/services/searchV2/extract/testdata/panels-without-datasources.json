@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "isStarred": true,
+    "type": "db",
+    "canSave": true,
+    "canEdit": true,
+    "canAdmin": true,
+    "canStar": true,
+    "canDelete": true,
+    "slug": "new-dashboard-var-ds-test",
+    "url": "/d/2HLX_B3nk/new-dashboard-var-ds-test",
+    "expires": "0001-01-01T00:00:00Z",
+    "created": "2022-06-27T11:56:44+04:00",
+    "updated": "2022-07-21T12:58:34+04:00",
+    "updatedBy": "admin",
+    "createdBy": "admin",
+    "version": 24,
+    "hasAcl": false,
+    "isFolder": false,
+    "folderId": 0,
+    "folderUid": "",
+    "folderTitle": "General",
+    "folderUrl": "",
+    "provisioned": false,
+    "provisionedExternalId": "",
+    "annotationsPermissions": {
+      "dashboard": {
+        "canAdd": true,
+        "canEdit": true,
+        "canDelete": true
+      },
+      "organization": {
+        "canAdd": true,
+        "canEdit": true,
+        "canDelete": true
+      }
+    },
+    "publicDashboardAccessToken": ""
+  },
+  "dashboard": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 208,
+    "iteration": 1658393827760,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "${dsVariable}"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto",
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 16,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "footer": {
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true
+        },
+        "pluginVersion": "9.1.0-pre",
+        "repeat": "dsVariable",
+        "repeatDirection": "h",
+        "targets": [
+          {
+            "datasource": {
+              "type": "testdata",
+              "uid": "${dsVariable}"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Panel Title",
+        "type": "table"
+      }
+    ],
+    "refresh": "",
+    "schemaVersion": 36,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "selected": true,
+            "text": [
+              "gdev-testdata",
+              "default"
+            ],
+            "value": [
+              "gdev-testdata",
+              "default"
+            ]
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "dsVariable",
+          "options": [],
+          "query": "frser-sqlite-datasource",
+          "queryValue": "",
+          "refresh": 1,
+          "regex": "asdfasdf",
+          "skipUrlSync": false,
+          "type": "datasource"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "new-dashboard-var-ds-test",
+    "uid": "2HLX_B3nk",
+    "version": 24,
+    "weekStart": ""
+  }
+}
