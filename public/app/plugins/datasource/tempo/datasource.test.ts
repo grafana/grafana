@@ -117,9 +117,9 @@ describe('Tempo data source', () => {
           { name: 'operationName', values: ['store.validateQueryTimeRange'] },
           { name: 'startTime', values: [1619712655875.4539] },
           { name: 'duration', values: [14.984] },
-          { name: 'serviceTags', values: ['{"key":"servicetag1","value":"service"}'] },
-          { name: 'logs', values: ['{"timestamp":12345,"fields":[{"key":"count","value":1}]}'] },
-          { name: 'tags', values: ['{"key":"tag1","value":"val1"}'] },
+          { name: 'serviceTags', values: [{ key: 'servicetag1', value: 'service' }] },
+          { name: 'logs', values: [{ timestamp: 12345, fields: [{ key: 'count', value: 1 }] }] },
+          { name: 'tags', values: [{ key: 'tag1', value: 'val1' }] },
           { name: 'serviceName', values: ['service'] },
         ],
       })
@@ -578,6 +578,14 @@ const backendSrvWithPrometheus = {
     }
     throw new Error('unexpected uid');
   },
+  getDataSourceSettingsByUid(uid: string) {
+    if (uid === 'prom') {
+      return { name: 'Prometheus' };
+    } else if (uid === 'gdev-tempo') {
+      return { name: 'Tempo' };
+    }
+    return '';
+  },
 };
 
 function setupBackendSrv(frame: DataFrame) {
@@ -598,7 +606,7 @@ function setupBackendSrv(frame: DataFrame) {
 
 const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
-  uid: '0',
+  uid: 'gdev-tempo',
   type: 'tracing',
   name: 'tempo',
   access: 'proxy',
@@ -777,7 +785,7 @@ const serviceGraphLinks = [
         queryType: 'nativeSearch',
         serviceName: '${__data.fields[0]}',
       } as TempoQuery,
-      datasourceUid: 'tempo',
+      datasourceUid: 'gdev-tempo',
       datasourceName: 'Tempo',
     },
   },

@@ -237,18 +237,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       });
 
       const dsId = this.serviceMap.datasourceUid;
+      const tempoDsUid = this.uid;
       if (config.featureToggles.tempoApmTable) {
         subQueries.push(
-          serviceMapQuery(options, dsId, this.name).pipe(
+          serviceMapQuery(options, dsId, tempoDsUid).pipe(
             concatMap((result) =>
               rateQuery(options, result, dsId).pipe(
-                concatMap((result) => errorAndDurationQuery(options, result, dsId, this.name))
+                concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
               )
             )
           )
         );
       } else {
-        subQueries.push(serviceMapQuery(options, dsId, this.name));
+        subQueries.push(serviceMapQuery(options, dsId, tempoDsUid));
       }
     }
 
@@ -585,7 +586,7 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
         instant: instant,
       } as PromQuery,
       datasourceUid,
-      datasourceName: 'Prometheus',
+      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
   };
 }
@@ -604,8 +605,8 @@ export function makeTempoLink(title: string, serviceName: string, spanName: stri
     title,
     internal: {
       query,
-      datasourceUid: datasourceUid,
-      datasourceName: 'Tempo',
+      datasourceUid,
+      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
   };
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -54,9 +54,9 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	})
 
 	// Create a couple of "fake" Alertmanagers
-	fakeAM1 := store.NewFakeExternalAlertmanager(t)
-	fakeAM2 := store.NewFakeExternalAlertmanager(t)
-	fakeAM3 := store.NewFakeExternalAlertmanager(t)
+	fakeAM1 := sender.NewFakeExternalAlertmanager(t)
+	fakeAM2 := sender.NewFakeExternalAlertmanager(t)
+	fakeAM3 := sender.NewFakeExternalAlertmanager(t)
 
 	// Now, let's test the configuration API.
 	{
@@ -84,7 +84,10 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "Invalid alertmanager choice specified"}`, string(b))
+		var res map[string]interface{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "Invalid alertmanager choice specified", res["message"])
 	}
 
 	// Let's try to send all the alerts to an external Alertmanager
@@ -102,7 +105,10 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "At least one Alertmanager must be provided to choose this option"}`, string(b))
+		var res map[string]interface{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", res["message"])
 	}
 
 	// Now, lets re-set external Alertmanagers for main organisation
@@ -121,7 +127,10 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "admin configuration updated"}`, string(b))
+		var res map[string]interface{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "admin configuration updated", res["message"])
 	}
 
 	// If we get the configuration again, it shows us what we've set.
@@ -220,7 +229,10 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, "{\"message\": \"admin configuration updated\"}", string(b))
+		var res map[string]interface{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "admin configuration updated", res["message"])
 	}
 
 	// If we get the configuration again, it shows us what we've set.
