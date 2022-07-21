@@ -55,6 +55,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
+			LastUsedAt:       nil,
 			ServiceAccountId: &serviceAccountId,
 		}
 

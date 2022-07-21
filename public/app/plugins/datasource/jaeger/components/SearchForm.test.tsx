@@ -15,7 +15,7 @@ import { JaegerQuery } from '../types';
 import SearchForm from './SearchForm';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: jest.fn(),
     containsTemplate: (val: string): boolean => {

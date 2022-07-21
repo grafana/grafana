@@ -166,6 +166,7 @@ func NewSlackNotifier(config *SlackConfig,
 // slackMessage is the slackMessage for sending a slack notification.
 type slackMessage struct {
 	Channel     string                   `json:"channel,omitempty"`
+	Text        string                   `json:"text,omitempty"`
 	Username    string                   `json:"username,omitempty"`
 	IconEmoji   string                   `json:"icon_emoji,omitempty"`
 	IconURL     string                   `json:"icon_url,omitempty"`
@@ -299,6 +300,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
+		Text:      tmpl(sn.Title),
 		Username:  tmpl(sn.Username),
 		IconEmoji: tmpl(sn.IconEmoji),
 		IconURL:   tmpl(sn.IconURL),
@@ -319,14 +321,10 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 		},
 	}
 
-	_ = withStoredImage(ctx, sn.log, sn.images,
-		func(index int, image *ngmodels.Image) error {
-			if image != nil {
-				req.Attachments[0].ImageURL = image.URL
-			}
-			return nil
-		},
-		0, alrts...)
+	_ = withStoredImages(ctx, sn.log, sn.images, func(index int, image ngmodels.Image) error {
+		req.Attachments[0].ImageURL = image.URL
+		return ErrImagesDone
+	}, alrts...)
 
 	if tmplErr != nil {
 		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())

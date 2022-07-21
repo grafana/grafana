@@ -77,9 +77,11 @@ describe('Tempo data source', () => {
       const queries = ds.interpolateVariablesInQueries([getQuery()], {
         interpolationVar: { text: text, value: text },
       });
-      expect(templateSrv.replace).toBeCalledTimes(5);
+      expect(templateSrv.replace).toBeCalledTimes(7);
       expect(queries[0].linkedQuery?.expr).toBe(text);
       expect(queries[0].query).toBe(text);
+      expect(queries[0].serviceName).toBe(text);
+      expect(queries[0].spanName).toBe(text);
       expect(queries[0].search).toBe(text);
       expect(queries[0].minDuration).toBe(text);
       expect(queries[0].maxDuration).toBe(text);
@@ -94,9 +96,11 @@ describe('Tempo data source', () => {
       const resp = ds.applyTemplateVariables(getQuery(), {
         interpolationVar: { text: text, value: text },
       });
-      expect(templateSrv.replace).toBeCalledTimes(5);
+      expect(templateSrv.replace).toBeCalledTimes(7);
       expect(resp.linkedQuery?.expr).toBe(text);
       expect(resp.query).toBe(text);
+      expect(resp.serviceName).toBe(text);
+      expect(resp.spanName).toBe(text);
       expect(resp.search).toBe(text);
       expect(resp.minDuration).toBe(text);
       expect(resp.maxDuration).toBe(text);
@@ -372,7 +376,7 @@ describe('Tempo apm table', () => {
     expect(response.data[0].fields[1].config.decimals).toBe(2);
     expect(response.data[0].fields[1].config.links[0].title).toBe('Rate');
     expect(response.data[0].fields[1].config.links[0].internal.query.expr).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+      'sum(rate(traces_spanmetrics_calls_total{span_name="${__data.fields[0]}"}[$__rate_interval]))'
     );
     expect(response.data[0].fields[1].config.links[0].internal.query.range).toBe(true);
     expect(response.data[0].fields[1].config.links[0].internal.query.exemplar).toBe(true);
@@ -392,7 +396,7 @@ describe('Tempo apm table', () => {
     expect(response.data[0].fields[3].config.decimals).toBe(2);
     expect(response.data[0].fields[3].config.links[0].title).toBe('Error Rate');
     expect(response.data[0].fields[3].config.links[0].internal.query.expr).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+      'sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval]))'
     );
     expect(response.data[0].fields[3].config.links[0].internal.query.range).toBe(true);
     expect(response.data[0].fields[3].config.links[0].internal.query.exemplar).toBe(true);
@@ -412,7 +416,7 @@ describe('Tempo apm table', () => {
     expect(response.data[0].fields[5].config.unit).toBe('s');
     expect(response.data[0].fields[5].config.links[0].title).toBe('Duration');
     expect(response.data[0].fields[5].config.links[0].internal.query.expr).toBe(
-      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (le))'
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{span_name="${__data.fields[0]}"}[$__rate_interval])) by (le))'
     );
     expect(response.data[0].fields[5].config.links[0].internal.query.range).toBe(true);
     expect(response.data[0].fields[5].config.links[0].internal.query.exemplar).toBe(true);
@@ -445,25 +449,25 @@ describe('Tempo apm table', () => {
     builtQuery = buildExpr(
       {
         expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
-        params: ['span_status="STATUS_CODE_ERROR"'],
+        params: ['status_code="STATUS_CODE_ERROR"'],
       },
       'span_name=~"HTTP Client|HTTP GET|HTTP GET - root|HTTP POST|HTTP POST - post"',
       targets
     );
     expect(builtQuery).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET|HTTP GET - root|HTTP POST|HTTP POST - post"}[$__range])) by (span_name))'
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET|HTTP GET - root|HTTP POST|HTTP POST - post"}[$__range])) by (span_name))'
     );
 
     builtQuery = buildExpr(
       {
-        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range])) by (le))',
-        params: ['span_status="STATUS_CODE_ERROR"'],
+        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{}[$__range])) by (le))',
+        params: ['status_code="STATUS_CODE_ERROR"'],
       },
       'span_name=~"HTTP Client"',
       targets
     );
     expect(builtQuery).toBe(
-      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client"}[$__range])) by (le))'
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{status_code="STATUS_CODE_ERROR",span_name=~"HTTP Client"}[$__range])) by (le))'
     );
 
     targets = { targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="app",service="app"}' }] } as any;
@@ -479,7 +483,7 @@ describe('Tempo apm table', () => {
 
   it('should build link expr correctly', () => {
     let builtQuery = buildLinkExpr('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))');
-    expect(builtQuery).toBe('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval])) by (span_name))');
+    expect(builtQuery).toBe('sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval]))');
   });
 
   it('should get rate aligned values correctly', () => {
@@ -527,7 +531,7 @@ describe('Tempo apm table', () => {
   it('should make apm request correctly', () => {
     const apmRequest = makeApmRequest([
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range])) by (span_name))"',
-      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{status_code="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
     ]);
     expect(apmRequest).toEqual([
       {
@@ -537,8 +541,8 @@ describe('Tempo apm table', () => {
       },
       {
         refId:
-          'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
-        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
+          'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{status_code="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
+        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{status_code="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
         instant: true,
       },
     ]);
@@ -574,6 +578,14 @@ const backendSrvWithPrometheus = {
     }
     throw new Error('unexpected uid');
   },
+  getDataSourceSettingsByUid(uid: string) {
+    if (uid === 'prom') {
+      return { name: 'Prometheus' };
+    } else if (uid === 'gdev-tempo') {
+      return { name: 'Tempo' };
+    }
+    return '';
+  },
 };
 
 function setupBackendSrv(frame: DataFrame) {
@@ -594,7 +606,7 @@ function setupBackendSrv(frame: DataFrame) {
 
 const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
-  uid: '0',
+  uid: 'gdev-tempo',
   type: 'tracing',
   name: 'tempo',
   access: 'proxy',
@@ -627,12 +639,12 @@ const rateMetric = new MutableDataFrame({
 
 const errorRateMetric = new MutableDataFrame({
   refId:
-    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET - root"}[$__range])) by (span_name))',
+    'topk(5, sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET - root"}[$__range])) by (span_name))',
   fields: [
     { name: 'Time', values: [1653725618609, 1653725618609] },
     { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
     {
-      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR"}[$__range])) by (span_name))',
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[$__range])) by (span_name))',
       values: [3.75164671814457, 3.121331111401608],
     },
   ],
@@ -640,11 +652,11 @@ const errorRateMetric = new MutableDataFrame({
 
 const durationMetric = new MutableDataFrame({
   refId:
-    'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range])) by (le))',
+    'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{span_name=~"HTTP GET - root"}[$__range])) by (le))',
   fields: [
     { name: 'Time', values: [1653725618609] },
     {
-      name: 'Value #histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range])) by (le))',
+      name: 'Value #histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{span_name=~"HTTP GET - root"}[$__range])) by (le))',
       values: [0.12003505696757232],
     },
   ],
@@ -728,7 +740,7 @@ const serviceGraphLinks = [
     title: 'Request rate',
     internal: {
       query: {
-        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__rate_interval])',
+        expr: 'sum by (client, server)(rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__rate_interval]))',
         instant: false,
         range: true,
         exemplar: true,
@@ -756,7 +768,7 @@ const serviceGraphLinks = [
     title: 'Failed request rate',
     internal: {
       query: {
-        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__rate_interval])',
+        expr: 'sum by (client, server)(rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__rate_interval]))',
         instant: false,
         range: true,
         exemplar: true,
@@ -773,7 +785,7 @@ const serviceGraphLinks = [
         queryType: 'nativeSearch',
         serviceName: '${__data.fields[0]}',
       } as TempoQuery,
-      datasourceUid: 'tempo',
+      datasourceUid: 'gdev-tempo',
       datasourceName: 'Tempo',
     },
   },

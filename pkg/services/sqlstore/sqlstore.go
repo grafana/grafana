@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -180,7 +181,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
-			if _, err := ss.createUser(ctx, sess, models.CreateUserCommand{
+			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
 				Login:    ss.Cfg.AdminUser,
 				Email:    ss.Cfg.AdminUser + "@localhost",
 				Password: ss.Cfg.AdminPassword,

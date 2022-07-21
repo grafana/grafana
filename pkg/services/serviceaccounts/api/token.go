@@ -20,13 +20,22 @@ const (
 	ServiceID         = "sa"
 )
 
+// swagger:model
 type TokenDTO struct {
-	Id                     int64      `json:"id"`
-	Name                   string     `json:"name"`
-	Created                *time.Time `json:"created"`
-	Expiration             *time.Time `json:"expiration"`
-	SecondsUntilExpiration *float64   `json:"secondsUntilExpiration"`
-	HasExpired             bool       `json:"hasExpired"`
+	// example: 1
+	Id int64 `json:"id"`
+	// example: grafana
+	Name string `json:"name"`
+	// example: 2022-03-23T10:31:02Z
+	Created *time.Time `json:"created"`
+	// example: 2022-03-23T10:31:02Z
+	LastUsedAt *time.Time `json:"lastUsedAt"`
+	// example: 2022-03-23T10:31:02Z
+	Expiration *time.Time `json:"expiration"`
+	// example: 0
+	SecondsUntilExpiration *float64 `json:"secondsUntilExpiration"`
+	// example: false
+	HasExpired bool `json:"hasExpired"`
 }
 
 func hasExpired(expiration *int64) bool {
@@ -72,6 +81,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 			Expiration:             expiration,
 			SecondsUntilExpiration: &secondsUntilExpiration,
 			HasExpired:             isExpired,
+			LastUsedAt:             t.LastUsedAt,
 		}
 	}
 

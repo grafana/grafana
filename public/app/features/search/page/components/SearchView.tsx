@@ -21,10 +21,11 @@ import { ActionRow, getValidQueryLayout } from './ActionRow';
 import { FolderSection } from './FolderSection';
 import { FolderView } from './FolderView';
 import { ManageActions } from './ManageActions';
+import { SearchResultsCards } from './SearchResultsCards';
 import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
 
-type SearchViewProps = {
+export type SearchViewProps = {
   queryText: string; // odd that it is not from query.query
   showManage: boolean;
   folderDTO?: FolderDTO;
@@ -63,6 +64,7 @@ export const SearchView = ({
       ds_uid: query.datasource as string,
       location: folderDTO?.uid, // This will scope all results to the prefix
       sort: query.sort?.value,
+      explain: query.explain,
     };
 
     // Only dashboards have additional properties
@@ -210,6 +212,10 @@ export const SearchView = ({
 
             if (layout === SearchLayout.Grid) {
               return <SearchResultsGrid {...props} />;
+            }
+
+            if (width < 800) {
+              return <SearchResultsCards {...props} />;
             }
 
             return <SearchResultsTable {...props} />;

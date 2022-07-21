@@ -1,9 +1,9 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
-import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/ui';
 import { FeedbackLink } from 'app/plugins/datasource/prometheus/querybuilder/shared/FeedbackLink';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
@@ -83,6 +83,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         <InlineSelect
           value={null}
           placeholder="Query patterns"
+          aria-label={selectors.components.QueryBuilder.queryPatterns}
           allowCustomValue
           onChange={({ value }) => {
             const result = buildVisualQueryFromString(query.expr || '');

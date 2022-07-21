@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -184,7 +185,7 @@ func TestSendEmailAsync(t *testing.T) {
 
 	t.Run("When sending reset email password", func(t *testing.T) {
 		sut, _ := createSut(t, bus)
-		err := sut.SendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
+		err := sut.SendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &user.User{Email: "asd@asd.com"}})
 		require.NoError(t, err)
 
 		sentMsg := <-sut.mailQueue

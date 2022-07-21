@@ -38,7 +38,7 @@ One difference between Grafana and Prometheus is that Grafana uses `$value` to h
 of the condition at the time the alert fired. For example:
 
 ```
-[ var='B' labels={instance=http_server} value=10.01 ]
+[ var='B' labels={instance=http_server} value=10 ]
 ```
 
 ## Alert rules with two or more queries or expressions
@@ -72,7 +72,7 @@ We can also show the labels of `B`, however since this alert rule has just one q
 `$labels`:
 
 ```
-{{ values.B.Labels.instance }} has a 95th percentile request latency above 1s: {{ $values.B }})
+{{ $values.B.Labels.instance }} has a 95th percentile request latency above 1s: {{ $values.B }})
 ```
 
 ### No data and execution errors or timeouts

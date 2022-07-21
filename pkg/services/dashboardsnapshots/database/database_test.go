@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -38,7 +39,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		encryptedDashboard, err := secretsService.Encrypt(context.Background(), rawDashboard, secrets.WithoutScope())
 		require.NoError(t, err)
 
-		cmd := models.CreateDashboardSnapshotCommand{
+		cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 			Key:                "hej",
 			DashboardEncrypted: encryptedDashboard,
 			UserId:             1000,
@@ -49,7 +50,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("Should be able to get snapshot by key", func(t *testing.T) {
-			query := models.GetDashboardSnapshotQuery{Key: "hej"}
+			query := dashboardsnapshots.GetDashboardSnapshotQuery{Key: "hej"}
 			err := dashStore.GetDashboardSnapshot(context.Background(), &query)
 			require.NoError(t, err)
 
@@ -68,7 +69,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		})
 
 		t.Run("And the user has the admin role", func(t *testing.T) {
-			query := models.GetDashboardSnapshotsQuery{
+			query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 			}
@@ -82,7 +83,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		})
 
 		t.Run("And the user has the editor role and has created a snapshot", func(t *testing.T) {
-			query := models.GetDashboardSnapshotsQuery{
+			query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, UserId: 1000},
 			}
@@ -96,7 +97,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		})
 
 		t.Run("And the user has the editor role and has not created any snapshot", func(t *testing.T) {
-			query := models.GetDashboardSnapshotsQuery{
+			query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, UserId: 2},
 			}
@@ -110,7 +111,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		})
 
 		t.Run("And the user is anonymous", func(t *testing.T) {
-			cmd := models.CreateDashboardSnapshotCommand{
+			cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 				Key:       "strangesnapshotwithuserid0",
 				DeleteKey: "adeletekey",
 				Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -123,7 +124,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("Should not return any snapshots", func(t *testing.T) {
-				query := models.GetDashboardSnapshotsQuery{
+				query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 					OrgId:        1,
 					SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, IsAnonymous: true, UserId: 0},
 				}
@@ -161,10 +162,10 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 		createTestSnapshot(t, dashStore, "key2", -1200)
 		createTestSnapshot(t, dashStore, "key3", -1200)
 
-		err := dashStore.DeleteExpiredSnapshots(context.Background(), &models.DeleteExpiredSnapshotsCommand{})
+		err := dashStore.DeleteExpiredSnapshots(context.Background(), &dashboardsnapshots.DeleteExpiredSnapshotsCommand{})
 		require.NoError(t, err)
 
-		query := models.GetDashboardSnapshotsQuery{
+		query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 			OrgId:        1,
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 		}
@@ -174,10 +175,10 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 		assert.Len(t, query.Result, 1)
 		assert.Equal(t, nonExpiredSnapshot.Key, query.Result[0].Key)
 
-		err = dashStore.DeleteExpiredSnapshots(context.Background(), &models.DeleteExpiredSnapshotsCommand{})
+		err = dashStore.DeleteExpiredSnapshots(context.Background(), &dashboardsnapshots.DeleteExpiredSnapshotsCommand{})
 		require.NoError(t, err)
 
-		query = models.GetDashboardSnapshotsQuery{
+		query = dashboardsnapshots.GetDashboardSnapshotsQuery{
 			OrgId:        1,
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 		}
@@ -189,8 +190,8 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 	})
 }
 
-func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key string, expires int64) *models.DashboardSnapshot {
-	cmd := models.CreateDashboardSnapshotCommand{
+func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key string, expires int64) *dashboardsnapshots.DashboardSnapshot {
+	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{

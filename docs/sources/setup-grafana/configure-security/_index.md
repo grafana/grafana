@@ -42,7 +42,7 @@ Users with the Viewer role can enter _any possible query_ in _any_ of the data s
 
 To address this vulnerability, you can restrict data source query access in the following ways:
 
-- Create multiple data sources with some restrictions added in data source configuration that restrict access (like database name or credentials). Then use the [Data Source Permissions]({{< relref "../../administration/data-source-management/datasource-permissions/" >}}) Enterprise feature to restrict user access to the data source in Grafana.
+- Create multiple data sources with some restrictions added in data source configuration that restrict access (like database name or credentials). Then use the [Data Source Permissions]({{< relref "../../administration/data-source-management/#data-source-permissions" >}}) Enterprise feature to restrict user access to the data source in Grafana.
 - Create a separate Grafana organization, and in that organization, create a separate data source. Make sure the data source has some option/user/credentials setting that limits access to a subset of the data. Not all data sources have an option to limit access.
 
 ## Implications of enabling anonymous access to dashboards

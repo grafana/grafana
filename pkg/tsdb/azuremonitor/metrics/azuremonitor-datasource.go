@@ -36,7 +36,7 @@ var (
 	resourceNameLandmark = regexp.MustCompile(`(?i)(/(?P<resourceName>[\w-\.]+)/providers/Microsoft\.Insights/metrics)`)
 )
 
-const azureMonitorAPIVersion = "2018-01-01"
+const AzureMonitorAPIVersion = "2018-01-01"
 
 func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
 	e.Proxy.Do(rw, req, cli)
@@ -114,7 +114,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		}
 
 		params := url.Values{}
-		params.Add("api-version", azureMonitorAPIVersion)
+		params.Add("api-version", AzureMonitorAPIVersion)
 		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
 		params.Add("aggregation", azJSONModel.Aggregation)

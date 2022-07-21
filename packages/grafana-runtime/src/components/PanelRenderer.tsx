@@ -11,11 +11,12 @@ import { AbsoluteTimeRange, FieldConfigSource, PanelData } from '@grafana/data';
  * @internal
  */
 export interface PanelRendererProps<P extends object = any, F extends object = any> {
-  data: PanelData;
+  data?: PanelData;
   pluginId: string;
   title: string;
   options?: Partial<P>;
   onOptionsChange?: (options: P) => void;
+  onFieldConfigChange?: (config: FieldConfigSource<F>) => void;
   onChangeTimeRange?: (timeRange: AbsoluteTimeRange) => void;
   fieldConfig?: FieldConfigSource<Partial<F>>;
   timeZone?: string;

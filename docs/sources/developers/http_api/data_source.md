@@ -10,12 +10,12 @@ keywords:
   - documentation
   - api
   - data source
-title: 'Data source HTTP API '
+title: 'Data source HTTP API'
 ---
 
 # Data source API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Get all data sources
 

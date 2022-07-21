@@ -5,11 +5,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -39,14 +40,14 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		require.Equal(t, len(store.inserted), 1)
 		require.Equal(t, store.inserted[0].OrgId, int64(1))
-		require.Equal(t, store.inserted[0].Access, models.DsAccess("proxy"))
+		require.Equal(t, store.inserted[0].Access, datasources.DsAccess("proxy"))
 		require.Equal(t, store.inserted[0].Name, "My datasource name")
 		require.Equal(t, store.inserted[0].Uid, "P2AD1F727255C56BA")
 	})
 
 	t.Run("when some values missing should not change UID when updates", func(t *testing.T) {
 		store := &spyStore{
-			items: []*models.DataSource{{Name: "My datasource name", OrgId: 1, Id: 1, Uid: util.GenerateShortUID()}},
+			items: []*datasources.DataSource{{Name: "My datasource name", OrgId: 1, Id: 1, Uid: util.GenerateShortUID()}},
 		}
 		orgStore := &mockOrgStore{}
 		dc := newDatasourceProvisioner(logger, store, orgStore)
@@ -76,7 +77,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("One datasource in database with same name should update one datasource", func(t *testing.T) {
-		store := &spyStore{items: []*models.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}}}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}}}
 		orgStore := &mockOrgStore{}
 		dc := newDatasourceProvisioner(logger, store, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
@@ -127,7 +128,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Two configured datasource and purge others", func(t *testing.T) {
-		store := &spyStore{items: []*models.DataSource{{Name: "old-graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "old-graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
 		orgStore := &mockOrgStore{}
 		dc := newDatasourceProvisioner(logger, store, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfigPurgeOthers)
@@ -141,7 +142,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Two configured datasource and purge others = false", func(t *testing.T) {
-		store := &spyStore{items: []*models.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
 		orgStore := &mockOrgStore{}
 		dc := newDatasourceProvisioner(logger, store, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
@@ -164,7 +165,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		reader := &configReader{log: logger, orgStore: &mockOrgStore{}}
 		configs, err := reader.readConfig(context.Background(), invalidAccess)
 		require.NoError(t, err)
-		require.Equal(t, configs[0].Datasources[0].Access, models.DS_ACCESS_PROXY)
+		require.Equal(t, configs[0].Datasources[0].Access, datasources.DS_ACCESS_PROXY)
 	})
 
 	t.Run("skip invalid directory", func(t *testing.T) {
@@ -236,7 +237,7 @@ func validateDatasource(t *testing.T, dsCfg *configs) {
 	ds := dsCfg.Datasources[0]
 	require.Equal(t, ds.Name, "name")
 	require.Equal(t, ds.Type, "type")
-	require.Equal(t, ds.Access, models.DS_ACCESS_PROXY)
+	require.Equal(t, ds.Access, datasources.DS_ACCESS_PROXY)
 	require.Equal(t, ds.OrgID, int64(2))
 	require.Equal(t, ds.URL, "url")
 	require.Equal(t, ds.User, "user")
@@ -273,33 +274,33 @@ func (m *mockOrgStore) GetOrgById(c context.Context, cmd *models.GetOrgByIdQuery
 }
 
 type spyStore struct {
-	inserted []*models.AddDataSourceCommand
-	deleted  []*models.DeleteDataSourceCommand
-	updated  []*models.UpdateDataSourceCommand
-	items    []*models.DataSource
+	inserted []*datasources.AddDataSourceCommand
+	deleted  []*datasources.DeleteDataSourceCommand
+	updated  []*datasources.UpdateDataSourceCommand
+	items    []*datasources.DataSource
 }
 
-func (s *spyStore) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 	for _, v := range s.items {
 		if query.Name == v.Name && query.OrgId == v.OrgId {
 			query.Result = v
 			return nil
 		}
 	}
-	return models.ErrDataSourceNotFound
+	return datasources.ErrDataSourceNotFound
 }
 
-func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	s.deleted = append(s.deleted, cmd)
 	return nil
 }
 
-func (s *spyStore) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	s.inserted = append(s.inserted, cmd)
 	return nil
 }
 
-func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
 	s.updated = append(s.updated, cmd)
 	return nil
 }

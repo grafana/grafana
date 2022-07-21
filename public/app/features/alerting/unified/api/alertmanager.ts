@@ -32,6 +32,7 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
     );
     return {
       template_files: result.data.template_files ?? {},
+      template_file_provenances: result.data.template_file_provenances ?? {},
       alertmanager_config: result.data.alertmanager_config ?? {},
     };
   } catch (e) {

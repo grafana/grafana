@@ -4,7 +4,7 @@ import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react
 
 import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } from '@grafana/data';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { appEvents } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';

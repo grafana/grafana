@@ -65,8 +65,8 @@ You can use RBAC to modify the permissions associated with any basic role, which
 Note that any modification to any of these basic role is not propagated to the other basic roles.
 For example, if you modify Viewer basic role and grant additional permission, Editors or Admins won't have that additional grant.
 
-For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "../../../../enterprise/access-control/about-rbac/rbac-fixed-basic-role-definitions/#basic-role-assignments" >}}).
-To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "../../../../enterprise/access-control/about-rbac/manage-rbac-roles/#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
+For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#basic-role-assignments" >}}).
+To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "./manage-rbac-roles/#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
 
 ### Fixed roles
 
@@ -74,25 +74,25 @@ Grafana Enterprise includes the ability for you to assign discrete fixed roles t
 
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
-- [Alerting]({{< relref "../../../../enterprise/alerting/" >}})
-- [Annotations]({{< relref "../../../../enterprise/dashboards/annotations/" >}})
-- [API keys]({{< relref "../../../../enterprise/administration/api-keys/" >}})
-- [Dashboards and folders]({{< relref "../../../../enterprise/dashboards/" >}})
-- [Data sources]({{< relref "../../../../enterprise/datasources/" >}})
-- [Explore]({{< relref "../../../../enterprise/explore/" >}})
-- [Folders]({{< relref "../../../../enterprise/dashboards/dashboard-folders/" >}})
-- [LDAP]({{< relref "../../../../enterprise/setup-grafana/configure-security/configure-authentication/ldap/" >}})
-- [Licenses]({{< relref "../../../../enterprise/access-control/license/" >}})
-- [Organizations]({{< relref "../../../../enterprise/administration/manage-organizations/" >}})
-- [Provisioning]({{< relref "../../../../enterprise/administration/provisioning/" >}})
-- [Reports]({{< relref "../../../../enterprise/access-control/reporting/" >}})
-- [Roles]({{< relref "../../../../enterprise/administration/manage-users-and-permissions/" >}})
-- [Settings]({{< relref "../../../../enterprise/access-control/settings-updates/" >}})
-- [Service accounts]({{< relref "../../../../enterprise/administration/service-accounts/" >}})
-- [Teams]({{< relref "../../../../enterprise/administration/manage-users-and-permissions/manage-teams/" >}})
-- [Users]({{< relref "../../../../enterprise/administration/manage-users-and-permissions/manage-server-users/" >}})
+- [Alerting]({{< relref "../../../alerting/" >}})
+- [Annotations]({{< relref "../../../dashboards/annotations/" >}})
+- [API keys]({{< relref "../../api-keys/" >}})
+- [Dashboards and folders]({{< relref "../../../dashboards/" >}})
+- [Data sources]({{< relref "../../../datasources/" >}})
+- [Explore]({{< relref "../../../explore/" >}})
+- [Folders]({{< relref "../../../dashboards/dashboard-folders/" >}})
+- [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
+- [Licenses]({{< relref "../../stats-and-license/" >}})
+- [Organizations]({{< relref "../../organization-management/" >}})
+- [Provisioning]({{< relref "../../provisioning/" >}})
+- [Reports]({{< relref "../../../enterprise/reporting/" >}})
+- [Roles]({{< relref "../../" >}})
+- [Settings]({{< relref "../../../enterprise/settings-updates/" >}})
+- [Service accounts]({{< relref "../../service-accounts/" >}})
+- [Teams]({{< relref "../../team-management/" >}})
+- [Users]({{< relref "../../user-management/" >}})
 
-To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "../../../../enterprise/access-control/about-rbac/rbac-fixed-basic-role-definitions/" >}}).
+To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions/" >}}).
 
 ### Custom roles
 
@@ -108,11 +108,11 @@ Consider creating a custom role when fixed roles do not meet your permissions re
 
 You can use either of the following methods to create, assign, and manage custom roles:
 
-- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "../../../../enterprise/access-control/about-rbac/manage-rbac-roles/" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "../../../../enterprise/access-control/about-rbac/assign-rbac-roles/" >}}).
-- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../../../enterprise/developers/http_api/access_control/" >}}).
+- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles/" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "./assign-rbac-roles/" >}}).
+- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../../developers/http_api/access_control/" >}}).
 
 ### Limitation
 
 If you have created a folder with the name `General` or `general`, you cannot manage its permissions with RBAC.
 
-If you set [folder permissions]({{< relref "../../../../enterprise/administration/manage-users-and-permissions/manage-dashboard-permissions/" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
+If you set [folder permissions]({{< relref "../../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.

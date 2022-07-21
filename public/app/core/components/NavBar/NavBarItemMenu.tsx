@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useLingui } from '@lingui/react';
 import { useMenu } from '@react-aria/menu';
 import { mergeProps } from '@react-aria/utils';
 import { useTreeState } from '@react-stately/tree';
@@ -11,6 +12,7 @@ import { useTheme2 } from '@grafana/ui';
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
 import { NavBarScrollContainer } from './NavBarScrollContainer';
 import { useNavBarItemMenuContext } from './context';
+import menuItemTranslations from './navBarItem-translations';
 import { getNavModelItemKey } from './utils';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
@@ -21,6 +23,7 @@ export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
 
 export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null {
   const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, onNavigate, ...rest } = props;
+  const { i18n } = useLingui();
   const contextProps = useNavBarItemMenuContext();
   const completeProps = {
     ...mergeProps(contextProps, rest),
@@ -57,6 +60,15 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   const itemComponents = items.map((item) => (
     <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onNavigate={onNavigate} />
   ));
+
+  if (itemComponents.length === 0 && section.value.emptyMessageId) {
+    const emptyMessageTranslated = i18n._(menuItemTranslations[section.value.emptyMessageId]);
+    itemComponents.push(
+      <div key="empty-message" className={styles.emptyMessage}>
+        {emptyMessageTranslated}
+      </div>
+    );
+  }
 
   const subTitleComponent = menuSubTitle && (
     <li key={menuSubTitle} className={styles.subtitle}>
@@ -104,6 +116,10 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
       padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
       text-align: left;
       white-space: nowrap;
+    `,
+    emptyMessage: css`
+      font-style: italic;
+      padding: ${theme.spacing(0.5, 2)};
     `,
   };
 }

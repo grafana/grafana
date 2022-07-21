@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -59,7 +60,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		encoded, err := util.EncodePassword(password, salt)
 		require.NoError(t, err)
 
-		sc.mockSQLStore.ExpectedUser = &models.User{Password: encoded, Id: id, Salt: salt}
+		sc.mockSQLStore.ExpectedUser = &user.User{Password: encoded, ID: id, Salt: salt}
 		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id}
 		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{})
 
@@ -72,7 +73,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {
-		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
+		sc.mockSQLStore.ExpectedError = user.ErrUserNotFound
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("user", "password")
 		sc.exec()
@@ -85,7 +86,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user & password do not match", func(t *testing.T, sc *scenarioContext) {
-		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
+		sc.mockSQLStore.ExpectedError = user.ErrUserNotFound
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("killa", "gorilla")
 		sc.exec()

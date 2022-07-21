@@ -2,14 +2,13 @@ package dashboardsnapshots
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
+//go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go
 type Service interface {
-	CreateDashboardSnapshot(context.Context, *models.CreateDashboardSnapshotCommand) error
-	DeleteDashboardSnapshot(context.Context, *models.DeleteDashboardSnapshotCommand) error
-	DeleteExpiredSnapshots(context.Context, *models.DeleteExpiredSnapshotsCommand) error
-	GetDashboardSnapshot(context.Context, *models.GetDashboardSnapshotQuery) error
-	SearchDashboardSnapshots(context.Context, *models.GetDashboardSnapshotsQuery) error
+	CreateDashboardSnapshot(context.Context, *CreateDashboardSnapshotCommand) error
+	DeleteDashboardSnapshot(context.Context, *DeleteDashboardSnapshotCommand) error
+	DeleteExpiredSnapshots(context.Context, *DeleteExpiredSnapshotsCommand) error
+	GetDashboardSnapshot(context.Context, *GetDashboardSnapshotQuery) error
+	SearchDashboardSnapshots(context.Context, *GetDashboardSnapshotsQuery) error
 }

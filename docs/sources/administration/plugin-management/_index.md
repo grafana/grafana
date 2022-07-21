@@ -13,7 +13,7 @@ weight: 600
 
 Besides the wide range of visualizations and data sources that are available immediately after you install Grafana, you can extend your Grafana experience with _plugins_.
 
-You can [install]({{< relref "../plugins/installation/" >}}) one of the plugins built by the Grafana community, or [build one yourself]({{< relref "../../developers/plugins/" >}}).
+You can [install]({{< ref "#install-a-plugin" >}}) one of the plugins built by the Grafana community, or [build one yourself]({{< relref "../../developers/plugins/" >}}).
 
 Grafana supports three types of plugins: [panels](https://grafana.com/grafana/plugins?type=panel), [data sources](https://grafana.com/grafana/plugins?type=datasource), and [apps](https://grafana.com/grafana/plugins?type=app).
 
@@ -62,7 +62,7 @@ The Plugin catalog allows you to browse and manage plugins from within Grafana. 
   </video>
 </div>
 
-In order to be able to install / uninstall / update plugins using plugin catalog, you must enable it via the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../../plugins/setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
+In order to be able to install / uninstall / update plugins using plugin catalog, you must enable it via the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>
@@ -138,9 +138,9 @@ If you are logged in to Grafana Cloud when you add a plugin, log out and back in
 
 Follow the instructions on the Install tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompress a .zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The .zip option is available if your Grafana server does not have access to the internet.
 
-For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../../plugins/administration/cli/#plugins-commands" >}}).
+For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
 
-As of Grafana v8.0, a plugin catalog app was introduced in order to make managing plugins easier. For more information, refer to [Plugin catalog]({{< relref "../../../plugins/installation/catalog/" >}}).
+As of Grafana v8.0, a plugin catalog app was introduced in order to make managing plugins easier. For more information, refer to [Plugin catalog]({{< ref "#plugin-catalog" >}}).
 
 #### Install a packaged plugin
 
@@ -150,7 +150,7 @@ After the user has downloaded the archive containing the plugin assets, they can
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 ```
 
-The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../../plugins/setup-grafana/configure-grafana/#plugins" >}}).
+The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}).
 
 ## Plugin signatures
 
@@ -164,7 +164,7 @@ Grafana also writes an error message to the server log:
 WARN[05-26|12:00:00] Some plugin scanning errors were found   errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
 ```
 
-If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../../../plugins/developers/plugins/sign-a-plugin/" >}}).
+If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../../developers/plugins/sign-a-plugin/" >}}).
 
 | Signature status   | Description                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |
@@ -188,7 +188,7 @@ All plugins is signed under a _signature level_. The signature level determines 
 
 > **Note:** Unsigned plugins are not supported in Grafana Cloud.
 
-We strongly recommend that you don't run unsigned plugins in your Grafana instance. If you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration]({{< relref "../../../plugins/setup-grafana/configure-grafana/#allow_loading_unsigned_plugins" >}}).
+We strongly recommend that you don't run unsigned plugins in your Grafana instance. If you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins" >}}).
 
 If you've allowed loading of an unsigned plugin, then Grafana writes a warning message to the server log:
 

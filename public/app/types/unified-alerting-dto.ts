@@ -159,6 +159,7 @@ export enum GrafanaAlertStateDecision {
 export interface AlertDataQuery extends DataQuery {
   maxDataPoints?: number;
   intervalMs?: number;
+  expression?: string;
 }
 
 export interface AlertQuery {
@@ -182,6 +183,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   uid: string;
   namespace_uid: string;
   namespace_id: number;
+  provenance?: string;
 }
 
 export interface RulerGrafanaRuleDTO {

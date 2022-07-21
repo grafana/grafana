@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagServiceAccounts
-	// support service accounts
-	FlagServiceAccounts = "serviceAccounts"
-
 	// FlagDatabaseMetrics
 	// Add prometheus metrics for database tables
 	FlagDatabaseMetrics = "database_metrics"
@@ -50,10 +46,6 @@ const (
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
-
-	// FlagTempoServiceGraph
-	// show service
-	FlagTempoServiceGraph = "tempoServiceGraph"
 
 	// FlagTempoApmTable
 	// Show APM table
@@ -111,13 +103,13 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
+	// FlagDashboardsFromStorage
+	// Load dashboards from the generic storage interface
+	FlagDashboardsFromStorage = "dashboardsFromStorage"
+
 	// FlagExport
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"
-
-	// FlagStorageLocalUpload
-	// allow uploads to local storage
-	FlagStorageLocalUpload = "storageLocalUpload"
 
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query
@@ -135,10 +127,6 @@ const (
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
 
-	// FlagSavedItems
-	// Enable Saved Items in the navbar.
-	FlagSavedItems = "savedItems"
-
 	// FlagCloudWatchDynamicLabels
 	// Use dynamic labels instead of alias patterns in CloudWatch datasource
 	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
@@ -146,10 +134,6 @@ const (
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
-
-	// FlagAzureMonitorExperimentalUI
-	// Use grafana-experimental UI in Azure Monitor
-	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
 
 	// FlagTraceToMetrics
 	// Enable trace to metrics links
@@ -175,9 +159,21 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagScenes
+	// Experimental framework to build interactive dashboards
+	FlagScenes = "scenes"
+
+	// FlagUseLegacyHeatmapPanel
+	// Continue to use the angular/flot based heatmap panel
+	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
+
 	// FlagCloudMonitoringExperimentalUI
 	// Use grafana-experimental UI in Cloud Monitoring
 	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
+
+	// FlagDisableSecretsCompatibility
+	// Disable duplicated secret storage in legacy tables
+	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
 
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown
@@ -190,4 +186,12 @@ const (
 	// FlagInternationalization
 	// Enables work-in-progress internationalization
 	FlagInternationalization = "internationalization"
+
+	// FlagTopnav
+	// New top nav and page layouts
+	FlagTopnav = "topnav"
+
+	// FlagCustomBranding
+	// Replaces whitelabeling with the new custom branding feature
+	FlagCustomBranding = "customBranding"
 )

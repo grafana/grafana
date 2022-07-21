@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Button, DeleteButton, HorizontalGroup, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
@@ -50,11 +49,9 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate
                 </td>
                 <td>
                   <HorizontalGroup justify="flex-end">
-                    {config.featureToggles.serviceAccounts && (
-                      <Button size="sm" onClick={() => onMigrate(key)}>
-                        Migrate
-                      </Button>
-                    )}
+                    <Button size="sm" onClick={() => onMigrate(key)}>
+                      Migrate
+                    </Button>
                     <DeleteButton
                       aria-label="Delete API key"
                       size="sm"

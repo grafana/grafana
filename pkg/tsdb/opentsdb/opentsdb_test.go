@@ -49,6 +49,10 @@ func TestOpenTsdbExecutor(t *testing.T) {
 				"metric": "test",
 				"dps": {
 					"1405544146": 50.0
+				},
+				"tags" : {
+					"env": "prod",
+					"app": "grafana"
 				}
 			}
 		]`
@@ -57,7 +61,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			data.NewField("time", nil, []time.Time{
 				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
 			}),
-			data.NewField("value", nil, []float64{
+			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
 				50}),
 		)
 

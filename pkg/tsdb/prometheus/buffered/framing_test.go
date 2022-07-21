@@ -136,8 +136,9 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 		tracer:             tracer,
 		TimeInterval:       "15s",
 		log:                &fakeLogger{},
+		client:             api,
 	}
-	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+	return s.runQueries(context.Background(), []*PrometheusQuery{&query})
 }
 
 type fakeLogger struct {

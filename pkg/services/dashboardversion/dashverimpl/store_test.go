@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -134,7 +135,7 @@ func getDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *models.D
 		if err != nil {
 			return err
 		} else if !has {
-			return models.ErrDashboardNotFound
+			return dashboards.ErrDashboardNotFound
 		}
 
 		dashboard.SetId(dashboard.Id)
@@ -188,7 +189,7 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 		if affectedRows, err := sess.Insert(dashVersion); err != nil {
 			return err
 		} else if affectedRows == 0 {
-			return models.ErrDashboardNotFound
+			return dashboards.ErrDashboardNotFound
 		}
 
 		return nil
@@ -250,7 +251,7 @@ func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *m
 		if affectedRows, err := sess.Insert(dashVersion); err != nil {
 			return err
 		} else if affectedRows == 0 {
-			return models.ErrDashboardNotFound
+			return dashboards.ErrDashboardNotFound
 		}
 
 		return nil

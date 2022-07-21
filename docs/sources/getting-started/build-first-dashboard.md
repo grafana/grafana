@@ -49,7 +49,7 @@ Continue to experiment with what you have built, try the [explore workflow]({{< 
 
 - [Panels]({{< relref "../panels/" >}})
 - [Dashboards]({{< relref "../dashboards/" >}})
-- [Keyboard shortcuts]({{< relref "../dashboards/shortcuts/" >}})
+- [Keyboard shortcuts]({{< relref "../dashboards/use-dashboards/#keyboard-shortcuts" >}})
 - [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
 ##### Admins
@@ -58,6 +58,6 @@ The following topics are of interest to Grafana server admin users:
 
 - [Grafana configuration]({{< relref "../setup-grafana/configure-grafana/" >}})
 - [Authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}})
-- [User permissions and roles]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions/" >}})
+- [User permissions and roles]({{< relref "../administration/roles-and-permissions/" >}})
 - [Provisioning]({{< relref "../administration/provisioning/" >}})
-- [Grafana CLI]({{< relref "../administration/cli/" >}})
+- [Grafana CLI]({{< relref "../cli/" >}})

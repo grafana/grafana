@@ -22,6 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@grafana/agent-web": "^0.3.0",
     "@grafana/data": "9.1.0-pre",
     "@grafana/e2e-selectors": "9.1.0-pre",
     "@grafana/ui": "9.1.0-pre",

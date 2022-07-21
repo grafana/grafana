@@ -38,6 +38,11 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     return frame;
   }
 
+  refField.state = {
+    ...refField.state,
+    nullThresholdApplied: true,
+  };
+
   const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls ?? refField.config.interval ?? null);
 
   const uniqueThresholds = new Set<number>(thresholds);
@@ -76,21 +81,10 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     return {
       ...frame,
       length: filledFieldValues[0].length,
-      fields: frame.fields.map((field, i) => {
-        let f = {
-          ...field,
-          values: new ArrayVector(filledFieldValues[i]),
-        };
-
-        if (i === 0) {
-          f.state = {
-            ...field.state,
-            nullThresholdApplied: true,
-          };
-        }
-
-        return f;
-      }),
+      fields: frame.fields.map((field, i) => ({
+        ...field,
+        values: new ArrayVector(filledFieldValues[i]),
+      })),
     };
   }
 

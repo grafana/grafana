@@ -50,6 +50,7 @@ type RuleStore interface {
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
+	GetNamespaceByUID(context.Context, string, int64, *models.SignedInUser) (*models.Folder, error)
 	// InsertAlertRules will insert all alert rules passed into the function
 	// and return the map of uuid to id.
 	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) (map[string]int64, error)
@@ -229,6 +230,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) erro
 				RuleUID:          r.New.UID,
 				RuleNamespaceUID: r.New.NamespaceUID,
 				RuleGroup:        r.New.RuleGroup,
+				RuleGroupIndex:   r.New.RuleGroupIndex,
 				ParentVersion:    parentVersion,
 				Version:          r.New.Version + 1,
 				Created:          r.New.Updated,
@@ -282,7 +284,7 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			q = q.Where("rule_group = ?", query.RuleGroup)
 		}
 
-		q = q.OrderBy("id ASC")
+		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
 		if err := q.Find(&alertRules); err != nil {
@@ -386,18 +388,29 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 	return folder, nil
 }
 
+// GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
+func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *models.SignedInUser) (*models.Folder, error) {
+	folder, err := st.FolderService.GetFolderByUID(ctx, user, orgID, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	return folder, nil
+}
+
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		alerts := make([]*ngmodels.SchedulableAlertRule, 0)
 		q := sess.Table("alert_rule")
-		if len(query.ExcludeOrgIDs) > 0 {
-			excludeOrgs := make([]interface{}, 0, len(query.ExcludeOrgIDs))
-			for _, orgID := range query.ExcludeOrgIDs {
+		if len(st.Cfg.DisabledOrgs) > 0 {
+			excludeOrgs := make([]interface{}, 0, len(st.Cfg.DisabledOrgs))
+			for orgID := range st.Cfg.DisabledOrgs {
 				excludeOrgs = append(excludeOrgs, orgID)
 			}
 			q = q.NotIn("org_id", excludeOrgs...)
 		}
+		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 		if err := q.Find(&alerts); err != nil {
 			return err
 		}
@@ -436,7 +449,7 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
-	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.BaseInterval.Seconds())); err != nil {
+	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.Cfg.BaseInterval.Seconds())); err != nil {
 		return err
 	}
 
@@ -466,5 +479,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return err
 	}
 
+	if alertRule.For < 0 {
+		return fmt.Errorf("%w: field `for` cannot be negative", ngmodels.ErrAlertRuleFailedValidation)
+	}
 	return nil
 }

@@ -10,6 +10,7 @@ import { CatalogPlugin, PluginTabIds } from '../types';
 
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
+import { PluginUsage } from './PluginUsage';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -60,6 +61,14 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     }
   }
 
+  if (pageId === PluginTabIds.USAGE && pluginConfig) {
+    return (
+      <div className={styles.container}>
+        <PluginUsage plugin={pluginConfig?.meta} />
+      </div>
+    );
+  }
+
   if (pageId === PluginTabIds.DASHBOARDS && pluginConfig) {
     return (
       <div className={styles.container}>
@@ -78,6 +87,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 export const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     padding: ${theme.spacing(3, 4)};
+    height: 100%;
   `,
   readme: css`
     & img {
