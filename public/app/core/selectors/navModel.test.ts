@@ -28,6 +28,12 @@ describe('getNavModel', () => {
 
   const navIndex = buildInitialState();
 
+  test('returns the correct nav model for root node', () => {
+    const navModel = getNavModel(navIndex, 'apps');
+    expect(navModel.main.id).toBe('apps');
+    expect(navModel.node.id).toBe('apps');
+  });
+
   test('returns the correct nav model a 1st-level child', () => {
     const navModel = getNavModel(navIndex, 'apps/child1');
     expect(navModel.main.id).toBe('apps');
