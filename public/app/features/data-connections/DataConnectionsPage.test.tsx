@@ -47,7 +47,7 @@ describe('Data Connections Page', () => {
   test('shows the "Data sources" tab by default', async () => {
     renderPage();
 
-    expect(await screen.findByText('Add data source')).toBeVisible();
+    expect(await screen.findByRole('button', { name: /add data source/i }).toBeVisible()
     expect(await screen.findByText(mockDatasources[0].name)).toBeVisible();
   });
 
