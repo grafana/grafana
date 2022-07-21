@@ -95,50 +95,41 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 	// SQLite has a max 999 variable limit per statement. We use almost 9 per
 	// row, so we split our writes into fewer prepared statements using the row
 	// limit.
-	rowLimit := 80
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for i := 0; i < len(cmd); i += rowLimit {
-			values := make([]interface{}, 0)
-			limit := i + rowLimit
-			if len(cmd) < limit {
-				limit = len(cmd)
-			}
+		// Prepare the statement to bind each argument to.
+		upsertSQL := st.SQLStore.Dialect.UpsertSQL(
+			"alert_instance",
+			[]string{"rule_org_id", "rule_uid", "labels_hash"},
+			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"})
+		stmt, err := sess.DB().Prepare(upsertSQL)
+		if err != nil {
+			return err
+		}
 
-			for _, alertInstance := range cmd[i:limit] {
-				labelTupleJSON, err := alertInstance.Labels.StringKey()
-				if err != nil {
-					return err
-				}
-
-				if err := models.ValidateAlertInstance(alertInstance); err != nil {
-					return err
-				}
-
-				values = append(values, alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash,
-					alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(),
-					alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
-			}
-
-			upsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
-				"alert_instance",
-				[]string{"rule_org_id", "rule_uid", "labels_hash"},
-				[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"},
-				len(cmd[i:limit]))
+		for _, alertInstance := range cmd {
+			labelTupleJSON, err := alertInstance.Labels.StringKey()
 			if err != nil {
 				return err
 			}
 
-			_, err = sess.SQL(upsertSQL, values...).Query()
-			if err != nil {
+			if err := models.ValidateAlertInstance(alertInstance); err != nil {
 				return err
 			}
 
+			_, err = stmt.ExecContext(ctx,
+				alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash,
+				alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(),
+				alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
