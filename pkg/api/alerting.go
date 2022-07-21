@@ -574,7 +574,18 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 	}
 }
 
-// POST /api/admin/pause-all-alerts
+// swagger:route POST /admin/pause-all-alerts admin pauseAllAlerts
+//
+// Pause/unpause all (legacy) alerts.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: pauseAlertsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *models.ReqContext) response.Response {
 	if legacyAlertingEnabled == nil || !*legacyAlertingEnabled {
 		return func(_ *models.ReqContext) response.Response {
@@ -610,4 +621,26 @@ func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *models
 
 		return response.JSON(http.StatusOK, result)
 	}
+}
+
+// swagger:parameters pauseAllAlerts
+type PauseAllAlertsParams struct {
+	// in:body
+	// required:true
+	Body dtos.PauseAllAlertsCommand `json:"body"`
+}
+
+// swagger:response pauseAlertsResponse
+type PauseAllAlertsResponse struct {
+	// in:body
+	Body struct {
+		// AlertsAffected is the number of the affected alerts.
+		// required: true
+		AlertsAffected int64 `json:"alertsAffected"`
+		// required: true
+		Message string `json:"message"`
+		// Alert result state
+		// required true
+		State string `json:"state"`
+	} `json:"body"`
 }

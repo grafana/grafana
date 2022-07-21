@@ -60,6 +60,21 @@ func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
 	return response.Success("Organization quota updated")
 }
 
+// swagger:route GET /admin/users/{user_id}/quotas admin_users getUserQuota
+//
+// Fetch user quota.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global.users:1` (userIDScope).
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: getQuotaResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
 	if !setting.Quota.Enabled {
 		return response.Error(404, "Quotas not enabled", nil)
@@ -79,6 +94,21 @@ func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, query.Result)
 }
 
+// swagger:route PUT /admin/users/{user_id}/quotas/{quota_target} admin_users updateUserQuota
+//
+// Update user quota.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global.users:1` (userIDScope).
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateUserQuota(c *models.ReqContext) response.Response {
 	cmd := models.UpdateUserQuotaCmd{}
 	var err error
@@ -102,4 +132,30 @@ func (hs *HTTPServer) UpdateUserQuota(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to update org quotas", err)
 	}
 	return response.Success("Organization quota updated")
+}
+
+// swagger:parameters updateUserQuota
+type UpdateUserQuotaParams struct {
+	// in:body
+	// required:true
+	Body models.UpdateUserQuotaCmd `json:"body"`
+	// in:path
+	// required:true
+	QuotaTarget string `json:"quota_target"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getUserQuota
+type GetUserQuotaParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:response getQuotaResponse
+type GetQuotaResponseResponse struct {
+	// in:body
+	Body []*models.UserQuotaDTO `json:"body"`
 }

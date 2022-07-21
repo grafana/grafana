@@ -143,7 +143,7 @@ import "github.com/grafana/grafana/pkg/models"
 // Return a list of all auth tokens (devices) that the actual user currently have logged in from.
 //
 // Responses:
-// 200: getAuthTokensResponse
+// 200: getSignedInUserAuthTokensResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
@@ -220,4 +220,10 @@ type HelpFlagResponse struct {
 		HelpFlags1 int64  `json:"helpFlags1"`
 		Message    string `json:"message"`
 	} `json:"body"`
+}
+
+// swagger:response getSignedInUserAuthTokensResponse
+type GetSignedInUserAuthTokensResponse struct {
+	// in:body
+	Body []*models.UserToken `json:"body"`
 }
