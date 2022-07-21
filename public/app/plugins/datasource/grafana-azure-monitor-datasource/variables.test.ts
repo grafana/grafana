@@ -389,7 +389,7 @@ describe('VariableSupport', () => {
           azureMonitorDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricDefinitions: jest.fn((sub: string, rg: string) => {
+          getMetricNamespaces: jest.fn((sub: string, rg: string) => {
             if (sub === 'subscriptionId' && rg === 'resourceGroup') {
               return Promise.resolve(expectedResults);
             }
