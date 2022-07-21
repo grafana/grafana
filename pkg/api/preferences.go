@@ -197,7 +197,7 @@ func (hs *HTTPServer) GetOrgPreferences(c *models.ReqContext) response.Response 
 // Update Current Org Prefs.
 //
 // Responses:
-// 200: addOrgUser
+// 200: addOrgUserResponse
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
@@ -216,7 +216,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *models.ReqContext) response.Respon
 // Patch Current Org Prefs.
 //
 // Responses:
-// 200: addOrgUser
+// 200: addOrgUserResponse
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
@@ -234,4 +234,21 @@ type UpdateOrgPreferencesParams struct {
 	// in:body
 	// required:true
 	Body dtos.UpdatePrefsCmd `json:"body"`
+}
+
+// swagger:response addOrgUserResponse
+type AddOrgUserResponse struct {
+	// The response message
+	// in: body
+	Body struct {
+		// ID Identifier of the added user.
+		// required: true
+		// example: 65
+		UsedID int64 `json:"id"`
+
+		// Message Message of the added user.
+		// required: true
+		// example: Data source added
+		Message string `json:"message"`
+	} `json:"body"`
 }
