@@ -434,6 +434,38 @@ msgstr ""
 msgid "nav.users"
 msgstr ""
 
+#: public/app/core/navigation/kiosk.ts
+msgid "navigation.kiosk.tv-alert"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-data"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-json"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.more"
+msgstr ""
+
+#: public/app/plugins/panel/graph/module.ts
+msgid "panel.header-menu.more-toggle"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.share"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.view"
+msgstr ""
+
 #: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
 msgid "share-modal.export.cancel-button"
 msgstr ""
@@ -519,7 +551,7 @@ msgid "share-modal.link.time-range-label"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
-msgid "share-modal.snapshot.copy-button"
+msgid "share-modal.snapshot.cancel-button"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
@@ -575,45 +607,11 @@ msgid "share-modal.snapshot.name"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
-msgid "share-modal.snapshot.sharing-button"
-msgstr ""
-
-#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
 msgid "share-modal.snapshot.timeout"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
 msgid "share-modal.snapshot.timeout-description"
-#: public/app/core/navigation/kiosk.ts
-msgid "navigation.kiosk.tv-alert"
-msgstr ""
-
-#: public/app/features/dashboard/utils/getPanelMenu.ts
-msgid "panel.header-menu.inspect"
-msgstr ""
-
-#: public/app/features/dashboard/utils/getPanelMenu.ts
-msgid "panel.header-menu.inspect-data"
-msgstr ""
-
-#: public/app/features/dashboard/utils/getPanelMenu.ts
-msgid "panel.header-menu.inspect-json"
-msgstr ""
-
-#: public/app/features/dashboard/utils/getPanelMenu.ts
-msgid "panel.header-menu.more"
-msgstr ""
-
-#: public/app/plugins/panel/graph/module.ts
-msgid "panel.header-menu.more-toggle"
-msgstr ""
-
-#: public/app/features/dashboard/utils/getPanelMenu.ts
-msgid "panel.header-menu.share"
-msgstr ""
-
-#: public/app/features/dashboard/utils/getPanelMenu.ts
-msgid "panel.header-menu.view"
 msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
