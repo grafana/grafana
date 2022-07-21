@@ -44,95 +44,95 @@ func TestUserAuth(t *testing.T) {
 			login := "loginuser0"
 
 			query := &models.GetUserByAuthInfoQuery{UserLookupParams: models.UserLookupParams{Login: &login}}
-			user, err := srv.LookupAndUpdate(context.Background(), query)
+			usr, err := srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, login)
+			require.Equal(t, usr.Login, login)
 
 			// By ID
-			id := user.ID
+			id := usr.ID
 
-			user, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
+			usr, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
 				UserID: &id,
 			})
 
 			require.Nil(t, err)
-			require.Equal(t, user.ID, id)
+			require.Equal(t, usr.ID, id)
 
 			// By Email
 			email := "user1@test.com"
 
-			user, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
+			usr, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
 				Email: &email,
 			})
 
 			require.Nil(t, err)
-			require.Equal(t, user.Email, email)
+			require.Equal(t, usr.Email, email)
 
 			// Don't find nonexistent user
 			email = "nonexistent@test.com"
 
-			user, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
+			usr, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
 				Email: &email,
 			})
 
-			require.Equal(t, models.ErrUserNotFound, err)
-			require.Nil(t, user)
+			require.Equal(t, user.ErrUserNotFound, err)
+			require.Nil(t, usr)
 		})
 
 		t.Run("Can set & locate by AuthModule and AuthId", func(t *testing.T) {
 			// get nonexistent user_auth entry
 			query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			user, err := srv.LookupAndUpdate(context.Background(), query)
+			usr, err := srv.LookupAndUpdate(context.Background(), query)
 
-			require.Equal(t, models.ErrUserNotFound, err)
-			require.Nil(t, user)
+			require.Equal(t, user.ErrUserNotFound, err)
+			require.Nil(t, usr)
 
 			// create user_auth entry
 			login := "loginuser0"
 
 			query.UserLookupParams.Login = &login
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, login)
+			require.Equal(t, usr.Login, login)
 
 			// get via user_auth
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, login)
+			require.Equal(t, usr.Login, login)
 
 			// get with non-matching id
-			idPlusOne := user.ID + 1
+			idPlusOne := usr.ID + 1
 
 			query.UserLookupParams.UserID = &idPlusOne
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, "loginuser1")
+			require.Equal(t, usr.Login, "loginuser1")
 
 			// get via user_auth
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, "loginuser1")
+			require.Equal(t, usr.Login, "loginuser1")
 
 			// remove user
 			err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", user.ID)
+				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", usr.ID)
 				return err
 			})
 			require.NoError(t, err)
 
 			// get via user_auth for deleted user
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
-			require.Equal(t, err, models.ErrUserNotFound)
-			require.Nil(t, user)
+			require.Equal(t, err, user.ErrUserNotFound)
+			require.Nil(t, usr)
 		})
 
 		t.Run("Can set & retrieve oauth token information", func(t *testing.T) {

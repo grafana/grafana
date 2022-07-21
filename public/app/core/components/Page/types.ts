@@ -1,9 +1,10 @@
-import { FC, HTMLAttributes, RefCallback } from 'react';
+import React, { FC, HTMLAttributes, RefCallback } from 'react';
 
 import { NavModel, NavModelItem } from '@grafana/data';
 
 import { PageHeader } from '../PageHeader/PageHeader';
 
+import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
 
 export interface PageProps extends HTMLAttributes<HTMLDivElement> {
@@ -28,5 +29,6 @@ export enum PageLayoutType {
 
 export interface PageType extends FC<PageProps> {
   Header: typeof PageHeader;
+  OldNavOnly: typeof OldNavOnly;
   Contents: typeof PageContents;
 }

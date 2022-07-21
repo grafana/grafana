@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
