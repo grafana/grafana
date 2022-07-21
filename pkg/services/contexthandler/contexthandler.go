@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -346,7 +347,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 			"err", err,
 		)
 
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			err = login.ErrInvalidCredentials
 		}
 		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)

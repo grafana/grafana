@@ -14,10 +14,8 @@ import (
 
 type SocialGitlab struct {
 	*SocialBase
-	allowedGroups       []string
-	apiUrl              string
-	roleAttributePath   string
-	roleAttributeStrict bool
+	allowedGroups []string
+	apiUrl        string
 }
 
 func (s *SocialGitlab) Type() int {
@@ -106,8 +104,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	err = json.Unmarshal(response.Body, &data)
-	if err != nil {
+	if err = json.Unmarshal(response.Body, &data); err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
 
@@ -117,11 +114,11 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	groups := s.GetGroups(client)
 
-	role, err := s.extractRole(response.Body)
+	role, err := s.extractRole(response.Body, groups)
 	if err != nil {
 		s.log.Error("Failed to extract role", "error", err)
 	}
-	if s.roleAttributeStrict && !models.RoleType(role).IsValid() {
+	if s.roleAttributeStrict && !role.IsValid() {
 		return nil, errors.New("invalid role")
 	}
 
@@ -131,7 +128,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		Login:  data.Username,
 		Email:  data.Email,
 		Groups: groups,
-		Role:   role,
+		Role:   string(role),
 	}
 
 	if !s.IsGroupMember(groups) {
@@ -139,17 +136,4 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	return userInfo, nil
-}
-
-func (s *SocialGitlab) extractRole(rawJSON []byte) (string, error) {
-	if s.roleAttributePath == "" {
-		return "", nil
-	}
-
-	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
-
-	if err != nil {
-		return "", err
-	}
-	return role, nil
 }

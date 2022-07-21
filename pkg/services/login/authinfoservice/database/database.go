@@ -55,7 +55,7 @@ func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *m
 
 func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	if query.UserId == 0 && query.AuthId == "" {
-		return models.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
 
 	userAuth := &models.UserAuth{
@@ -76,7 +76,7 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthIn
 	}
 
 	if !has {
-		return models.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
 
 	secretAccessToken, err := s.decodeAndDecrypt(userAuth.OAuthAccessToken)
