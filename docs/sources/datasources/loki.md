@@ -123,6 +123,10 @@ Operation can have additional parameters under the operation header. See the ope
 
 Some operations make sense only in specific order, if adding an operation would result in nonsensical query, operation will be added to the correct place. To order operations manually drag operation box by the operation name and drop in appropriate place.
 
+##### Hints
+
+In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
+
 #### Raw query
 
 This section is shown only if the `Raw query` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.

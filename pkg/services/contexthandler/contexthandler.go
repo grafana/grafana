@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -346,7 +347,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 			"err", err,
 		)
 
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			err = login.ErrInvalidCredentials
 		}
 		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
@@ -449,7 +450,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		return false
 	}
 
-	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithRenderAuth")
+	ctx, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithRenderAuth")
 	defer span.End()
 
 	renderUser, exists := h.RenderService.GetRenderUser(reqContext.Req.Context(), key)
@@ -458,12 +459,21 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		return true
 	}
 
-	reqContext.IsSignedIn = true
 	reqContext.SignedInUser = &models.SignedInUser{
 		OrgId:   renderUser.OrgID,
 		UserId:  renderUser.UserID,
 		OrgRole: models.RoleType(renderUser.OrgRole),
 	}
+
+	// UserID can be 0 for background tasks and, in this case, there is no user info to retrieve
+	if renderUser.UserID != 0 {
+		query := models.GetSignedInUserQuery{UserId: renderUser.UserID, OrgId: renderUser.OrgID}
+		if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err == nil {
+			reqContext.SignedInUser = query.Result
+		}
+	}
+
+	reqContext.IsSignedIn = true
 	reqContext.IsRenderCall = true
 	reqContext.LastSeenAt = time.Now()
 	return true

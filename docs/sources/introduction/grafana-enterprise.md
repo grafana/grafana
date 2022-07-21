@@ -49,14 +49,15 @@ With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security
 
 Grafana Enterprise adds the following features:
 
-- [Role-based access control]({{< relref "../enterprise/access-control/" >}}) to control access with role-based permissions.
-- [Data source permissions]({{< relref "../administration/data-source-management/datasource-permissions.md" >}}) to restrict query access to specific teams and users.
+- [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) to control access with role-based permissions.
+- [Data source permissions]({{< relref "../administration/data-source-management#data-source-permissions" >}}) to restrict query access to specific teams and users.
 - [Data source query caching]({{< relref "../enterprise/query-caching.md" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "../enterprise/reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}})
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "../enterprise/usage-insights/" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/" >}}) to manage your configuration or provisioning secrets with Vault.
+- [AWS Secrets Manager integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/store-secrets-using-aws-secrets-manager-plugin/" >}}) to store datasource secrets in AWS Secrets Manager.
 - [Auditing]({{< relref "../setup-grafana/configure-security/audit-grafana/" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "../setup-grafana/configure-security/configure-request-security/" >}}) makes it possible to restrict outgoing requests from the Grafana server.
 - [Settings updates at runtime]({{< relref "../enterprise/settings-updates.md" >}}) allows you to update Grafana settings at runtime without requiring a restart.

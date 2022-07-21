@@ -105,7 +105,6 @@ export class DashboardModel implements TimeModel {
   // ------------------
 
   // repeat process cycles
-  iteration?: number;
   declare meta: DashboardMeta;
   events: EventBusExtended;
 
@@ -206,7 +205,7 @@ export class DashboardModel implements TimeModel {
     meta.canEdit = meta.canEdit !== false;
     meta.canDelete = meta.canDelete !== false;
 
-    meta.showSettings = meta.canSave;
+    meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
     meta.hasUnsavedFolderChange = false;
 
@@ -521,13 +520,10 @@ export class DashboardModel implements TimeModel {
       return;
     }
 
-    this.iteration = (this.iteration || new Date().getTime()) + 1;
     // cleanup scopedVars
     deleteScopeVars(this.panels);
 
-    const panelsToRemove = this.panels.filter(
-      (p) => (!p.repeat || p.repeatedByRow) && p.repeatPanelId && p.repeatIteration !== this.iteration
-    );
+    const panelsToRemove = this.panels.filter((p) => (!p.repeat || p.repeatedByRow) && p.repeatPanelId);
 
     // remove panels
     pull(this.panels, ...panelsToRemove);
@@ -541,8 +537,6 @@ export class DashboardModel implements TimeModel {
     }
 
     this.cleanUpRepeats();
-
-    this.iteration = (this.iteration || new Date().getTime()) + 1;
 
     for (let i = 0; i < this.panels.length; i++) {
       const panel = this.panels[i];
@@ -598,7 +592,6 @@ export class DashboardModel implements TimeModel {
     // insert after source panel + value index
     this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
 
-    clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
     clone.repeat = undefined;
 
@@ -761,12 +754,13 @@ export class DashboardModel implements TimeModel {
   updateRepeatedPanelIds(panel: PanelModel, repeatedByRow?: boolean) {
     panel.repeatPanelId = panel.id;
     panel.id = this.getNextPanelId();
-    panel.repeatIteration = this.iteration;
+
     if (repeatedByRow) {
       panel.repeatedByRow = true;
     } else {
       panel.repeat = undefined;
     }
+
     return panel;
   }
 
@@ -841,9 +835,11 @@ export class DashboardModel implements TimeModel {
     delete newPanel.repeatIteration;
     delete newPanel.repeatPanelId;
     delete newPanel.scopedVars;
+
     if (newPanel.alert) {
       delete newPanel.thresholds;
     }
+
     delete newPanel.alert;
 
     // does it fit to the right?
@@ -1120,6 +1116,10 @@ export class DashboardModel implements TimeModel {
     if (shouldUpdateGridPositionLayout) {
       this.events.publish(new DashboardPanelsChangedEvent());
     }
+  }
+
+  getDefaultTime() {
+    return this.originalTime;
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {

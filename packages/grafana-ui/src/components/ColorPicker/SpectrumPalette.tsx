@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import { useThrottleFn } from 'react-use';
@@ -37,13 +37,13 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
 
   return (
     <div className={styles.wrapper}>
-      <RgbaStringColorPicker className={cx(styles.root)} color={rgbaString} onChange={setColor} />
+      <RgbaStringColorPicker className={styles.root} color={rgbaString} onChange={setColor} />
       <ColorInput theme={theme} color={rgbaString} onChange={setColor} className={styles.colorInput} />
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     flex-grow: 1;
   `,

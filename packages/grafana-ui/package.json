@@ -32,7 +32,6 @@
   "dependencies": {
     "@emotion/css": "11.9.0",
     "@emotion/react": "11.9.0",
-    "@grafana/aws-sdk": "0.0.36",
     "@grafana/data": "9.1.0-pre",
     "@grafana/e2e-selectors": "9.1.0-pre",
     "@grafana/schema": "9.1.0-pre",
@@ -91,7 +90,7 @@
     "slate-plain-serializer": "0.7.10",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.0",
-    "uplot": "1.6.21",
+    "uplot": "1.6.22",
     "uuid": "8.3.2"
   },
   "devDependencies": {
@@ -110,6 +109,7 @@
     "@storybook/addons": "6.4.21",
     "@storybook/api": "6.4.21",
     "@storybook/builder-webpack5": "6.4.21",
+    "@storybook/client-api": "6.4.21",
     "@storybook/components": "6.4.21",
     "@storybook/core-events": "6.4.21",
     "@storybook/manager-webpack5": "6.4.21",

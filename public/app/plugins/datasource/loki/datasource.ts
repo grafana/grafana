@@ -1,10 +1,7 @@
-// Libraries
 import { cloneDeep, map as lodashMap } from 'lodash';
-import Prism from 'prismjs';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-// Types
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
@@ -33,6 +30,9 @@ import {
   TimeRange,
   rangeUtil,
   toUtc,
+  QueryHint,
+  getDefaultTimeRange,
+  QueryFixAction,
 } from '@grafana/data';
 import { FetchError, config, DataSourceWithBackend } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -44,16 +44,16 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
-import { addLabelToQuery } from './add_label_to_query';
+import { addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
-import { getNormalizedLokiQuery } from './query_utils';
+import { getQueryHints } from './queryHints';
+import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
-import syntax from './syntax';
 import { LokiOptions, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
@@ -108,7 +108,7 @@ export class LokiDatasource
       const normalized = getNormalizedLokiQuery(query);
       const { expr } = normalized;
       // it has to be a logs-producing range-query
-      return expr && !isMetricsQuery(expr) && normalized.queryType === LokiQueryType.Range;
+      return expr && isLogsQuery(expr) && normalized.queryType === LokiQueryType.Range;
     };
 
     const isLogsVolumeAvailable = request.targets.some(isQuerySuitable);
@@ -171,7 +171,7 @@ export class LokiDatasource
   runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     // this only works in explore-mode, so variables don't need to be handled,
     //  and only for logs-queries, not metric queries
-    const logsQueries = request.targets.filter((query) => query.expr !== '' && !isMetricsQuery(query.expr));
+    const logsQueries = request.targets.filter((query) => query.expr !== '' && isLogsQuery(query.expr));
 
     if (logsQueries.length === 0) {
       return of({
@@ -348,7 +348,26 @@ export class LokiDatasource
     return Array.from(streams);
   }
 
-  // By implementing getTagKeys and getTagValues we add ad-hoc filtters functionality
+  async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
+    // Currently works only for log samples
+    if (!isValidQuery(query.expr) || !isLogsQuery(query.expr)) {
+      return [];
+    }
+
+    const lokiLogsQuery: LokiQuery = {
+      expr: query.expr,
+      queryType: LokiQueryType.Range,
+      refId: 'log-samples',
+      maxLines: 50,
+    };
+
+    // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
+    const timeRange = getDefaultTimeRange();
+    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Explore, 'log-samples');
+    return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
+  }
+
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagKeys() {
     return await this.labelNamesQuery();
   }
@@ -371,15 +390,31 @@ export class LokiDatasource
     return escapedValues.join('|');
   }
 
-  modifyQuery(query: LokiQuery, action: any): LokiQuery {
+  modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = this.addLabelToQuery(expression, action.key, '=', action.value);
+        if (action.options?.key && action.options?.value) {
+          expression = this.addLabelToQuery(expression, action.options.key, '=', action.options.value);
+        }
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = this.addLabelToQuery(expression, action.key, '!=', action.value);
+        if (action.options?.key && action.options?.value) {
+          expression = this.addLabelToQuery(expression, action.options.key, '!=', action.options.value);
+        }
+        break;
+      }
+      case 'ADD_LOGFMT_PARSER': {
+        expression = addParserToQuery(expression, 'logfmt');
+        break;
+      }
+      case 'ADD_JSON_PARSER': {
+        expression = addParserToQuery(expression, 'json');
+        break;
+      }
+      case 'ADD_NO_PIPELINE_ERROR': {
+        expression = addNoPipelineErrorToQuery(expression);
         break;
       }
       default:
@@ -396,10 +431,10 @@ export class LokiDatasource
     return Math.ceil(date.valueOf() * 1e6);
   }
 
-  getLogRowContext = (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
+  getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
     const direction = (options && options.direction) || 'BACKWARD';
     const limit = (options && options.limit) || 10;
-    const { query, range } = this.prepareLogRowContextQueryTarget(row, limit, direction);
+    const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction);
 
     const processDataFrame = (frame: DataFrame): DataFrame => {
       // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
@@ -462,11 +497,13 @@ export class LokiDatasource
     );
   };
 
-  prepareLogRowContextQueryTarget = (
+  prepareLogRowContextQueryTarget = async (
     row: LogRowModel,
     limit: number,
     direction: 'BACKWARD' | 'FORWARD'
-  ): { query: LokiQuery; range: TimeRange } => {
+  ): Promise<{ query: LokiQuery; range: TimeRange }> => {
+    // need to await the languageProvider to be started to have all labels. This call is not blocking after it has been called once.
+    await this.languageProvider.start();
     const labels = this.languageProvider.getLabelKeys();
     const expr = Object.keys(row.labels)
       .map((label: string) => {
@@ -681,6 +718,10 @@ export class LokiDatasource
   getVariables(): string[] {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
+
+  getQueryHints(query: LokiQuery, result: DataFrame[]): QueryHint[] {
+    return getQueryHints(query.expr, result);
+  }
 }
 
 export function lokiRegularEscape(value: any) {
@@ -695,21 +736,6 @@ export function lokiSpecialRegexEscape(value: any) {
     return lokiRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
   }
   return value;
-}
-
-/**
- * Checks if the query expression uses function and so should return a time series instead of logs.
- * Sometimes important to know that before we actually do the query.
- */
-export function isMetricsQuery(query: string): boolean {
-  if (!query) {
-    return false;
-  }
-  const tokens = Prism.tokenize(query, syntax);
-  return tokens.some((t) => {
-    // Not sure in which cases it can be string maybe if nothing matched which means it should not be a function
-    return typeof t !== 'string' && t.type === 'function';
-  });
 }
 
 function extractLevel(dataFrame: DataFrame): LogLevel {

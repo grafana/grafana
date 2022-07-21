@@ -26,6 +26,8 @@ export enum AccessControlAction {
   ServiceAccountsCreate = 'serviceaccounts:create',
   ServiceAccountsWrite = 'serviceaccounts:write',
   ServiceAccountsDelete = 'serviceaccounts:delete',
+  ServiceAccountsPermissionsRead = 'serviceaccounts.permissions:read',
+  ServiceAccountsPermissionsWrite = 'serviceaccounts.permissions:write',
 
   OrgsRead = 'orgs:read',
   OrgsPreferencesRead = 'orgs.preferences:read',
@@ -48,6 +50,7 @@ export enum AccessControlAction {
   DataSourcesWrite = 'datasources:write',
   DataSourcesDelete = 'datasources:delete',
   DataSourcesPermissionsRead = 'datasources.permissions:read',
+  DataSourcesInsightsRead = 'datasources.insights:read',
 
   ActionServerStatsRead = 'server.stats:read',
 
@@ -64,6 +67,8 @@ export enum AccessControlAction {
   ActionTeamsRolesAdd = 'teams.roles:add',
   ActionTeamsRolesRemove = 'teams.roles:remove',
   ActionUserRolesList = 'users.roles:read',
+  ActionUserRolesAdd = 'users.roles:add',
+  ActionUserRolesRemove = 'users.roles:remove',
 
   DashboardsRead = 'dashboards:read',
   DashboardsWrite = 'dashboards:write',

@@ -34,6 +34,242 @@ msgstr ""
 msgid "common.save"
 msgstr ""
 
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.data-options"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.dataframe-aria-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.dataframe-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.download-csv"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.download-excel-description"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.download-excel-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.download-logs"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.download-service"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.download-traces"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.excel-header"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.formatted"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.formatted-data-description"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.formatted-data-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.panel-transforms"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.series-to-columns"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataTab.tsx
+msgid "dashboard.inspect-data.transformation"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.transformations-description"
+msgstr ""
+
+#: public/app/features/inspector/InspectDataOptions.tsx
+msgid "dashboard.inspect-data.transformations-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.dataframe-description"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.dataframe-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-data-description"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-data-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-json-description"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.panel-json-label"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.select-source"
+msgstr ""
+
+#: public/app/features/inspector/InspectJSONTab.tsx
+msgid "dashboard.inspect-json.unknown"
+msgstr ""
+
+#: public/app/features/inspector/InspectMetadataTab.tsx
+msgid "dashboard.inspect-meta.no-inspector"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.data-title"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.processing-time"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.queries"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.request-time"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.rows"
+msgstr ""
+
+#: public/app/features/inspector/InspectStatsTab.tsx
+msgid "dashboard.inspect-stats.table-title"
+msgstr ""
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.actions-tab"
+msgstr ""
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.data-tab"
+msgstr ""
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.error-tab"
+msgstr ""
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.json-tab"
+msgstr ""
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.meta-tab"
+msgstr ""
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.query-tab"
+msgstr ""
+
+#: public/app/features/dashboard/components/Inspector/hooks.ts
+msgid "dashboard.inspect.stats-tab"
+msgstr ""
+
+#: public/app/features/dashboard/components/Inspector/InspectContent.tsx
+msgid "dashboard.inspect.subtitle"
+msgstr ""
+
+#: public/app/features/dashboard/components/Inspector/InspectContent.tsx
+msgid "dashboard.inspect.title"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-arialabel"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-description"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-label"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.on-description"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.add-panel"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.comments-show"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.mark-favorite"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.open-original"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-next"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-previous"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-stop"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.toolbar.refresh"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.save"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.settings"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.share"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.tv-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.unmark-favorite"
+msgstr ""
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr ""
@@ -75,10 +311,6 @@ msgid "nav.api-keys"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
-msgid "nav.change-password"
-msgstr ""
-
-#: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.config"
 msgstr ""
 
@@ -114,10 +346,6 @@ msgstr ""
 msgid "nav.explore"
 msgstr ""
 
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.folder"
-#~ msgstr ""
-
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.help"
 msgstr ""
@@ -125,10 +353,6 @@ msgstr ""
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.home"
 msgstr ""
-
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.import"
-#~ msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.library-panels"
@@ -175,7 +399,11 @@ msgid "nav.plugins"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
-msgid "nav.profile-settings"
+msgid "nav.profile/password"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.profile/settings"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
@@ -204,6 +432,38 @@ msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.users"
+msgstr ""
+
+#: public/app/core/navigation/kiosk.ts
+msgid "navigation.kiosk.tv-alert"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-data"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.inspect-json"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.more"
+msgstr ""
+
+#: public/app/plugins/panel/graph/module.ts
+msgid "panel.header-menu.more-toggle"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.share"
+msgstr ""
+
+#: public/app/features/dashboard/utils/getPanelMenu.ts
+msgid "panel.header-menu.view"
 msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx

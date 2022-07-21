@@ -32,7 +32,6 @@ function buildWarningNav(text: string, subTitle?: string): NavModel {
     icon: 'exclamation-triangle',
   };
   return {
-    breadcrumbs: [node],
     node: node,
     main: node,
   };

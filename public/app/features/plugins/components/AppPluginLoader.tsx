@@ -3,7 +3,7 @@ import { useLocation, useParams } from 'react-router-dom';
 
 import { NavModel } from '@grafana/data';
 import { getWarningNav } from 'app/angular/services/nav_model_srv';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 
 import { useImportAppPlugin } from '../hooks/useImportAppPlugin';
@@ -23,13 +23,13 @@ export const AppPluginLoader = ({ id, basePath }: AppPluginLoaderProps) => {
   const { pathname } = useLocation();
 
   if (error) {
-    return <Page.Header model={getWarningNav(error.message, error.stack)} />;
+    return <Page.Header navItem={getWarningNav(error.message, error.stack).main} />;
   }
 
   return (
     <>
       {loading && <PageLoader />}
-      {nav && <Page.Header model={nav} />}
+      {nav && <Page.Header navItem={nav.main} />}
       {!loading && plugin && plugin.root && (
         <plugin.root
           meta={plugin.meta}

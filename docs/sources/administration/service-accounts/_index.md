@@ -16,15 +16,9 @@ weight: 800
 
 # Service accounts
 
-You can use service accounts to run automated or compute workloads.
+You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and tokens to authenticate applications, such as Terraform, with the Grafana API.
 
-{{< section >}}
-
-## About service accounts
-
-A service account can be used to run automated workloads in Grafana, like dashboard provisioning, configuration, or report generation. Create service accounts and tokens to authenticate applications like Terraform with the Grafana API.
-
-> **Note:** Service accounts are available in Grafana 8.5+ as a beta feature. To enable service accounts, refer to the [Enable service accounts]({{< ref "#enable-service-accounts" >}}) section. Service accounts will eventually replace [API keys]({{< relref "../api-keys/" >}}) as the primary way to authenticate applications that interact with Grafana.
+> **Note:** Service accounts will eventually replace [API keys]({{< relref "../api-keys/" >}}) as the primary way to authenticate applications that interact with Grafana.
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
 
@@ -59,47 +53,16 @@ The added benefits of service accounts to API keys include:
 - Unlike API keys, service account tokens are not associated with a specific user, which means that applications can be authenticated even if a Grafana user is deleted.
 - You can grant granular permissions to service accounts by leveraging [role-based access control]({{< relref "../roles-and-permissions/access-control/" >}}). For more information about permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/" >}}).
 
-## Enable service accounts in Grafana
-
-Service accounts are available behind the `serviceAccounts` feature toggle, available in Grafana 8.5+.
-
-You can enable service accounts by:
-
-- modifying the Grafana configuration file, or
-- configuring an environment variable
-
-### Enable service accounts in the Grafana configuration file
-
-This topic shows you how to enable service accounts by modifying the Grafana configuration file.
-
-1. Sign in to the Grafana server and locate the configuration file. For more information about finding the configuration file, refer to LINK.
-2. Open the configuration file and locate the [feature toggles section]({{< relref "../../setup-grafana/configure-grafana/#feature_toggles" >}}). Add `serviceAccounts` as a [feature_toggle]({{< relref "../../setup-grafana/configure-grafana/#feature_toggle" >}}).
-
-```
-[feature_toggles]
-# enable features, separated by spaces
-enable = serviceAccounts
-```
-
-1. Save your changes, Grafana should recognize your changes; in case of any issues we recommend restarting the Grafana server.
-
-### Enable service accounts with an environment variable
-
-This topic shows you how to enable service accounts by setting environment variables before starting Grafana.
-
-Follow the instructions to [override configuration with environment variables]({{< relref "../../setup-grafana/configure-grafana/#override-configuration-with-environment-variables" >}}). Set the following environment variable: `GF_FEATURE_TOGGLES_ENABLE = serviceAccounts`.
-
-> **Note:** Environment variables override configuration file settings.
-
 ## Create a service account in Grafana
 
 A service account can be used to run automated workloads in Grafana, like dashboard provisioning, configuration, or report generation. For more information about how you can use service accounts, refer to [About service accounts]({{< ref "#about-service-accounts" >}}).
 
 For more information about creating service accounts via the API, refer to [Create a service account in the HTTP API]({{< relref "../../developers/http_api/serviceaccount/#create-service-account" >}}).
 
+Note that the user who created a service account will also be able to read, update and delete the service account that they created, as well as permissions associated with that service account.
+
 ### Before you begin
 
-- Ensure you have added the feature toggle for service accounts `serviceAccounts`. For more information about adding the feature toggle, refer to [Enable service accounts]({{< ref "#enable-service-accounts" >}}).
 - Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
 ### To create a service account
@@ -121,7 +84,6 @@ You can create a service account token using the Grafana UI or via the API. For 
 
 ### Before you begin
 
-- Ensure you have added the `serviceAccounts` feature toggle to Grafana. For more information about adding the feature toggle, refer to [Enable service accounts]({{< ref "#enable-service-accounts" >}}).
 - Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
 ### To add a token to a service account
@@ -135,3 +97,22 @@ You can create a service account token using the Grafana UI or via the API. For 
    - The expiry date specifies how long you want the key to be valid.
    - If you are unsure of an expiration date, we recommend that you set the token to expire after a short time, such as a few hours or less. This limits the risk associated with a token that is valid for a long time.
 1. Click **Generate service account token**.
+
+## Assign roles to a service account in Grafana
+
+You can assign roles to a Grafana service account to control access for the associated service account tokens.
+You can assign roles to a service account using the Grafana UI or via the API. For more information about assigning a role to a service account via the API, refer to [Update service account using the HTTP API]({{< relref "../../developers/http_api/serviceaccount/#update-service-account" >}}).
+
+In [Grafana Enterprise]({{< relref "../../enterprise/" >}}), you can also [assign RBAC roles]({{< relref "../roles-and-permissions/access-control/assign-rbac-roles" >}}) to grant very specific permissions to applications that interact with Grafana.
+
+### Before you begin
+
+- Ensure you have permission to update service accounts permissions. By default, the organization administrator role is required to update service accounts permissions. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
+
+### To assign a role to a service account
+
+1. Sign in to Grafana, then hover your cursor over **Configuration** (the gear icon) in the sidebar.
+1. Click **Service accounts**.
+1. Click the service account to which you want to assign a role. As an alternative, find the service account in the list view,
+1. Assign a role using the role picker.
+1. Click **Update**.
