@@ -84,14 +84,13 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 	// this is to init the sql secret store inside the migration
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	kvStore := kvstore.ProvideService(sqlStore)
 	migratorService := ProvidePluginSecretMigrationService(
 		secretsStoreForPlugin,
 		cfg,
 		sqlStore,
 		secretsService,
 		remoteCheck,
-		kvStore,
+		kvstore.ProvideService(sqlStore),
 	)
 
 	secretsSql := &secretsKVStoreSQL{
