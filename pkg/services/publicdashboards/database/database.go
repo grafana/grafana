@@ -34,6 +34,22 @@ func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 	}
 }
 
+func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
+	dashboard := &models.Dashboard{Uid: dashboardUid}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.Get(dashboard)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return ErrPublicDashboardNotFound
+		}
+		return nil
+	})
+
+	return dashboard, err
+}
+
 // Retrieves public dashboard configuration
 func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
 	if accessToken == "" {
@@ -58,17 +74,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, acces
 	}
 
 	// find dashboard
-	dashRes := &models.Dashboard{OrgId: pdRes.OrgId, Uid: pdRes.DashboardUid}
-	err = d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Get(dashRes)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return ErrPublicDashboardNotFound
-		}
-		return nil
-	})
+	dashRes, err := d.GetDashboard(ctx, pdRes.DashboardUid)
 
 	if err != nil {
 		return nil, nil, err
