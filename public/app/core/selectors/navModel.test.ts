@@ -28,7 +28,7 @@ describe('getNavModel', () => {
 
   const navIndex = buildInitialState();
 
-  test('get nav model for 1 level deep child', () => {
+  test('returns the correct nav model a 1st-level child', () => {
     const navModel = getNavModel(navIndex, 'apps/child1');
     expect(navModel.main.id).toBe('apps');
     expect(navModel.node.id).toBe('apps/child1');
