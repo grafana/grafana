@@ -16,6 +16,10 @@ import { RuleEditorSection } from './RuleEditorSection';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
+function parseDurationToMiliseconds(duration: string) {
+  return durationToMilliseconds(parseDuration(duration));
+}
+
 const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
     value: true,
@@ -23,10 +27,8 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   },
   pattern: durationValidationPattern,
   validate: (value) => {
-    const evaluateEveryDuration = parseDuration(evaluateEvery);
-    const forDuration = parseDuration(value);
-    const millisFor = durationToMilliseconds(forDuration);
-    const millisEvery = durationToMilliseconds(evaluateEveryDuration);
+    const millisFor = parseDurationToMiliseconds(value);
+    const millisEvery = parseDurationToMiliseconds(evaluateEvery);
 
     return millisFor >= millisEvery ? true : 'For must be greater than or equal to evaluate every.';
   },
@@ -53,6 +55,15 @@ const evaluateEveryValidationOptions: RegisterOptions = {
   },
 };
 
+function useEvaluateEveryGlobalLimit(alertGroupEvaluateEvery: string) {
+  const evaluateEveryMilis = parseDurationToMiliseconds(alertGroupEvaluateEvery);
+  const evaluateEveryGlobalLimitMilis = parseDurationToMiliseconds(config.unifiedAlerting.minInterval);
+
+  const exceedsLimit = evaluateEveryGlobalLimitMilis > evaluateEveryMilis && evaluateEveryMilis > 0;
+
+  return { exceedsLimit };
+}
+
 export const GrafanaEvaluationBehavior: FC = () => {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
@@ -62,12 +73,7 @@ export const GrafanaEvaluationBehavior: FC = () => {
     watch,
   } = useFormContext<RuleFormValues>();
 
-  const evaluateEveryDuration = parseDuration(watch('evaluateEvery'));
-  const millisEvery = durationToMilliseconds(evaluateEveryDuration);
-  const evaluateEveryGlobalLimitDuration = parseDuration(config.unifiedAlerting.minInterval);
-  const milisGlobalLimit = durationToMilliseconds(evaluateEveryGlobalLimitDuration);
-
-  const exceedsGlobalEvaluationLimit = milisGlobalLimit > millisEvery && millisEvery > 0;
+  const { exceedsLimit: exceedsGlobalEvaluationLimit } = useEvaluateEveryGlobalLimit(watch('evaluateEvery'));
 
   const evaluateEveryId = 'eval-every-input';
   const evaluateForId = 'eval-for-input';
