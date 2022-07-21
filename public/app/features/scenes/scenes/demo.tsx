@@ -78,7 +78,7 @@ export function getScenePanelRepeaterTest(): Scene {
           uid: 'gdev-testdata',
           type: 'testdata',
         },
-        seriesCount: 5,
+        seriesCount: 2,
         alias: '__server_names',
         scenarioId: 'random_walk',
       },
@@ -119,7 +119,7 @@ export function getScenePanelRepeaterTest(): Scene {
     $data: queryRunner,
     actions: [
       new SceneToolbarInput({
-        value: '5',
+        value: '2',
         onChange: (newValue) => {
           queryRunner.setState({
             queries: [

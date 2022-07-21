@@ -1,9 +1,10 @@
-import { FC, HTMLAttributes, RefCallback } from 'react';
+import React, { FC, HTMLAttributes, RefCallback } from 'react';
 
 import { NavModel, NavModelItem } from '@grafana/data';
 
 import { PageHeader } from '../PageHeader/PageHeader';
 
+import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
 
 export interface PageProps extends HTMLAttributes<HTMLDivElement> {
@@ -11,6 +12,7 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   navId?: string;
   navModel?: NavModel;
   pageNav?: NavModelItem;
+  subTitle?: React.ReactNode;
   layout?: PageLayoutType;
   /** Something we can remove when we remove the old nav. */
   toolbar?: React.ReactNode;
@@ -27,5 +29,6 @@ export enum PageLayoutType {
 
 export interface PageType extends FC<PageProps> {
   Header: typeof PageHeader;
+  OldNavOnly: typeof OldNavOnly;
   Contents: typeof PageContents;
 }

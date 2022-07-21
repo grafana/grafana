@@ -194,7 +194,7 @@ func TestSQLStore_AddOrgUser(t *testing.T) {
 		if err != nil {
 			return err
 		} else if !has {
-			return models.ErrUserNotFound
+			return user.ErrUserNotFound
 		}
 		return nil
 	})
