@@ -139,6 +139,12 @@ func parseKeys(keys []*smp.Key) []Key {
 }
 
 func updateFatalFlag(ctx context.Context, skv secretsKVStorePlugin) {
+	// This function makes the most sense in here because it handles all possible scenarios:
+	//   - User changed backwards compatibility flag, so we have to migrate secrets either to or from the plugin (get or set)
+	//   - Migration is on, so we migrate secrets to the plugin (set)
+	//   - User doesn't migrate, but stores a new secret in the plugin (set)
+	// Rather than updating the flag in several places, it is cleaner to just do this check once
+	// Very early on. Once backwards compatibility to legacy secrets is gone in Grafana 10, this can go away as well
 	fatalFlagOnce.Do(func() {
 		var err error
 		if isFatal, _ := isPluginStartupErrorFatal(ctx, skv.kvstore); !isFatal && skv.backwardsCompatibilityDisabled {
