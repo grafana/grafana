@@ -10,6 +10,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
     ,
     .rc-tree {
       margin: 0;
+      margin-bottom: 15px;
       border: 1px solid transparent;
 
       &-focused:not(&-active-focused) {
@@ -71,7 +72,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             content: '';
           }
           & ~ .rc-tree-treenode {
-            border-left: 2px solid chocolate;
+            border-left: 2px solid ${theme.v1.colors.formInputBorder};
           }
         }
         &.drop-target {

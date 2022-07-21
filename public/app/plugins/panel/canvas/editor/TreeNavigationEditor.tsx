@@ -1,14 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import Tree from 'rc-tree';
-import React, { Key, useEffect, useState } from 'react';
+import React, { Key, useEffect, useMemo, useState } from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
-import { Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { Button, HorizontalGroup, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
+import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
 import { LayerName } from '../../../../core/components/Layers/LayerName';
+import { CanvasElementOptions, canvasElementRegistry } from '../../../../features/canvas';
+import { notFoundItem } from '../../../../features/canvas/elements/notFound';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
 import { getTreeData, onNodeDrop, TreeElement } from '../tree';
@@ -28,12 +31,14 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
   const selectedBgColor = theme.v1.colors.formInputBorderActive;
   const { settings } = item;
+  const selection = useMemo(
+    () => (settings?.selected ? settings.selected.map((v) => v.getName()) : []),
+    [settings?.selected]
+  );
 
   useEffect(() => {
-    const selection: string[] = settings?.selected ? settings.selected.map((v) => v.getName()) : [];
-
     setTreeData(getTreeData(item?.settings?.scene.root, selection, selectedBgColor));
-  }, [item?.settings?.scene.root, selectedBgColor, settings?.selected]);
+  }, [item?.settings?.scene.root, selectedBgColor, selection]);
 
   if (!settings) {
     return <div>No settings</div>;
@@ -100,7 +105,8 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   };
 
   const onDuplicate = (element: ElementState) => {
-    layer.doAction(LayerActionID.Duplicate, element);
+    const elLayer = element.parent ?? layer;
+    elLayer.doAction(LayerActionID.Duplicate, element);
   };
 
   const onNameChange = (element: ElementState, name: string) => {
@@ -117,7 +123,23 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     return element.options.type;
   };
 
-  const renderTreeNode = (nodeData: TreeElement) => {
+  const onAddItem = (sel: SelectableValue<string>) => {
+    const item = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
+    const newElementOptions = item.getNewOptions() as CanvasElementOptions;
+    newElementOptions.type = item.id;
+    const newElement = new ElementState(item, newElementOptions, layer);
+    newElement.updateData(layer.scene.context);
+    layer.elements.push(newElement);
+    layer.scene.save();
+
+    layer.reinitializeMoveable();
+  };
+
+  const onClearSelection = () => {
+    layer.scene.clearCurrentSelection();
+  };
+
+  const onTitleRender = (nodeData: TreeElement) => {
     const element = nodeData.dataRef;
     const name = nodeData.dataRef.getName();
 
@@ -146,8 +168,6 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
             />
           </>
         )}
-
-        <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
       </>
     );
   };
@@ -167,9 +187,22 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         expandedKeys={expandedKeys}
         onExpand={onExpand}
         treeData={treeData}
-        titleRender={renderTreeNode}
+        titleRender={onTitleRender}
         switcherIcon={switcherIcon}
       />
+
+      <HorizontalGroup>
+        <AddLayerButton
+          onChange={onAddItem}
+          options={canvasElementRegistry.selectOptions().options}
+          label={'Add item'}
+        />
+        {selection.length > 0 && (
+          <Button size="sm" variant="secondary" onClick={onClearSelection}>
+            Clear selection
+          </Button>
+        )}
+      </HorizontalGroup>
     </>
   );
 };
