@@ -8,7 +8,7 @@ import { Stack } from '@grafana/experimental';
 import { Button, ConfirmModal, Modal, useStyles2, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { ReceiverState } from 'app/types';
+import { ContactPointsState } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -40,19 +40,11 @@ function ReceiverError({ errorCount }: ReceiverErrorProps) {
   );
 }
 interface ReceiverHealthProps {
-  receiverName: string;
+  errorsByReceiver: number;
 }
 
-function ReceiverHealth({ receiverName }: ReceiverHealthProps) {
-  const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
-  const { result: contactPointsState } = contactPointsStateRequest ?? initialAsyncRequestState;
-  const receiverState: ReceiverState | undefined = contactPointsState?.receivers[receiverName];
-  const errorsByReceiver = receiverState?.errorCount ?? 0;
-  if (errorsByReceiver > 0) {
-    return <ReceiverError errorCount={errorsByReceiver} />;
-  } else {
-    return <div>OK</div>;
-  }
+function ReceiverHealth({ errorsByReceiver }: ReceiverHealthProps) {
+  return errorsByReceiver > 0 ? <ReceiverError errorCount={errorsByReceiver} /> : <div>OK</div>;
 }
 
 interface Props {
@@ -67,6 +59,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
+
   const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
   const { result: contactPointsState } = (alertManagerName && contactPointsStateRequest) || initialAsyncRequestState;
   const receivers = contactPointsState?.receivers ?? {};
@@ -107,6 +100,9 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
       })) ?? [],
     [config, grafanaNotifiers.result]
   );
+
+  const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: string) =>
+    contactPointsState?.receivers[receiverName]?.errorCount ?? 0;
 
   return (
     <ReceiversSection
@@ -149,7 +145,9 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
               <td>{receiver.types.join(', ')}</td>
               {errorStateAvailable && (
                 <td>
-                  <ReceiverHealth receiverName={receiver.name} />
+                  <ReceiverHealth
+                    errorsByReceiver={contactPointsState ? errorsByReceiver(contactPointsState, receiver.name) : 0}
+                  />
                 </td>
               )}
               <Authorize actions={[permissions.update, permissions.delete]}>
