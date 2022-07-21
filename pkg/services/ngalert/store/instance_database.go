@@ -92,9 +92,12 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 // writes transactions with a maximum count of 400 rows. Larger writes are
 // split into multiple transactions.
 func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error {
-	rowLimit := 400
-	for i := 0; i < len(cmd); i += rowLimit {
-		err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	// SQLite has a max 999 variable limit per statement. We use almost 9 per
+	// row, so we split our writes into fewer prepared statements using the row
+	// limit.
+	rowLimit := 80
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for i := 0; i < len(cmd); i += rowLimit {
 			values := make([]interface{}, 0)
 			limit := i + rowLimit
 			if len(cmd) < limit {
@@ -120,7 +123,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 				"alert_instance",
 				[]string{"rule_org_id", "rule_uid", "labels_hash"},
 				[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"},
-				len(cmd))
+				len(cmd[i:limit]))
 			if err != nil {
 				return err
 			}
@@ -130,11 +133,11 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 				return err
 			}
 
-			return nil
-		})
-		if err != nil {
-			return err
 		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -170,26 +173,16 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 		return nil
 	}
 
-	rowLimit := 400
-	for i := 0; i < len(keys); i = +rowLimit {
-		err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			limit := i + rowLimit
-			if len(keys) < limit {
-				limit = len(keys)
+	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for _, k := range keys {
+			_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels_hash = ?",
+				k.RuleOrgID, k.RuleUID, k.LabelsHash)
+			if err != nil {
+				return err
 			}
-
-			for _, k := range keys[i:limit] {
-				_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels_hash = ?",
-					k.RuleOrgID, k.RuleUID, k.LabelsHash)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return err
 		}
-	}
-	return nil
+		return nil
+	})
+
+	return err
 }

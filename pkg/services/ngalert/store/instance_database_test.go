@@ -35,7 +35,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	alertRule := tests.CreateTestAlertRule(b, ctx, dbstore, 60, mainOrgID)
 
 	// Create some instances to write down and then delete.
-	count := 100
+	count := 10_000
 	instances := make([]models.AlertInstance, 0, count)
 	keys := make([]models.AlertInstanceKey, 0, count)
 	for i := 0; i < count; i++ {
@@ -60,6 +60,57 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 		_ = dbstore.SaveAlertInstances(ctx, instances...)
 		_ = dbstore.DeleteAlertInstances(ctx, keys...)
 	}
+}
+
+func TestAlertInstanceBulkWrite(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	ctx := context.Background()
+	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	const mainOrgID int64 = 1
+
+	alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+
+	// Create some instances to write down and then delete.
+	count := 1_000_000
+	instances := make([]models.AlertInstance, 0, count)
+	keys := make([]models.AlertInstanceKey, 0, count)
+	for i := 0; i < count; i++ {
+		labels := models.InstanceLabels{"test": fmt.Sprint(i)}
+		_, labelsHash, _ := labels.StringAndHash()
+		instance := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  alertRule.OrgID,
+				RuleUID:    alertRule.UID,
+				LabelsHash: labelsHash,
+			},
+			CurrentState:  models.InstanceStateFiring,
+			CurrentReason: string(models.InstanceStateError),
+			Labels:        labels,
+		}
+		instances = append(instances, instance)
+		keys = append(keys, instance.AlertInstanceKey)
+	}
+
+	err := dbstore.SaveAlertInstances(ctx, instances...)
+	require.NoError(t, err)
+
+	//// List our instances. Make sure we have 100k.
+	q := &models.ListAlertInstancesQuery{
+		RuleOrgID: alertRule.OrgID,
+	}
+	err = dbstore.ListAlertInstances(ctx, q)
+	require.NoError(t, err)
+	require.Equal(t, count, len(q.Result), "Expected %v instances but got %v", count, len(q.Result))
+
+	err = dbstore.DeleteAlertInstances(ctx, keys...)
+	require.NoError(t, err)
+
+	err = dbstore.ListAlertInstances(ctx, q)
+	require.NoError(t, err)
+	require.Zero(t, len(q.Result), "Deleted instances but still had %v", len(q.Result))
 }
 
 func TestIntegrationAlertInstanceOperations(t *testing.T) {
