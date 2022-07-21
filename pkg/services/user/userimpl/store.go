@@ -94,11 +94,12 @@ func (ss *sqlStore) GetNotServiceAccount(ctx context.Context, userID int64) (*us
 }
 
 func (ss *sqlStore) GetByID(ctx context.Context, userID int64) (*user.User, error) {
-	var usr *user.User
+	var usr user.User
+
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.ID(userID).
+		has, err := sess.ID(&userID).
 			Where(ss.notServiceAccountFilter()).
-			Get(usr)
+			Get(&usr)
 
 		if err != nil {
 			return err
@@ -107,7 +108,7 @@ func (ss *sqlStore) GetByID(ctx context.Context, userID int64) (*user.User, erro
 		}
 		return nil
 	})
-	return usr, err
+	return &usr, err
 }
 
 func (ss *sqlStore) notServiceAccountFilter() string {
