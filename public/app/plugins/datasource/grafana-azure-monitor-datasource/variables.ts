@@ -11,7 +11,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
-import { migrateStringQueriesToObjectQueries } from './grafanaTemplateVariableFns';
+import { migrateQuery } from './grafanaTemplateVariableFns';
 import { AzureMonitorQuery, AzureQueryType } from './types';
 import { GrafanaTemplateVariableQuery } from './types/templateVariables';
 import messageFromError from './utils/messageFromError';
@@ -27,7 +27,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
 
   query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     const promisedResults = async () => {
-      const queryObj = await migrateStringQueriesToObjectQueries(request.targets[0], { datasource: this.datasource });
+      const queryObj = await migrateQuery(request.targets[0], { datasource: this.datasource });
 
       try {
         switch (queryObj.queryType) {
@@ -101,6 +101,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     return from(promisedResults());
   }
 
+  // Deprecated
   callGrafanaTemplateVariableFn(query: GrafanaTemplateVariableQuery): Promise<MetricFindValue[]> | null {
     if (query.kind === 'SubscriptionsQuery') {
       return this.datasource.getSubscriptions();
