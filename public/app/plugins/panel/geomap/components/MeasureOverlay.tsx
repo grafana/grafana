@@ -18,6 +18,65 @@ type Props = {
   menuActiveState: (value: boolean) => void;
 };
 
+export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
+  const measureStyle = getStyles(config.theme);
+
+  // Menu State Management
+  const [firstLoad, setFirstLoad] = useState<boolean>(true);
+  const [menuActive, setMenuActive] = useState<boolean>(false);
+
+  // Options State
+  const [typeSelect, setTypeSelect] = useState<string>('LineString');
+  const clearPrevious = true;
+  const showSegments = false;
+
+  return (
+    <div className={measureStyle.infoWrap} style={{ paddingBottom: '4px' }}>
+      {menuActive ? (
+        <RadioButtonGroup
+          value={typeSelect}
+          options={[
+            { label: 'Length', value: 'LineString' },
+            { label: 'Area', value: 'Polygon' },
+          ]}
+          size="sm"
+          onChange={(e) => {
+            map.removeInteraction(draw);
+            setTypeSelect(e);
+            addInteraction(map, e, showSegments, clearPrevious);
+          }}
+        />
+      ) : null}
+      <IconButton
+        name="ruler-combined"
+        style={{ marginLeft: '5px' }}
+        tooltip={`${menuActive ? 'hide' : 'show'} measure tools`}
+        tooltipPlacement="right"
+        onClick={() => {
+          setMenuActive(!menuActive);
+          // Lift menu state
+          // TODO: consolidate into one state
+          menuActiveState(!menuActive);
+          if (menuActive) {
+            map.removeInteraction(draw);
+            vector.set('visible', false);
+          } else {
+            if (firstLoad) {
+              // Initialize on first load
+              setFirstLoad(false);
+              map.addLayer(vector);
+              map.addInteraction(modify);
+            }
+            vector.set('visible', true);
+            map.removeInteraction(draw); // Remove last interaction
+            addInteraction(map, typeSelect, showSegments, clearPrevious);
+          }
+        }}
+      />
+    </div>
+  );
+};
+
 // Open Layer styles
 const style = new Style({
   fill: new Fill({
@@ -243,65 +302,6 @@ function addInteraction(map: Map, typeSelect: string, showSegments: boolean, cle
   modify.setActive(true);
   map.addInteraction(draw);
 }
-
-export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
-  const measureStyle = getStyles(config.theme);
-
-  // Menu State Management
-  const [firstLoad, setFirstLoad] = useState<boolean>(true);
-  const [menuActive, setMenuActive] = useState<boolean>(false);
-
-  // Options State
-  const [typeSelect, setTypeSelect] = useState<string>('LineString');
-  const clearPrevious = true;
-  const showSegments = false;
-
-  return (
-    <div className={measureStyle.infoWrap} style={{ paddingBottom: '4px' }}>
-      {menuActive ? (
-        <RadioButtonGroup
-          value={typeSelect}
-          options={[
-            { label: 'Length', value: 'LineString' },
-            { label: 'Area', value: 'Polygon' },
-          ]}
-          size="sm"
-          onChange={(e) => {
-            map.removeInteraction(draw);
-            setTypeSelect(e);
-            addInteraction(map, e, showSegments, clearPrevious);
-          }}
-        />
-      ) : null}
-      <IconButton
-        name="ruler-combined"
-        style={{ marginLeft: '5px' }}
-        tooltip={`${menuActive ? 'hide' : 'show'} measure tools`}
-        tooltipPlacement="right"
-        onClick={() => {
-          setMenuActive(!menuActive);
-          // Lift menu state
-          // TODO: consolidate into one state
-          menuActiveState(!menuActive);
-          if (menuActive) {
-            map.removeInteraction(draw);
-            vector.set('visible', false);
-          } else {
-            if (firstLoad) {
-              // Initialize on first load
-              setFirstLoad(false);
-              map.addLayer(vector);
-              map.addInteraction(modify);
-            }
-            vector.set('visible', true);
-            map.removeInteraction(draw); // Remove last interaction
-            addInteraction(map, typeSelect, showSegments, clearPrevious);
-          }
-        }}
-      />
-    </div>
-  );
-};
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   infoWrap: css`
