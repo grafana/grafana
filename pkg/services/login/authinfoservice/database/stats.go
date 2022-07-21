@@ -145,6 +145,6 @@ func (s *AuthInfoStore) mixedCasedUsers(ctx context.Context) string {
 	// this query counts how many users have upper case and lower case login or emails.
 	// why
 	// users login via IDP or service providers get upper cased domains at times :shrug:
-	sqlQuery := `SELECT COUNT(*) FROM ` + userDialect + ` WHERE (LOWER(login) != login OR lower(email) != email)`
+	sqlQuery := `SELECT login, email FROM ` + userDialect + ` WHERE (LOWER(login) != login OR lower(email) != email)`
 	return sqlQuery
 }
