@@ -143,9 +143,14 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   };
 
   onHideApiKeys = async () => {
-    await this.props.hideApiKeys();
-    let serviceAccountsUrl = '/org/serviceaccounts';
-    locationService.push(serviceAccountsUrl);
+    try {
+      await this.props.hideApiKeys();
+      let serviceAccountsUrl = '/org/serviceaccounts';
+      locationService.push(serviceAccountsUrl);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   render() {
