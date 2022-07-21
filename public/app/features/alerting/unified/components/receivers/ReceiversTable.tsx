@@ -52,6 +52,14 @@ interface Props {
   alertManagerName: string;
 }
 
+const useContactPointsState = (alertManagerName: string) => {
+  const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
+  const { result: contactPointsState } = (alertManagerName && contactPointsStateRequest) || initialAsyncRequestState;
+  const receivers = contactPointsState?.receivers ?? {};
+  const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
+  return { contactPointsState, errorStateAvailable };
+};
+
 export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const dispatch = useDispatch();
   const tableStyles = useStyles2(getAlertTableStyles);
@@ -60,10 +68,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
-  const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
-  const { result: contactPointsState } = (alertManagerName && contactPointsStateRequest) || initialAsyncRequestState;
-  const receivers = contactPointsState?.receivers ?? {};
-  const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
+  const { contactPointsState, errorStateAvailable } = useContactPointsState(alertManagerName);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
