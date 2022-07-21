@@ -135,10 +135,6 @@ LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 LegendDisplayMode: "list" | "table" @cuetsy(kind="enum")
 
 // TODO docs
-
-LegendVisibility: "visible" | "hidden" @cuetsy(kind="enum")
-
-// TODO docs
 TableSortByFieldState: {
 	displayName: string
 	desc?:       bool
@@ -233,7 +229,7 @@ GraphFieldConfig: {
 VizLegendOptions: {
 	displayMode:  LegendDisplayMode
 	placement:    LegendPlacement
-	showLegend: 	LegendVisibility
+	showLegend: 	bool
 	asTable?:     bool
 	isVisible?:   bool
   sortBy?:      string

@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
-import { LegendVisibility } from '@grafana/schema';
 
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 import { withTheme2 } from '../../themes/ThemeContext';
@@ -42,7 +41,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
     const { legend, frames } = this.props;
 
     //hides and shows the legend ON the uPlot graph
-    if (!config || (legend && legend.showLegend === LegendVisibility.Hidden)) {
+    if (!config || (legend && !legend.showLegend)) {
       return null;
     }
 

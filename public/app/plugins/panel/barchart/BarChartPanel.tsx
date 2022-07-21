@@ -12,7 +12,6 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { LegendVisibility } from '@grafana/schema';
 import {
   GraphNG,
   GraphNGProps,
@@ -183,7 +182,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
   const renderLegend = (config: UPlotConfigBuilder) => {
     const { legend } = options;
-    if (!config || legend.showLegend === LegendVisibility.Hidden) {
+    if (!config || legend.showLegend === false) {
       return null;
     }
 

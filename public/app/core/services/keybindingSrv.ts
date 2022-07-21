@@ -232,13 +232,9 @@ export class KeybindingSrv {
     //toggle legend
     this.bindWithPanelId('p l', (panelId) => {
       const panel = dashboard.getPanelById(panelId)!;
-      //keyboard shortcut function
-
       const newOptions = { ...panel.options };
 
-      newOptions.legend.showLegend === 'visible'
-        ? (newOptions.legend.showLegend = 'hidden')
-        : (newOptions.legend.showLegend = 'visible');
+      newOptions.legend.showLegend ? (newOptions.legend.showLegend = false) : (newOptions.legend.showLegend = true);
 
       panel.updateOptions(newOptions);
     });

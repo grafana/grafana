@@ -1,5 +1,5 @@
 import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
-import { LegendDisplayMode, LegendVisibility, OptionsWithLegend } from '@grafana/schema';
+import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
 
 /**
  * @alpha
@@ -9,6 +9,13 @@ export function addLegendOptions<T extends OptionsWithLegend>(
   includeLegendCalcs = true
 ) {
   builder
+    .addBooleanSwitch({
+      path: 'legend.showLegend',
+      name: 'Visibility',
+      category: ['Legend'],
+      description: '',
+      defaultValue: true,
+    })
     .addRadio({
       path: 'legend.displayMode',
       name: 'Mode',
@@ -19,19 +26,6 @@ export function addLegendOptions<T extends OptionsWithLegend>(
         options: [
           { value: LegendDisplayMode.List, label: 'List' },
           { value: LegendDisplayMode.Table, label: 'Table' },
-        ],
-      },
-    })
-    .addRadio({
-      path: 'legend.showLegend',
-      name: 'Visibility',
-      category: ['Legend'],
-      description: '',
-      defaultValue: LegendVisibility.Visible,
-      settings: {
-        options: [
-          { value: LegendVisibility.Visible, label: 'Visible' },
-          { value: LegendVisibility.Hidden, label: 'Hidden' },
         ],
       },
     })
@@ -47,7 +41,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
           { value: 'right', label: 'Right' },
         ],
       },
-      showIf: (c) => c.legend.showLegend !== LegendVisibility.Hidden,
+      showIf: (c) => c.legend.showLegend,
     })
     .addNumberInput({
       path: 'legend.width',
@@ -56,7 +50,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       settings: {
         placeholder: 'Auto',
       },
-      showIf: (c) => c.legend.showLegend !== LegendVisibility.Hidden && c.legend.placement === 'right',
+      showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
     });
 
   if (includeLegendCalcs) {
@@ -71,7 +65,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       settings: {
         allowMultiple: true,
       },
-      showIf: (currentConfig) => currentConfig.legend.showLegend !== LegendVisibility.Hidden,
+      showIf: (currentConfig) => currentConfig.legend.showLegend !== false,
     });
   }
 }

@@ -1,5 +1,5 @@
 import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
-import { LegendDisplayMode, LegendVisibility } from '@grafana/schema';
+import { LegendDisplayMode } from '@grafana/schema';
 
 import { PieChartOptions, PieChartLabels, PieChartLegendValues, PieChartType } from './types';
 
@@ -49,7 +49,7 @@ export const PieChartPanelChangedHandler = (
       placement: 'right',
       values: [],
       displayMode: LegendDisplayMode.Table,
-      showLegend: LegendVisibility.Visible,
+      showLegend: true,
       calcs: [],
     };
 
@@ -94,7 +94,7 @@ export const PieChartPanelChangedHandler = (
 
     if (angular.legend) {
       if (!angular.legend.show) {
-        options.legend.showLegend = LegendVisibility.Hidden;
+        options.legend.showLegend = false;
       }
       if (angular.legend.values) {
         options.legend.values.push(PieChartLegendValues.Value);
@@ -104,13 +104,13 @@ export const PieChartPanelChangedHandler = (
       }
       if (!angular.legend.percentage && !angular.legend.values) {
         // If you deselect both value and percentage in the old pie chart plugin, the legend is hidden.
-        options.legend.showLegend = LegendVisibility.Hidden;
+        options.legend.showLegend = false;
       }
     }
 
     // Set up labels when the old piechart is using 'on graph', for the legend option.
     if (angular.legendType === 'On graph') {
-      options.legend.showLegend = LegendVisibility.Hidden;
+      options.legend.showLegend = false;
       options.displayLabels = [PieChartLabels.Name];
       if (angular.legend.values) {
         options.displayLabels.push(PieChartLabels.Value);

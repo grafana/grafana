@@ -171,11 +171,6 @@ export enum LegendDisplayMode {
   Table = 'table',
 }
 
-export enum LegendVisibility {
-  Hidden = 'hidden',
-  Visible = 'visible',
-}
-
 export interface TableSortByFieldState {
   desc?: boolean;
   displayName: string;
@@ -284,7 +279,7 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
   placement: LegendPlacement;
-  showLegend: LegendVisibility;
+  showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
   width?: number;

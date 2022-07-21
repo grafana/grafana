@@ -20,7 +20,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, LegendVisibility, TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import {
   Icon,
   PanelContext,
@@ -175,7 +175,7 @@ export function ExploreGraph({
             tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
             legend: {
               displayMode: LegendDisplayMode.List,
-              showLegend: LegendVisibility.Visible,
+              showLegend: true,
               placement: 'bottom',
               calcs: [],
             },
