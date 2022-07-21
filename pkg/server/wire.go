@@ -6,6 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -109,6 +110,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/services/userauth/userauthimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -250,7 +252,6 @@ var wireBasicSet = wire.NewSet(
 	teamguardianDatabase.ProvideTeamGuardianStore,
 	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
 	teamguardianManager.ProvideService,
-	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	dashboardservice.ProvideDashboardService,
@@ -286,6 +287,7 @@ var wireBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDashboardPermissions,
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
+	playlistimpl.ProvideService,
 	dashverimpl.ProvideService,
 	publicdashboardsService.ProvideService,
 	wire.Bind(new(publicdashboards.Service), new(*publicdashboardsService.PublicDashboardServiceImpl)),
@@ -295,8 +297,10 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	datasourceservice.ProvideDataSourceMigrationService,
+	secretsStore.ProvidePluginSecretMigrationService,
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
+	userauthimpl.ProvideService,
 )
 
 var wireSet = wire.NewSet(

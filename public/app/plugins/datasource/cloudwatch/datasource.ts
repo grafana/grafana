@@ -69,8 +69,8 @@ import { CloudWatchVariableSupport } from './variables';
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
 // Constants also defined in tsdb/cloudwatch/cloudwatch.go
-const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
-const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
+export const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
+export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
@@ -89,7 +89,7 @@ const displayCustomError = (title: string, message: string) =>
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport
+  implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
 {
   proxyUrl: any;
   defaultRegion: any;
@@ -488,7 +488,8 @@ export class CloudWatchDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {}
+    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {},
+    query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
     let logStreamField = null;
     let logField = null;
@@ -510,6 +511,7 @@ export class CloudWatchDatasource
     const requestParams: GetLogEventsRequest = {
       limit,
       startFromHead: direction !== 'BACKWARD',
+      region: query?.region,
       logGroupName: parseLogGroupName(logField!.values.get(row.rowIndex)),
       logStreamName: logStreamField!.values.get(row.rowIndex),
     };

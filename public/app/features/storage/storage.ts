@@ -123,6 +123,7 @@ class SimpleStorage implements GrafanaStorage {
     if (!path.endsWith('.json')) {
       path += '.json';
     }
+
     const result = await backendSrv.get(`/api/storage/read/${path}`);
     result.uid = path;
     delete result.id; // Saved with the dev dashboards!

@@ -91,7 +91,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
 	// App Root Page
-	appPluginIDScope := plugins.ScopeProvider.GetResourceScope(":id")
+	appPluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
 	r.Get("/a/:id/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
 	r.Get("/a/:id", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
 
@@ -113,7 +113,7 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), hs.Index)
+		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), publicdashboardsapi.CountPublicDashboardRequest(), hs.Index)
 	}
 
 	r.Get("/explore", authorize(func(c *models.ReqContext) {
@@ -227,17 +227,16 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
-			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
-				orgRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
-				orgRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
-				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
+			apiRoute.Group("/storage", func(storageRoute routing.RouteRegister) {
+				storageRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
+				storageRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
+				storageRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
 
-				if hs.Features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-					orgRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Delete))
-					orgRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Upload))
-					orgRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.CreateFolder))
-					orgRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.DeleteFolder))
-				}
+				// Write paths
+				storageRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Delete))
+				storageRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Upload))
+				storageRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.CreateFolder))
+				storageRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.DeleteFolder))
 			})
 		}
 
@@ -335,7 +334,7 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Get("/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, nameScope)), routing.Wrap(hs.GetDataSourceIdByName))
 		})
 
-		pluginIDScope := plugins.ScopeProvider.GetResourceScope(":pluginId")
+		pluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":pluginId"))
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID)) // RBAC check performed in handler for App Plugins
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(hs.GetPluginMarkdown))

@@ -49,6 +49,9 @@ func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *da
 
 func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	for _, datasource := range s.DataSources {
+		if query.OrgId > 0 && datasource.OrgId != query.OrgId {
+			continue
+		}
 		typeMatch := query.Type != "" && query.Type == datasource.Type
 		if typeMatch {
 			query.Result = append(query.Result, datasource)
