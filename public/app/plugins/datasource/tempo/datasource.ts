@@ -469,7 +469,8 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         datasourceUid,
         tempoDatasourceUid,
         '__data.fields.target',
-        '__data.fields.target'
+        '__data.fields.target',
+        '__data.fields.source'
       );
 
       return {
@@ -480,24 +481,31 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
   );
 }
 
-function getFieldConfig(datasourceUid: string, tempoDatasourceUid: string, field: string, tempoField: string) {
+function getFieldConfig(
+  datasourceUid: string,
+  tempoDatasourceUid: string,
+  targetField: string,
+  tempoField: string,
+  sourceField?: string
+) {
+  sourceField = sourceField ? `client="\${${sourceField}}",` : '';
   return {
     links: [
       makePromLink(
         'Request rate',
-        `sum by (client, server)(rate(${totalsMetric}{server="\${${field}}"}[$__rate_interval]))`,
+        `sum by (client, server)(rate(${totalsMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
         datasourceUid,
         false
       ),
       makePromLink(
         'Request histogram',
-        `histogram_quantile(0.9, sum(rate(${histogramMetric}{server="\${${field}}"}[$__rate_interval])) by (le, client, server))`,
+        `histogram_quantile(0.9, sum(rate(${histogramMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval])) by (le, client, server))`,
         datasourceUid,
         false
       ),
       makePromLink(
         'Failed request rate',
-        `sum by (client, server)(rate(${failedMetric}{server="\${${field}}"}[$__rate_interval]))`,
+        `sum by (client, server)(rate(${failedMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
         datasourceUid,
         false
       ),
@@ -807,7 +815,8 @@ export function buildExpr(
 
 export function buildLinkExpr(expr: string) {
   // don't want top 5 or by span name in links
-  return expr.replace('topk(5, ', '').replace(' by (span_name))', '');
+  expr = expr.replace('topk(5, ', '').replace(' by (span_name))', '');
+  return expr.replace('__range', '__rate_interval');
 }
 
 // query result frames can come back in any order
