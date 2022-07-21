@@ -1,4 +1,4 @@
-# Localisation
+# Internationalization
 
 Grafana uses the [LinguiJS](https://github.com/lingui/js-lingui) framework for managing translating phrases in the Grafana frontend.
 
