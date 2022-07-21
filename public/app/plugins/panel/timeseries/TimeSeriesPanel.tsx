@@ -37,6 +37,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   };
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
+  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
 
   if (!frames) {
     return (
@@ -51,16 +52,13 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const timezones = getTimezones(options.timezones, timeZone);
-  // console.log('SHOW', timezones);
 
   return (
     <TimeSeries
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZone={timeZone}
-      timeZone2={timezones[1]}
+      timeZones={timezones}
       width={width}
       height={height}
       legend={options.legend}

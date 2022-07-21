@@ -285,8 +285,7 @@ export type Renderers = Array<{
 type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
-  timeZone: TimeZone;
-  timeZone2?: TimeZone;
+  timeZones: TimeZone[];
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
   allFrames: DataFrame[];

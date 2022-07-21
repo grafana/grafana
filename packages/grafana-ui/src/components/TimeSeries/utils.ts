@@ -48,8 +48,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 }> = ({
   frame,
   theme,
-  timeZone,
-  timeZone2,
+  timeZones,
   getTimeRange,
   eventBus,
   sync,
@@ -58,7 +57,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
 }) => {
-  const builder = new UPlotConfigBuilder(timeZone);
+  const builder = new UPlotConfigBuilder(timeZones[0]);
 
   let alignedFrame: DataFrame;
 
@@ -98,40 +97,43 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
     });
 
-    builder.addAxis({
-      scaleKey: xScaleKey,
-      isTime: true,
-      placement: xFieldAxisPlacement,
-      show: xFieldAxisShow,
-      label: timeZone2 ? undefined : xField.config.custom?.axisLabel,
-      timeZone,
-      theme,
-      grid: { show: xField.config.custom?.axisGridShow },
-    });
+    for (let i = 0; i < timeZones.length; i++) {
+      const timeZone = timeZones[i];
+      if (i === 0) {
+        builder.addAxis({
+          scaleKey: xScaleKey,
+          isTime: true,
+          placement: xFieldAxisPlacement,
+          show: xFieldAxisShow,
+          label: xField.config.custom?.axisLabel,
+          timeZone,
+          theme,
+          grid: { show: xField.config.custom?.axisGridShow },
+        });
+      } else if (xFieldAxisShow) {
+        const scaleKey = `${xScaleKey}_${i + 1}`;
+        builder.addScale({
+          scaleKey,
+          orientation: ScaleOrientation.Horizontal,
+          direction: ScaleDirection.Right,
+          isTime: true,
+          from: xScaleKey,
+          range: () => {
+            const r = getTimeRange();
+            return [r.from.valueOf(), r.to.valueOf()];
+          },
+        });
 
-    if (timeZone2) {
-      builder.addScale({
-        scaleKey: 'x2',
-        orientation: ScaleOrientation.Horizontal,
-        direction: ScaleDirection.Right,
-        isTime: true,
-        from: xScaleKey,
-        range: () => {
-          const r = getTimeRange();
-          return [r.from.valueOf(), r.to.valueOf()];
-        },
-      });
-
-      builder.addAxis({
-        scaleKey: 'x2',
-        isTime: true,
-        placement: xFieldAxisPlacement,
-        show: xFieldAxisShow,
-        label: xField.config.custom?.axisLabel,
-        timeZone: timeZone2,
-        theme,
-        grid: { show: false },
-      });
+        builder.addAxis({
+          scaleKey,
+          isTime: true,
+          placement: xFieldAxisPlacement,
+          show: xFieldAxisShow,
+          timeZone: timeZone,
+          theme,
+          grid: { show: false },
+        });
+      }
     }
   } else {
     // Not time!
