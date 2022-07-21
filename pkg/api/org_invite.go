@@ -19,6 +19,15 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// swagger:route GET /org/invites org_invites getPendingOrgInvites
+//
+// Get pending invites.
+//
+// Responses:
+// 200: getPendingOrgInvitesResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Response {
 	query := models.GetTempUsersQuery{OrgId: c.OrgId, Status: models.TmpUserInvitePending}
 
@@ -33,6 +42,17 @@ func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, query.Result)
 }
 
+// swagger:route POST /org/invites org_invites addOrgInvite
+//
+// Add invite.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 412: SMTPNotEnabledError
+// 500: internalServerError
 func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	inviteDto := dtos.AddInviteForm{}
 	if err := web.Bind(c.Req, &inviteDto); err != nil {
@@ -159,6 +179,16 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.U
 	})
 }
 
+// swagger:route DELETE /org/invites/{invitation_code}/revoke org_invites revokeInvite
+//
+// Revoke invite.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) RevokeInvite(c *models.ReqContext) response.Response {
 	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), web.Params(c.Req)[":code"], models.TmpUserRevoked); !ok {
 		return rsp
@@ -285,4 +315,25 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, user *user.User, invi
 	}
 
 	return true, nil
+}
+
+// swagger:parameters addOrgInvite
+type AddInviteParams struct {
+	// in:body
+	// required:true
+	Body dtos.AddInviteForm `json:"body"`
+}
+
+// swagger:parameters revokeInvite
+type RevokeInviteParams struct {
+	// in:path
+	// required:true
+	Code string `json:"invitation_code"`
+}
+
+// swagger:response getPendingOrgInvitesResponse
+type GetPendingOrgInvitesResponse struct {
+	// The response message
+	// in: body
+	Body []*models.TempUserDTO `json:"body"`
 }
