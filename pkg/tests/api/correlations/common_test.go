@@ -60,9 +60,6 @@ func (c TestContext) Post(params PostParams) *http.Response {
 		buf,
 	)
 	require.NoError(c.t, err)
-	c.t.Cleanup(func() {
-		require.NoError(c.t, resp.Body.Close())
-	})
 
 	return resp
 }

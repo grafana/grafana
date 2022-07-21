@@ -30,6 +30,8 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", "some-ds-uid"),
 				body: ``,
 			})
+			require.NoError(t, res.Body.Close())
+
 			require.Equal(t, 403, res.StatusCode)
 		},
 	)
@@ -50,6 +52,8 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					password: "editor",
 				},
 			})
+			require.NoError(t, res.Body.Close())
+
 			require.Equal(t, 403, res.StatusCode)
 		},
 	)
@@ -70,6 +74,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					password: "password",
 				},
 			})
+			require.NoError(t, res.Body.Close())
 
 			require.Equal(t, 400, res.StatusCode)
 		},
@@ -93,6 +98,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					password: "password",
 				},
 			})
+			require.NoError(t, res.Body.Close())
 
 			require.Equal(t, 404, res.StatusCode)
 		},
@@ -123,6 +129,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					password: "password",
 				},
 			})
+			require.NoError(t, res.Body.Close())
 
 			require.Equal(t, 404, res.StatusCode)
 		},
@@ -154,6 +161,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					password: "password",
 				},
 			})
+			require.NoError(t, res.Body.Close())
 
 			require.Equal(t, 403, res.StatusCode)
 		},
@@ -192,6 +200,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					password: "password",
 				},
 			})
+			require.NoError(t, res.Body.Close())
 
 			require.Equal(t, 200, res.StatusCode)
 		},
@@ -222,6 +231,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					password: "password",
 				},
 			})
+			require.NoError(t, res.Body.Close())
 
 			require.Equal(t, 200, res.StatusCode)
 		},
