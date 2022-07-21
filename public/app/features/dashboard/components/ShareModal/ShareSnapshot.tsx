@@ -288,11 +288,11 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
         <Modal.ButtonRow>
           <Button variant="secondary" onClick={onDismiss} fill="outline">
-            <Trans id="share-modal.snapshot.copy-button">Cancel</Trans>
+            <Trans id="share-modal.snapshot.cancel-button">Cancel</Trans>
           </Button>
           {externalEnabled && (
             <Button variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
-              <Trans id="share-modal.snapshot.sharing-button">{sharingButtonText}</Trans>
+              {sharingButtonText}
             </Button>
           )}
           <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
@@ -321,7 +321,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         </div>
 
         <div className="pull-right" style={{ padding: '5px' }}>
-          <Trans id="share-modal.snapshot.mistake-message">Did you make a mistake? </Trans>
+          <Trans id="share-modal.snapshot.mistake-message">Did you make a mistake? </Trans>&nbsp;
           <LinkButton fill="text" target="_blank" onClick={this.deleteSnapshot}>
             <Trans id="share-modal.snapshot.delete-button">Delete snapshot.</Trans>
           </LinkButton>
