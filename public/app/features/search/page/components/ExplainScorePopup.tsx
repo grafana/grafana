@@ -60,9 +60,9 @@ export function ExplainScorePopup({ name, explain, frame, row }: Props) {
             showLineNumbers={false}
             showMiniMap={false}
             value={(() => {
-              const allowedActionsField = frame.fields.find((f) => f.name === 'allowed_actions');
-              const values = allowedActionsField?.values?.get(row);
-              return JSON.stringify(values ?? {}, null, 2);
+              const allowedActions = frame.fields.find((f) => f.name === 'allowed_actions')?.values?.get(row);
+              const dsUids = frame.fields.find((f) => f.name === 'ds_uid')?.values?.get(row);
+              return JSON.stringify({ dsUids: dsUids ?? [], allowedActions: allowedActions ?? [] }, null, 2);
             })()}
             readOnly={false}
           />
