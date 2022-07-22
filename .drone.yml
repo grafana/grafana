@@ -4376,16 +4376,6 @@ steps:
     - success
     - failure
 - commands:
-  - yarn storybook:build
-  - ./bin/grabpl verify-storybook
-  depends_on:
-  - build-frontend
-  - build-frontend-packages
-  environment:
-    NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.8
-  name: build-storybook
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise
   depends_on:
   - package
@@ -4996,6 +4986,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: e7d0d317023fd79876413db46733bfb2485f51c43fd439122213e00df9b1bbbe
+hmac: 79f0ff4d5e2a0278bc637ba3452f326988df20ecffb321de0023d92d26c3a26a
 
 ...

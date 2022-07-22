@@ -75,8 +75,8 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
 		serviceAccountsRoute.Post("/migrate/:keyId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
-		serviceAccountsRoute.Post("/revert/:keyId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionDelete)), routing.Wrap(api.RevertApiKey))
+		serviceAccountsRoute.Post("/:serviceAccountId/revert/:keyId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.RevertApiKey))
 	})
 }
 
@@ -307,13 +307,17 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Response {
 	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
+		return response.Error(http.StatusBadRequest, "key ID is invalid", err)
+	}
+	serviceAccountId, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "service account ID is invalid", err)
 	}
 
-	if err := api.store.RevertApiKey(ctx.Req.Context(), keyId); err != nil {
-		return response.Error(http.StatusInternalServerError, "Error reverting to API key", err)
+	if err := api.store.RevertApiKey(ctx.Req.Context(), serviceAccountId, keyId); err != nil {
+		return response.Error(http.StatusInternalServerError, "error reverting to API key", err)
 	}
-	return response.Success("Reverted service account to API key")
+	return response.Success("reverted service account to API key")
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {

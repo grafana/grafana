@@ -4,6 +4,7 @@ import React, { FC, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import kbn from 'app/core/utils/kbn';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -70,7 +71,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
-      const baseUrl = `/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
+      const baseUrl = `${config.appSubUrl}/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
       if (folder?.canSave) {
         actionIcons.push(
           <ActionIcon
