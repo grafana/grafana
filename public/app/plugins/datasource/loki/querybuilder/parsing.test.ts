@@ -268,18 +268,26 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
-  it('returns error for query with unwrap and conversion operation', () => {
+  it('parses query with unwrap and conversion operation', () => {
     const context = buildVisualQueryFromString(
       'sum_over_time({app="frontend"} | logfmt | unwrap duration(label) [5m])'
     );
-    expect(context.errors).toEqual([
-      {
-        text: 'Unwrap with conversion operator not supported in query builder: | unwrap duration(label)',
-        from: 40,
-        to: 64,
-        parentType: 'LogRangeExpr',
-      },
-    ]);
+    expect(context).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: 'unwrap', params: ['label', 'duration'] },
+          { id: 'sum_over_time', params: ['5m'] },
+        ],
+      })
+    );
   });
 
   it('parses metrics query with function', () => {

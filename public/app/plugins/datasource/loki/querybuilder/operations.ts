@@ -323,12 +323,22 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.Unwrap,
       name: 'Unwrap',
-      params: [{ name: 'Identifier', type: 'string', hideName: true, minWidth: 16, placeholder: 'Label key' }],
-      defaultParams: [''],
+      params: [
+        { name: 'Identifier', type: 'string', hideName: true, minWidth: 16, placeholder: 'Label key' },
+        {
+          name: 'Conversion operator',
+          hideName: true,
+          type: 'string',
+          options: ['duration', 'duration_seconds', 'bytes'],
+          optional: true,
+        },
+      ],
+      defaultParams: ['', ''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.Unwrap,
-      renderer: (op, def, innerExpr) => `${innerExpr} | unwrap ${op.params[0]}`,
+      renderer: (op, def, innerExpr) =>
+        `${innerExpr} | unwrap ${op.params[1] ? `${op.params[1]}(${op.params[0]})` : op.params[0]}`,
       addOperationHandler: addLokiOperation,
       explainHandler: (op) => {
         let label = String(op.params[0]).length > 0 ? op.params[0] : '<label>';
