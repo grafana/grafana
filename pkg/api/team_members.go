@@ -219,3 +219,51 @@ var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService 
 	}
 	return nil
 }
+
+// swagger:parameters getTeamMembers
+type GetTeamMembersParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters addTeamMember
+type AddTeamMemberParams struct {
+	// in:body
+	// required:true
+	Body models.AddTeamMemberCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters updateTeamMember
+type UpdateTeamMemberParams struct {
+	// in:body
+	// required:true
+	Body models.UpdateTeamMemberCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters removeTeamMember
+type RemoveTeamMemberParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+
+// swagger:response getTeamMembersResponse
+type GetTeamMembersResponse struct {
+	// The response message
+	// in: body
+	Body []*models.TeamMemberDTO `json:"body"`
+}

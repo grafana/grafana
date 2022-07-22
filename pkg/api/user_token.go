@@ -15,14 +15,14 @@ import (
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
-// swagger:route GET /user/auth-tokens signed_in_user getSignedInUserAuthTokens
+// swagger:route GET /user/auth-tokens signed_in_user getUserAuthTokens
 //
 // Auth tokens of the actual User.
 //
 // Return a list of all auth tokens (devices) that the actual user currently have logged in from.
 //
 // Responses:
-// 200: getSignedInUserAuthTokensResponse
+// 200: getUserAuthTokensResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
@@ -30,7 +30,7 @@ func (hs *HTTPServer) GetUserAuthTokens(c *models.ReqContext) response.Response 
 	return hs.getUserAuthTokensInternal(c, c.UserId)
 }
 
-// swagger:route POST /user/revoke-auth-token signed_in_user revokeSignedInAuthToken
+// swagger:route POST /user/revoke-auth-token signed_in_user revokeUserAuthToken
 //
 // Revoke an auth token of the actual User.
 //
@@ -175,69 +175,15 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 	})
 }
 
-// swagger:parameters updateSignedInUser
-type UpdateSignedInUserParams struct {
-	// To change the email, name, login, theme, provide another one.
-	// in:body
-	// required:true
-	Body models.UpdateUserCommand `json:"body"`
-}
-
-// swagger:parameters userSetUsingOrg
-type UserSetUsingOrgParams struct {
-	// in:path
-	// required:true
-	OrgID int64 `json:"org_id"`
-}
-
-// swagger:parameters starDashboard
-type StarDashboardParams struct {
-	// in:path
-	// required:true
-	DashboardID string `json:"dashboard_id"`
-}
-
-// swagger:parameters unstarDashboard
-type UnstarDashboardParams struct {
-	// in:path
-	// required:true
-	DashboardID string `json:"dashboard_id"`
-}
-
-// swagger:parameters setHelpFlag
-type SetHelpFlagParams struct {
-	// in:path
-	// required:true
-	FlagID string `json:"flag_id"`
-}
-
-// swagger:parameters changeUserPassword
-type ChangeUserPasswordParams struct {
-	// To change the email, name, login, theme, provide another one.
-	// in:body
-	// required:true
-	Body models.ChangeUserPasswordCommand `json:"body"`
-}
-
-// swagger:parameters revokeSignedInAuthToken
-type RevokeSignedINAuthTokenCmdParams struct {
+// swagger:parameters revokeUserAuthToken
+type RevokeUserAuthTokenParams struct {
 	// in:body
 	// required:true
 	Body models.RevokeAuthTokenCmd `json:"body"`
 }
 
-// swagger:response helpFlagResponse
-type HelpFlagResponse struct {
-	// The response message
-	// in: body
-	Body struct {
-		HelpFlags1 int64  `json:"helpFlags1"`
-		Message    string `json:"message"`
-	} `json:"body"`
-}
-
-// swagger:response getSignedInUserAuthTokensResponse
-type GetSignedInUserAuthTokensResponse struct {
+// swagger:response getUserAuthTokensResponse
+type GetUserAuthTokensResponse struct {
 	// in:body
 	Body []*models.UserToken `json:"body"`
 }

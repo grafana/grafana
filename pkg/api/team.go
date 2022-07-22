@@ -312,7 +312,7 @@ type UpdateTeamPreferencesParams struct {
 }
 
 // swagger:parameters getTeamByID
-type GetTeamParams struct {
+type GetTeamByIDParams struct {
 	// in:path
 	// required:true
 	TeamID string `json:"team_id"`
@@ -325,28 +325,11 @@ type DeleteTeamByIDParams struct {
 	TeamID string `json:"team_id"`
 }
 
-// swagger:parameters getTeamMembers
-type GetTeamMembersParams struct {
-	// in:path
-	// required:true
-	TeamID string `json:"team_id"`
-}
-
 // swagger:parameters getTeamPreferences
 type GetTeamPreferencesParams struct {
 	// in:path
 	// required:true
 	TeamID string `json:"team_id"`
-}
-
-// swagger:parameters removeTeamMember
-type RemoveTeamMemberParams struct {
-	// in:path
-	// required:true
-	TeamID string `json:"team_id"`
-	// in:path
-	// required:true
-	UserID int64 `json:"user_id"`
 }
 
 // swagger:parameters searchTeams
@@ -384,29 +367,6 @@ type UpdateTeamParams struct {
 	TeamID string `json:"team_id"`
 }
 
-// swagger:parameters addTeamMember
-type AddTeamMemberParams struct {
-	// in:body
-	// required:true
-	Body models.AddTeamMemberCommand `json:"body"`
-	// in:path
-	// required:true
-	TeamID string `json:"team_id"`
-}
-
-// swagger:parameters updateTeamMember
-type UpdateTeamMember struct {
-	// in:body
-	// required:true
-	Body models.UpdateTeamMemberCommand `json:"body"`
-	// in:path
-	// required:true
-	TeamID string `json:"team_id"`
-	// in:path
-	// required:true
-	UserID int64 `json:"user_id"`
-}
-
 // swagger:response searchTeamsResponse
 type SearchTeamsResponse struct {
 	// The response message
@@ -415,7 +375,7 @@ type SearchTeamsResponse struct {
 }
 
 // swagger:response getTeamByIDResponse
-type GetTeamResponse struct {
+type GetTeamByIDResponse struct {
 	// The response message
 	// in: body
 	Body *models.TeamDTO `json:"body"`
@@ -431,9 +391,3 @@ type CreateTeamResponse struct {
 	} `json:"body"`
 }
 
-// swagger:response getTeamMembersResponse
-type GetTeamMembersResponse struct {
-	// The response message
-	// in: body
-	Body []*models.TeamMemberDTO `json:"body"`
-}

@@ -93,7 +93,7 @@ func (fn quotaServiceFunc) QuotaReached(c *models.ReqContext, target string) (bo
 }
 
 // swagger:parameters importDashboard
-type ImportDashboardParam struct {
+type ImportDashboardParams struct {
 	// in:body
 	// required:true
 	Body dashboardimport.ImportDashboardRequest

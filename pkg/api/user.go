@@ -109,7 +109,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Respo
 // Update signed in User.
 //
 // Responses:
-// 200: userResponse
+// 200: okResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
@@ -137,7 +137,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response
 // Update the user identified by id.
 //
 // Responses:
-// 200: userResponse
+// 200: okResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
@@ -207,7 +207,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd models.UpdateUse
 // - basic:
 //
 // Responses:
-// 200: getUserOrgListResponse
+// 200: getSignedInUserOrgListResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
@@ -222,7 +222,7 @@ func (hs *HTTPServer) GetSignedInUserOrgList(c *models.ReqContext) response.Resp
 // Return a list of all teams that the current user is member of.
 //
 // Responses:
-// 200: getUserOrgListResponse
+// 200: getSignedInUserTeamListResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
@@ -530,6 +530,37 @@ type SearchUsersWithPagingParams struct {
 	Query string `json:"query"`
 }
 
+// swagger:parameters updateSignedInUser
+type UpdateSignedInUserParams struct {
+	// To change the email, name, login, theme, provide another one.
+	// in:body
+	// required:true
+	Body models.UpdateUserCommand `json:"body"`
+}
+
+// swagger:parameters userSetUsingOrg
+type UserSetUsingOrgParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters setHelpFlag
+type SetHelpFlagParams struct {
+	// in:path
+	// required:true
+	FlagID string `json:"flag_id"`
+}
+
+// swagger:parameters changeUserPassword
+type ChangeUserPasswordParams struct {
+	// To change the email, name, login, theme, provide another one.
+	// in:body
+	// required:true
+	Body models.ChangeUserPasswordCommand `json:"body"`
+}
+
+
 // swagger:parameters getUserByID
 type GetUserByIDParams struct {
 	// in:path
@@ -591,9 +622,33 @@ type GetUserOrgListResponse struct {
 	Body []*models.UserOrgDTO `json:"body"`
 }
 
+// swagger:response getSignedInUserOrgListResponse
+type GetSignedInUserOrgListResponse struct {
+	// The response message
+	// in: body
+	Body []*models.UserOrgDTO `json:"body"`
+}
+
 // swagger:response getUserTeamsResponse
 type GetUserTeamsResponse struct {
 	// The response message
 	// in: body
 	Body []*models.TeamDTO `json:"body"`
+}
+
+// swagger:response getSignedInUserTeamListResponse
+type GetSignedInUserTeamListResponse struct {
+	// The response message
+	// in: body
+	Body []*models.TeamDTO `json:"body"`
+}
+
+// swagger:response helpFlagResponse
+type HelpFlagResponse struct {
+	// The response message
+	// in: body
+	Body struct {
+		HelpFlags1 int64  `json:"helpFlags1"`
+		Message    string `json:"message"`
+	} `json:"body"`
 }

@@ -95,3 +95,17 @@ func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
 
 	return response.Success("Dashboard unstarred")
 }
+
+// swagger:parameters starDashboard
+type StarDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardID string `json:"dashboard_id"`
+}
+
+// swagger:parameters unstarDashboard
+type UnstarDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardID string `json:"dashboard_id"`
+}
