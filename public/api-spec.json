@@ -1476,10 +1476,10 @@
         "description": "Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.",
         "tags": ["legacy_alerts_notification_channels"],
         "summary": "Get all notification channels (lookup)",
-        "operationId": "lookupAlertNotificationChannels",
+        "operationId": "getAlertNotificationLookup",
         "responses": {
           "200": {
-            "$ref": "#/responses/lookupAlertNotificationChannelsResponse"
+            "$ref": "#/responses/getAlertNotificationLookupResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2549,10 +2549,10 @@
         }
       },
       "post": {
-        "description": "Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
+        "description": "Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
         "tags": ["dashboard_permissions"],
         "summary": "Updates permissions for a dashboard.",
-        "operationId": "postDashboardPermissions",
+        "operationId": "updateDashboardPermissionsByID",
         "deprecated": true,
         "parameters": [
           {
@@ -2895,7 +2895,7 @@
         "description": "This operation will remove existing permissions if they’re not included in the request.",
         "tags": ["dashboard_permissions"],
         "summary": "Updates permissions for a dashboard.",
-        "operationId": "postDashboardPermissionsWithUid",
+        "operationId": "updateDashboardPermissionsByUID",
         "parameters": [
           {
             "name": "Body",
@@ -3344,6 +3344,47 @@
       }
     },
     "/datasources/proxy/{id}/{datasource_proxy_route}": {
+      "get": {
+        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
+        "tags": ["datasources"],
+        "summary": "Data source proxy GET calls.",
+        "operationId": "datasourceProxyGETcalls",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
         "tags": ["datasources"],
@@ -3959,10 +4000,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/queryDataResponse"
+            "$ref": "#/responses/queryMetricsWithExpressionsRespons"
           },
           "207": {
-            "$ref": "#/responses/queryDataResponse"
+            "$ref": "#/responses/queryMetricsWithExpressionsRespons"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -4922,7 +4963,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/addOrgUserResponse"
+            "$ref": "#/responses/okResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -4954,7 +4995,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/addOrgUserResponse"
+            "$ref": "#/responses/okResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -5727,7 +5768,7 @@
     "/playlists/{uid}": {
       "get": {
         "tags": ["playlists"],
-        "summary": "Get playlist by UID.",
+        "summary": "Get playlist.",
         "operationId": "getPlaylist",
         "parameters": [
           {
@@ -6881,10 +6922,10 @@
       "get": {
         "description": "List search sorting options",
         "tags": ["search"],
-        "operationId": "searchSorting",
+        "operationId": "listSortOptions",
         "responses": {
           "200": {
-            "$ref": "#/responses/searchSortingResponse"
+            "$ref": "#/responses/listSortOptionsResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -7908,7 +7949,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/userResponse"
+            "$ref": "#/responses/okResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -7927,10 +7968,10 @@
         "description": "Return a list of all auth tokens (devices) that the actual user currently have logged in from.",
         "tags": ["signed_in_user"],
         "summary": "Auth tokens of the actual User.",
-        "operationId": "getSignedInUserAuthTokens",
+        "operationId": "getUserAuthTokens",
         "responses": {
           "200": {
-            "$ref": "#/responses/getSignedInUserAuthTokensResponse"
+            "$ref": "#/responses/getUserAuthTokensResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -8007,7 +8048,7 @@
         "operationId": "getSignedInUserOrgList",
         "responses": {
           "200": {
-            "$ref": "#/responses/getUserOrgListResponse"
+            "$ref": "#/responses/getSignedInUserOrgListResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -8084,16 +8125,6 @@
         "tags": ["user_preferences"],
         "summary": "Update user preferences.",
         "operationId": "updateUserPreferences",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdatePrefsCmd"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
@@ -8168,7 +8199,7 @@
         "description": "Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.",
         "tags": ["signed_in_user"],
         "summary": "Revoke an auth token of the actual User.",
-        "operationId": "revokeSignedInAuthToken",
+        "operationId": "revokeUserAuthToken",
         "parameters": [
           {
             "name": "body",
@@ -8270,7 +8301,7 @@
         "operationId": "getSignedInUserTeamList",
         "responses": {
           "200": {
-            "$ref": "#/responses/getUserOrgListResponse"
+            "$ref": "#/responses/getSignedInUserTeamListResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -8472,7 +8503,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/userResponse"
+            "$ref": "#/responses/okResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -13500,26 +13531,6 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
-    "addOrgUserResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": ["id", "message"],
-        "properties": {
-          "id": {
-            "description": "ID Identifier of the added user.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
-          "message": {
-            "description": "Message Message of the added user.",
-            "type": "string",
-            "example": "Data source added"
-          }
-        }
-      }
-    },
     "adminCreateUserResponse": {
       "description": "",
       "schema": {
@@ -13554,7 +13565,7 @@
       }
     },
     "calculateDashboardDiffResponse": {
-      "description": "Calculate dashboard diff response.",
+      "description": "",
       "schema": {
         "type": "array",
         "items": {
@@ -13860,6 +13871,15 @@
         }
       }
     },
+    "getAlertNotificationLookupResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AlertNotificationLookup"
+        }
+      }
+    },
     "getAlertResponse": {
       "description": "",
       "schema": {
@@ -13996,7 +14016,7 @@
       }
     },
     "getHomeDashboardResponse": {
-      "description": "Home dashboard response.",
+      "description": "",
       "schema": {
         "$ref": "#/definitions/GetHomeDashboardResponse"
       }
@@ -14192,12 +14212,21 @@
         }
       }
     },
-    "getSignedInUserAuthTokensResponse": {
+    "getSignedInUserOrgListResponse": {
       "description": "",
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/UserToken"
+          "$ref": "#/definitions/UserOrgDTO"
+        }
+      }
+    },
+    "getSignedInUserTeamListResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TeamDTO"
         }
       }
     },
@@ -14222,6 +14251,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/TeamMemberDTO"
+        }
+      }
+    },
+    "getUserAuthTokensResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/UserToken"
         }
       }
     },
@@ -14291,19 +14329,30 @@
         }
       }
     },
+    "listSortOptionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "listTokensResponse": {
       "description": "",
       "schema": {
         "$ref": "#/definitions/TokenDTO"
-      }
-    },
-    "lookupAlertNotificationChannelsResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertNotificationLookup"
-        }
       }
     },
     "notFoundError": {
@@ -14385,7 +14434,7 @@
       }
     },
     "postDashboardResponse": {
-      "description": "Create/update dashboard response.",
+      "description": "",
       "schema": {
         "type": "object",
         "required": ["status", "title", "version", "id", "uid", "url"],
@@ -14433,7 +14482,7 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
-    "queryDataResponse": {
+    "queryMetricsWithExpressionsRespons": {
       "description": "",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
@@ -14499,26 +14548,6 @@
         "$ref": "#/definitions/HitList"
       }
     },
-    "searchSortingResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "meta": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "searchTeamsResponse": {
       "description": "",
       "schema": {
@@ -14538,7 +14567,7 @@
       }
     },
     "trimDashboardResponse": {
-      "description": "Trimmed dashboard response.",
+      "description": "",
       "schema": {
         "$ref": "#/definitions/TrimDashboardFullWithMeta"
       }
