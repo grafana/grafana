@@ -238,6 +238,9 @@ func (hs *HTTPServer) registerRoutes() {
 				storageRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.CreateFolder))
 				storageRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.DeleteFolder))
 			})
+
+			apiRoute.Group("/entity", hs.entityStore.RegisterEntityRoutes)
+			apiRoute.Group("/kinds", hs.entityStore.RegisterKindsRoutes)
 		}
 
 		// current org

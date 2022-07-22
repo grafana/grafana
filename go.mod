@@ -54,7 +54,7 @@ require (
 	github.com/grafana/cuetsy v0.0.3
 	github.com/grafana/grafana-aws-sdk v0.10.8
 	github.com/grafana/grafana-azure-sdk-go v1.3.0
-	github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220721004249-bd226be67f51
+	github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220722001756-79482a29677b
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3
@@ -165,7 +165,7 @@ require (
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/go-openapi/validate v0.20.2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/status v1.1.0 // indirect
+	github.com/gogo/status v1.1.0
 	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang/glog v1.0.0 // indirect

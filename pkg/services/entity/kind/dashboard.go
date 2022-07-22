@@ -19,11 +19,11 @@ var _ entity.Kind = &DashboardKind{}
 
 type DashboardKind struct{}
 
-func (k *DashboardKind) Info() entity.KindInfo {
-	return entity.KindInfo{
+func (k *DashboardKind) Info() *entity.KindInfo {
+	return &entity.KindInfo{
 		ID:          "dashboard",
 		Description: "Core dashboard model",
-		FileSuffix:  "-dash.json",
+		PathSuffix:  "-dash.json",
 	}
 }
 
@@ -57,10 +57,10 @@ func (k *DashboardKind) GetReferences(v interface{}) []entity.EntityLocator {
 	return nil // TODO:
 }
 
-func (k *DashboardKind) Validate(payload []byte, details bool) entity.ValidationResponse {
+func (k *DashboardKind) Normalize(payload []byte, details bool) entity.NormalizeResponse {
 	_, err := k.Read(payload)
 	if err != nil {
-		return entity.ValidationResponse{
+		return entity.NormalizeResponse{
 			Valid: false,
 			Info: []data.Notice{
 				{
@@ -70,14 +70,14 @@ func (k *DashboardKind) Validate(payload []byte, details bool) entity.Validation
 			},
 		}
 	}
-	return entity.ValidationResponse{
+	return entity.NormalizeResponse{
 		Valid:  true,
 		Result: payload,
 	}
 }
 
-func (k *DashboardKind) Migrate(payload []byte, targetVersion string) entity.ValidationResponse {
-	return k.Validate(payload, false) // migration is a noop
+func (k *DashboardKind) Migrate(payload []byte, targetVersion string) entity.NormalizeResponse {
+	return k.Normalize(payload, false) // migration is a noop
 }
 
 func (k *DashboardKind) GetSchemaVersions() []string {

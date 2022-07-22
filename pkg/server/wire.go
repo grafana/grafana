@@ -57,6 +57,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/entity"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -289,6 +290,7 @@ var wireBasicSet = wire.NewSet(
 	starimpl.ProvideService,
 	playlistimpl.ProvideService,
 	dashverimpl.ProvideService,
+	entity.ProvideService,
 	publicdashboardsService.ProvideService,
 	wire.Bind(new(publicdashboards.Service), new(*publicdashboardsService.PublicDashboardServiceImpl)),
 	publicdashboardsStore.ProvideStore,

@@ -1341,8 +1341,8 @@ github.com/grafana/grafana-azure-sdk-go v1.3.0/go.mod h1:rgrnK9m6CgKlgx4rH3FFP/6
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2ud7NNM7LrGPO4x0NFR8qLq68CqI4SmB7I2yRN2w9oE=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220721004249-bd226be67f51 h1:537ZWNohxK2QfWTaaECf5yR6XH4+FuWDYyezi4dh1QM=
-github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220721004249-bd226be67f51/go.mod h1:Y+Ps2sesZ62AyCnX+hzrYnyDQYe/ZZl+A8yKLOBm12c=
+github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220722001756-79482a29677b h1:IAXP38lxaiFHP/P1Ja/qz8CiRfG0DzjeK1aPfalmJUw=
+github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220722001756-79482a29677b/go.mod h1:Y+Ps2sesZ62AyCnX+hzrYnyDQYe/ZZl+A8yKLOBm12c=
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b h1:YiSGp34F4V0G08HHx1cJBf2GVgwYAkXQjzuVs1t8jYk=
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b/go.mod h1:q83kyQoMD0vhy+RzFLlbw0UgHJ6TAihQpuXvdFmm4s4=
 github.com/grafana/thema v0.0.0-20220523183731-72aebd14e751 h1:5PpsfN52XA0hxOjD/qQ0QNiEkp9Y9Tb+yz/Hj9fyL4M=
