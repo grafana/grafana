@@ -108,6 +108,10 @@ func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*model
 	}
 }
 
+var NoReq = func(c *models.ReqContext) bool {
+	return true
+}
+
 var ReqSignedIn = func(c *models.ReqContext) bool {
 	return c.IsSignedIn
 }
