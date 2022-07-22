@@ -217,7 +217,7 @@ describe('buildVisualQueryFromString', () => {
         ],
         operations: [
           { id: 'logfmt', params: [] },
-          { id: 'unwrap', params: ['bytes_processed'] },
+          { id: 'unwrap', params: ['bytes_processed', ''] },
           { id: 'sum_over_time', params: ['1m'] },
         ],
       })
@@ -238,7 +238,7 @@ describe('buildVisualQueryFromString', () => {
         ],
         operations: [
           { id: 'logfmt', params: [] },
-          { id: 'unwrap', params: ['duration'] },
+          { id: 'unwrap', params: ['duration', ''] },
           { id: '__label_filter_no_errors', params: [] },
           { id: 'sum_over_time', params: ['1m'] },
         ],
@@ -260,7 +260,7 @@ describe('buildVisualQueryFromString', () => {
         ],
         operations: [
           { id: 'logfmt', params: [] },
-          { id: 'unwrap', params: ['duration'] },
+          { id: 'unwrap', params: ['duration', ''] },
           { id: '__label_filter', params: ['label', '=', 'value'] },
           { id: 'sum_over_time', params: ['1m'] },
         ],
