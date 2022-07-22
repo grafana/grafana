@@ -431,10 +431,10 @@ export class LokiDatasource
     return Math.ceil(date.valueOf() * 1e6);
   }
 
-  getLogRowContext = (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
+  getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
     const direction = (options && options.direction) || 'BACKWARD';
     const limit = (options && options.limit) || 10;
-    const { query, range } = this.prepareLogRowContextQueryTarget(row, limit, direction);
+    const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction);
 
     const processDataFrame = (frame: DataFrame): DataFrame => {
       // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
@@ -497,11 +497,13 @@ export class LokiDatasource
     );
   };
 
-  prepareLogRowContextQueryTarget = (
+  prepareLogRowContextQueryTarget = async (
     row: LogRowModel,
     limit: number,
     direction: 'BACKWARD' | 'FORWARD'
-  ): { query: LokiQuery; range: TimeRange } => {
+  ): Promise<{ query: LokiQuery; range: TimeRange }> => {
+    // need to await the languageProvider to be started to have all labels. This call is not blocking after it has been called once.
+    await this.languageProvider.start();
     const labels = this.languageProvider.getLabelKeys();
     const expr = Object.keys(row.labels)
       .map((label: string) => {

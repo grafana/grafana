@@ -48,7 +48,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	// first try get existing user
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
 	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery); err != nil {
-		if !errors.Is(err, models.ErrUserNotFound) {
+		if !errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(500, "Failed to query db for existing user check", err)
 		}
 	} else {
@@ -221,7 +221,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 
 	usr, err := hs.Login.CreateUser(cmd)
 	if err != nil {
-		if errors.Is(err, models.ErrUserAlreadyExists) {
+		if errors.Is(err, user.ErrUserAlreadyExists) {
 			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)
 		}
 
