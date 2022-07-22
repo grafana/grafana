@@ -84,6 +84,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
 - [Licenses]({{< relref "../../stats-and-license/" >}})
 - [Organizations]({{< relref "../../organization-management/" >}})
+- [Plugins]({{< relref "../../plugin-management/" >}})
 - [Provisioning]({{< relref "../../provisioning/" >}})
 - [Reports]({{< relref "../../../enterprise/reporting/" >}})
 - [Roles]({{< relref "../../" >}})
