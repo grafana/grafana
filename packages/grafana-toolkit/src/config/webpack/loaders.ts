@@ -1,8 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 
-import { getPluginId } from '../utils/getPluginId';
-
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const supportedExtensions = ['css', 'scss', 'less', 'sass'];
@@ -139,34 +137,21 @@ export const getStyleLoaders = () => {
 };
 
 export const getFileLoaders = () => {
-  const shouldExtractCss = hasThemeStylesheets();
-
   return [
     {
       test: /\.(png|jpe?g|gif|svg)$/,
-      use: [
-        shouldExtractCss
-          ? {
-              loader: require.resolve('file-loader'),
-              options: {
-                outputPath: '/',
-                name: '[path][name].[ext]',
-              },
-            }
-          : // When using single css import images are inlined as base64 URIs in the result bundle
-            {
-              loader: 'url-loader',
-            },
-      ],
+      type: 'asset/resource',
+      generator: {
+        publicPath: `img/`,
+        outputPath: 'img/',
+      },
     },
     {
       test: /\.(woff|woff2|eot|ttf|otf)(\?v=\d+\.\d+\.\d+)?$/,
-      loader: require.resolve('file-loader'),
-      options: {
-        // Keep publicPath relative for host.com/grafana/ deployments
-        publicPath: `public/plugins/${getPluginId()}/fonts`,
-        outputPath: 'fonts',
-        name: '[name].[ext]',
+      type: 'asset/resource',
+      generator: {
+        publicPath: `fonts/`,
+        outputPath: 'fonts/',
       },
     },
   ];
