@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData, TimeRange } from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
@@ -91,3 +91,7 @@ export type GraphiteQueryEditorDependencies = {
   // schedule onChange/onRunQuery after the reducer actions finishes
   refresh: () => void;
 };
+
+export interface GraphiteQueryRequest extends DataQueryRequest {
+  format: string;
+}

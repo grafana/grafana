@@ -22,6 +22,7 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
   };
 };
 
+// eslint-ignore-next-line
 export const prepareAnnotation = (json: any) => {
   // annotation attributes are either 'tags' or 'target'(a graphite query string)
   // because the new annotations will also have a target attribute, {}

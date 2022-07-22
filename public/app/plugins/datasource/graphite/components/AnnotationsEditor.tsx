@@ -3,14 +3,13 @@ import React, { useState } from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel, Input, TagsInput } from '@grafana/ui';
 
+import { GraphiteDatasource } from '../datasource';
 import { GraphiteQuery, GraphiteOptions } from '../types';
-
-import { GraphiteDatasource } from './../datasource';
 
 export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>) => {
   const { query, onChange } = props;
-  const [target, setTarget] = useState<string>(query?.target || '');
-  const [tags, setTags] = useState<string[]>(query?.tags || []);
+  const [target, setTarget] = useState<string>(query.target ?? '');
+  const [tags, setTags] = useState<string[]>(query.tags ?? []);
   const updateValue = <K extends keyof GraphiteQuery, V extends GraphiteQuery[K]>(key: K, val: V) => {
     if (key === 'tags') {
       onChange({
@@ -39,7 +38,7 @@ export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, Gra
       <div className="gf-form">
         <InlineFormLabel width={12}>Graphite Query</InlineFormLabel>
         <Input
-          value={target || ''}
+          value={target}
           onChange={(e) => setTarget(e.currentTarget.value || '')}
           onBlur={() => updateValue('target', target)}
           placeholder="Example: statsd.application.counters.*.count"

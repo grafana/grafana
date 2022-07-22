@@ -35,6 +35,7 @@ import {
   GraphiteMetricLokiMatcher,
   GraphiteOptions,
   GraphiteQuery,
+  GraphiteQueryRequest,
   GraphiteQueryImportConfiguration,
   GraphiteType,
   MetricTankRequestMeta,
@@ -187,18 +188,13 @@ export class GraphiteDatasource
     const streams: Array<Observable<DataQueryResponse>> = [];
 
     for (const target of options.targets) {
-      if (target.hide) {
-        continue;
-      } else if (target.fromAnnotations) {
+      // hiding target is handled in buildGraphiteParams
+      if (target.fromAnnotations) {
         streams.push(
           new Observable((subscriber) => {
             this.annotationEvents(options.range, target)
-              .then((events) => {
-                return subscriber.next({ data: [toDataFrame(events)] });
-              })
-              .catch((ex) => {
-                return subscriber.error(new Error(ex));
-              })
+              .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+              .catch((ex) => subscriber.error(new Error(ex)))
               .finally(() => subscriber.complete());
           })
         );
@@ -208,7 +204,7 @@ export class GraphiteDatasource
           from: this.translateTime(options.range.from, false, options.timezone),
           until: this.translateTime(options.range.to, true, options.timezone),
           targets: options.targets,
-          format: (options as any).format,
+          format: (options as GraphiteQueryRequest).format,
           cacheTimeout: options.cacheTimeout || this.cacheTimeout,
           maxDataPoints: options.maxDataPoints,
         };
