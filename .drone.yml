@@ -210,7 +210,7 @@ steps:
       from_secret: drone_token
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
+    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
   depends_on:
   - gen-version
   - wire-install
@@ -263,7 +263,7 @@ steps:
   name: ensure-cuetsified
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
+    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
   depends_on:
   - build-plugins
   - build-backend
@@ -4681,6 +4681,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: ad9c98e244d2e7f09bfede40d3c5e9af904bc69f5e741a8b9d39df2f8915ee86
+hmac: 45809a95000ceac98fa3659718547c9e2d6820b82186feea5d49f05ea23aeaf0
 
 ...
