@@ -127,10 +127,24 @@ func addUserMigrations(mg *Migrator) {
 		Cols: []string{"login", "email"},
 	}))
 
+	//Service accounts are lightweight users with restricted permissions.  They support API keys
+	//and provisioning and tasks like alarms and reports.
+	// Issues in this migration: is_service_account should be nullable
 	mg.AddMigration("Add is_service_account column to user", NewAddColumnMigration(userV2, &Column{
 		Name: "is_service_account", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	mg.AddMigration("Update is_service_account column to nullable",
+		NewRawSQLMigration("").
+			SQLite(migSQLITEisServiceAccountNullable).
+			Postgres("ALTER TABLE `user` ALTER COLUMN is_service_account DROP NOT NULL;").
+			Mysql("ALTER TABLE user MODIFY is_service_account BOOLEAN DEFAULT 0;"))
 }
+
+const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;
+UPDATE user SET tmp_service_account = is_service_account;
+ALTER TABLE user DROP COLUMN is_service_account;
+ALTER TABLE user RENAME COLUMN tmp_service_account TO is_service_account;`
 
 type AddMissingUserSaltAndRandsMigration struct {
 	MigrationBase

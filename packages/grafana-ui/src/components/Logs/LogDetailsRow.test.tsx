@@ -1,5 +1,7 @@
-import React, { ComponentProps } from 'react';
 import { screen, render, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React, { ComponentProps } from 'react';
+
 import { LogDetailsRow } from './LogDetailsRow';
 
 type Props = ComponentProps<typeof LogDetailsRow>;
@@ -20,7 +22,13 @@ const setup = (propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  return render(<LogDetailsRow {...props} />);
+  return render(
+    <table>
+      <tbody>
+        <LogDetailsRow {...props} />
+      </tbody>
+    </table>
+  );
 };
 
 describe('LogDetailsRow', () => {
@@ -97,5 +105,17 @@ describe('LogDetailsRow', () => {
     fireEvent.click(adHocStatsButton);
     expect(screen.getByTestId('logLabelStats')).toBeInTheDocument();
     expect(screen.getByTestId('logLabelStats')).toHaveTextContent('another value');
+  });
+
+  it('should render clipboard button on hover of log row table value', async () => {
+    setup({ parsedKey: 'key', parsedValue: 'value' });
+
+    const valueCell = screen.getByRole('cell', { name: 'value' });
+    await userEvent.hover(valueCell);
+
+    expect(screen.getByRole('button', { name: 'Copy value to clipboard' })).toBeInTheDocument();
+    await userEvent.unhover(valueCell);
+
+    expect(screen.queryByRole('button', { name: 'Copy value to clipboard' })).not.toBeInTheDocument();
   });
 });

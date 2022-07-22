@@ -1,7 +1,9 @@
 package cloudmonitoring
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
@@ -9,6 +11,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -932,4 +936,30 @@ func baseReq() *backend.QueryDataRequest {
 		},
 	}
 	return query
+}
+
+func TestCheckHealth(t *testing.T) {
+	t.Run("and using GCE authentation should return proper error", func(t *testing.T) {
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: gceAuthentication,
+			}, nil
+		})
+		service := &Service{
+			im: im,
+			gceDefaultProjectGetter: func(ctx context.Context) (string, error) {
+				return "", fmt.Errorf("not found!")
+			},
+		}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+		})
+		assert.Nil(t, err)
+		assert.Equal(t, &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: "not found!",
+		}, res)
+	})
 }

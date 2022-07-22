@@ -6,8 +6,10 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
+
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+
+import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
 
 describe('Order Transformer', () => {
   beforeAll(() => {
@@ -47,6 +49,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'temperature',
+              multipleFrames: false,
             },
           },
           {
@@ -57,6 +60,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'humidity',
+              multipleFrames: false,
             },
           },
           {
@@ -67,6 +71,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'time',
+              multipleFrames: false,
             },
           },
         ]);
@@ -108,6 +113,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'humidity',
+              multipleFrames: false,
             },
           },
           {
@@ -118,6 +124,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'time',
+              multipleFrames: false,
             },
           },
           {
@@ -128,6 +135,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'pressure',
+              multipleFrames: false,
             },
           },
         ]);

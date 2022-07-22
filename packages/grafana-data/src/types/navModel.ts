@@ -1,26 +1,36 @@
 import { ComponentType } from 'react';
 
-export interface NavModelItem {
+export interface NavLinkDTO {
+  id?: string;
   text: string;
-  url?: string;
+  description?: string;
+  section?: NavSection;
   subTitle?: string;
   icon?: string;
   img?: string;
-  id?: string;
-  active?: boolean;
-  hideFromTabs?: boolean;
-  hideFromMenu?: boolean;
-  divider?: boolean;
-  children?: NavModelItem[];
-  breadcrumbs?: NavModelBreadcrumb[];
+  url?: string;
   target?: string;
+  sortWeight?: number;
+  divider?: boolean;
+  hideFromMenu?: boolean;
+  hideFromTabs?: boolean;
+  children?: NavLinkDTO[];
+  highlightText?: string;
+  emptyMessageId?: string;
+}
+
+export interface NavModelItem extends NavLinkDTO {
+  children?: NavModelItem[];
+  active?: boolean;
+  breadcrumbs?: NavModelBreadcrumb[];
   parentItem?: NavModelItem;
-  section?: NavSection;
   showOrgSwitcher?: boolean;
   onClick?: () => void;
   menuItemType?: NavMenuItemType;
   highlightText?: string;
+  highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
+  showIconInNavbar?: boolean;
 }
 
 export enum NavSection {
@@ -46,10 +56,6 @@ export interface NavModel {
    *   This is the current active tab/navigation.
    */
   node: NavModelItem;
-  /**
-   *  Describes breadcrumbs that are used in places such as data source settings., folder page and plugins page.
-   */
-  breadcrumbs?: NavModelItem[];
 }
 
 export interface NavModelBreadcrumb {

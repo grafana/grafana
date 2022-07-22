@@ -1,21 +1,20 @@
-//go:build integration
-// +build integration
-
 // package search_test contains integration tests for search
 package searchstore_test
 
 import (
 	"context"
 	"testing"
-	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -46,7 +45,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 		Dialect: db.Dialect,
 	}
 
-	res := []sqlstore.DashboardSearchProjection{}
+	res := []dashboards.DashboardSearchProjection{}
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
@@ -55,7 +54,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 
 	assert.Len(t, res, 1)
 	res[0].UID = ""
-	assert.EqualValues(t, []sqlstore.DashboardSearchProjection{
+	assert.EqualValues(t, []dashboards.DashboardSearchProjection{
 		{
 			ID:    dashIds[0],
 			Title: "A",
@@ -83,9 +82,9 @@ func TestBuilder_Pagination(t *testing.T) {
 		Dialect: db.Dialect,
 	}
 
-	resPg1 := []sqlstore.DashboardSearchProjection{}
-	resPg2 := []sqlstore.DashboardSearchProjection{}
-	resPg3 := []sqlstore.DashboardSearchProjection{}
+	resPg1 := []dashboards.DashboardSearchProjection{}
+	resPg2 := []dashboards.DashboardSearchProjection{}
+	resPg3 := []dashboards.DashboardSearchProjection{}
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(15, 1)
 		err := sess.SQL(sql, params...).Find(&resPg1)
@@ -138,7 +137,7 @@ func TestBuilder_Permissions(t *testing.T) {
 		Dialect: db.Dialect,
 	}
 
-	res := []sqlstore.DashboardSearchProjection{}
+	res := []dashboards.DashboardSearchProjection{}
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
@@ -171,11 +170,27 @@ func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, o
 			"version": 0
 		}`))
 		require.NoError(t, err)
-		dash, err := db.SaveDashboard(models.SaveDashboardCommand{
-			Dashboard: dashboard,
-			UserId:    1,
-			OrgId:     orgID,
-			UpdatedAt: time.Now(),
+
+		var dash *models.Dashboard
+		err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			dash = models.NewDashboardFromJson(dashboard)
+			dash.OrgId = orgID
+			dash.Uid = util.GenerateShortUID()
+			dash.CreatedBy = 1
+			dash.UpdatedBy = 1
+			_, err := sess.Insert(dash)
+			require.NoError(t, err)
+
+			tags := dash.GetTags()
+			if len(tags) > 0 {
+				for _, tag := range tags {
+					if _, err := sess.Insert(&sqlstore.DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
 		})
 		require.NoError(t, err)
 

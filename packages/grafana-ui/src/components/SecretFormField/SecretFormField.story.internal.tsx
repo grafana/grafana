@@ -1,12 +1,13 @@
-import React from 'react';
 import { action } from '@storybook/addon-actions';
-import { Meta, Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
+import React from 'react';
 
-import { SecretFormField, Props } from './SecretFormField';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-export default {
+import { SecretFormField } from './SecretFormField';
+
+const meta: ComponentMeta<typeof SecretFormField> = {
   title: 'Forms/SecretFormField',
   component: SecretFormField,
   decorators: [withCenteredStory],
@@ -20,9 +21,9 @@ export default {
     inputWidth: { control: { type: 'range', min: 0, max: 30 } },
     tooltip: { control: { type: 'text' } },
   },
-} as Meta;
+};
 
-export const Basic: Story<Props> = (args) => {
+export const Basic: ComponentStory<typeof SecretFormField> = (args) => {
   return (
     <UseState initialState="Input value">
       {(value, setValue) => (
@@ -52,3 +53,5 @@ Basic.args = {
   tooltip: 'this is a tooltip',
   placeholder: 'Password',
 };
+
+export default meta;

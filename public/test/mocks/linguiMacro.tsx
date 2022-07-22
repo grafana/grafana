@@ -1,6 +1,6 @@
-import React from 'react';
 import { MessageDescriptor } from '@lingui/core';
 import { Trans as OriginalTrans } from '@lingui/macro';
+import React from 'react';
 
 export const Trans: typeof OriginalTrans = ({ id, children }) => {
   return <>{children ?? id}</>;

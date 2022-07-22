@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
 import {
   DataFrameJSON,
   DataQueryRequest,
@@ -6,7 +8,6 @@ import {
   LiveChannelEvent,
   LiveChannelPresenceStatus,
 } from '@grafana/data';
-import { Observable } from 'rxjs';
 
 /**
  * @alpha -- experimental

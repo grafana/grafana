@@ -77,11 +77,11 @@ Instructions for setting up filters in Gmail can be found [here](#setting-up-gma
 
 ## 2. Ensure the issue contains basic information
 
-Before triaging an issue very far, make sure that the issue's author provided the standard issue information. This will help you make an educated recommendation on how to categorize the issue. The Grafana project utilizes [GitHub issue templates](https://help.github.com/en/articles/creating-issue-templates-for-your-repository) to guide contributors to provide standard information that must be included for each type of template or type of issue.
+Before triaging an issue very far, make sure that the issue's author provided the standard issue information. This will help you make an educated recommendation on how to categorize the issue. The Grafana project utilizes [GitHub issue templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository) to guide contributors to provide standard information that must be included for each type of template or type of issue.
 
 ### Standard issue information that must be included
 
-Given a certain [issue template](<[template](https://github.com/grafana/grafana/issues/new/choose)>) have been used by the issue author or depending how the issue is perceived by the issue triage responsible, the following should help you understand what standard issue information that must be included.
+Given a certain [issue template](https://github.com/grafana/grafana/issues/new/choose) have been used by the issue author or depending how the issue is perceived by the issue triage responsible, the following should help you understand what standard issue information that must be included.
 
 #### Bug reports
 
@@ -192,7 +192,7 @@ First, evaluate if the documentation makes sense to be included in the Grafana p
 
 - Is this something we want/can maintain as a project?
 - Is this referring to usage of some specific integration/tool and in that case is that a popular use case in combination with Grafana?
-- If unsure, kindly and politely add a comment explaining that we would need [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) to identify that lots of other users want/need this.
+- If unsure, kindly and politely add a comment explaining that we would need [upvotes](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments) to identify that lots of other users want/need this.
 
 Second, label the issue `type/docs` and at least one `area/*` or `datasource/*` label.
 
@@ -296,13 +296,13 @@ In many cases the issue author or community as a whole is more suitable to contr
 
 ## Investigation of issues
 
-When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending on the perceived severity and/or number of [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments), the investigation will either be delegated to another maintainer for further investigation or put on hold until someone else (maintainer or contributor) picks it up and eventually starts investigating it.
+When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending on the perceived severity and/or number of [upvotes](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments), the investigation will either be delegated to another maintainer for further investigation or put on hold until someone else (maintainer or contributor) picks it up and eventually starts investigating it.
 
 Investigating issues can be a very time consuming task, especially for the maintainers, given the huge number of combinations of plugins, data sources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services, etc that are being used with Grafana. There is a certain number of combinations that are more common than others, and these are in general easier for maintainers to investigate.
 
 For some other combinations it may not be possible at all for a maintainer to setup a proper test environment to investigate the issue. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 
-Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
+Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
 
 ## Automation
 

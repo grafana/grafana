@@ -1,20 +1,16 @@
-// Libraries
+import { t } from '@lingui/macro';
 import React, { Component } from 'react';
+import { Unsubscribable } from 'rxjs';
+
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-
-// Types
-import { DashboardModel } from '../../state';
-
-// Components
 import { defaultIntervals, RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
-
-// Utils & Services
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
-import { ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../../types/events';
-import { Unsubscribable } from 'rxjs';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
+import { DashboardModel } from '../../state';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -38,16 +34,16 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onRefresh = () => {
-    getTimeSrv().refreshDashboard();
+    getTimeSrv().refreshTimeModel();
     return Promise.resolve();
   };
 
   onMoveBack = () => {
-    appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Left));
+    appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left }));
   };
 
   onMoveForward = () => {
-    appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Right));
+    appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right }));
   };
 
   onChangeTimePicker = (timeRange: TimeRange) => {
@@ -77,7 +73,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onZoom = () => {
-    appEvents.publish(new ZoomOutEvent(2));
+    appEvents.publish(new ZoomOutEvent({ scale: 2 }));
   };
 
   render() {
@@ -108,8 +104,20 @@ export class DashNavTimeControls extends Component<Props> {
           onRefresh={this.onRefresh}
           value={dashboard.refresh}
           intervals={intervals}
-          tooltip="Refresh dashboard"
+          tooltip={t({ id: 'dashboard.toolbar.refresh', message: 'Refresh dashboard' })}
           noIntervalPicker={hideIntervalPicker}
+          offDescriptionAriaLabelMsg={t({
+            id: 'dashboard.refresh-picker.off-description',
+            message: 'Auto refresh turned off. Choose refresh time interval',
+          })}
+          onDescriptionAriaLabelMsg={(durationAriaLabel) =>
+            t({
+              id: 'dashboard.refresh-picker.on-description',
+              message: `Choose refresh time interval with current interval ${durationAriaLabel} selected`,
+            })
+          }
+          offOptionLabelMsg={t({ id: 'dashboard.refresh-picker.off-label', message: 'Off' })}
+          offOptionAriaLabelMsg={t({ id: 'dashboard.refresh-picker.off-arialabel', message: 'Turn off auto refresh' })}
         />
       </ToolbarButtonRow>
     );

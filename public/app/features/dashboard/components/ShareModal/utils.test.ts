@@ -1,5 +1,6 @@
-import { buildParams } from './utils';
 import { TimeRange } from '@grafana/data';
+
+import { buildParams } from './utils';
 
 describe('buildParams', () => {
   it.each`
@@ -36,7 +37,7 @@ describe('buildParams', () => {
         to: 2000,
         raw: { from: 'now-6h', to: 'now' },
       } as unknown as TimeRange;
-      const orgId = '2';
+      const orgId = 2;
       const result = buildParams({ useCurrentTimeRange, selectedTheme, panel, search, range, orgId });
 
       expect(result.toString()).toEqual(expected);

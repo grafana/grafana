@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useAsync, useDebounce } from 'react-use';
+
+import { isFetchError } from '@grafana/runtime';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+
 import { PanelModel } from '../../../dashboard/state';
-import { usePanelSave } from '../../utils/usePanelSave';
-import { useAsync, useDebounce } from 'react-use';
 import { getLibraryPanelByName } from '../../state/api';
+import { usePanelSave } from '../../utils/usePanelSave';
 
 interface AddLibraryPanelContentsProps {
   onDismiss: () => void;
@@ -34,7 +37,9 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
     try {
       return !(await getLibraryPanelByName(panelName)).some((lp) => lp.folderId === folderId);
     } catch (err) {
-      err.isHandled = true;
+      if (isFetchError(err)) {
+        err.isHandled = true;
+      }
       return true;
     } finally {
       setWaiting(false);

@@ -12,25 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
-import cx from 'classnames';
-import IoAndroidLocate from 'react-icons/lib/io/android-locate';
 import { css } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
+import cx from 'classnames';
+import React, { memo, Dispatch, SetStateAction } from 'react';
 
-import * as markers from './TracePageSearchBar.markers';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
+
 import UiFindInput from '../common/UiFindInput';
-import { TNil } from '../types';
-
-import { UIButton, UIInputGroup } from '../uiElementsContext';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
-// eslint-disable-next-line no-duplicate-imports
-import { memo } from 'react';
 
-export const getStyles = () => {
+// eslint-disable-next-line no-duplicate-imports
+
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     TracePageSearchBar: css`
       label: TracePageSearchBar;
+      float: right;
+      position: sticky;
+      top: 8px;
+      right: 0;
+      z-index: ${theme.zIndex.navbarFixed};
+      background: ${theme.colors.background.primary};
+      margin-top: 8px;
+      margin-bottom: -48px;
+      padding: 8px;
+      margin-right: 2px;
+      border-radius: 4px;
+      box-shadow: ${theme.shadows.z2};
     `,
     TracePageSearchBarBar: css`
       label: TracePageSearchBarBar;
@@ -40,14 +49,14 @@ export const getStyles = () => {
         max-width: 100%;
       }
     `,
-    TracePageSearchBarCount: css`
-      label: TracePageSearchBarCount;
+    TracePageSearchBarSuffix: css`
+      label: TracePageSearchBarSuffix;
       opacity: 0.6;
     `,
     TracePageSearchBarBtn: css`
       label: TracePageSearchBarBtn;
-      border-left: none;
       transition: 0.2s;
+      margin-left: 8px;
     `,
     TracePageSearchBarBtnDisabled: css`
       label: TracePageSearchBarBtnDisabled;
@@ -61,86 +70,125 @@ export const getStyles = () => {
 };
 
 type TracePageSearchBarProps = {
-  textFilter: string | TNil;
-  prevResult: () => void;
-  nextResult: () => void;
-  clearSearch: () => void;
-  focusUiFindMatches: () => void;
-  resultCount: number;
   navigable: boolean;
   searchValue: string;
-  onSearchValueChange: (value: string) => void;
-  hideSearchButtons?: boolean;
+  setSearch: (value: string) => void;
+  searchBarSuffix: string;
+  spanFindMatches: Set<string> | undefined;
+  focusedSpanIdForSearch: string;
+  setSearchBarSuffix: Dispatch<SetStateAction<string>>;
+  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
   const {
-    clearSearch,
-    focusUiFindMatches,
     navigable,
-    nextResult,
-    prevResult,
-    resultCount,
-    textFilter,
-    onSearchValueChange,
+    setSearch,
     searchValue,
-    hideSearchButtons,
+    searchBarSuffix,
+    spanFindMatches,
+    focusedSpanIdForSearch,
+    setSearchBarSuffix,
+    setFocusedSpanIdForSearch,
   } = props;
   const styles = useStyles2(getStyles);
 
-  const count = textFilter ? <span className={styles.TracePageSearchBarCount}>{resultCount}</span> : null;
+  const suffix = searchValue ? (
+    <span className={styles.TracePageSearchBarSuffix} aria-label="Search bar suffix">
+      {searchBarSuffix}
+    </span>
+  ) : null;
 
-  const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !textFilter });
+  const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const uiFindInputInputProps = {
-    'data-test': markers.IN_TRACE_SEARCH,
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
-    suffix: count,
+    suffix,
+  };
+
+  const setTraceSearch = (value: string) => {
+    setFocusedSpanIdForSearch('');
+    setSearchBarSuffix('');
+    setSearch(value);
+  };
+
+  const nextResult = () => {
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
+
+    // new query || at end, go to start
+    if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
+      setFocusedSpanIdForSearch(spanMatches[0]);
+      setSearchBarSuffix(getSearchBarSuffix(1));
+      return;
+    }
+
+    // get next
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex + 2));
+  };
+
+  const prevResult = () => {
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
+
+    // new query || at start, go to end
+    if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
+      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
+      setSearchBarSuffix(getSearchBarSuffix(spanMatches.length));
+      return;
+    }
+
+    // get prev
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex));
+  };
+
+  const getSearchBarSuffix = (index: number): string => {
+    if (spanFindMatches?.size && spanFindMatches?.size > 0) {
+      return index + ' of ' + spanFindMatches?.size;
+    }
+    return '';
   };
 
   return (
     <div className={styles.TracePageSearchBar}>
-      {/* style inline because compact overwrites the display */}
-      <UIInputGroup className={ubJustifyEnd} compact style={{ display: 'flex' }}>
-        <UiFindInput onChange={onSearchValueChange} value={searchValue} inputProps={uiFindInputInputProps} />
-        {!hideSearchButtons && (
-          <>
-            {navigable && (
-              <>
-                <UIButton
-                  className={cx(btnClass, styles.TracePageSearchBarLocateBtn)}
-                  disabled={!textFilter}
-                  htmlType="button"
-                  onClick={focusUiFindMatches}
-                >
-                  <IoAndroidLocate />
-                </UIButton>
-                <UIButton
-                  className={btnClass}
-                  disabled={!textFilter}
-                  htmlType="button"
-                  icon="up"
-                  onClick={prevResult}
-                />
-                <UIButton
-                  className={btnClass}
-                  disabled={!textFilter}
-                  htmlType="button"
-                  icon="down"
-                  onClick={nextResult}
-                />
-              </>
-            )}
-            <UIButton
-              className={btnClass}
-              disabled={!textFilter}
-              htmlType="button"
-              icon="close"
-              onClick={clearSearch}
-            />
-          </>
-        )}
-      </UIInputGroup>
+      <span className={ubJustifyEnd} style={{ display: 'flex' }}>
+        <UiFindInput
+          onChange={setTraceSearch}
+          value={searchValue}
+          inputProps={uiFindInputInputProps}
+          allowClear={true}
+        />
+        <>
+          {navigable && (
+            <>
+              <Button
+                className={btnClass}
+                variant="secondary"
+                disabled={!searchValue}
+                type="button"
+                icon="arrow-down"
+                aria-label="Next results button"
+                onClick={nextResult}
+              />
+              <Button
+                className={btnClass}
+                variant="secondary"
+                disabled={!searchValue}
+                type="button"
+                icon="arrow-up"
+                aria-label="Prev results button"
+                onClick={prevResult}
+              />
+            </>
+          )}
+        </>
+      </span>
     </div>
   );
 });

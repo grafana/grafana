@@ -7,8 +7,9 @@
     "allowJs": true,
     "strict": true,
     "resolveJsonModule": true,
-    "useUnknownInCatchVariables": false,
-    "incremental": true
+    "useUnknownInCatchVariables": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": [
@@ -17,6 +18,7 @@
     "public/test/**/*.ts",
     "public/vendor/**/*.ts",
     "packages/jaeger-ui-components/typings",
-    "packages/grafana-data/typings"
+    "packages/grafana-data/typings",
+    "packages/grafana-ui/src/types"
   ]
 }

@@ -87,7 +87,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
+			cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger"), sqlstore: fakeSQL}
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.CleanAnnotations(context.Background(), test.cfg)
 			require.NoError(t, err)
 
@@ -142,7 +142,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	require.NoError(t, err, "cannot insert annotation")
 
 	// run the clean up task to keep one annotation.
-	cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
+	cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger"), sqlstore: fakeSQL}
 	_, err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 	require.NoError(t, err)
 

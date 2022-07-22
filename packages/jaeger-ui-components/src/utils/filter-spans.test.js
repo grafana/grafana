@@ -104,8 +104,8 @@ describe('filterSpans', () => {
   };
   const spans = [span0, span2];
 
-  it('should return `null` if spans is falsy', () => {
-    expect(filterSpans('operationName', null)).toBe(null);
+  it('should return `undefined` if spans is falsy', () => {
+    expect(filterSpans('operationName', null)).toBe(undefined);
   });
 
   it('should return spans whose spanID exactly match a filter', () => {

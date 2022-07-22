@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 )
 
@@ -46,6 +47,17 @@ func NewJson(body []byte) (*Json, error) {
 		return nil, err
 	}
 	return j, nil
+}
+
+// MustJson returns a pointer to a new `Json` object, panicking if `body` cannot be parsed.
+func MustJson(body []byte) *Json {
+	j, err := NewJson(body)
+
+	if err != nil {
+		panic(fmt.Sprintf("could not unmarshal JSON: %q", err))
+	}
+
+	return j
 }
 
 // New returns a pointer to a new, empty `Json` object
@@ -179,6 +191,24 @@ func (j *Json) GetIndex(index int) *Json {
 		}
 	}
 	return &Json{nil}
+}
+
+// CheckGetIndex returns a pointer to a new `Json` object
+// for `index` in its `array` representation, and a `bool`
+// indicating success or failure
+//
+// useful for chained operations when success is important:
+//    if data, ok := js.Get("top_level").CheckGetIndex(0); ok {
+//        log.Println(data)
+//    }
+func (j *Json) CheckGetIndex(index int) (*Json, bool) {
+	a, err := j.Array()
+	if err == nil {
+		if len(a) > index {
+			return &Json{a[index]}, true
+		}
+	}
+	return nil, false
 }
 
 // SetIndex modifies `Json` array by `index` and `value`

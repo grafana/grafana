@@ -1,12 +1,14 @@
 import React, { Context, createContext, PropsWithChildren, useCallback, useContext } from 'react';
+
+import { TimeRange } from '@grafana/data';
+
 import { ElasticDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
 import { ElasticsearchQuery } from '../../types';
 
-import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
+import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
-import { TimeRange } from '@grafana/data';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);

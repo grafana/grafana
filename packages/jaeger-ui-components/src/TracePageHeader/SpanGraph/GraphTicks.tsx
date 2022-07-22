@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { useStyles2 } from '@grafana/ui';
 
 const getStyles = () => {
@@ -41,7 +42,7 @@ export default function GraphTicks(props: GraphTicksProps) {
   }
 
   return (
-    <g data-test="ticks" aria-hidden="true">
+    <g data-testid="ticks" aria-hidden="true">
       {ticks}
     </g>
   );

@@ -1,7 +1,7 @@
-// Libraries
 import { flatten, omit, uniq } from 'lodash';
 import { Unsubscribable } from 'rxjs';
-// Services & Utils
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   CoreApp,
   DataQuery,
@@ -24,16 +24,16 @@ import {
   toUtc,
   urlUtil,
 } from '@grafana/data';
-import store from 'app/core/store';
-import { v4 as uuidv4 } from 'uuid';
-import { getNextRefIdChar } from './query';
-// Types
-import { RefreshPicker } from '@grafana/ui';
-import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
-import { config } from '../config';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
+import { RefreshPicker } from '@grafana/ui';
+import store from 'app/core/store';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
+
+import { config } from '../config';
+
+import { getNextRefIdChar } from './query';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -103,7 +103,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
       };
     }
 
-    const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
+    const exploreState = JSON.stringify(state);
     url = urlUtil.renderUrl('/explore', { left: exploreState });
   }
 
@@ -223,7 +223,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     queries: [],
     range: DEFAULT_RANGE,
     mode: null,
-    originPanelId: null,
   };
 
   if (!parsed) {
@@ -245,13 +244,10 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter(
-    (segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode', '__panelsState')
-  );
+  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'mode', '__panelsState'));
 
-  const originPanelId = parsedSegments.find((segment) => isSegment(segment, 'originPanelId'));
   const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
-  return { datasource, queries, range, originPanelId, panelsState };
+  return { datasource, queries, range, panelsState };
 }
 
 export function generateKey(index = 0): string {

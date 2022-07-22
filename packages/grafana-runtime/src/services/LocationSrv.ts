@@ -1,13 +1,8 @@
-/**
- * Passed as options to the {@link LocationSrv} to describe how the automatically navigation
- * should be performed.
- *
- * @public
- */
 import { UrlQueryMap } from '@grafana/data';
 
 /**
  * @public
+ * @deprecated in favor of {@link locationService} and will be removed in Grafana 9
  */
 export interface LocationUpdate {
   /**
@@ -47,6 +42,7 @@ export interface LocationUpdate {
  * be done via the LocationSrv and it will make sure to update the application state accordingly.
  *
  * @public
+ * @deprecated in favor of {@link locationService} and will be removed in Grafana 9
  */
 export interface LocationSrv {
   update(options: LocationUpdate): void;
@@ -69,6 +65,7 @@ export function setLocationSrv(instance: LocationSrv) {
  * the user to a new place in Grafana.
  *
  * @public
+ * @deprecated in favor of {@link locationService} and will be removed in Grafana 9
  */
 export function getLocationSrv(): LocationSrv {
   return singletonInstance;

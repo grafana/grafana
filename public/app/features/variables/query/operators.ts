@@ -1,14 +1,16 @@
 import { from, of, OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { QueryVariableModel } from '../types';
-import { ThunkDispatch } from '../../../types';
-import { toVariableIdentifier, toVariablePayload } from '../state/types';
-import { validateVariableSelectionState } from '../state/actions';
 import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
-import { updateVariableOptions } from './reducer';
-import { getTemplatedRegex } from '../utils';
 import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
+
+import { ThunkDispatch } from '../../../types';
+import { validateVariableSelectionState } from '../state/actions';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { QueryVariableModel } from '../types';
+import { getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { updateVariableOptions } from './reducer';
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
   return (source) =>
@@ -102,9 +104,13 @@ export function updateOptionsState(args: {
     source.pipe(
       map((results) => {
         const { variable, dispatch, getTemplatedRegexFunc } = args;
+        if (!variable.rootStateKey) {
+          console.error('updateOptionsState: variable.rootStateKey is not defined');
+          return;
+        }
         const templatedRegex = getTemplatedRegexFunc(variable);
         const payload = toVariablePayload(variable, { results, templatedRegex });
-        dispatch(updateVariableOptions(payload));
+        dispatch(toKeyedAction(variable.rootStateKey, updateVariableOptions(payload)));
       })
     );
 }
@@ -124,7 +130,7 @@ export function validateVariableSelection(args: {
         // So after search and selection the current value is already update so no setValue, refresh and URL update is performed
         // The if statement below fixes https://github.com/grafana/grafana/issues/25671
         if (!searchFilter) {
-          return from(dispatch(validateVariableSelectionState(toVariableIdentifier(variable))));
+          return from(dispatch(validateVariableSelectionState(toKeyedVariableIdentifier(variable))));
         }
 
         return of<void>();

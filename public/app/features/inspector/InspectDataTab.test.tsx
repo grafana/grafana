@@ -1,8 +1,14 @@
-import React, { ComponentProps } from 'react';
-import { FieldType, DataFrame } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React, { ComponentProps } from 'react';
+
+import { DataFrame, FieldType } from '@grafana/data';
+
 import { InspectDataTab } from './InspectDataTab';
+
+// the mock below gets rid of this warning from recompose:
+// Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
+jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
 
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
   const defaultProps = {
@@ -46,19 +52,19 @@ describe('InspectDataTab', () => {
       render(<InspectDataTab {...createProps()} />);
       expect(screen.getByText(/Data options/i)).toBeInTheDocument();
     });
-    it('should show available options', () => {
+    it('should show available options', async () => {
       render(<InspectDataTab {...createProps()} />);
       const dataOptions = screen.getByText(/Data options/i);
-      userEvent.click(dataOptions);
+      await userEvent.click(dataOptions);
       expect(screen.getByText(/Show data frame/i)).toBeInTheDocument();
       expect(screen.getByText(/Download for Excel/i)).toBeInTheDocument();
     });
-    it('should show available dataFrame options', () => {
+    it('should show available dataFrame options', async () => {
       render(<InspectDataTab {...createProps()} />);
       const dataOptions = screen.getByText(/Data options/i);
-      userEvent.click(dataOptions);
+      await userEvent.click(dataOptions);
       const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
-      userEvent.click(dataFrameInput);
+      await userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
     it('should show download logs button if logs data', () => {
@@ -140,6 +146,32 @@ describe('InspectDataTab', () => {
     it('should not show download traces button if no traces data', () => {
       render(<InspectDataTab {...createProps()} />);
       expect(screen.queryByText(/Download traces/i)).not.toBeInTheDocument();
+    });
+    it('should show download service graph button', () => {
+      const sgFrames = [
+        {
+          name: 'Nodes',
+          fields: [],
+          meta: {
+            preferredVisualisationType: 'nodeGraph',
+          },
+        },
+        {
+          name: 'Edges',
+          fields: [],
+          meta: {
+            preferredVisualisationType: 'nodeGraph',
+          },
+        },
+      ] as unknown as DataFrame[];
+      render(
+        <InspectDataTab
+          {...createProps({
+            data: sgFrames,
+          })}
+        />
+      );
+      expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
     });
   });
 });

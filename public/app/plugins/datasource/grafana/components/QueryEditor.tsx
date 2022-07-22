@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { InlineField, Select, Alert, Input, InlineFieldRow } from '@grafana/ui';
+
 import {
   QueryEditorProps,
   SelectableValue,
@@ -8,9 +8,15 @@ import {
   DataQueryRequest,
   DataFrame,
 } from '@grafana/data';
+import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { InlineField, Select, Alert, Input, InlineFieldRow } from '@grafana/ui';
+import { hasAlphaPanels } from 'app/core/config';
+import { SearchQuery } from 'app/features/search/service';
+
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+
+import SearchEditor from './SearchEditor';
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
 
@@ -42,6 +48,18 @@ export class QueryEditor extends PureComponent<Props, State> {
       description: 'Show directory listings for public resources',
     },
   ];
+
+  constructor(props: Props) {
+    super(props);
+
+    if (config.featureToggles.panelTitleSearch && hasAlphaPanels) {
+      this.queryTypes.push({
+        label: 'Search',
+        value: GrafanaQueryType.Search,
+        description: 'Search for grafana resources',
+      });
+    }
+  }
 
   loadChannelInfo() {
     getBackendSrv()
@@ -146,20 +164,27 @@ export class QueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
-  checkAndUpdateBuffer = (txt: string) => {
+  checkAndUpdateValue = (key: keyof GrafanaQuery, txt: string) => {
     const { onChange, query, onRunQuery } = this.props;
-    let buffer: number | undefined;
-    if (txt) {
-      try {
-        buffer = rangeUtil.intervalToSeconds(txt) * 1000;
-      } catch (err) {
-        console.warn('ERROR', err);
+    if (key === 'buffer') {
+      let buffer: number | undefined;
+      if (txt) {
+        try {
+          buffer = rangeUtil.intervalToSeconds(txt) * 1000;
+        } catch (err) {
+          console.warn('ERROR', err);
+        }
       }
+      onChange({
+        ...query,
+        buffer,
+      });
+    } else {
+      onChange({
+        ...query,
+        [key]: txt,
+      });
     }
-    onChange({
-      ...query,
-      buffer,
-    });
     onRunQuery();
   };
 
@@ -167,11 +192,11 @@ export class QueryEditor extends PureComponent<Props, State> {
     if (e.key !== 'Enter') {
       return;
     }
-    this.checkAndUpdateBuffer((e.target as any).value);
+    this.checkAndUpdateValue('buffer', (e.target as any).value);
   };
 
   handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    this.checkAndUpdateBuffer(e.target.value);
+    this.checkAndUpdateValue('buffer', e.target.value);
   };
 
   renderMeasurementsQuery() {
@@ -227,7 +252,6 @@ export class QueryEditor extends PureComponent<Props, State> {
         <div className="gf-form">
           <InlineField label="Channel" grow={true} labelWidth={labelWidth}>
             <Select
-              menuShouldPortal
               options={channels}
               value={currentChannel || ''}
               onChange={this.onChannelChange}
@@ -244,7 +268,6 @@ export class QueryEditor extends PureComponent<Props, State> {
           <div className="gf-form">
             <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
               <Select
-                menuShouldPortal
                 options={fields}
                 value={filter?.fields || []}
                 onChange={this.onFieldNamesChange}
@@ -307,7 +330,6 @@ export class QueryEditor extends PureComponent<Props, State> {
       <InlineFieldRow>
         <InlineField label="Path" grow={true} labelWidth={labelWidth}>
           <Select
-            menuShouldPortal
             options={folders}
             value={currentFolder || ''}
             onChange={this.onFolderChanged}
@@ -322,26 +344,46 @@ export class QueryEditor extends PureComponent<Props, State> {
     );
   }
 
+  onSearchChange = (search: SearchQuery) => {
+    const { query, onChange, onRunQuery } = this.props;
+
+    onChange({
+      ...query,
+      search,
+    });
+    onRunQuery();
+  };
+
   render() {
     const query = {
       ...defaultQuery,
       ...this.props.query,
     };
 
+    const { queryType } = query;
+
     return (
       <>
+        {queryType === GrafanaQueryType.Search && (
+          <Alert title="Grafana Search" severity="info">
+            Using this datasource to call the new search system is experimental, and subject to change at any time
+            without notice.
+          </Alert>
+        )}
         <InlineFieldRow>
           <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
             <Select
-              menuShouldPortal
               options={this.queryTypes}
-              value={this.queryTypes.find((v) => v.value === query.queryType) || this.queryTypes[0]}
+              value={this.queryTypes.find((v) => v.value === queryType) || this.queryTypes[0]}
               onChange={this.onQueryTypeChange}
             />
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
-        {query.queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
+        {queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
+        {queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
+        {queryType === GrafanaQueryType.Search && (
+          <SearchEditor value={query.search ?? {}} onChange={this.onSearchChange} />
+        )}
       </>
     );
   }

@@ -1,21 +1,29 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
+import React from 'react';
+import { openMenu } from 'react-select-event';
+
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+
+import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',
   type: DataSourceType.Alertmanager,
 });
 
+const mockVariable = mockDataSource({
+  name: '${dsVariable}',
+  type: 'datasource',
+});
+
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {
     getDataSourceSrv: () => ({
       get: () => Promise.resolve(mockDS),
-      getList: () => [mockDS],
+      getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
       getInstanceSettings: () => mockDS,
     }),
   };
@@ -30,7 +38,7 @@ describe('QueryEditorRowHeader', () => {
     fireEvent.change(input, { target: { value: 'new name' } });
     fireEvent.blur(input);
 
-    expect((scenario.props.onChange as any).mock.calls[0][0].refId).toBe('new name');
+    expect(jest.mocked(scenario.props.onChange).mock.calls[0][0].refId).toBe('new name');
   });
 
   it('Show error when other query with same name exists', async () => {
@@ -65,6 +73,14 @@ describe('QueryEditorRowHeader', () => {
     renderScenario({ onChangeDataSource: undefined });
 
     expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
+  });
+
+  it('should render variables in the data source picker', async () => {
+    renderScenario({ onChangeDataSource: () => {} });
+
+    const dsSelect = screen.getByLabelText(selectors.components.DataSourcePicker.inputV2);
+    openMenu(dsSelect);
+    expect(await screen.findByText('${dsVariable}')).toBeInTheDocument();
   });
 });
 

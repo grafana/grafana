@@ -1,4 +1,5 @@
 import { FieldType } from '../types/dataFrame';
+
 import { DataFrameJSON, dataFrameFromJSON } from './DataFrameJSON';
 
 describe('DataFrame JSON', () => {

@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as processSelectors from './process';
 import traceGenerator from '../demo/trace-generators';
+
+import * as processSelectors from './process';
 
 const generatedTrace = traceGenerator.trace({ numberOfSpans: 45 });
 

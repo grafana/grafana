@@ -1,5 +1,7 @@
 import React, { FC } from 'react';
+
 import { Checkbox, CollapsableSection, Field, InfoBox, Input } from '@grafana/ui';
+
 import { NotificationSettingsProps } from './NotificationChannelForm';
 
 interface Props extends NotificationSettingsProps {

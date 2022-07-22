@@ -6,7 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -95,16 +99,16 @@ func Test_handleResourceReq(t *testing.T) {
 	proxy := &fakeProxy{}
 	s := Service{
 		im: &fakeInstance{
-			services: map[string]datasourceService{
+			services: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL:        routes[setting.AzurePublic][azureMonitor].URL,
+					URL:        routes[azsettings.AzurePublic][azureMonitor].URL,
 					HTTPClient: &http.Client{},
 				},
 			},
 		},
 		executors: map[string]azDatasourceExecutor{
-			azureMonitor: &AzureMonitorDatasource{
-				proxy: proxy,
+			azureMonitor: &metrics.AzureMonitorDatasource{
+				Proxy: proxy,
 			},
 		},
 	}

@@ -1,20 +1,22 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,40 +25,25 @@ import (
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
-		hs := &HTTPServer{Cfg: settings}
+		dashboardStore := &dashboards.FakeDashboardStore{}
+		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(nil, nil)
+		defer dashboardStore.AssertExpectations(t)
 
-		t.Run("Given dashboard not exists", func(t *testing.T) {
-			setUp := func() {
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					return models.ErrDashboardNotFound
-				})
-			}
-			mock := mockstore.NewSQLStoreMock()
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					setUp()
-					callGetDashboardPermissions(sc, hs)
-					assert.Equal(t, 404, sc.resp.Code)
-				}, mock)
+		features := featuremgmt.WithFeatures()
+		mockSQLStore := mockstore.NewSQLStoreMock()
+		ac := accesscontrolmock.New()
+		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-				},
-			}
-
-			updateDashboardPermissionScenario(t, updatePermissionContext{
-				desc:         "When calling POST on",
-				url:          "/api/dashboards/id/1/permissions",
-				routePattern: "/api/dashboards/id/:dashboardId/permissions",
-				cmd:          cmd,
-				fn: func(sc *scenarioContext) {
-					setUp()
-					callUpdateDashboardPermissions(t, sc)
-					assert.Equal(t, 404, sc.resp.Code)
-				},
-			}, hs)
-		})
+		hs := &HTTPServer{
+			Cfg:      settings,
+			SQLStore: mockSQLStore,
+			Features: features,
+			DashboardService: dashboardservice.ProvideDashboardService(
+				settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac,
+			),
+			AccessControl: accesscontrolmock.New().WithDisabled(),
+		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {
 			origNewGuardian := guardian.New
@@ -65,36 +52,25 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			})
 
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
-
-			getDashboardQueryResult := models.NewDashboard("Dash")
-
-			setUp := func() {
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 403, sc.resp.Code)
-				}, mock)
+				}, mockSQLStore)
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
 
+			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
 				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					setUp()
 					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 403, sc.resp.Code)
 				},
@@ -110,7 +86,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,
 				CheckPermissionBeforeUpdateValue: true,
-				GetAclValue: []*models.DashboardAclInfoDTO{
+				GetACLValue: []*models.DashboardACLInfoDTO{
 					{OrgId: 1, DashboardId: 1, UserId: 2, Permission: models.PERMISSION_VIEW},
 					{OrgId: 1, DashboardId: 1, UserId: 3, Permission: models.PERMISSION_EDIT},
 					{OrgId: 1, DashboardId: 1, UserId: 4, Permission: models.PERMISSION_ADMIN},
@@ -119,32 +95,22 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				},
 			})
 
-			setUp := func() {
-				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-			mock := mockstore.NewSQLStoreMock()
-
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
-					setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 200, sc.resp.Code)
 
-					var resp []*models.DashboardAclInfoDTO
+					var resp []*models.DashboardACLInfoDTO
 					err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 					require.NoError(t, err)
 
 					assert.Len(t, resp, 5)
 					assert.Equal(t, int64(2), resp[0].UserId)
 					assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
-				}, mock)
+				}, mockSQLStore)
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
@@ -155,7 +121,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					setUp()
 					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 200, sc.resp.Code)
 				},
@@ -173,16 +138,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				CheckPermissionBeforeUpdateValue: true,
 			})
 
-			setUp := func() {
-				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, TeamID: 1, Permission: models.PERMISSION_ADMIN},
 				},
 			}
@@ -193,7 +150,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					setUp()
 					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 400, sc.resp.Code)
 					respJSON, err := jsonMap(sc.resp.Body.Bytes())
@@ -214,16 +170,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				CheckPermissionBeforeUpdateError: guardian.ErrGuardianPermissionExists,
 			})
 
-			setUp := func() {
-				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
@@ -234,7 +182,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					setUp()
 					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 400, sc.resp.Code)
 				},
@@ -243,14 +190,14 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 		t.Run("When trying to update team or user permissions with a role", func(t *testing.T) {
 			role := models.ROLE_EDITOR
-			cmds := []dtos.UpdateDashboardAclCommand{
+			cmds := []dtos.UpdateDashboardACLCommand{
 				{
-					Items: []dtos.DashboardAclUpdateItem{
+					Items: []dtos.DashboardACLUpdateItem{
 						{UserID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
 					},
 				},
 				{
-					Items: []dtos.DashboardAclUpdateItem{
+					Items: []dtos.DashboardACLUpdateItem{
 						{TeamID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
 					},
 				},
@@ -285,16 +232,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverride},
 			)
 
-			setUp := func() {
-				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
@@ -305,7 +244,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					setUp()
 					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 400, sc.resp.Code)
 				},
@@ -323,31 +261,24 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				settings.HiddenUsers = make(map[string]struct{})
 			})
 
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-				CanAdminValue:                    true,
-				CheckPermissionBeforeUpdateValue: true,
-				GetAclValue: []*models.DashboardAclInfoDTO{
-					{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
-					{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
-					{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
-				},
-				GetHiddenAclValue: []*models.DashboardAcl{
-					{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
-				},
-			})
-
-			setUp := func() {
-				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-			mock := mockstore.NewSQLStoreMock()
-			var resp []*models.DashboardAclInfoDTO
+			mockSQLStore := mockstore.NewSQLStoreMock()
+			var resp []*models.DashboardACLInfoDTO
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 					setUp()
+					guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+						CanAdminValue:                    true,
+						CheckPermissionBeforeUpdateValue: true,
+						GetACLValue: []*models.DashboardACLInfoDTO{
+							{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
+							{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
+							{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
+						},
+						GetHiddenACLValue: []*models.DashboardACL{
+							{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
+						},
+					})
+
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 200, sc.resp.Code)
 
@@ -359,42 +290,35 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					assert.Equal(t, models.PERMISSION_EDIT, resp[0].Permission)
 					assert.Equal(t, int64(4), resp[1].UserId)
 					assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
-				}, mock)
+				}, mockSQLStore)
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
 			for _, acl := range resp {
-				cmd.Items = append(cmd.Items, dtos.DashboardAclUpdateItem{
+				cmd.Items = append(cmd.Items, dtos.DashboardACLUpdateItem{
 					UserID:     acl.UserId,
 					Permission: acl.Permission,
 				})
 			}
 			assert.Len(t, cmd.Items, 3)
 
+			var numOfItems []*models.DashboardACL
+			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				items := args.Get(2).([]*models.DashboardACL)
+				numOfItems = items
+			}).Return(nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
 				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					setUp()
-					// TODO: Replace this fake with a fake SQLStore instead (once we can use an interface in its stead)
-					origUpdateDashboardACL := updateDashboardACL
-					t.Cleanup(func() {
-						updateDashboardACL = origUpdateDashboardACL
-					})
-					var gotItems []*models.DashboardAcl
-					updateDashboardACL = func(_ context.Context, _ dashboards.Store, folderID int64, items []*models.DashboardAcl) error {
-						gotItems = items
-						return nil
-					}
-
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
-					assert.Len(t, gotItems, 4)
+					assert.Len(t, numOfItems, 4)
 				},
 			}, hs)
 		})
@@ -408,15 +332,6 @@ func callGetDashboardPermissions(sc *scenarioContext, hs *HTTPServer) {
 
 func callUpdateDashboardPermissions(t *testing.T, sc *scenarioContext) {
 	t.Helper()
-
-	origUpdateDashboardACL := updateDashboardACL
-	t.Cleanup(func() {
-		updateDashboardACL = origUpdateDashboardACL
-	})
-	updateDashboardACL = func(_ context.Context, _ dashboards.Store, dashID int64, items []*models.DashboardAcl) error {
-		return nil
-	}
-
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
@@ -424,18 +339,17 @@ type updatePermissionContext struct {
 	desc         string
 	url          string
 	routePattern string
-	cmd          dtos.UpdateDashboardAclCommand
+	cmd          dtos.UpdateDashboardACLCommand
 	fn           scenarioFunc
 }
 
 func updateDashboardPermissionScenario(t *testing.T, ctx updatePermissionContext, hs *HTTPServer) {
 	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		sc := setupScenarioContext(t, ctx.url)
 
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(ctx.cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.OrgId = testOrgID
 			sc.context.UserId = testUserID

@@ -1,12 +1,15 @@
-import React, { ReactElement, useRef } from 'react';
 import { css } from '@emotion/css';
+import React, { ReactElement, useRef } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
+
 import { MenuItemProps } from './MenuItem';
-import { getPosition } from './utils';
 import { useMenuFocus } from './hooks';
+import { getPosition } from './utils';
 
 /** @internal */
 export interface SubMenuProps {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceLog } from '../../types/trace';
+import { TraceLog, TraceSpanReference } from '../../types/trace';
 
 /**
  * Which items of a {@link SpanDetail} component are expanded.
@@ -21,6 +21,7 @@ export default class DetailState {
   isTagsOpen: boolean;
   isProcessOpen: boolean;
   logs: { isOpen: boolean; openedItems: Set<TraceLog> };
+  references: { isOpen: boolean; openedItems: Set<TraceSpanReference> };
   isWarningsOpen: boolean;
   isStackTracesOpen: boolean;
   isReferencesOpen: boolean;
@@ -33,6 +34,7 @@ export default class DetailState {
       isWarningsOpen,
       isStackTracesOpen,
       logs,
+      references,
     }: DetailState | Record<string, undefined> = oldState || {};
     this.isTagsOpen = Boolean(isTagsOpen);
     this.isProcessOpen = Boolean(isProcessOpen);
@@ -42,6 +44,10 @@ export default class DetailState {
     this.logs = {
       isOpen: Boolean(logs && logs.isOpen),
       openedItems: logs && logs.openedItems ? new Set(logs.openedItems) : new Set(),
+    };
+    this.references = {
+      isOpen: Boolean(references && references.isOpen),
+      openedItems: references && references.openedItems ? new Set(references.openedItems) : new Set(),
     };
   }
 
@@ -59,7 +65,17 @@ export default class DetailState {
 
   toggleReferences() {
     const next = new DetailState(this);
-    next.isReferencesOpen = !this.isReferencesOpen;
+    next.references.isOpen = !this.references.isOpen;
+    return next;
+  }
+
+  toggleReferenceItem(reference: TraceSpanReference) {
+    const next = new DetailState(this);
+    if (next.references.openedItems.has(reference)) {
+      next.references.openedItems.delete(reference);
+    } else {
+      next.references.openedItems.add(reference);
+    }
     return next;
   }
 

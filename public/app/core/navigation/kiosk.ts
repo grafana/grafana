@@ -1,7 +1,10 @@
-import { AppEvents, UrlQueryValue } from '@grafana/data';
+import { t } from '@lingui/macro';
+
+import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import appEvents from '../app_events';
+
 import { KioskMode } from '../../types';
+import appEvents from '../app_events';
 
 export function toggleKioskMode() {
   let kiosk = locationService.getSearchObject().kiosk;
@@ -9,7 +12,9 @@ export function toggleKioskMode() {
   switch (kiosk) {
     case 'tv':
       kiosk = true;
-      appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
+      appEvents.emit(AppEvents.alertSuccess, [
+        t({ id: 'navigation.kiosk.tv-alert', message: 'Press ESC to exit Kiosk mode' }),
+      ]);
       break;
     case '1':
     case true:
@@ -22,8 +27,10 @@ export function toggleKioskMode() {
   locationService.partial({ kiosk });
 }
 
-export function getKioskMode(queryParam?: UrlQueryValue): KioskMode {
-  switch (queryParam) {
+export function getKioskMode(): KioskMode {
+  const kiosk = locationService.getSearchObject().kiosk;
+
+  switch (kiosk) {
     case 'tv':
       return KioskMode.TV;
     //  legacy support

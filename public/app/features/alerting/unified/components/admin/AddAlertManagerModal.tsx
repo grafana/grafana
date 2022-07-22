@@ -1,19 +1,18 @@
-import React, { FC, useMemo } from 'react';
 import { css, cx } from '@emotion/css';
-import { useDispatch } from 'react-redux';
+import React, { FC, useMemo } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, FieldArray, Form, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
-import { addExternalAlertmanagersAction } from '../../state/actions';
 import { AlertmanagerUrl } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {
   onClose: () => void;
   alertmanagers: AlertmanagerUrl[];
+  onChangeAlertmanagerConfig: (alertmanagers: string[]) => void;
 }
 
-export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
+export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onChangeAlertmanagerConfig, onClose }) => {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
   const defaultValues: Record<string, AlertmanagerUrl[]> = useMemo(
     () => ({
       alertmanagers: alertmanagers,
@@ -29,7 +28,7 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
   );
 
   const onSubmit = (values: Record<string, AlertmanagerUrl[]>) => {
-    dispatch(addExternalAlertmanagersAction(values.alertmanagers.map((am) => cleanAlertmanagerUrl(am.url))));
+    onChangeAlertmanagerConfig(values.alertmanagers.map((am) => cleanAlertmanagerUrl(am.url)));
     onClose();
   };
 
@@ -83,7 +82,9 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
               )}
             </FieldArray>
             <div>
-              <Button onSubmit={() => onSubmit}>Add Alertmanagers</Button>
+              <Button type="submit" onSubmit={() => onSubmit}>
+                Add Alertmanagers
+              </Button>
             </div>
           </div>
         )}

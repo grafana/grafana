@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/shared/view-server-org-list/
 title: View user list
 ---
 

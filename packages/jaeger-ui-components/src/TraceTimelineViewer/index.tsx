@@ -12,21 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import React, { RefObject } from 'react';
+
+import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import TimelineHeaderRow from './TimelineHeaderRow';
-import VirtualizedTraceView from './VirtualizedTraceView';
-import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { Accessors } from '../ScrollManager';
-import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
-import { SpanLinkFunc, TNil } from '../types';
-import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink } from '../types/trace';
-import TTraceTimeline from '../types/TTraceTimeline';
 import { autoColor } from '../Theme';
-import ExternalLinkContext from '../url/externalLinkContext';
+import { merge as mergeShortcuts } from '../keyboard-shortcuts';
+import { SpanBarOptions } from '../settings/SpanBarSettings';
+import { SpanLinkFunc, TNil } from '../types';
+import TTraceTimeline from '../types/TTraceTimeline';
+import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
+
+import TimelineHeaderRow from './TimelineHeaderRow';
+import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
+import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
@@ -74,11 +77,12 @@ type TProps = TExtractUiFindFromStateReturn & {
   scrollToFirstVisibleSpan: () => void;
   traceTimeline: TTraceTimeline;
   trace: Trace;
+  datasourceType: string;
+  spanBarOptions: SpanBarOptions | undefined;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
-  focusSpan: (uiFind: string) => void;
-  createLinkToExternalSpan: (traceID: string, spanID: string) => string;
+  timeZone: TimeZone;
 
   setSpanNameColumnWidth: (width: number) => void;
   collapseAll: (spans: TraceSpan[]) => void;
@@ -93,6 +97,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   detailWarningsToggle: (spanID: string) => void;
   detailStackTracesToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
+  detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
@@ -104,7 +109,10 @@ type TProps = TExtractUiFindFromStateReturn & {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
+  focusedSpanIdForSearch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 type State = {
@@ -137,18 +145,34 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
 
   collapseAll = () => {
     this.props.collapseAll(this.props.trace.spans);
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'collapseAll',
+    });
   };
 
   collapseOne = () => {
     this.props.collapseOne(this.props.trace.spans);
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'collapseOne',
+    });
   };
 
   expandAll = () => {
     this.props.expandAll();
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'expandAll',
+    });
   };
 
   expandOne = () => {
     this.props.expandOne(this.props.trace.spans);
+    reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
+      datasourceType: this.props.datasourceType,
+      type: 'expandOne',
+    });
   };
 
   render() {
@@ -157,42 +181,43 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
       updateNextViewRangeTime,
       updateViewRangeTime,
       viewRange,
-      createLinkToExternalSpan,
       traceTimeline,
       theme,
+      topOfViewRef,
+      focusedSpanIdForSearch,
       ...rest
     } = this.props;
     const { trace } = rest;
     const styles = getStyles(theme);
 
     return (
-      <ExternalLinkContext.Provider value={createLinkToExternalSpan}>
-        <div
-          className={styles.TraceTimelineViewer}
-          ref={(ref: HTMLDivElement | null) => ref && this.setState({ height: ref.getBoundingClientRect().height })}
-        >
-          <TimelineHeaderRow
-            duration={trace.duration}
-            nameColumnWidth={traceTimeline.spanNameColumnWidth}
-            numTicks={NUM_TICKS}
-            onCollapseAll={this.collapseAll}
-            onCollapseOne={this.collapseOne}
-            onColummWidthChange={setSpanNameColumnWidth}
-            onExpandAll={this.expandAll}
-            onExpandOne={this.expandOne}
-            viewRangeTime={viewRange.time}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            columnResizeHandleHeight={this.state.height}
-          />
-          <VirtualizedTraceView
-            {...rest}
-            {...traceTimeline}
-            setSpanNameColumnWidth={setSpanNameColumnWidth}
-            currentViewRangeTime={viewRange.time.current}
-          />
-        </div>
-      </ExternalLinkContext.Provider>
+      <div
+        className={styles.TraceTimelineViewer}
+        ref={(ref: HTMLDivElement | null) => ref && this.setState({ height: ref.getBoundingClientRect().height })}
+      >
+        <TimelineHeaderRow
+          duration={trace.duration}
+          nameColumnWidth={traceTimeline.spanNameColumnWidth}
+          numTicks={NUM_TICKS}
+          onCollapseAll={this.collapseAll}
+          onCollapseOne={this.collapseOne}
+          onColummWidthChange={setSpanNameColumnWidth}
+          onExpandAll={this.expandAll}
+          onExpandOne={this.expandOne}
+          viewRangeTime={viewRange.time}
+          updateNextViewRangeTime={updateNextViewRangeTime}
+          updateViewRangeTime={updateViewRangeTime}
+          columnResizeHandleHeight={this.state.height}
+        />
+        <VirtualizedTraceView
+          {...rest}
+          {...traceTimeline}
+          setSpanNameColumnWidth={setSpanNameColumnWidth}
+          currentViewRangeTime={viewRange.time.current}
+          topOfViewRef={topOfViewRef}
+          focusedSpanIdForSearch={focusedSpanIdForSearch}
+        />
+      </div>
     );
   }
 }

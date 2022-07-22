@@ -11,4 +11,4 @@ Thank you for joining our community.
 
 The Grafana team
 
-Sent by Grafana v{{.BuildVersion}} (c) 2021 Grafana Labs
+Sent by Grafana v{{.BuildVersion}} (c) 2022 Grafana Labs

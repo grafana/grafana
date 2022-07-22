@@ -1,21 +1,12 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_AZURE_MONITOR",
-      "label": "Azure Monitor",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "grafana-azure-monitor-datasource",
-      "pluginName": "Azure Monitor"
-    }
-  ],
+  "__inputs": [],
   "__elements": [],
   "__requires": [
     {
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.3.0-pre"
+      "version": "8.4.3"
     },
     {
       "type": "datasource",
@@ -25,42 +16,621 @@
     },
     {
       "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
       "id": "table",
       "name": "Table",
       "version": ""
     }
   ],
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "target": {
-          "limit": 100,
-          "matchAny": false,
-          "tags": [],
-          "type": "dashboard"
-        },
-        "type": "dashboard"
-      }
-    ]
-  },
   "description": "A summary of all alerts for the subscription and other filters selected",
   "editable": true,
-  "fiscalYearStartMonth": 0,
-  "gnetId": null,
-  "graphTooltip": 0,
   "id": null,
-  "iteration": 1634314135767,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "datasource": "${DS_AZURE_MONITOR}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Alerts"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "",
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev0&var-sev=Sev1&var-sev=Sev2&var-sev=Sev3&var-sev=Sev4&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "azureMonitor": {
+            "dimensionFilters": [],
+            "timeGrain": "auto"
+          },
+          "azureResourceGraph": {
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where tolower(subscriptionId) == tolower(\"$sub\") and properties.essentials.targetResourceGroup in~ ($rg) and properties.essentials.monitorCondition in~ ($mc)\r\nand properties.essentials.alertState in~ ($as) and properties.essentials.severity in~ ($sev)\r\n| summarize count()"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscription": "",
+          "subscriptions": ["$sub"]
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "count_": "Total Alerts"
+            }
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Critical"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "",
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev0&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 2,
+        "y": 0
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "azureMonitor": {
+            "dimensionFilters": [],
+            "timeGrain": "auto"
+          },
+          "azureResourceGraph": {
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where tolower(subscriptionId) == tolower(\"$sub\") and properties.essentials.targetResourceGroup in~ ($rg) and properties.essentials.monitorCondition in~ ($mc)\r\nand properties.essentials.alertState in~ ($as) and properties.essentials.severity in~ ($sev) and properties.essentials.severity == \"Sev0\" \r\n| summarize count()"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscription": "",
+          "subscriptions": ["$sub"]
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "count_": "Critical"
+            }
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "orange",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Error"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "",
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev1&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 4,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "azureMonitor": {
+            "dimensionFilters": [],
+            "timeGrain": "auto"
+          },
+          "azureResourceGraph": {
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where tolower(subscriptionId) == tolower(\"$sub\") and properties.essentials.targetResourceGroup in~ ($rg) and properties.essentials.monitorCondition in~ ($mc)\r\nand properties.essentials.alertState in~ ($as) and properties.essentials.severity in~ ($sev) and properties.essentials.severity == \"Sev1\" \r\n| summarize count()"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscription": "",
+          "subscriptions": ["$sub"]
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "count_": "Error"
+            }
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "yellow",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Warning"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "",
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev2&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 6,
+        "y": 0
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "azureMonitor": {
+            "dimensionFilters": [],
+            "timeGrain": "auto"
+          },
+          "azureResourceGraph": {
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where tolower(subscriptionId) == tolower(\"$sub\") and properties.essentials.targetResourceGroup in~ ($rg) and properties.essentials.monitorCondition in~ ($mc)\r\nand properties.essentials.alertState in~ ($as) and properties.essentials.severity in~ ($sev) and properties.essentials.severity == \"Sev2\" \r\n| summarize count()"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscription": "",
+          "subscriptions": ["$sub"]
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "count_": "Warning"
+            }
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Informational"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "",
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev3&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 8,
+        "y": 0
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "azureMonitor": {
+            "dimensionFilters": [],
+            "timeGrain": "auto"
+          },
+          "azureResourceGraph": {
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where tolower(subscriptionId) == tolower(\"$sub\") and properties.essentials.targetResourceGroup in~ ($rg) and properties.essentials.monitorCondition in~ ($mc)\r\nand properties.essentials.alertState in~ ($as) and properties.essentials.severity in~ ($sev) and properties.essentials.severity == \"Sev3\" \r\n| summarize count()"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscription": "",
+          "subscriptions": ["$sub"]
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "count_": "Informational"
+            }
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Verbose"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "",
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev4&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 10,
+        "y": 0
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "azureMonitor": {
+            "dimensionFilters": [],
+            "timeGrain": "auto"
+          },
+          "azureResourceGraph": {
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where tolower(subscriptionId) == tolower(\"$sub\") and properties.essentials.targetResourceGroup in~ ($rg) and properties.essentials.monitorCondition in~ ($mc)\r\nand properties.essentials.alertState in~ ($as) and properties.essentials.severity in~ ($sev) and properties.essentials.severity == \"Sev4\" \r\n| summarize count()"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscription": "",
+          "subscriptions": ["$sub"]
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "count_": "Verbose"
+            }
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -91,7 +661,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "properties_essentials_severity"
+              "options": "Severity"
             },
             "properties": [
               {
@@ -102,27 +672,27 @@
                       "\"Sev0\"": {
                         "color": "red",
                         "index": 4,
-                        "text": "0 - Critical"
+                        "text": "Critical"
                       },
                       "\"Sev1\"": {
                         "color": "orange",
                         "index": 3,
-                        "text": "1 - Error"
+                        "text": "Error"
                       },
                       "\"Sev2\"": {
                         "color": "yellow",
                         "index": 2,
-                        "text": "2 - Warning"
+                        "text": "Warning"
                       },
                       "\"Sev3\"": {
                         "color": "blue",
                         "index": 1,
-                        "text": "3 - Informational"
+                        "text": "Informational"
                       },
                       "\"Sev4\"": {
                         "color": "#8F3BB8",
                         "index": 0,
-                        "text": "4 - Verbose"
+                        "text": "Verbose"
                       }
                     },
                     "type": "value"
@@ -132,23 +702,15 @@
               {
                 "id": "custom.displayMode",
                 "value": "color-background-solid"
-              },
-              {
-                "id": "displayName",
-                "value": "Severity"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "name"
+              "options": "Name"
             },
             "properties": [
-              {
-                "id": "displayName",
-                "value": "Name"
-              },
               {
                 "id": "custom.displayMode",
                 "value": "color-text"
@@ -159,13 +721,9 @@
                   {
                     "targetBlank": true,
                     "title": "test title",
-                    "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_Monitoring/AlertDetailsTemplateBlade/alertId/%2Fsubscriptions%2F${sub}%2Fresourcegroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%2Fproviders%2FMicrosoft.AlertsManagement%2Falerts%2F${__data.fields.alertId}"
+                    "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_Monitoring/AlertDetailsTemplateBlade/alertId/%2Fsubscriptions%2F${sub}%2Fresourcegroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%2Fproviders%2FMicrosoft.AlertsManagement%2Falerts%2F${__data.fields[\"Alert ID\"]}"
                   }
                 ]
-              },
-              {
-                "id": "mappings",
-                "value": []
               }
             ]
           },
@@ -175,10 +733,6 @@
               "options": "properties_essentials_monitorCondition"
             },
             "properties": [
-              {
-                "id": "displayName",
-                "value": "Monitor condition"
-              },
               {
                 "id": "mappings",
                 "value": [
@@ -202,110 +756,6 @@
                 "value": "basic"
               }
             ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "properties_essentials_alertState"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Alert state"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "properties_essentials_targetResourceName"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Affected resource"
-              },
-              {
-                "id": "custom.displayMode",
-                "value": "color-text"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "properties_essentials_monitorService"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Monitor service"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "properties_essentials_signalType"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Signal type"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "properties_essentials_lastModifiedDateTime"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Fired time"
-              },
-              {
-                "id": "unit",
-                "value": "dateTimeAsUS"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "SubName"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Subscription name"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Name"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 423
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Subscription name"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 266
-              }
-            ]
           }
         ]
       },
@@ -313,7 +763,7 @@
         "h": 16,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 4
       },
       "id": 2,
       "links": [],
@@ -327,29 +777,15 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "8.3.0-pre",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
-          },
           "azureResourceGraph": {
-            "query": "alertsmanagementresources\r\n| join kind=leftouter (ResourceContainers | where type=='microsoft.resources/subscriptions' | project SubName=name, subscriptionId) on subscriptionId\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where subscriptionId == \"$sub\" and properties.essentials.targetResourceGroup in ($rg) and properties.essentials.monitorCondition in ($mc)\r\nand properties.essentials.alertState in ($as) and properties.essentials.severity in ($sev)\r\nand todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| parse id with * \"alerts/\" alertId\r\n| project name, properties.essentials.severity, tostring(properties.essentials.monitorCondition), \r\ntostring(properties.essentials.alertState), tostring(properties.essentials.targetResourceName),\r\n tostring(properties.essentials.monitorService), tostring(properties.essentials.signalType),\r\n  todatetime(properties.essentials.lastModifiedDateTime), tostring(SubName), alertId, id\r\n",
+            "query": "alertsmanagementresources\r\n| join kind=leftouter (ResourceContainers | where type=='microsoft.resources/subscriptions' | project SubName=name, subscriptionId) on subscriptionId\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where tolower(subscriptionId) == tolower(\"$sub\") and properties.essentials.targetResourceGroup in~ ($rg) and properties.essentials.monitorCondition in~ ($mc)\r\nand properties.essentials.alertState in~ ($as) and properties.essentials.severity in~ ($sev)\r\nand todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| parse id with * \"alerts/\" alertId\r\n| project name, properties.essentials.severity, tostring(properties.essentials.monitorCondition), \r\ntostring(properties.essentials.alertState), todatetime(properties.essentials.lastModifiedDateTime), tostring(properties.essentials.monitorService), alertId\r\n",
             "resultFormat": "table"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "insightsAnalytics": {
             "query": "",
@@ -358,38 +794,35 @@
           "queryType": "Azure Resource Graph",
           "refId": "A",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "V1 Alerts",
       "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "alertId",
-                "name",
-                "properties_essentials_severity",
-                "properties_essentials_monitorCondition",
-                "properties_essentials_alertState",
-                "properties_essentials_targetResourceName",
-                "properties_essentials_monitorService",
-                "properties_essentials_signalType",
-                "properties_essentials_lastModifiedDateTime",
-                "SubName"
-              ]
-            }
-          }
-        },
         {
           "id": "organize",
           "options": {
             "excludeByName": {
               "alertId": false
             },
-            "indexByName": {},
-            "renameByName": {}
+            "indexByName": {
+              "alertId": 6,
+              "name": 0,
+              "properties_essentials_alertState": 3,
+              "properties_essentials_lastModifiedDateTime": 5,
+              "properties_essentials_monitorCondition": 2,
+              "properties_essentials_monitorService": 4,
+              "properties_essentials_severity": 1
+            },
+            "renameByName": {
+              "alertId": "Alert ID",
+              "name": "Name",
+              "properties_essentials_alertState": "User Response",
+              "properties_essentials_monitorService": "Monitor Service",
+              "properties_essentials_lastModifiedDateTime": "Fired Time",
+              "properties_essentials_monitorCondition": "Alert Condition",
+              "properties_essentials_severity": "Severity"
+            }
           }
         }
       ],
@@ -398,18 +831,33 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 31,
+  "schemaVersion": 35,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${DS_AZURE_MONITOR}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "ds",
+        "options": [],
+        "query": "grafana-azure-monitor-datasource",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
         "definition": "subscriptions()",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Subscription",
@@ -424,15 +872,15 @@
         "type": "query"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${DS_AZURE_MONITOR}",
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
         "definition": "ResourceGroups($sub)",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": "Resource group",
+        "label": "Resource Group(s)",
         "multi": true,
         "name": "rg",
         "options": [],
@@ -444,17 +892,14 @@
         "type": "query"
       },
       {
-        "allValue": null,
         "current": {
           "selected": false,
           "text": ["Fired", "Resolved"],
           "value": ["Fired", "Resolved"]
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": "Monitor Condition",
+        "label": "Alert Condition",
         "multi": true,
         "name": "mc",
         "options": [
@@ -475,17 +920,14 @@
         "type": "custom"
       },
       {
-        "allValue": null,
         "current": {
           "selected": false,
           "text": ["New", "Acknowledged", "Closed"],
           "value": ["New", "Acknowledged", "Closed"]
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": "Alert State",
+        "label": "User Response",
         "multi": true,
         "name": "as",
         "options": [
@@ -511,14 +953,11 @@
         "type": "custom"
       },
       {
-        "allValue": null,
         "current": {
           "selected": false,
-          "text": ["1 - Error", "0 - Critical", "2 - Warning", "3 - Informational", "4 - Verbose"],
-          "value": ["Sev1", "Sev0", "Sev2", "Sev3", "Sev4"]
+          "text": ["Critical", "Error", "Warning", "Informational", "Verbose"],
+          "value": ["Sev0", "Sev1", "Sev2", "Sev3", "Sev4"]
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Severity",
@@ -527,31 +966,31 @@
         "options": [
           {
             "selected": true,
-            "text": "0 - Critical",
+            "text": "Critical",
             "value": "Sev0"
           },
           {
             "selected": true,
-            "text": "1 - Error",
+            "text": "Error",
             "value": "Sev1"
           },
           {
             "selected": true,
-            "text": "2 - Warning",
+            "text": "Warning",
             "value": "Sev2"
           },
           {
             "selected": true,
-            "text": "3 - Informational",
+            "text": "Informational",
             "value": "Sev3"
           },
           {
             "selected": true,
-            "text": "4 - Verbose",
+            "text": "Verbose",
             "value": "Sev4"
           }
         ],
-        "query": "0 - Critical : Sev0, 1 - Error : Sev1, 2 - Warning : Sev2, 3 - Informational : Sev3,  4 - Verbose : Sev4",
+        "query": "Critical : Sev0, Error : Sev1, Warning : Sev2, Informational : Sev3,  Verbose : Sev4",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"
@@ -566,8 +1005,7 @@
     "hidden": false,
     "refresh_intervals": ["30m", "1h", "12h", "24h", "3d", "7d", "30d"]
   },
-  "timezone": "",
-  "title": "Azure Alert Consumption",
-  "uid": "5DLst5N7k",
-  "version": 1
+  "title": "Azure / Alert Consumption",
+  "uid": "dyzn5SK7z",
+  "version": 45
 }

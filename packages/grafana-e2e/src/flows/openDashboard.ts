@@ -1,5 +1,6 @@
 import { e2e } from '../index';
 import { getScenarioContext } from '../support/scenarioContext';
+
 import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
 
 interface OpenDashboardDefault {

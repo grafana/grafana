@@ -1,10 +1,17 @@
-+++
-title = "Geomap"
-description = "Geomap visualization documentation"
-keywords = ["grafana", "Geomap", "panel", "documentation"]
-aliases = ["/docs/grafana/latest/features/panels/geomap/", "/docs/grafana/latest/panels/visualizations/geomap/"]
-weight = 600
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/panels/geomap/
+  - /docs/grafana/latest/panels/visualizations/geomap/
+  - /docs/grafana/latest/visualizations/geomap/
+description: Geomap visualization documentation
+keywords:
+  - grafana
+  - Geomap
+  - panel
+  - documentation
+title: Geomap
+weight: 600
+---
 
 # Geomap
 
@@ -23,7 +30,7 @@ The initial view configures how the GeoMap panel renders when the panel is first
 - **View** sets the center for the map when the panel first loads.
 - **Latitude** (available when the **View** mode is _Coordinates_)
 - **Longitude** (available when the **View** mode is _Coordinates_)
-- **Zoom** sets the initial zoom level for the GeoMap panel.
+- **Zoom** sets the initial zoom level for the GeoMap panel, or the initial maximum zoom level in case the _Fit data layers_ view is selected.
 
 ## Data layer
 
@@ -70,7 +77,7 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer Options](/static/img/docs/geomap-panel/geomap-markers-options-8-1-0.png)
 
-- **Marker Color** configures the color of the marker. The default `Fixed size` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
+- **Marker Color** configures the color of the marker. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
 - **Marker Size** configures the size of the marker. Default is `Fixed size`, making all marker size the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within this range.
 - **Marker Shape** allows you to choose the shape, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple shapes or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
 - **Fill opacity** configures the transparency of each marker.
@@ -114,7 +121,7 @@ The base layer loads in a blank world map from the tile server to the Grafana pa
 
 ### Configure the default base layer with provisioning
 
-You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page]({{< relref "../administration/provisioning.md" >}}).
+You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page]({{< relref "../administration/provisioning/" >}}).
 
 Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map option.
 

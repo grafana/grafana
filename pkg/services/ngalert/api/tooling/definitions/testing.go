@@ -7,14 +7,28 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/prometheus/promql"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// swagger:route Post /api/v1/rule/test/{Recipient} testing RouteTestRuleConfig
+// swagger:route Post /api/v1/rule/test/grafana testing RouteTestRuleGrafanaConfig
 //
-// Test rule
+// Test a rule against Grafana ruler
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: TestRuleResponse
+
+// swagger:route Post /api/v1/rule/test/{DatasourceUID} testing RouteTestRuleConfig
+//
+// Test a rule against external data source ruler
 //
 //     Consumes:
 //     - application/json
@@ -44,7 +58,7 @@ type TestReceiverRequest struct {
 	Body ExtendedReceiver
 }
 
-// swagger:parameters RouteTestRuleConfig
+// swagger:parameters RouteTestRuleConfig RouteTestRuleGrafanaConfig
 type TestRuleRequest struct {
 	// in:body
 	Body TestRulePayload
@@ -55,7 +69,7 @@ type TestRulePayload struct {
 	// Example: (node_filesystem_avail_bytes{fstype!="",job="integrations/node_exporter"} node_filesystem_size_bytes{fstype!="",job="integrations/node_exporter"} * 100 < 5 and node_filesystem_readonly{fstype!="",job="integrations/node_exporter"} == 0)
 	Expr string `json:"expr,omitempty"`
 	// GrafanaManagedCondition for grafana alerts
-	GrafanaManagedCondition *models.EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
+	GrafanaManagedCondition *EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
 }
 
 // swagger:parameters RouteEvalQueries

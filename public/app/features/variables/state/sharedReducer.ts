@@ -1,12 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, defaults as lodashDefaults } from 'lodash';
+
 import { LoadingState, VariableType } from '@grafana/data';
-import { VariableModel, VariableOption, VariableWithOptions } from '../types';
-import { AddVariable, getInstanceState, initialVariablesState, VariablePayload, VariablesState } from './types';
+
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
+import { VariableModel, VariableOption, VariableWithOptions } from '../types';
 import { ensureStringValues } from '../utils';
-import { getNextVariableIndex } from './selectors';
+
+import { getInstanceState, getNextVariableIndex } from './selectors';
+import { AddVariable, initialVariablesState, VariablePayload, VariablesState } from './types';
 
 const sharedReducerSlice = createSlice({
   name: 'templating/shared',
@@ -100,11 +103,12 @@ const sharedReducerSlice = createSlice({
     },
     changeVariableType: (state: VariablesState, action: PayloadAction<VariablePayload<{ newType: VariableType }>>) => {
       const { id } = action.payload;
-      const { label, name, index, description } = state[id];
+      const { label, name, index, description, rootStateKey } = state[id];
 
       state[id] = {
         ...cloneDeep(variableAdapters.get(action.payload.data.newType).initialState),
-        id: id,
+        id,
+        rootStateKey: rootStateKey,
         label,
         name,
         index,
@@ -126,6 +130,7 @@ const sharedReducerSlice = createSlice({
       instanceState.current = current;
       instanceState.options = instanceState.options.map((option) => {
         option.value = ensureStringValues(option.value);
+        option.text = ensureStringValues(option.text);
         let selected = false;
         if (Array.isArray(current.value)) {
           for (let index = 0; index < current.value.length; index++) {

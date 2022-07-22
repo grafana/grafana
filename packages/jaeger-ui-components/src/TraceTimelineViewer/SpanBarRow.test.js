@@ -12,24 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { mount, shallow } from 'enzyme';
+
+import { NONE, DURATION, TAG } from '../settings/SpanBarSettings';
 
 import SpanBarRow from './SpanBarRow';
-import SpanTreeOffset from './SpanTreeOffset';
-import ReferencesButton from './ReferencesButton';
-
-jest.mock('./SpanTreeOffset', () => {
-  // eslint-disable-next-line react/display-name
-  return () => <span>SpanTreeOffset</span>;
-});
 
 describe('<SpanBarRow>', () => {
   const spanID = 'some-id';
   const props = {
+    addHoverIndentGuideId: jest.fn(),
     className: 'a-class-name',
     color: 'color-a',
     columnDivision: '0.5',
+    hoverIndentGuideIds: new Set(),
     isChildrenExpanded: true,
     isDetailExpanded: false,
     isFilteredOut: false,
@@ -47,82 +45,85 @@ describe('<SpanBarRow>', () => {
     showErrorIcon: false,
     getViewedBounds: () => ({ start: 0, end: 1 }),
     span: {
-      duration: 'test-duration',
+      duration: 9000,
       hasChildren: true,
       process: {
         serviceName: 'service-name',
       },
       spanID,
       logs: [],
+      references: [],
     },
   };
-
-  let wrapper;
 
   beforeEach(() => {
     props.onDetailToggled.mockReset();
     props.onChildrenToggled.mockReset();
-    wrapper = mount(<SpanBarRow {...props} />);
   });
 
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
+    expect(() => render(<SpanBarRow {...props} />)).not.toThrow();
   });
 
-  it('escalates detail toggling', () => {
+  it('escalates detail toggling', async () => {
+    render(<SpanBarRow {...props} />);
     const { onDetailToggled } = props;
     expect(onDetailToggled.mock.calls.length).toBe(0);
-    wrapper.find('div[data-test-id="span-view"]').prop('onClick')();
+    await userEvent.click(screen.getByTestId('span-view'));
     expect(onDetailToggled.mock.calls).toEqual([[spanID]]);
   });
 
-  it('escalates children toggling', () => {
+  it('escalates children toggling', async () => {
+    render(<SpanBarRow {...props} />);
     const { onChildrenToggled } = props;
     expect(onChildrenToggled.mock.calls.length).toBe(0);
-    wrapper.find(SpanTreeOffset).prop('onClick')();
-    expect(onChildrenToggled.mock.calls).toEqual([[spanID]]);
+    await userEvent.click(screen.getByTestId('icon-wrapper'));
+    expect(onChildrenToggled.mock.calls.length).toBe(1);
   });
 
   it('render references button', () => {
-    const span = Object.assign(
-      {
-        references: [
-          {
-            refType: 'CHILD_OF',
-            traceID: 'trace1',
+    render(<SpanBarRow {...props} />);
+    const newSpan = Object.assign({}, props.span);
+    const span = Object.assign(newSpan, {
+      references: [
+        {
+          refType: 'FOLLOWS_FROM',
+          traceID: 'trace1',
+          spanID: 'span0',
+          span: {
             spanID: 'span0',
-            span: {
-              spanID: 'span0',
-            },
           },
-          {
-            refType: 'CHILD_OF',
-            traceID: 'otherTrace',
+        },
+        {
+          refType: 'FOLLOWS_FROM',
+          traceID: 'otherTrace',
+          spanID: 'span1',
+          span: {
             spanID: 'span1',
-            span: {
-              spanID: 'span1',
-            },
           },
-        ],
-      },
-      props.span
-    );
+        },
+      ],
+    });
 
-    const spanRow = shallow(<SpanBarRow {...props} span={span} />)
-      .dive()
-      .dive()
-      .dive();
-    const refButton = spanRow.find(ReferencesButton);
-    expect(refButton.length).toEqual(1);
-    expect(refButton.at(0).props().tooltipText).toEqual('Contains multiple references');
+    render(
+      <SpanBarRow
+        {...props}
+        span={span}
+        createSpanLink={() => ({
+          traceLinks: [{ href: 'href' }, { href: 'href' }],
+        })}
+      />
+    );
+    expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
   });
 
   it('render referenced to by single span', () => {
+    render(<SpanBarRow {...props} />);
     const span = Object.assign(
       {
         subsidiarilyReferencedBy: [
           {
-            refType: 'CHILD_OF',
+            refType: 'FOLLOWS_FROM',
             traceID: 'trace1',
             spanID: 'span0',
             span: {
@@ -133,21 +134,25 @@ describe('<SpanBarRow>', () => {
       },
       props.span
     );
-    const spanRow = shallow(<SpanBarRow {...props} span={span} />)
-      .dive()
-      .dive()
-      .dive();
-    const refButton = spanRow.find(ReferencesButton);
-    expect(refButton.length).toEqual(1);
-    expect(refButton.at(0).props().tooltipText).toEqual('This span is referenced by another span');
+    render(
+      <SpanBarRow
+        {...props}
+        span={span}
+        createSpanLink={() => ({
+          traceLinks: [{ content: 'This span is referenced by another span', href: 'href' }],
+        })}
+      />
+    );
+    expect(screen.getByRole('link', { name: 'This span is referenced by another span' })).toBeInTheDocument();
   });
 
   it('render referenced to by multiple span', () => {
+    render(<SpanBarRow {...props} />);
     const span = Object.assign(
       {
         subsidiarilyReferencedBy: [
           {
-            refType: 'CHILD_OF',
+            refType: 'FOLLOWS_FROM',
             traceID: 'trace1',
             spanID: 'span0',
             span: {
@@ -155,7 +160,7 @@ describe('<SpanBarRow>', () => {
             },
           },
           {
-            refType: 'CHILD_OF',
+            refType: 'FOLLOWS_FROM',
             traceID: 'trace1',
             spanID: 'span1',
             span: {
@@ -166,12 +171,100 @@ describe('<SpanBarRow>', () => {
       },
       props.span
     );
-    const spanRow = shallow(<SpanBarRow {...props} span={span} />)
-      .dive()
-      .dive()
-      .dive();
-    const refButton = spanRow.find(ReferencesButton);
-    expect(refButton.length).toEqual(1);
-    expect(refButton.at(0).props().tooltipText).toEqual('This span is referenced by multiple other spans');
+    render(
+      <SpanBarRow
+        {...props}
+        span={span}
+        createSpanLink={() => ({
+          traceLinks: [{ href: 'href' }, { href: 'href' }],
+        })}
+      />
+    );
+    expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
+  });
+
+  describe('render span bar label', () => {
+    it('with default value', () => {
+      render(<SpanBarRow {...props} />);
+      expect(screen.getByText('(9ms)')).toBeInTheDocument();
+    });
+
+    it('with none value', () => {
+      const testProps = Object.assign(
+        {
+          spanBarOptions: {
+            type: NONE,
+          },
+        },
+        props
+      );
+      render(<SpanBarRow {...testProps} />);
+      expect(screen.queryByText('(9ms)')).not.toBeInTheDocument();
+    });
+
+    it('with duration value', () => {
+      const testProps = Object.assign(
+        {
+          spanBarOptions: {
+            type: DURATION,
+          },
+        },
+        props
+      );
+      render(<SpanBarRow {...testProps} />);
+      expect(screen.getByText('(9ms)')).toBeInTheDocument();
+    });
+
+    it('with tag value', () => {
+      const testProps = Object.assign(
+        {
+          spanBarOptions: {
+            type: TAG,
+            tag: 'tag',
+          },
+        },
+        {
+          ...props,
+          span: {
+            process: {},
+            tags: [
+              {
+                key: 'tag',
+                value: 'tag-value',
+              },
+            ],
+          },
+        }
+      );
+      render(<SpanBarRow {...testProps} />);
+      expect(screen.getByText('(tag-value)')).toBeInTheDocument();
+    });
+
+    it('with process value', () => {
+      let testProps = Object.assign(
+        {
+          spanBarOptions: {
+            type: TAG,
+            tag: 'tag',
+          },
+        },
+        {
+          ...props,
+          span: {
+            process: {
+              tags: [
+                {
+                  key: 'tag',
+                  value: 'process-value',
+                },
+              ],
+            },
+            tags: [],
+          },
+        }
+      );
+      render(<SpanBarRow {...testProps} />);
+      expect(screen.getByText('(process-value)')).toBeInTheDocument();
+    });
   });
 });

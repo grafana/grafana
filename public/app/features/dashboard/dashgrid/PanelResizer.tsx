@@ -1,5 +1,5 @@
-import React, { PureComponent } from 'react';
 import { throttle } from 'lodash';
+import React, { PureComponent } from 'react';
 import Draggable, { DraggableEventHandler } from 'react-draggable';
 
 import { PanelModel } from '../state/PanelModel';

@@ -1,14 +1,17 @@
-import { CascaderOption } from '@grafana/ui';
-import { act, renderHook } from '@testing-library/react-hooks';
 import { render, screen } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react-hooks';
 import React from 'react';
-import { ZipkinDatasource } from './datasource';
+
+import { CascaderOption } from '@grafana/ui';
+
 import { ZipkinQueryField, useLoadOptions, useServices } from './QueryField';
+import { ZipkinDatasource } from './datasource';
 import { ZipkinQuery } from './types';
 
 describe('QueryField', () => {
-  it('renders properly', () => {
+  it('renders properly', async () => {
     const ds = {} as ZipkinDatasource;
+
     render(
       <ZipkinQueryField
         history={[]}
@@ -19,8 +22,8 @@ describe('QueryField', () => {
       />
     );
 
-    expect(screen.getByText(/1234/i)).toBeInTheDocument();
-    expect(screen.getByText(/Traces/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1234/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Traces/i)).toBeInTheDocument();
   });
 });
 

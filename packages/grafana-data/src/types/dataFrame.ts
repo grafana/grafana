@@ -1,11 +1,11 @@
+import { ScopedVars } from './ScopedVars';
+import { QueryResultBase, Labels, NullValueMode } from './data';
+import { DataLink, LinkModel } from './dataLink';
+import { DisplayProcessor, DisplayValue } from './displayValue';
+import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
-import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DisplayProcessor, DisplayValue } from './displayValue';
-import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
-import { FieldColor } from './fieldColor';
-import { ScopedVars } from './ScopedVars';
 
 /** @public */
 export enum FieldType {
@@ -175,6 +175,19 @@ export interface FieldState {
    * @internal -- we will try to make this unnecessary
    */
   origin?: DataFrameFieldIndex;
+
+  /**
+   * Boolean value is true if field is in a larger data set with multiple frames.
+   * This is only related to the cached displayName property above.
+   */
+  multipleFrames?: boolean;
+
+  /**
+   * Boolean value is true if a null filling threshold has been applied
+   * against the frame of the field. This is used to avoid cases in which
+   * this would applied more than one time.
+   */
+  nullThresholdApplied?: boolean;
 }
 
 /** @public */

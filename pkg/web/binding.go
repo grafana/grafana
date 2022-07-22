@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"reflect"
 )
@@ -12,8 +13,15 @@ import (
 // Bind deserializes JSON payload from the request
 func Bind(req *http.Request, v interface{}) error {
 	if req.Body != nil {
+		m, _, err := mime.ParseMediaType(req.Header.Get("Content-type"))
+		if err != nil {
+			return err
+		}
+		if m != "application/json" {
+			return errors.New("bad content type")
+		}
 		defer func() { _ = req.Body.Close() }()
-		err := json.NewDecoder(req.Body).Decode(v)
+		err = json.NewDecoder(req.Body).Decode(v)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}

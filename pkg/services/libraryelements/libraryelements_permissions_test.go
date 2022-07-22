@@ -48,6 +48,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 		{models.ROLE_ADMIN, viewerOnlyPermissions, viewerOnlyDesc, 200},
 		{models.ROLE_ADMIN, everyonePermissions, everyoneDesc, 200},
 		{models.ROLE_ADMIN, noPermissions, noDesc, 200},
+
 		{models.ROLE_EDITOR, defaultPermissions, defaultDesc, 200},
 		{models.ROLE_EDITOR, adminOnlyPermissions, adminOnlyDesc, 403},
 		{models.ROLE_EDITOR, editorOnlyPermissions, editorOnlyDesc, 200},
@@ -55,6 +56,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 		{models.ROLE_EDITOR, viewerOnlyPermissions, viewerOnlyDesc, 403},
 		{models.ROLE_EDITOR, everyonePermissions, everyoneDesc, 200},
 		{models.ROLE_EDITOR, noPermissions, noDesc, 403},
+
 		{models.ROLE_VIEWER, defaultPermissions, defaultDesc, 403},
 		{models.ROLE_VIEWER, adminOnlyPermissions, adminOnlyDesc, 403},
 		{models.ROLE_VIEWER, editorOnlyPermissions, editorOnlyDesc, 403},
@@ -86,7 +88,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				toFolder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, testCase.items)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryElementCommand{FolderID: toFolder.Id, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := PatchLibraryElementCommand{FolderID: toFolder.Id, Version: 1, Kind: int64(models.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -103,7 +105,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				toFolder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, everyonePermissions)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryElementCommand{FolderID: toFolder.Id, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := PatchLibraryElementCommand{FolderID: toFolder.Id, Version: 1, Kind: int64(models.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -154,7 +156,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryElementCommand{FolderID: 0, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := PatchLibraryElementCommand{FolderID: 0, Version: 1, Kind: int64(models.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.ctx.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -170,7 +172,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryElementCommand{FolderID: folder.Id, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := PatchLibraryElementCommand{FolderID: folder.Id, Version: 1, Kind: int64(models.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.ctx.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -219,7 +221,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryElementCommand{FolderID: -100, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := PatchLibraryElementCommand{FolderID: -100, Version: 1, Kind: int64(models.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)

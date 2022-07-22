@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -64,7 +65,7 @@ type LDAPServerDTO struct {
 }
 
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
-func (user *LDAPUserDTO) FetchOrgs(ctx context.Context) error {
+func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, sqlstore sqlstore.Store) error {
 	orgIds := []int64{}
 
 	for _, or := range user.OrgRoles {
@@ -74,7 +75,7 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context) error {
 	q := &models.SearchOrgsQuery{}
 	q.Ids = orgIds
 
-	if err := bus.Dispatch(ctx, q); err != nil {
+	if err := sqlstore.SearchOrgs(ctx, q); err != nil {
 		return err
 	}
 
@@ -171,19 +172,18 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil { // validate the userId exists
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+	if err := hs.SQLStore.GetUserById(c.Req.Context(), &query); err != nil { // validate the userId exists
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to get user", err)
 	}
 
-	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
-
-	if err := bus.Dispatch(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.ID, AuthModule: models.AuthModuleLDAP}
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to get user", err)
@@ -200,7 +200,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 			}
 
 			// Since the user was not in the LDAP server. Let's disable it.
-			err := login.DisableExternalUser(c.Req.Context(), query.Result.Login)
+			err := hs.Login.DisableExternalUser(c.Req.Context(), query.Result.Login)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
@@ -221,9 +221,14 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		ReqContext:    c,
 		ExternalUser:  user,
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
+		UserLookupParams: models.UserLookupParams{
+			UserID: &query.Result.ID, // Upsert by ID only
+			Email:  nil,
+			Login:  nil,
+		},
 	}
 
-	err = bus.Dispatch(c.Req.Context(), upsertCmd)
+	err = hs.Login.UpsertUser(c.Req.Context(), upsertCmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update the user", err)
 	}
@@ -242,7 +247,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration", err)
 	}
 
-	ldap := newLDAP(ldapConfig.Servers)
+	multiLDAP := newLDAP(ldapConfig.Servers)
 
 	username := web.Params(c.Req)[":username"]
 
@@ -250,9 +255,8 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Validation error. You must specify an username", nil)
 	}
 
-	user, serverConfig, err := ldap.User(username)
-
-	if user == nil {
+	user, serverConfig, err := multiLDAP.User(username)
+	if user == nil || err != nil {
 		return response.Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
 
@@ -269,45 +273,32 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		IsDisabled:     user.IsDisabled,
 	}
 
-	orgRoles := []LDAPRoleDTO{}
-
-	// Need to iterate based on the config groups as only the first match for an org is used
-	// We are showing all matches as that should help in understanding why one match wins out
-	// over another.
-	for _, configGroup := range serverConfig.Groups {
-		for _, userGroup := range user.Groups {
-			if configGroup.GroupDN == userGroup {
-				r := &LDAPRoleDTO{GroupDN: configGroup.GroupDN, OrgId: configGroup.OrgId, OrgRole: configGroup.OrgRole}
-				orgRoles = append(orgRoles, *r)
-				break
-			}
-		}
-		//}
-	}
-
-	// Then, we find what we did not match by inspecting the list of groups returned from
-	// LDAP against what we have already matched above.
+	unmappedUserGroups := map[string]struct{}{}
 	for _, userGroup := range user.Groups {
-		var matched bool
+		unmappedUserGroups[strings.ToLower(userGroup)] = struct{}{}
+	}
 
-		for _, orgRole := range orgRoles {
-			if orgRole.GroupDN == userGroup { // we already matched it
-				matched = true
-				break
-			}
+	orgRolesMap := map[int64]models.RoleType{}
+	for _, group := range serverConfig.Groups {
+		// only use the first match for each org
+		if orgRolesMap[group.OrgId] != "" {
+			continue
 		}
 
-		if !matched {
-			r := &LDAPRoleDTO{GroupDN: userGroup}
-			orgRoles = append(orgRoles, *r)
+		if ldap.IsMemberOf(user.Groups, group.GroupDN) {
+			orgRolesMap[group.OrgId] = group.OrgRole
+			u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: group.GroupDN,
+				OrgId: group.OrgId, OrgRole: group.OrgRole})
+			delete(unmappedUserGroups, strings.ToLower(group.GroupDN))
 		}
 	}
 
-	u.OrgRoles = orgRoles
+	for userGroup := range unmappedUserGroups {
+		u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: userGroup})
+	}
 
 	ldapLogger.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
-	err = u.FetchOrgs(c.Req.Context())
-	if err != nil {
+	if err := u.FetchOrgs(c.Req.Context(), hs.SQLStore); err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 
@@ -316,7 +307,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}
 
-	return response.JSON(200, u)
+	return response.JSON(http.StatusOK, u)
 }
 
 // splitName receives the full name of a user and splits it into two parts: A name and a surname.

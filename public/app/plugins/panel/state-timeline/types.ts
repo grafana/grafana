@@ -18,6 +18,7 @@ export interface TimelineOptions extends OptionsWithLegend, OptionsWithTooltip {
   alignValue?: TimelineValueAlignment;
 
   sync?: () => DashboardCursorSync;
+  getValueColor?: (frameIdx: number, fieldIdx: number, value: any) => string;
 }
 
 export type TimelineValueAlignment = 'center' | 'left' | 'right';

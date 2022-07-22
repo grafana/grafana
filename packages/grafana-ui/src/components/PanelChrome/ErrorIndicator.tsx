@@ -1,9 +1,11 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme } from '@grafana/data';
+
+import { useStyles } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
 
 /**
  * @internal

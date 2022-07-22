@@ -1,6 +1,8 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
+
 import { DataQuery, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
 export type AlertManagerQuery = {
@@ -49,7 +51,7 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery, Ale
           return {
             status: 'error',
             message:
-              'It looks like you have chosen Prometheus implementation, but detected a Cortex endpoint. Please update implementation selection and try again.',
+              'It looks like you have chosen Prometheus implementation, but detected a Mimir or Cortex endpoint. Please update implementation selection and try again.',
           };
         }
       } catch (e) {}
@@ -63,7 +65,7 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery, Ale
           return {
             status: 'error',
             message:
-              'It looks like you have chosen Cortex implementation, but detected a Prometheus endpoint. Please update implementation selection and try again.',
+              'It looks like you have chosen a Mimir or Cortex implementation, but detected a Prometheus endpoint. Please update implementation selection and try again.',
           };
         }
       } catch (e) {}

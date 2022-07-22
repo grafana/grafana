@@ -45,6 +45,23 @@ func TestSimplejson(t *testing.T) {
 	awsval, _ = aws.GetIndex(1).Get("subkeythree").Int()
 	assert.Equal(t, 3, awsval)
 
+	arr := js.Get("test").Get("array")
+	assert.NotEqual(t, nil, arr)
+	val, ok := arr.CheckGetIndex(0)
+	assert.Equal(t, ok, true)
+	valInt, _ := val.Int()
+	assert.Equal(t, valInt, 1)
+	val, ok = arr.CheckGetIndex(1)
+	assert.Equal(t, ok, true)
+	valStr, _ := val.String()
+	assert.Equal(t, valStr, "2")
+	val, ok = arr.CheckGetIndex(2)
+	assert.Equal(t, ok, true)
+	valInt, _ = val.Int()
+	assert.Equal(t, valInt, 3)
+	_, ok = arr.CheckGetIndex(3)
+	assert.Equal(t, ok, false)
+
 	i, _ := js.Get("test").Get("int").Int()
 	assert.Equal(t, 10, i)
 
@@ -245,4 +262,13 @@ func TestPathWillOverwriteExisting(t *testing.T) {
 	s, err := js.GetPath("this", "a", "foo").String()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "bar", s)
+}
+
+func TestMustJson(t *testing.T) {
+	js := MustJson([]byte(`{"foo": "bar"}`))
+	assert.Equal(t, js.Get("foo").MustString(), "bar")
+
+	assert.PanicsWithValue(t, "could not unmarshal JSON: \"unexpected EOF\"", func() {
+		MustJson([]byte(`{`))
+	})
 }

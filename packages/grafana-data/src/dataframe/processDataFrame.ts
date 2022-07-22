@@ -2,6 +2,9 @@
 import { isArray, isBoolean, isNumber, isString } from 'lodash';
 
 // Types
+import { isDateTime } from '../datetime/moment_wrapper';
+import { fieldIndexComparer } from '../field/fieldComparers';
+import { getFieldDisplayName } from '../field/fieldState';
 import {
   DataFrame,
   Field,
@@ -17,15 +20,13 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
 } from '../types/index';
-import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
-import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
-import { ArrayDataFrame } from './ArrayDataFrame';
-import { getFieldDisplayName } from '../field/fieldState';
-import { fieldIndexComparer } from '../field/fieldComparers';
 import { vectorToArray } from '../vector/vectorToArray';
+
+import { ArrayDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
+import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {

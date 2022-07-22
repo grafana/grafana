@@ -2,49 +2,48 @@ package ngalert
 
 import (
 	"context"
+	"fmt"
 	"net/url"
-	"time"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	// scheduler interval
-	// changing this value is discouraged
-	// because this could cause existing alert definition
-	// with intervals that are not exactly divided by this number
-	// not to be evaluated
-	defaultBaseIntervalSeconds = 10
-	// default alert definition interval
-	defaultIntervalSeconds int64 = 6 * defaultBaseIntervalSeconds
-)
-
-func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
+func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert) (*AlertNG, error) {
+	quotaService quota.Service, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
+	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
+	bus bus.Bus) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
+		DataSourceService:   dataSourceService,
 		RouteRegister:       routeRegister,
 		SQLStore:            sqlStore,
 		KVStore:             kvStore,
@@ -53,8 +52,13 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		QuotaService:        quotaService,
 		SecretsService:      secretsService,
 		Metrics:             m,
-		NotificationService: notificationService,
 		Log:                 log.New("ngalert"),
+		NotificationService: notificationService,
+		folderService:       folderService,
+		accesscontrol:       ac,
+		dashboardService:    dashboardService,
+		renderService:       renderService,
+		bus:                 bus,
 	}
 
 	if ng.IsDisabled() {
@@ -72,115 +76,156 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 type AlertNG struct {
 	Cfg                 *setting.Cfg
 	DataSourceCache     datasources.CacheService
+	DataSourceService   datasources.DataSourceService
 	RouteRegister       routing.RouteRegister
 	SQLStore            *sqlstore.SQLStore
 	KVStore             kvstore.KVStore
 	ExpressionService   *expr.Service
 	DataProxy           *datasourceproxy.DataSourceProxyService
-	QuotaService        *quota.QuotaService
+	QuotaService        quota.Service
 	SecretsService      secrets.Service
 	Metrics             *metrics.NGAlert
 	NotificationService notifications.Service
 	Log                 log.Logger
+	renderService       rendering.Service
+	imageService        image.ImageService
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
+	folderService       dashboards.FolderService
+	dashboardService    dashboards.DashboardService
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	AlertsRouter         *sender.AlertsRouter
+	accesscontrol        accesscontrol.AccessControl
+
+	bus bus.Bus
 }
 
 func (ng *AlertNG) init() error {
 	var err error
 
-	baseInterval := ng.Cfg.AlertingBaseInterval
-	if baseInterval <= 0 {
-		baseInterval = defaultBaseIntervalSeconds
-	}
-	baseInterval *= time.Second
-
 	store := &store.DBstore{
-		BaseInterval:    baseInterval,
-		DefaultInterval: ng.getRuleDefaultInterval(),
-		SQLStore:        ng.SQLStore,
-		Logger:          ng.Log,
+		Cfg:              ng.Cfg.UnifiedAlerting,
+		SQLStore:         ng.SQLStore,
+		Logger:           ng.Log,
+		FolderService:    ng.folderService,
+		AccessControl:    ng.accesscontrol,
+		DashboardService: ng.dashboardService,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"))
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
 	if err != nil {
 		return err
 	}
 
-	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
-	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
+	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.Metrics.Registerer, store, ng.dashboardService, ng.renderService)
+	if err != nil {
 		return err
 	}
+	ng.imageService = imageService
 
-	schedCfg := schedule.SchedulerCfg{
-		C:                       clock.New(),
-		BaseInterval:            baseInterval,
-		Logger:                  ng.Log,
-		MaxAttempts:             ng.Cfg.UnifiedAlerting.MaxAttempts,
-		Evaluator:               eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log, DataSourceCache: ng.DataSourceCache},
-		InstanceStore:           store,
-		RuleStore:               store,
-		AdminConfigStore:        store,
-		OrgStore:                store,
-		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
-		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
-		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		MinRuleInterval:         ng.getRuleMinInterval(),
+	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
+	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
+		return fmt.Errorf("failed to initialize alerting because multiorg alertmanager manager failed to warm up: %w", err)
 	}
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
 	if err != nil {
-		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
+		ng.Log.Error("Failed to parse application URL. Continue without it.", "err", err)
 		appUrl = nil
 	}
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store)
-	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
+
+	clk := clock.New()
+
+	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
+		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService)
+
+	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
+	if err := alertsRouter.SyncAndApplyConfigFromDatabase(); err != nil {
+		return fmt.Errorf("failed to initialize alerting because alert notifications router failed to warm up: %w", err)
+	}
+
+	ng.AlertsRouter = alertsRouter
+
+	schedCfg := schedule.SchedulerCfg{
+		Cfg:           ng.Cfg.UnifiedAlerting,
+		C:             clk,
+		Logger:        ng.Log,
+		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
+		InstanceStore: store,
+		RuleStore:     store,
+		Metrics:       ng.Metrics.GetSchedulerMetrics(),
+		AlertSender:   alertsRouter,
+	}
+
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk)
+	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager, ng.bus)
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
+	// Provisioning
+	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Cfg.UnifiedAlerting, ng.Log)
+	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
+	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
+	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
+	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.QuotaService, store,
+		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
+		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
+
 	api := api.API{
 		Cfg:                  ng.Cfg,
 		DatasourceCache:      ng.DataSourceCache,
+		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
 		ExpressionService:    ng.ExpressionService,
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		SecretsService:       ng.SecretsService,
+		TransactionManager:   store,
 		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
 		AdminConfigStore:     store,
+		ProvenanceStore:      store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
+		AccessControl:        ng.accesscontrol,
+		Policies:             policyService,
+		ContactPointService:  contactPointService,
+		Templates:            templateService,
+		MuteTimings:          muteTimingService,
+		AlertRules:           alertRuleService,
+		AlertsRouter:         alertsRouter,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	return nil
+	return DeclareFixedRoles(ng.accesscontrol)
 }
 
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
-	ng.stateManager.Warm()
+	ng.stateManager.Warm(ctx)
 
 	children, subCtx := errgroup.WithContext(ctx)
+
+	children.Go(func() error {
+		return ng.MultiOrgAlertmanager.Run(subCtx)
+	})
+	children.Go(func() error {
+		return ng.AlertsRouter.Run(subCtx)
+	})
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
 		})
 	}
-	children.Go(func() error {
-		return ng.MultiOrgAlertmanager.Run(subCtx)
-	})
 	return children.Wait()
 }
 
@@ -190,31 +235,4 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.UnifiedAlerting.IsEnabled()
-}
-
-// getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.
-// If this constant (1 minute) is lower than the configured minimum evaluation interval then
-// this configuration is returned.
-func (ng *AlertNG) getRuleDefaultInterval() time.Duration {
-	ruleMinInterval := ng.getRuleMinInterval()
-	if defaultIntervalSeconds < int64(ruleMinInterval.Seconds()) {
-		return ruleMinInterval
-	}
-	return time.Duration(defaultIntervalSeconds) * time.Second
-}
-
-// getRuleMinIntervalSeconds returns the configured minimum rule interval.
-// If this value is less or equal to zero or not divided exactly by the scheduler interval
-// the scheduler interval (10 seconds) is returned.
-func (ng *AlertNG) getRuleMinInterval() time.Duration {
-	if ng.Cfg.UnifiedAlerting.MinInterval <= 0 {
-		return defaultBaseIntervalSeconds // if it's not configured; apply default
-	}
-
-	if ng.Cfg.UnifiedAlerting.MinInterval%defaultBaseIntervalSeconds != 0 {
-		ng.Log.Error("Configured minimum evaluation interval is not divided exactly by the scheduler interval and it will fallback to default", "alertingMinInterval", ng.Cfg.UnifiedAlerting.MinInterval, "baseIntervalSeconds", defaultBaseIntervalSeconds, "defaultIntervalSeconds", defaultIntervalSeconds)
-		return defaultBaseIntervalSeconds // if it's invalid; apply default
-	}
-
-	return ng.Cfg.UnifiedAlerting.MinInterval
 }

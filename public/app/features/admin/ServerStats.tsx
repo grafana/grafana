@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
+import React, { useEffect, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
 import { AccessControlAction } from 'app/types';
-import { getServerStats, ServerStat } from './state/apis';
+
 import { contextSrv } from '../../core/services/context_srv';
 import { Loader } from '../plugins/admin/components/Loader';
-import { config } from '@grafana/runtime';
+
 import { CrawlerStatus } from './CrawlerStatus';
+import { getServerStats, ServerStat } from './state/apis';
 
 export const ServerStats = () => {
   const [stats, setStats] = useState<ServerStat | null>(null);
@@ -94,7 +97,7 @@ export const ServerStats = () => {
         <p className={styles.notFound}>No stats found.</p>
       )}
 
-      {config.featureToggles.dashboardPreviews && <CrawlerStatus />}
+      {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && <CrawlerStatus />}
     </>
   );
 };

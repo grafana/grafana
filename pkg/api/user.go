@@ -3,14 +3,13 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -34,8 +33,8 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 	query := models.GetUserProfileQuery{UserId: userID}
 
 	if err := hs.SQLStore.GetUserProfile(c.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to get user", err)
 	}
@@ -48,55 +47,34 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 		query.Result.IsExternal = true
 	}
 
-	accessControlMetadata, errAC := hs.getGlobalUserAccessControlMetadata(c, userID)
-	if errAC != nil {
-		hs.log.Error("Failed to get access control metadata", "error", errAC)
-	}
-
-	query.Result.AccessControl = accessControlMetadata
+	query.Result.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, "global.users:id:", strconv.FormatInt(userID, 10))
 	query.Result.AvatarUrl = dtos.GetGravatarUrl(query.Result.Email)
 
-	return response.JSON(200, query.Result)
-}
-
-func (hs *HTTPServer) getGlobalUserAccessControlMetadata(c *models.ReqContext, userID int64) (accesscontrol.Metadata, error) {
-	if hs.AccessControl == nil || hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil, nil
-	}
-
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
-	if err != nil || len(userPermissions) == 0 {
-		return nil, err
-	}
-
-	key := fmt.Sprintf("%d", userID)
-	userIDs := map[string]bool{key: true}
-
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "global:users", userIDs)[key], nil
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // GET /api/users/lookup
 func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Response {
 	query := models.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
 	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to get user", err)
 	}
 	user := query.Result
 	result := models.UserProfileDTO{
-		Id:             user.Id,
+		Id:             user.ID,
 		Name:           user.Name,
 		Email:          user.Email,
 		Login:          user.Login,
 		Theme:          user.Theme,
 		IsGrafanaAdmin: user.IsAdmin,
-		OrgId:          user.OrgId,
+		OrgId:          user.OrgID,
 		UpdatedAt:      user.Updated,
 		CreatedAt:      user.Created,
 	}
-	return response.JSON(200, &result)
+	return response.JSON(http.StatusOK, &result)
 }
 
 // POST /api/user
@@ -159,12 +137,15 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd models.UpdateUse
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {
-			return response.Error(400, "Validation error, need to specify either username or email", nil)
+			return response.Error(http.StatusBadRequest, "Validation error, need to specify either username or email", nil)
 		}
 	}
 
 	if err := hs.SQLStore.UpdateUser(ctx, &cmd); err != nil {
-		return response.Error(500, "Failed to update user", err)
+		if errors.Is(err, user.ErrCaseInsensitive) {
+			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to update user", err)
 	}
 
 	return response.Success("User updated")
@@ -177,7 +158,7 @@ func (hs *HTTPServer) GetSignedInUserOrgList(c *models.ReqContext) response.Resp
 
 // GET /api/user/teams
 func (hs *HTTPServer) GetSignedInUserTeamList(c *models.ReqContext) response.Response {
-	return hs.getUserTeamList(c.Req.Context(), c.OrgId, c.UserId)
+	return hs.getUserTeamList(c, c.OrgId, c.UserId)
 }
 
 // GET /api/users/:id/teams
@@ -186,20 +167,20 @@ func (hs *HTTPServer) GetUserTeams(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	return hs.getUserTeamList(c.Req.Context(), c.OrgId, id)
+	return hs.getUserTeamList(c, c.OrgId, id)
 }
 
-func (hs *HTTPServer) getUserTeamList(ctx context.Context, orgID int64, userID int64) response.Response {
-	query := models.GetTeamsByUserQuery{OrgId: orgID, UserId: userID}
+func (hs *HTTPServer) getUserTeamList(c *models.ReqContext, orgID int64, userID int64) response.Response {
+	query := models.GetTeamsByUserQuery{OrgId: orgID, UserId: userID, SignedInUser: c.SignedInUser}
 
-	if err := hs.SQLStore.GetTeamsByUser(ctx, &query); err != nil {
+	if err := hs.SQLStore.GetTeamsByUser(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get user teams", err)
 	}
 
 	for _, team := range query.Result {
 		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
 	}
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // GET /api/users/:id/orgs
@@ -218,7 +199,7 @@ func (hs *HTTPServer) getUserOrgList(ctx context.Context, userID int64) response
 		return response.Error(500, "Failed to get user organizations", err)
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 func (hs *HTTPServer) validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
@@ -344,7 +325,7 @@ func (hs *HTTPServer) SetHelpFlag(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to update help flag", err)
 	}
 
-	return response.JSON(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }
 
 func (hs *HTTPServer) ClearHelpFlags(c *models.ReqContext) response.Response {
@@ -357,7 +338,7 @@ func (hs *HTTPServer) ClearHelpFlags(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to update help flag", err)
 	}
 
-	return response.JSON(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }
 
 func GetAuthProviderLabel(authModule string) string {

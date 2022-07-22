@@ -1,21 +1,24 @@
-import React from 'react';
-import { FolderSettingsPage, Props } from './FolderSettingsPage';
 import { shallow } from 'enzyme';
-import { NavModel } from '@grafana/data';
+import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { setFolderTitle } from './state/reducers';
+
+import { NavModel } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+
+import { FolderSettingsPage, Props } from './FolderSettingsPage';
+import { setFolderTitle } from './state/reducers';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
     ...getRouteComponentProps(),
-    navModel: {} as NavModel,
+    pageNav: {} as NavModel,
     folderUid: '1234',
     folder: {
       id: 0,
       uid: '1234',
       title: 'loading',
       canSave: true,
+      canDelete: true,
       url: 'url',
       hasChanged: false,
       version: 1,
@@ -52,6 +55,7 @@ describe('Render', () => {
         uid: '1234',
         title: 'loading',
         canSave: true,
+        canDelete: true,
         hasChanged: true,
         version: 1,
       },

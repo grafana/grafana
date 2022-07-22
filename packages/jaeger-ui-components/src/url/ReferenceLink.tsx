@@ -13,46 +13,37 @@
 // limitations under the License.
 
 import React from 'react';
+
+import { Field, LinkModel } from '@grafana/data';
+
 import { TraceSpanReference } from '../types/trace';
-import ExternalLinkContext from './externalLinkContext';
 
 type ReferenceLinkProps = {
   reference: TraceSpanReference;
   children: React.ReactNode;
-  className?: string;
-  focusSpan: (spanID: string) => void;
-  onClick?: () => void;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
 };
 
 export default function ReferenceLink(props: ReferenceLinkProps) {
-  const { reference, children, className, focusSpan, ...otherProps } = props;
-  delete otherProps.onClick;
-  if (reference.span) {
-    return (
-      <a role="button" onClick={() => focusSpan(reference.spanID)} className={className} {...otherProps}>
-        {children}
-      </a>
-    );
-  }
+  const { reference, children, createFocusSpanLink } = props;
+
+  const link = createFocusSpanLink(reference.traceID, reference.spanID);
 
   return (
-    <ExternalLinkContext.Consumer>
-      {(createLinkToExternalSpan) => {
-        if (!createLinkToExternalSpan) {
-          throw new Error("ExternalLinkContext does not have a value, you probably forgot to setup it's provider");
-        }
-        return (
-          <a
-            href={createLinkToExternalSpan(reference.traceID, reference.spanID)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={className}
-            {...otherProps}
-          >
-            {children}
-          </a>
-        );
-      }}
-    </ExternalLinkContext.Consumer>
+    <a
+      href={link.href}
+      target={link.target}
+      rel="noopener noreferrer"
+      onClick={
+        link.onClick
+          ? (event) => {
+              event.preventDefault();
+              link.onClick!(event);
+            }
+          : undefined
+      }
+    >
+      {children}
+    </a>
   );
 }

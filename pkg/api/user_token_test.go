@@ -8,11 +8,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +20,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	mock := mockstore.NewSQLStoreMock()
 	t.Run("When current user attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
-		mock.ExpectedError = models.ErrUserNotFound
+		mock.ExpectedError = user.ErrUserNotFound
 		revokeUserAuthTokenScenario(t, "Should return not found when calling POST on", "/api/user/revoke-auth-token",
 			"/api/user/revoke-auth-token", cmd, 200, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -29,9 +29,9 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When current user gets auth tokens for a non-existing user", func(t *testing.T) {
-		mock := mockstore.SQLStoreMock{
-			ExpectedUser:  &models.User{Id: 200},
-			ExpectedError: models.ErrUserNotFound,
+		mock := &mockstore.SQLStoreMock{
+			ExpectedUser:  &user.User{ID: 200},
+			ExpectedError: user.ErrUserNotFound,
 		}
 		getUserAuthTokensScenario(t, "Should return not found when calling GET on", "/api/user/auth-tokens", "/api/user/auth-tokens", 200, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -40,8 +40,8 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When logging out an existing user from all devices", func(t *testing.T) {
-		mock := mockstore.SQLStoreMock{
-			ExpectedUser: &models.User{Id: 200},
+		mock := &mockstore.SQLStoreMock{
+			ExpectedUser: &user.User{ID: 200},
 		}
 		logoutUserFromAllDevicesInternalScenario(t, "Should be successful", 1, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -51,7 +51,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 
 	t.Run("When logout a non-existing user from all devices", func(t *testing.T) {
 		logoutUserFromAllDevicesInternalScenario(t, "Should return not found", testUserID, func(sc *scenarioContext) {
-			mock.ExpectedError = models.ErrUserNotFound
+			mock.ExpectedError = user.ErrUserNotFound
 
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 404, sc.resp.Code)
@@ -61,8 +61,8 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	t.Run("When revoke an auth token for a user", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
 		token := &models.UserToken{Id: 1}
-		mock := mockstore.SQLStoreMock{
-			ExpectedUser: &models.User{Id: 200},
+		mock := &mockstore.SQLStoreMock{
+			ExpectedUser: &user.User{ID: 200},
 		}
 
 		revokeUserAuthTokenInternalScenario(t, "Should be successful", cmd, 200, token, func(sc *scenarioContext) {
@@ -79,11 +79,6 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		token := &models.UserToken{Id: 2}
 		mock := mockstore.NewSQLStoreMock()
 		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
-				cmd.Result = &models.User{Id: testUserID}
-				return nil
-			})
-
 			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
 				return token, nil
 			}
@@ -153,12 +148,9 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd,
 	userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}
@@ -183,12 +175,9 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 
 func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}
@@ -212,10 +201,7 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 
 func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(desc, func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: auth.NewFakeUserAuthTokenService(),
 			SQLStore:         sqlStore,
 		}
@@ -239,12 +225,9 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.RevokeAuthTokenCmd, userId int64,
 	token *models.UserToken, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(desc, func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}
@@ -267,12 +250,9 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.R
 
 func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.UserToken, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(desc, func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}

@@ -15,7 +15,7 @@ import {
 } from 'lodash';
 import { lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { FetchResponse, getBackendSrv } from '@grafana/runtime';
+
 import {
   AnnotationEvent,
   DataQueryRequest,
@@ -24,8 +24,9 @@ import {
   dateMath,
   ScopedVars,
 } from '@grafana/data';
-
+import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
 import { OpenTsdbOptions, OpenTsdbQuery } from './types';
 
 export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenTsdbOptions> {
@@ -162,7 +163,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   targetContainsTemplate(target: any) {
     if (target.filters && target.filters.length > 0) {
       for (let i = 0; i < target.filters.length; i++) {
-        if (this.templateSrv.variableExists(target.filters[i].filter)) {
+        if (this.templateSrv.containsTemplate(target.filters[i].filter)) {
           return true;
         }
       }
@@ -170,7 +171,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     if (target.tags && Object.keys(target.tags).length > 0) {
       for (const tagKey in target.tags) {
-        if (this.templateSrv.variableExists(target.tags[tagKey])) {
+        if (this.templateSrv.containsTemplate(target.tags[tagKey])) {
           return true;
         }
       }

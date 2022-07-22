@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
+import React from 'react';
+import useAsync from 'react-use/lib/useAsync';
+
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
-  Badge,
   FileDropzone,
   InlineField,
   InlineFieldRow,
@@ -12,59 +14,26 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
-import React from 'react';
+
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
+import { LokiDatasource } from '../../loki/datasource';
 import { LokiQuery } from '../../loki/types';
 import { TempoDatasource, TempoQuery, TempoQueryType } from '../datasource';
-import LokiDatasource from '../../loki/datasource';
-import { PrometheusDatasource } from '../../prometheus/datasource';
-import useAsync from 'react-use/lib/useAsync';
+
 import NativeSearch from './NativeSearch';
-import { getDS } from './utils';
 import { ServiceGraphSection } from './ServiceGraphSection';
+import { getDS } from './utils';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
 
-interface State {
-  linkedDatasourceUid?: string;
-  linkedDatasource?: LokiDatasource;
-  serviceMapDatasourceUid?: string;
-  serviceMapDatasource?: PrometheusDatasource;
-}
-
-class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
-  state = {
-    linkedDatasourceUid: undefined,
-    linkedDatasource: undefined,
-    serviceMapDatasourceUid: undefined,
-    serviceMapDatasource: undefined,
-  };
-
+class TempoQueryFieldComponent extends React.PureComponent<Props> {
   constructor(props: Props) {
     super(props);
   }
 
   async componentDidMount() {
-    const { datasource } = this.props;
-    // Find query field from linked datasource
-    const tracesToLogsOptions: TraceToLogsOptions = datasource.tracesToLogs || {};
-    const linkedDatasourceUid = tracesToLogsOptions.datasourceUid;
-
-    const serviceMapDsUid = datasource.serviceMap?.datasourceUid;
-
-    // Check status of linked data sources so we can show warnings if needed.
-    const [logsDs, serviceMapDs] = await Promise.all([getDS(linkedDatasourceUid), getDS(serviceMapDsUid)]);
-
-    this.setState({
-      linkedDatasourceUid: linkedDatasourceUid,
-      linkedDatasource: logsDs as LokiDatasource,
-      serviceMapDatasourceUid: serviceMapDsUid,
-      serviceMapDatasource: serviceMapDs as PrometheusDatasource,
-    });
-
     // Set initial query type to ensure traceID field appears
     if (!this.props.query.queryType) {
       this.props.onChange({
@@ -97,27 +66,24 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { query, onChange, datasource } = this.props;
-    // Find query field from linked datasource
-    const tracesToLogsOptions: TraceToLogsOptions = datasource.tracesToLogs || {};
-    const logsDatasourceUid = tracesToLogsOptions.datasourceUid;
+    const { query, onChange, datasource, app } = this.props;
+
+    const logsDatasourceUid = datasource.getLokiSearchDS();
+
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'traceId', label: 'TraceID' },
       { value: 'upload', label: 'JSON file' },
+      { value: 'serviceMap', label: 'Service Graph' },
     ];
 
-    if (config.featureToggles.tempoServiceGraph) {
-      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
+    if (!datasource?.search?.hide) {
+      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
     }
 
-    if (config.featureToggles.tempoSearch && !datasource?.search?.hide) {
-      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search - Beta' });
-    }
-
-    if (logsDatasourceUid && tracesToLogsOptions?.lokiSearch !== false) {
-      if (!config.featureToggles.tempoSearch) {
+    if (logsDatasourceUid) {
+      if (datasource?.search?.hide) {
         // Place at beginning as Search if no native search
         queryTypeOptions.unshift({ value: 'search', label: 'Search' });
       } else {
@@ -134,6 +100,13 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
               options={queryTypeOptions}
               value={query.queryType}
               onChange={(v) => {
+                reportInteraction('grafana_traces_query_type_changed', {
+                  datasourceType: 'tempo',
+                  app: app ?? '',
+                  newQueryType: v,
+                  previousQueryType: query.queryType ?? '',
+                });
+
                 this.onClearResults();
 
                 onChange({
@@ -145,23 +118,9 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             />
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'nativeSearch' && (
-          <p style={{ maxWidth: '65ch' }}>
-            <Badge icon="rocket" text="Beta" color="blue" />
-            {config.featureToggles.tempoBackendSearch ? (
-              <>&nbsp;Tempo search is currently in beta.</>
-            ) : (
-              <>
-                &nbsp;Tempo search is currently in beta and is designed to return recent traces only. It ignores the
-                time range picker. We are actively working on full backend search. Look for improvements in the near
-                future!
-              </>
-            )}
-          </p>
-        )}
         {query.queryType === 'search' && (
           <SearchSection
-            linkedDatasourceUid={logsDatasourceUid}
+            logsDatasourceUid={logsDatasourceUid}
             query={query}
             onRunQuery={this.onRunLinkedQuery}
             onChange={this.onChangeLinkedQuery}
@@ -217,13 +176,13 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
 }
 
 interface SearchSectionProps {
-  linkedDatasourceUid?: string;
+  logsDatasourceUid?: string;
   onChange: (value: LokiQuery) => void;
   onRunQuery: () => void;
   query: TempoQuery;
 }
-function SearchSection({ linkedDatasourceUid, onChange, onRunQuery, query }: SearchSectionProps) {
-  const dsState = useAsync(() => getDS(linkedDatasourceUid), [linkedDatasourceUid]);
+function SearchSection({ logsDatasourceUid, onChange, onRunQuery, query }: SearchSectionProps) {
+  const dsState = useAsync(() => getDS(logsDatasourceUid), [logsDatasourceUid]);
   if (dsState.loading) {
     return null;
   }
@@ -234,7 +193,6 @@ function SearchSection({ linkedDatasourceUid, onChange, onRunQuery, query }: Sea
     return (
       <>
         <InlineLabel>Tempo uses {ds.name} to find traces.</InlineLabel>
-
         <LokiQueryField
           datasource={ds}
           onChange={onChange}
@@ -246,15 +204,15 @@ function SearchSection({ linkedDatasourceUid, onChange, onRunQuery, query }: Sea
     );
   }
 
-  if (!linkedDatasourceUid) {
-    return <div className="text-warning">Please set up a Traces-to-logs datasource in the datasource settings.</div>;
+  if (!logsDatasourceUid) {
+    return <div className="text-warning">Please set up a Loki search datasource in the datasource settings.</div>;
   }
 
-  if (linkedDatasourceUid && !ds) {
+  if (logsDatasourceUid && !ds) {
     return (
       <div className="text-warning">
-        Traces-to-logs datasource is configured but the data source no longer exists. Please configure existing data
-        source to use the search.
+        Loki search datasource is configured but the data source no longer exists. Please configure existing data source
+        to use the search.
       </div>
     );
   }

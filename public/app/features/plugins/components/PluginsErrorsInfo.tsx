@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
+import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { HorizontalGroup, InfoBox, List, PluginSignatureBadge, useTheme } from '@grafana/ui';
+
 import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
-import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
-import { css } from '@emotion/css';
 
 export function PluginsErrorsInfo(): React.ReactElement | null {
   const errors = useGetErrors();

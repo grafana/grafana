@@ -1,3 +1,5 @@
+import { ValidateResult } from 'react-hook-form';
+
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -63,4 +65,17 @@ export function updateMathExpressionRefs(expression: string, previousRefId: stri
   const newExpression = '${' + newRefId + '}';
 
   return expression.replace(oldExpression, newExpression);
+}
+
+// some gateways (like Istio) will decode "/" and "\" characters – this will cause 404 errors for any API call
+// that includes these values in the URL (ie. /my/path%2fto/resource -> /my/path/to/resource)
+//
+// see https://istio.io/latest/docs/ops/best-practices/security/#customize-your-system-on-path-normalization
+export function checkForPathSeparator(value: string): ValidateResult {
+  const containsPathSeparator = value.includes('/') || value.includes('\\');
+  if (containsPathSeparator) {
+    return 'Cannot contain "/" or "\\" characters';
+  }
+
+  return true;
 }

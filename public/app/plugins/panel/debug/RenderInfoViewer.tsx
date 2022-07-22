@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+
 import {
   compareArrayValues,
   compareDataFrameStructures,
@@ -8,9 +9,9 @@ import {
   PanelProps,
   ReducerID,
 } from '@grafana/data';
+import { IconButton } from '@grafana/ui';
 
 import { DebugPanelOptions, UpdateCounters, UpdateConfig } from './types';
-import { IconButton } from '@grafana/ui';
 
 type Props = PanelProps<DebugPanelOptions>;
 

@@ -1,13 +1,20 @@
 import { getBackendSrv } from '@grafana/runtime';
-
-import { TeamMember, ThunkResult } from 'app/types';
 import { updateNavIndex } from 'app/core/actions';
+import { contextSrv } from 'app/core/core';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { AccessControlAction, TeamMember, ThunkResult } from 'app/types';
+
 import { buildNavModel } from './navModel';
 import { teamGroupsLoaded, teamLoaded, teamMembersLoaded, teamsLoaded } from './reducers';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 export function loadTeams(): ThunkResult<void> {
   return async (dispatch) => {
+    // Early return if the user cannot list teams
+    if (!contextSrv.hasPermission(AccessControlAction.ActionTeamsRead)) {
+      dispatch(teamsLoaded([]));
+      return;
+    }
+
     const response = await getBackendSrv().get(
       '/api/teams/search',
       accessControlQueryParam({ perpage: 1000, page: 1 })
@@ -83,6 +90,8 @@ export function removeTeamGroup(groupId: string): ThunkResult<void> {
 export function deleteTeam(id: number): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().delete(`/api/teams/${id}`);
+    // Update users permissions in case they lost teams.read with the deletion
+    await contextSrv.fetchUserPermissions();
     dispatch(loadTeams());
   };
 }

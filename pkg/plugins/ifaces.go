@@ -2,10 +2,10 @@ package plugins
 
 import (
 	"context"
+	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
@@ -15,26 +15,13 @@ type Store interface {
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
+}
+
+type Manager interface {
 	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
-}
-
-// Loader is responsible for loading plugins from the file system.
-type Loader interface {
-	// Load will return a list of plugins found in the provided file system paths.
-	Load(ctx context.Context, class Class, paths []string, ignore map[string]struct{}) ([]*Plugin, error)
-}
-
-// Installer is responsible for managing plugins (add / remove) on the file system.
-type Installer interface {
-	// Install downloads the requested plugin in the provided file system location.
-	Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
-	// Uninstall removes the requested plugin from the provided file system location.
-	Uninstall(ctx context.Context, pluginDir string) error
-	// GetUpdateInfo provides update information for the requested plugin.
-	GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (UpdateInfo, error)
 }
 
 type UpdateInfo struct {
@@ -47,9 +34,7 @@ type Client interface {
 	backend.CheckHealthHandler
 	backend.StreamHandler
 	backend.CallResourceHandler
-
-	// CollectMetrics collects metrics from a plugin.
-	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
+	backend.CollectMetricsHandler
 }
 
 // BackendFactoryProvider provides a backend factory for a provided plugin.
@@ -60,6 +45,11 @@ type BackendFactoryProvider interface {
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
 	Renderer() *Plugin
+}
+
+type SecretsPluginManager interface {
+	// SecretsManager returns a secretsmanager plugin
+	SecretsManager() *Plugin
 }
 
 type StaticRouteResolver interface {
@@ -75,26 +65,32 @@ type PluginLoaderAuthorizer interface {
 	CanLoadPlugin(plugin *Plugin) bool
 }
 
-type PluginDashboardInfoDTO struct {
-	UID              string `json:"uid"`
-	PluginId         string `json:"pluginId"`
-	Title            string `json:"title"`
-	Imported         bool   `json:"imported"`
-	ImportedUri      string `json:"importedUri"`
-	ImportedUrl      string `json:"importedUrl"`
-	Slug             string `json:"slug"`
-	DashboardId      int64  `json:"dashboardId"`
-	FolderId         int64  `json:"folderId"`
-	ImportedRevision int64  `json:"importedRevision"`
-	Revision         int64  `json:"revision"`
-	Description      string `json:"description"`
-	Path             string `json:"path"`
-	Removed          bool   `json:"removed"`
+// ListPluginDashboardFilesArgs list plugin dashboard files argument model.
+type ListPluginDashboardFilesArgs struct {
+	PluginID string
 }
 
-type PluginDashboardManager interface {
-	// GetPluginDashboards gets dashboards for a certain org/plugin.
-	GetPluginDashboards(ctx context.Context, orgID int64, pluginID string) ([]*PluginDashboardInfoDTO, error)
-	// LoadPluginDashboard loads a plugin dashboard.
-	LoadPluginDashboard(ctx context.Context, pluginID, path string) (*models.Dashboard, error)
+// GetPluginDashboardFilesArgs list plugin dashboard files result model.
+type ListPluginDashboardFilesResult struct {
+	FileReferences []string
+}
+
+// GetPluginDashboardFileContentsArgs get plugin dashboard file content argument model.
+type GetPluginDashboardFileContentsArgs struct {
+	PluginID      string
+	FileReference string
+}
+
+// GetPluginDashboardFileContentsResult get plugin dashboard file content result model.
+type GetPluginDashboardFileContentsResult struct {
+	Content io.ReadCloser
+}
+
+// DashboardFileStore is the interface for plugin dashboard file storage.
+type DashboardFileStore interface {
+	// ListPluginDashboardFiles lists plugin dashboard files.
+	ListPluginDashboardFiles(ctx context.Context, args *ListPluginDashboardFilesArgs) (*ListPluginDashboardFilesResult, error)
+
+	// GetPluginDashboardFileContents gets the referenced plugin dashboard file content.
+	GetPluginDashboardFileContents(ctx context.Context, args *GetPluginDashboardFileContentsArgs) (*GetPluginDashboardFileContentsResult, error)
 }

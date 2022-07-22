@@ -2,6 +2,7 @@ package channels
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -25,32 +27,53 @@ const (
 	victoropsAlertStateRecovery = "RECOVERY"
 )
 
+type VictorOpsConfig struct {
+	*NotificationChannelConfig
+	URL         string
+	MessageType string
+}
+
+func VictorOpsFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewVictorOpsConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewVictoropsNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
+}
+
+func NewVictorOpsConfig(config *NotificationChannelConfig) (*VictorOpsConfig, error) {
+	url := config.Settings.Get("url").MustString()
+	if url == "" {
+		return nil, errors.New("could not find victorops url property in settings")
+	}
+	return &VictorOpsConfig{
+		NotificationChannelConfig: config,
+		URL:                       url,
+		MessageType:               config.Settings.Get("messageType").MustString(),
+	}, nil
+}
+
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*VictoropsNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-
-	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find victorops url property in settings"}
-	}
-
+func NewVictoropsNotifier(config *VictorOpsConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *VictoropsNotifier {
 	return &VictoropsNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		URL:         url,
-		MessageType: model.Settings.Get("messageType").MustString(),
+		URL:         config.URL,
+		MessageType: config.MessageType,
 		log:         log.New("alerting.notifier.victorops"),
+		images:      images,
 		ns:          ns,
 		tmpl:        t,
-	}, nil
+	}
 }
 
 // VictoropsNotifier defines URL property for Victorops REST API
@@ -61,13 +84,14 @@ type VictoropsNotifier struct {
 	URL         string
 	MessageType string
 	log         log.Logger
+	images      ImageStore
 	ns          notifications.WebhookSender
 	tmpl        *template.Template
 }
 
 // Notify sends notification to Victorops via POST to URL endpoint
 func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	vn.log.Debug("Executing victorops notification", "notification", vn.Name)
+	vn.log.Debug("executing victorops notification", "notification", vn.Name)
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
@@ -94,12 +118,27 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 
+	_ = withStoredImages(ctx, vn.log, vn.images,
+		func(index int, image ngmodels.Image) error {
+			if image.URL != "" {
+				bodyJSON.Set("image_url", image.URL)
+				return ErrImagesDone
+			}
+			return nil
+		}, as...)
+
 	ruleURL := joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list", vn.log)
 	bodyJSON.Set("alert_url", ruleURL)
 
-	u := tmpl(vn.URL)
 	if tmplErr != nil {
 		vn.log.Warn("failed to template VictorOps message", "err", tmplErr.Error())
+		tmplErr = nil
+	}
+
+	u := tmpl(vn.URL)
+	if tmplErr != nil {
+		vn.log.Info("failed to template VictorOps URL", "err", tmplErr.Error(), "fallback", vn.URL)
+		u = vn.URL
 	}
 
 	b, err := bodyJSON.MarshalJSON()
@@ -112,7 +151,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	if err := vn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		vn.log.Error("Failed to send Victorops notification", "error", err, "webhook", vn.Name)
+		vn.log.Error("Failed to send Victorops notification", "err", err, "webhook", vn.Name)
 		return false, err
 	}
 

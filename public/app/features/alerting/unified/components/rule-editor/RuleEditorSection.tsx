@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { FieldSet, useStyles2 } from '@grafana/ui';
-import React, { FC } from 'react';
 
 export interface RuleEditorSectionProps {
   title: string;
@@ -44,6 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   description: css`
     margin-top: -${theme.spacing(2)};
+    color: ${theme.colors.text.secondary};
   `,
   stepNo: css`
     display: inline-block;

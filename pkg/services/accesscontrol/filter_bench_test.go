@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -31,30 +32,29 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 
 	for i := 0; i < b.N; i++ {
 		baseSql := `SELECT data_source.* FROM data_source WHERE`
-		query, args, err := accesscontrol.Filter(
-			context.Background(),
-			"data_source.id",
-			"datasources",
-			"datasources:read",
+		acFilter, err := accesscontrol.Filter(
 			&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(permissions)}},
+			"data_source.id",
+			"datasources:id:",
+			"datasources:read",
 		)
 		require.NoError(b, err)
 
-		var datasources []models.DataSource
+		var datasources []datasources.DataSource
 		sess := store.NewSession(context.Background())
-		err = sess.SQL(baseSql+query, args...).Find(&datasources)
+		err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
 		require.NoError(b, err)
 		sess.Close()
 		require.Len(b, datasources, numPermissions)
 	}
 }
 
-func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []*accesscontrol.Permission) {
+func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []accesscontrol.Permission) {
 	b.Helper()
 	store := sqlstore.InitTestDB(b)
 
 	for i := 1; i <= numDs; i++ {
-		err := store.AddDataSource(context.Background(), &models.AddDataSourceCommand{
+		err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			Name:  fmt.Sprintf("ds:%d", i),
 			OrgId: 1,
 		})
@@ -65,9 +65,9 @@ func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQ
 		numPermissions = numDs
 	}
 
-	permissions := make([]*accesscontrol.Permission, 0, numPermissions)
+	permissions := make([]accesscontrol.Permission, 0, numPermissions)
 	for i := 1; i <= numPermissions; i++ {
-		permissions = append(permissions, &accesscontrol.Permission{
+		permissions = append(permissions, accesscontrol.Permission{
 			Action: "datasources:read",
 			Scope:  accesscontrol.Scope("datasources", "id", strconv.Itoa(i)),
 		})

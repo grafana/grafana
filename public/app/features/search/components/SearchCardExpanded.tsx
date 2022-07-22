@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import classNames from 'classnames';
+import React, { useState } from 'react';
+import SVG from 'react-inlinesvg';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
+
 import { DashboardSectionItem } from '../types';
+
 import { getThumbnailURL } from './SearchCard';
 
 export interface Props {
@@ -11,7 +15,7 @@ export interface Props {
   imageHeight: number;
   imageWidth: number;
   item: DashboardSectionItem;
-  lastUpdated?: string;
+  lastUpdated?: string | null;
 }
 
 export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated }: Props) {
@@ -35,7 +39,11 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
           />
         ) : (
           <div className={styles.imagePlaceholder}>
-            <Icon name="apps" size="xl" />
+            {item.icon ? (
+              <SVG src={item.icon} width={36} height={36} title={item.title} />
+            ) : (
+              <Icon name="apps" size="xl" />
+            )}
           </div>
         )}
       </div>
@@ -48,10 +56,12 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
               {folderTitle}
             </div>
           </div>
-          <div className={styles.updateContainer}>
-            <div>Last updated</div>
-            {lastUpdated ? <div className={styles.update}>{lastUpdated}</div> : <Spinner />}
-          </div>
+          {lastUpdated !== null && (
+            <div className={styles.updateContainer}>
+              <div>Last updated</div>
+              {lastUpdated ? <div className={styles.update}>{lastUpdated}</div> : <Spinner />}
+            </div>
+          )}
         </div>
         <div>
           <TagList className={styles.tagList} tags={item.tags} />

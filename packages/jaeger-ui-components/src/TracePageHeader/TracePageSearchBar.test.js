@@ -12,81 +12,69 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
 
-import * as markers from './TracePageSearchBar.markers';
+import { createTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
 import TracePageSearchBar, { getStyles } from './TracePageSearchBar';
-import UiFindInput from '../common/UiFindInput';
 
 const defaultProps = {
   forwardedRef: React.createRef(),
   navigable: true,
-  nextResult: () => {},
-  prevResult: () => {},
-  resultCount: 0,
-  textFilter: 'something',
+  searchBarSuffix: 'suffix',
+  searchValue: 'value',
 };
 
 describe('<TracePageSearchBar>', () => {
-  let wrapper;
-
-  beforeEach(() => {
-    wrapper = shallow(<TracePageSearchBar {...defaultProps} />);
-  });
-
   describe('truthy textFilter', () => {
     it('renders UiFindInput with correct props', () => {
-      const renderedUiFindInput = wrapper.find(UiFindInput);
-      const suffix = shallow(renderedUiFindInput.prop('inputProps').suffix);
-      expect(renderedUiFindInput.prop('inputProps')).toEqual(
-        expect.objectContaining({
-          'data-test': markers.IN_TRACE_SEARCH,
-          name: 'search',
-        })
-      );
-      expect(suffix.hasClass(getStyles().TracePageSearchBarCount)).toBe(true);
-      expect(suffix.text()).toBe(String(defaultProps.resultCount));
+      render(<TracePageSearchBar {...defaultProps} />);
+      expect(screen.getByPlaceholderText('Find...')['value']).toEqual('value');
+      const suffix = screen.getByLabelText('Search bar suffix');
+      const theme = createTheme();
+      expect(suffix['className']).toBe(getStyles(theme).TracePageSearchBarSuffix);
+      expect(suffix.textContent).toBe('suffix');
     });
 
     it('renders buttons', () => {
-      const buttons = wrapper.find('UIButton');
-      expect(buttons.length).toBe(4);
-      buttons.forEach((button) => {
-        expect(button.hasClass(getStyles().TracePageSearchBarBtn)).toBe(true);
-        expect(button.hasClass(getStyles().TracePageSearchBarBtnDisabled)).toBe(false);
-        expect(button.prop('disabled')).toBe(false);
-      });
-      expect(wrapper.find('UIButton[icon="up"]').prop('onClick')).toBe(defaultProps.prevResult);
-      expect(wrapper.find('UIButton[icon="down"]').prop('onClick')).toBe(defaultProps.nextResult);
-      expect(wrapper.find('UIButton[icon="close"]').prop('onClick')).toBe(defaultProps.clearSearch);
+      render(<TracePageSearchBar {...defaultProps} />);
+      const nextResButton = screen.queryByRole('button', { name: 'Next results button' });
+      const prevResButton = screen.queryByRole('button', { name: 'Prev results button' });
+      expect(nextResButton).toBeInTheDocument();
+      expect(prevResButton).toBeInTheDocument();
+      expect(nextResButton['disabled']).toBe(false);
+      expect(prevResButton['disabled']).toBe(false);
     });
 
-    it('hides navigation buttons when not navigable', () => {
-      wrapper.setProps({ navigable: false });
-      const button = wrapper.find('UIButton');
-      expect(button.length).toBe(1);
-      expect(button.prop('icon')).toBe('close');
+    it('only shows navigable buttons when navigable is true', () => {
+      const props = {
+        ...defaultProps,
+        navigable: false,
+      };
+      render(<TracePageSearchBar {...props} />);
+      expect(screen.queryByRole('button', { name: 'Next results button' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Prev results button' })).not.toBeInTheDocument();
     });
   });
 
   describe('falsy textFilter', () => {
     beforeEach(() => {
-      wrapper.setProps({ textFilter: '' });
+      const props = {
+        ...defaultProps,
+        searchValue: '',
+      };
+      render(<TracePageSearchBar {...props} />);
     });
 
-    it('renders UiFindInput with correct props', () => {
-      expect(wrapper.find(UiFindInput).prop('inputProps').suffix).toBe(null);
+    it('does not render suffix', () => {
+      expect(screen.queryByLabelText('Search bar suffix')).not.toBeInTheDocument();
     });
 
     it('renders buttons', () => {
-      const buttons = wrapper.find('UIButton');
-      expect(buttons.length).toBe(4);
-      buttons.forEach((button) => {
-        expect(button.hasClass(getStyles().TracePageSearchBarBtn)).toBe(true);
-        expect(button.hasClass(getStyles().TracePageSearchBarBtnDisabled)).toBe(true);
-        expect(button.prop('disabled')).toBe(true);
-      });
+      expect(screen.getByRole('button', { name: 'Next results button' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Prev results button' })).toBeInTheDocument();
     });
   });
 });

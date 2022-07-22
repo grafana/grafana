@@ -1,7 +1,9 @@
-import React from 'react';
-import { TestRuleResult, Props } from './TestRuleResult';
-import { DashboardModel, PanelModel } from '../dashboard/state';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import { DashboardModel, PanelModel } from '../dashboard/state';
+
+import { TestRuleResult, Props } from './TestRuleResult';
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');

@@ -1,4 +1,5 @@
 import { DataFrameDTO, FieldType } from '../types/dataFrame';
+
 import { MutableDataFrame } from './MutableDataFrame';
 
 describe('Reversing DataFrame', () => {

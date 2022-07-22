@@ -1,11 +1,15 @@
-import React from 'react';
 import { render, RenderResult } from '@testing-library/react';
-import { CoreApp } from '@grafana/data';
 import { noop } from 'lodash';
+import React from 'react';
+
+import { CoreApp } from '@grafana/data';
+
 import { LokiDatasource } from '../datasource';
-import { testIds as alertingTestIds } from './LokiQueryEditorForAlerting';
+
+import { testIds as exploreTestIds } from './LokiExploreQueryEditor';
 import { testIds as regularTestIds } from './LokiQueryEditor';
-import LokiQueryEditorByApp from './LokiQueryEditorByApp';
+import { LokiQueryEditorByApp } from './LokiQueryEditorByApp';
+import { testIds as alertingTestIds } from './LokiQueryEditorForAlerting';
 
 function setup(app: CoreApp): RenderResult {
   const dataSource = {
@@ -43,10 +47,10 @@ describe('LokiQueryEditorByApp', () => {
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
-  it('should render regular query editor for explore', () => {
+  it('should render expore query editor for explore', () => {
     const { getByTestId, queryByTestId } = setup(CoreApp.Explore);
 
-    expect(getByTestId(regularTestIds.editor)).toBeInTheDocument();
+    expect(getByTestId(exploreTestIds.editor)).toBeInTheDocument();
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 

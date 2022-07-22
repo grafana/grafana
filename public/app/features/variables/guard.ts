@@ -1,5 +1,6 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
+
 import {
   CustomVariableSupport,
   DataQuery,
@@ -15,6 +16,7 @@ import {
   VariableSupportType,
 } from '@grafana/data';
 
+import { LEGACY_VARIABLE_QUERY_EDITOR_NAME } from './editor/LegacyVariableQueryEditor';
 import {
   AdHocVariableModel,
   ConstantVariableModel,
@@ -23,8 +25,8 @@ import {
   VariableQueryEditorProps,
   VariableWithMultiSupport,
   VariableWithOptions,
+  DataSourceVariableModel,
 } from './types';
-import { LEGACY_VARIABLE_QUERY_EDITOR_NAME } from './editor/LegacyVariableQueryEditor';
 
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
   return model.type === 'query';
@@ -36,6 +38,10 @@ export const isAdHoc = (model: VariableModel): model is AdHocVariableModel => {
 
 export const isConstant = (model: VariableModel): model is ConstantVariableModel => {
   return model.type === 'constant';
+};
+
+export const isDataSource = (model: VariableModel): model is DataSourceVariableModel => {
+  return model.type === 'datasource';
 };
 
 export const isMulti = (model: VariableModel): model is VariableWithMultiSupport => {

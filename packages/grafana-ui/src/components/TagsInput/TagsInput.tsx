@@ -1,10 +1,13 @@
-import React, { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Button } from '../Button';
-import { TagItem } from './TagItem';
-import { useStyles, useTheme2 } from '../../themes/ThemeContext';
+import React, { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+
+import { useStyles, useTheme2 } from '../../themes/ThemeContext';
+import { Button } from '../Button';
 import { Input } from '../Input/Input';
+
+import { TagItem } from './TagItem';
 
 export interface Props {
   placeholder?: string;
@@ -42,10 +45,7 @@ export const TagsInput: FC<Props> = ({
   };
 
   const onRemove = (tagToRemove: string) => {
-    if (disabled) {
-      return;
-    }
-    onChange(tags?.filter((x) => x !== tagToRemove));
+    onChange(tags.filter((x) => x !== tagToRemove));
   };
 
   const onAdd = (event?: React.MouseEvent) => {
@@ -74,7 +74,7 @@ export const TagsInput: FC<Props> = ({
     <div className={cx(styles.wrapper, className, width ? css({ width: theme.spacing(width) }) : '')}>
       <div className={tags?.length ? styles.tags : undefined}>
         {tags?.map((tag: string, index: number) => {
-          return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
+          return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} disabled={disabled} />;
         })}
       </div>
       <div>
@@ -85,6 +85,13 @@ export const TagsInput: FC<Props> = ({
           onChange={onNameChange}
           value={newTagName}
           onKeyUp={onKeyboardAdd}
+          onKeyDown={(e) => {
+            // onKeyDown is triggered before onKeyUp, triggering submit behaviour on Enter press if this component
+            // is used inside forms. Moving onKeyboardAdd callback here doesn't work since text input is not captured in onKeyDown
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
           onBlur={onBlur}
           invalid={invalid}
           suffix={

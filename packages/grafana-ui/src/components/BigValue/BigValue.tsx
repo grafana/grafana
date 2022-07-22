@@ -1,11 +1,12 @@
-// Library
 import React, { PureComponent } from 'react';
-import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline, TextDisplayOptions } from '@grafana/data';
 
-// Types
+import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
+import { VizTextDisplayOptions } from '@grafana/schema';
+
 import { Themeable2 } from '../../types';
-import { buildLayout } from './BigValueLayout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
+
+import { buildLayout } from './BigValueLayout';
 
 export enum BigValueColorMode {
   Value = 'value',
@@ -57,7 +58,7 @@ export interface Props extends Themeable2 {
   /** Factors that should influence the positioning of the text  */
   alignmentFactors?: DisplayValueAlignmentFactors;
   /** Explicit font size control */
-  text?: TextDisplayOptions;
+  text?: VizTextDisplayOptions;
   /** Specify which text should be visible in the BigValue */
   textMode?: BigValueTextMode;
   /** If true disables the tooltip */

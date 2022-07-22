@@ -1,5 +1,6 @@
-import { debounce, each, indexOf, map, partial, escape, unescape } from 'lodash';
 import $ from 'jquery';
+import { debounce, each, indexOf, map, partial, escape, unescape } from 'lodash';
+
 import coreModule from 'app/angular/core_module';
 
 const template = `

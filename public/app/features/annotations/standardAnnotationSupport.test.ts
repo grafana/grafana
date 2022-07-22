@@ -1,4 +1,5 @@
 import { FieldType, toDataFrame } from '@grafana/data';
+
 import { getAnnotationsFromData } from './standardAnnotationSupport';
 
 describe('DataFrame to annotations', () => {
@@ -48,7 +49,7 @@ describe('DataFrame to annotations', () => {
     ]);
   });
 
-  test('explicit mappins', async () => {
+  test('explicit mappings', async () => {
     const frame = toDataFrame({
       fields: [
         { name: 'time1', values: [111, 222, 333] },

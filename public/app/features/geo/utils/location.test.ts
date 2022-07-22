@@ -1,6 +1,8 @@
-import { toDataFrame, FieldType, FrameGeometrySourceMode } from '@grafana/data';
 import { Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
+
+import { toDataFrame, FieldType, FrameGeometrySourceMode } from '@grafana/data';
+
 import { getGeometryField, getLocationFields, getLocationMatchers } from './location';
 
 const longitude = [0, -74.1];

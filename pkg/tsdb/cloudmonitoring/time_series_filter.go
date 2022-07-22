@@ -166,11 +166,10 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 			if len(point.Value.DistributionValue.BucketCounts) == 0 {
 				continue
 			}
-			maxKey := 0
 			for i := 0; i < len(point.Value.DistributionValue.BucketCounts); i++ {
 				value, err := strconv.ParseFloat(point.Value.DistributionValue.BucketCounts[i], 64)
 				if err != nil {
-					continue
+					return err
 				}
 				if _, ok := buckets[i]; !ok {
 					// set lower bounds
@@ -193,39 +192,20 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 							valueField,
 						},
 						RefID: timeSeriesFilter.RefID,
-					}
-
-					if maxKey < i {
-						maxKey = i
+						Meta: &data.FrameMeta{
+							ExecutedQueryString: executedQueryString,
+						},
 					}
 				}
 				buckets[i].AppendRow(point.Interval.EndTime, value)
 			}
-			for i := 0; i < maxKey; i++ {
-				if _, ok := buckets[i]; !ok {
-					bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
-					additionalLabels := data.Labels{"bucket": bucketBound}
-					timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
-					valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
-					frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels,
-						additionalLabels, timeSeriesFilter)
-					valueField.Name = frameName
-					valueField.Labels = seriesLabels
-					setDisplayNameAsFieldName(valueField)
-
-					buckets[i] = &data.Frame{
-						Name:  frameName,
-						RefID: timeSeriesFilter.RefID,
-						Fields: []*data.Field{
-							timeField,
-							valueField,
-						},
-					}
-				}
-			}
 		}
 		for i := 0; i < len(buckets); i++ {
+			buckets[i].Meta.Custom = customFrameMeta
 			frames = append(frames, buckets[i])
+		}
+		if len(buckets) == 0 {
+			frames = append(frames, frame)
 		}
 	}
 	if len(response.TimeSeries) > 0 {
@@ -270,33 +250,36 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(dr *backend.DataResponse,
 	response cloudMonitoringResponse, title, text string) error {
-	frames := data.Frames{}
+	frame := data.NewFrame(timeSeriesFilter.RefID,
+		data.NewField("time", nil, []time.Time{}),
+		data.NewField("title", nil, []string{}),
+		data.NewField("tags", nil, []string{}),
+		data.NewField("text", nil, []string{}),
+	)
+
 	for _, series := range response.TimeSeries {
 		if len(series.Points) == 0 {
 			continue
 		}
-		annotation := make(map[string][]string)
+
 		for i := len(series.Points) - 1; i >= 0; i-- {
 			point := series.Points[i]
 			value := strconv.FormatFloat(point.Value.DoubleValue, 'f', 6, 64)
 			if series.ValueType == "STRING" {
 				value = point.Value.StringValue
 			}
-			annotation["time"] = append(annotation["time"], point.Interval.EndTime.UTC().Format(time.RFC3339))
-			annotation["title"] = append(annotation["title"], formatAnnotationText(title, value, series.Metric.Type,
-				series.Metric.Labels, series.Resource.Labels))
-			annotation["tags"] = append(annotation["tags"], "")
-			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type,
-				series.Metric.Labels, series.Resource.Labels))
+			annotation := &annotationEvent{
+				Time: point.Interval.EndTime,
+				Title: formatAnnotationText(title, value, series.Metric.Type,
+					series.Metric.Labels, series.Resource.Labels),
+				Tags: "",
+				Text: formatAnnotationText(text, value, series.Metric.Type,
+					series.Metric.Labels, series.Resource.Labels),
+			}
+			frame.AppendRow(annotation.Time, annotation.Title, annotation.Tags, annotation.Text)
 		}
-		frames = append(frames, data.NewFrame(timeSeriesFilter.getRefID(),
-			data.NewField("time", nil, annotation["time"]),
-			data.NewField("title", nil, annotation["title"]),
-			data.NewField("tags", nil, annotation["tags"]),
-			data.NewField("text", nil, annotation["text"]),
-		))
 	}
-	dr.Frames = frames
+	dr.Frames = append(dr.Frames, frame)
 
 	return nil
 }

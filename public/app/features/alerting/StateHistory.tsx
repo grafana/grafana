@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
+
 import { getBackendSrv } from '@grafana/runtime';
 import { Icon, ConfirmButton, Button } from '@grafana/ui';
 
-import alertDef from './state/alertDef';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { css } from '@emotion/css';
+
+import alertDef from './state/alertDef';
 
 interface Props {
   dashboard: DashboardModel;

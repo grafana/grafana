@@ -1,6 +1,7 @@
-import { mapInternalLinkToExplore } from './dataLinks';
 import { DataLink, FieldType } from '../types';
 import { ArrayVector } from '../vector';
+
+import { mapInternalLinkToExplore } from './dataLinks';
 
 describe('mapInternalLinkToExplore', () => {
   it('creates internal link', () => {

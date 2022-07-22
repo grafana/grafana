@@ -169,6 +169,8 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 		if certificate != "" {
 			connStr += fmt.Sprintf("certificate=%s;", certificate)
 		}
+	} else if encrypt == "disable" {
+		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
 	}
 	return connStr, nil
 }

@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
-import { cx, css } from '@emotion/css';
+
 import { LogRowModel, Field, LinkModel } from '@grafana/data';
 
-import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
+import { Themeable } from '../../types/theme';
 
 import { getAllFields } from './logParser';
 
@@ -18,12 +19,11 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
   render() {
     const { row, showDetectedFields, getFieldLinks, wrapLogMessage } = this.props;
     const fields = getAllFields(row, getFieldLinks);
-    const wrapClassName = cx(
-      wrapLogMessage &&
-        css`
-          white-space: pre-wrap;
-        `
-    );
+    const wrapClassName = wrapLogMessage
+      ? ''
+      : css`
+          white-space: nowrap;
+        `;
 
     const line = showDetectedFields
       .map((parsedKey) => {

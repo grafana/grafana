@@ -1,3 +1,5 @@
+import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
+
 import {
   AbsoluteTimeRange,
   DataSourceApi,
@@ -8,13 +10,13 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
-
+import { ExplorePanelData } from 'app/types';
 import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
+
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { toRawTimeRange } from '../utils/time';
-import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -61,16 +63,25 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   logsResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
+  richHistory: [],
   logsVolumeDataProvider: undefined,
   logsVolumeData: undefined,
   graphStyle: loadGraphStyle(),
   panelsState: {},
 });
 
-export const createEmptyQueryResponse = (): PanelData => ({
+export const createEmptyQueryResponse = (): ExplorePanelData => ({
   state: LoadingState.NotStarted,
   series: [],
   timeRange: getDefaultTimeRange(),
+  graphFrames: [],
+  logsFrames: [],
+  traceFrames: [],
+  nodeGraphFrames: [],
+  tableFrames: [],
+  graphResult: null,
+  logsResult: null,
+  tableResult: null,
 });
 
 export async function loadAndInitDatasource(
@@ -96,7 +107,7 @@ export async function loadAndInitDatasource(
   }
 
   const historyKey = `grafana.explore.history.${instance.meta?.id}`;
-  const history = store.getObject(historyKey, []);
+  const history = store.getObject<HistoryItem[]>(historyKey, []);
   // Save last-used datasource
 
   store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.uid);

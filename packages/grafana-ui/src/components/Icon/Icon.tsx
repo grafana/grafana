@@ -1,13 +1,15 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '../../themes/stylesFactory';
-import { useTheme } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types/icon';
+import React from 'react';
 import SVG from 'react-inlinesvg';
-import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 
-const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'library-panel'];
+import { GrafanaTheme } from '@grafana/data';
+
+import { useTheme } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { IconName, IconType, IconSize } from '../../types/icon';
+
+import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
+import { getIconSubDir, getSvgSize } from './utils';
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
@@ -18,14 +20,15 @@ export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    // line-height: 0; is needed for correct icon alignment in Safari
     container: css`
       label: Icon;
       display: inline-block;
+      line-height: 0;
     `,
     icon: css`
       vertical-align: middle;
       display: inline-block;
-      margin-bottom: ${theme.spacing.xxs};
       fill: currentColor;
     `,
     orange: css`
@@ -33,16 +36,6 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-
-function getIconSubDir(name: IconName, type: string): string {
-  return name?.startsWith('gf-')
-    ? 'custom'
-    : alwaysMonoIcons.includes(name)
-    ? 'mono'
-    : type === 'default'
-    ? 'unicons'
-    : 'mono';
-}
 
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
   ({ size = 'md', type = 'default', name, className, style, title = '', ...divElementProps }, ref) => {
@@ -94,23 +87,3 @@ function getFontAwesomeIconStyles(iconName: string, className?: string): string 
     className
   );
 }
-
-/* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
-export const getSvgSize = (size: IconSize) => {
-  switch (size) {
-    case 'xs':
-      return 12;
-    case 'sm':
-      return 14;
-    case 'md':
-      return 16;
-    case 'lg':
-      return 18;
-    case 'xl':
-      return 24;
-    case 'xxl':
-      return 36;
-    case 'xxxl':
-      return 48;
-  }
-};

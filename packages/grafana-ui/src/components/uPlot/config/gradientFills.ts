@@ -1,3 +1,6 @@
+import tinycolor from 'tinycolor2';
+import uPlot from 'uplot';
+
 import {
   colorManipulator,
   FieldColorMode,
@@ -7,8 +10,7 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { ScaleOrientation } from '@grafana/schema';
-import tinycolor from 'tinycolor2';
-import uPlot from 'uplot';
+
 import { getCanvasContext } from '../../../utils/measureText';
 
 function makeDirectionalGradient(direction: GradientDirection, bbox: uPlot.BBox, ctx: CanvasRenderingContext2D) {
@@ -133,6 +135,10 @@ export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValue
   let maxStopPos = Math.round(u.valToPos(maxStopVal, scaleKey, true));
 
   let range = minStopPos - maxStopPos;
+
+  if (range === 0) {
+    return scaleStops[maxStopIdx!][1];
+  }
 
   let x0, y0, x1, y1;
 

@@ -1,7 +1,9 @@
-import { act, renderHook } from '@testing-library/react-hooks';
-import { useDetailState } from './useDetailState';
 import { TraceLog } from '@jaegertracing/jaeger-ui-components/src/types/trace';
+import { act, renderHook } from '@testing-library/react-hooks';
+
 import { DataFrame } from '@grafana/data';
+
+import { useDetailState } from './useDetailState';
 
 const sampleFrame: DataFrame = {
   name: 'trace',
@@ -44,7 +46,7 @@ describe('useDetailState', () => {
     const { result } = renderHook(() => useDetailState(sampleFrame));
     act(() => result.current.toggleDetail('span1'));
     act(() => result.current.detailReferencesToggle('span1'));
-    expect(result.current.detailStates.get('span1')?.isReferencesOpen).toBe(true);
+    expect(result.current.detailStates.get('span1')?.references.isOpen).toBe(true);
   });
 
   it('toggles processes', async () => {

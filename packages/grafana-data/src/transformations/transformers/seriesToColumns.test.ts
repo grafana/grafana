@@ -6,8 +6,10 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
+
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+
+import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
 
 describe('SeriesToColumns Transformer', () => {
   beforeAll(() => {
@@ -170,7 +172,9 @@ describe('SeriesToColumns Transformer', () => {
                 "name": "even",
               },
               "name": "time",
-              "state": Object {},
+              "state": Object {
+                "multipleFrames": true,
+              },
               "type": "time",
               "values": Array [
                 3000,
@@ -208,7 +212,9 @@ describe('SeriesToColumns Transformer', () => {
                 "name": "odd",
               },
               "name": "time",
-              "state": Object {},
+              "state": Object {
+                "multipleFrames": true,
+              },
               "type": "time",
               "values": Array [
                 undefined,
@@ -267,7 +273,9 @@ describe('SeriesToColumns Transformer', () => {
             Object {
               "config": Object {},
               "name": "time",
-              "state": Object {},
+              "state": Object {
+                "multipleFrames": true,
+              },
               "type": "time",
               "values": Array [
                 1000,

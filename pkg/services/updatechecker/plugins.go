@@ -29,7 +29,7 @@ type PluginsService struct {
 
 func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store) *PluginsService {
 	return &PluginsService{
-		enabled:          cfg.CheckForUpdates,
+		enabled:          cfg.CheckForPluginUpdates,
 		grafanaVersion:   cfg.BuildVersion,
 		httpClient:       &http.Client{Timeout: 10 * time.Second},
 		log:              log.New("plugins.update.checker"),

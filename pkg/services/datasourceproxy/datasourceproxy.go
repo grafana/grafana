@@ -16,13 +16,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
 	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
-	oauthTokenService *oauthtoken.Service, dsService *datasources.Service, tracer tracing.Tracer) *DataSourceProxyService {
+	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
+	tracer tracing.Tracer, secretsService secrets.Service) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
@@ -32,6 +35,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator m
 		OAuthTokenService:      oauthTokenService,
 		DataSourcesService:     dsService,
 		tracer:                 tracer,
+		secretsService:         secretsService,
 	}
 }
 
@@ -42,8 +46,9 @@ type DataSourceProxyService struct {
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider
 	OAuthTokenService      *oauthtoken.Service
-	DataSourcesService     *datasources.Service
+	DataSourcesService     datasources.DataSourceService
 	tracer                 tracing.Tracer
+	secretsService         secrets.Service
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
@@ -55,24 +60,51 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 	p.ProxyDatasourceRequestWithID(c, id)
 }
 
+func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqContext, dsUID string) {
+	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
+
+	if dsUID == "" { // if datasource UID is not provided, fetch it from the uid path parameter
+		dsUID = web.Params(c.Req)[":uid"]
+	}
+
+	if !util.IsValidShortUID(dsUID) {
+		c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
+		return
+	}
+
+	ds, err := p.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	if err != nil {
+		toAPIError(c, err)
+		return
+	}
+	p.proxyDatasourceRequest(c, ds)
+}
+
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
 	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if errors.Is(err, models.ErrDataSourceAccessDenied) {
-			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
-			return
-		}
-		if errors.Is(err, models.ErrDataSourceNotFound) {
-			c.JsonApiErr(http.StatusNotFound, "Unable to find datasource", err)
-			return
-		}
-		c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
+		toAPIError(c, err)
 		return
 	}
+	p.proxyDatasourceRequest(c, ds)
+}
 
-	err = p.PluginRequestValidator.Validate(ds.Url, c.Req)
+func toAPIError(c *models.ReqContext, err error) {
+	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
+		c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
+		return
+	}
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
+		c.JsonApiErr(http.StatusNotFound, "Unable to find datasource", err)
+		return
+	}
+	c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
+}
+
+func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds *datasources.DataSource) {
+	err := p.PluginRequestValidator.Validate(ds.Url, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -99,7 +131,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	proxy.HandleRequest()
 }
 
-var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/[\d]+\/?`)
+var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/([\d]+|uid\/[\w]+)\/?`)
 
 func extractProxyPath(originalRawPath string) string {
 	return proxyPathRegexp.ReplaceAllString(originalRawPath, "")

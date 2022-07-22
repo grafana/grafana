@@ -9,10 +9,13 @@ import './services/popover_srv';
 import './services/timer';
 import './services/AngularLoader';
 
+import '../angular/jquery_extended';
 import './dropdown_typeahead';
 import './autofill_event_fix';
 import './metric_segment';
 import './misc';
+import './bsTooltip';
+import './bsTypeahead';
 import './ng_model_on_blur';
 import './tags';
 import './rebuild_on_change';
@@ -37,3 +40,4 @@ import './components/plugin_component';
 import './GrafanaCtrl';
 
 export { AngularApp } from './AngularApp';
+export { coreModule } from './core_module';

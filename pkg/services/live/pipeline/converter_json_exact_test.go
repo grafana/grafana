@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -12,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func checkExactConversion(tb testing.TB, file string, fields []Field) *backend.DataResponse {
-	tb.Helper()
-	content := loadTestJson(tb, file)
+func checkExactConversion(t *testing.T, file string, fields []Field) *backend.DataResponse {
+	t.Helper()
+	content := loadTestJson(t, file)
 
 	converter := NewExactJsonConverter(ExactJsonConverterConfig{
 		Fields: fields,
@@ -23,16 +22,15 @@ func checkExactConversion(tb testing.TB, file string, fields []Field) *backend.D
 		return time.Date(2021, 01, 01, 12, 12, 12, 0, time.UTC)
 	}
 	channelFrames, err := converter.Convert(context.Background(), Vars{}, content)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 
 	dr := &backend.DataResponse{}
 	for _, cf := range channelFrames {
-		require.Empty(tb, cf.Channel)
+		require.Empty(t, cf.Channel)
 		dr.Frames = append(dr.Frames, cf.Frame)
 	}
 
-	err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", file+".golden.txt"), dr, *update)
-	require.NoError(tb, err)
+	experimental.CheckGoldenJSONResponse(t, "testdata", file+".golden", dr, *update)
 	return dr
 }
 

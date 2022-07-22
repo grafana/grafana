@@ -1,15 +1,19 @@
 import { chain } from 'lodash';
-import { getTemplateSrv } from '@grafana/runtime';
-import { stringToJsRegex } from '@grafana/data';
 
-import { toVariablePayload, VariableIdentifier } from '../state/types';
+import { stringToJsRegex } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+
 import { ThunkResult } from '../../../types';
-import { createDataSourceOptions } from './reducer';
-import { validateVariableSelectionState } from '../state/actions';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { getVariable } from '../state/selectors';
-import { DataSourceVariableModel } from '../types';
 import { changeVariableEditorExtended } from '../editor/reducer';
+import { validateVariableSelectionState } from '../state/actions';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getVariable } from '../state/selectors';
+import { KeyedVariableIdentifier } from '../state/types';
+import { DataSourceVariableModel } from '../types';
+import { toVariablePayload } from '../utils';
+
+import { createDataSourceOptions } from './reducer';
 
 export interface DataSourceVariableActionDependencies {
   getDatasourceSrv: typeof getDatasourceSrv;
@@ -17,12 +21,13 @@ export interface DataSourceVariableActionDependencies {
 
 export const updateDataSourceVariableOptions =
   (
-    identifier: VariableIdentifier,
+    identifier: KeyedVariableIdentifier,
     dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
   ): ThunkResult<void> =>
   async (dispatch, getState) => {
+    const { rootStateKey } = identifier;
     const sources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
-    const variableInState = getVariable<DataSourceVariableModel>(identifier.id, getState());
+    const variableInState = getVariable<DataSourceVariableModel>(identifier, getState());
     let regex;
 
     if (variableInState.regex) {
@@ -30,12 +35,15 @@ export const updateDataSourceVariableOptions =
       regex = stringToJsRegex(regex);
     }
 
-    dispatch(createDataSourceOptions(toVariablePayload(identifier, { sources, regex })));
+    dispatch(toKeyedAction(rootStateKey, createDataSourceOptions(toVariablePayload(identifier, { sources, regex }))));
     await dispatch(validateVariableSelectionState(identifier));
   };
 
 export const initDataSourceVariableEditor =
-  (dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }): ThunkResult<void> =>
+  (
+    key: string,
+    dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
+  ): ThunkResult<void> =>
   (dispatch) => {
     const dataSources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: true });
     const dataSourceTypes = chain(dataSources)
@@ -47,10 +55,5 @@ export const initDataSourceVariableEditor =
 
     dataSourceTypes.unshift({ text: '', value: '' });
 
-    dispatch(
-      changeVariableEditorExtended({
-        propName: 'dataSourceTypes',
-        propValue: dataSourceTypes,
-      })
-    );
+    dispatch(toKeyedAction(key, changeVariableEditorExtended({ dataSourceTypes })));
   };

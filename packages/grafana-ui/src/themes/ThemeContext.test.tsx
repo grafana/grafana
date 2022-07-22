@@ -1,8 +1,9 @@
-import React from 'react';
-import { renderHook } from '@testing-library/react-hooks';
 import { css } from '@emotion/css';
-import { mockThemeContext, useStyles } from './ThemeContext';
 import { render } from '@testing-library/react';
+import { renderHook } from '@testing-library/react-hooks';
+import React from 'react';
+
+import { mockThemeContext, useStyles } from './ThemeContext';
 
 describe('useStyles', () => {
   it('memoizes the passed in function correctly', () => {

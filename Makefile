@@ -7,11 +7,14 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
+API_DEFINITION_FILES = $(shell find ./pkg/api/docs/definitions -name '*.go' -print)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
 all: deps build
 
@@ -28,23 +31,54 @@ node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
 	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
 
+##@ Swagger
+SPEC_TARGET = public/api-spec.json
+MERGED_SPEC_TARGET := public/api-merged.json
+NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
+
+$(NGALERT_SPEC_TARGET):
+	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
+
+$(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
+	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
+	$(SWAGGER) mixin $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+
+--swagger-api-spec: $(API_DEFINITION_FILES) $(SWAGGER) ## Generate API Swagger specification
+	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o public/api-spec.json \
+	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i pkg/api/docs/tags.json
+
+swagger-api-spec: gen-go --swagger-api-spec $(MERGED_SPEC_TARGET) validate-api-spec
+
+validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
+	$(SWAGGER) validate $(<)
+
+clean-api-spec:
+	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
+
 ##@ Building
 
-gen-go: $(WIRE)
+gen-cue: ## Do all CUE/Thema code generation
+	@echo "generate code from .cue files"
+	go generate ./pkg/framework/coremodel
+	go generate ./public/app/plugins
+
+gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
-build-go: gen-go ## Build all Go binaries.
+build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
-	$(GO) run build.go build
+	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
 build-server: ## Build Grafana server.
 	@echo "build server"
-	$(GO) run build.go build-server
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
 
 build-cli: ## Build Grafana CLI application.
 	@echo "build grafana-cli"
-	$(GO) run build.go build-cli
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
 
 build-js: ## Build frontend assets.
 	@echo "build frontend"
@@ -53,21 +87,38 @@ build-js: ## Build frontend assets.
 
 build: build-go build-js ## Build backend and frontend.
 
-scripts/go/bin/bra: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/bra github.com/unknwon/bra
-
-run: scripts/go/bin/bra ## Build and run web server on filesystem changes.
-	@scripts/go/bin/bra run
+run: $(BRA) ## Build and run web server on filesystem changes.
+	$(BRA) run
 
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
 ##@ Testing
 
-test-go: ## Run tests for backend.
-	@echo "test backend"
-	$(GO) test -v ./pkg/...
+.PHONY: test-go
+test-go: test-go-unit test-go-integration
+
+.PHONY: test-go-unit
+test-go-unit: ## Run unit tests for backend with flags.
+	@echo "test backend unit tests"
+	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/...
+
+.PHONY: test-go-integration
+test-go-integration: ## Run integration tests for backend with flags.
+	@echo "test backend integration tests"
+	$(GO) test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+
+.PHONY: test-go-integration-postgres
+test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
+	@echo "test backend integration postgres tests"
+	$(GO) clean -testcache
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=30m {}'
+
+.PHONY: test-go-integration-mysql
+test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
+	@echo "test backend integration mysql tests"
+	$(GO) clean -testcache
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=30m {}'
 
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
@@ -76,14 +127,10 @@ test-js: ## Run tests for frontend.
 test: test-go test-js ## Run all tests.
 
 ##@ Linting
-scripts/go/bin/golangci-lint: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
-
-golangci-lint: scripts/go/bin/golangci-lint
+golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
-	@scripts/go/bin/golangci-lint run \
-		--config ./scripts/go/configs/.golangci.toml \
+	$(GOLANGCI_LINT) run \
+		--config ./conf/.golangci.toml \
 		$(GO_FILES)
 
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
@@ -98,6 +145,11 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
 	docker build --tag grafana/grafana:dev .
+
+build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
+	@echo "build docker container"
+	docker build --tag grafana/grafana:dev-ubuntu -f ./Dockerfile.ubuntu .
+
 
 ##@ Services
 
@@ -122,6 +174,14 @@ devenv-down: ## Stop optional services.
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;
+
+devenv-postgres:
+	@cd devenv; \
+	sources=postgres_tests
+
+devenv-mysql:
+	@cd devenv; \
+	sources=mysql_tests
 
 ##@ Helpers
 

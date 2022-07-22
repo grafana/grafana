@@ -1,9 +1,12 @@
 import { lastValueFrom, of } from 'rxjs';
+import { TemplateSrvStub } from 'test/specs/helpers';
+
+import { ScopedVars } from '@grafana/data/src';
 import { FetchResponse } from '@grafana/runtime';
+import config from 'app/core/config';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import InfluxDatasource from '../datasource';
-import { TemplateSrvStub } from 'test/specs/helpers';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
@@ -80,7 +83,7 @@ describe('InfluxDataSource', () => {
   });
 
   describe('When getting error on 200 after issuing a query', () => {
-    const queryOptions: any = {
+    const queryOptions = {
       range: {
         from: '2018-01-01T00:00:00Z',
         to: '2018-01-02T00:00:00Z',
@@ -99,7 +102,7 @@ describe('InfluxDataSource', () => {
     };
 
     it('throws an error', async () => {
-      fetchMock.mockImplementation((req: any) => {
+      fetchMock.mockImplementation(() => {
         return of({
           data: {
             results: [
@@ -114,7 +117,9 @@ describe('InfluxDataSource', () => {
       try {
         await lastValueFrom(ctx.ds.query(queryOptions));
       } catch (err) {
-        expect(err.message).toBe('InfluxDB Error: Query timeout');
+        if (err instanceof Error) {
+          expect(err.message).toBe('InfluxDB Error: Query timeout');
+        }
       }
     });
   });
@@ -174,54 +179,125 @@ describe('InfluxDataSource', () => {
     });
   });
 
-  describe('Interpolating query variables for dashboard->explore', () => {
-    const templateSrv: any = { replace: jest.fn() };
+  describe('Variables should be interpolated correctly', () => {
     const instanceSettings: any = {};
-    const ds = new InfluxDatasource(instanceSettings, templateSrv);
     const text = 'interpolationText';
+    const text2 = 'interpolationText2';
+    const textWithoutFormatRegex = 'interpolationText,interpolationText2';
+    const textWithFormatRegex = 'interpolationText|interpolationText2';
+    const variableMap: Record<string, string> = {
+      $interpolationVar: text,
+      $interpolationVar2: text2,
+    };
+    const templateSrv: any = {
+      replace: jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
+        if (!format) {
+          return variableMap[target!] || '';
+        }
+        if (format === 'regex') {
+          return textWithFormatRegex;
+        }
+        return textWithoutFormatRegex;
+      }),
+    };
+    const ds = new InfluxDatasource(instanceSettings, templateSrv);
 
-    it('Should interpolate all variables', () => {
-      const query = {
-        refId: 'x',
-        measurement: '$interpolationVar',
-        policy: '$interpolationVar',
-        limit: '$interpolationVar',
-        slimit: '$interpolationVar',
-        tz: '$interpolationVar',
-        tags: [
-          {
-            key: 'cpu',
-            operator: '=~',
-            value: '/^$interpolationVar$/',
-          },
-        ],
-        groupBy: [
+    const influxQuery = {
+      refId: 'x',
+      alias: '$interpolationVar',
+      measurement: '$interpolationVar',
+      policy: '$interpolationVar',
+      limit: '$interpolationVar',
+      slimit: '$interpolationVar',
+      tz: '$interpolationVar',
+      tags: [
+        {
+          key: 'cpu',
+          operator: '=~',
+          value: '/^$interpolationVar,$interpolationVar2$/',
+        },
+      ],
+      groupBy: [
+        {
+          params: ['$interpolationVar'],
+          type: 'tag',
+        },
+      ],
+      select: [
+        [
           {
             params: ['$interpolationVar'],
-            type: 'tag',
+            type: 'field',
           },
         ],
-        select: [
-          [
-            {
-              params: ['$interpolationVar'],
-              type: 'field',
-            },
-          ],
-        ],
-      };
-      templateSrv.replace.mockReturnValue(text);
+      ],
+    };
 
-      const queries = ds.interpolateVariablesInQueries([query], { interpolationVar: { text: text, value: text } });
-      expect(templateSrv.replace).toBeCalledTimes(8);
-      expect(queries[0].measurement).toBe(text);
-      expect(queries[0].policy).toBe(text);
-      expect(queries[0].limit).toBe(text);
-      expect(queries[0].slimit).toBe(text);
-      expect(queries[0].tz).toBe(text);
-      expect(queries[0].tags![0].value).toBe(text);
-      expect(queries[0].groupBy![0].params![0]).toBe(text);
-      expect(queries[0].select![0][0].params![0]).toBe(text);
+    function influxChecks(query: any) {
+      expect(templateSrv.replace).toBeCalledTimes(10);
+      expect(query.alias).toBe(text);
+      expect(query.measurement).toBe(textWithFormatRegex);
+      expect(query.policy).toBe(textWithFormatRegex);
+      expect(query.limit).toBe(textWithFormatRegex);
+      expect(query.slimit).toBe(textWithFormatRegex);
+      expect(query.tz).toBe(text);
+      expect(query.tags![0].value).toBe(textWithFormatRegex);
+      expect(query.groupBy![0].params![0]).toBe(textWithFormatRegex);
+      expect(query.select![0][0].params![0]).toBe(textWithFormatRegex);
+    }
+
+    describe('when interpolating query variables for dashboard->explore', () => {
+      it('should interpolate all variables with Flux mode', () => {
+        ds.isFlux = true;
+        const fluxQuery = {
+          refId: 'x',
+          query: '$interpolationVar,$interpolationVar2',
+        };
+        const queries = ds.interpolateVariablesInQueries([fluxQuery], {
+          interpolationVar: { text: text, value: text },
+          interpolationVar2: { text: text2, value: text2 },
+        });
+        expect(templateSrv.replace).toBeCalledTimes(1);
+        expect(queries[0].query).toBe(textWithFormatRegex);
+      });
+
+      it('should interpolate all variables with InfluxQL mode', () => {
+        ds.isFlux = false;
+        const queries = ds.interpolateVariablesInQueries([influxQuery], {
+          interpolationVar: { text: text, value: text },
+          interpolationVar2: { text: text2, value: text2 },
+        });
+        influxChecks(queries[0]);
+      });
+    });
+
+    describe('when interpolating template variables', () => {
+      it('should apply all template variables with Flux mode', () => {
+        ds.isFlux = true;
+        const fluxQuery = {
+          refId: 'x',
+          query: '$interpolationVar',
+        };
+        const query = ds.applyTemplateVariables(fluxQuery, {
+          interpolationVar: {
+            text: text,
+            value: text,
+          },
+        });
+        expect(templateSrv.replace).toBeCalledTimes(1);
+        expect(query.query).toBe(text);
+      });
+
+      it('should apply all template variables with InfluxQL mode', () => {
+        ds.isFlux = false;
+        ds.access = 'proxy';
+        config.featureToggles.influxdbBackendMigration = true;
+        const query = ds.applyTemplateVariables(influxQuery, {
+          interpolationVar: { text: text, value: text },
+          interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
+        });
+        influxChecks(query);
+      });
     });
   });
 });

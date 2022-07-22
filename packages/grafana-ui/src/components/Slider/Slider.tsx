@@ -1,12 +1,13 @@
-import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent } from 'react';
-import SliderComponent from 'rc-slider';
-
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
+import SliderComponent from 'rc-slider';
+import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent } from 'react';
+
 import { useTheme2 } from '../../themes/ThemeContext';
+import { Input } from '../Input/Input';
+
 import { getStyles } from './styles';
 import { SliderProps } from './types';
-import { Input } from '../Input/Input';
 
 /**
  * @public

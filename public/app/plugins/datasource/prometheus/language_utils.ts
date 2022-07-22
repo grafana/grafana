@@ -1,9 +1,11 @@
-import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
+import { invert } from 'lodash';
+import { Token } from 'prismjs';
+
+import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
+
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
-import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
-import { Token } from 'prismjs';
-import { invert } from 'lodash';
+import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -142,8 +144,8 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
 
   // Split query into 2 parts - before the invalidLabelsRegex match and after.
   const indexOfRegexMatch = match.index ?? 0;
-  const exprBeforeRegexMatch = expr.substr(0, indexOfRegexMatch + 1);
-  const exprAfterRegexMatch = expr.substr(indexOfRegexMatch + 1);
+  const exprBeforeRegexMatch = expr.slice(0, indexOfRegexMatch + 1);
+  const exprAfterRegexMatch = expr.slice(indexOfRegexMatch + 1);
 
   // Create arrayOfLabelObjects with label objects that have key, operator and value.
   const arrayOfLabelObjects: Array<{ key: string; operator: string; value: string }> = [];
@@ -152,12 +154,12 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
     return '';
   });
 
-  // Loop trough all of the label objects and add them to query.
+  // Loop through all label objects and add them to query.
   // As a starting point we have valid query without the labels.
   let result = exprBeforeRegexMatch;
   arrayOfLabelObjects.filter(Boolean).forEach((obj) => {
     // Remove extra set of quotes from obj.value
-    const value = obj.value.substr(1, obj.value.length - 2);
+    const value = obj.value.slice(1, -1);
     result = addLabelToQuery(result, obj.key, value, obj.operator);
   });
 

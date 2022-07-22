@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,7 +15,7 @@ type getSettingsTestCase struct {
 	desc         string
 	expectedCode int
 	expectedBody string
-	permissions  []*accesscontrol.Permission
+	permissions  []accesscontrol.Permission
 }
 
 func TestAPI_AdminGetSettings(t *testing.T) {
@@ -23,7 +24,7 @@ func TestAPI_AdminGetSettings(t *testing.T) {
 			desc:         "should return all settings",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"auth.proxy":{"enable_login_token":"false","enabled":"false"},"auth.saml":{"allow_idp_initiated":"false","enabled":"true"}}`,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionSettingsRead,
 					Scope:  accesscontrol.ScopeSettingsAll,
@@ -34,7 +35,7 @@ func TestAPI_AdminGetSettings(t *testing.T) {
 			desc:         "should only return auth.saml settings",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"auth.saml":{"allow_idp_initiated":"false","enabled":"true"}}`,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionSettingsRead,
 					Scope:  "settings:auth.saml:*",
@@ -45,7 +46,7 @@ func TestAPI_AdminGetSettings(t *testing.T) {
 			desc:         "should only partial properties from auth.saml and auth.proxy settings",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"auth.proxy":{"enable_login_token":"false"},"auth.saml":{"enabled":"true"}}`,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionSettingsRead,
 					Scope:  "settings:auth.saml:enabled",
@@ -100,7 +101,7 @@ func TestAdmin_AccessControl(t *testing.T) {
 			desc:         "AdminGetStats should return 200 for user with correct permissions",
 			url:          "/api/admin/stats",
 			method:       http.MethodGet,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionServerStatsRead,
 				},
@@ -111,7 +112,7 @@ func TestAdmin_AccessControl(t *testing.T) {
 			desc:         "AdminGetStats should return 403 for user without required permissions",
 			url:          "/api/admin/stats",
 			method:       http.MethodGet,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: "wrong",
 				},
@@ -122,7 +123,7 @@ func TestAdmin_AccessControl(t *testing.T) {
 			desc:         "AdminGetSettings should return 200 for user with correct permissions",
 			url:          "/api/admin/settings",
 			method:       http.MethodGet,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionSettingsRead,
 				},
@@ -133,7 +134,7 @@ func TestAdmin_AccessControl(t *testing.T) {
 			desc:         "AdminGetSettings should return 403 for user without required permissions",
 			url:          "/api/admin/settings",
 			method:       http.MethodGet,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: "wrong",
 				},
@@ -147,6 +148,7 @@ func TestAdmin_AccessControl(t *testing.T) {
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 			sc.resp = httptest.NewRecorder()
 			hs.SettingsProvider = &setting.OSSImpl{Cfg: cfg}
+			hs.SQLStore = mockstore.NewSQLStoreMock()
 
 			var err error
 			sc.req, err = http.NewRequest(test.method, test.url, nil)

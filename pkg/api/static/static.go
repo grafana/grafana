@@ -52,6 +52,8 @@ type StaticOptions struct {
 	AddHeaders func(ctx *web.Context)
 	// FileSystem is the interface for supporting any implementation of file system.
 	FileSystem http.FileSystem
+	// Exclude paths from being served
+	Exclude []string
 }
 
 // FIXME: to be deleted.
@@ -121,6 +123,12 @@ func staticHandler(ctx *web.Context, log log.Logger, opt StaticOptions) bool {
 	}
 
 	file := ctx.Req.URL.Path
+	for _, p := range opt.Exclude {
+		if file == p {
+			return false
+		}
+	}
+
 	// if we have a prefix, filter requests by stripping the prefix
 	if opt.Prefix != "" {
 		if !strings.HasPrefix(file, opt.Prefix) {

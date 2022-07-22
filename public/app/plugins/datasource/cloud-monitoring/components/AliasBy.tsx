@@ -1,9 +1,11 @@
-import { Input } from '@grafana/ui';
 import { debounce } from 'lodash';
 import React, { FunctionComponent, useState } from 'react';
 
-import { QueryEditorRow } from '.';
+import { Input } from '@grafana/ui';
+
 import { INPUT_WIDTH } from '../constants';
+
+import { QueryEditorRow } from '.';
 
 export interface Props {
   refId: string;

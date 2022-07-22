@@ -1,7 +1,8 @@
-import { map, size, has } from 'lodash';
-import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
+import { map, size, has } from 'lodash';
+
 import { textUtil, rangeUtil } from '@grafana/data';
+import { QueryCtrl } from 'app/plugins/sdk';
 
 export class OpenTsQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -209,7 +210,9 @@ export class OpenTsQueryCtrl extends QueryCtrl {
           errs.downsampleInterval = "You must supply a downsample interval (e.g. '1m' or '1h').";
         }
       } catch (err) {
-        errs.downsampleInterval = err.message;
+        if (err instanceof Error) {
+          errs.downsampleInterval = err.message;
+        }
       }
     }
 

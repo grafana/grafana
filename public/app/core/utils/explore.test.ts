@@ -1,3 +1,10 @@
+import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { RefreshPicker } from '@grafana/ui';
+import store from 'app/core/store';
+
+import { ExploreId } from '../../types';
+
 import {
   buildQueryTransaction,
   clearHistory,
@@ -13,17 +20,11 @@ import {
   getTimeRangeFromUrl,
   getTimeRange,
 } from './explore';
-import store from 'app/core/store';
-import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
-import { RefreshPicker } from '@grafana/ui';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { ExploreId } from '../../types';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
   queries: [],
   range: DEFAULT_RANGE,
-  originPanelId: undefined,
 };
 
 describe('state functions', () => {
@@ -114,31 +115,6 @@ describe('state functions', () => {
           '{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
-
-    // TODO: remove in 9.0
-    it('returns url parameter value for a state object', () => {
-      const state = {
-        ...DEFAULT_EXPLORE_STATE,
-        datasource: 'foo',
-        queries: [
-          {
-            expr: 'metric{test="a/b"}',
-            refId: 'A',
-          },
-          {
-            expr: 'super{foo="x/z"}',
-            refId: 'B',
-          },
-        ],
-        range: {
-          from: 'now-5h',
-          to: 'now',
-        },
-      };
-      expect(serializeStateToUrlParam(state, true)).toBe(
-        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}","refId":"A"},{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
-      );
-    });
   });
 
   describe('interplay', () => {
@@ -162,32 +138,6 @@ describe('state functions', () => {
         },
       };
       const serialized = serializeStateToUrlParam(state);
-      const parsed = parseUrlState(serialized);
-      expect(state).toMatchObject(parsed);
-    });
-
-    // TODO: remove in 9.0
-    it('can parse the compact serialized state into the original state', () => {
-      const state = {
-        ...DEFAULT_EXPLORE_STATE,
-        datasource: 'foo',
-        queries: [
-          {
-            expr: 'metric{test="a/b"}',
-            refId: 'A',
-          },
-          {
-            expr: 'super{foo="x/z"}',
-            refId: 'B',
-          },
-        ],
-        range: {
-          from: 'now - 5h',
-          to: 'now',
-        },
-        panelsState: undefined,
-      };
-      const serialized = serializeStateToUrlParam(state, true);
       const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });
@@ -216,7 +166,7 @@ describe('state functions', () => {
           },
         },
       };
-      const serialized = serializeStateToUrlParam(state, true);
+      const serialized = serializeStateToUrlParam(state);
       const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });

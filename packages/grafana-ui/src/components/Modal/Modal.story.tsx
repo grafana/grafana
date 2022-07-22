@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import { oneLineTrim } from 'common-tags';
-import { Story, Meta } from '@storybook/react';
-import { getAvailableIcons } from '../../types';
-import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
+import { Story, Meta } from '@storybook/react';
+import { oneLineTrim } from 'common-tags';
+import React, { useState } from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+
+import { getAvailableIcons } from '../../types';
 import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import mdx from './Modal.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Overlays/Modal',
   component: Modal,
   decorators: [withCenteredStory],
@@ -45,7 +47,7 @@ export default {
       },
     },
   },
-} as Meta;
+};
 
 export const Basic: Story = ({ body, title, ...args }) => {
   return (
@@ -127,3 +129,5 @@ UsingContentClassName.args = {
   closeOnEscape: false,
   iconTooltip: 'icon tooltip',
 };
+
+export default meta;

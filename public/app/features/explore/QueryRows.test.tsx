@@ -1,13 +1,16 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { configureStore } from 'app/store/configureStore';
+import React from 'react';
 import { Provider } from 'react-redux';
-import { QueryRows } from './QueryRows';
-import { ExploreId, ExploreState } from 'app/types';
-import { makeExplorePaneState } from './state/utils';
+
 import { setDataSourceSrv } from '@grafana/runtime';
-import { UserState } from '../profile/state/reducers';
+import { configureStore } from 'app/store/configureStore';
+import { ExploreId, ExploreState } from 'app/types';
+
 import { DataQuery } from '../../../../packages/grafana-data/src';
+import { UserState } from '../profile/state/reducers';
+
+import { QueryRows } from './QueryRows';
+import { makeExplorePaneState } from './state/utils';
 
 function setup(queries: DataQuery[]) {
   const defaultDs = {
@@ -44,14 +47,15 @@ function setup(queries: DataQuery[]) {
   const initialState: ExploreState = {
     left: {
       ...leftState,
+      richHistory: [],
       datasourceInstance: datasources['someDs-uid'],
       queries,
     },
     syncedTimes: false,
     right: undefined,
-    richHistory: [],
-    localStorageFull: false,
+    richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
+    richHistoryMigrationFailed: false,
   };
   const store = configureStore({ explore: initialState, user: { orgId: 1 } as UserState });
 

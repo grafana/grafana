@@ -1,13 +1,15 @@
+import { css, cx } from '@emotion/css';
 import React, { HTMLAttributes } from 'react';
-import { Icon } from '../Icon/Icon';
+import tinycolor from 'tinycolor2';
+
+import { GrafanaTheme } from '@grafana/data';
+
 import { useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { IconName } from '../../types';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { getColorForTheme, GrafanaTheme } from '@grafana/data';
-import tinycolor from 'tinycolor2';
-import { css, cx } from '@emotion/css';
+import { Icon } from '../Icon/Icon';
 import { HorizontalGroup } from '../Layout/Layout';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
 
@@ -42,7 +44,7 @@ export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, class
 Badge.displayName = 'Badge';
 
 const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
-  let sourceColor = getColorForTheme(color, theme);
+  let sourceColor = theme.visualization.getColorByName(color);
   let borderColor = '';
   let bgColor = '';
   let textColor = '';

@@ -2,9 +2,11 @@ import { getStylesheetEntries, hasThemeStylesheets } from './loaders';
 
 describe('Loaders', () => {
   describe('stylesheet helpers', () => {
-    jest.spyOn(console, 'log').mockImplementation();
+    beforeEach(() => {
+      jest.spyOn(console, 'log').mockImplementation();
+    });
 
-    afterAll(() => {
+    afterEach(() => {
       jest.restoreAllMocks();
     });
 
@@ -23,12 +25,12 @@ describe('Loaders', () => {
 
     describe('hasThemeStylesheets', () => {
       it('throws when only one theme file is defined', () => {
-        jest.spyOn(console, 'error').mockImplementation();
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation();
         const result = () => {
           hasThemeStylesheets(`${__dirname}/../mocks/stylesheetsSupport/missing-theme-file`);
         };
         expect(result).toThrow();
-        jest.restoreAllMocks();
+        errorSpy.mockRestore();
       });
 
       it('returns false when no theme files present', () => {

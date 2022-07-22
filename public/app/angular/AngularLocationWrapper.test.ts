@@ -1,5 +1,13 @@
-import { AngularLocationWrapper } from './AngularLocationWrapper';
 import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
+
+import { AngularLocationWrapper } from './AngularLocationWrapper';
+
+// The methods in this file are deprecated
+// Stub the deprecation warning here to prevent polluting the test output
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  deprecationWarning: () => {},
+}));
 
 describe('AngularLocationWrapper', () => {
   const { location } = window;

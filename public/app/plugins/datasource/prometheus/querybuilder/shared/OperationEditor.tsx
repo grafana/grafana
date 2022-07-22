@@ -1,9 +1,10 @@
-import { css } from '@emotion/css';
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { FlexItem, Stack } from '@grafana/experimental';
-import { Button, useStyles2 } from '@grafana/ui';
-import React from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useEffect, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
+
+import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { Button, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
+
 import {
   VisualQueryModeller,
   QueryBuilderOperation,
@@ -11,9 +12,10 @@ import {
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
 } from '../shared/types';
-import { OperationInfoButton } from './OperationInfoButton';
-import { OperationName } from './OperationName';
+
+import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
+import { getOperationParamId } from './operationUtils';
 
 export interface Props {
   operation: QueryBuilderOperation;
@@ -24,6 +26,7 @@ export interface Props {
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
+  highlight?: boolean;
 }
 
 export function OperationEditor({
@@ -35,9 +38,15 @@ export function OperationEditor({
   queryModeller,
   query,
   datasource,
+  highlight,
 }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
+  const shouldHighlight = useHighlight(highlight);
+
+  if (!def) {
+    return <span>Operation {operation.id} not found</span>;
+  }
 
   const onParamValueChanged = (paramIdx: number, value: QueryBuilderOperationParamValue) => {
     const update: QueryBuilderOperation = { ...operation, params: [...operation.params] };
@@ -66,7 +75,16 @@ export function OperationEditor({
 
     operationElements.push(
       <div className={styles.paramRow} key={`${paramIndex}-1`}>
-        <div className={styles.paramName}>{paramDef.name}</div>
+        {!paramDef.hideName && (
+          <div className={styles.paramName}>
+            <label htmlFor={getOperationParamId(index, paramIndex)}>{paramDef.name}</label>
+            {paramDef.description && (
+              <Tooltip placement="top" content={paramDef.description} theme="info">
+                <Icon name="info-circle" size="sm" className={styles.infoIcon} />
+              </Tooltip>
+            )}
+          </div>
+        )}
         <div className={styles.paramValue}>
           <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
             <Editor
@@ -74,6 +92,7 @@ export function OperationEditor({
               paramDef={paramDef}
               value={operation.params[paramIndex]}
               operation={operation}
+              operationIndex={index}
               onChange={onParamValueChanged}
               onRunQuery={onRunQuery}
               query={query}
@@ -81,6 +100,7 @@ export function OperationEditor({
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button
+                data-testid={`operations.${index}.remove-rest-param`}
                 size="sm"
                 fill="text"
                 icon="times"
@@ -100,7 +120,7 @@ export function OperationEditor({
   if (def.params.length > 0) {
     const lastParamDef = def.params[def.params.length - 1];
     if (lastParamDef.restParam) {
-      restParam = renderAddRestParamButton(lastParamDef, onAddRestParam, operation.params.length, styles);
+      restParam = renderAddRestParamButton(lastParamDef, onAddRestParam, index, operation.params.length, styles);
     }
   }
 
@@ -108,32 +128,20 @@ export function OperationEditor({
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided) => (
         <div
-          className={styles.card}
+          className={cx(styles.card, shouldHighlight && styles.cardHighlight)}
           ref={provided.innerRef}
           {...provided.draggableProps}
-          data-testid={`operation-wrapper-for-${operation.id}`}
+          data-testid={`operations.${index}.wrapper`}
         >
-          <div className={styles.header} {...provided.dragHandleProps}>
-            <OperationName
-              operation={operation}
-              def={def}
-              index={index}
-              onChange={onChange}
-              queryModeller={queryModeller}
-            />
-            <FlexItem grow={1} />
-            <div className={`${styles.operationHeaderButtons} operation-header-show-on-hover`}>
-              <OperationInfoButton def={def} operation={operation} />
-              <Button
-                icon="times"
-                size="sm"
-                onClick={() => onRemove(index)}
-                fill="text"
-                variant="secondary"
-                title="Remove operation"
-              />
-            </div>
-          </div>
+          <OperationHeader
+            operation={operation}
+            dragHandleProps={provided.dragHandleProps}
+            def={def}
+            index={index}
+            onChange={onChange}
+            onRemove={onRemove}
+            queryModeller={queryModeller}
+          />
           <div className={styles.body}>{operationElements}</div>
           {restParam}
           {index < query.operations.length - 1 && (
@@ -148,15 +156,46 @@ export function OperationEditor({
   );
 }
 
+/**
+ * When highlight is switched on makes sure it is switched of right away, so we just flash the highlight and then fade
+ * out.
+ * @param highlight
+ */
+function useHighlight(highlight?: boolean) {
+  const [keepHighlight, setKeepHighlight] = useState(true);
+  useEffect(() => {
+    let t: any;
+    if (highlight) {
+      t = setTimeout(() => {
+        setKeepHighlight(false);
+      }, 1);
+    } else {
+      setKeepHighlight(true);
+    }
+
+    return () => clearTimeout(t);
+  }, [highlight]);
+
+  return keepHighlight && highlight;
+}
+
 function renderAddRestParamButton(
   paramDef: QueryBuilderOperationParamDef,
   onAddRestParam: () => void,
+  operationIndex: number,
   paramIndex: number,
   styles: OperationEditorStyles
 ) {
   return (
     <div className={styles.restParam} key={`${paramIndex}-2`}>
-      <Button size="sm" icon="plus" title={`Add ${paramDef.name}`} variant="secondary" onClick={onAddRestParam}>
+      <Button
+        size="sm"
+        icon="plus"
+        title={`Add ${paramDef.name}`}
+        variant="secondary"
+        onClick={onAddRestParam}
+        data-testid={`operations.${operationIndex}.add-rest-param`}
+      >
         {paramDef.name}
       </Button>
     </div>
@@ -188,25 +227,25 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.borderRadius(1),
       marginBottom: theme.spacing(1),
       position: 'relative',
+      transition: 'all 1s ease-in 0s',
     }),
-    header: css({
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
-      padding: theme.spacing(0.5, 0.5, 0.5, 1),
-      gap: theme.spacing(1),
-      display: 'flex',
-      alignItems: 'center',
-      '&:hover .operation-header-show-on-hover': css({
-        opacity: 1,
-      }),
+    cardHighlight: css({
+      boxShadow: `0px 0px 4px 0px ${theme.colors.primary.border}`,
+      border: `1px solid ${theme.colors.primary.border}`,
     }),
     infoIcon: css({
+      marginLeft: theme.spacing(0.5),
       color: theme.colors.text.secondary,
+      ':hover': {
+        color: theme.colors.text.primary,
+      },
     }),
     body: css({
       margin: theme.spacing(1, 1, 0.5, 1),
       display: 'table',
     }),
     paramRow: css({
+      label: 'paramRow',
       display: 'table-row',
       verticalAlign: 'middle',
     }),
@@ -218,15 +257,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       verticalAlign: 'middle',
       height: '32px',
     }),
-    operationHeaderButtons: css({
-      opacity: 0,
-      transition: theme.transitions.create(['opacity'], {
-        duration: theme.transitions.duration.short,
-      }),
-    }),
     paramValue: css({
+      label: 'paramValue',
       display: 'table-cell',
-      paddingBottom: theme.spacing(0.5),
       verticalAlign: 'middle',
     }),
     restParam: css({

@@ -1,4 +1,5 @@
 import { Grammar } from 'prismjs';
+
 import { CompletionItem } from '@grafana/ui';
 
 const AGGREGATION_OPERATORS: CompletionItem[] = [
@@ -71,6 +72,13 @@ export const PIPE_PARSERS: CompletionItem[] = [
     insertText: 'pattern',
     documentation: 'Extracting labels from the log line using pattern parser. Only available in Loki 2.3+.',
   },
+  {
+    label: 'unpack',
+    insertText: 'unpack',
+    detail: 'unpack identifier',
+    documentation:
+      'Parses a JSON log line, unpacking all embedded labels in the pack stage. A special property "_entry" will also be used to replace the original log line. Only available in Loki 2.2+.',
+  },
 ];
 
 export const PIPE_OPERATORS: CompletionItem[] = [
@@ -113,6 +121,18 @@ export const RANGE_VEC_FUNCTIONS = [
     label: 'max_over_time',
     detail: 'max_over_time(range-vector)',
     documentation: 'The maximum of all values in the specified interval. Only available in Loki 2.0+.',
+  },
+  {
+    insertText: 'first_over_time',
+    label: 'first_over_time',
+    detail: 'first_over_time(range-vector)',
+    documentation: 'The first of all values in the specified interval. Only available in Loki 2.3+.',
+  },
+  {
+    insertText: 'last_over_time',
+    label: 'last_over_time',
+    detail: 'last_over_time(range-vector)',
+    documentation: 'The last of all values in the specified interval. Only available in Loki 2.3+.',
   },
   {
     insertText: 'sum_over_time',
@@ -192,7 +212,7 @@ export const lokiGrammar: Grammar = {
         pattern: /#.*/,
       },
       'label-key': {
-        pattern: /[a-z_]\w*(?=\s*(=|!=|=~|!~))/,
+        pattern: /[a-zA-Z_]\w*(?=\s*(=|!=|=~|!~))/,
         alias: 'attr-name',
         greedy: true,
       },
@@ -239,9 +259,19 @@ export const lokiGrammar: Grammar = {
       },
     },
   ],
+  quote: {
+    pattern: /"(?:\\.|[^\\"])*"/,
+    alias: 'string',
+    greedy: true,
+  },
+  backticks: {
+    pattern: /`(?:\\.|[^\\`])*`/,
+    alias: 'string',
+    greedy: true,
+  },
   number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
   operator: /\s?(\|[=~]?|!=?|<(?:=>?|<|>)?|>[>=]?)\s?/i,
-  punctuation: /[{}()`,.]/,
+  punctuation: /[{}(),.]/,
 };
 
 export default lokiGrammar;

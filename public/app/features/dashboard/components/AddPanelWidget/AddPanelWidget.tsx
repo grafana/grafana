@@ -1,25 +1,26 @@
-import React, { useMemo, useState } from 'react';
-import { connect, MapDispatchToProps } from 'react-redux';
 import { css, cx, keyframes } from '@emotion/css';
 import { chain, cloneDeep, defaults, find, sortBy } from 'lodash';
+import React, { useMemo, useState } from 'react';
+import { connect, MapDispatchToProps } from 'react-redux';
 import tinycolor from 'tinycolor2';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
-import { GrafanaTheme2 } from '@grafana/data';
-
+import { CardButton } from 'app/core/components/CardButton';
 import config from 'app/core/config';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
 import { addPanel } from 'app/features/dashboard/state/reducers';
-import { DashboardModel, PanelModel } from '../../state';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { LibraryElementDTO } from '../../../library-panels/types';
-import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
+
 import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { CardButton } from 'app/core/components/CardButton';
+import { LibraryElementDTO } from '../../../library-panels/types';
+import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
+import { DashboardModel, PanelModel } from '../../state';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -211,7 +212,7 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, o
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
       {onBack && (
         <div className={styles.backButton}>
-          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} surface="header" size="xl" />
+          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} size="xl" />
         </div>
       )}
       {!onBack && (
@@ -221,7 +222,7 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, o
       )}
       {children && <span>{children}</span>}
       <div className="flex-grow-1" />
-      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} surface="header" />
+      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} />
     </div>
   );
 };

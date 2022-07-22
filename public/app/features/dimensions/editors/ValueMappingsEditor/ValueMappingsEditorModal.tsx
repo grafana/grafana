@@ -1,17 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
-import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { css } from '@emotion/css';
+import { uniqueId } from 'lodash';
+import React, { useEffect, useState } from 'react';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+
+import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
+
+import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
 
 export interface Props {
   value: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
   onClose: () => void;
+  showIconPicker?: boolean;
 }
 
-export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
+export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPicker }: Props) {
   const styles = useStyles2(getStyles);
   const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
 
@@ -51,18 +55,11 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
   ];
 
   const onAddValueMapping = (value: SelectableValue<MappingType>) => {
-    updateRows([
-      ...rows,
-      {
-        type: value.value!,
-        isNew: true,
-        result: {},
-      },
-    ]);
+    updateRows([...rows, createRow({ type: value.value!, result: {}, isNew: true })]);
   };
 
   const onDuplicateMapping = (index: number) => {
-    const sourceRow = rows[index];
+    const sourceRow = duplicateRow(rows[index]);
     const copy = [...rows];
     copy.splice(index, 0, { ...sourceRow });
 
@@ -98,6 +95,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
               </th>
               <th style={{ textAlign: 'left' }}>Display text</th>
               <th style={{ width: '10%' }}>Color</th>
+              {showIconPicker && <th style={{ width: '10%' }}>Icon</th>}
               <th style={{ width: '1%' }}></th>
             </tr>
           </thead>
@@ -107,12 +105,13 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
                 <tbody ref={provided.innerRef} {...provided.droppableProps}>
                   {rows.map((row, index) => (
                     <ValueMappingEditRow
-                      key={index.toString()}
+                      key={row.id}
                       mapping={row}
                       index={index}
                       onChange={onChangeMapping}
                       onRemove={onRemoveRow}
                       onDuplicate={onDuplicateMapping}
+                      showIconPicker={showIconPicker}
                     />
                   ))}
                   {provided.placeholder}
@@ -172,6 +171,27 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
+
+function getRowUniqueId(): string {
+  return uniqueId('mapping-');
+}
+
+function createRow(row: Partial<ValueMappingEditRowModel>): ValueMappingEditRowModel {
+  return {
+    type: MappingType.ValueToText,
+    result: {},
+    id: getRowUniqueId(),
+    ...row,
+  };
+}
+
+function duplicateRow(row: Partial<ValueMappingEditRowModel>): ValueMappingEditRowModel {
+  return {
+    ...createRow(row),
+    // provide a new unique id to the duplicated row, to preserve focus when dragging 2 duplicated rows
+    id: getRowUniqueId(),
+  };
+}
 
 export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
   const mappings: ValueMapping[] = [];
@@ -240,38 +260,48 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
 export function buildEditRowModels(value: ValueMapping[]) {
   const editRows: ValueMappingEditRowModel[] = [];
 
-  for (const mapping of value) {
-    switch (mapping.type) {
-      case MappingType.ValueToText:
-        for (const key of Object.keys(mapping.options)) {
-          editRows.push({
-            type: mapping.type,
-            result: mapping.options[key],
-            key,
-          });
-        }
-        break;
-      case MappingType.RangeToText:
-        editRows.push({
-          type: mapping.type,
-          result: mapping.options.result,
-          from: mapping.options.from ?? 0,
-          to: mapping.options.to ?? 0,
-        });
-        break;
-      case MappingType.RegexToText:
-        editRows.push({
-          type: mapping.type,
-          result: mapping.options.result,
-          pattern: mapping.options.pattern,
-        });
-        break;
-      case MappingType.SpecialValue:
-        editRows.push({
-          type: mapping.type,
-          result: mapping.options.result,
-          specialMatch: mapping.options.match ?? SpecialValueMatch.Null,
-        });
+  if (value) {
+    for (const mapping of value) {
+      switch (mapping.type) {
+        case MappingType.ValueToText:
+          for (const key of Object.keys(mapping.options)) {
+            editRows.push(
+              createRow({
+                type: mapping.type,
+                result: mapping.options[key],
+                key,
+              })
+            );
+          }
+          break;
+        case MappingType.RangeToText:
+          editRows.push(
+            createRow({
+              type: mapping.type,
+              result: mapping.options.result,
+              from: mapping.options.from ?? 0,
+              to: mapping.options.to ?? 0,
+            })
+          );
+          break;
+        case MappingType.RegexToText:
+          editRows.push(
+            createRow({
+              type: mapping.type,
+              result: mapping.options.result,
+              pattern: mapping.options.pattern,
+            })
+          );
+          break;
+        case MappingType.SpecialValue:
+          editRows.push(
+            createRow({
+              type: mapping.type,
+              result: mapping.options.result,
+              specialMatch: mapping.options.match ?? SpecialValueMatch.Null,
+            })
+          );
+      }
     }
   }
 

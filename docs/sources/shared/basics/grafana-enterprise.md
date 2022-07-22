@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/shared/basics/grafana-enterprise/
 title: Grafana Enterprise
 ---
 

@@ -1,5 +1,6 @@
-import { MutableDataFrame } from './MutableDataFrame';
 import { CircularVector } from '../vector/CircularVector';
+
+import { MutableDataFrame } from './MutableDataFrame';
 
 interface CircularOptions {
   append?: 'head' | 'tail';

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -32,7 +33,8 @@ func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
-		c.Map(initCtx)
+
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
 
 	m.Use(requestContextMiddleware())
@@ -47,6 +49,16 @@ func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 		Mux:           m,
 		TestServer:    testServer,
 	}
+}
+
+// NewGetRequest creates a new GET request setup for test.
+func (s *Server) NewGetRequest(target string) *http.Request {
+	return s.NewRequest(http.MethodGet, target, nil)
+}
+
+// NewPostRequest creates a new POST request setup for test.
+func (s *Server) NewPostRequest(target string, body io.Reader) *http.Request {
+	return s.NewRequest(http.MethodPost, target, body)
 }
 
 // NewRequest creates a new request setup for test.
@@ -65,9 +77,17 @@ func (s *Server) NewRequest(method string, target string, body io.Reader) *http.
 	return req
 }
 
-// Send sends an HTTP request to the test server and returns an HTTP response
+// Send sends a HTTP request to the test server and returns an HTTP response.
 func (s *Server) Send(req *http.Request) (*http.Response, error) {
 	return http.DefaultClient.Do(req)
+}
+
+// SendJSON sets the Content-Type header to application/json and sends
+// a HTTP request to the test server and returns an HTTP response.
+// Suitable for POST/PUT/PATCH requests that sends request body as JSON.
+func (s *Server) SendJSON(req *http.Request) (*http.Response, error) {
+	req.Header.Add("Content-Type", "application/json")
+	return s.Send(req)
 }
 
 func generateRequestIdentifier() string {
@@ -91,7 +111,7 @@ func RequestWithWebContext(req *http.Request, c *models.ReqContext) *http.Reques
 
 func RequestWithSignedInUser(req *http.Request, user *models.SignedInUser) *http.Request {
 	return RequestWithWebContext(req, &models.ReqContext{
-		SignedInUser: &models.SignedInUser{},
+		SignedInUser: user,
 		IsSignedIn:   true,
 	})
 }
@@ -107,7 +127,9 @@ func requestContextFromRequest(req *http.Request) *models.ReqContext {
 }
 
 func requestContextMiddleware() web.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *models.ReqContext) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		c := ctxkey.Get(req.Context()).(*models.ReqContext)
+
 		ctx := requestContextFromRequest(req)
 		if ctx == nil {
 			c.Next()
@@ -123,6 +145,5 @@ func requestContextMiddleware() web.Handler {
 		c.RequestNonce = ctx.RequestNonce
 		c.PerfmonTimer = ctx.PerfmonTimer
 		c.LookupTokenErr = ctx.LookupTokenErr
-		c.Map(c)
 	}
 }

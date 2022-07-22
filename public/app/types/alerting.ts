@@ -133,6 +133,7 @@ export interface NotificationChannelOption {
   showWhen: { field: string; is: string };
   validationRule: string;
   subformOptions?: NotificationChannelOption[];
+  dependsOn: string;
 }
 
 export interface NotificationChannelState {

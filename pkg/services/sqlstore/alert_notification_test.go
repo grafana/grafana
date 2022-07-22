@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -10,22 +7,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestAlertNotificationSQLAccess(t *testing.T) {
-	var sqlStore *SQLStore
-	setup := func() {
-		sqlStore = InitTestDB(t)
-		// Set up bus handlers
-		bus.AddHandler("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
-			return sqlStore.DeleteAlertNotification(ctx, cmd)
-		})
+func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
 	}
+	var sqlStore *SQLStore
+	setup := func() { sqlStore = InitTestDB(t) }
 
 	t.Run("Alert notification state", func(t *testing.T) {
 		setup()

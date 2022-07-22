@@ -74,6 +74,8 @@ export const valueMappingsOverrideProcessor = (
 export interface SelectFieldConfigSettings<T> {
   allowCustomValue?: boolean;
 
+  isClearable?: boolean;
+
   /** The default options */
   options: Array<SelectableValue<T>>;
 
@@ -123,7 +125,9 @@ export const thresholdsOverrideProcessor = (
   return value as ThresholdsConfig; // !!!! likely not !!!!
 };
 
-export interface UnitFieldConfigSettings {}
+export interface UnitFieldConfigSettings {
+  isClearable?: boolean;
+}
 
 export const unitOverrideProcessor = (
   value: boolean,

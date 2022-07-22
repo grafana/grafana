@@ -1,9 +1,12 @@
-import React, { FC, useCallback } from 'react';
-import { Button, Field, FieldArray, Input, InputControl, Label, TextArea, useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React, { FC, useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
+
+import { GrafanaTheme } from '@grafana/data';
+import { Button, Field, FieldArray, Input, InputControl, Label, TextArea, useStyles } from '@grafana/ui';
+
 import { RuleFormValues } from '../../types/rule-form';
+
 import { AnnotationKeyInput } from './AnnotationKeyInput';
 
 const AnnotationsField: FC = () => {

@@ -1,10 +1,13 @@
 import { Field, FieldType } from '@grafana/data';
+
 import { ComponentSize } from './size';
-export type IconType = 'mono' | 'default';
+
+export type IconType = 'mono' | 'default' | 'solid';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export const getAvailableIcons = () =>
   [
+    'anchor',
     'angle-double-down',
     'angle-double-right',
     'angle-double-up',
@@ -21,12 +24,14 @@ export const getAvailableIcons = () =>
     'arrow-right',
     'arrow-up',
     'arrows-h',
+    'arrows-v',
     'backward',
     'bars',
     'bell',
     'bell-slash',
     'bolt',
     'book',
+    'bookmark',
     'book-open',
     'brackets-curly',
     'building',
@@ -50,6 +55,7 @@ export const getAvailableIcons = () =>
     'cog',
     'columns',
     'comment-alt',
+    'comment-alt-message',
     'comment-alt-share',
     'comments-alt',
     'compass',
@@ -66,6 +72,7 @@ export const getAvailableIcons = () =>
     'envelope',
     'exchange-alt',
     'exclamation-triangle',
+    'exclamation-circle',
     'external-link-alt',
     'eye',
     'eye-slash',
@@ -100,7 +107,11 @@ export const getAvailableIcons = () =>
     'heart',
     'heart-break',
     'history',
+    'home',
     'home-alt',
+    'horizontal-align-center',
+    'horizontal-align-left',
+    'horizontal-align-right',
     'hourglass',
     'import',
     'info',
@@ -166,7 +177,11 @@ export const getAvailableIcons = () =>
     'upload',
     'user',
     'users-alt',
+    'vertical-align-bottom',
+    'vertical-align-center',
+    'vertical-align-top',
     'wrap-text',
+    'rss',
     'x',
   ] as const;
 

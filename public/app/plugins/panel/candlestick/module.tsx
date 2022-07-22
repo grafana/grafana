@@ -1,4 +1,3 @@
-import { GraphFieldConfig } from '@grafana/schema';
 import {
   Field,
   FieldType,
@@ -7,8 +6,14 @@ import {
   PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { GraphFieldConfig } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+
+import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
+
 import { CandlestickPanel } from './CandlestickPanel';
+import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
 import {
   defaultColors,
   CandlestickOptions,
@@ -17,9 +22,6 @@ import {
   defaultPanelOptions,
   CandleStyle,
 } from './models.gen';
-import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
-import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
-import { config } from '@grafana/runtime';
 import { CandlestickSuggestionsSupplier } from './suggestions';
 
 const modeOptions = [

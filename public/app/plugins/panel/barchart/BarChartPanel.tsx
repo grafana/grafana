@@ -1,32 +1,44 @@
-import React, { useMemo, useRef } from 'react';
-import { TooltipDisplayMode, StackingMode, LegendDisplayMode } from '@grafana/schema';
+import { css } from '@emotion/css';
+import React, { useMemo, useRef, useState } from 'react';
+
 import {
+  CartesianCoords2D,
   compareDataFrameStructures,
   DataFrame,
   getFieldDisplayName,
+  GrafanaTheme2,
   PanelProps,
   TimeRange,
   VizOrientation,
 } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { LegendDisplayMode } from '@grafana/schema';
 import {
   GraphNG,
   GraphNGProps,
   measureText,
   PlotLegend,
-  TooltipPlugin,
+  Portal,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
   usePanelContext,
+  useStyles2,
   useTheme2,
   VizLayout,
   VizLegend,
+  VizTooltipContainer,
 } from '@grafana/ui';
-import { PanelOptions } from './models.gen';
-import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+
 import { DataHoverView } from '../geomap/components/DataHoverView';
 import { getFieldLegendItem } from '../state-timeline/utils';
-import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
+
+import { HoverEvent, setupConfig } from './config';
+import { PanelOptions } from './models.gen';
+import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
+
+const TOOLTIP_OFFSET = 10;
 
 /**
  * @alpha
@@ -53,12 +65,45 @@ const propsToDiff: Array<string | PropDiffFn> = [
 
 interface Props extends PanelProps<PanelOptions> {}
 
-export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({
+  data,
+  options,
+  fieldConfig,
+  width,
+  height,
+  timeZone,
+  id,
+}) => {
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
+
+  const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
+  const isToolTipOpen = useRef<boolean>(false);
+
+  const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
+  const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
+  const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
+  const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+
+  const onCloseToolTip = () => {
+    isToolTipOpen.current = false;
+    setCoords(null);
+    setShouldDisplayCloseButton(false);
+  };
+
+  const onUPlotClick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+
+    // Linking into useState required to re-render tooltip
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  };
 
   const frame0Ref = useRef<DataFrame>();
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
+  const chartDisplay = 'viz' in info ? info : null;
+
   const structureRef = useRef(10000);
   useMemo(() => {
     structureRef.current++;
@@ -66,14 +111,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   }, [options]); // change every time the options object changes (while editing)
 
   const structureRev = useMemo(() => {
-    const f0 = info.viz;
+    const f0 = chartDisplay?.viz[0];
     const f1 = frame0Ref.current;
     if (!(f0 && f1 && compareDataFrameStructures(f0, f1, true))) {
       structureRef.current++;
     }
     frame0Ref.current = f0;
     return (data.structureRev ?? 0) + structureRef.current;
-  }, [info, data.structureRev]);
+  }, [chartDisplay, data.structureRev]);
 
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
@@ -86,7 +131,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     // If no max length is set, limit the number of characters to a length where it will use a maximum of half of the height of the viz.
     if (!options.xTickLabelMaxLength) {
       const rotationAngle = options.xTickLabelRotation;
-      const textSize = measureText('M', UPLOT_AXIS_FONT_SIZE).width; // M is usually the widest character so let's use that as an aproximation.
+      const textSize = measureText('M', UPLOT_AXIS_FONT_SIZE).width; // M is usually the widest character so let's use that as an approximation.
       const maxHeightForValues = height / 2;
 
       return (
@@ -99,16 +144,16 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     }
   }, [height, options.xTickLabelRotation, options.xTickLabelMaxLength]);
 
-  // Force 'multi' tooltip setting or stacking mode
-  const tooltip = useMemo(() => {
-    if (options.stacking === StackingMode.Normal || options.stacking === StackingMode.Percent) {
-      return { ...options.tooltip, mode: TooltipDisplayMode.Multi };
-    }
-    return options.tooltip;
-  }, [options.tooltip, options.stacking]);
-
-  if (!info.viz?.fields.length) {
-    return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
+  if ('warn' in info) {
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        message={info.warn}
+        needsNumberField={true}
+      />
+    );
   }
 
   const renderTooltip = (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
@@ -119,12 +164,20 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     }
 
     return (
-      <DataHoverView
-        data={info.aligned}
-        rowIndex={datapointIdx}
-        columnIndex={seriesIdx}
-        sortOrder={options.tooltip.sort}
-      />
+      <>
+        {shouldDisplayCloseButton && (
+          <>
+            <CloseButton onClick={onCloseToolTip} />
+            <div className={styles.closeButtonSpacer} />
+          </>
+        )}
+        <DataHoverView
+          data={info.aligned}
+          rowIndex={datapointIdx}
+          columnIndex={seriesIdx}
+          sortOrder={options.tooltip.sort}
+        />
+      </>
     );
   };
 
@@ -145,7 +198,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       }
     }
 
-    return <PlotLegend data={[info.viz]} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
+    return <PlotLegend data={info.viz} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
@@ -200,14 +253,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       rawValue,
       getColor,
       fillOpacity,
-      allFrames: [info.viz],
+      allFrames: info.viz,
     });
   };
 
   return (
     <GraphNG
       theme={theme}
-      frames={[info.viz]}
+      frames={info.viz}
       prepConfig={prepConfig}
       propsToDiff={propsToDiff}
       preparePlotFrame={(f) => f[0]} // already processed in by the panel above!
@@ -219,17 +272,39 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       width={width}
       height={height}
     >
-      {(config, alignedFrame) => {
+      {(config) => {
+        if (oldConfig.current !== config) {
+          oldConfig.current = setupConfig({
+            config,
+            onUPlotClick,
+            setFocusedSeriesIdx,
+            setFocusedPointIdx,
+            setCoords,
+            setHover,
+            isToolTipOpen,
+          });
+        }
+
         return (
-          <TooltipPlugin
-            data={alignedFrame}
-            config={config}
-            mode={tooltip.mode}
-            timeZone={timeZone}
-            renderTooltip={renderTooltip}
-          />
+          <Portal>
+            {hover && coords && (
+              <VizTooltipContainer
+                position={{ x: coords.x, y: coords.y }}
+                offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                allowPointerEvents={isToolTipOpen.current}
+              >
+                {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
+              </VizTooltipContainer>
+            )}
+          </Portal>
         );
       }}
     </GraphNG>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  closeButtonSpacer: css`
+    margin-bottom: 15px;
+  `,
+});

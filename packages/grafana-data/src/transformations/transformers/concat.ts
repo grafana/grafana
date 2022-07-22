@@ -1,9 +1,10 @@
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo } from '../../types/transformations';
 import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
+import { DataTransformerInfo } from '../../types/transformations';
 import { ArrayVector } from '../../vector';
+
+import { DataTransformerID } from './ids';
 
 export enum ConcatenateFrameNameMode {
   /**

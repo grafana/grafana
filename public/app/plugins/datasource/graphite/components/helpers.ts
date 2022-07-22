@@ -1,8 +1,11 @@
-import { FuncDefs, FuncInstance, ParamDef } from '../gfunc';
 import { forEach, sortBy } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
-import { EditableParam } from './FunctionParamEditor';
+
+import { FuncDefs, FuncInstance, ParamDef } from '../gfunc';
 import { GraphiteSegment } from '../types';
+
+import { EditableParam } from './FunctionParamEditor';
 
 export function mapStringsToSelectables<T extends string>(values: T[]): Array<SelectableValue<T>> {
   return values.map((value) => ({

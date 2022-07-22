@@ -59,15 +59,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -195,15 +198,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -331,15 +337,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -467,15 +476,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -603,15 +615,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -739,15 +754,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -875,15 +893,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -1011,15 +1032,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],

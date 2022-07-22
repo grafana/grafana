@@ -17,8 +17,10 @@ export function toDataQueryError(err: DataQueryError | string | Object): DataQue
     let message = 'Query error';
     if (error.message) {
       message = error.message;
-    } else if (error.data && error.data.message) {
+    } else if (error.data && error.data.message && error.data?.message !== 'Query data error') {
       message = error.data.message;
+    } else if (error?.data?.message === 'Query data error' && error?.data?.error) {
+      message = error.data.error;
     } else if (error.data && error.data.error) {
       message = error.data.error;
     } else if (error.status) {

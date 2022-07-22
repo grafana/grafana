@@ -9,7 +9,7 @@ import (
 )
 
 // Quota returns a function that returns a function used to call quotaservice based on target name
-func Quota(quotaService *quota.QuotaService) func(string) web.Handler {
+func Quota(quotaService quota.Service) func(string) web.Handler {
 	if quotaService == nil {
 		panic("quotaService is nil")
 	}

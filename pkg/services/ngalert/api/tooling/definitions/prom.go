@@ -6,14 +6,28 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-// swagger:route GET /api/prometheus/{Recipient}/api/v1/rules prometheus RouteGetRuleStatuses
+// swagger:route GET /api/prometheus/grafana/api/v1/rules prometheus RouteGetGrafanaRuleStatuses
 //
 // gets the evaluation statuses of all rules
 //
 //     Responses:
 //       200: RuleResponse
 
-// swagger:route GET /api/prometheus/{Recipient}/api/v1/alerts prometheus RouteGetAlertStatuses
+// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/rules prometheus RouteGetRuleStatuses
+//
+// gets the evaluation statuses of all rules
+//
+//     Responses:
+//       200: RuleResponse
+
+// swagger:route GET /api/prometheus/grafana/api/v1/alerts prometheus RouteGetGrafanaAlertStatuses
+//
+// gets the current alerts
+//
+//     Responses:
+//       200: AlertResponse
+
+// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/alerts prometheus RouteGetAlertStatuses
 //
 // gets the current alerts
 //
@@ -101,10 +115,10 @@ type Rule struct {
 	Name string `json:"name"`
 	// required: true
 	Query  string         `json:"query"`
-	Labels overrideLabels `json:"labels"`
+	Labels overrideLabels `json:"labels,omitempty"`
 	// required: true
 	Health    string `json:"health"`
-	LastError string `json:"lastError"`
+	LastError string `json:"lastError,omitempty"`
 	// required: true
 	Type           v1.RuleType `json:"type"`
 	LastEvaluation time.Time   `json:"lastEvaluation"`
@@ -128,3 +142,31 @@ type Alert struct {
 // override the labels type with a map for generation.
 // The custom marshaling for labels.Labels ends up doing this anyways.
 type overrideLabels map[string]string
+
+// swagger:parameters RouteGetGrafanaAlertStatuses
+type GetGrafanaAlertStatusesParams struct {
+	// Include Grafana specific labels as part of the response.
+	// in: query
+	// required: false
+	// default: false
+	IncludeInternalLabels bool `json:"includeInternalLabels"`
+}
+
+// swagger:parameters RouteGetGrafanaRuleStatuses
+type GetGrafanaRuleStatusesParams struct {
+	// Include Grafana specific labels as part of the response.
+	// in: query
+	// required: false
+	// default: false
+	IncludeInternalLabels bool `json:"includeInternalLabels"`
+
+	// Filter the list of rules to those that belong to the specified dashboard UID.
+	// in: query
+	// required: false
+	DashboardUID string
+
+	// Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.
+	// in: query
+	// required: false
+	PanelID int64
+}

@@ -1,77 +1,15 @@
 package models
 
 import (
-	"errors"
 	"time"
-)
 
-// Typed errors
-var (
-	ErrUserNotFound      = errors.New("user not found")
-	ErrUserAlreadyExists = errors.New("user already exists")
-	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
-	ErrProtectedUser     = errors.New("cannot adopt protected user")
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Password string
 
 func (p Password) IsWeak() bool {
 	return len(p) <= 4
-}
-
-type User struct {
-	Id            int64
-	Version       int
-	Email         string
-	Name          string
-	Login         string
-	Password      string
-	Salt          string
-	Rands         string
-	Company       string
-	EmailVerified bool
-	Theme         string
-	HelpFlags1    HelpFlags1
-	IsDisabled    bool
-
-	IsAdmin          bool
-	IsServiceAccount bool
-	OrgId            int64
-
-	Created    time.Time
-	Updated    time.Time
-	LastSeenAt time.Time
-}
-
-func (u *User) NameOrFallback() string {
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
-}
-
-// ---------------------
-// COMMANDS
-
-type CreateUserCommand struct {
-	Email            string
-	Login            string
-	Name             string
-	Company          string
-	OrgId            int64
-	OrgName          string
-	Password         string
-	EmailVerified    bool
-	IsAdmin          bool
-	IsDisabled       bool
-	SkipOrgSetup     bool
-	DefaultOrgRole   string
-	IsServiceAccount bool
-
-	Result User
 }
 
 type UpdateUserCommand struct {
@@ -114,17 +52,17 @@ type SetUsingOrgCommand struct {
 
 type GetUserByLoginQuery struct {
 	LoginOrEmail string
-	Result       *User
+	Result       *user.User
 }
 
 type GetUserByEmailQuery struct {
 	Email  string
-	Result *User
+	Result *user.User
 }
 
 type GetUserByIdQuery struct {
 	Id     int64
-	Result *User
+	Result *user.User
 }
 
 type GetSignedInUserQuery struct {
@@ -141,12 +79,13 @@ type GetUserProfileQuery struct {
 }
 
 type SearchUsersQuery struct {
-	OrgId      int64
-	Query      string
-	Page       int
-	Limit      int
-	AuthModule string
-	Filters    []Filter
+	SignedInUser *SignedInUser
+	OrgId        int64
+	Query        string
+	Page         int
+	Limit        int
+	AuthModule   string
+	Filters      []Filter
 
 	IsDisabled *bool
 
@@ -169,22 +108,25 @@ type GetUserOrgListQuery struct {
 // DTO & Projections
 
 type SignedInUser struct {
-	UserId         int64
-	OrgId          int64
-	OrgName        string
-	OrgRole        RoleType
-	Login          string
-	Name           string
-	Email          string
-	ApiKeyId       int64
-	OrgCount       int
-	IsGrafanaAdmin bool
-	IsAnonymous    bool
-	HelpFlags1     HelpFlags1
-	LastSeenAt     time.Time
-	Teams          []int64
+	UserId             int64
+	OrgId              int64
+	OrgName            string
+	OrgRole            RoleType
+	ExternalAuthModule string
+	ExternalAuthId     string
+	Login              string
+	Name               string
+	Email              string
+	ApiKeyId           int64
+	OrgCount           int
+	IsGrafanaAdmin     bool
+	IsAnonymous        bool
+	IsDisabled         bool
+	HelpFlags1         HelpFlags1
+	LastSeenAt         time.Time
+	Teams              []int64
 	// Permissions grouped by orgID and actions
-	Permissions map[int64]map[string][]string
+	Permissions map[int64]map[string][]string `json:"-"`
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -231,7 +173,7 @@ type UserProfileDTO struct {
 	Name           string          `json:"name"`
 	Login          string          `json:"login"`
 	Theme          string          `json:"theme"`
-	OrgId          int64           `json:"orgId"`
+	OrgId          int64           `json:"orgId,omitempty"`
 	IsGrafanaAdmin bool            `json:"isGrafanaAdmin"`
 	IsDisabled     bool            `json:"isDisabled"`
 	IsExternal     bool            `json:"isExternal"`

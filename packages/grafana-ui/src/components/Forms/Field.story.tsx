@@ -1,10 +1,12 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
-import { Story } from '@storybook/react';
-import { Field, FieldProps } from './Field';
+
 import { Input, Switch } from '..';
+
+import { Field } from './Field';
 import mdx from './Field.mdx';
 
-export default {
+const meta: ComponentMeta<typeof Field> = {
   title: 'Forms/Field',
   component: Field,
   argTypes: {
@@ -25,7 +27,7 @@ export default {
   },
 };
 
-export const Simple: Story<FieldProps> = (args) => (
+export const Simple: ComponentStory<typeof Field> = (args) => (
   <div>
     <Field {...args}>
       <Input id="thisField" />
@@ -43,7 +45,7 @@ Simple.args = {
   horizontal: false,
 };
 
-export const HorizontalLayout: Story<FieldProps> = (args) => {
+export const HorizontalLayout: ComponentStory<typeof Field> = (args) => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
   return (
@@ -64,3 +66,5 @@ HorizontalLayout.args = {
   error: 'Not valid input',
   horizontal: true,
 };
+
+export default meta;

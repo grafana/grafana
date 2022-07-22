@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
+
 import { cleanUpAction, StateSelector } from '../actions/cleanUp';
 
 export function useCleanup<T>(stateSelector: StateSelector<T>) {

@@ -131,12 +131,12 @@ func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 	return pluginClient, true
 }
 
-func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *grpcPlugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	return pluginClient.CollectMetrics(ctx)
+	return pluginClient.CollectMetrics(ctx, req)
 }
 
 func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {

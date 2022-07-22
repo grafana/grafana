@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import DetailState from '../TraceTimelineViewer/SpanDetail/DetailState';
+
 import TNil from './TNil';
 
 type TTraceTimeline = {

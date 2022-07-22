@@ -1,27 +1,31 @@
 import Mousetrap from 'mousetrap';
+
 import 'mousetrap-global-bind';
+import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { locationService } from '@grafana/runtime';
-import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
+import { DashboardModel } from 'app/features/dashboard/state';
+
+import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
+import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
 import {
   RemovePanelEvent,
   ShiftTimeEvent,
-  ShiftTimeEventPayload,
+  ShiftTimeEventDirection,
   ShowModalReactEvent,
   ZoomOutEvent,
   AbsoluteTimeEvent,
 } from '../../types/events';
+import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
-import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
-import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
+import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
+
 import { toggleTheme } from './toggleTheme';
 import { withFocusedPanel } from './withFocusedPanelId';
-import { HelpModal } from '../components/help/HelpModal';
 
 export class KeybindingSrv {
   reset() {
@@ -43,9 +47,13 @@ export class KeybindingSrv {
 
     this.bind('t t', () => toggleTheme(false));
     this.bind('t r', () => toggleTheme(true));
+
+    if (process.env.NODE_ENV === 'development') {
+      this.bind('t n', () => this.toggleNav());
+    }
   }
 
-  private globalEsc() {
+  globalEsc() {
     const anyDoc = document as any;
     const activeElement = anyDoc.activeElement;
 
@@ -69,6 +77,12 @@ export class KeybindingSrv {
 
     // ok no focused input or editor that should block this, let exist!
     this.exit();
+  }
+
+  toggleNav() {
+    window.location.href = locationUtil.getUrlForPartial(locationService.getLocation(), {
+      '__feature.topnav': (!config.featureToggles.topnav).toString(),
+    });
   }
 
   private openSearch() {
@@ -171,6 +185,24 @@ export class KeybindingSrv {
     this.bind(keyArg, withFocusedPanel(fn));
   }
 
+  setupTimeRangeBindings(updateUrl = true) {
+    this.bind('t z', () => {
+      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
+    });
+
+    this.bind('ctrl+z', () => {
+      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
+    });
+
+    this.bind('t left', () => {
+      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl }));
+    });
+
+    this.bind('t right', () => {
+      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl }));
+    });
+  }
+
   setupDashboardBindings(dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
@@ -182,7 +214,7 @@ export class KeybindingSrv {
       if (dashboard.meta.canSave) {
         appEvents.publish(
           new ShowModalReactEvent({
-            component: SaveDashboardModalProxy,
+            component: SaveDashboardDrawer,
             props: {
               dashboard,
             },
@@ -191,21 +223,7 @@ export class KeybindingSrv {
       }
     });
 
-    this.bind('t z', () => {
-      appEvents.publish(new ZoomOutEvent(2));
-    });
-
-    this.bind('ctrl+z', () => {
-      appEvents.publish(new ZoomOutEvent(2));
-    });
-
-    this.bind('t left', () => {
-      appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Left));
-    });
-
-    this.bind('t right', () => {
-      appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Right));
-    });
+    this.setupTimeRangeBindings();
 
     // edit panel
     this.bindWithPanelId('e', (panelId) => {

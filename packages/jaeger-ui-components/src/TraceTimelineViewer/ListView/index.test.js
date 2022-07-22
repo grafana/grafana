@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { mount, shallow } from 'enzyme';
+import React from 'react';
+
+import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
 import ListView from './index';
-import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
 // Util to get list of all callbacks added to an event emitter by event type.
 // jest adds "error" event listeners to window, this util makes it easier to

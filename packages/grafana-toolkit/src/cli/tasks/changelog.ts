@@ -1,8 +1,10 @@
-import { difference, sortBy } from 'lodash';
-import { Task } from './task';
-import GithubClient from '../utils/githubClient';
 import chalk from 'chalk';
+import { difference, sortBy } from 'lodash';
+
+import GithubClient from '../utils/githubClient';
 import { useSpinner } from '../utils/useSpinner';
+
+import { Task } from './task';
 
 interface ChangelogOptions {
   milestone: string;

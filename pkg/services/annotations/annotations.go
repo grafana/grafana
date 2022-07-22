@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,10 +15,10 @@ var (
 
 type Repository interface {
 	Save(item *Item) error
-	Update(item *Item) error
-	Find(query *ItemQuery) ([]*ItemDTO, error)
-	Delete(params *DeleteParams) error
-	FindTags(query *TagsQuery) (FindTagsResult, error)
+	Update(ctx context.Context, item *Item) error
+	Find(ctx context.Context, query *ItemQuery) ([]*ItemDTO, error)
+	Delete(ctx context.Context, params *DeleteParams) error
+	FindTags(ctx context.Context, query *TagsQuery) (FindTagsResult, error)
 }
 
 // AnnotationCleaner is responsible for cleaning up old annotations
@@ -37,6 +38,7 @@ type ItemQuery struct {
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
 	MatchAny     bool     `json:"matchAny"`
+	SignedInUser *models.SignedInUser
 
 	Limit int64 `json:"limit"`
 }
@@ -75,7 +77,6 @@ type GetAnnotationTagsResponse struct {
 type DeleteParams struct {
 	OrgId       int64
 	Id          int64
-	AlertId     int64
 	DashboardId int64
 	PanelId     int64
 }
@@ -126,22 +127,48 @@ func (i Item) TableName() string {
 }
 
 type ItemDTO struct {
-	Id          int64            `json:"id"`
-	AlertId     int64            `json:"alertId"`
-	AlertName   string           `json:"alertName"`
-	DashboardId int64            `json:"dashboardId"`
-	PanelId     int64            `json:"panelId"`
-	UserId      int64            `json:"userId"`
-	NewState    string           `json:"newState"`
-	PrevState   string           `json:"prevState"`
-	Created     int64            `json:"created"`
-	Updated     int64            `json:"updated"`
-	Time        int64            `json:"time"`
-	TimeEnd     int64            `json:"timeEnd"`
-	Text        string           `json:"text"`
-	Tags        []string         `json:"tags"`
-	Login       string           `json:"login"`
-	Email       string           `json:"email"`
-	AvatarUrl   string           `json:"avatarUrl"`
-	Data        *simplejson.Json `json:"data"`
+	Id           int64            `json:"id"`
+	AlertId      int64            `json:"alertId"`
+	AlertName    string           `json:"alertName"`
+	DashboardId  int64            `json:"dashboardId"`
+	DashboardUID *string          `json:"dashboardUID"`
+	PanelId      int64            `json:"panelId"`
+	UserId       int64            `json:"userId"`
+	NewState     string           `json:"newState"`
+	PrevState    string           `json:"prevState"`
+	Created      int64            `json:"created"`
+	Updated      int64            `json:"updated"`
+	Time         int64            `json:"time"`
+	TimeEnd      int64            `json:"timeEnd"`
+	Text         string           `json:"text"`
+	Tags         []string         `json:"tags"`
+	Login        string           `json:"login"`
+	Email        string           `json:"email"`
+	AvatarUrl    string           `json:"avatarUrl"`
+	Data         *simplejson.Json `json:"data"`
+}
+
+type annotationType int
+
+const (
+	Organization annotationType = iota
+	Dashboard
+)
+
+func (a annotationType) String() string {
+	switch a {
+	case Organization:
+		return "organization"
+	case Dashboard:
+		return "dashboard"
+	default:
+		return ""
+	}
+}
+
+func (annotation *ItemDTO) GetType() annotationType {
+	if annotation.DashboardId != 0 {
+		return Dashboard
+	}
+	return Organization
 }

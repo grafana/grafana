@@ -27,13 +27,15 @@ func TestWebhookNotifier(t *testing.T) {
 	orgID := int64(1)
 
 	cases := []struct {
-		name          string
-		settings      string
-		alerts        []*types.Alert
+		name     string
+		settings string
+		alerts   []*types.Alert
+
 		expMsg        *webhookMessage
 		expUrl        string
 		expUsername   string
 		expPassword   string
+		expHeaders    map[string]string
 		expHttpMethod string
 		expInitError  string
 		expMsgError   error
@@ -68,7 +70,7 @@ func TestWebhookNotifier(t *testing.T) {
 							Fingerprint:  "fac0861a85de433a",
 							DashboardURL: "http://localhost/d/abcd",
 							PanelURL:     "http://localhost/d/abcd?viewPanel=efgh",
-							SilenceURL:   "http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1",
+							SilenceURL:   "http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1",
 						},
 					},
 					GroupLabels: template.KV{
@@ -87,11 +89,13 @@ func TestWebhookNotifier(t *testing.T) {
 				GroupKey: "alertname",
 				Title:    "[FIRING:1]  (val1)",
 				State:    "alerting",
-				Message:  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				Message:  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 				OrgID:    orgID,
 			},
 			expMsgError: nil,
-		}, {
+			expHeaders:  map[string]string{},
+		},
+		{
 			name: "Custom config with multiple alerts",
 			settings: `{
 				"url": "http://localhost/test1",
@@ -137,7 +141,7 @@ func TestWebhookNotifier(t *testing.T) {
 								"ann1": "annv1",
 							},
 							Fingerprint: "fac0861a85de433a",
-							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1",
+							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1",
 						}, {
 							Status: "firing",
 							Labels: template.KV{
@@ -148,7 +152,7 @@ func TestWebhookNotifier(t *testing.T) {
 								"ann1": "annv2",
 							},
 							Fingerprint: "fab6861a85d5eeb5",
-							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2",
+							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2",
 						},
 					},
 					GroupLabels: template.KV{
@@ -165,14 +169,87 @@ func TestWebhookNotifier(t *testing.T) {
 				TruncatedAlerts: 1,
 				Title:           "[FIRING:2]  ",
 				State:           "alerting",
-				Message:         "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n",
+				Message:         "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 				OrgID:           orgID,
 			},
 			expMsgError: nil,
-		}, {
+			expHeaders:  map[string]string{},
+		},
+		{
+			name: "with Authorization set",
+			settings: `{
+				"url": "http://localhost/test1",
+				"authorization_credentials": "mysecret",
+				"httpMethod": "POST",
+				"maxAlerts": 2
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &webhookMessage{
+				ExtendedData: &ExtendedData{
+					Receiver: "my_receiver",
+					Status:   "firing",
+					Alerts: ExtendedAlerts{
+						{
+							Status: "firing",
+							Labels: template.KV{
+								"alertname": "alert1",
+								"lbl1":      "val1",
+							},
+							Annotations: template.KV{
+								"ann1": "annv1",
+							},
+							Fingerprint:  "fac0861a85de433a",
+							DashboardURL: "http://localhost/d/abcd",
+							PanelURL:     "http://localhost/d/abcd?viewPanel=efgh",
+							SilenceURL:   "http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1",
+						},
+					},
+					GroupLabels: template.KV{
+						"alertname": "",
+					},
+					CommonLabels: template.KV{
+						"alertname": "alert1",
+						"lbl1":      "val1",
+					},
+					CommonAnnotations: template.KV{
+						"ann1": "annv1",
+					},
+					ExternalURL: "http://localhost",
+				},
+				Version:  "1",
+				GroupKey: "alertname",
+				Title:    "[FIRING:1]  (val1)",
+				State:    "alerting",
+				Message:  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				OrgID:    orgID,
+			},
+			expUrl:        "http://localhost/test1",
+			expHttpMethod: "POST",
+			expHeaders:    map[string]string{"Authorization": "Bearer mysecret"},
+		},
+		{
+			name: "with both HTTP basic auth and Authorization Header set",
+			settings: `{
+				"url": "http://localhost/test1",
+				"username": "user1",
+				"password": "mysecret",
+				"authorization_credentials": "mysecret",
+				"httpMethod": "POST",
+				"maxAlerts": 2
+			}`,
+			expInitError: "both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted",
+		},
+		{
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "webhook_testing" of type "webhook": could not find url property in settings`,
+			expInitError: `could not find url property in settings`,
 		},
 	}
 
@@ -193,7 +270,7 @@ func TestWebhookNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewWebHookNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewWebHookConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -204,6 +281,7 @@ func TestWebhookNotifier(t *testing.T) {
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
 			ctx = notify.WithReceiverName(ctx, "my_receiver")
+			pn := NewWebHookNotifier(cfg, webhookSender, &UnavailableImageStore{}, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
@@ -222,6 +300,7 @@ func TestWebhookNotifier(t *testing.T) {
 			require.Equal(t, c.expUsername, webhookSender.Webhook.User)
 			require.Equal(t, c.expPassword, webhookSender.Webhook.Password)
 			require.Equal(t, c.expHttpMethod, webhookSender.Webhook.HttpMethod)
+			require.Equal(t, c.expHeaders, webhookSender.Webhook.HttpHeader)
 		})
 	}
 }

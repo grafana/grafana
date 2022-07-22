@@ -21,6 +21,7 @@ import (
 type configReader struct {
 	encryptionService   encryption.Internal
 	notificationService *notifications.NotificationService
+	orgStore            utils.OrgStore
 	log                 log.Logger
 }
 
@@ -93,7 +94,7 @@ func (cr *configReader) checkOrgIDAndOrgName(ctx context.Context, notifications 
 					notification.OrgID = 0
 				}
 			} else {
-				if err := utils.CheckOrgExists(ctx, notification.OrgID); err != nil {
+				if err := utils.CheckOrgExists(ctx, cr.orgStore, notification.OrgID); err != nil {
 					return fmt.Errorf("failed to provision %q notification: %w", notification.Name, err)
 				}
 			}

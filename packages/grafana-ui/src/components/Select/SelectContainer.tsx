@@ -1,12 +1,14 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
+import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory } from '../../themes';
 import { useTheme2 } from '../../themes/ThemeContext';
+import { focusCss } from '../../themes/mixins';
 import { sharedInputStyle } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
-import { css, cx } from '@emotion/css';
-import { stylesFactory } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
-import { focusCss } from '../../themes/mixins';
-import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
 
 // isFocus prop is actually available, but its not in the types for the version we have.
 export interface SelectContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>>
@@ -47,7 +49,7 @@ const getSelectContainerStyles = stylesFactory((theme: GrafanaTheme2, focused: b
         /* The display property is set by the styles prop in SelectBase because it's dependant on the width prop  */
         flex-direction: row;
         flex-wrap: wrap;
-        align-items: center;
+        align-items: stretch;
         justify-content: space-between;
 
         min-height: 32px;

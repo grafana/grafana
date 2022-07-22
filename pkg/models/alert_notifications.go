@@ -55,7 +55,7 @@ type CreateAlertNotificationCommand struct {
 	OrgId                   int64             `json:"-"`
 	EncryptedSecureSettings map[string][]byte `json:"-"`
 
-	Result *AlertNotification
+	Result *AlertNotification `json:"-"`
 }
 
 type UpdateAlertNotificationCommand struct {
@@ -73,7 +73,7 @@ type UpdateAlertNotificationCommand struct {
 	OrgId                   int64             `json:"-"`
 	EncryptedSecureSettings map[string][]byte `json:"-"`
 
-	Result *AlertNotification
+	Result *AlertNotification `json:"-"`
 }
 
 type UpdateAlertNotificationWithUidCommand struct {
@@ -88,8 +88,8 @@ type UpdateAlertNotificationWithUidCommand struct {
 	Settings              *simplejson.Json  `json:"settings"  binding:"Required"`
 	SecureSettings        map[string]string `json:"secureSettings"`
 
-	OrgId  int64
-	Result *AlertNotification
+	OrgId  int64              `json:"-"`
+	Result *AlertNotification `json:"-"`
 }
 
 type DeleteAlertNotificationCommand struct {

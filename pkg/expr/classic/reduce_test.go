@@ -103,6 +103,12 @@ func TestReducer(t *testing.T) {
 			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
+			name:           "count_non_null with mixed null/real values",
+			reducer:        classicReducer("count_non_null"),
+			inputSeries:    valBasedSeries(nil, nil, ptr.Float64(3), ptr.Float64(4)),
+			expectedNumber: valBasedNumber(ptr.Float64(2)),
+		},
+		{
 			name:           "count_non_null with no values",
 			reducer:        classicReducer("count_non_null"),
 			inputSeries:    valBasedSeries(nil, nil),

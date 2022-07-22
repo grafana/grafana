@@ -7,22 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
-
-func (ss *SQLStore) addAlertQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.HandleAlertsQuery)
-	bus.AddHandler("sql", ss.GetAlertById)
-	bus.AddHandler("sql", ss.GetAllAlertQueryHandler)
-	bus.AddHandler("sql", ss.SetAlertState)
-	bus.AddHandler("sql", ss.GetAlertStatesForDashboard)
-	bus.AddHandler("sql", ss.PauseAlert)
-	bus.AddHandler("sql", ss.PauseAllAlerts)
-}
 
 func (ss *SQLStore) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
@@ -153,23 +142,6 @@ func (ss *SQLStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 		query.Result = alerts
 		return nil
 	})
-}
-
-func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
-	alerts := make([]*models.Alert, 0)
-	if err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts); err != nil {
-		return err
-	}
-
-	for _, alert := range alerts {
-		if err := deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess); err != nil {
-			// If we return an error, the current transaction gets rolled back, so no use
-			// trying to delete more
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (ss *SQLStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {

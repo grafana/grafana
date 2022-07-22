@@ -25,6 +25,7 @@ export enum ReducerID {
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
   allValues = 'allValues',
+  uniqueValues = 'uniqueValues',
 }
 
 // Internal function
@@ -140,14 +141,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     standard: true,
     reduce: calculateLast,
   },
-  { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
   {
     id: ReducerID.firstNotNull,
-    name: 'First',
+    name: 'First *',
     description: 'First non-null value',
     standard: true,
     reduce: calculateFirstNotNull,
   },
+  { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
   { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true },
   { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
   { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
@@ -236,6 +237,15 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Returns an array with all values',
     standard: false,
     reduce: (field: Field) => ({ allValues: field.values.toArray() }),
+  },
+  {
+    id: ReducerID.uniqueValues,
+    name: 'All unique values',
+    description: 'Returns an array with all unique values',
+    standard: false,
+    reduce: (field: Field) => ({
+      uniqueValues: [...new Set(field.values.toArray())],
+    }),
   },
 ]);
 

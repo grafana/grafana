@@ -7,15 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/stretchr/testify/require"
 )
 
 type FakeEvalHandler struct {
@@ -46,12 +46,12 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 // A mock implementation of the AlertStore interface, allowing to override certain methods individually
 type AlertStoreMock struct {
 	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) error
-	getDataSource                      func(context.Context, *models.GetDataSourceQuery) error
+	getDataSource                      func(context.Context, *datasources.GetDataSourceQuery) error
 	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
 	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
 }
 
-func (a *AlertStoreMock) GetDataSource(c context.Context, cmd *models.GetDataSourceQuery) error {
+func (a *AlertStoreMock) GetDataSource(c context.Context, cmd *datasources.GetDataSourceQuery) error {
 	if a.getDataSource != nil {
 		return a.getDataSource(c, cmd)
 	}
@@ -62,6 +62,10 @@ func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.
 	if a.getAllAlerts != nil {
 		return a.getAllAlerts(c, cmd)
 	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetAlertNotificationUidWithId(c context.Context, query *models.GetAlertNotificationUidQuery) error {
 	return nil
 }
 
@@ -96,13 +100,11 @@ func (a *AlertStoreMock) SetAlertState(_ context.Context, _ *models.SetAlertStat
 }
 
 func TestEngineProcessJob(t *testing.T) {
-	bus := bus.New()
 	usMock := &usagestats.UsageStatsMock{T: t}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	store := &AlertStoreMock{}
-	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg())
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil, nil)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
@@ -119,8 +121,8 @@ func TestEngineProcessJob(t *testing.T) {
 			return nil
 		}
 
-		store.getDataSource = func(ctx context.Context, q *models.GetDataSourceQuery) error {
-			q.Result = &models.DataSource{Id: 1, Type: models.DS_PROMETHEUS}
+		store.getDataSource = func(ctx context.Context, q *datasources.GetDataSourceQuery) error {
+			q.Result = &datasources.DataSource{Id: 1, Type: datasources.DS_PROMETHEUS}
 			return nil
 		}
 

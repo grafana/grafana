@@ -3,6 +3,7 @@ package social
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -45,6 +47,7 @@ type OAuthInfo struct {
 	TeamsUrl               string
 	AllowSignup            bool
 	Name                   string
+	Icon                   string
 	TlsClientCert          string
 	TlsClientKey           string
 	TlsClientCa            string
@@ -81,6 +84,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			HostedDomain:         sec.Key("hosted_domain").String(),
 			AllowSignup:          sec.Key("allow_sign_up").MustBool(),
 			Name:                 sec.Key("name").MustString(name),
+			Icon:                 sec.Key("icon").String(),
 			TlsClientCert:        sec.Key("tls_client_cert").String(),
 			TlsClientKey:         sec.Key("tls_client_key").String(),
 			TlsClientCa:          sec.Key("tls_client_ca").String(),
@@ -103,13 +107,26 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 
 		ss.oAuthProvider[name] = info
 
+		var authStyle oauth2.AuthStyle
+		switch strings.ToLower(sec.Key("auth_style").String()) {
+		case "inparams":
+			authStyle = oauth2.AuthStyleInParams
+		case "inheader":
+			authStyle = oauth2.AuthStyleInHeader
+		case "autodetect", "":
+			authStyle = oauth2.AuthStyleAutoDetect
+		default:
+			logger.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
+			authStyle = oauth2.AuthStyleAutoDetect
+		}
+
 		config := oauth2.Config{
 			ClientID:     info.ClientId,
 			ClientSecret: info.ClientSecret,
 			Endpoint: oauth2.Endpoint{
 				AuthURL:   info.AuthUrl,
 				TokenURL:  info.TokenUrl,
-				AuthStyle: oauth2.AuthStyleAutoDetect,
+				AuthStyle: authStyle,
 			},
 			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
@@ -118,7 +135,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// GitHub.
 		if name == "github" {
 			ss.socialMap["github"] = &SocialGithub{
-				SocialBase:           newSocialBase(name, &config, info),
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
@@ -128,17 +145,16 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:        newSocialBase(name, &config, info),
-				apiUrl:            info.ApiUrl,
-				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				roleAttributePath: info.RoleAttributePath,
+				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				apiUrl:        info.ApiUrl,
+				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
 
 		// Google.
 		if name == "google" {
 			ss.socialMap["google"] = &SocialGoogle{
-				SocialBase:   newSocialBase(name, &config, info),
+				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
 				hostedDomain: info.HostedDomain,
 				apiUrl:       info.ApiUrl,
 			}
@@ -147,16 +163,17 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:        newSocialBase(name, &config, info),
-				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				autoAssignOrgRole: cfg.AutoAssignOrgRole,
+				SocialBase:          newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
+				autoAssignOrgRole:   cfg.AutoAssignOrgRole,
+				roleAttributeStrict: info.RoleAttributeStrict,
 			}
 		}
 
 		// Okta
 		if name == "okta" {
 			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:          newSocialBase(name, &config, info),
+				SocialBase:          newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
 				apiUrl:              info.ApiUrl,
 				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
 				roleAttributePath:   info.RoleAttributePath,
@@ -167,7 +184,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// Generic - Uses the same scheme as GitHub.
 		if name == "generic_oauth" {
 			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           newSocialBase(name, &config, info),
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
 				apiUrl:               info.ApiUrl,
 				teamsUrl:             info.TeamsUrl,
 				emailAttributeName:   info.EmailAttributeName,
@@ -198,7 +215,8 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			}
 
 			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
-				SocialBase:           newSocialBase(name, &config, info),
+				SocialBase: newSocialBase(name, &config, info,
+					cfg.AutoAssignOrgRole),
 				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
@@ -215,6 +233,11 @@ type BasicUserInfo struct {
 	Company string
 	Role    string
 	Groups  []string
+}
+
+func (b *BasicUserInfo) String() string {
+	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Company: %s, Role: %s, Groups: %v",
+		b.Id, b.Name, b.Email, b.Login, b.Company, b.Role, b.Groups)
 }
 
 type SocialConnector interface {
@@ -234,6 +257,10 @@ type SocialBase struct {
 	log            log.Logger
 	allowSignup    bool
 	allowedDomains []string
+
+	roleAttributePath   string
+	roleAttributeStrict bool
+	autoAssignOrgRole   string
 }
 
 type Error struct {
@@ -262,15 +289,50 @@ type Service interface {
 	GetOAuthInfoProviders() map[string]*OAuthInfo
 }
 
-func newSocialBase(name string, config *oauth2.Config, info *OAuthInfo) *SocialBase {
+func newSocialBase(name string,
+	config *oauth2.Config,
+	info *OAuthInfo,
+	autoAssignOrgRole string,
+) *SocialBase {
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
-		Config:         config,
-		log:            logger,
-		allowSignup:    info.AllowSignup,
-		allowedDomains: info.AllowedDomains,
+		Config:              config,
+		log:                 logger,
+		allowSignup:         info.AllowSignup,
+		allowedDomains:      info.AllowedDomains,
+		autoAssignOrgRole:   autoAssignOrgRole,
+		roleAttributePath:   info.RoleAttributePath,
+		roleAttributeStrict: info.RoleAttributeStrict,
 	}
+}
+
+type groupStruct struct {
+	Groups []string `json:"groups"`
+}
+
+func (s *SocialBase) extractRole(rawJSON []byte, groups []string) (models.RoleType, error) {
+	if s.roleAttributePath == "" {
+		if s.autoAssignOrgRole != "" {
+			return models.RoleType(s.autoAssignOrgRole), nil
+		}
+
+		return "", nil
+	}
+
+	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
+	if err == nil && role != "" {
+		return models.RoleType(role), nil
+	}
+
+	if groupBytes, err := json.Marshal(groupStruct{groups}); err == nil {
+		if role, err := s.searchJSONForStringAttr(
+			s.roleAttributePath, groupBytes); err == nil && role != "" {
+			return models.RoleType(role), nil
+		}
+	}
+
+	return "", nil
 }
 
 // GetOAuthProviders returns available oauth providers and if they're enabled or not

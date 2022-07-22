@@ -1,9 +1,11 @@
-import { DataQueryRequest, DataQueryResponseData, toDataFrame } from '@grafana/data';
 import { from } from 'rxjs';
-import { AzureMonitorQuery, AzureQueryType } from './types';
-import { VariableSupport } from './variables';
+
+import { DataQueryRequest, DataQueryResponseData, toDataFrame } from '@grafana/data';
+
 import createMockDatasource from './__mocks__/datasource';
 import { invalidSubscriptionError } from './__mocks__/errors';
+import { AzureMonitorQuery, AzureQueryType } from './types';
+import { VariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -15,62 +17,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 describe('VariableSupport', () => {
   describe('querying for grafana template variable fns', () => {
-    it('can fetch deprecated log analytics metric names', (done) => {
-      const expectedResults = ['test'];
-      const variableSupport = new VariableSupport(
-        createMockDatasource({
-          insightsAnalyticsDatasource: {
-            getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
-          },
-        })
-      );
-      const mockRequest = {
-        targets: [
-          {
-            refId: 'A',
-            queryType: AzureQueryType.GrafanaTemplateVariableFn,
-            grafanaTemplateVariableFn: {
-              kind: 'AppInsightsMetricNameQuery',
-              rawQuery: 'AppInsightsMetricNames()',
-            },
-          } as AzureMonitorQuery,
-        ],
-      } as DataQueryRequest<AzureMonitorQuery>;
-      const observables = variableSupport.query(mockRequest);
-      observables.subscribe((result: DataQueryResponseData) => {
-        expect(result.data[0].source).toEqual(expectedResults);
-        done();
-      });
-    });
-
-    it('can fetch deprecated log analytics groupBys', (done) => {
-      const expectedResults = ['test'];
-      const variableSupport = new VariableSupport(
-        createMockDatasource({
-          insightsAnalyticsDatasource: {
-            getGroupBys: jest.fn().mockResolvedValueOnce(expectedResults),
-          },
-        })
-      );
-      const mockRequest = {
-        targets: [
-          {
-            refId: 'A',
-            queryType: AzureQueryType.GrafanaTemplateVariableFn,
-            grafanaTemplateVariableFn: {
-              kind: 'AppInsightsGroupByQuery',
-              rawQuery: 'AppInsightsGroupBys(metricname)',
-            },
-          } as AzureMonitorQuery,
-        ],
-      } as DataQueryRequest<AzureMonitorQuery>;
-      const observables = variableSupport.query(mockRequest);
-      observables.subscribe((result: DataQueryResponseData) => {
-        expect(result.data[0].source).toEqual(expectedResults);
-        done();
-      });
-    });
-
     it('can fetch subscriptions', (done) => {
       const fakeSubscriptions = ['subscriptionId'];
       const variableSupport = new VariableSupport(
@@ -269,7 +215,9 @@ describe('VariableSupport', () => {
           azureLogAnalyticsDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -295,7 +243,9 @@ describe('VariableSupport', () => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
-          getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -324,7 +274,9 @@ describe('VariableSupport', () => {
           azureLogAnalyticsDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -350,7 +302,9 @@ describe('VariableSupport', () => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
-          getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -435,7 +389,7 @@ describe('VariableSupport', () => {
           azureMonitorDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricDefinitions: jest.fn((sub: string, rg: string) => {
+          getMetricNamespaces: jest.fn((sub: string, rg: string) => {
             if (sub === 'subscriptionId' && rg === 'resourceGroup') {
               return Promise.resolve(expectedResults);
             }
@@ -467,6 +421,36 @@ describe('VariableSupport', () => {
       const observables = variableSupport.query(mockRequest);
       observables.subscribe((result: DataQueryResponseData) => {
         expect(result.data).toEqual([]);
+        done();
+      });
+    });
+
+    it('should return None when there is no data', (done) => {
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          azureLogAnalyticsDatasource: {
+            defaultSubscriptionId: 'defaultSubscriptionId',
+          },
+          azureMonitorDatasource: {
+            getMetricNames: jest.fn().mockResolvedValueOnce([]),
+          },
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.GrafanaTemplateVariableFn,
+            grafanaTemplateVariableFn: {
+              kind: 'MetricNamesQuery',
+              rawQuery: 'metricNames(resourceGroup, metricDefinition, resourceName, metricNamespace)',
+            },
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data.length).toBe(0);
         done();
       });
     });
@@ -527,6 +511,148 @@ describe('VariableSupport', () => {
     observables.subscribe((result: DataQueryResponseData) => {
       expect(result.error?.message).toBe(error.data.error.message);
       done();
+    });
+  });
+
+  describe('predefined functions', () => {
+    it('can fetch subscriptions', (done) => {
+      const fakeSubscriptions = ['subscriptionId'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getSubscriptions: jest.fn().mockResolvedValueOnce(fakeSubscriptions),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.SubscriptionsQuery,
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(fakeSubscriptions);
+        done();
+      });
+    });
+
+    it('can fetch resourceGroups', (done) => {
+      const expectedResults = ['test'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getResourceGroups: jest.fn().mockResolvedValueOnce(expectedResults),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.ResourceGroupsQuery,
+            subscription: 'sub',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(expectedResults);
+        done();
+      });
+    });
+
+    it('can fetch namespaces', (done) => {
+      const expectedResults = ['test'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.NamespacesQuery,
+            subscription: 'sub',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(expectedResults);
+        done();
+      });
+    });
+
+    it('can fetch resource names', (done) => {
+      const expectedResults = ['test'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getResourceNames: jest.fn().mockResolvedValueOnce(expectedResults),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.ResourceNamesQuery,
+            subscription: 'sub',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(expectedResults);
+        done();
+      });
+    });
+
+    it('can fetch metric names', (done) => {
+      const expectedResults = ['test'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.MetricNamesQuery,
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            namespace: 'ns',
+            resource: 'rn',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(expectedResults);
+        done();
+      });
+    });
+
+    it('can fetch workspaces', (done) => {
+      const expectedResults = ['test'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce(expectedResults),
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.WorkspacesQuery,
+            subscription: 'sub',
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(expectedResults);
+        done();
+      });
     });
   });
 });

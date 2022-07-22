@@ -1,15 +1,17 @@
+import { auto } from 'angular';
 import { clone, filter, find, findIndex, indexOf, map } from 'lodash';
-import appEvents from 'app/core/app_events';
-import { PostgresMetaQuery } from './meta_query';
-import { QueryCtrl } from 'app/plugins/sdk';
+
+import { PanelEvents, QueryResultMeta } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 import { SqlPart } from 'app/angular/components/sql_part/sql_part';
+import appEvents from 'app/core/app_events';
+import { VariableWithMultiSupport } from 'app/features/variables/types';
+import { QueryCtrl } from 'app/plugins/sdk';
+import { ShowConfirmModalEvent } from 'app/types/events';
+
+import { PostgresMetaQuery } from './meta_query';
 import PostgresQueryModel from './postgres_query_model';
 import sqlPart from './sql_part';
-import { auto } from 'angular';
-import { PanelEvents, QueryResultMeta } from '@grafana/data';
-import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { TemplateSrv } from '@grafana/runtime';
-import { ShowConfirmModalEvent } from 'app/types/events';
 
 const defaultQuery = `SELECT
   $__time(time_column),
@@ -111,10 +113,27 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
+  timescaleAggCheck() {
+    const aggIndex = this.findAggregateIndex(this.selectParts[0]);
+
+    // add or remove TimescaleDB aggregate functions as needed
+    if (aggIndex !== -1) {
+      const baseOpts = this.selectParts[0][aggIndex].def.params[0].baseOptions;
+      const timescaleOpts = baseOpts.concat(this.selectParts[0][aggIndex].def.params[0].timescaleOptions);
+
+      if (this.datasource.jsonData.timescaledb === true) {
+        this.selectParts[0][aggIndex].def.params[0].options = timescaleOpts;
+      } else {
+        this.selectParts[0][aggIndex].def.params[0].options = baseOpts;
+      }
+    }
+  }
+
   updateProjection() {
     this.selectParts = map(this.target.select, (parts: any) => {
       return map(parts, sqlPart.create).filter((n) => n);
     });
+    this.timescaleAggCheck();
     this.whereParts = map(this.target.where, sqlPart.create).filter((n) => n);
     this.groupParts = map(this.target.group, sqlPart.create).filter((n) => n);
   }
@@ -125,6 +144,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         return { type: part.def.type, datatype: part.datatype, params: part.params };
       });
     });
+    this.timescaleAggCheck();
     this.target.where = map(this.whereParts, (part: any) => {
       return { type: part.def.type, datatype: part.datatype, name: part.name, params: part.params };
     });

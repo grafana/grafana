@@ -1,22 +1,24 @@
-import React, { HTMLAttributes, useEffect } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
+import React, { HTMLAttributes, useEffect } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportExperimentView } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 
 export interface Props extends HTMLAttributes<HTMLSpanElement> {
   text?: string;
-  /** Function to call when component initializes, e.g. event trackers */
-  onLoad?: (...args: any[]) => void;
+  experimentId?: string;
+  eventVariant?: string;
 }
 
-export const ProBadge = ({ text = 'PRO', className, onLoad, ...htmlProps }: Props) => {
+export const ProBadge = ({ text = 'PRO', className, experimentId, eventVariant = '', ...htmlProps }: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    if (onLoad) {
-      onLoad();
+    if (experimentId) {
+      reportExperimentView(experimentId, 'test', eventVariant);
     }
-  }, [onLoad]);
+  }, [experimentId, eventVariant]);
 
   return (
     <span className={cx(styles.badge, className)} {...htmlProps}>
@@ -32,7 +34,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius(5)};
       background-color: ${theme.colors.success.main};
       padding: ${theme.spacing(0.25, 0.75)};
-      color: ${theme.colors.text.maxContrast};
+      color: white; // use the same color for both themes
       font-weight: ${theme.typography.fontWeightMedium};
       font-size: ${theme.typography.pxToRem(10)};
     `,

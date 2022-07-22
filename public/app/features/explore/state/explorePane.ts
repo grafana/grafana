@@ -1,27 +1,7 @@
-import { AnyAction } from 'redux';
-import { isEqual } from 'lodash';
-
-import {
-  DEFAULT_RANGE,
-  getQueryKeys,
-  parseUrlState,
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getTimeRangeFromUrl,
-} from 'app/core/utils/explore';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
-import { queryReducer, runQueries, setQueriesAction } from './query';
-import { datasourceReducer } from './datasource';
-import { timeReducer, updateTime } from './time';
-import { historyReducer } from './history';
-import {
-  makeExplorePaneState,
-  loadAndInitDatasource,
-  createEmptyQueryResponse,
-  getUrlStateFromPaneState,
-  storeGraphStyle,
-} from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
+import { isEqual } from 'lodash';
+import { AnyAction } from 'redux';
+
 import {
   EventBusExtended,
   DataQuery,
@@ -32,12 +12,33 @@ import {
   ExplorePanelsState,
   PreferredVisualisationType,
 } from '@grafana/data';
-// Types
-import { ThunkResult } from 'app/types';
-import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getRichHistory } from '../../../core/utils/richHistory';
-import { richHistoryUpdatedAction, stateSave } from './main';
+import { keybindingSrv } from 'app/core/services/keybindingSrv';
+import {
+  DEFAULT_RANGE,
+  getQueryKeys,
+  parseUrlState,
+  ensureQueries,
+  generateNewKeyAndAddRefIdIfMissing,
+  getTimeRangeFromUrl,
+} from 'app/core/utils/explore';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
+import { ThunkResult } from 'app/types';
+import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
+
+import { datasourceReducer } from './datasource';
+import { historyReducer } from './history';
+import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction, stateSave } from './main';
+import { queryReducer, runQueries, setQueriesAction } from './query';
+import { timeReducer, updateTime } from './time';
+import {
+  makeExplorePaneState,
+  loadAndInitDatasource,
+  createEmptyQueryResponse,
+  getUrlStateFromPaneState,
+  storeGraphStyle,
+} from './utils';
+// Types
 
 //
 // Actions and Payloads
@@ -98,7 +99,6 @@ export interface InitializeExplorePayload {
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
-  originPanelId?: number | null;
 }
 export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
@@ -143,9 +143,7 @@ export function initializeExplore(
   range: TimeRange,
   containerWidth: number,
   eventBridge: EventBusExtended,
-  panelsState?: ExplorePanelsState,
-
-  originPanelId?: number | null
+  panelsState?: ExplorePanelsState
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const exploreDatasources = getDataSourceSrv().getList();
@@ -166,7 +164,6 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
-        originPanelId,
         datasourceInstance: instance,
         history,
       })
@@ -176,15 +173,14 @@ export function initializeExplore(
     }
     dispatch(updateTime({ exploreId }));
 
+    keybindingSrv.setupTimeRangeBindings(false);
+
     if (instance) {
       // We do not want to add the url to browser history on init because when the pane is initialised it's because
       // we already have something in the url. Adding basically the same state as additional history item prevents
       // user to go back to previous url.
       dispatch(runQueries(exploreId, { replaceUrl: true }));
     }
-
-    const richHistory = getRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 }
 
@@ -205,7 +201,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
-    const { datasource, queries, range: urlRange, originPanelId, panelsState } = newUrlState;
+    const { datasource, queries, range: urlRange, panelsState } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
     for (let index = 0; index < queries.length; index++) {
@@ -222,16 +218,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       await dispatch(
-        initializeExplore(
-          exploreId,
-          datasource,
-          initialQueries,
-          range,
-          containerWidth,
-          eventBridge,
-          panelsState,
-          originPanelId
-        )
+        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, panelsState)
       );
       return;
     }
@@ -269,6 +256,23 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = timeReducer(state, action);
   state = historyReducer(state, action);
 
+  if (richHistoryUpdatedAction.match(action)) {
+    const { richHistory, total } = action.payload.richHistoryResults;
+    return {
+      ...state,
+      richHistory,
+      richHistoryTotal: total,
+    };
+  }
+
+  if (richHistorySearchFiltersUpdatedAction.match(action)) {
+    const richHistorySearchFilters = action.payload.filters;
+    return {
+      ...state,
+      richHistorySearchFilters,
+    };
+  }
+
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
     return { ...state, containerWidth };
@@ -285,7 +289,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, originPanelId, datasourceInstance, history } = action.payload;
+    const { containerWidth, eventBridge, queries, range, datasourceInstance, history } = action.payload;
 
     return {
       ...state,
@@ -295,7 +299,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queries,
       initialized: true,
       queryKeys: getQueryKeys(queries, datasourceInstance),
-      originPanelId,
       datasourceInstance,
       history,
       datasourceMissing: !datasourceInstance,

@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { CodeEditor } from '@grafana/ui';
+
 import { EditorProps } from '../QueryEditor';
 
 export const CSVContentEditor = ({ onChange, query }: EditorProps) => {

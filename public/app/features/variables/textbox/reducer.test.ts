@@ -1,10 +1,13 @@
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cloneDeep } from 'lodash';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload, VariablesState } from '../state/types';
-import { createTextBoxOptions, textBoxVariableReducer } from './reducer';
+import { VariablesState } from '../state/types';
 import { TextBoxVariableModel } from '../types';
+import { toVariablePayload } from '../utils';
+
 import { createTextBoxVariableAdapter } from './adapter';
+import { createTextBoxOptions, textBoxVariableReducer } from './reducer';
 
 describe('textBoxVariableReducer', () => {
   const adapter = createTextBoxVariableAdapter();
