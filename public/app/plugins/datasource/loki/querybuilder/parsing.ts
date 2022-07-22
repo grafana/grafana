@@ -295,15 +295,13 @@ function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 
 function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   const id = 'label_format';
-  const identifier = node.getChild('Identifier');
-  const op = identifier!.nextSibling;
-  const value = op!.nextSibling;
-
-  let valueString = handleQuotes(getString(expr, value));
+  const renameTo = node.getChild('Identifier');
+  const op = renameTo!.nextSibling;
+  const originalLabel = op!.nextSibling;
 
   return {
     id,
-    params: [getString(expr, identifier), valueString],
+    params: [getString(expr, originalLabel), handleQuotes(getString(expr, renameTo))],
   };
 }
 
