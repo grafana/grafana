@@ -1,4 +1,4 @@
-// Package api contains API logic.
+// Package api Grafana HTTP API.
 //
 // The Grafana backend exposes an HTTP API, the same API is used by the frontend to do
 // everything from saving dashboards, creating users and updating data sources.

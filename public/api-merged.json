@@ -5,7 +5,7 @@
   "swagger": "2.0",
   "info": {
     "description": "The Grafana backend exposes an HTTP API, the same API is used by the frontend to do\neverything from saving dashboards, creating users and updating data sources.",
-    "title": "contains API logic.",
+    "title": "Grafana HTTP API.",
     "contact": {
       "name": "Grafana Labs",
       "url": "https://grafana.com",
