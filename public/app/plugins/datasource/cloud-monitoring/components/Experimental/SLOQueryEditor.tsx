@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRow, EditorFieldGroup, EditorField, Stack } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 
 import { ALIGNMENT_PERIODS } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
+import { alignmentPeriodLabel } from '../../functions';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
 
 import { AliasBy } from './AliasBy';
-import { AlignmentPeriodLabel } from './AlignmentPeriodLabel';
 import { PeriodSelect } from './PeriodSelect';
 import { Project } from './Project';
 import { SLO } from './SLO';
@@ -45,6 +45,7 @@ export function SLOQueryEditor({
   variableOptionGroup,
   customMetaData,
 }: React.PropsWithChildren<Props>) {
+  const alignmentLabel = useMemo(() => alignmentPeriodLabel(customMetaData, datasource), [customMetaData, datasource]);
   return (
     <>
       <EditorRow>
@@ -78,7 +79,7 @@ export function SLOQueryEditor({
         />
 
         <EditorFieldGroup>
-          <EditorField label="Alignment period">
+          <EditorField label="Alignment period" tooltip={alignmentLabel}>
             <PeriodSelect
               inputId={`${refId}-alignment-period`}
               templateVariableOptions={variableOptionGroup.options}
@@ -87,9 +88,6 @@ export function SLOQueryEditor({
               aligmentPeriods={ALIGNMENT_PERIODS}
             />
           </EditorField>
-          <Stack alignItems="flex-end">
-            <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
-          </Stack>
         </EditorFieldGroup>
 
         <AliasBy refId={refId} value={query.aliasBy} onChange={(aliasBy) => onChange({ ...query, aliasBy })} />

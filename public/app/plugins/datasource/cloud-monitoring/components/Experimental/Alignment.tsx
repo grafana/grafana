@@ -1,14 +1,14 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, Stack } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 
-import { ALIGNMENT_PERIODS, SELECT_WIDTH } from '../../constants';
+import { ALIGNMENT_PERIODS } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
+import { alignmentPeriodLabel } from '../../functions';
 import { CustomMetaData, MetricQuery, SLOQuery } from '../../types';
 
 import { AlignmentFunction } from './AlignmentFunction';
-import { AlignmentPeriodLabel } from './AlignmentPeriodLabel';
 import { PeriodSelect } from './PeriodSelect';
 
 export interface Props {
@@ -28,6 +28,7 @@ export const Alignment: FC<Props> = ({
   customMetaData,
   datasource,
 }) => {
+  const alignmentLabel = useMemo(() => alignmentPeriodLabel(customMetaData, datasource), [customMetaData, datasource]);
   return (
     <EditorFieldGroup>
       <EditorField
@@ -41,19 +42,15 @@ export const Alignment: FC<Props> = ({
           onChange={onChange}
         />
       </EditorField>
-      <EditorField label="Alignment period">
+      <EditorField label="Alignment period" tooltip={alignmentLabel}>
         <PeriodSelect
           inputId={`${refId}-alignment-period`}
-          selectWidth={SELECT_WIDTH}
           templateVariableOptions={templateVariableOptions}
           current={query.alignmentPeriod}
           onChange={(period) => onChange({ ...query, alignmentPeriod: period })}
           aligmentPeriods={ALIGNMENT_PERIODS}
         />
       </EditorField>
-      <Stack alignItems="flex-end">
-        <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
-      </Stack>
     </EditorFieldGroup>
   );
 };
