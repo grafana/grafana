@@ -1,14 +1,12 @@
 import React, { FC } from 'react';
-import { IconButton } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 import { CloseProps } from '@reactour/tour/dist/components/Close';
+import { getStyles } from './Close.styles';
 
-const Close: FC<CloseProps> = ({ onClick }) => (
-  <IconButton
-    style={{ position: 'absolute', right: 10, top: 10, outline: 'none', margin: 0 }}
-    onClick={onClick}
-    name="times"
-    size="lg"
-  />
-);
+const Close: FC<CloseProps> = ({ onClick }) => {
+  const styles = useStyles2(getStyles);
+
+  return <IconButton className={styles.button} onClick={onClick} name="times" size="lg" />;
+};
 
 export default Close;
