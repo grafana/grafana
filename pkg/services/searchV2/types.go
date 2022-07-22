@@ -26,7 +26,6 @@ type DashboardQuery struct {
 	WithAllowedActions bool         `json:"withAllowedActions,omitempty"` // adds allowed actions per entity
 	Facet              []FacetField `json:"facet,omitempty"`
 	SkipLocation       bool         `json:"skipLocation,omitempty"`
-	AccessInfo         bool         `json:"accessInfo,omitempty"` // adds field for access control
 	HasPreview         string       `json:"hasPreview,omitempty"` // the light|dark theme
 	Limit              int          `json:"limit,omitempty"`      // explicit page size
 	From               int          `json:"from,omitempty"`       // for paging
