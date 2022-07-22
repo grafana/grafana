@@ -5,12 +5,12 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
-import { ClipboardButton, Props } from './ClipboardButton';
+import { ClipboardButton as ClipboardButtonImpl, Props } from './ClipboardButton';
 import mdx from './ClipboardButton.mdx';
 
 export default {
   title: 'Buttons/ClipboardButton',
-  component: ClipboardButton,
+  component: ClipboardButtonImpl,
   decorators: [withCenteredStory],
   parameters: {
     docs: {
@@ -27,6 +27,16 @@ interface StoryProps extends Partial<Props> {
   buttonText: string;
 }
 
+export const ClipboardButton: Story<StoryProps> = (args) => {
+  const shareUrl = 'https://grafana.com/d/abcDEF-34t';
+
+  return (
+    <ClipboardButtonImpl icon="copy" variant="primary" getText={() => shareUrl} {...args}>
+      Copy URL
+    </ClipboardButtonImpl>
+  );
+};
+
 export const AsInputFieldAddon: Story<StoryProps> = (args) => {
   const shareUrl = 'https://grafana.com/d/abcDEF-34t';
 
@@ -38,9 +48,9 @@ export const AsInputFieldAddon: Story<StoryProps> = (args) => {
           value={shareUrl}
           readOnly
           addonAfter={
-            <ClipboardButton icon="copy" variant="primary" getText={() => shareUrl} {...args}>
+            <ClipboardButtonImpl icon="copy" variant="primary" getText={() => shareUrl} {...args}>
               Copy
-            </ClipboardButton>
+            </ClipboardButtonImpl>
           }
         />
       </Field>
