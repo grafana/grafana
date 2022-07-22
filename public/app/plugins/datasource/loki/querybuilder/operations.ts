@@ -187,13 +187,13 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       name: 'Label format',
       params: [
         { name: 'Label', type: 'string' },
-        { name: 'Rename', type: 'string' },
+        { name: 'Rename to', type: 'string' },
       ],
       defaultParams: ['', ''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.LineFormats,
-      renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=\`${model.params[0]}\``,
+      renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=${model.params[0]}`,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
         `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level".

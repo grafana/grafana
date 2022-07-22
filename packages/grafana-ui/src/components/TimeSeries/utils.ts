@@ -185,6 +185,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           max: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
+          centeredZero: customConfig.axisCenteredZero,
         },
         field
       )

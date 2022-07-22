@@ -3,11 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, InlineField, Select } from '@grafana/ui';
 
 import DataSource from '../../datasource';
-import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
+import { migrateQuery } from '../../grafanaTemplateVariableFns';
 import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import useLastError from '../../utils/useLastError';
 import LogsQueryEditor from '../LogsQueryEditor';
@@ -26,16 +25,20 @@ const removeOption: SelectableValue = { label: '-', value: '' };
 const VariableEditor = (props: Props) => {
   const { query, onChange, datasource } = props;
   const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
-    { label: 'Grafana Query Function', value: AzureQueryType.GrafanaTemplateVariableFn },
+    { label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery },
+    { label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery },
+    { label: 'Namespaces', value: AzureQueryType.NamespacesQuery },
+    { label: 'Resource Names', value: AzureQueryType.ResourceNamesQuery },
+    { label: 'Metric Names', value: AzureQueryType.MetricNamesQuery },
+    { label: 'Workspaces', value: AzureQueryType.WorkspacesQuery },
     { label: 'Logs', value: AzureQueryType.LogAnalytics },
   ];
-  if (config.featureToggles.azTemplateVars) {
-    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery });
-    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery });
-    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Namespaces', value: AzureQueryType.NamespacesQuery });
-    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Resource Names', value: AzureQueryType.ResourceNamesQuery });
-    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Metric Names', value: AzureQueryType.MetricNamesQuery });
-    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({ label: 'Workspaces', value: AzureQueryType.WorkspacesQuery });
+  if (typeof props.query === 'object' && props.query.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
+    // Add the option for the GrafanaTemplateVariableFn only if it's already in use
+    AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({
+      label: 'Grafana Query Function',
+      value: AzureQueryType.GrafanaTemplateVariableFn,
+    });
   }
   const [variableOptionGroup, setVariableOptionGroup] = useState<{ label: string; options: AzureMonitorOption[] }>({
     label: 'Template Variables',
@@ -55,7 +58,7 @@ const VariableEditor = (props: Props) => {
   const queryType = typeof query === 'string' ? '' : query.queryType;
 
   useEffect(() => {
-    migrateStringQueriesToObjectQueries(query, { datasource: datasource }).then((migratedQuery) => {
+    migrateQuery(query, { datasource: datasource }).then((migratedQuery) => {
       onChange(migratedQuery);
     });
   }, [query, datasource, onChange]);

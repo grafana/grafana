@@ -56,7 +56,7 @@ export const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, va
   const styles = useStyles2(getSeriesTableRowStyles);
 
   return (
-    <div className={cx(styles.seriesTableRow, isActive && styles.activeSeries)}>
+    <div data-testid="SeriesTableRow" className={cx(styles.seriesTableRow, isActive && styles.activeSeries)}>
       {color && (
         <div className={styles.seriesTableCell}>
           <SeriesIcon color={color} className={styles.icon} />

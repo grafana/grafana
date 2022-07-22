@@ -170,9 +170,9 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: LokiOperationId.LabelFormat, params: ['new', 'old'] }],
+        operations: [{ id: LokiOperationId.LabelFormat, params: ['original', 'renameTo'] }],
       })
-    ).toBe('{app="grafana"} | label_format old=`new`');
+    ).toBe('{app="grafana"} | label_format renameTo=original');
   });
 
   it('Can render simply binary operation with scalar', () => {

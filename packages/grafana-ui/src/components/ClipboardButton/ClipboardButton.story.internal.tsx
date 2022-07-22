@@ -1,15 +1,16 @@
 import { Story, Meta } from '@storybook/react';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Input } from '../Forms/Legacy/Input/Input';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
 
-import { ClipboardButton, Props } from './ClipboardButton';
+import { ClipboardButton as ClipboardButtonImpl, Props } from './ClipboardButton';
 import mdx from './ClipboardButton.mdx';
 
 export default {
   title: 'Buttons/ClipboardButton',
-  component: ClipboardButton,
+  component: ClipboardButtonImpl,
   decorators: [withCenteredStory],
   parameters: {
     docs: {
@@ -26,29 +27,33 @@ interface StoryProps extends Partial<Props> {
   buttonText: string;
 }
 
-const Wrapper: Story<StoryProps> = (args) => {
-  const [copyMessage, setCopyMessage] = useState('');
-  const clipboardCopyMessage = 'Value copied to clipboard';
+export const ClipboardButton: Story<StoryProps> = (args) => {
+  const shareUrl = 'https://grafana.com/d/abcDEF-34t';
+
   return (
-    <div style={{ width: '100%' }}>
-      <div style={{ display: 'flex', width: '100%', marginBottom: '1em' }}>
-        <ClipboardButton
-          variant="secondary"
-          size={args.size}
-          getText={() => args.inputText}
-          onClipboardCopy={() => setCopyMessage(clipboardCopyMessage)}
-        >
-          {args.buttonText}
-        </ClipboardButton>
-        <Input value={args.inputText} onChange={() => {}} />
-      </div>
-      <span>{copyMessage}</span>
-    </div>
+    <ClipboardButtonImpl icon="copy" variant="primary" getText={() => shareUrl} {...args}>
+      Copy URL
+    </ClipboardButtonImpl>
   );
 };
-export const CopyToClipboard = Wrapper.bind({});
-CopyToClipboard.args = {
-  inputText: 'go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only',
-  buttonText: 'Copy to clipboard',
-  size: 'md',
+
+export const AsInputFieldAddon: Story<StoryProps> = (args) => {
+  const shareUrl = 'https://grafana.com/d/abcDEF-34t';
+
+  return (
+    <div style={{ width: '100%', maxWidth: 500 }}>
+      <Field label="Link URL">
+        <Input
+          id="link-url-input"
+          value={shareUrl}
+          readOnly
+          addonAfter={
+            <ClipboardButtonImpl icon="copy" variant="primary" getText={() => shareUrl} {...args}>
+              Copy
+            </ClipboardButtonImpl>
+          }
+        />
+      </Field>
+    </div>
+  );
 };
