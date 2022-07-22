@@ -9,7 +9,7 @@ import { Button, HorizontalGroup, IconButton, useStyles2, useTheme2 } from '@gra
 import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
-import { LayerName } from '../../../../core/components/Layers/LayerName';
+import { EditLayerName } from '../../../../core/components/Layers/EditLayerName';
 import { CanvasElementOptions, canvasElementRegistry } from '../../../../features/canvas';
 import { notFoundItem } from '../../../../features/canvas/elements/notFound';
 import { getGlobalStyles } from '../globalStyles';
@@ -24,6 +24,8 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
+  const [editElementId, setEditElementId] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const theme = useTheme2();
   const globalCSS = getGlobalStyles(theme);
@@ -124,10 +126,10 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   };
 
   const onAddItem = (sel: SelectableValue<string>) => {
-    const item = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
-    const newElementOptions = item.getNewOptions() as CanvasElementOptions;
-    newElementOptions.type = item.id;
-    const newElement = new ElementState(item, newElementOptions, layer);
+    const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
+    const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
+    newElementOptions.type = newItem.id;
+    const newElement = new ElementState(newItem, newElementOptions, layer);
     newElement.updateData(layer.scene.context);
     layer.elements.push(newElement);
     layer.scene.save();
@@ -139,19 +141,31 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     layer.scene.clearCurrentSelection();
   };
 
+  const onEdit = (element: ElementState) => {
+    setEditElementId(element.UID);
+    setIsEditing(!isEditing);
+  };
+
   const onTitleRender = (nodeData: TreeElement) => {
     const element = nodeData.dataRef;
     const name = nodeData.dataRef.getName();
+    const UID = nodeData.dataRef.UID;
 
     return (
       <>
-        <LayerName
+        <EditLayerName
           name={name}
-          onChange={(v) => onNameChange(element, v)}
+          UID={UID}
+          editElementId={editElementId}
+          isEditing={isEditing}
+          onChange={(v: string) => onNameChange(element, v)}
+          setEditElementId={setEditElementId}
           verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined}
         />
+
         <div className={styles.textWrapper}>&nbsp; {getLayerInfo(element)}</div>
 
+        <IconButton name="pen" className={styles.actionIcon} size="sm" onClick={() => onEdit(element)} />
         {!nodeData.children && (
           <>
             <IconButton
@@ -223,5 +237,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-grow: 1;
     overflow: hidden;
     margin-right: ${theme.v1.spacing.sm};
+  `,
+  wrapper: css`
+    label: Wrapper;
+    display: flex;
+    align-items: center;
+    margin-left: ${theme.v1.spacing.xs};
+  `,
+  layerName: css`
+    font-weight: ${theme.v1.typography.weight.semibold};
+    color: ${theme.v1.colors.textBlue};
+    cursor: pointer;
+    overflow: hidden;
+    margin-left: ${theme.v1.spacing.xs};
+  `,
+  layerNameInput: css`
+    max-width: 300px;
+    margin: -4px 0;
   `,
 });
