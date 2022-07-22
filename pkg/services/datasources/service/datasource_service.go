@@ -387,6 +387,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		Timeouts: timeouts,
 		Headers:  s.getCustomHeaders(ds.JsonData, decryptedValues),
 		Labels: map[string]string{
+			"datasource_type": ds.Type,
 			"datasource_name": ds.Name,
 			"datasource_uid":  ds.Uid,
 		},

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"math/rand"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -270,14 +271,21 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 
 func TestStore_RevertApiKey(t *testing.T) {
 	cases := []struct {
-		desc        string
-		key         tests.TestApiKey
-		expectedErr error
+		desc                        string
+		key                         tests.TestApiKey
+		forceMismatchServiceAccount bool
+		expectedErr                 error
 	}{
 		{
 			desc:        "service account token should be reverted to api key",
 			key:         tests.TestApiKey{Name: "Test1", Role: models.ROLE_EDITOR, OrgId: 1},
 			expectedErr: nil,
+		},
+		{
+			desc:                        "should fail reverting to api key when the token is assigned to a different service account",
+			key:                         tests.TestApiKey{Name: "Test1", Role: models.ROLE_EDITOR, OrgId: 1},
+			forceMismatchServiceAccount: true,
+			expectedErr:                 ErrServiceAccountAndTokenMismatch,
 		},
 	}
 
@@ -291,9 +299,23 @@ func TestStore_RevertApiKey(t *testing.T) {
 			require.NoError(t, err)
 
 			key := tests.SetupApiKey(t, db, c.key)
-			err = store.MigrateApiKey(context.Background(), key.OrgId, key.Id)
+			err = store.CreateServiceAccountFromApikey(context.Background(), key)
 			require.NoError(t, err)
-			err = store.RevertApiKey(context.Background(), key.Id)
+
+			var saId int64
+			if c.forceMismatchServiceAccount {
+				saId = rand.Int63()
+			} else {
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+					key.OrgId: {
+						"serviceaccounts:read": {"serviceaccounts:id:*"},
+					},
+				}})
+				require.NoError(t, err)
+				saId = serviceAccounts.ServiceAccounts[0].Id
+			}
+
+			err = store.RevertApiKey(context.Background(), saId, key.Id)
 
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
