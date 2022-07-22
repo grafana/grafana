@@ -1,9 +1,9 @@
-import { Meta, Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { Props, Switch } from './Switch';
+import { Switch } from './Switch';
 
-export default {
+const meta: ComponentMeta<typeof Switch> = {
   title: 'Forms/Legacy/Switch',
   component: Switch,
   parameters: {
@@ -11,9 +11,9 @@ export default {
       exclude: ['className', 'labelClass', 'switchClass', 'onChange'],
     },
   },
-} as Meta;
+};
 
-const SwitchWrapper: Story<Props> = ({ label, ...args }) => {
+const SwitchWrapper: ComponentStory<typeof Switch> = ({ label, ...args }) => {
   const [checked, setChecked] = useState(false);
   return <Switch {...args} label={label} checked={checked} onChange={() => setChecked(!checked)} />;
 };
@@ -23,3 +23,5 @@ Basic.args = {
   label: 'Label',
   tooltip: '',
 };
+
+export default meta;
