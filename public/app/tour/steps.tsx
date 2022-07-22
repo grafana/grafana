@@ -1,34 +1,59 @@
 import { StepType } from '@reactour/tour';
 import React from 'react';
 
+import { Settings } from 'app/percona/settings/Settings.types';
+
 import SidebarStep from './SidebarStep';
 import { Messages } from './steps.messages';
 
-const steps: StepType[] = [
+export const getSteps = (isPmmAdmin = true, settings?: Settings): StepType[] => [
   {
-    selector: '.dropdown > [aria-label="PMM dashboards"]',
+    selector: '.dropdown > [aria-label="Dashboards"]',
     content: (
-      <SidebarStep title="PMM Dashboards">
-        <p>{Messages.dashboards.pmmShipping}</p>
-        <p>
-          {Messages.dashboards.checkOur}
-          <a
-            href="https://github.com/percona/grafana-dashboards"
-            target="_blank"
-            rel="noreferrer noopener"
-            style={{ textDecoration: 'underline' }}
-          >
-            {Messages.dashboards.dashboardsRepo}
-          </a>
-          {Messages.dashboards.contribute}
-        </p>
+      <SidebarStep title={Messages.dashboards.title}>
+        <p>{Messages.dashboards.browse}</p>
+        <p>{Messages.dashboards.folders}</p>
+        <p>{Messages.dashboards.playlists}</p>
       </SidebarStep>
     ),
   },
   {
+    selector: '.dropdown > [aria-label="PMM dashboards"]',
+    content: (
+      <SidebarStep title={Messages.pmmDashboards.title}>
+        <p>{Messages.pmmDashboards.grafanaTechnology}</p>
+        <p>{Messages.pmmDashboards.observe}</p>
+        <p>{Messages.pmmDashboards.zoomIn}</p>
+      </SidebarStep>
+    ),
+  },
+  {
+    selector: '.dropdown > [aria-label="Query Analytics (QAN)"]',
+    content: (
+      <SidebarStep title={Messages.qan.title}>
+        <p>{Messages.qan.queries}</p>
+        <p>{Messages.qan.analyze}</p>
+      </SidebarStep>
+    ),
+  },
+  ...(isPmmAdmin
+    ? [
+        {
+          selector: '.dropdown > [aria-label="Explore"]',
+          content: (
+            <SidebarStep title={Messages.explore.title}>
+              <p>{Messages.explore.data}</p>
+              <p>{Messages.explore.graphs}</p>
+              <p>{Messages.explore.query}</p>
+            </SidebarStep>
+          ),
+        },
+      ]
+    : []),
+  {
     selector: '.dropdown > [aria-label="Alerting"]',
     content: (
-      <SidebarStep title="PMM Alerting">
+      <SidebarStep title={Messages.alerting.title}>
         <p>{Messages.alerting.simplerToUse}</p>
         <p>{Messages.alerting.youDefine}</p>
         <p>{Messages.alerting.howToUse}</p>
@@ -38,7 +63,6 @@ const steps: StepType[] = [
             href="https://docs.percona.com/percona-monitoring-and-management/using/alerting.html"
             target="_blank"
             rel="noreferrer noopener"
-            style={{ textDecoration: 'underline' }}
           >
             {Messages.alerting.docs}
           </a>
@@ -47,47 +71,86 @@ const steps: StepType[] = [
       </SidebarStep>
     ),
   },
-  {
-    selector: '.dropdown > [aria-label="Configuration"]',
-    content: (
-      <SidebarStep title="Configuration Panel">
-        <p>{Messages.configPanel.services}</p>
-        <p>{Messages.configPanel.settings}</p>
-        <p>
-          {Messages.configPanel.settingsDocs}{' '}
-          <a
-            href="https://docs.percona.com/percona-monitoring-and-management/how-to/configure.html"
-            target="_blank"
-            rel="noreferrer noopener"
-            style={{ textDecoration: 'underline' }}
-          >
-            {Messages.configPanel.settingsDocsLink}
-          </a>
-          .
-        </p>
-      </SidebarStep>
-    ),
-  },
-  {
-    selector: '.dropdown > [aria-label="Advisor Checks"]',
-    content: (
-      <SidebarStep title="Advisor checks">
-        <p>{Messages.advisors.pmmIncludes}</p>
-        <p>
-          {Messages.advisors.findOutMore}
-          <a
-            href="https://docs.percona.com/percona-platform/checks.html"
-            target="_blank"
-            rel="noreferrer noopener"
-            style={{ textDecoration: 'underline' }}
-          >
-            {Messages.advisors.docs}
-          </a>
-          .
-        </p>
-      </SidebarStep>
-    ),
-  },
+  ...(isPmmAdmin
+    ? [
+        {
+          selector: '.dropdown > [aria-label="Configuration"]',
+          content: (
+            <SidebarStep title={Messages.configPanel.title}>
+              <p>{Messages.configPanel.services}</p>
+              <p>{Messages.configPanel.settings}</p>
+              <p>
+                {Messages.configPanel.settingsDocs}{' '}
+                <a
+                  href="https://docs.percona.com/percona-monitoring-and-management/how-to/configure.html"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {Messages.configPanel.settingsDocsLink}
+                </a>
+                .
+              </p>
+            </SidebarStep>
+          ),
+        },
+        {
+          selector: '.dropdown > [aria-label="Server Admin"]',
+          content: (
+            <SidebarStep title={Messages.serverAdmin.title}>
+              <p>{Messages.serverAdmin.userManagement}</p>
+              <ul>
+                <li>{Messages.serverAdmin.addEditRemove}</li>
+                <li>{Messages.serverAdmin.grant}</li>
+                <li>{Messages.serverAdmin.manageOrg}</li>
+                <li>{Messages.serverAdmin.changeOrg}</li>
+              </ul>
+            </SidebarStep>
+          ),
+        },
+      ]
+    : []),
+  ...(isPmmAdmin && !!settings?.sttEnabled
+    ? [
+        {
+          selector: '.dropdown > [aria-label="Advisor Checks"]',
+          content: (
+            <SidebarStep title={Messages.advisors.title}>
+              <p>{Messages.advisors.pmmIncludes}</p>
+              <p>
+                {Messages.advisors.findOutMore}
+                <a
+                  href="https://docs.percona.com/percona-platform/checks.html"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {Messages.advisors.docs}
+                </a>
+                .
+              </p>
+            </SidebarStep>
+          ),
+        },
+      ]
+    : []),
+  ...(isPmmAdmin && !!settings?.dbaasEnabled
+    ? [
+        {
+          selector: '.dropdown > [aria-label="DBaaS"]',
+          content: (
+            <SidebarStep title={Messages.dbaas.title}>
+              <p>{Messages.dbaas.feature}</p>
+              <p>{Messages.dbaas.techPreview}</p>
+              <p>{Messages.dbaas.benefits}</p>
+              <ul>
+                <li>{Messages.dbaas.singleInterface}</li>
+                <li>{Messages.dbaas.dbManagement}</li>
+                <li>{Messages.dbaas.automation}</li>
+              </ul>
+            </SidebarStep>
+          ),
+        },
+      ]
+    : []),
 ];
 
-export default steps;
+export default getSteps;

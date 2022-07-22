@@ -25,7 +25,8 @@ import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import Close from './tour/Close';
 import Navigation from './tour/Navigation';
-import steps from './tour/steps';
+import { PERCONA_TOUR_FLAG } from './tour/constants';
+import getSteps from './tour/steps';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -113,15 +114,15 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
                         <TourProvider
-                          steps={steps}
+                          steps={getSteps()}
                           components={{ Close, Navigation }}
                           showBadge={false}
-                          badgeContent={({ totalSteps, currentStep }) => `${currentStep + 1}/${totalSteps}`}
                           disableFocusLock
                           onClickClose={({ setIsOpen }) => {
-                            localStorage.setItem('percona.showTour', 'false');
+                            localStorage.setItem(PERCONA_TOUR_FLAG, 'false');
                             setIsOpen(false);
                           }}
+                          className="pmm-tour"
                           styles={{
                             popover: (base) => ({
                               ...base,

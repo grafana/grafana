@@ -11,6 +11,8 @@ import {
   fetchServerSaasHostAction,
   fetchUserStatusAction,
 } from 'app/percona/shared/core/reducers';
+import { PERCONA_TOUR_FLAG } from 'app/tour/constants';
+import getSteps from 'app/tour/steps';
 import { useDispatch } from 'app/types';
 
 import { isPmmAdmin } from '../../helpers/permissions';
@@ -21,9 +23,9 @@ import { getStyles } from './PerconaBootstrapper.styles';
 // This component is only responsible for populating the store with Percona's settings initially
 export const PerconaBootstrapper = () => {
   const dispatch = useDispatch();
-  const { setCurrentStep, setIsOpen } = useTour();
+  const { setCurrentStep, setIsOpen, setSteps } = useTour();
   const [modalIsOpen, setModalIsOpen] = useState(true);
-  const [showTour, setShowTour] = useLocalStorage<boolean>('percona.showTour', true);
+  const [showTour, setShowTour] = useLocalStorage<boolean>(PERCONA_TOUR_FLAG, true);
   const styles = useStyles2(getStyles);
   const isLoggedIn = !!contextSrv.user.isSignedIn;
 
@@ -45,7 +47,8 @@ export const PerconaBootstrapper = () => {
   useEffect(() => {
     const getSettings = async () => {
       try {
-        await dispatch(fetchSettingsAction()).unwrap();
+        const settings = await dispatch(fetchSettingsAction()).unwrap();
+        setSteps(getSteps(isPmmAdmin(contextSrv.user), settings));
         dispatch(setAuthorized(true));
       } catch (e) {
         if (e.response?.status === 401) {
@@ -64,10 +67,10 @@ export const PerconaBootstrapper = () => {
     if (isLoggedIn) {
       bootstrap();
     }
-  }, [dispatch, isLoggedIn, setCurrentStep, setIsOpen]);
+  }, [dispatch, isLoggedIn, setCurrentStep, setIsOpen, setSteps]);
 
-  return isLoggedIn && isPmmAdmin(contextSrv.user) && showTour ? (
-    <Modal onDismiss={dismissModal} isOpen={modalIsOpen} title=" Welcome to Percona Monitoring and Management">
+  return isLoggedIn && showTour ? (
+    <Modal onDismiss={dismissModal} isOpen={modalIsOpen} title={Messages.title}>
       <div className={styles.iconContainer}>
         <Icon type="mono" name="pmm-logo" className={styles.svg} />
       </div>
@@ -79,8 +82,7 @@ export const PerconaBootstrapper = () => {
         {Messages.pmmEnables}
         <ul className={styles.list}>
           <li>{Messages.spotCriticalPerformance}</li>
-          <li>{Messages.monitorDb}</li>
-          <li>{Messages.runDbHealth}</li>
+          <li>{Messages.ensureDbPerformance}</li>
           <li>{Messages.backup}</li>
         </ul>
       </p>
@@ -98,7 +100,7 @@ export const PerconaBootstrapper = () => {
       </p>
       <HorizontalGroup justify="center" spacing="md">
         <Button onClick={startTour} size="lg" className={styles.callToAction}>
-          Start tour
+          {Messages.startTour}
         </Button>
       </HorizontalGroup>
       <HorizontalGroup justify="flex-end" spacing="md">

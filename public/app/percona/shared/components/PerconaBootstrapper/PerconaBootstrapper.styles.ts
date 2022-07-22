@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ v1: { spacing }, isLight }: GrafanaTheme2) => ({
+export const getStyles = ({ v1: { spacing } }: GrafanaTheme2) => ({
   iconContainer: css`
     text-align: center;
     margin-bottom: ${spacing.md};
@@ -10,10 +10,6 @@ export const getStyles = ({ v1: { spacing }, isLight }: GrafanaTheme2) => ({
   svg: css`
     width: 70px;
     height: 70px;
-
-    & path {
-      fill: ${isLight ? 'black' : ''};
-    }
   `,
   list: css`
     padding-left: ${spacing.lg};
