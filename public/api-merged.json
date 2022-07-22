@@ -5412,7 +5412,7 @@
     "/org": {
       "get": {
         "description": "Get current Organization",
-        "tags": ["current_org_details"],
+        "tags": ["org"],
         "operationId": "getCurrentOrg",
         "responses": {
           "200": {
@@ -5430,7 +5430,7 @@
         }
       },
       "put": {
-        "tags": ["current_org_details"],
+        "tags": ["org"],
         "summary": "Update current Organization.",
         "operationId": "updateCurrentOrg",
         "parameters": [
@@ -5464,7 +5464,7 @@
     },
     "/org/address": {
       "put": {
-        "tags": ["current_org_details"],
+        "tags": ["org"],
         "summary": "Update current Organization's address.",
         "operationId": "updateCurrentOrgAddress",
         "parameters": [
@@ -5672,7 +5672,7 @@
     "/org/users": {
       "get": {
         "description": "Returns all org users within the current organization. Accessible to users with org admin role.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
-        "tags": ["current_org_details"],
+        "tags": ["org"],
         "summary": "Get all users within the current organization.",
         "operationId": "getOrgUsersForCurrentOrg",
         "responses": {
@@ -5692,7 +5692,7 @@
       },
       "post": {
         "description": "Adds a global user to the current organization.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:add` with scope `users:*`.",
-        "tags": ["current_org_details"],
+        "tags": ["org"],
         "summary": "Add a new user to the current organization",
         "operationId": "addOrgUserToCurrentOrg",
         "parameters": [
@@ -5724,7 +5724,7 @@
     "/org/users/lookup": {
       "get": {
         "description": "Returns all org users within the current organization, but with less detailed information.\nAccessible to users with org admin role, admin in any folder or admin of any team.\nMainly used by Grafana UI for providing list of users when adding team members and when editing folder/dashboard permissions.",
-        "tags": ["current_org_details"],
+        "tags": ["org"],
         "summary": "Get all users within the current organization (lookup)",
         "operationId": "getOrgUsersForCurrentOrgLookup",
         "parameters": [
@@ -5759,7 +5759,7 @@
     "/org/users/{user_id}": {
       "delete": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:remove` with scope `users:*`.",
-        "tags": ["current_org_details"],
+        "tags": ["org"],
         "summary": "Delete user in current organization",
         "operationId": "removeOrgUserForCurrentOrg",
         "parameters": [
@@ -5791,7 +5791,7 @@
       },
       "patch": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users.role:update` with scope `users:*`.",
-        "tags": ["current_org_details"],
+        "tags": ["org"],
         "summary": "Updates the given user",
         "operationId": "updateOrgUserForCurrentOrg",
         "parameters": [
@@ -18583,7 +18583,7 @@
     },
     {
       "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
-      "name": "current_org_details"
+      "name": "org"
     },
     {
       "description": "This API can be used to create/update/delete Teams and to add/remove users to Teams. All actions require that the user has the Admin role for the organization.",

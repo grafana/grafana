@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// swagger:route GET /org current_org_details getCurrentOrg
+// swagger:route GET /org org getCurrentOrg
 //
 // Get current Organization
 //
@@ -150,7 +150,7 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 	})
 }
 
-// swagger:route PUT /org current_org_details updateCurrentOrg
+// swagger:route PUT /org org updateCurrentOrg
 //
 // Update current Organization.
 //
@@ -205,7 +205,7 @@ func (hs *HTTPServer) updateOrgHelper(ctx context.Context, form dtos.UpdateOrgFo
 	return response.Success("Organization updated")
 }
 
-// swagger:route PUT /org/address current_org_details updateCurrentOrgAddress
+// swagger:route PUT /org/address org updateCurrentOrgAddress
 //
 // Update current Organization's address.
 //

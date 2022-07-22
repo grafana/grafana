@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// swagger:route POST /org/users current_org_details addOrgUserToCurrentOrg
+// swagger:route POST /org/users org addOrgUserToCurrentOrg
 //
 // Add a new user to the current organization
 //
@@ -99,7 +99,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 	})
 }
 
-// swagger:route GET /org/users current_org_details getOrgUsersForCurrentOrg
+// swagger:route GET /org/users org getOrgUsersForCurrentOrg
 //
 // Get all users within the current organization.
 //
@@ -127,7 +127,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, result)
 }
 
-// swagger:route GET /org/users/lookup current_org_details getOrgUsersForCurrentOrgLookup
+// swagger:route GET /org/users/lookup org getOrgUsersForCurrentOrgLookup
 //
 // Get all users within the current organization (lookup)
 //
@@ -273,7 +273,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, query.Result)
 }
 
-// swagger:route PATCH /org/users/{user_id} current_org_details updateOrgUserForCurrentOrg
+// swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg
 //
 // Updates the given user
 //
@@ -347,7 +347,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd models.Updat
 	return response.Success("Organization user updated")
 }
 
-// swagger:route DELETE /org/users/{user_id} current_org_details removeOrgUserForCurrentOrg
+// swagger:route DELETE /org/users/{user_id} org removeOrgUserForCurrentOrg
 //
 // Delete user in current organization
 //
