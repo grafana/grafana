@@ -43,7 +43,7 @@ type PluginListItem struct {
 	Signature     plugins.SignatureStatus `json:"signature"`
 	SignatureType plugins.SignatureType   `json:"signatureType"`
 	SignatureOrg  string                  `json:"signatureOrg"`
-	AccessControl accesscontrol.Metadata  `json:"accessControl"`
+	AccessControl accesscontrol.Metadata  `json:"accessControl,omitempty"`
 }
 
 type PluginList []PluginListItem
