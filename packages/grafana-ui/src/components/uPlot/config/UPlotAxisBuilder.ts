@@ -151,7 +151,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         ticks
       ),
       splits,
-      values: values,
+      values,
       space:
         space ??
         ((self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -227,7 +227,7 @@ export function formatTime(
     format = systemDateFormats.interval.month;
   }
 
-  return splits.map((v) => dateTimeFormat(v, { format, timeZone }));
+  return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
 }
 
 export function getUPlotSideFromAxis(axis: AxisPlacement) {

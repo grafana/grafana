@@ -97,6 +97,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
     });
 
+    // filters first 2 ticks to make space for timezone labels
+    const filterTicks: uPlot.Axis.Filter | undefined =
+      timeZones.length > 1
+        ? (u, splits) => {
+            return splits.map((v, i) => (i < 2 ? null : v));
+          }
+        : undefined;
+
     for (let i = 0; i < timeZones.length; i++) {
       const timeZone = timeZones[i];
       if (i === 0) {
@@ -109,6 +117,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           timeZone,
           theme,
           grid: { show: xField.config.custom?.axisGridShow },
+          filter: filterTicks,
         });
       } else if (xFieldAxisShow) {
         const scaleKey = `${xScaleKey}_${i + 1}`;
@@ -132,8 +141,32 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           timeZone: timeZone,
           theme,
           grid: { show: false },
+          filter: filterTicks,
         });
       }
+    }
+
+    // render timezone labels
+    if (timeZones.length > 1) {
+      builder.addHook('drawAxes', (u: uPlot) => {
+        u.ctx.save();
+
+        u.ctx.fillStyle = theme.colors.text.primary;
+        u.ctx.textAlign = 'left';
+        u.ctx.textBaseline = 'bottom';
+
+        let i = 0;
+        u.axes.forEach((a) => {
+          if (a.side === 2) {
+            //@ts-ignore
+            let cssBaseline: number = a._pos + a._size;
+            u.ctx.fillText(timeZones[i], u.bbox.left, cssBaseline * uPlot.pxRatio);
+            i++;
+          }
+        });
+
+        u.ctx.restore();
+      });
     }
   } else {
     // Not time!
