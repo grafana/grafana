@@ -293,6 +293,27 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: (op) => `Return log lines that does not match regex \`${op.params[0]}\`.`,
     },
     {
+      id: LokiOperationId.LineFilterIpMatches,
+      name: 'IP line filter',
+      params: [
+        { name: 'Operator', type: 'string', options: ['|=', '~=', '|~', '!~'] },
+        {
+          name: 'Pattern',
+          type: 'string',
+          placeholder: '<pattern>',
+          minWidth: 16,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: ['|=', ''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: (op, def, innerExpr) => `${innerExpr} ${op.params[0]} ip(\`${op.params[1]}\`)`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that match line filter ${op.params[0]} ip(\`${op.params[1]}\`).`,
+    },
+    {
       id: LokiOperationId.LabelFilter,
       name: 'Label filter expression',
       params: [

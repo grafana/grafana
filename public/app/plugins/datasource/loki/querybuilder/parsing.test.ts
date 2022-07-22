@@ -77,15 +77,22 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('returns error for query with ip matching line filter', () => {
-    const context = buildVisualQueryFromString('{app="frontend"} |= ip("192.168.4.5/16")');
-    expect(context.errors).toEqual([
-      {
-        text: 'Matching ip addresses not supported in query builder: |= ip("192.168.4.5/16")',
-        from: 17,
-        to: 40,
-        parentType: 'LineFilters',
-      },
-    ]);
+    const context = buildVisualQueryFromString('{app="frontend"} |= ip("192.168.4.5/16") | logfmt');
+    expect(context).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: '__line_filter_ip_matches', params: ['|=', '192.168.4.5/16'] },
+          { id: 'logfmt', params: [] },
+        ],
+      })
+    );
   });
 
   it('parses query with matcher label filter', () => {
