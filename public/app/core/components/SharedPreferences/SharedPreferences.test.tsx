@@ -175,7 +175,7 @@ describe('SharedPreferences', () => {
       queryHistory: {
         homeTab: '',
       },
-      locale: 'fr',
+      locale: 'fr-FR',
     });
   });
 
