@@ -23,7 +23,6 @@
 - **Alerting:** Preserve new-lines from custom email templates in rendered email. [#52253](https://github.com/grafana/grafana/pull/52253), [@alexweav](https://github.com/alexweav)
 - **Insights:** Fix dashboard and data source insights pages. (Enterprise)
 - **Log:** Fix text logging for unsupported types. [#51306](https://github.com/grafana/grafana/pull/51306), [@papagian](https://github.com/papagian)
-- **Loki:** Fix `show context` not working in some occasions. [#52458](https://github.com/grafana/grafana/pull/52458), [@svennergr](https://github.com/svennergr)
 - **Loki:** Fix incorrect TopK value type in query builder. [#52226](https://github.com/grafana/grafana/pull/52226), [@ivanahuckova](https://github.com/ivanahuckova)
 
 <!-- 9.0.4 END -->

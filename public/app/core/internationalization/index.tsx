@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 
 import config from 'app/core/config';
 
-import { messages } from '../../locales/en/messages';
+import { messages } from '../../../locales/en/messages';
 
 let i18nInstance: I18n;
 
@@ -15,7 +15,7 @@ export async function getI18n(locale = 'en') {
   // Dynamically load the messages for the user's locale
   const imp =
     config.featureToggles.internationalization &&
-    (await import(`../../locales/${locale}/messages`).catch((err) => {
+    (await import(`../../../locales/${locale}/messages`).catch((err) => {
       // TODO: Properly return an error if we can't find the messages for a locale
       return err;
     }));
