@@ -13,6 +13,9 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
+// Local SDK development
+//replace github.com/grafana/grafana-plugin-sdk-go => /Users/ryan/workspace/grafana/more/grafana-plugin-sdk-go
+
 require (
 	cloud.google.com/go/storage v1.21.0
 	cuelang.org/go v0.4.3
@@ -54,7 +57,7 @@ require (
 	github.com/grafana/cuetsy v0.0.3
 	github.com/grafana/grafana-aws-sdk v0.10.8
 	github.com/grafana/grafana-azure-sdk-go v1.3.0
-	github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220722001756-79482a29677b
+	github.com/grafana/grafana-plugin-sdk-go v0.139.1-0.20220722011945-fa6fcd5af4c4
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3

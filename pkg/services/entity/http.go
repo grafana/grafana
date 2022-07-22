@@ -66,10 +66,14 @@ func (s *StandardEntityStoreServer) doGetEntity(c *models.ReqContext) {
 
 	// Check for ETag updates
 	if rsp.Meta != nil && rsp.Meta.Etag != "" {
-		c.Resp.Header().Set("ETag", rsp.Meta.Etag)
+		currentETag := rsp.Meta.Etag
+		if isRaw {
+			currentETag += "-raw"
+		}
+		c.Resp.Header().Set("ETag", currentETag)
 
 		previousEtag := c.Req.Header.Get("If-None-Match")
-		if previousEtag == rsp.Meta.Etag {
+		if previousEtag == currentETag {
 			c.Resp.WriteHeader(http.StatusNotModified)
 			return
 		}
