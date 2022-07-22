@@ -112,7 +112,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Heading:     "DingDing settings",
 			Options: []alerting.NotifierOption{
 				{
-					Label:        "Url",
+					Label:        "URL",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
 					Placeholder:  "https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx",
@@ -268,7 +268,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Heading:     "VictorOps settings",
 			Options: []alerting.NotifierOption{
 				{
-					Label:        "Url",
+					Label:        "URL",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
 					Placeholder:  "VictorOps url",
@@ -608,14 +608,14 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Heading:     "Webhook settings",
 			Options: []alerting.NotifierOption{
 				{
-					Label:        "Url",
+					Label:        "URL",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
 					PropertyName: "url",
 					Required:     true,
 				},
 				{
-					Label:   "Http Method",
+					Label:   "HTTP Method",
 					Element: alerting.ElementTypeSelect,
 					SelectOptions: []alerting.SelectOption{
 						{
@@ -630,16 +630,32 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					PropertyName: "httpMethod",
 				},
 				{
-					Label:        "Username",
+					Label:        "HTTP Basic Authentication - Username",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
 					PropertyName: "username",
 				},
 				{
-					Label:        "Password",
+					Label:        "HTTP Basic Authentication - Password",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypePassword,
 					PropertyName: "password",
+					Secure:       true,
+				},
+				{ // New in 9.1
+					Label:        "Authorization Header - Scheme",
+					Description:  "Optionally provide a scheme for the Authorization Request Header. Default is Bearer.",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					PropertyName: "authorization_scheme",
+					Placeholder:  "Bearer",
+				},
+				{ // New in 9.1
+					Label:        "Authorization Header - Credentials",
+					Description:  "Credentials for the Authorization Request header. Only one of HTTP Basic Authentication or Authorization Request Header can be set.",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					PropertyName: "authorization_credentials",
 					Secure:       true,
 				},
 				{ // New in 8.0. TODO: How to enforce only numbers?
@@ -658,7 +674,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Heading:     "WeCom settings",
 			Options: []alerting.NotifierOption{
 				{
-					Label:        "Url",
+					Label:        "URL",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
 					Placeholder:  "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx",
@@ -747,7 +763,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Heading:     "Google Hangouts Chat settings",
 			Options: []alerting.NotifierOption{
 				{
-					Label:        "Url",
+					Label:        "URL",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
 					Placeholder:  "Google Hangouts Chat incoming webhook url",
@@ -833,7 +849,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Secure:       true,
 				},
 				{
-					Label:        "Alert API Url",
+					Label:        "Alert API URL",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
 					Placeholder:  "https://api.opsgenie.com/v2/alerts",
