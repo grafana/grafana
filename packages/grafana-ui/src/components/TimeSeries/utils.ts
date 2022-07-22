@@ -107,43 +107,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     for (let i = 0; i < timeZones.length; i++) {
       const timeZone = timeZones[i];
-      if (i === 0) {
-        builder.addAxis({
-          scaleKey: xScaleKey,
-          isTime: true,
-          placement: xFieldAxisPlacement,
-          show: xFieldAxisShow,
-          label: xField.config.custom?.axisLabel,
-          timeZone,
-          theme,
-          grid: { show: xField.config.custom?.axisGridShow },
-          filter: filterTicks,
-        });
-      } else if (xFieldAxisShow) {
-        const scaleKey = `${xScaleKey}_${i + 1}`;
-        builder.addScale({
-          scaleKey,
-          orientation: ScaleOrientation.Horizontal,
-          direction: ScaleDirection.Right,
-          isTime: true,
-          from: xScaleKey,
-          range: () => {
-            const r = getTimeRange();
-            return [r.from.valueOf(), r.to.valueOf()];
-          },
-        });
-
-        builder.addAxis({
-          scaleKey,
-          isTime: true,
-          placement: xFieldAxisPlacement,
-          show: xFieldAxisShow,
-          timeZone: timeZone,
-          theme,
-          grid: { show: false },
-          filter: filterTicks,
-        });
-      }
+      builder.addAxis({
+        scaleKey: xScaleKey,
+        isTime: true,
+        placement: xFieldAxisPlacement,
+        show: xFieldAxisShow,
+        label: xField.config.custom?.axisLabel,
+        timeZone,
+        theme,
+        grid: { show: i === 0 && xField.config.custom?.axisGridShow },
+        filter: filterTicks,
+      });
     }
 
     // render timezone labels
