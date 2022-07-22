@@ -214,7 +214,6 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.Equal(t, "", response.Result.Label)
 
 		require.NoError(t, res.Body.Close())
-
 	})
 
 	t.Run("Should correctly create a correlation", func(t *testing.T) {
