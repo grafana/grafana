@@ -20,6 +20,8 @@ import { doSelect } from '../utils';
 
 import { TreeViewEditorProps } from './treeViewEditor';
 
+let allowSelection = true;
+
 export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeViewEditorProps, PanelOptions>) => {
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
@@ -40,6 +42,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
   useEffect(() => {
     setTreeData(getTreeData(item?.settings?.scene.root, selection, selectedBgColor));
+    allowSelection = true;
   }, [item?.settings?.scene.root, selectedBgColor, selection]);
 
   if (!settings) {
@@ -60,7 +63,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   };
 
   const onSelect = (selectedKeys: Key[], info: { node: { dataRef: ElementState } }) => {
-    if (item.settings?.scene) {
+    if (allowSelection && item.settings?.scene) {
       doSelect(item.settings.scene, info.node.dataRef);
     }
   };
@@ -104,11 +107,13 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   const onDelete = (element: ElementState) => {
     const elLayer = element.parent ?? layer;
     elLayer.doAction(LayerActionID.Delete, element);
+    allowSelection = false;
   };
 
   const onDuplicate = (element: ElementState) => {
     const elLayer = element.parent ?? layer;
     elLayer.doAction(LayerActionID.Duplicate, element);
+    allowSelection = false;
   };
 
   const onNameChange = (element: ElementState, name: string) => {
