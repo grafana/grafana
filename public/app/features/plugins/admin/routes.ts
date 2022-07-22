@@ -49,10 +49,7 @@ const ADMIN_ROUTES = [
 ];
 
 export function getRoutes(): RouteDescriptor[] {
-  if (
-    contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin()) ||
-    contextSrv.hasAccess(AccessControlAction.PluginsSettingsWrite, isGrafanaAdmin())
-  ) {
+  if (contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin())) {
     return [...DEFAULT_ROUTES, ...ADMIN_ROUTES];
   }
 

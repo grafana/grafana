@@ -21,11 +21,7 @@ var (
 	ConfigurationAccessEvaluator = ac.EvalPermission(ActionSettingsWrite)
 
 	// Protects access to the Server Admin > Plugins page
-	// FIXME: In another iteration we'll add a read settings permission check as well
-	AdminAccessEvaluator = ac.EvalAny(
-		ac.EvalPermission(ActionIntall),
-		ac.EvalPermission(ActionSettingsWrite),
-	)
+	AdminAccessEvaluator = ac.EvalPermission(ActionIntall)
 )
 
 func DeclareRBACRoles(acService ac.AccessControl) error {
@@ -45,7 +41,7 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins:writer",
 			DisplayName: "Plugin Writer",
-			Description: "Enable and disable plugins, view and edit plugins' settings",
+			Description: "Enable and disable plugins and edit plugins' settings",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
 				{Action: ActionSettingsWrite, Scope: ScopeProvider.GetResourceAllScope()},
@@ -57,11 +53,10 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins:maintainer",
 			DisplayName: "Plugin Maintainer",
-			Description: "Install, uninstall, enable, disable plugins",
+			Description: "Install, uninstall plugins",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
 				{Action: ActionIntall},
-				{Action: ActionSettingsWrite, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
 		Grants: []string{ac.RoleGrafanaAdmin},
