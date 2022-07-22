@@ -134,7 +134,10 @@ export class BackendSrv implements BackendService {
       if (!options.headers) {
         options.headers = {};
       }
-      options.headers['Authorization'] = `Bearer ${token}`;
+
+      if (config.jwtUrlLogin && config.jwtHeaderName) {
+        options.headers[config.jwtHeaderName] = `${token}`;
+      }
     }
 
     const fromFetchStream = this.getFromFetchStream<T>(options);
