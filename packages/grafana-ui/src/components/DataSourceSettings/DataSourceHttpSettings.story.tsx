@@ -1,11 +1,13 @@
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/client-api';
+import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 
-import { UseState } from '../../utils/storybook/UseState';
-
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import mdx from './DataSourceHttpSettings.mdx';
+import { HttpSettingsProps } from './types';
 
 const settingsMock: DataSourceSettings<any, any> = {
   id: 4,
@@ -36,29 +38,34 @@ const settingsMock: DataSourceSettings<any, any> = {
   readOnly: true,
 };
 
-export default {
+const meta: Meta = {
   title: 'Data Source/DataSourceHttpSettings',
   component: DataSourceHttpSettings,
   parameters: {
+    controls: {
+      exclude: ['onChange'],
+    },
     docs: {
       page: mdx,
     },
   },
+  args: {
+    dataSourceConfig: settingsMock,
+    defaultUrl: 'http://localhost:9999',
+  },
 };
 
-export const basic = () => {
+export const Basic: Story<HttpSettingsProps> = (args) => {
+  const [, updateArgs] = useArgs();
   return (
-    <UseState initialState={settingsMock} logState>
-      {(dataSourceSettings, updateDataSourceSettings) => {
-        return (
-          <DataSourceHttpSettings
-            defaultUrl="http://localhost:9999"
-            dataSourceConfig={dataSourceSettings}
-            onChange={updateDataSourceSettings}
-            showAccessOptions={true}
-          />
-        );
+    <DataSourceHttpSettings
+      {...args}
+      onChange={(change: typeof settingsMock) => {
+        action('onChange')(change);
+        updateArgs({ dataSourceConfig: change });
       }}
-    </UseState>
+    />
   );
 };
+
+export default meta;
