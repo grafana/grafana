@@ -22,7 +22,7 @@ export const Aggregation: FC<Props> = (props) => {
   return (
     <EditorField label="Group by function" data-testid="cloud-monitoring-aggregation">
       <Select
-        width={15}
+        width="auto"
         onChange={({ value }) => props.onChange(value!)}
         value={selected}
         options={[
