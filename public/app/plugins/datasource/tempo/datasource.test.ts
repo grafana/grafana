@@ -117,9 +117,9 @@ describe('Tempo data source', () => {
           { name: 'operationName', values: ['store.validateQueryTimeRange'] },
           { name: 'startTime', values: [1619712655875.4539] },
           { name: 'duration', values: [14.984] },
-          { name: 'serviceTags', values: ['{"key":"servicetag1","value":"service"}'] },
-          { name: 'logs', values: ['{"timestamp":12345,"fields":[{"key":"count","value":1}]}'] },
-          { name: 'tags', values: ['{"key":"tag1","value":"val1"}'] },
+          { name: 'serviceTags', values: [{ key: 'servicetag1', value: 'service' }] },
+          { name: 'logs', values: [{ timestamp: 12345, fields: [{ key: 'count', value: 1 }] }] },
+          { name: 'tags', values: [{ key: 'tag1', value: 'val1' }] },
           { name: 'serviceName', values: ['service'] },
         ],
       })
