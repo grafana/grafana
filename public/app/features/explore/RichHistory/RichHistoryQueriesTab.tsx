@@ -34,9 +34,6 @@ export interface Props {
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
   const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
 
-  /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
-  const cardWidth = '100% - 134px';
-  const sliderHeight = `${height - 180}px`;
   return {
     container: css`
       display: flex;
@@ -52,20 +49,21 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       }
     `,
     containerContent: css`
-      width: calc(${cardWidth});
+      /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
+      width: calc(100% - 134px);
     `,
     containerSlider: css`
       width: 129px;
       margin-right: ${theme.spacing.sm};
-      .slider {
-        bottom: 10px;
-        height: ${sliderHeight};
-        width: 129px;
-        padding: ${theme.spacing.sm} 0;
-      }
+    `,
+    fixedSlider: css`
+      position: fixed;
     `,
     slider: css`
-      position: fixed;
+      bottom: 10px;
+      height: ${height - 180}px;
+      width: 129px;
+      padding: ${theme.spacing.sm} 0;
     `,
     selectors: css`
       display: flex;
@@ -175,10 +173,10 @@ export function RichHistoryQueriesTab(props: Props) {
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
-        <div className={styles.slider}>
+        <div className={styles.fixedSlider}>
           <div className={styles.labelSlider}>Filter history</div>
           <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
-          <div className="slider">
+          <div className={styles.slider}>
             <RangeSlider
               tooltipAlwaysVisible={false}
               min={0}
