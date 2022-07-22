@@ -21,7 +21,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
   }
 
   // Enforce RBAC
-  if (!contextSrv.hasAccessInMetadata(AccessControlAction.PluginsSettingsWrite, plugin, true)) {
+  if (!contextSrv.hasAccessInMetadata(AccessControlAction.PluginsSettingsWrite, plugin, isOrgAdmin())) {
     return null;
   }
 
