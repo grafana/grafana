@@ -5,6 +5,7 @@ import { Button } from '@grafana/ui';
 
 import { updatePluginSettings } from '../../api';
 import { usePluginConfig } from '../../hooks/usePluginConfig';
+import { isOrgAdmin } from '../../permissions';
 import { CatalogPlugin } from '../../types';
 
 type Props = {
@@ -38,13 +39,13 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
   return (
     <>
       {!enabled && (
-        <Button variant="primary" onClick={enable}>
+        <Button variant="primary" onClick={enable} disabled={!isOrgAdmin()}>
           Enable
         </Button>
       )}
 
       {enabled && (
-        <Button variant="destructive" onClick={disable}>
+        <Button variant="destructive" onClick={disable} disabled={!isOrgAdmin()}>
           Disable
         </Button>
       )}
