@@ -78,7 +78,7 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
           >
             <Button variant="secondary" size="sm" onClick={onEscapeNewlines}>
               <span>{forceEscape ? 'Remove escaping' : 'Escape newlines'}&nbsp;</span>
-              <Icon name="exclamation-triangle" className="muted" size="sm" />
+              <Icon name="exclamation-triangle" size="sm" />
             </Button>
           </Tooltip>
         ),
