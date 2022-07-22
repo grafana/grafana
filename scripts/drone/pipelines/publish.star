@@ -11,10 +11,16 @@ load(
     'pipeline',
 )
 
+load(
+    'scripts/drone/steps/build.star',
+    'compile_build_cmd',
+)
+
 def publish(trigger, ver_mode, edition):
     steps = [
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        compile_build_cmd(),
         identify_runner_step(),
         store_packages_step(edition=edition, ver_mode=ver_mode),
     ]

@@ -59,7 +59,13 @@ load(
     'failure_template',
     'drone_change_template',
 )
+
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
+
+load(
+    'scripts/drone/steps/build.star',
+    'compile_build_cmd',
+)
 
 def store_npm_packages_step():
     return {
@@ -162,6 +168,7 @@ def get_steps(edition, ver_mode):
         verify_gen_cue_step(edition),
         wire_install_step(),
         yarn_install_step(),
+        compile_build_cmd(),
     ]
 
     test_steps = []
@@ -302,7 +309,8 @@ def get_enterprise_pipelines(trigger, ver_mode):
         download_grabpl_step(),
         identify_runner_step(),
         clone_enterprise_step(ver_mode),
-        init_enterprise_step(ver_mode)
+        init_enterprise_step(ver_mode),
+        compile_build_cmd(),
     ]
     for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode), verify_gen_cue_step(edition)]:
         step.update(deps_on_clone_enterprise_step)

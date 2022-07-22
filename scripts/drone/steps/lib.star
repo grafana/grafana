@@ -383,14 +383,14 @@ def build_backend_step(edition, ver_mode, variants=None):
     # TODO: Convert number of jobs to percentage
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} ${{DRONE_TAG}}'.format(
+            './bin/build build-backend --jobs 8 --edition {} ${{DRONE_TAG}}'.format(
                 edition,
             ),
         ]
     else:
         build_no = '${DRONE_BUILD_NUMBER}'
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{}'.format(
+            './bin/build build-backend --jobs 8 --edition {} --build-id {}{}'.format(
                 edition, build_no, variants_str,
             ),
         ]
@@ -401,6 +401,7 @@ def build_backend_step(edition, ver_mode, variants=None):
         'depends_on': [
             'gen-version',
             'wire-install',
+            'compile-build-cmd',
         ],
         'commands': cmds,
     }

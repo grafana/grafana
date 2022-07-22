@@ -14,12 +14,18 @@ load(
     'pipeline',
 )
 
+load(
+    'scripts/drone/steps/build.star',
+    'compile_build_cmd',
+)
+
 def test_frontend(trigger, ver_mode):
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
         yarn_install_step(),
+        compile_build_cmd(),
     ]
     test_steps = [
         lint_frontend_step(),

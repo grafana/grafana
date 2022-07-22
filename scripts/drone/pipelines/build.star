@@ -39,6 +39,11 @@ load(
 )
 
 load(
+    'scripts/drone/steps/build.star',
+    'compile_build_cmd',
+)
+
+load(
     'scripts/drone/utils/utils.star',
     'pipeline',
 )
@@ -48,6 +53,7 @@ def build_e2e(trigger, ver_mode, edition):
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
+        compile_build_cmd(),
         gen_version_step(ver_mode),
         verify_gen_cue_step(edition="oss"),
         wire_install_step(),

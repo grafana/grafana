@@ -20,11 +20,17 @@ load(
     'pipeline',
 )
 
+load(
+    'scripts/drone/steps/build.star',
+    'compile_build_cmd',
+)
+
 def integration_tests(trigger, ver_mode, edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
     init_steps = [
         download_grabpl_step(),
+        compile_build_cmd(),
         identify_runner_step(),
         verify_gen_cue_step(edition="oss"),
         wire_install_step(),
