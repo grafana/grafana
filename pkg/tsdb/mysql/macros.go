@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
@@ -93,6 +94,38 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		return fmt.Sprintf("UNIX_TIMESTAMP(%s) DIV %.0f * %.0f", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__timeGroupAlias":
 		tg, err := m.evaluateMacro(timeRange, query, "__timeGroup", args)
+		if err == nil {
+			return tg + " AS \"time\"", nil
+		}
+		return "", err
+	case "__timeGroupTZ":
+		tg, err := m.evaluateMacro(timeRange, query, "__timeGroup", args)
+		if err == nil {
+			if len(args) >= 4 {
+				trimmedArg := strings.Trim(args[3], "\"")
+				sign := trimmedArg[:1]
+				timeStr := strings.Split(trimmedArg[1:], ":")
+				timeParsed, err := time.ParseDuration(timeStr[0] + "h" + timeStr[1] + "m")
+
+				if err != nil {
+					return "", fmt.Errorf("timezone argument error %v", args[3])
+				}
+
+				var offset string
+				if sign == "-" {
+					offset = "+"
+				} else {
+					offset = "-"
+				}
+
+				return fmt.Sprintf(" %v %v %d", tg, offset, int(timeParsed.Seconds())), nil
+			}
+
+			return "", fmt.Errorf("timezone argument missing")
+		}
+		return "", err
+	case "__timeGroupAliasTZ":
+		tg, err := m.evaluateMacro(timeRange, query, "__timeGroupTZ", args)
 		if err == nil {
 			return tg + " AS \"time\"", nil
 		}
