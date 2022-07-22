@@ -12,6 +12,7 @@ import (
 )
 
 func TestRequestParser(t *testing.T) {
+	average := "Average"
 	t.Run("Query migration ", func(t *testing.T) {
 		t.Run("legacy statistics field is migrated", func(t *testing.T) {
 			oldQuery := &backend.DataQuery{
@@ -45,7 +46,6 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("New dimensions structure", func(t *testing.T) {
-		statistic := "Average"
 		false := false
 		query := QueryJson{
 			RefId:      "ref1",
@@ -58,7 +58,7 @@ func TestRequestParser(t *testing.T) {
 				"InstanceId":   []interface{}{"test"},
 				"InstanceType": []interface{}{"test2", "test3"},
 			},
-			Statistic: &statistic,
+			Statistic: &average,
 			Period:    "600",
 			Hide:      &false,
 		}
@@ -81,7 +81,6 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Old dimensions structure (backwards compatibility)", func(t *testing.T) {
-		average := "Average"
 		false := false
 		query := QueryJson{
 			RefId:      "ref1",
@@ -117,7 +116,6 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Period defined in the editor by the user is being used when time range is short", func(t *testing.T) {
-		average := "Average"
 		false := false
 		query := QueryJson{
 			RefId:      "ref1",
@@ -141,7 +139,6 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Period is parsed correctly if not defined by user", func(t *testing.T) {
-		average := "Average"
 		false := false
 		query := QueryJson{
 			RefId:      "ref1",
