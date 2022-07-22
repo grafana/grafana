@@ -92,7 +92,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 	return response.JSON(http.StatusOK, filteredACLs)
 }
 
-// swagger:route POST /dashboards/uid/{uid}/permissions dashboard_permissions postDashboardPermissionsWithUid
+// swagger:route POST /dashboards/uid/{uid}/permissions dashboard_permissions updateDashboardPermissionsByUID
 //
 // Updates permissions for a dashboard.
 //
@@ -106,11 +106,11 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /dashboards/id/{DashboardID}/permissions dashboard_permissions postDashboardPermissions
+// swagger:route POST /dashboards/id/{DashboardID}/permissions dashboard_permissions updateDashboardPermissionsByID
 //
 // Updates permissions for a dashboard.
 //
-// Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead
+// Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead
 //
 // This operation will remove existing permissions if they’re not included in the request.
 //
@@ -293,13 +293,13 @@ type GetDashboardPermissionsListByUIDParams struct {
 }
 
 // swagger:parameters getDashboardPermissionsListByID
-type GetDashboardPermissionsParams struct {
+type GetDashboardPermissionsListByIDParams struct {
 	// in:path
 	DashboardID int64
 }
 
-// swagger:parameters postDashboardPermissions
-type PostDashboardPermissionsParams struct {
+// swagger:parameters updateDashboardPermissionsByID
+type UpdateDashboardPermissionsByIDParams struct {
 	// in:body
 	// required:true
 	Body dtos.UpdateDashboardACLCommand
@@ -307,8 +307,8 @@ type PostDashboardPermissionsParams struct {
 	DashboardID int64
 }
 
-// swagger:parameters postDashboardPermissionsWithUid
-type PostDashboardPermissionsWithUIDParams struct {
+// swagger:parameters updateDashboardPermissionsByUID
+type UpdateDashboardPermissionsByUIDParams struct {
 	// in:body
 	// required:true
 	Body dtos.UpdateDashboardACLCommand
