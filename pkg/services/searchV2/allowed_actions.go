@@ -45,33 +45,33 @@ func (s *StandardSearchService) addAllowedActionsField(ctx context.Context, orgI
 }
 
 type allowedActions struct {
-	EntityType entityKind `json:"type"`
+	EntityKind entityKind `json:"kind"`
 	UID        string     `json:"uid"`
 	Actions    []string   `json:"actions"`
 }
 
 func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId int64, user *models.SignedInUser, references []entityReferences) ([][]allowedActions, error) {
-	uidsPerType := make(map[entityKind][]string)
+	uidsPerKind := make(map[entityKind][]string)
 	for _, refs := range references {
-		if _, ok := uidsPerType[refs.entityType]; !ok {
-			uidsPerType[refs.entityType] = []string{}
+		if _, ok := uidsPerKind[refs.entityKind]; !ok {
+			uidsPerKind[refs.entityKind] = []string{}
 		}
 
-		uidsPerType[refs.entityType] = append(uidsPerType[refs.entityType], refs.uid)
+		uidsPerKind[refs.entityKind] = append(uidsPerKind[refs.entityKind], refs.uid)
 
 		if len(refs.dsUids) > 0 {
-			if _, ok := uidsPerType[entityKindDatasource]; !ok {
-				uidsPerType[entityKindDatasource] = []string{}
+			if _, ok := uidsPerKind[entityKindDatasource]; !ok {
+				uidsPerKind[entityKindDatasource] = []string{}
 			}
 
-			uidsPerType[entityKindDatasource] = append(uidsPerType[entityKindDatasource], refs.dsUids...)
+			uidsPerKind[entityKindDatasource] = append(uidsPerKind[entityKindDatasource], refs.dsUids...)
 		}
 	}
 
 	allowedActionsByUid := make(map[entityKind]map[string][]string)
 
-	for entType, uids := range uidsPerType {
-		if entType == entityKindPanel {
+	for entKind, uids := range uidsPerKind {
+		if entKind == entityKindPanel {
 			emptyAllowedActions := make(map[string][]string)
 			for _, uid := range uids {
 				emptyAllowedActions[uid] = []string{}
@@ -80,7 +80,7 @@ func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId 
 		}
 
 		var prefix string
-		switch entType {
+		switch entKind {
 		case entityKindFolder:
 			prefix = dashboards.ScopeFoldersPrefix
 		case entityKindDatasource:
@@ -91,7 +91,7 @@ func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId 
 			continue
 		}
 
-		allowedActionsByUid[entType] = s.getAllowedActionsByUid(ctx, user, orgId, prefix, uids)
+		allowedActionsByUid[entKind] = s.getAllowedActionsByUid(ctx, user, orgId, prefix, uids)
 	}
 
 	dsActionsByUid, ok := allowedActionsByUid[entityKindDatasource]
@@ -104,14 +104,14 @@ func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId 
 		var actions []allowedActions
 
 		selfActions := make([]string, 0)
-		if selfTypeActions, ok := allowedActionsByUid[ref.entityType]; ok {
-			if self, ok := selfTypeActions[ref.uid]; ok && len(self) > 0 {
+		if selfKindActions, ok := allowedActionsByUid[ref.entityKind]; ok {
+			if self, ok := selfKindActions[ref.uid]; ok && len(self) > 0 {
 				selfActions = self
 			}
 		}
 
 		actions = append(actions, allowedActions{
-			EntityType: ref.entityType,
+			EntityKind: ref.entityKind,
 			UID:        ref.uid,
 			Actions:    selfActions,
 		})
@@ -123,7 +123,7 @@ func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId 
 			}
 
 			actions = append(actions, allowedActions{
-				EntityType: entityKindDatasource,
+				EntityKind: entityKindDatasource,
 				UID:        dsUid,
 				Actions:    dsActions,
 			})
@@ -169,7 +169,7 @@ func (s *StandardSearchService) getAllowedActionsByUid(ctx context.Context, user
 }
 
 type entityReferences struct {
-	entityType entityKind
+	entityKind entityKind
 	uid        string
 	dsUids     []string
 }
@@ -221,7 +221,7 @@ func getEntityReferences(resp *backend.DataResponse) ([]entityReferences, error)
 
 		if entityKind(kind) != entityKindDashboard {
 			out = append(out, entityReferences{
-				entityType: entityKind(kind),
+				entityKind: entityKind(kind),
 				uid:        uid,
 			})
 			continue
@@ -250,7 +250,7 @@ func getEntityReferences(resp *backend.DataResponse) ([]entityReferences, error)
 			}
 		}
 
-		out = append(out, entityReferences{entityType: entityKindDashboard, uid: uid, dsUids: uids})
+		out = append(out, entityReferences{entityKind: entityKindDashboard, uid: uid, dsUids: uids})
 	}
 
 	return out, nil

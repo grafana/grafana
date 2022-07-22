@@ -21,17 +21,17 @@
 //  | Labels:        | Labels:        | Labels:                 | Labels:          | Labels:                              | Labels:                  | Labels:                   | Labels:        | Labels:                                                                                                                                                                                                                                                           |
 //  | Type: []string | Type: []string | Type: []string          | Type: []string   | Type: []string                       | Type: []*json.RawMessage | Type: []*json.RawMessage  | Type: []string | Type: []json.RawMessage                                                                                                                                                                                                                                           |
 //  +----------------+----------------+-------------------------+------------------+--------------------------------------+--------------------------+---------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-//  | folder         | ujaM1h6nz      | abc2                    |                  | /dashboards/f/ujaM1h6nz/abc2         | null                     | null                      |                | [{"type":"folder","uid":"ujaM1h6nz","actions":["folders:read"]}]                                                                                                                                                                                                  |
-//  | dashboard      | 7MeksYbmk      | Alerting with TestData  |                  | /d/7MeksYbmk/alerting-with-testdata  | [                        | [                         | yboVMzb7z      | [{"type":"dashboard","uid":"7MeksYbmk","actions":["dashboards:write"]},{"type":"datasource","uid":"datasource-1","actions":[]}]                                                                                                                                   |
+//  | folder         | ujaM1h6nz      | abc2                    |                  | /dashboards/f/ujaM1h6nz/abc2         | null                     | null                      |                | [{"kind":"folder","uid":"ujaM1h6nz","actions":["folders:read"]}]                                                                                                                                                                                                  |
+//  | dashboard      | 7MeksYbmk      | Alerting with TestData  |                  | /d/7MeksYbmk/alerting-with-testdata  | [                        | [                         | yboVMzb7z      | [{"kind":"dashboard","uid":"7MeksYbmk","actions":["dashboards:write"]},{"kind":"datasource","uid":"datasource-1","actions":[]}]                                                                                                                                   |
 //  |                |                |                         |                  |                                      |           "gdev",        |           "datasource-1"  |                |                                                                                                                                                                                                                                                                   |
 //  |                |                |                         |                  |                                      |           "alerting"     |         ]                 |                |                                                                                                                                                                                                                                                                   |
 //  |                |                |                         |                  |                                      |         ]                |                           |                |                                                                                                                                                                                                                                                                   |
-//  | dashboard      | vmie2cmWz      | Bar Gauge Demo          |                  | /d/vmie2cmWz/bar-gauge-demo          | [                        | [                         | yboVMzb7z      | [{"type":"dashboard","uid":"vmie2cmWz","actions":[]},{"type":"datasource","uid":"datasource-2","actions":["datasources:read"]},{"type":"datasource","uid":"datasource-3","actions":["datasources:read"]},{"type":"datasource","uid":"datasource-4","actions":[]}] |
+//  | dashboard      | vmie2cmWz      | Bar Gauge Demo          |                  | /d/vmie2cmWz/bar-gauge-demo          | [                        | [                         | yboVMzb7z      | [{"kind":"dashboard","uid":"vmie2cmWz","actions":[]},{"kind":"datasource","uid":"datasource-2","actions":["datasources:read"]},{"kind":"datasource","uid":"datasource-3","actions":["datasources:read"]},{"kind":"datasource","uid":"datasource-4","actions":[]}] |
 //  |                |                |                         |                  |                                      |           "gdev",        |           "datasource-2", |                |                                                                                                                                                                                                                                                                   |
 //  |                |                |                         |                  |                                      |           "demo"         |           "datasource-3", |                |                                                                                                                                                                                                                                                                   |
 //  |                |                |                         |                  |                                      |         ]                |           "datasource-4"  |                |                                                                                                                                                                                                                                                                   |
 //  |                |                |                         |                  |                                      |                          |         ]                 |                |                                                                                                                                                                                                                                                                   |
-//  | dashboard      | xMsQdBfWz      | Bar Gauge Demo Unfilled |                  | /d/xMsQdBfWz/bar-gauge-demo-unfilled | [                        | []                        | yboVMzb7z      | [{"type":"dashboard","uid":"xMsQdBfWz","actions":[]}]                                                                                                                                                                                                             |
+//  | dashboard      | xMsQdBfWz      | Bar Gauge Demo Unfilled |                  | /d/xMsQdBfWz/bar-gauge-demo-unfilled | [                        | []                        | yboVMzb7z      | [{"kind":"dashboard","uid":"xMsQdBfWz","actions":[]}]                                                                                                                                                                                                             |
 //  |                |                |                         |                  |                                      |           "gdev",        |                           |                |                                                                                                                                                                                                                                                                   |
 //  |                |                |                         |                  |                                      |           "demo"         |                           |                |                                                                                                                                                                                                                                                                   |
 //  |                |                |                         |                  |                                      |         ]                |                           |                |                                                                                                                                                                                                                                                                   |
@@ -203,7 +203,7 @@
           [
             [
               {
-                "type": "folder",
+                "kind": "folder",
                 "uid": "ujaM1h6nz",
                 "actions": [
                   "folders:read"
@@ -212,47 +212,47 @@
             ],
             [
               {
-                "type": "dashboard",
+                "kind": "dashboard",
                 "uid": "7MeksYbmk",
                 "actions": [
                   "dashboards:write"
                 ]
               },
               {
-                "type": "datasource",
+                "kind": "datasource",
                 "uid": "datasource-1",
                 "actions": []
               }
             ],
             [
               {
-                "type": "dashboard",
+                "kind": "dashboard",
                 "uid": "vmie2cmWz",
                 "actions": []
               },
               {
-                "type": "datasource",
+                "kind": "datasource",
                 "uid": "datasource-2",
                 "actions": [
                   "datasources:read"
                 ]
               },
               {
-                "type": "datasource",
+                "kind": "datasource",
                 "uid": "datasource-3",
                 "actions": [
                   "datasources:read"
                 ]
               },
               {
-                "type": "datasource",
+                "kind": "datasource",
                 "uid": "datasource-4",
                 "actions": []
               }
             ],
             [
               {
-                "type": "dashboard",
+                "kind": "dashboard",
                 "uid": "xMsQdBfWz",
                 "actions": []
               }
