@@ -107,12 +107,47 @@ In [Grafana Enterprise]({{< relref "../../enterprise/" >}}), you can also [assig
 
 ### Before you begin
 
-- Ensure you have permission to update service accounts permissions. By default, the organization administrator role is required to update service accounts permissions. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
+- Ensure you have permission to update service accounts roles. By default, the organization administrator role is required to update service accounts permissions. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
 ### To assign a role to a service account
 
 1. Sign in to Grafana, then hover your cursor over **Configuration** (the gear icon) in the sidebar.
 1. Click **Service accounts**.
-1. Click the service account to which you want to assign a role. As an alternative, find the service account in the list view,
+1. Click the service account to which you want to assign a role. As an alternative, find the service account in the list view.
 1. Assign a role using the role picker.
 1. Click **Update**.
+
+## Manage users and teams permissions for a service account in Grafana
+
+To control what and who can do with the service account you can assign permissions directly to users and teams. You can assign permissions using the Grafana UI.
+
+### Before you begin
+
+- Ensure you have permission to update user and team permissions of a service accounts. By default, the organization administrator role is required to update user and teams permissions for a service account. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
+- Ensure you have permission to read teams.
+
+### User and team permissions for a service account
+
+You can assign on of the following permissions to a specific user or a team:
+
+1. **View**: User or a team with this permission will be able to view service account details and service account tokens.
+1. **Edit**: User or a team with this permission will be able to view, edit, enable and disable, delete service account, as well as view, add or delete service account tokens.
+1. **Admin**: User or a team with this permission will be able to everything from **Edit** permission, as well as manage user and team permissions for a service account.
+
+### To update team permissions for a service account
+
+1. Sign in to Grafana, then hover your cursor over **Configuration** (the gear icon) in the sidebar.
+1. Click **Service accounts**.
+1. Click the service account for which you want to update team permissions a role.
+1. In the **Permissions** section at the bottom, click **Add permission**.
+1. Choose **Team** in the dropdown and select your desired team.
+1. Choose **View**, **Edit** or **Admin** role in the dropdown and click **Save**.
+
+### To update user permissions for a service account
+
+1. Sign in to Grafana, then hover your cursor over **Configuration** (the gear icon) in the sidebar.
+1. Click **Service accounts**.
+1. Click the service account for which you want to update team permissions a role.
+1. In the **Permissions** section at the bottom, click **Add permission**.
+1. Choose **User** in the dropdown and select your desired user.
+1. Choose **View**, **Edit** or **Admin** role in the dropdown and click **Save**.
