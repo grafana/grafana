@@ -107,7 +107,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   );
 
   const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: string) =>
-    contactPointsState?.receivers[receiverName]?.errorCount ?? 0;
+    contactPointsState.receivers[receiverName]?.errorCount ?? 0;
 
   return (
     <ReceiversSection
