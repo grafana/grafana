@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
 import React, { FC, memo } from 'react';
-import { connect, MapStateToProps } from 'react-redux';
 import { useAsync } from 'react-use';
 
-import { NavModel, locationUtil } from '@grafana/data';
+import { locationUtil, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { FolderDTO, StoreState } from 'app/types';
+import { FolderDTO } from 'app/types';
 
 import { GrafanaRouteComponentProps } from '../../../core/navigation/types';
 import { loadFolderPage } from '../loaders';
@@ -19,17 +17,14 @@ export interface DashboardListPageRouteParams {
   slug?: string;
 }
 
-interface DashboardListPageConnectedProps {
-  navModel: NavModel;
-}
-interface Props extends GrafanaRouteComponentProps<DashboardListPageRouteParams>, DashboardListPageConnectedProps {}
+interface Props extends GrafanaRouteComponentProps<DashboardListPageRouteParams> {}
 
-export const DashboardListPage: FC<Props> = memo(({ navModel, match, location }) => {
-  const { loading, value } = useAsync<() => Promise<{ folder?: FolderDTO; pageNavModel: NavModel }>>(() => {
+export const DashboardListPage: FC<Props> = memo(({ match, location }) => {
+  const { loading, value } = useAsync<() => Promise<{ folder?: FolderDTO; pageNav?: NavModelItem }>>(() => {
     const uid = match.params.uid;
     const url = location.pathname;
     if (!uid || !url.startsWith('/dashboards')) {
-      return Promise.resolve({ pageNavModel: navModel });
+      return Promise.resolve({});
     }
 
     return loadFolderPage(uid!).then(({ folder, folderNav }) => {
@@ -39,12 +34,12 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, match, location })
         locationService.push(path);
       }
 
-      return { folder, pageNavModel: { ...navModel, main: folderNav } };
+      return { folder, pageNav: folderNav };
     });
   }, [match.params.uid]);
 
   return (
-    <Page navModel={value?.pageNavModel ?? navModel}>
+    <Page navId="dashboards/browse" pageNav={value?.pageNav}>
       <Page.Contents
         isLoading={loading}
         className={css`
@@ -61,10 +56,4 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, match, location })
 
 DashboardListPage.displayName = 'DashboardListPage';
 
-const mapStateToProps: MapStateToProps<DashboardListPageConnectedProps, {}, StoreState> = (state) => {
-  return {
-    navModel: getNavModel(state.navIndex, 'manage-dashboards'),
-  };
-};
-
-export default connect(mapStateToProps)(DashboardListPage);
+export default DashboardListPage;

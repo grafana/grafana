@@ -205,7 +205,7 @@ export class DashboardModel implements TimeModel {
     meta.canEdit = meta.canEdit !== false;
     meta.canDelete = meta.canDelete !== false;
 
-    meta.showSettings = meta.canSave;
+    meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
     meta.hasUnsavedFolderChange = false;
 
@@ -1104,7 +1104,7 @@ export class DashboardModel implements TimeModel {
 
   canAddAnnotations() {
     // If RBAC is enabled there are additional conditions to check.
-    const canAdd = contextSrv.accessControlEnabled() && this.meta.annotationsPermissions?.dashboard.canAdd;
+    const canAdd = !contextSrv.accessControlEnabled() || this.meta.annotationsPermissions?.dashboard.canAdd;
 
     return Boolean(this.canEditDashboard() && canAdd);
   }
