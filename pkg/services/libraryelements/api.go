@@ -150,11 +150,11 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 	return response.JSON(http.StatusOK, LibraryElementSearchResponse{Result: elementsResult})
 }
 
-// swagger:route POST /library-elements library_elements createLibraryElement
+// swagger:route PATCH /library-elements/{library_element_uid} library_elements updateLibraryElement
 //
-// Create library element.
+// Update library element.
 //
-// Creates a new library element.
+// Updates an existing library element identified by uid.
 //
 // Responses:
 // 200: getLibraryElementResponse
@@ -162,6 +162,7 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
+// 412: preconditionFailedError
 // 500: internalServerError
 func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Response {
 	cmd := PatchLibraryElementCommand{}

@@ -340,6 +340,18 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, dtos.NewAlertNotification(query.Result))
 }
 
+// swagger:route GET /alert-notifications/uid/{notification_channel_uid} legacy_alerts_notification_channels getAlertNotificationChannelByUID
+//
+// Get notification channel by UID
+//
+// Returns the notification channel given the notification channel UID.
+//
+// Responses:
+// 200: getAlertNotificationChannelResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetAlertNotificationByUID(c *models.ReqContext) response.Response {
 	query := &models.GetAlertNotificationsWithUidQuery{
 		OrgId: c.OrgId,

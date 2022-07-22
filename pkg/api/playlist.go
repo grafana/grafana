@@ -216,12 +216,12 @@ func (hs *HTTPServer) CreatePlaylist(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, p)
 }
 
-// swagger:route DELETE /playlists/{uid} playlists deletePlaylist
+// swagger:route PUT /playlists/{uid} playlists updatePlaylist
 //
-// Delete pllaylist.
+// Update playlist.
 //
 // Responses:
-// 200: okResponse
+// 200: updatePlaylistResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError

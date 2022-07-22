@@ -1532,6 +1532,37 @@
       }
     },
     "/alert-notifications/uid/{notification_channel_uid}": {
+      "get": {
+        "description": "Returns the notification channel given the notification channel UID.",
+        "tags": ["legacy_alerts_notification_channels"],
+        "summary": "Get notification channel by UID",
+        "operationId": "getAlertNotificationChannelByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "notification_channel_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAlertNotificationChannelResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "put": {
         "description": "Updates an existing notification channel identified by uid.",
         "tags": ["legacy_alerts_notification_channels"],
@@ -5102,6 +5133,51 @@
             "$ref": "#/responses/internalServerError"
           }
         }
+      },
+      "patch": {
+        "description": "Updates an existing library element identified by uid.",
+        "tags": ["library_elements"],
+        "summary": "Update library element.",
+        "operationId": "updateLibraryElement",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PatchLibraryElementCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "library_element_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getLibraryElementResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "412": {
+            "$ref": "#/responses/preconditionFailedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
       }
     },
     "/library-elements/{library_element_uid}/connections/": {
@@ -6377,9 +6453,47 @@
           }
         }
       },
+      "put": {
+        "tags": ["playlists"],
+        "summary": "Update playlist.",
+        "operationId": "updatePlaylist",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePlaylistCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updatePlaylistResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "delete": {
         "tags": ["playlists"],
-        "summary": "Delete pllaylist.",
+        "summary": "Delete playlist.",
         "operationId": "deletePlaylist",
         "parameters": [
           {
@@ -8706,6 +8820,16 @@
         "tags": ["user_preferences"],
         "summary": "Update user preferences.",
         "operationId": "updateUserPreferences",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePrefsCmd"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"

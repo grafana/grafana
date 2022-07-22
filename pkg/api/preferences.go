@@ -254,7 +254,7 @@ func (hs *HTTPServer) PatchOrgPreferences(c *models.ReqContext) response.Respons
 	return hs.patchPreferencesFor(c.Req.Context(), c.OrgId, 0, 0, &dtoCmd)
 }
 
-// swagger:parameters  updateOrgPreferences updateTeamPreferences
+// swagger:parameters  updateUserPreferences
 type UpdateUserPreferencesParams struct {
 	// in:body
 	// required:true
