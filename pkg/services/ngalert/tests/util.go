@@ -63,7 +63,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	)
 
 	ng, err := ngalert.ProvideService(
-		cfg, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
+		cfg, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus,
 	)
 	require.NoError(tb, err)

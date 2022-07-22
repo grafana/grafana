@@ -65,7 +65,7 @@ import (
 // Get Team Members.
 //
 // Responses:
-// 200: okResponse
+// 200: getTeamMembersResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError

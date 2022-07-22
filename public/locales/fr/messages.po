@@ -202,6 +202,74 @@ msgstr ""
 msgid "dashboard.inspect.title"
 msgstr ""
 
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-arialabel"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-description"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.off-label"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.refresh-picker.on-description"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.add-panel"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.comments-show"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.mark-favorite"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.open-original"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-next"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-previous"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-stop"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.toolbar.refresh"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.save"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.settings"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.share"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.tv-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.unmark-favorite"
+msgstr ""
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr ""
@@ -364,6 +432,10 @@ msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.users"
+msgstr ""
+
+#: public/app/core/navigation/kiosk.ts
+msgid "navigation.kiosk.tv-alert"
 msgstr ""
 
 #: public/app/features/dashboard/utils/getPanelMenu.ts

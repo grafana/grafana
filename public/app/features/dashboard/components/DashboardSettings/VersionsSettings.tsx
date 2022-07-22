@@ -83,8 +83,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
       isLoading: true,
     });
 
-    const lhs = await historySrv.getDashboardVersion(this.props.dashboard.id, baseInfo.version);
-    const rhs = await historySrv.getDashboardVersion(this.props.dashboard.id, newInfo.version);
+    const lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.version);
+    const rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.version);
 
     this.setState({
       baseInfo,
