@@ -1,5 +1,4 @@
 import { e2e } from '@grafana/e2e';
-import { selectors } from '@grafana/e2e-selectors';
 
 const dataSourceName = 'PromExemplar';
 const addDataSource = () => {

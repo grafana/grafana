@@ -234,7 +234,21 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	if err != nil {
 		return nil, err
 	}
-	navTree = append(navTree, appLinks...)
+
+	// When topnav is enabled we can test new information architecture where plugins live in Apps category
+	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		navTree = append(navTree, &dtos.NavLink{
+			Text:        "Apps",
+			Icon:        "apps",
+			Description: "App plugins",
+			Id:          "apps",
+			Children:    appLinks,
+			Section:     dtos.NavSectionCore,
+			Url:         hs.Cfg.AppSubURL + "/apps",
+		})
+	} else {
+		navTree = append(navTree, appLinks...)
+	}
 
 	configNodes := []*dtos.NavLink{}
 
@@ -335,8 +349,11 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
+	var configNode *dtos.NavLink
+	var serverAdminNode *dtos.NavLink
+
 	if len(configNodes) > 0 {
-		configNode := &dtos.NavLink{
+		configNode = &dtos.NavLink{
 			Id:         dtos.NavIDCfg,
 			Text:       "Configuration",
 			SubTitle:   "Organization: " + c.OrgName,
@@ -352,8 +369,18 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	adminNavLinks := hs.buildAdminNavLinks(c)
 
 	if len(adminNavLinks) > 0 {
-		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks)
+		serverAdminNode = navlinks.GetServerAdminNode(adminNavLinks)
 		navTree = append(navTree, serverAdminNode)
+	}
+
+	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		// Move server admin into Configuration and rename to administration
+		if configNode != nil && serverAdminNode != nil {
+			configNode.Text = "Administration"
+			configNode.Children = append(configNode.Children, serverAdminNode)
+			adminNodeIndex := len(navTree) - 1
+			navTree = navTree[:adminNodeIndex]
+		}
 	}
 
 	navTree = hs.addHelpLinks(navTree, c)

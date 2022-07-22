@@ -5,7 +5,7 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
-"Language: es\n"
+"Language: fr\n"
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: \n"
@@ -466,6 +466,154 @@ msgstr ""
 msgid "panel.header-menu.view"
 msgstr ""
 
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.cancel-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.info-text"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.save-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.share-default-label"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.share-externally-label"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.view-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.copy-link-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.info-text"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.link-url"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.render-alert"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.render-instructions"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.rendered-image"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.save-alert"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.save-dashboard"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.shorten-url"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.theme"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.theme-current"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.theme-dark"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.theme-light"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.time-range-description"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.time-range-label"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.cancel-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.copy-link-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.delete-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.deleted-message"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire-day"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire-hour"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire-never"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire-week"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.info-text-1"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.info-text-2"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.local-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.mistake-message"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.name"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.timeout"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.timeout-description"
+msgstr ""
+
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"
 msgstr ""
@@ -559,7 +707,7 @@ msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "user-profile.title"
-msgstr "Editar perfil"
+msgstr "Editer le profil"
 
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-session.browser-column"
