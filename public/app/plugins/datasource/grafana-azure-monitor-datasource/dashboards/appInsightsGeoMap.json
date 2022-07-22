@@ -45,6 +45,20 @@
   "liveNow": false,
   "panels": [
     {
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 18,
+      "options": {
+        "content": "<div style=\"padding: 1em; text-align: center\">\n  <p> This dashboard helps you visualize data on availability tests for your Application Insights. Note that even if you have an App Insights resource configured, if you have no tests configured for it, no data will show. You can configure the following:</p>\n  <ul style=\"display: inline-block; text-align:left\">\n\n      <li>The regions (Select one or more)</li>\n\n      <li>The Availability tests (Select one or more)</li>\n\n      <li>The colors and thresholds in the Geo Maps to make the dashboard more relevant to your environment.</li>\n  </ul>\n</div>",
+        "mode": "html"
+      },
+      "type": "text"
+    },
+    {
       "datasource": {
         "type": "grafana-azure-monitor-datasource",
         "uid": "${ds}"
