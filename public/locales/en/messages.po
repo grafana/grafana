@@ -466,6 +466,156 @@ msgstr "Share"
 msgid "panel.header-menu.view"
 msgstr "View"
 
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.cancel-button"
+msgstr "Cancel"
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.info-text"
+msgstr "Export this dashboard."
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.save-button"
+msgstr "Save to file"
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.share-default-label"
+msgstr "Export with default values removed"
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.share-externally-label"
+msgstr "Export for sharing externally"
+
+#: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
+msgid "share-modal.export.view-button"
+msgstr "View JSON"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.copy-link-button"
+msgstr "Copy"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.info-text"
+msgstr "Create a direct link to this dashboard or panel, customized with the options below."
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.link-url"
+msgstr "Link URL"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.render-alert"
+msgstr "Image renderer plugin not installed"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.render-instructions"
+msgstr "To render a panel image, you must install the <0>Grafana image renderer plugin</0>. Please contact your Grafana administrator to install the plugin."
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.rendered-image"
+msgstr "Direct link rendered image"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.save-alert"
+msgstr "Dashboard is not saved"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.save-dashboard"
+msgstr "To render a panel image, you must save the dashboard first."
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.shorten-url"
+msgstr "Shorten URL"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.theme"
+msgstr "Theme"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.theme-current"
+msgstr "Current"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.theme-dark"
+msgstr "Dark"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.theme-light"
+msgstr "Light"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.time-range-description"
+msgstr "Transforms the current relative time range to an absolute time range"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
+msgid "share-modal.link.time-range-label"
+msgstr "Lock time range"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.cancel-button"
+msgstr "Cancel"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.copy-link-button"
+msgstr "Copy"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.delete-button"
+msgstr "Delete snapshot."
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.deleted-message"
+msgstr "The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before before it is removed from browser caches or CDN caches."
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire"
+msgstr "Expire"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire-day"
+msgstr "1 Day"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire-hour"
+msgstr "1 Hour"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire-never"
+msgstr "Never"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.expire-week"
+msgstr "7 Days"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.info-text-1"
+msgstr "A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data and series names embedded in your dashboard."
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.info-text-2"
+msgstr "Keep in mind, your snapshot <0>can be viewed by anyone</0> that has the link and can access the URL. Share wisely."
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.local-button"
+msgstr "Local Snapshot"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.mistake-message"
+msgstr "Did you make a mistake?"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.name"
+msgstr "Snapshot name"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.timeout"
+msgstr "Timeout (seconds)"
+
+#: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
+msgid "share-modal.snapshot.timeout-description"
+msgstr ""
+"You might need to configure the timeout value if it takes a long time to collect your dashboard\n"
+"metrics."
+
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"
 msgstr "Timezone"
@@ -528,7 +678,7 @@ msgstr "Role"
 
 #: public/app/features/profile/UserOrganizations.tsx
 msgid "user-orgs.select-org-button"
-msgstr "Select"
+msgstr "Select organisation"
 
 #: public/app/features/profile/UserOrganizations.tsx
 msgid "user-orgs.title"
