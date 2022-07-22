@@ -1,4 +1,5 @@
-import { keyframes, css } from '@emotion/css';
+import { keyframes, css, cx } from '@emotion/css';
+import { relative } from 'node:path/win32';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Popper } from 'react-popper';
 
@@ -6,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { Button, ButtonProps } from '../Button';
+import { Icon } from '../Icon/Icon';
 import Indicator from '../Indicator/Indicator';
 
 export interface Props extends ButtonProps {
@@ -76,13 +78,20 @@ export function ClipboardButton({
 
       <Button
         onClick={copyTextCallback}
-        icon={showCopySuccess ? 'check' : icon}
+        icon={icon}
         variant={showCopySuccess ? 'success' : variant}
         aria-label={showCopySuccess ? 'Copied' : undefined}
         {...buttonProps}
+        className={cx(styles.button, showCopySuccess && styles.successButton)}
         ref={buttonRef}
       >
         {children}
+
+        {showCopySuccess && (
+          <div className={styles.successOverlay}>
+            <Icon name="check" />
+          </div>
+        )}
       </Button>
     </>
   );
@@ -121,9 +130,25 @@ const flyUpAnimation = keyframes({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    button: css({
+      position: 'relative',
+    }),
+    successButton: css({
+      '> *': css({
+        visibility: 'hidden',
+      }),
+    }),
+    successOverlay: css({
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      right: 0,
+      left: 0,
+      visibility: 'visible', // re-visible the overlay
+    }),
     appearAnimation: css({
       paddingBottom: theme.spacing(1),
-      animation: `${flyUpAnimation} ease-in 100ms`,
+      animation: `${flyUpAnimation} ease-out 100ms`,
     }),
   };
 };

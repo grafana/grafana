@@ -26,8 +26,8 @@ export default function Indicator({ children, suffixIcon }: IndicatorProps) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     root: css({
-      background: theme.colors.background.secondary,
-      color: theme.colors.text.maxContrast,
+      background: theme.components.tooltip.background,
+      color: theme.components.tooltip.text,
       padding: theme.spacing(0.5, 1.5), // get's an extra .5 of vertical padding to account for the rounded corners
       ...theme.typography.bodySmall,
       borderRadius: 100, // just a sufficiently large value to ensure ends are completely rounded
