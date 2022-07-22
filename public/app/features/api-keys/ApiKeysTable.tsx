@@ -50,7 +50,7 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate
                 <td>
                   <HorizontalGroup justify="flex-end">
                     <Button size="sm" onClick={() => onMigrate(key)}>
-                      Migrate
+                      Migrate to service account
                     </Button>
                     <DeleteButton
                       aria-label="Delete API key"
