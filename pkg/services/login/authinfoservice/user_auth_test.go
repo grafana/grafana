@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -459,6 +460,10 @@ func TestUserAuth(t *testing.T) {
 				}
 				authInfoStore.ExpectedDuplicateUserEntries = 2
 				authInfoStore.ExpectedHasDuplicateUserEntries = 1
+				authInfoStore.ExpectedLoginStats = login.LoginStats{
+					DuplicateUserEntries: 2,
+					MixedCasedUsers:      1,
+				}
 				// require metrics and statistics to be 2
 				m, err := srv.authInfoStore.CollectLoginStats(context.Background())
 				require.NoError(t, err)
@@ -477,6 +482,7 @@ type FakeAuthInfoStore struct {
 	ExpectedOAuth                   *models.UserAuth
 	ExpectedDuplicateUserEntries    int
 	ExpectedHasDuplicateUserEntries int
+	ExpectedLoginStats              login.LoginStats
 }
 
 func newFakeAuthInfoStore() *FakeAuthInfoStore {
@@ -522,5 +528,14 @@ func (f *FakeAuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]i
 	res["stats.users.has_duplicate_user_entries_by_login"] = 0
 	res["stats.users.duplicate_user_entries_by_email"] = 0
 	res["stats.users.has_duplicate_user_entries_by_email"] = 0
+	res["stats.users.mixed_cased_users"] = f.ExpectedLoginStats.MixedCasedUsers
 	return res, f.ExpectedError
+}
+
+func (f *FakeAuthInfoStore) RunMetricsCollection(ctx context.Context) error {
+	return f.ExpectedError
+}
+
+func (f *FakeAuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, error) {
+	return f.ExpectedLoginStats, f.ExpectedError
 }
