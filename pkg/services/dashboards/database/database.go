@@ -848,11 +848,7 @@ func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, ses
 		}
 	}
 	_, err = sess.Insert(entityEvent)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *sqlstore.DBSession) error {
