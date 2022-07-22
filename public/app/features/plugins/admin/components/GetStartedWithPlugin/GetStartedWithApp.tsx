@@ -7,8 +7,8 @@ import { AccessControlAction } from 'app/types';
 
 import { updatePluginSettings } from '../../api';
 import { usePluginConfig } from '../../hooks/usePluginConfig';
+import { isOrgAdmin } from '../../permissions';
 import { CatalogPlugin } from '../../types';
-import { isOrgAdmin } from '../permissions';
 
 type Props = {
   plugin: CatalogPlugin;
