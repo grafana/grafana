@@ -143,11 +143,10 @@ export const ExternalAlertmanagers = () => {
     <div>
       <h4>External Alertmanagers</h4>
 
-      <h5>Alert managers data sources</h5>
+      <h5>Alertmanagers data sources</h5>
       <div className={styles.muted}>
-        During the Alert manager data source configuration you can choose to send Grafana managed alerts to that Alert
-        manager. <br />
-        Here you can see the list of all Alert manager data sources which receive Grafana managed alerts.
+        Alertmanager data sources support a configuration setting that allows you to choose to send Grafana-managed alerts to that Alertmanager. <br />
+        Below, you can see the list of all Alertmanager data sources that have this setting enabled.
       </div>
       <div className={styles.externalDs}>
         {externalDsAlertManagers.map((ds) => (
@@ -167,10 +166,10 @@ export const ExternalAlertmanagers = () => {
         ))}
       </div>
 
-      <h5>URL-based external alert managers [deprecated]</h5>
-      <Alert severity="warning" title="Deprecation notice">
-        The URL-based configuration method is deprecated and will be removed in the future versions of Grafana <br />
-        Please use Alertmanager data sources to configure external alert managers.
+      <h5>Alertmanagers by URL</h5>
+      <Alert severity="warning" title="Deprecation Notice">
+        The URL-based configuration of Alertmanagers is now deprecated and will be removed in Grafana 9.2.0<br />
+        Please use Alertmanager data sources to configure your external Alertmanagers.
       </Alert>
 
       <div className={styles.muted}>
@@ -244,7 +243,7 @@ export const ExternalAlertmanagers = () => {
         <div className={styles.amChoice}>
           <Field
             label="Send alerts to"
-            description="Sets which Alertmanager will handle your alerts. Internal (Grafana built in Alertmanager), External (All Alertmanagers configured above), or both."
+            description="Configures how the Grafana alert rule evaluation engine Alertmanager will handle your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured above), or both."
           >
             <RadioButtonGroup
               options={alertmanagerChoices}
