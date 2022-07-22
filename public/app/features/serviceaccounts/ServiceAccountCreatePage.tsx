@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Form, Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
@@ -64,8 +63,6 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
     }
   }, [currentOrgId]);
 
-  const history = useHistory();
-
   const onSubmit = useCallback(
     async (data: ServiceAccountDTO) => {
       data.role = serviceAccount.role;
@@ -92,9 +89,9 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
       } catch (e) {
         console.error(e);
       }
-      history.push('/org/serviceaccounts/');
+      locationService.push(`/org/serviceaccounts/${response.id}`);
     },
-    [history, serviceAccount.role, pendingRoles]
+    [serviceAccount.role, pendingRoles]
   );
 
   const onRoleChange = (role: OrgRole) => {
