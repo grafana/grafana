@@ -1,5 +1,6 @@
 import { isArray, reduce } from 'lodash';
 
+import { IconName } from '@grafana/ui';
 import { QueryPartDef, QueryPart } from 'app/features/alerting/state/query_part';
 
 const alertQueryDef = new QueryPartDef({
@@ -81,7 +82,13 @@ function createReducerPart(model: any) {
   return new QueryPart(model, def);
 }
 
-function getStateDisplayModel(state: string) {
+interface AlertStateDisplayModel {
+  text: string;
+  iconClass: IconName;
+  stateClass: string;
+}
+
+function getStateDisplayModel(state: string): AlertStateDisplayModel {
   const normalizedState = state.toLowerCase().replace(/_/g, '');
 
   switch (normalizedState) {
