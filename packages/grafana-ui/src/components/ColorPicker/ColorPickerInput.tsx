@@ -29,6 +29,11 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
 
     useThrottleFn(
       (c) => {
+        // Default to an empty string if no color value is available
+        if (!c) {
+          onChange('');
+          return;
+        }
         const color = theme.visualization.getColorByName(c);
         if (returnColorAs === 'rgb') {
           onChange(colorManipulator.asRgbString(color));
