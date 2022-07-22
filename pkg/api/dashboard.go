@@ -1018,7 +1018,7 @@ type GetDashboardVersionByIDParams struct {
 }
 
 // swagger:parameters getDashboardVersionByUID
-type getDashboardVersionByUIDParams struct {
+type GetDashboardVersionByUIDParams struct {
 	// in:path
 	DashboardVersionID int64
 	// in:path

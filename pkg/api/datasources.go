@@ -857,7 +857,7 @@ type CheckDatasourceHealthByIDParams struct {
 }
 
 // swagger:parameters callDatasourceResourceByID
-type callDatasourceResourceByIDParams struct {
+type CallDatasourceResourceByIDParams struct {
 	// in:path
 	// required:true
 	DatasourceID string `json:"id"`

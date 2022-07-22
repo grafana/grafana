@@ -560,7 +560,6 @@ type ChangeUserPasswordParams struct {
 	Body models.ChangeUserPasswordCommand `json:"body"`
 }
 
-
 // swagger:parameters getUserByID
 type GetUserByIDParams struct {
 	// in:path

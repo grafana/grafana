@@ -390,4 +390,3 @@ type CreateTeamResponse struct {
 		Message string `json:"message"`
 	} `json:"body"`
 }
-

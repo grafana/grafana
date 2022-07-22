@@ -260,7 +260,6 @@ type RemoveTeamMemberParams struct {
 	UserID int64 `json:"user_id"`
 }
 
-
 // swagger:response getTeamMembersResponse
 type GetTeamMembersResponse struct {
 	// The response message
