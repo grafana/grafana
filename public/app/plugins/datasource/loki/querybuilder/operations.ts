@@ -326,7 +326,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       params: [
         { name: 'Identifier', type: 'string', hideName: true, minWidth: 16, placeholder: 'Label key' },
         {
-          name: 'Conversion operator',
+          name: 'Conversion function',
           hideName: true,
           type: 'string',
           options: ['duration', 'duration_seconds', 'bytes'],
@@ -342,7 +342,11 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: addLokiOperation,
       explainHandler: (op) => {
         let label = String(op.params[0]).length > 0 ? op.params[0] : '<label>';
-        return `Use the extracted label \`${label}\` as sample values instead of log lines for the subsequent range aggregation.`;
+        return `Use the extracted label \`${label}\` as sample values instead of log lines for the subsequent range aggregation.${
+          op.params[1]
+            ? ` Conversion function \`${op.params[1]}\` wrapping \`${label}\` will attempt to convert this label from a specific format (e.g. 3k, 500ms).`
+            : ''
+        }`;
       },
     },
     ...binaryScalarOperations,

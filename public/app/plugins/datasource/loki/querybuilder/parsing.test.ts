@@ -268,7 +268,7 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
-  it('parses query with unwrap and conversion operation', () => {
+  it('parses query with unwrap and conversion function', () => {
     const context = buildVisualQueryFromString(
       'sum_over_time({app="frontend"} | logfmt | unwrap duration(label) [5m])'
     );
