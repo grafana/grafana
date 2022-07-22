@@ -463,7 +463,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 }
 
 // RevertApiKey converts service account token to old API key
-func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64) error {
+func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
 	query := models.GetApiKeyByIdQuery{ApiKeyId: keyId}
 	if err := s.sqlStore.GetApiKeyById(ctx, &query); err != nil {
 		return err
@@ -472,6 +472,10 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 
 	if key.ServiceAccountId == nil {
 		return fmt.Errorf("API key is not service account token")
+	}
+
+	if *key.ServiceAccountId != saId {
+		return ErrServiceAccountAndTokenMismatch
 	}
 
 	tokens, err := s.ListTokens(ctx, key.OrgId, *key.ServiceAccountId)

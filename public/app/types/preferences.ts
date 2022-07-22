@@ -4,7 +4,8 @@ export interface UserPreferencesDTO {
   timezone: TimeZone;
   weekStart: string;
   locale: string;
-  homeDashboardId: number;
+  // It is undefined when there is not dashboard assigned (default)
+  homeDashboardUID?: string;
   theme: string;
   queryHistory: {
     homeTab: '' | 'query' | 'starred';
