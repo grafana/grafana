@@ -58,9 +58,6 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   isLive: false,
   isPaused: false,
   queryResponse: createEmptyQueryResponse(),
-  tableResult: null,
-  graphResult: null,
-  logsResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
@@ -68,20 +65,15 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   logsVolumeData: undefined,
   graphStyle: loadGraphStyle(),
   panelsState: {},
+  frames: {},
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
   state: LoadingState.NotStarted,
   series: [],
   timeRange: getDefaultTimeRange(),
-  graphFrames: [],
-  logsFrames: [],
-  traceFrames: [],
-  nodeGraphFrames: [],
-  tableFrames: [],
-  graphResult: null,
   logsResult: null,
-  tableResult: null,
+  frames: {},
 });
 
 export async function loadAndInitDatasource(

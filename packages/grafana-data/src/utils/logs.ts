@@ -207,7 +207,7 @@ export const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
-export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: LogsSortOrder): LogsModel => {
+export const sortLogsResult = (logsResult: LogsModel | null | undefined, sortOrder: LogsSortOrder): LogsModel => {
   const rows = logsResult ? sortLogRows(logsResult.rows, sortOrder) : [];
   return logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 };

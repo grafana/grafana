@@ -333,28 +333,26 @@ export function getNodeGraphDataFrames(frames: DataFrame[], options?: NodeGraphO
   //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
   //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
   //  and lazy processing here. Needs bigger refactor so keeping nodeGraph and Traces as they are for now.
-  let nodeGraphFrames = frames.filter((frame) => {
-    if (frame.meta?.preferredVisualisationType === 'nodeGraph') {
-      return true;
-    }
-
-    if (frame.name === 'nodes' || frame.name === 'edges' || frame.refId === 'nodes' || frame.refId === 'edges') {
-      return true;
-    }
-
-    const fieldsCache = new FieldCache(frame);
-    if (fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id)) {
-      return true;
-    }
-
-    return false;
-  });
+  let nodeGraphFrames = frames.filter(isNodeGraphFrame);
 
   // If panel options are provided, interpolate their values in to the data frames
   if (options) {
     nodeGraphFrames = applyOptionsToFrames(nodeGraphFrames, options);
   }
   return nodeGraphFrames;
+}
+
+export function isNodeGraphFrame(frame: DataFrame): boolean {
+  if (frame.meta?.preferredVisualisationType === 'nodeGraph') {
+    return true;
+  }
+
+  if (frame.name === 'nodes' || frame.name === 'edges' || frame.refId === 'nodes' || frame.refId === 'edges') {
+    return true;
+  }
+
+  const fieldsCache = new FieldCache(frame);
+  return Boolean(fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id));
 }
 
 export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOptions): DataFrame[] => {

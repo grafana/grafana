@@ -59,7 +59,6 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
         spanFindMatches={spanFindMatches}
         search={search}
         focusedSpanIdForSearch={focusedSpanIdForSearch}
-        queryResponse={data}
         datasource={dataSource.value}
         topOfViewRef={topOfViewRef}
         topOfViewRefType={TopOfViewRefType.Panel}

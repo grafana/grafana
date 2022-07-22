@@ -90,8 +90,6 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
     return {
       ...state,
       datasourceInstance,
-      graphResult: null,
-      tableResult: null,
       logsResult: null,
       logsVolumeDataProvider: undefined,
       logsVolumeData: undefined,
@@ -100,6 +98,7 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       queryKeys: [],
       history,
       datasourceMissing: false,
+      frames: {},
     };
   }
 

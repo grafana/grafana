@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import memoizeOne from 'memoize-one';
 import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -8,31 +7,24 @@ import { Unsubscribable } from 'rxjs';
 
 import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
+import { CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
-import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
 import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 
-import { ExploreGraph } from './ExploreGraph';
-import { ExploreGraphLabel } from './ExploreGraphLabel';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
-import LogsContainer from './LogsContainer';
 import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
-import { NodeGraphContainer } from './NodeGraphContainer';
 import { QueryRows } from './QueryRows';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
-import TableContainer from './TableContainer';
-import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize, changeGraphStyle } from './state/explorePane';
 import { splitOpen } from './state/main';
 import { addQueryRow, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
@@ -228,94 +220,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return <NoData />;
   }
 
-  renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme, graphStyle } = this.props;
-    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
-    const label = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={this.onChangeGraphStyle} />;
-    return (
-      <Collapse label={label} loading={loading} isOpen>
-        <ExploreGraph
-          graphStyle={graphStyle}
-          data={graphResult!}
-          height={400}
-          width={width - spacing}
-          absoluteRange={absoluteRange}
-          onChangeTime={this.onUpdateTimeRange}
-          timeZone={timeZone}
-          annotations={queryResponse.annotations}
-          splitOpenFn={splitOpen}
-          loadingState={queryResponse.state}
-        />
-      </Collapse>
-    );
-  }
-
-  renderTablePanel(width: number) {
-    const { exploreId, datasourceInstance, timeZone } = this.props;
-    return (
-      <TableContainer
-        ariaLabel={selectors.pages.Explore.General.table}
-        width={width}
-        exploreId={exploreId}
-        onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
-        timeZone={timeZone}
-      />
-    );
-  }
-
-  renderLogsPanel(width: number) {
-    const { exploreId, syncedTimes, theme, queryResponse } = this.props;
-    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
-    return (
-      <LogsContainer
-        exploreId={exploreId}
-        loadingState={queryResponse.state}
-        syncedTimes={syncedTimes}
-        width={width - spacing}
-        onClickFilterLabel={this.onClickFilterLabel}
-        onClickFilterOutLabel={this.onClickFilterOutLabel}
-        onStartScanning={this.onStartScanning}
-        onStopScanning={this.onStopScanning}
-      />
-    );
-  }
-
-  renderNodeGraphPanel() {
-    const { exploreId, showTrace, queryResponse, datasourceInstance } = this.props;
-    const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
-
-    return (
-      <NodeGraphContainer
-        dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
-        exploreId={exploreId}
-        withTraceView={showTrace}
-        datasourceType={datasourceType}
-      />
-    );
-  }
-
-  memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
-
-  renderTraceViewPanel() {
-    const { queryResponse, splitOpen, exploreId } = this.props;
-    const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
-
-    return (
-      // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames.length && (
-        <TraceViewContainer
-          exploreId={exploreId}
-          dataFrames={dataFrames}
-          splitOpenFn={splitOpen}
-          scrollElement={this.scrollElement}
-          queryResponse={queryResponse}
-          topOfViewRef={this.topOfViewRef}
-        />
-      )
-    );
-  }
-
-  renderPanels() {
+  renderPanels(width: number) {
     const { queryResponse, frames } = this.props;
     const showNoData =
       queryResponse.state === LoadingState.Done && Object.values(frames).every((frame) => frame.length === 0);
@@ -324,29 +229,51 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       return <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>;
     }
 
-    // TODO: this needs to be changed to something like this:
-    // for (key of Object.keys(frames)) {
-    //   const panel = getPanelForVisType(key)
-    //   if panel {
-    //     panel.render(frames)
-    //   }
-    // }
-    // But also panels need to get some unified API for rendering as right now there are some custom things for
-    // each supported panel in explore
-    return (
-      <>
-        {showMetrics && graphResult && <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>}
-        {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-        {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
-        {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
-        {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-      </>
-    );
+    const panels: React.ReactNode[] = [];
+    if (!frames) {
+      return panels;
+    }
+
+    for (const key of Object.keys(frames)) {
+      const Panel = getPanelForVisType(key);
+      if (Panel) {
+        panels.push(
+          <ErrorBoundaryAlert key={key}>
+            <Panel
+              onChangeGraphStyle={this.onChangeGraphStyle}
+              data={frames[key]}
+              absoluteRange={this.props.absoluteRange}
+              range={this.props.range}
+              timeZone={this.props.timeZone}
+              splitOpen={this.props.splitOpen}
+              annotations={this.props.queryResponse.annotations}
+              loadingState={this.props.queryResponse.state}
+              loading={this.props.loading}
+              theme={this.props.theme}
+              graphStyle={this.props.graphStyle}
+              onUpdateTimeRange={this.onUpdateTimeRange}
+              width={width}
+              onCellFilterAdded={this.onCellFilterAdded}
+              exploreId={this.props.exploreId}
+              syncedTimes={this.props.syncedTimes}
+              onClickFilterLabel={this.onClickFilterLabel}
+              onClickFilterOutLabel={this.onClickFilterOutLabel}
+              onStartScanning={this.onStartScanning}
+              onStopScanning={this.onStopScanning}
+              datasourceInstance={this.props.datasourceInstance}
+              withTraceView={Boolean(frames['trace']?.length)}
+              scrollElement={this.scrollElement}
+              topOfViewRef={this.topOfViewRef}
+            />
+          </ErrorBoundaryAlert>
+        );
+      }
+    }
+    return panels;
   }
 
   render() {
-    const { datasourceInstance, datasourceMissing, exploreId, queryResponse, isLive, theme, timeZone, frames } =
-      this.props;
+    const { datasourceInstance, datasourceMissing, exploreId, queryResponse, isLive, theme, timeZone } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
@@ -389,7 +316,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 return (
                   <main className={cx(styles.exploreMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
-                      {showPanels && this.renderPanels()}
+                      {showPanels && this.renderPanels(width)}
                       {showRichHistory && (
                         <RichHistoryContainer
                           width={width}
@@ -433,6 +360,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     loading,
     graphStyle,
     frames,
+    range,
   } = item;
 
   return {
@@ -448,6 +376,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     loading,
     graphStyle,
     frames,
+    range,
   };
 }
 

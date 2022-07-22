@@ -104,7 +104,7 @@ export interface ExploreItemState {
   /**
    * Log query result to be displayed in the logs result viewer.
    */
-  logsResult?: LogsModel;
+  logsResult?: LogsModel | null;
   frames: { [key: string]: DataFrame[] };
 
   /**
@@ -209,5 +209,5 @@ export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
 
 export interface ExplorePanelData extends PanelData {
   frames: { [key: string]: DataFrame[] };
-  logsResult?: LogsModel;
+  logsResult?: LogsModel | null;
 }

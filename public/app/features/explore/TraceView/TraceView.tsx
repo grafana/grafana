@@ -13,7 +13,6 @@ import {
   GrafanaTheme2,
   LinkModel,
   mapInternalLinkToExplore,
-  PanelData,
   SplitOpen,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -65,7 +64,6 @@ type Props = {
   spanFindMatches?: Set<string>;
   search: string;
   focusedSpanIdForSearch: string;
-  queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef: RefObject<HTMLDivElement>;
   topOfViewRefType: TopOfViewRefType;

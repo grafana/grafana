@@ -16,10 +16,12 @@ import { config } from '@grafana/runtime';
 
 import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
+import { isNodeGraphFrame } from '../../../plugins/panel/nodeGraph/utils';
 import { ExplorePanelData } from '../../../types';
 import { preProcessPanelData } from '../../query/state/runRequest';
 
 /**
+ import { isNodeGraphFrame } from 'app/plugins/panel/nodeGraph/utils';
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
  * dataFrames with different type of data. This is later used for type specific processing. As we use this in
  * Observable pipeline, it decorates the existing panelData to pass the results to later processing stages.
@@ -36,6 +38,8 @@ export const groupFramesByVisType = (data: PanelData): ExplorePanelData => {
       if (isTimeSeries(frame)) {
         frames['graph'].push(frame);
         frames['table'].push(frame);
+      } else if (isNodeGraphFrame(frame)) {
+        frames['nodeGraph'].push(frame);
       } else {
         // We fallback to table if we do not have any better meta info about the dataframe.
         frames['table'].push(frame);
@@ -56,7 +60,7 @@ export const groupFramesByVisType = (data: PanelData): ExplorePanelData => {
  */
 export const mergeTableFrames = (data: ExplorePanelData): Observable<ExplorePanelData> => {
   let tableFrames = data.frames['table'];
-  if (tableFrames?.length === 0) {
+  if (!tableFrames?.length) {
     return of({ ...data, tableResult: null });
   }
 
@@ -113,7 +117,7 @@ export const processLogs =
     } = {}
   ) =>
   (data: ExplorePanelData): ExplorePanelData => {
-    if (data.frames['logs'].length === 0) {
+    if (!data.frames['logs']?.length) {
       return { ...data, logsResult: undefined };
     }
 

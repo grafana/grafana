@@ -3,7 +3,7 @@ import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceT
 import React, { RefObject, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { DataFrame, SplitOpen, PanelData } from '@grafana/data';
+import { DataFrame, SplitOpen } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
@@ -16,13 +16,12 @@ interface Props {
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
   scrollElement?: Element;
-  queryResponse: PanelData;
   topOfViewRef: RefObject<HTMLDivElement>;
 }
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
-  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef, queryResponse } = props;
+  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
@@ -58,7 +57,6 @@ export function TraceViewContainer(props: Props) {
           spanFindMatches={spanFindMatches}
           search={search}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
-          queryResponse={queryResponse}
           datasource={datasource}
           topOfViewRef={topOfViewRef}
           topOfViewRefType={TopOfViewRefType.Explore}
