@@ -414,13 +414,13 @@ type GetSnapshotsParams struct {
 }
 
 // swagger:parameters getDashboardSnapshot
-type SnapshotByKeyParams struct {
+type GetDashboardSnapshotParams struct {
 	// in:path
 	Key string `json:"key"`
 }
 
 // swagger:parameters deleteDashboardSnapshot
-type DeleteSnapshotByKeyParams struct {
+type DeleteDashboardSnapshotParams struct {
 	// in:path
 	Key string `json:"key"`
 }
@@ -447,16 +447,16 @@ type CreateSnapshotResponse struct {
 }
 
 // swagger:response searchDashboardSnapshotsResponse
-type GetSnapshotsResponse struct {
+type SearchDashboardSnapshotsResponse struct {
 	// in:body
 	Body []*dashboardsnapshots.DashboardSnapshotDTO `json:"body"`
 }
 
 // swagger:response getDashboardSnapshotResponse
-type SnapshotResponse DashboardResponse
+type GetDashboardSnapshotResponse DashboardResponse
 
 // swagger:response getSharingOptionsResponse
-type GetSnapshotSharingOptionsResponse struct {
+type GetSharingOptionsResponse struct {
 	// in:body
 	Body struct {
 		ExternalSnapshotURL  string `json:"externalSnapshotURL"`
