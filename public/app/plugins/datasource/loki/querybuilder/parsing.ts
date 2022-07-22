@@ -240,8 +240,17 @@ function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuil
     };
   }
   if (node.firstChild!.name === 'IpLabelFilter') {
+    const ipLabelFilter = node.firstChild;
+    const label = ipLabelFilter?.getChild('Identifier');
+    const op = label?.nextSibling;
+    const value = ipLabelFilter?.getChild('String');
+    const valueString = handleQuotes(getString(expr, value));
+
     return {
-      error: 'IpLabelFilter not supported in query builder',
+      operation: {
+        id: LokiOperationId.LabelFilterIpMatches,
+        params: [getString(expr, label), getString(expr, op), valueString],
+      },
     };
   }
 

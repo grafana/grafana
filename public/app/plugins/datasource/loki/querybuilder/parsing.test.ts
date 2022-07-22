@@ -1,5 +1,5 @@
 import { buildVisualQueryFromString } from './parsing';
-import { LokiVisualQuery } from './types';
+import { LokiOperationId, LokiVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
   it('creates no errors for empty query', () => {
@@ -169,14 +169,21 @@ describe('buildVisualQueryFromString', () => {
 
   it('returns error for query with ip label filter', () => {
     const context = buildVisualQueryFromString('{app="frontend"} | logfmt | address=ip("192.168.4.5/16")');
-    expect(context.errors).toEqual([
-      {
-        text: 'IpLabelFilter not supported in query builder: address=ip("192.168.4.5/16")',
-        from: 28,
-        to: 56,
-        parentType: 'PipelineStage',
-      },
-    ]);
+    expect(context).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: LokiOperationId.LabelFilterIpMatches, params: ['address', '=', '192.168.4.5/16'] },
+        ],
+      })
+    );
   });
 
   it('parses query with with parser', () => {
