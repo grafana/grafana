@@ -9,10 +9,10 @@ import InfluxDatasource from './../datasource';
 
 export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, InfluxQuery, InfluxOptions>) => {
   const { query, onChange } = props;
-  const [eventQuery, setEventQuery] = useState<string>(query?.query || '');
+  const [eventQuery, setEventQuery] = useState<string>(query.query ?? '');
 
-  const [textColumn, setTextColumn] = useState<string>(query?.textColumn || '');
-  const [tagsColumn, setTagsColumn] = useState<string>(query?.tagsColumn || '');
+  const [textColumn, setTextColumn] = useState<string>(query.textColumn ?? '');
+  const [tagsColumn, setTagsColumn] = useState<string>(query.tagsColumn ?? '');
   const [timeEndColumn, setTimeEndColumn] = useState<string>(query?.timeEndColumn || '');
   const [titleColumn] = useState<string>(query?.titleColumn || '');
   const updateValue = <K extends keyof InfluxQuery, V extends InfluxQuery[K]>(key: K, val: V) => {
@@ -28,7 +28,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
       <div className="gf-form">
         <InlineFormLabel width={12}>Graphite Query</InlineFormLabel>
         <Input
-          value={eventQuery || ''}
+          value={eventQuery}
           onChange={(e) => setEventQuery(e.currentTarget.value || '')}
           onBlur={() => updateValue('query', eventQuery)}
           placeholder="select text from events where $timeFilter limit 1000"
@@ -46,7 +46,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
           <div className="gf-form">
             <InlineFormLabel width={12}>Text</InlineFormLabel>
             <Input
-              value={textColumn || ''}
+              value={textColumn}
               onChange={(e) => setTextColumn(e.currentTarget.value || '')}
               onBlur={() => updateValue('textColumn', textColumn)}
             />
@@ -54,7 +54,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
           <div className="gf-form">
             <InlineFormLabel width={12}>Tags</InlineFormLabel>
             <Input
-              value={tagsColumn || ''}
+              value={tagsColumn}
               onChange={(e) => setTagsColumn(e.currentTarget.value || '')}
               onBlur={() => updateValue('tagsColumn', tagsColumn)}
             />
@@ -62,14 +62,14 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
           <div className="gf-form">
             <InlineFormLabel width={12}>TimeEnd</InlineFormLabel>
             <Input
-              value={timeEndColumn || ''}
+              value={timeEndColumn}
               onChange={(e) => setTimeEndColumn(e.currentTarget.value || '')}
               onBlur={() => updateValue('timeEndColumn', timeEndColumn)}
             />
           </div>
           <div className="gf-form ng-hide">
             <InlineFormLabel width={12}>Title</InlineFormLabel>
-            <Input value={titleColumn || ''} />
+            <Input value={titleColumn} />
           </div>
         </div>
       </div>
