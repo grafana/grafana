@@ -10,6 +10,38 @@ const hasArrayIndex = (name: string) => name.indexOf('[') !== -1;
 export const isValidIntegrationType = (integrationName: string): boolean =>
   hasArrayIndex(integrationName) ? /\w(\[((\d*))])$/.test(integrationName) : true;
 
+export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDTO[]): ContactPointsState => {
+  // init object to return
+  const contactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
+
+  // for each receiver from response
+  receiversStateDto.forEach((cpState) => {
+    //init receiver state
+    contactPointsState.receivers[cpState.name] = { active: cpState.active, integrations: {}, errorCount: 0 };
+    const receiverState = contactPointsState.receivers[cpState.name];
+    //update integrations in response
+    cpState.integrations.forEach((integrationStatusDTO) => {
+      //update errorcount
+      const hasError = Boolean(integrationStatusDTO?.lastError);
+      if (hasError) {
+        receiverState.errorCount += 1;
+        contactPointsState.errorCount += 1;
+      }
+      //add integration for this type
+      const integrationType = getIntegrationType(integrationStatusDTO.name);
+      if (integrationType) {
+        //if type still does not exist in IntegrationsTypeState we initialize it with an empty array
+        if (!receiverState.integrations[integrationType]) {
+          receiverState.integrations[integrationType] = [];
+        }
+        // add error status for this type
+        receiverState.integrations[integrationType].push(integrationStatusDTO);
+      }
+    });
+  });
+  return contactPointsState;
+};
+
 export const getIntegrationType = (integrationName: string): string | undefined =>
   isValidIntegrationType(integrationName)
     ? hasArrayIndex(integrationName)
@@ -18,37 +50,6 @@ export const getIntegrationType = (integrationName: string): string | undefined 
     : undefined;
 
 export function fetchContactPointsState(alertManagerSourceName: String): Promise<ContactPointsState> {
-  const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDTO[]): ContactPointsState => {
-    // init object to return
-    const contactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
-
-    // for each receiver from response
-    receiversStateDto.forEach((cpState) => {
-      //init receiver state
-      contactPointsState.receivers[cpState.name] = { active: cpState.active, integrations: {}, errorCount: 0 };
-      const receiverState = contactPointsState.receivers[cpState.name];
-      //update integrations in response
-      cpState.integrations.forEach((integrationStatusDTO) => {
-        //update errorcount
-        const hasError = Boolean(integrationStatusDTO?.lastError);
-        if (hasError) {
-          receiverState.errorCount += 1;
-          contactPointsState.errorCount += 1;
-        }
-        //add integration for this type
-        const integrationType = getIntegrationType(integrationStatusDTO.name);
-        if (integrationType) {
-          //if type still does not exist in IntegrationsTypeState we initialize it with an empty array
-          if (!receiverState.integrations[integrationType]) {
-            receiverState.integrations[integrationType] = [];
-          }
-          // add error status for this type
-          receiverState.integrations[integrationType].push(integrationStatusDTO);
-        }
-      });
-    });
-    return contactPointsState;
-  };
   return new Promise<ContactPointsState>((resolve) => {
     // Response EXAMPLE
     //    const fakeResponse = [
