@@ -3,6 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
 import { rangeUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -142,8 +143,14 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   };
 
   onHideApiKeys = async () => {
-    await this.props.hideApiKeys();
-    window.location.reload();
+    try {
+      await this.props.hideApiKeys();
+      let serviceAccountsUrl = '/org/serviceaccounts';
+      locationService.push(serviceAccountsUrl);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   render() {
