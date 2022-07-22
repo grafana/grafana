@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { keyBy } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -21,13 +20,12 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { loadDataSources } from 'app/features/datasources/state/actions';
 import { StoreState } from 'app/types/store';
 
-import { useExternalAmSelector } from '../../hooks/useExternalAmSelector';
+import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
 import {
   addExternalAlertmanagersAction,
   fetchExternalAlertmanagersAction,
   fetchExternalAlertmanagersConfigAction,
 } from '../../state/actions';
-import { getAlertManagerDataSources } from '../../utils/datasource';
 import { makeDataSourceLink } from '../../utils/misc';
 
 import { AddAlertManagerModal } from './AddAlertManagerModal';
@@ -44,15 +42,8 @@ export const ExternalAlertmanagers = () => {
   const [modalState, setModalState] = useState({ open: false, payload: [{ url: '' }] });
   const [deleteModalState, setDeleteModalState] = useState({ open: false, index: 0 });
 
-  const alertmanagerDatasources = useSelector((state: StoreState) =>
-    keyBy(
-      state.dataSources.dataSources.filter((ds) => ds.type === 'alertmanager'),
-      (ds) => ds.uid
-    )
-  );
-
   const externalAlertManagers = useExternalAmSelector();
-  const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
+  const externalDsAlertManagers = useExternalDataSourceAlertmanagers();
 
   const alertmanagersChoice = useSelector(
     (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagersChoice
@@ -151,9 +142,9 @@ export const ExternalAlertmanagers = () => {
         Below, you can see the list of all Alertmanager data sources that have this setting enabled.
       </div>
       <div className={styles.externalDs}>
-        {externalDsAlertManagers.map((ds) => (
-          <Card key={ds.uid} href={makeDataSourceLink(ds)}>
-            <Card.Heading>{ds.name}</Card.Heading>
+        {externalDsAlertManagers.map((am) => (
+          <Card key={am.dataSource.uid} href={makeDataSourceLink(am.dataSource)}>
+            <Card.Heading>{am.dataSource.name}</Card.Heading>
             <Card.Figure>
               <img
                 src="public/app/plugins/datasource/alertmanager/img/logo.svg"
@@ -163,7 +154,10 @@ export const ExternalAlertmanagers = () => {
                 style={{ objectFit: 'contain' }}
               />
             </Card.Figure>
-            {alertmanagerDatasources[ds.uid] && <Card.Meta>{alertmanagerDatasources[ds.uid].url}</Card.Meta>}
+            <Card.Tags>
+              <Icon name="heart" size="xl" style={{ color: getStatusColor(am.status) }} title={am.status} />
+            </Card.Tags>
+            <Card.Meta>{am.url}</Card.Meta>
           </Card>
         ))}
       </div>
