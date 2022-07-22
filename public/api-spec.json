@@ -118,7 +118,7 @@
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:list` and scope `roles:*`.",
         "tags": ["access_control", "enterprise"],
         "summary": "Get all roles.",
-        "operationId": "getAllRoles",
+        "operationId": "listRoles",
         "parameters": [
           {
             "type": "boolean",
@@ -128,7 +128,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/getAllRolesResponse"
+            "$ref": "#/responses/listRolesResponse"
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
@@ -142,7 +142,7 @@
         "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Create a new custom role.",
-        "operationId": "createRoleWithPermissions",
+        "operationId": "createRole",
         "parameters": [
           {
             "name": "body",
@@ -154,8 +154,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "$ref": "#/responses/getRoleResponse"
+          "201": {
+            "$ref": "#/responses/createRoleResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -596,11 +596,11 @@
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
         "tags": ["ldap_debug"],
-        "summary": "Available to grafana admins.",
-        "operationId": "getLDAPSyncStatus",
+        "summary": "Returns the current state of the LDAP background sync integration",
+        "operationId": "getSyncStatus",
         "responses": {
           "200": {
-            "$ref": "#/responses/getLDAPSyncStatusResponse"
+            "$ref": "#/responses/getSyncStatusResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -3763,7 +3763,7 @@
         "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
         "summary": "Get permissions for a data source.",
-        "operationId": "getPermissions",
+        "operationId": "getAllPermissions",
         "parameters": [
           {
             "type": "string",
@@ -3774,7 +3774,61 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/getPermissionseResponse"
+            "$ref": "#/responses/getAllPermissionseResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "tags": ["datasource_permissions", "enterprise"],
+        "summary": "Add permissions for a data source.",
+        "operationId": "addPermission",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "userId",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "builtinRole",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "permission",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "datasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/addPermissionResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -3823,9 +3877,6 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -4633,10 +4684,10 @@
       "get": {
         "tags": ["licensing", "enterprise"],
         "summary": "Check license availability.",
-        "operationId": "getLicenseStatus",
+        "operationId": "getStatus",
         "responses": {
           "200": {
-            "$ref": "#/responses/getLicenseStatusResponse"
+            "$ref": "#/responses/getStatusResponse"
           }
         }
       }
@@ -4788,24 +4839,6 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
-          }
-        }
-      }
-    },
-    "/login/saml": {
-      "get": {
-        "tags": ["saml", "enterprise"],
-        "summary": "It initiates the login flow by redirecting the user to the IdP.",
-        "operationId": "getSAMLLogin",
-        "responses": {
-          "302": {
-            "description": ""
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -6263,8 +6296,8 @@
     },
     "/recording-rules": {
       "get": {
+        "description": "Lists all rules in the database: active or deleted",
         "tags": ["recording_rules", "enterprise"],
-        "summary": "Get all recording rules.",
         "operationId": "listRecordingRules",
         "responses": {
           "200": {
@@ -6285,8 +6318,8 @@
         }
       },
       "put": {
+        "description": "Update the active status of a rule",
         "tags": ["recording_rules", "enterprise"],
-        "summary": "Update a recording rule.",
         "operationId": "updateRecordingRule",
         "parameters": [
           {
@@ -6317,8 +6350,8 @@
         }
       },
       "post": {
+        "description": "Create a recording rule that is then registered and started",
         "tags": ["recording_rules", "enterprise"],
-        "summary": "Create a new recording rule.",
         "operationId": "createRecordingRule",
         "parameters": [
           {
@@ -6388,8 +6421,8 @@
     },
     "/recording-rules/writer": {
       "get": {
+        "description": "Return the prometheus remote write target",
         "tags": ["recording_rules", "enterprise"],
-        "summary": "Get the write target.",
         "operationId": "getRecordingRuleWriteTarget",
         "responses": {
           "200": {
@@ -6410,8 +6443,9 @@
         }
       },
       "post": {
+        "description": "It returns a 422 if there is not an existing prometheus data source configured",
         "tags": ["recording_rules", "enterprise"],
-        "summary": "Create a new write target.",
+        "summary": "Create a remote write target.",
         "operationId": "createRecordingRuleWriteTarget",
         "parameters": [
           {
@@ -6446,7 +6480,7 @@
       },
       "delete": {
         "tags": ["recording_rules", "enterprise"],
-        "summary": "Delete the write target.",
+        "summary": "Delete the remote write target.",
         "operationId": "deleteRecordingRuleWriteTarget",
         "responses": {
           "200": {
@@ -6470,7 +6504,7 @@
     "/recording-rules/{recordingRuleID}": {
       "delete": {
         "tags": ["recording_rules", "enterprise"],
-        "summary": "Delete a recording rule.",
+        "summary": "Delete removes the rule from the registry and stops it.",
         "operationId": "deleteRecordingRule",
         "parameters": [
           {
@@ -6596,7 +6630,7 @@
         }
       }
     },
-    "/reports/render/pdf/{DashboardID}": {
+    "/reports/render/pdf/{dashboardID}": {
       "get": {
         "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "produces": ["application/pdf"],
@@ -6611,6 +6645,43 @@
             "name": "DashboardID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "dashboardID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "title",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "variables",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "orientation",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "layout",
+            "in": "query"
           }
         ],
         "responses": {
@@ -6636,6 +6707,23 @@
         "tags": ["reports", "enterprise"],
         "summary": "Render report for multiple dashboards.",
         "operationId": "renderReportPDFs",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboardID",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "orientation",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "layout",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/contentResponse"
@@ -6745,7 +6833,7 @@
         }
       }
     },
-    "/reports/{reportID}": {
+    "/reports/{id}": {
       "get": {
         "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
         "tags": ["reports", "enterprise"],
@@ -6755,7 +6843,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "reportID",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -6798,7 +6886,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "reportID",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -6833,7 +6921,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "reportID",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -6890,7 +6978,7 @@
         "produces": ["application/xml;application/samlmetadata+xml"],
         "tags": ["saml", "enterprise"],
         "summary": "It exposes the SP (Grafana's) metadata for the IdP's consumption.",
-        "operationId": "getSAMLMetadata",
+        "operationId": "getMetadata",
         "responses": {
           "200": {
             "$ref": "#/responses/contentResponse"
@@ -6900,6 +6988,7 @@
     },
     "/saml/slo": {
       "post": {
+        "description": "There might be two possible requests:\n1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.\n2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,\nor in case of IdP-initiated logout.",
         "tags": ["saml", "enterprise"],
         "summary": "It performs Single Logout (SLO) callback.",
         "operationId": "postSLO",
@@ -13655,6 +13744,21 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "addPermissionResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "permissionId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "adminCreateUserResponse": {
       "description": "",
       "schema": {
@@ -13808,6 +13912,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "createRoleResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/RoleDTO"
       }
     },
     "createServiceAccountResponse": {
@@ -14019,6 +14129,12 @@
         }
       }
     },
+    "getAllPermissionseResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DataSourcePermissionsDTO"
+      }
+    },
     "getAllRolesResponse": {
       "description": "",
       "schema": {
@@ -14145,12 +14261,6 @@
         "$ref": "#/definitions/GetHomeDashboardResponse"
       }
     },
-    "getLDAPSyncStatusResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/ActiveSyncStatusDTO"
-      }
-    },
     "getLibraryElementConnectionsResponse": {
       "description": "",
       "schema": {
@@ -14168,9 +14278,6 @@
       "schema": {
         "$ref": "#/definitions/LibraryElementSearchResponse"
       }
-    },
-    "getLicenseStatusResponse": {
-      "description": ""
     },
     "getLicenseTokenResponse": {
       "description": "",
@@ -14224,12 +14331,6 @@
         "items": {
           "$ref": "#/definitions/TempUserDTO"
         }
-      }
-    },
-    "getPermissionseResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/DataSourcePermissionsDTO"
       }
     },
     "getPlaylistDashboardsResponse": {
@@ -14354,6 +14455,15 @@
         }
       }
     },
+    "getStatusResponse": {
+      "description": ""
+    },
+    "getSyncStatusResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ActiveSyncStatusDTO"
+      }
+    },
     "getTeamByIDResponse": {
       "description": "",
       "schema": {
@@ -14450,6 +14560,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/RecordingRuleJSON"
+        }
+      }
+    },
+    "listRolesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/RoleDTO"
         }
       }
     },
