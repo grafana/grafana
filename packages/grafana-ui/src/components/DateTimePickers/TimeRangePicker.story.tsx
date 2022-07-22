@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
 import { dateTime, TimeRange, DefaultTimeZone, TimeZone, isDateTime } from '@grafana/data';
@@ -12,7 +12,7 @@ import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
 import { TimeRangePickerProps } from './TimeRangePicker';
 
-export default {
+const meta: Meta = {
   title: 'Pickers and Editors/TimePickers/TimeRangePicker',
   component: TimeRangePicker,
   decorators: [withCenteredStory],
@@ -126,3 +126,5 @@ export const Absolute: Story<TimeRangePickerProps> = (props) => {
     props
   );
 };
+
+export default meta;
