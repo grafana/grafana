@@ -1,6 +1,12 @@
+import { keyframes, css } from '@emotion/css';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { Popper } from 'react-popper';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { Button, ButtonProps } from '../Button';
+import Indicator from '../Indicator/Indicator';
 
 export interface Props extends ButtonProps {
   /** A function that returns text to be copied */
@@ -22,6 +28,7 @@ export function ClipboardButton({
   variant,
   ...buttonProps
 }: Props) {
+  const styles = useStyles2(getStyles);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   useEffect(() => {
@@ -52,16 +59,32 @@ export function ClipboardButton({
   }, [getText, onClipboardCopy, onClipboardError]);
 
   return (
-    <Button
-      onClick={copyTextCallback}
-      icon={showCopySuccess ? 'check' : icon}
-      variant={showCopySuccess ? 'success' : variant}
-      aria-label={showCopySuccess ? 'Copied' : undefined}
-      {...buttonProps}
-      ref={buttonRef}
-    >
-      {children}
-    </Button>
+    <>
+      {showCopySuccess && (
+        <Popper placement="top" referenceElement={buttonRef.current ?? undefined}>
+          {({ ref, style, placement }) => {
+            return (
+              <div ref={ref} style={style} data-placement={placement}>
+                <div className={styles.appearAnimation}>
+                  <Indicator suffixIcon="check">Copied</Indicator>
+                </div>
+              </div>
+            );
+          }}
+        </Popper>
+      )}
+
+      <Button
+        onClick={copyTextCallback}
+        icon={showCopySuccess ? 'check' : icon}
+        variant={showCopySuccess ? 'success' : variant}
+        aria-label={showCopySuccess ? 'Copied' : undefined}
+        {...buttonProps}
+        ref={buttonRef}
+      >
+        {children}
+      </Button>
+    </>
   );
 }
 
@@ -82,4 +105,25 @@ const copyText = async (text: string, buttonRef: React.MutableRefObject<HTMLButt
     document.execCommand('copy');
     input.remove();
   }
+};
+
+const flyUpAnimation = keyframes({
+  from: {
+    opacity: 0,
+    transform: 'translate(0, 8px)',
+  },
+
+  to: {
+    opacity: 1,
+    transform: 'translate(0, 0px)',
+  },
+});
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    appearAnimation: css({
+      paddingBottom: theme.spacing(1),
+      animation: `${flyUpAnimation} ease-in 100ms`,
+    }),
+  };
 };
