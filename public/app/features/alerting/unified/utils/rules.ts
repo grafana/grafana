@@ -50,7 +50,7 @@ export function alertInstanceKey(alert: Alert): string {
 }
 
 export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
-  return resp.error && resp.error?.message === RULER_NOT_SUPPORTED_MSG;
+  return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
 }
 
 export function isGrafanaRuleIdentifier(identifier: RuleIdentifier): identifier is GrafanaRuleIdentifier {

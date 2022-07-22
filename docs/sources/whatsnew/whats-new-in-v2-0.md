@@ -57,7 +57,7 @@ They're a great way to communicate about a particular incident with specific peo
 
 ### Publish snapshots
 
-You can publish snapshots locally or to [snapshot.raintank.io](http://snapshot.raintank.io). snapshot.raintank is a free service provided by [raintank](http://raintank.io) for hosting external Grafana snapshots.
+You can publish snapshots locally or to [snapshots.raintank.io](https://snapshots.raintank.io). snapshots.raintank.io is a free service provided by [Grafana Labs](https://grafana.com) for hosting external Grafana snapshots.
 
 Either way, anyone with the link (and access to your Grafana instance for local snapshots) can view it.
 
@@ -82,11 +82,11 @@ Currently you can only override the dashboard time with relative time ranges, no
 
 You can embed a single panel on another web page or your own application using the panel share dialog.
 
-Below you should see an iframe with a graph panel (taken from a Dashboard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io).
+Below you should see an iframe with a graph panel (taken from a Dashboard snapshot at [snapshots.raintank.io](http://snapshots.raintank.io).
 
 Try hovering or zooming on the panel below!
 
-<iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/4IKyWYNEQll1B9FXcN3RIgx4M2VGgU8d?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>
+<iframe src="https://snapshots.raintank.io/dashboard-solo/snapshot/4IKyWYNEQll1B9FXcN3RIgx4M2VGgU8d?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>
 
 This feature makes it easy to include interactive visualizations from your Grafana instance anywhere you want.
 

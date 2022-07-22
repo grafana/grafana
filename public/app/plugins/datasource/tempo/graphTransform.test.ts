@@ -88,6 +88,31 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'secondaryStat', values: new ArrayVector([1000, 2000]) },
     ]);
   });
+
+  it('handles invalid failed count', () => {
+    // If node.failed > node.total, the stat circle will render in the wrong position
+    // Fixed this by limiting the failed value to the total value
+    const range = {
+      from: dateTime('2000-01-01T00:00:00'),
+      to: dateTime('2000-01-01T00:01:00'),
+    };
+    const { nodes } = mapPromMetricsToServiceMap(
+      [{ data: [totalsPromMetric, secondsPromMetric, invalidFailedPromMetric] }],
+      {
+        ...range,
+        raw: range,
+      }
+    );
+
+    expect(nodes.fields).toMatchObject([
+      { name: 'id', values: new ArrayVector(['db', 'app', 'lb']) },
+      { name: 'title', values: new ArrayVector(['db', 'app', 'lb']) },
+      { name: 'mainStat', values: new ArrayVector([1000, 2000, NaN]) },
+      { name: 'secondaryStat', values: new ArrayVector([0.17, 0.33, NaN]) },
+      { name: 'arc__success', values: new ArrayVector([0, 0, 1]) },
+      { name: 'arc__failed', values: new ArrayVector([1, 1, 0]) },
+    ]);
+  });
 });
 
 const singleSpanResponse = new MutableDataFrame({
@@ -150,5 +175,18 @@ const failedPromMetric = new MutableDataFrame({
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
     { name: 'Value #traces_service_graph_request_failed_total', values: [2, 15] },
+  ],
+});
+
+const invalidFailedPromMetric = new MutableDataFrame({
+  refId: 'traces_service_graph_request_failed_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_failed_total', values: [20, 40] },
   ],
 });

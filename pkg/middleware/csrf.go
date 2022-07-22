@@ -4,10 +4,12 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"strings"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func CSRF(loginCookieName string) func(http.Handler) http.Handler {
+func CSRF(loginCookieName string, logger log.Logger) func(http.Handler) http.Handler {
 	// As per RFC 7231/4.2.2 these methods are idempotent:
 	// (GET is excluded because it may have side effects in some APIs)
 	safeMethods := []string{"HEAD", "OPTIONS", "TRACE"}
@@ -27,12 +29,21 @@ func CSRF(loginCookieName string) func(http.Handler) http.Handler {
 				}
 			}
 			// Otherwise - verify that Origin matches the server origin
-			host := strings.Split(r.Host, ":")[0]
+			netAddr, err := util.SplitHostPortDefault(r.Host, "", "0") // we ignore the port
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
 			origin, err := url.Parse(r.Header.Get("Origin"))
-			if err != nil || (origin.String() != "" && origin.Hostname() != host) {
+			if err != nil {
+				logger.Error("error parsing Origin header", "err", err)
+			}
+			if err != nil || netAddr.Host == "" || (origin.String() != "" && origin.Hostname() != netAddr.Host) {
 				http.Error(w, "origin not allowed", http.StatusForbidden)
 				return
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
