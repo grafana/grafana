@@ -39,7 +39,7 @@ func ProvideBackgroundServiceRegistry(
 	pluginsUpdateChecker *updatechecker.PluginsService, metrics *metrics.InternalMetricsService,
 	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache,
 	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
-	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
+	authInfoService *authinfoservice.Implementation,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ *dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -69,7 +69,6 @@ func ProvideBackgroundServiceRegistry(
 		thumbnailsService,
 		searchService,
 		entityEventsService,
-		saService,
 		authInfoService,
 	)
 }
