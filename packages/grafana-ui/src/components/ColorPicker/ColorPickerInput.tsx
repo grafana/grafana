@@ -29,6 +29,9 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
 
     useThrottleFn(
       (c) => {
+        if (c === value) {
+          return;
+        }
         // Default to an empty string if no color value is available
         if (!c) {
           onChange('');
