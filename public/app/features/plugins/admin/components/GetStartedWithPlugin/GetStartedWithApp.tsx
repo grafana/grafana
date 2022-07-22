@@ -20,7 +20,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
   }
 
   // Enabling is restricted to Org Admins
-  if (isOrgAdmin()) {
+  if (!isOrgAdmin()) {
     return null;
   }
 
