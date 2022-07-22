@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { PluginState, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
-import { Alert, InlineField, InlineFieldRow, InlineLabel, Select, ValuePicker } from '@grafana/ui';
+import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
 import { getDistinctLabels } from '../utils';
 
@@ -52,10 +52,11 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
       join.splice(idx, 1);
       if (!join.length) {
         onChange({ ...options, join: undefined });
+        return;
       }
-      return;
+    } else {
+      join[idx] = value;
     }
-    join[idx] = value;
 
     // Remove duplicates and the value field
     const t = new Set(join);
@@ -107,19 +108,25 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
               error="Unable to join by the value label"
               invalid={v === options.value}
             >
-              <Select
-                options={info.joinOptions}
-                value={info.joinOptions.find((o) => o.value === v)}
-                isClearable={true}
-                onChange={(v) => updateJoinValue(idx, v?.value)}
-                noOptionsMessage={noOptionsMessage}
-              />
+              <HorizontalGroup>
+                <Select
+                  options={info.joinOptions}
+                  value={info.joinOptions.find((o) => o.value === v)}
+                  isClearable={true}
+                  onChange={(v) => updateJoinValue(idx, v?.value)}
+                  noOptionsMessage={noOptionsMessage}
+                />
+                {Boolean(info.addOptions.length && idx === options.join!.length - 1) && (
+                  <ValuePicker
+                    icon="plus"
+                    label={''}
+                    options={info.addOptions}
+                    onChange={addJoin}
+                    variant="secondary"
+                  />
+                )}
+              </HorizontalGroup>
             </InlineField>
-            {Boolean(info.addOptions.length && idx === options.join!.length - 1) && (
-              <InlineLabel width={2}>
-                <ValuePicker icon="plus" label={''} options={info.addOptions} onChange={addJoin} variant="secondary" />
-              </InlineLabel>
-            )}
           </InlineFieldRow>
         ))
       ) : (
