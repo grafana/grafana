@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { PluginState, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineLabel, Select, ValuePicker } from '@grafana/ui';
 
 import { getDistinctLabels } from '../utils';
 
@@ -39,17 +39,23 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
     if (!options.join) {
       return; // nothing to do
     }
+
     const join = options.join.slice();
     if (!value) {
       join.splice(idx, 1);
       if (!join.length) {
         onChange({ ...options, join: undefined });
-        return;
       }
-    } else {
-      join[idx] = value;
+      return;
     }
-    onChange({ ...options, join });
+    join[idx] = value;
+
+    // Remove duplicates and the value field
+    const t = new Set(join);
+    if (options.value) {
+      t.delete(options.value);
+    }
+    onChange({ ...options, join: Array.from(t) });
   };
 
   const addJoin = (sel: SelectableValue<string>) => {
@@ -85,7 +91,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
           />
         </InlineField>
       </InlineFieldRow>
-      {info.hasJoin &&
+      {info.hasJoin ? (
         options.join!.map((v, idx) => (
           <InlineFieldRow key={v + idx}>
             <InlineField
@@ -101,12 +107,17 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
                 onChange={(v) => updateJoinValue(idx, v?.value)}
               />
             </InlineField>
+            {Boolean(info.addOptions.length && idx === options.join!.length - 1) && (
+              <InlineLabel width={2}>
+                <ValuePicker icon="plus" label={''} options={info.addOptions} onChange={addJoin} variant="secondary" />
+              </InlineLabel>
+            )}
           </InlineFieldRow>
-        ))}
-      {Boolean(info.addOptions.length) && (
+        ))
+      ) : (
         <InlineFieldRow>
-          <InlineField label={info.hasJoin ? '' : 'Join'} labelWidth={labelWidth}>
-            <Select key={info.key} options={info.addOptions} placeholder={info.addText} onChange={addJoin} />
+          <InlineField label={'Join'} labelWidth={labelWidth}>
+            <Select options={info.addOptions} placeholder={info.addText} onChange={addJoin} />
           </InlineField>
         </InlineFieldRow>
       )}
