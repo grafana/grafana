@@ -58,7 +58,7 @@ export const ConfigEditor = (props: Props) => {
         </div>
         <div className="gf-form-inline">
           <InlineField
-            label="Receive Grafana-managed alerts"
+            label="Receive Grafana Alerts"
             tooltip="When enabled, Grafana-managed alerts are sent to this Alertmanager."
             labelWidth={26}
           >

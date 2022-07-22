@@ -28,6 +28,7 @@ import {
   fetchExternalAlertmanagersConfigAction,
 } from '../../state/actions';
 import { getAlertManagerDataSources } from '../../utils/datasource';
+import { makeDataSourceLink } from '../../utils/misc';
 
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 
@@ -145,12 +146,13 @@ export const ExternalAlertmanagers = () => {
 
       <h5>Alertmanagers data sources</h5>
       <div className={styles.muted}>
-        Alertmanager data sources support a configuration setting that allows you to choose to send Grafana-managed alerts to that Alertmanager. <br />
+        Alertmanager data sources support a configuration setting that allows you to choose to send Grafana-managed
+        alerts to that Alertmanager. <br />
         Below, you can see the list of all Alertmanager data sources that have this setting enabled.
       </div>
       <div className={styles.externalDs}>
         {externalDsAlertManagers.map((ds) => (
-          <Card key={ds.uid}>
+          <Card key={ds.uid} href={makeDataSourceLink(ds)}>
             <Card.Heading>{ds.name}</Card.Heading>
             <Card.Figure>
               <img
@@ -166,9 +168,25 @@ export const ExternalAlertmanagers = () => {
         ))}
       </div>
 
+      {hasExternalAlertmanagers && (
+        <div className={styles.amChoice}>
+          <Field
+            label="Send alerts to"
+            description="Configures how the Grafana alert rule evaluation engine Alertmanager will handle your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured above), or both."
+          >
+            <RadioButtonGroup
+              options={alertmanagerChoices}
+              value={alertmanagersChoice}
+              onChange={(value) => onChangeAlertmanagerChoice(value!)}
+            />
+          </Field>
+        </div>
+      )}
+
       <h5>Alertmanagers by URL</h5>
       <Alert severity="warning" title="Deprecation Notice">
-        The URL-based configuration of Alertmanagers is now deprecated and will be removed in Grafana 9.2.0<br />
+        The URL-based configuration of Alertmanagers is now deprecated and will be removed in Grafana 9.2.0
+        <br />
         Please use Alertmanager data sources to configure your external Alertmanagers.
       </Alert>
 
@@ -239,21 +257,6 @@ export const ExternalAlertmanagers = () => {
         </>
       )}
 
-      {hasExternalAlertmanagers && (
-        <div className={styles.amChoice}>
-          <Field
-            label="Send alerts to"
-            description="Configures how the Grafana alert rule evaluation engine Alertmanager will handle your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured above), or both."
-          >
-            <RadioButtonGroup
-              options={alertmanagerChoices}
-              value={alertmanagersChoice}
-              onChange={(value) => onChangeAlertmanagerChoice(value!)}
-            />
-          </Field>
-        </div>
-      )}
-
       <ConfirmModal
         isOpen={deleteModalState.open}
         title="Remove Alertmanager"
@@ -289,7 +292,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(2)};
   `,
   amChoice: css`
-    margin: ${theme.spacing(2, 0)};
+    margin-bottom: ${theme.spacing(4)};
   `,
   externalDs: css`
     display: grid;
