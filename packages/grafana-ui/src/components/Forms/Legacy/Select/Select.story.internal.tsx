@@ -9,7 +9,7 @@ import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory
 
 import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
 
-export default {
+const meta: Meta = {
   title: 'Forms/Legacy/Select',
   component: Select,
   decorators: [withCenteredStory],
@@ -52,7 +52,7 @@ export default {
   argTypes: {
     width: { control: { type: 'range', min: 5, max: 30 } },
   },
-} as Meta;
+};
 
 const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
 
@@ -91,7 +91,7 @@ Basic.args = {
 
 export const AsyncSelect: Story = (args) => {
   const [isLoading, setIsLoading] = useState<boolean>(args.loading);
-  const [asyncValue, setAsyncValue] = useState<SelectableValue<any>>();
+  const [asyncValue, setAsyncValue] = useState<SelectableValue<string>>();
   const loadAsyncOptions = useCallback((inputValue) => {
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(() => {
@@ -118,3 +118,5 @@ AsyncSelect.args = {
   defaultOptions: true,
   width: 20,
 };
+
+export default meta;
