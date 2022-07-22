@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { PluginState, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
-import { InlineField, InlineFieldRow, InlineLabel, Select, ValuePicker } from '@grafana/ui';
+import { Alert, InlineField, InlineFieldRow, InlineLabel, Select, ValuePicker } from '@grafana/ui';
 
 import { getDistinctLabels } from '../utils';
 
@@ -11,12 +11,19 @@ export interface Props extends TransformerUIProps<JoinByLabelsTransformOptions> 
 
 export function JoinByLabelsTransformerEditor({ input, options, onChange }: Props) {
   const info = useMemo(() => {
+    let warn: React.ReactNode = undefined;
     const distinct = getDistinctLabels(input);
     const valueOptions = Array.from(distinct).map((value) => ({ label: value, value }));
     let valueOption = valueOptions.find((v) => v.value === options.value);
     if (!valueOption && options.value) {
       valueOption = { label: `${options.value} (not found)`, value: options.value };
       valueOptions.push(valueOption);
+    }
+
+    if (!input.length) {
+      warn = <Alert title="No input found">No input (or labels) found</Alert>;
+    } else if (distinct.size === 0) {
+      warn = <Alert title="No labels found">The input does not contain any labels</Alert>;
     }
 
     // Show the selected values
@@ -32,7 +39,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
       addText = joinOptions.map((v) => v.value).join(', '); // all the fields
     }
 
-    return { valueOptions, valueOption, joinOptions, addOptions, addText, hasJoin, key: Date.now() };
+    return { warn, valueOptions, valueOption, joinOptions, addOptions, addText, hasJoin, key: Date.now() };
   }, [options, input]);
 
   const updateJoinValue = (idx: number, value?: string) => {
@@ -68,14 +75,13 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
     onChange({ ...options, join });
   };
 
-  if (input.length === 0) {
-    return null;
-  }
-
   const labelWidth = 10;
+  const noOptionsMessage = 'No labels found';
 
   return (
     <div>
+      {info.warn}
+
       <InlineFieldRow>
         <InlineField
           error="required"
@@ -88,6 +94,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
             options={info.valueOptions}
             value={info.valueOption}
             onChange={(v) => onChange({ ...options, value: v.value! })}
+            noOptionsMessage={noOptionsMessage}
           />
         </InlineField>
       </InlineFieldRow>
@@ -105,6 +112,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
                 value={info.joinOptions.find((o) => o.value === v)}
                 isClearable={true}
                 onChange={(v) => updateJoinValue(idx, v?.value)}
+                noOptionsMessage={noOptionsMessage}
               />
             </InlineField>
             {Boolean(info.addOptions.length && idx === options.join!.length - 1) && (
@@ -115,11 +123,20 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
           </InlineFieldRow>
         ))
       ) : (
-        <InlineFieldRow>
-          <InlineField label={'Join'} labelWidth={labelWidth}>
-            <Select options={info.addOptions} placeholder={info.addText} onChange={addJoin} />
-          </InlineField>
-        </InlineFieldRow>
+        <>
+          {Boolean(info.addOptions.length) && (
+            <InlineFieldRow>
+              <InlineField label={'Join'} labelWidth={labelWidth}>
+                <Select
+                  options={info.addOptions}
+                  placeholder={info.addText}
+                  onChange={addJoin}
+                  noOptionsMessage={noOptionsMessage}
+                />
+              </InlineField>
+            </InlineFieldRow>
+          )}
+        </>
       )}
     </div>
   );
