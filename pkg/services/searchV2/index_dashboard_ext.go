@@ -27,7 +27,7 @@ func (n NoopExtender) GetDocumentExtender() DocumentExtender {
 	return &NoopDocumentExtender{}
 }
 
-func (n NoopExtender) GetQueryExtender(query DashboardQuery) QueryExtender {
+func (n NoopExtender) GetQueryExtender(_ DashboardQuery) QueryExtender {
 	return &NoopQueryExtender{}
 }
 
