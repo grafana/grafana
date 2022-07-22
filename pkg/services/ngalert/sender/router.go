@@ -10,6 +10,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -126,6 +127,8 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
+		d.logger.Debug("alertmanagers found in the configuration", "alertmanagers", cfg.Alertmanagers)
+
 		// We have a running sender, check if we need to apply a new config.
 		if ok {
 			if d.externalAlertmanagersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
@@ -224,10 +227,13 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 		return amURL, nil
 	}
 
-	parsed, err := url.Parse(ds.Url)
+	// We re-use the same parsing logic as the datasource to make sure it matches whatever output the user received
+	// when doing the healthcheck.
+	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, amURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
 	}
+
 	password := d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "basicAuthPassword", "")
 	if password == "" {
 		return "", fmt.Errorf("basic auth enabled but no password set")
