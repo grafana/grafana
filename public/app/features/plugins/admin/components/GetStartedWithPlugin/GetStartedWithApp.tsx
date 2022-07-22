@@ -19,6 +19,11 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
     return null;
   }
 
+  // Enabling is restricted to Org Admins
+  if (isOrgAdmin()) {
+    return null;
+  }
+
   const { enabled, jsonData } = pluginConfig?.meta;
 
   const enable = () =>
@@ -39,13 +44,13 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
   return (
     <>
       {!enabled && (
-        <Button variant="primary" onClick={enable} disabled={!isOrgAdmin()}>
+        <Button variant="primary" onClick={enable}>
           Enable
         </Button>
       )}
 
       {enabled && (
-        <Button variant="destructive" onClick={disable} disabled={!isOrgAdmin()}>
+        <Button variant="destructive" onClick={disable}>
           Disable
         </Button>
       )}
