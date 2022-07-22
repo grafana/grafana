@@ -5,10 +5,19 @@ export function fetchNotifiers(): Promise<NotifierDTO[]> {
   return getBackendSrv().get(`/api/alert-notifiers`);
 }
 
-export function fetchContactPointsState(alertManagerSourceName: String): Promise<ContactPointsState> {
-  const getIntegrationType = (integrationName: string): string =>
-    integrationName.indexOf('[') !== -1 ? integrationName.substring(0, integrationName.indexOf('[')) : integrationName;
+const hasArrayIndex = (name: string) => name.indexOf('[') !== -1;
 
+export const isValidIntegrationType = (integrationName: string): boolean =>
+  hasArrayIndex(integrationName) ? /\w(\[((\d*))])$/.test(integrationName) : true;
+
+export const getIntegrationType = (integrationName: string): string | undefined =>
+  isValidIntegrationType(integrationName)
+    ? hasArrayIndex(integrationName)
+      ? integrationName.substring(0, integrationName.indexOf('['))
+      : integrationName
+    : undefined;
+
+export function fetchContactPointsState(alertManagerSourceName: String): Promise<ContactPointsState> {
   const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDTO[]): ContactPointsState => {
     // init object to return
     const contactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
@@ -28,12 +37,14 @@ export function fetchContactPointsState(alertManagerSourceName: String): Promise
         }
         //add integration for this type
         const integrationType = getIntegrationType(integrationStatusDTO.name);
-        //if type still does not exist in IntegrationsTypeState we initialize it with an empty array
-        if (!receiverState.integrations[integrationType]) {
-          receiverState.integrations[integrationType] = [];
+        if (integrationType) {
+          //if type still does not exist in IntegrationsTypeState we initialize it with an empty array
+          if (!receiverState.integrations[integrationType]) {
+            receiverState.integrations[integrationType] = [];
+          }
+          // add error status for this type
+          receiverState.integrations[integrationType].push(integrationStatusDTO);
         }
-        // add error status for this type
-        receiverState.integrations[integrationType].push(integrationStatusDTO);
       });
     });
     return contactPointsState;
