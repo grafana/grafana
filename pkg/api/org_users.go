@@ -490,7 +490,6 @@ type RemoveOrgUserParams struct {
 	UserID int64 `json:"user_id"`
 }
 
-
 // swagger:response getOrgUsersForCurrentOrgLookupResponse
 type GetOrgUsersForCurrentOrgLookupResponse struct {
 	// The response message

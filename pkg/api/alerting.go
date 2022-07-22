@@ -574,7 +574,6 @@ func (hs *HTTPServer) DeleteAlertNotification(c *models.ReqContext) response.Res
 	return response.Success("Notification deleted")
 }
 
-
 // swagger:route DELETE /alert-notifications/uid/{notification_channel_uid} legacy_alerts_notification_channels deleteAlertNotificationChannelByUID
 //
 // Delete alert notification by UID.
@@ -976,7 +975,6 @@ type DeleteAlertNotificationChannelResponse struct {
 
 // swagger:response SMTPNotEnabledError
 type SMTPNotEnabledError PreconditionFailedError
-
 
 // swagger:response getAlertsResponse
 type GetAlertsResponse struct {

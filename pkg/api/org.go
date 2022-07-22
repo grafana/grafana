@@ -333,7 +333,6 @@ func (hs *HTTPServer) SearchOrgs(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, query.Result)
 }
 
-
 // swagger:parameters updateCurrentOrgAddress
 type UpdateCurrentOrgAddressParams struct {
 	// in:body

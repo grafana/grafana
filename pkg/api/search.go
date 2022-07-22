@@ -150,7 +150,6 @@ func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
 	})
 }
 
-
 // swagger:parameters search
 type SearchParams struct {
 	// Search Query
@@ -221,4 +220,3 @@ type ListSortOptionsResponse struct {
 		Meta        string `json:"meta"`
 	} `json:"body"`
 }
-

@@ -1055,7 +1055,6 @@ type DeleteDashboardByUIDParams struct {
 	UID string `json:"uid"`
 }
 
-
 // swagger:parameters postDashboard
 type PostDashboardParams struct {
 	// in:body

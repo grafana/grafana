@@ -394,7 +394,6 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, dtos)
 }
 
-
 // swagger:parameters createDashboardSnapshot
 type CreateSnapshotParams struct {
 	// in:body

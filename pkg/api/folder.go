@@ -247,7 +247,6 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 	}
 }
 
-
 // swagger:parameters getFolders
 type GetFoldersParams struct {
 	// Limit the maximum number of folders to return
