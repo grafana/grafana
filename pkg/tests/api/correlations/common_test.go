@@ -21,7 +21,9 @@ type TestContext struct {
 
 func NewTestEnv(t *testing.T) TestContext {
 	t.Helper()
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	return TestContext{
@@ -76,9 +78,6 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) {
 
 func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) {
 	c.t.Helper()
-
-	c.env.SQLStore.Cfg.AutoAssignOrg = true
-	c.env.SQLStore.Cfg.AutoAssignOrgId = 1
 
 	err := c.env.SQLStore.AddDataSource(context.Background(), cmd)
 	require.NoError(c.t, err)

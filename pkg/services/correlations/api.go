@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -18,7 +19,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	authorize := ac.Middleware(s.AccessControl)
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
-		entities.Post("/", authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
+		entities.Post("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
 	})
 }
 
