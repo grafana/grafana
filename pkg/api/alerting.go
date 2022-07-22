@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -198,7 +198,7 @@ func (hs *HTTPServer) GetAlert(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Response {
 	return func(_ *models.ReqContext) response.Response {
 		if ngalertEnabled {
-			return response.JSON(http.StatusOK, notifier.GetAvailableNotifiers())
+			return response.JSON(http.StatusOK, channels_config.GetAvailableNotifiers())
 		}
 		// TODO(codesome): This wont be required in 8.0 since ngalert
 		// will be enabled by default with no disabling. This is to be removed later.

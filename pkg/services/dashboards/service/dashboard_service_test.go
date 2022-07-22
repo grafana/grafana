@@ -17,10 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestIntegrationDashboardService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
@@ -216,6 +213,28 @@ func TestIntegrationDashboardService(t *testing.T) {
 				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 			})
+
+			// t.Run("Delete ACL by user", func(t *testing.T) {
+			// 	fakeStore := dashboards.FakeDashboardStore{}
+			// 	args := 1
+			// 	fakeStore.On("DeleteACLByUser", mock.Anything, args).Return(nil).Once()
+			// 	err := service.DeleteACLByUser(context.Background(), 1)
+			// 	require.NoError(t, err)
+			// })
 		})
+	})
+
+	t.Run("Delete user by acl", func(t *testing.T) {
+		fakeStore := dashboards.FakeDashboardStore{}
+		defer fakeStore.AssertExpectations(t)
+
+		service := &DashboardServiceImpl{
+			cfg:                setting.NewCfg(),
+			log:                log.New("test.logger"),
+			dashboardStore:     &fakeStore,
+			dashAlertExtractor: &dummyDashAlertExtractor{},
+		}
+		err := service.DeleteACLByUser(context.Background(), 1)
+		require.NoError(t, err)
 	})
 }

@@ -15,6 +15,11 @@ export enum AxisPlacement {
   Top = 'top',
 }
 
+export enum AxisColorMode {
+  Series = 'series',
+  Text = 'text',
+}
+
 export enum VisibilityMode {
   Always = 'always',
   Auto = 'auto',
@@ -118,6 +123,8 @@ export interface ScaleDistributionConfig {
 }
 
 export interface AxisConfig {
+  axisCenteredZero?: boolean;
+  axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;

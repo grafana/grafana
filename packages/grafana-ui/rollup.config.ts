@@ -29,7 +29,6 @@ const buildCjsPackage = ({ env }) => {
     external: [
       'react',
       'react-dom',
-      '@grafana/aws-sdk',
       '@grafana/data',
       '@grafana/schema',
       '@grafana/e2e-selectors',

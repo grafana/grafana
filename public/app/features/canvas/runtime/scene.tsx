@@ -309,8 +309,11 @@ export class Scene {
 
     this.selecto = new Selecto({
       container: this.div,
+      rootContainer: this.div,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
+      selectFromInside: false,
+      hitRate: 0,
     });
 
     this.moveable = new Moveable(this.div!, {
@@ -412,6 +415,11 @@ export class Scene {
         ?.getSelectedTargets()
         .includes(selectedTarget.parentElement.parentElement);
 
+      // Apply grabbing cursor while dragging, applyLayoutStylesToDiv() resets it to grab when done
+      if (this.isEditingEnabled && isTargetMoveableElement && this.selecto?.getSelectedTargets().length) {
+        this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+      }
+
       if (isTargetMoveableElement || isTargetAlreadySelected) {
         // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
@@ -420,12 +428,15 @@ export class Scene {
       targets = event.selected;
       this.updateSelection({ targets });
 
-      if (event.isDragStart) {
-        event.inputEvent.preventDefault();
-        setTimeout(() => {
-          this.moveable!.dragStart(event.inputEvent);
-        });
-      }
+      // @TODO Figure out click-drag functionality without phantom mouseup issue
+      // https://github.com/daybrush/moveable/issues/481
+
+      // if (event.isDragStart) {
+      //   event.inputEvent.preventDefault();
+      //   setTimeout(() => {
+      //     this.moveable!.dragStart(event.inputEvent);
+      //   });
+      // }
     });
   };
 

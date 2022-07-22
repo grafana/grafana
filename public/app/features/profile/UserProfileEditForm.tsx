@@ -21,16 +21,22 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
     updateProfile(data);
   };
 
+  // check if authLabels is longer than 0 otherwise false
+  const isExternalUser: boolean = (user && user.isExternal) ?? false;
+  const authSource = isExternalUser && user && user.authLabels ? user.authLabels[0] : '';
+  const lockMessage = authSource ? ` (Synced via ${authSource})` : '';
+  const disabledEdit = disableLoginForm || isExternalUser;
+
   return (
     <Form onSubmit={onSubmitProfileUpdate} validateOn="onBlur">
       {({ register, errors }) => {
         return (
           <FieldSet label={<Trans id="user-profile.title">Edit profile</Trans>}>
             <Field
-              label={t({ id: 'user-profile.fields.name-label', message: 'Name' })}
+              label={t({ id: 'user-profile.fields.name-label', message: 'Name' }) + lockMessage}
               invalid={!!errors.name}
               error={<Trans id="user-profile.fields.name-error">Name is required</Trans>}
-              disabled={disableLoginForm}
+              disabled={disabledEdit}
             >
               <Input
                 {...register('name', { required: true })}
@@ -42,10 +48,10 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
             </Field>
 
             <Field
-              label={t({ id: 'user-profile.fields.email-label', message: 'Email' })}
+              label={t({ id: 'user-profile.fields.email-label', message: 'Email' }) + lockMessage}
               invalid={!!errors.email}
               error={<Trans id="user-profile.fields.email-error">Email is required</Trans>}
-              disabled={disableLoginForm}
+              disabled={disabledEdit}
             >
               <Input
                 {...register('email', { required: true })}
@@ -57,14 +63,14 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
             </Field>
 
             <Field
-              label={t({ id: 'user-profile.fields.username-label', message: 'Username' })}
-              disabled={disableLoginForm}
+              label={t({ id: 'user-profile.fields.username-label', message: 'Username' }) + lockMessage}
+              disabled={disabledEdit}
             >
               <Input
                 {...register('login')}
                 id="edit-user-profile-username"
                 defaultValue={user?.login ?? ''}
-                placeholder={t({ id: 'user-profile.fields.username-label', message: 'Username' })}
+                placeholder={t({ id: 'user-profile.fields.username-label', message: 'Username' }) + lockMessage}
                 suffix={<InputSuffix />}
               />
             </Field>
@@ -72,7 +78,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
             <div className="gf-form-button-row">
               <Button
                 variant="primary"
-                disabled={isSavingUser}
+                disabled={isSavingUser || disabledEdit}
                 data-testid={selectors.components.UserProfile.profileSaveButton}
                 type="submit"
               >

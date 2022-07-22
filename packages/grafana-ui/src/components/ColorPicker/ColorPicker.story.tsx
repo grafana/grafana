@@ -1,76 +1,81 @@
 import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/client-api';
 import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
 import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
 
-import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 import mdx from './ColorPicker.mdx';
+import { ColorPickerInput, ColorPickerInputProps } from './ColorPickerInput';
 import { ColorPickerProps } from './ColorPickerPopover';
 
-export default {
+const meta: Meta = {
   title: 'Pickers and Editors/ColorPicker',
   component: ColorPicker,
-  subcomponents: { SeriesColorPicker },
+  subcomponents: { SeriesColorPicker, ColorPickerInput },
   decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
     },
     controls: {
-      exclude: ['color', 'onChange', 'onColorChange'],
+      exclude: ['onChange', 'onColorChange'],
     },
   },
   args: {
     enableNamedColors: false,
+    color: '#00ff00',
   },
-} as Meta;
+};
 
-export const Basic: Story<ColorPickerProps> = ({ enableNamedColors }) => {
+export const Basic: Story<ColorPickerProps> = ({ color, enableNamedColors }) => {
+  const [, updateArgs] = useArgs();
+  return renderComponentWithTheme(ColorPicker, {
+    enableNamedColors,
+    color,
+    onChange: (color: string) => {
+      action('Color changed')(color);
+      updateArgs({ color });
+    },
+  });
+};
+
+export const SeriesPicker: Story<ColorPickerProps> = ({ color, enableNamedColors }) => {
+  const [, updateArgs] = useArgs();
   return (
-    <UseState initialState="#00ff00">
-      {(selectedColor, updateSelectedColor) => {
-        return renderComponentWithTheme(ColorPicker, {
-          enableNamedColors,
-          color: selectedColor,
-          onChange: (color: any) => {
-            action('Color changed')(color);
-            updateSelectedColor(color);
-          },
-        });
+    <SeriesColorPicker
+      enableNamedColors={enableNamedColors}
+      yaxis={1}
+      onToggleAxis={() => {}}
+      color={color}
+      onChange={(color) => {
+        action('Color changed')(color);
+        updateArgs({ color });
       }}
-    </UseState>
+    >
+      {({ ref, showColorPicker, hideColorPicker }) => (
+        <div ref={ref} onMouseLeave={hideColorPicker} onClick={showColorPicker} style={{ color, cursor: 'pointer' }}>
+          Open color picker
+        </div>
+      )}
+    </SeriesColorPicker>
   );
 };
 
-export const SeriesPicker: Story<ColorPickerProps> = ({ enableNamedColors }) => {
+export const Input: Story<ColorPickerInputProps> = ({ color }) => {
+  const [, updateArgs] = useArgs();
   return (
-    <UseState initialState="#00ff00">
-      {(selectedColor, updateSelectedColor) => {
-        return (
-          <SeriesColorPicker
-            enableNamedColors={enableNamedColors}
-            yaxis={1}
-            onToggleAxis={() => {}}
-            color={selectedColor}
-            onChange={(color) => updateSelectedColor(color)}
-          >
-            {({ ref, showColorPicker, hideColorPicker }) => (
-              <div
-                ref={ref}
-                onMouseLeave={hideColorPicker}
-                onClick={showColorPicker}
-                style={{ color: selectedColor, cursor: 'pointer' }}
-              >
-                Open color picker
-              </div>
-            )}
-          </SeriesColorPicker>
-        );
+    <ColorPickerInput
+      value={color}
+      onChange={(color) => {
+        action('Color changed')(color);
+        updateArgs({ color });
       }}
-    </UseState>
+    />
   );
 };
+
+export default meta;

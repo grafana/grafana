@@ -126,6 +126,7 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 		PublicDashboard: pubdash,
 	}
 
+	// Save the public dashboard
 	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to save public dashboard configuration", err)

@@ -1,8 +1,20 @@
 package user
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type HelpFlags1 uint64
+
+// Typed errors
+var (
+	ErrCaseInsensitive   = errors.New("case insensitive conflict")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
+	ErrProtectedUser     = errors.New("cannot adopt protected user")
+)
 
 type User struct {
 	ID            int64 `xorm:"pk autoincr 'id'"`
@@ -52,4 +64,8 @@ func (u *User) NameOrFallback() string {
 		return u.Login
 	}
 	return u.Email
+}
+
+type DeleteUserCommand struct {
+	UserID int64
 }

@@ -15,7 +15,7 @@ import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
-import { I18nProvider } from './core/localisation';
+import { I18nProvider } from './core/internationalization';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
@@ -115,7 +115,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
         <I18nProvider>
           <ErrorBoundaryAlert style="page">
             <ConfigContext.Provider value={config}>
-              <ThemeProvider>
+              <ThemeProvider value={config.theme2}>
                 <KBarProvider
                   actions={[]}
                   options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
