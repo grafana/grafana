@@ -33,7 +33,7 @@ func TestFatalPluginErr_PluginFailsToStartWithFatalFlagNotSet(t *testing.T) {
 	require.IsType(t, &secretsKVStoreSQL{}, cachedKv.GetUnwrappedStore())
 }
 
-// With fatal flag not set, store a secret in the plugin while backwards compatibilty is disabled
+// With fatal flag not set, store a secret in the plugin while backwards compatibility is disabled
 // Should result in the fatal flag going from unset -> set to true
 func TestFatalPluginErr_FatalFlagGetsSetWithBackwardsCompatDisabled(t *testing.T) {
 	svc, kvstore, _, err := setupFatalCrashTest(t, false, false, true)
@@ -94,12 +94,11 @@ func setupFatalCrashTest(
 	}
 	kvstore := kvstore.ProvideService(sqlStore)
 	if isPluginErrorFatal {
-		setPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(kvstore), true)
+		_ = setPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(kvstore), true)
 	}
 	features := NewFakeFeatureToggles(t, isBackwardsCompatDisabled)
 	svc, err := ProvideService(sqlStore, secretService, remoteCheck, kvstore, features)
 	return svc, kvstore, sqlStore, err
-
 }
 
 func setupTestMigratorServiceWithDeletionError(
