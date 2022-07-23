@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
 import React, { useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { CSSTransition } from 'react-transition-group';
@@ -44,17 +45,19 @@ export const Dropdown = React.memo(({ children, overlay, placement, trigger = ['
       })}
       {visible && (
         <Portal>
-          <div ref={setTooltipRef} {...getTooltipProps()} onClick={onOverlayClicked}>
-            <div {...getArrowProps({ className: 'tooltip-arrow' })} />
-            <CSSTransition
-              appear={true}
-              in={true}
-              timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
-              classNames={animationStyles}
-            >
-              {ReactUtils.renderOrCallToRender(overlay)}
-            </CSSTransition>
-          </div>
+          <FocusScope autoFocus>
+            <div ref={setTooltipRef} {...getTooltipProps()} onClick={onOverlayClicked}>
+              <div {...getArrowProps({ className: 'tooltip-arrow' })} />
+              <CSSTransition
+                appear={true}
+                in={true}
+                timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
+                classNames={animationStyles}
+              >
+                {ReactUtils.renderOrCallToRender(overlay)}
+              </CSSTransition>
+            </div>
+          </FocusScope>
         </Portal>
       )}
     </>

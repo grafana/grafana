@@ -28,10 +28,10 @@ const meta: ComponentMeta<typeof Dropdown> = {
 export function Examples() {
   const menu = (
     <Menu>
-      <MenuItem label="View settings" />
-      <MenuItem label="Edit actions" />
-      <MenuItem label="Share" />
-      <MenuItem label="Delete" />
+      <MenuItem label="View settings" tabIndex={0} />
+      <MenuItem label="Edit actions" tabIndex={1} />
+      <MenuItem label="Share" tabIndex={2} />
+      <MenuItem label="Delete" tabIndex={3} />
     </Menu>
   );
 
