@@ -41,7 +41,9 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
-	updateFatalFlag(ctx, *kv)
+	if res.Exists {
+		updateFatalFlag(ctx, *kv)
+	}
 
 	return res.DecryptedValue, res.Exists, err
 }
