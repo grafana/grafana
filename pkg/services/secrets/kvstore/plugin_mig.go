@@ -20,6 +20,7 @@ type PluginSecretMigrationService struct {
 	secretsService secrets.Service
 	remoteCheck    UseRemoteSecretsPluginCheck
 	kvstore        kvstore.KVStore
+	getAllFunc     func(ctx context.Context) ([]Item, error)
 }
 
 func ProvidePluginSecretMigrationService(
@@ -29,6 +30,7 @@ func ProvidePluginSecretMigrationService(
 	secretsService secrets.Service,
 	remoteCheck UseRemoteSecretsPluginCheck,
 	kvstore kvstore.KVStore,
+	getAllFunc func(ctx context.Context) ([]Item, error),
 ) *PluginSecretMigrationService {
 	return &PluginSecretMigrationService{
 		secretsStore:   secretsStore,
@@ -38,6 +40,7 @@ func ProvidePluginSecretMigrationService(
 		secretsService: secretsService,
 		remoteCheck:    remoteCheck,
 		kvstore:        kvstore,
+		getAllFunc:     getAllFunc,
 	}
 }
 
@@ -54,6 +57,7 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 			decryptionCache: decryptionCache{
 				cache: make(map[int64]cachedDecrypted),
 			},
+			GetAllFuncOverride: s.getAllFunc,
 		}
 
 		// before we start migrating, check see if plugin startup failures were already fatal

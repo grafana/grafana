@@ -90,6 +90,7 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 		secretsService,
 		remoteCheck,
 		kvstore.ProvideService(sqlStore),
+		nil,
 	)
 
 	secretsSql := &secretsKVStoreSQL{
