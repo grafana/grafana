@@ -78,10 +78,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
       { value: 'serviceMap', label: 'Service Graph' },
     ];
 
-    // span names in Tempo search links (generated on the service graph page) are in camel case (for Prometheus queries)
-    // but the span name dropdown menu in the search tab is lower case
-    query.spanName = query.spanName?.toLowerCase();
-
     if (!datasource?.search?.hide) {
       queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
     }
