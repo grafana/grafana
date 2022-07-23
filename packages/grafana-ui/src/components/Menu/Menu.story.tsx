@@ -6,6 +6,7 @@ import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
 
 import { Menu } from './Menu';
+import mdx from './Menu.mdx';
 import { MenuGroup } from './MenuGroup';
 import { MenuItem } from './MenuItem';
 
@@ -14,6 +15,9 @@ const meta: ComponentMeta<typeof Menu> = {
   component: Menu,
   argTypes: {},
   parameters: {
+    docs: {
+      page: mdx,
+    },
     knobs: {
       disabled: true,
     },
@@ -26,20 +30,42 @@ const meta: ComponentMeta<typeof Menu> = {
   },
 };
 
-export const Simple: Story = (args) => {
+export const Examples: Story = (args) => {
   return (
     <VerticalGroup>
-      <StoryExample name="Simple">
+      <StoryExample name="Plain">
         <Menu>
-          <MenuItem label="Google" icon="search-plus" />
-          <MenuItem label="Filter" icon="filter" />
-          <MenuItem label="History" icon="history" />
-          <MenuItem label="Active" icon="history" active />
-          <MenuItem label="Apps" icon="apps" />
+          <Menu.Item label="Google" />
+          <Menu.Item label="Filter" />
+          <Menu.Item label="Active" active />
+          <Menu.Item label="I am a link" url="http://google.com" target="_blank" />
+          <Menu.Item label="Delete" destructive />
+        </Menu>
+      </StoryExample>
+      <StoryExample name="With icons and a divider">
+        <Menu>
+          <Menu.Item label="Google" icon="search-plus" />
+          <Menu.Item label="Filter" icon="filter" />
+          <Menu.Item label="History" icon="history" />
+          <Menu.Divider />
+          <Menu.Item label="Delete" icon="trash-alt" destructive />
         </Menu>
       </StoryExample>
       <StoryExample name="With header & groups">
-        <Menu header={args.header} ariaLabel="Menu header">
+        <Menu
+          header={
+            <GraphContextMenuHeader
+              timestamp="2020-11-25 19:04:25"
+              seriesColor="#00ff00"
+              displayName="A-series"
+              displayValue={{
+                text: '128',
+                suffix: 'km/h',
+              }}
+            />
+          }
+          ariaLabel="Menu header"
+        >
           <MenuGroup label="Group 1">
             <MenuItem label="item1" icon="history" />
             <MenuItem label="item2" icon="filter" />
@@ -75,20 +101,6 @@ export const Simple: Story = (args) => {
       </StoryExample>
     </VerticalGroup>
   );
-};
-
-Simple.args = {
-  header: (
-    <GraphContextMenuHeader
-      timestamp="2020-11-25 19:04:25"
-      seriesColor="#00ff00"
-      displayName="A-series"
-      displayValue={{
-        text: '128',
-        suffix: 'km/h',
-      }}
-    />
-  ),
 };
 
 export default meta;

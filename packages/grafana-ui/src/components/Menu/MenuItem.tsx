@@ -35,9 +35,9 @@ export interface MenuItemProps<T = any> {
   className?: string;
   /** Active */
   active?: boolean;
-
+  /** Show in destructive style (error color) */
+  destructive?: boolean;
   tabIndex?: number;
-
   /** List of menu items for the subMenu */
   childItems?: Array<ReactElement<MenuItemProps>>;
 }
@@ -55,6 +55,7 @@ export const MenuItem = React.memo(
       onClick,
       className,
       active,
+      destructive,
       childItems,
       role = 'menuitem',
       tabIndex = -1,
@@ -77,6 +78,7 @@ export const MenuItem = React.memo(
       {
         [styles.item]: true,
         [styles.activeItem]: isActive,
+        [styles.destructive]: destructive,
       },
       className
     );
@@ -159,6 +161,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       color: ${theme.colors.text.primary};
       display: flex;
+      align-items: center;
       padding: 5px 12px 5px 10px;
       margin: 0;
       border: none;
@@ -179,6 +182,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     activeItem: css`
       background: ${theme.colors.action.selected};
+    `,
+    destructive: css`
+      color: ${theme.colors.error.text};
+
+      svg {
+        color: ${theme.colors.error.text};
+      }
+
+      &:hover {
+        background: ${theme.colors.error.main};
+        color: ${theme.colors.error.contrastText};
+
+        svg {
+          color: ${theme.colors.error.contrastText};
+        }
+      }
     `,
     icon: css`
       opacity: 0.7;

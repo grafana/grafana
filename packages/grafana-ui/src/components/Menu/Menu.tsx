@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useImperativeHandle, useRef } from 'react';
+import React, { ForwardRefExoticComponent, PropsWithoutRef, RefAttributes, useImperativeHandle, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
+import { MenuDivider } from './MenuDivider';
+import { MenuItem } from './MenuItem';
 import { useMenuFocus } from './hooks';
 
 /** @internal */
@@ -18,8 +20,14 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   onKeyDown?: React.KeyboardEventHandler;
 }
 
+export interface MenuType
+  extends ForwardRefExoticComponent<PropsWithoutRef<MenuProps> & RefAttributes<HTMLDivElement>> {
+  Item: typeof MenuItem;
+  Divider: typeof MenuDivider;
+}
+
 /** @internal */
-export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
+export const Menu: MenuType = React.forwardRef<HTMLDivElement, MenuProps>(
   ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
 
@@ -43,7 +51,10 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
       </div>
     );
   }
-);
+) as MenuType;
+
+Menu.Item = MenuItem;
+Menu.Divider = MenuDivider;
 Menu.displayName = 'Menu';
 
 /** @internal */
