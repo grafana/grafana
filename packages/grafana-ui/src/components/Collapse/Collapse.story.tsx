@@ -1,3 +1,4 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { UseState } from '../../utils/storybook/UseState';
@@ -6,7 +7,7 @@ import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/st
 import { Collapse, ControlledCollapse } from './Collapse';
 import mdx from './Collapse.mdx';
 
-export default {
+const meta: ComponentMeta<typeof Collapse> = {
   title: 'Layout/Collapse',
   component: Collapse,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
@@ -43,3 +44,5 @@ export const controlled = () => {
     </ControlledCollapse>
   );
 };
+
+export default meta;

@@ -17,7 +17,7 @@ export interface ScaleProps {
   orientation: ScaleOrientation;
   direction: ScaleDirection;
   log?: number;
-  from?: string;
+  centeredZero?: boolean;
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -27,7 +27,18 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   }
 
   getConfig(): Scale {
-    let { isTime, scaleKey, min: hardMin, max: hardMax, softMin, softMax, range, direction, orientation } = this.props;
+    let {
+      isTime,
+      scaleKey,
+      min: hardMin,
+      max: hardMax,
+      softMin,
+      softMax,
+      range,
+      direction,
+      orientation,
+      centeredZero,
+    } = this.props;
     const distribution = !isTime
       ? {
           distr:
@@ -69,6 +80,14 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
       if (scale.distr === 1 || scale.distr === 2) {
+        if (centeredZero) {
+          let absMin = Math.abs(dataMin);
+          let absMax = Math.abs(dataMax);
+          let max = Math.max(absMin, absMax);
+          dataMin = -max;
+          dataMax = max;
+        }
+
         // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
         minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
       } else if (scale.distr === 3) {
@@ -100,7 +119,6 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         range: range ?? rangeFn,
         dir: direction,
         ori: orientation,
-        from: this.props.from,
         ...distribution,
       },
     };

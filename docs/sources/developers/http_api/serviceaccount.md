@@ -138,9 +138,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action               | Scope                |
-| -------------------- | -------------------- |
-| serviceaccounts:read | serviceaccounts:id:1 |
+| Action               | Scope                 |
+| -------------------- | --------------------- |
+| serviceaccounts:read | serviceaccounts:id:\* |
 
 **Example Request**:
 
@@ -179,9 +179,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope                |
-| --------------------- | -------------------- |
-| serviceaccounts:write | serviceaccounts:id:1 |
+| Action                | Scope                 |
+| --------------------- | --------------------- |
+| serviceaccounts:write | serviceaccounts:id:\* |
 
 **Example Request**:
 
@@ -227,9 +227,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action               | Scope                |
-| -------------------- | -------------------- |
-| serviceaccounts:read | serviceaccounts:id:1 |
+| Action               | Scope                 |
+| -------------------- | --------------------- |
+| serviceaccounts:read | serviceaccounts:id:\* |
 
 **Example Request**:
 
@@ -267,9 +267,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope                |
-| --------------------- | -------------------- |
-| serviceaccounts:write | serviceaccounts:id:1 |
+| Action                | Scope                 |
+| --------------------- | --------------------- |
+| serviceaccounts:write | serviceaccounts:id:\* |
 
 **Example Request**:
 
@@ -306,9 +306,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope                |
-| --------------------- | -------------------- |
-| serviceaccounts:write | serviceaccounts:id:1 |
+| Action                | Scope                 |
+| --------------------- | --------------------- |
+| serviceaccounts:write | serviceaccounts:id:\* |
 
 **Example Request**:
 
@@ -332,7 +332,7 @@ Content-Type: application/json
 
 ## Revert service account token to API key
 
-`DELETE /api/serviceaccounts/revert/:keyId`
+`DELETE /api/serviceaccounts/:serviceAccountId/revert/:keyId`
 
 This operation will delete the service account and create a legacy API Key for the given `keyId`.
 
@@ -340,14 +340,14 @@ This operation will delete the service account and create a legacy API Key for t
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                 | Scope |
-| ---------------------- | ----- |
-| serviceaccounts:delete | n/a   |
+| Action                 | Scope                 |
+| ---------------------- | --------------------- |
+| serviceaccounts:delete | serviceaccounts:id:\* |
 
 **Example Request**:
 
 ```http
-DELETE /api/serviceaccounts/revert/glsa_VVQjot0nijQ59lun6pMZRtsdBXxnFQ9M_77c34a79 HTTP/1.1
+DELETE /api/serviceaccounts/1/revert/glsa_VVQjot0nijQ59lun6pMZRtsdBXxnFQ9M_77c34a79 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=

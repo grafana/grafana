@@ -97,43 +97,50 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
     });
 
+    // filters first 2 ticks to make space for timezone labels
+    const filterTicks: uPlot.Axis.Filter | undefined =
+      timeZones.length > 1
+        ? (u, splits) => {
+            return splits.map((v, i) => (i < 2 ? null : v));
+          }
+        : undefined;
+
     for (let i = 0; i < timeZones.length; i++) {
       const timeZone = timeZones[i];
-      if (i === 0) {
-        builder.addAxis({
-          scaleKey: xScaleKey,
-          isTime: true,
-          placement: xFieldAxisPlacement,
-          show: xFieldAxisShow,
-          label: xField.config.custom?.axisLabel,
-          timeZone,
-          theme,
-          grid: { show: xField.config.custom?.axisGridShow },
-        });
-      } else if (xFieldAxisShow) {
-        const scaleKey = `${xScaleKey}_${i + 1}`;
-        builder.addScale({
-          scaleKey,
-          orientation: ScaleOrientation.Horizontal,
-          direction: ScaleDirection.Right,
-          isTime: true,
-          from: xScaleKey,
-          range: () => {
-            const r = getTimeRange();
-            return [r.from.valueOf(), r.to.valueOf()];
-          },
+      builder.addAxis({
+        scaleKey: xScaleKey,
+        isTime: true,
+        placement: xFieldAxisPlacement,
+        show: xFieldAxisShow,
+        label: xField.config.custom?.axisLabel,
+        timeZone,
+        theme,
+        grid: { show: i === 0 && xField.config.custom?.axisGridShow },
+        filter: filterTicks,
+      });
+    }
+
+    // render timezone labels
+    if (timeZones.length > 1) {
+      builder.addHook('drawAxes', (u: uPlot) => {
+        u.ctx.save();
+
+        u.ctx.fillStyle = theme.colors.text.primary;
+        u.ctx.textAlign = 'left';
+        u.ctx.textBaseline = 'bottom';
+
+        let i = 0;
+        u.axes.forEach((a) => {
+          if (a.side === 2) {
+            //@ts-ignore
+            let cssBaseline: number = a._pos + a._size;
+            u.ctx.fillText(timeZones[i], u.bbox.left, cssBaseline * uPlot.pxRatio);
+            i++;
+          }
         });
 
-        builder.addAxis({
-          scaleKey,
-          isTime: true,
-          placement: xFieldAxisPlacement,
-          show: xFieldAxisShow,
-          timeZone: timeZone,
-          theme,
-          grid: { show: false },
-        });
-      }
+        u.ctx.restore();
+      });
     }
   } else {
     // Not time!
@@ -213,6 +220,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           max: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
+          centeredZero: customConfig.axisCenteredZero,
         },
         field
       )

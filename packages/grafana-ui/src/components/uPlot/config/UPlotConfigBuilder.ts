@@ -87,8 +87,14 @@ export class UPlotConfigBuilder {
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
     props.grid = props.grid ?? {};
-    if (this.axes[props.scaleKey]) {
-      this.axes[props.scaleKey].merge(props);
+    let scaleKey = props.scaleKey;
+
+    if (scaleKey === 'x') {
+      scaleKey += props.timeZone ?? '';
+    }
+
+    if (this.axes[scaleKey]) {
+      this.axes[scaleKey].merge(props);
       return;
     }
 
@@ -106,7 +112,7 @@ export class UPlotConfigBuilder {
       props.size = 0;
     }
 
-    this.axes[props.scaleKey] = new UPlotAxisBuilder(props);
+    this.axes[scaleKey] = new UPlotAxisBuilder(props);
   }
 
   getAxisPlacement(scaleKey: string): AxisPlacement {

@@ -10,10 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -40,6 +40,16 @@ func ProvideService(
 		cfg:   cfg,
 		store: store,
 	}
+}
+
+func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
+	dashboard, err := pd.store.GetDashboard(ctx, dashboardUid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, err
 }
 
 // Gets public dashboard via access token
@@ -78,8 +88,13 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardConfig(ctx context.Conte
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
 func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
-	if len(dto.DashboardUid) == 0 {
-		return nil, dashboards.ErrDashboardIdentifierNotSet
+	dashboard, err := pd.GetDashboard(ctx, dto.DashboardUid)
+	if err != nil {
+		return nil, err
+	}
+	err = validation.ValidateSavePublicDashboard(dto, dashboard)
+	if err != nil {
+		return nil, err
 	}
 
 	// set default value for time settings
