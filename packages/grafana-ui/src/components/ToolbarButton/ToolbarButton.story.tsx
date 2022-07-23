@@ -126,22 +126,6 @@ export const Examples: ComponentStory<typeof ToolbarButton> = (args) => {
           ))}
         </ToolbarButtonRow>
         <br />
-        disabled
-        <ToolbarButtonRow>
-          <ToolbarButton icon="sync" disabled>
-            Disabled
-          </ToolbarButton>
-        </ToolbarButtonRow>
-        <br />
-        Variants
-        <ToolbarButtonRow>
-          {variants.map((variant) => (
-            <ToolbarButton icon="sync" tooltip="Sync" variant={variant} key={variant}>
-              {variant}
-            </ToolbarButton>
-          ))}
-        </ToolbarButtonRow>
-        <br />
         Wrapped in noSpacing ButtonGroup
         <ButtonGroup>
           <ToolbarButton icon="clock-nine" tooltip="Time picker">
@@ -155,7 +139,7 @@ export const Examples: ComponentStory<typeof ToolbarButton> = (args) => {
           <ToolbarButton isOpen={false} narrow />
         </ButtonGroup>
         <br />
-        As primary and destructive variant
+        Inside button group
         <HorizontalGroup>
           <ButtonGroup>
             <ToolbarButton variant="primary" icon="sync">
