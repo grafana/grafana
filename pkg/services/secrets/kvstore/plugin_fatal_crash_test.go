@@ -3,6 +3,7 @@ package kvstore
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -98,6 +99,9 @@ func setupFatalCrashTest(
 	}
 	features := NewFakeFeatureToggles(t, isBackwardsCompatDisabled)
 	svc, err := ProvideService(sqlStore, secretService, remoteCheck, kvstore, features)
+	t.Cleanup(func() {
+		fatalFlagOnce = sync.Once{}
+	})
 	return svc, kvstore, sqlStore, err
 }
 
