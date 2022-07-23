@@ -18,6 +18,7 @@ export interface SearchQuery {
   id?: number[];
   facet?: FacetField[];
   explain?: boolean;
+  withAllowedActions?: boolean;
   accessInfo?: boolean;
   hasPreview?: string; // theme
   limit?: number;
