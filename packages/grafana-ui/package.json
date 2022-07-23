@@ -58,7 +58,7 @@
     "jquery": "3.6.0",
     "lodash": "4.17.21",
     "memoize-one": "6.0.0",
-    "moment": "2.29.3",
+    "moment": "2.29.4",
     "monaco-editor": "^0.31.1",
     "ol": "6.14.1",
     "prismjs": "1.28.0",

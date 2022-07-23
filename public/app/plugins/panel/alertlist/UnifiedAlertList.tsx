@@ -25,6 +25,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { GroupMode, SortOrder, UnifiedAlertListOptions } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
+import { filterAlerts } from './util';
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -143,14 +144,15 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
     const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
     const matchers = parseMatchers(replacedLabelFilter);
     // Reduce rules and instances to only those that match
-    filteredRules = filteredRules.reduce((rules, rule) => {
+    filteredRules = filteredRules.reduce<PromRuleWithLocation[]>((rules, rule) => {
       const filteredAlerts = (rule.rule.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
       if (filteredAlerts.length) {
         rules.push({ ...rule, rule: { ...rule.rule, alerts: filteredAlerts } });
       }
       return rules;
-    }, [] as PromRuleWithLocation[]);
+    }, []);
   }
+
   if (options.folder) {
     filteredRules = filteredRules.filter((rule) => {
       return rule.namespaceName === options.folder.title;
@@ -165,6 +167,19 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
         : ({ dataSourceName }) => dataSourceName === options.datasource
     );
   }
+
+  // Remove rules having 0 instances
+  // AlertInstances filters instances and we need to prevent situation
+  // when we display a rule with 0 instances
+  filteredRules = filteredRules.reduce<PromRuleWithLocation[]>((rules, rule) => {
+    const filteredAlerts = filterAlerts(options, rule.rule.alerts ?? []);
+    if (filteredAlerts.length) {
+      // We intentionally don't set alerts to filteredAlerts
+      // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
+      rules.push(rule);
+    }
+    return rules;
+  }, []);
 
   return filteredRules;
 }

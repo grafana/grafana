@@ -4700,7 +4700,7 @@ __metadata:
     history: 4.10.1
     lodash: 4.17.21
     marked: 4.0.16
-    moment: 2.29.3
+    moment: 2.29.4
     moment-timezone: 0.5.34
     ol: 6.14.1
     papaparse: 5.3.2
@@ -5101,7 +5101,7 @@ __metadata:
     lodash: 4.17.21
     memoize-one: 6.0.0
     mock-raf: 1.0.1
-    moment: 2.29.3
+    moment: 2.29.4
     monaco-editor: ^0.31.1
     ol: 6.14.1
     postcss: 8.4.14
@@ -5290,7 +5290,7 @@ __metadata:
     lodash: 4.17.21
     lru-memoize: ^1.1.0
     memoize-one: 6.0.0
-    moment: 2.29.3
+    moment: 2.29.4
     moment-timezone: 0.5.34
     prop-types: 15.8.1
     react: 17.0.2
@@ -6958,14 +6958,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/api-extractor-model@npm:7.21.0":
-  version: 7.21.0
-  resolution: "@microsoft/api-extractor-model@npm:7.21.0"
+"@microsoft/api-extractor-model@npm:7.22.1":
+  version: 7.22.1
+  resolution: "@microsoft/api-extractor-model@npm:7.22.1"
   dependencies:
     "@microsoft/tsdoc": 0.14.1
     "@microsoft/tsdoc-config": ~0.16.1
     "@rushstack/node-core-library": 3.49.0
-  checksum: 9e0cb0cd2d344ee23f32294103856e413fd998ceefc5ea26427b603ef7a6dc155ff6710bf3a30d0c426b9928118e8f56e080f0c0aa9685f3e825e7e154340f62
+  checksum: f1e583cc95abf383e0650568ec3c8a32810de3f47175308f7f867b5b5fa18a92d6fdb2d1f035f54b77c9346ad8a4070c8c70a18602de80a404b2ff3310d9334d
   languageName: node
   linkType: hard
 
@@ -21153,7 +21153,7 @@ __metadata:
     lru-cache: 7.10.1
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
-    moment: 2.29.3
+    moment: 2.29.4
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
     monaco-promql: 1.7.4
@@ -26589,10 +26589,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.3, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1, moment@npm:^2.29.1":
-  version: 2.29.3
-  resolution: "moment@npm:2.29.3"
-  checksum: 2e780e36d9a1823c08a1b6313cbb08bd01ecbb2a9062095820a34f42c878991ccba53abaa6abb103fd5c01e763724f295162a8c50b7e95b4f1c992ef0772d3f0
+"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1, moment@npm:^2.29.1":
+  version: 2.29.4
+  resolution: "moment@npm:2.29.4"
+  checksum: 0ec3f9c2bcba38dc2451b1daed5daded747f17610b92427bebe1d08d48d8b7bdd8d9197500b072d14e326dd0ccf3e326b9e3d07c5895d3d49e39b6803b76e80e
   languageName: node
   linkType: hard
 

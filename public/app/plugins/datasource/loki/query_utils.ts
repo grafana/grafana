@@ -159,3 +159,16 @@ export function isQueryPipelineErrorFiltering(query: string): boolean {
 
   return isQueryPipelineErrorFiltering;
 }
+
+export function isQueryWithLabelFormat(query: string): boolean {
+  let queryWithLabelFormat = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type): false | void => {
+      if (type.name === 'LabelFormatExpr') {
+        queryWithLabelFormat = true;
+      }
+    },
+  });
+  return queryWithLabelFormat;
+}
