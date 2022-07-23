@@ -77,7 +77,7 @@ export const MenuItem = React.memo(
     const itemStyle = cx(
       {
         [styles.item]: true,
-        [styles.activeItem]: isActive,
+        [styles.active]: isActive,
         [styles.destructive]: destructive,
       },
       className
@@ -180,8 +180,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         ${getFocusStyles(theme)}
       }
     `,
-    activeItem: css`
-      background: ${theme.colors.action.selected};
+    active: css`
+      background: ${theme.colors.action.hover};
     `,
     destructive: css`
       color: ${theme.colors.error.text};
@@ -190,7 +190,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: ${theme.colors.error.text};
       }
 
-      &:hover {
+      &:hover,
+      &:focus,
+      &:focus-visible {
         background: ${theme.colors.error.main};
         color: ${theme.colors.error.contrastText};
 
