@@ -1,26 +1,42 @@
 {
-  "id": 209,
-  "title": "ds-variables",
+  "id": 220,
+  "title": "new-dashboard-mixed",
   "tags": null,
   "templateVars": [
-    "sqllite"
+    "dsVariable"
   ],
   "datasource": [
     {
+      "uid": "gdev-testdata",
+      "type": "testdata"
+    },
+    {
       "uid": "default.uid",
       "type": "default.type"
+    },
+    {
+      "uid": "P8045C56BDA891CB2",
+      "type": "cloudwatch"
     }
   ],
   "panels": [
     {
-      "id": 1,
-      "title": "usersss!",
+      "id": 2,
+      "title": "Panel Title",
       "type": "table",
       "pluginVersion": "9.1.0-pre",
       "datasource": [
         {
+          "uid": "gdev-testdata",
+          "type": "testdata"
+        },
+        {
           "uid": "default.uid",
           "type": "default.type"
+        },
+        {
+          "uid": "P8045C56BDA891CB2",
+          "type": "cloudwatch"
         }
       ]
     }
