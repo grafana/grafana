@@ -80,18 +80,13 @@ describe('Stats Calculators', () => {
   it('should get non standard stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: [
-        ReducerID.distinctCount,
-        ReducerID.changeCount,
-        ReducerID.variancePopulation,
-        ReducerID.stddevPopulation,
-      ],
+      reducers: [ReducerID.distinctCount, ReducerID.changeCount, ReducerID.variance, ReducerID.stdDev],
     });
 
     expect(stats.distinctCount).toEqual(2);
     expect(stats.changeCount).toEqual(1);
-    expect(stats.variancePopulation).toEqual(25);
-    expect(stats.stddevPopulation).toEqual(5);
+    expect(stats.variance).toEqual(25);
+    expect(stats.stdDev).toEqual(5);
   });
 
   it('should calculate step', () => {

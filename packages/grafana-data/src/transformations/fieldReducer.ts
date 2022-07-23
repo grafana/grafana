@@ -10,8 +10,8 @@ export enum ReducerID {
   min = 'min',
   logmin = 'logmin',
   mean = 'mean',
-  variancePopulation = 'variancePopulation',
-  stddevPopulation = 'stddevPopulation',
+  variance = 'variance',
+  stdDev = 'stdDev',
   last = 'last',
   first = 'first',
   count = 'count',
@@ -155,18 +155,18 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
   { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
   {
-    id: ReducerID.variancePopulation,
-    name: 'Variance (p)',
+    id: ReducerID.variance,
+    name: 'Variance',
     description: 'Variance (based on population) of all values in a field',
     standard: false,
-    reduce: calculateVariancePopulation,
+    reduce: calculateVariance,
   },
   {
-    id: ReducerID.stddevPopulation,
-    name: 'Standard deviation (p)',
+    id: ReducerID.stdDev,
+    name: 'StdDev',
     description: 'Standard deviation (based on population) of all values in a field',
     standard: false,
-    reduce: calculateStddevPopulation,
+    reduce: calculateStdDev,
   },
   {
     id: ReducerID.sum,
@@ -435,11 +435,11 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
   return { lastNotNull: null };
 }
 
-function calculateVariancePopulation(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateVariance(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   let squareSum = 0;
   let runningMean = 0;
   let runningNonNullCount = 0;
-  let variancePopulation = null;
+  let variance = null;
   const isNumberField = field.type === FieldType.number || FieldType.time;
   const data = field.values;
   for (let i = 0; i < data.length; i++) {
@@ -454,15 +454,15 @@ function calculateVariancePopulation(field: Field, ignoreNulls: boolean, nullAsZ
     }
   }
   if (runningNonNullCount > 0) {
-    variancePopulation = squareSum / runningNonNullCount;
+    variance = squareSum / runningNonNullCount;
   }
-  return { variancePopulation: variancePopulation };
+  return { variance: variance };
 }
 
-function calculateStddevPopulation(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  let variancePopulation = calculateVariancePopulation(field, ignoreNulls, nullAsZero).variancePopulation;
-  let stddevPopulation = Math.sqrt(variancePopulation);
-  return { stddevPopulation: stddevPopulation };
+function calculateStdDev(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  let variance = calculateVariance(field, ignoreNulls, nullAsZero).variance;
+  let stdDev = Math.sqrt(variance);
+  return { stdDev: stdDev };
 }
 
 function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
