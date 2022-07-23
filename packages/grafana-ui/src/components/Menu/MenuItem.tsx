@@ -150,9 +150,9 @@ export const MenuItem = React.memo(
     );
   })
 );
+
 MenuItem.displayName = 'MenuItem';
 
-/** @internal */
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     item: css`

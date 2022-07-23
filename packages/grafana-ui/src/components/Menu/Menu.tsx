@@ -9,7 +9,6 @@ import { MenuDivider } from './MenuDivider';
 import { MenuItem } from './MenuItem';
 import { useMenuFocus } from './hooks';
 
-/** @internal */
 export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   /** React element rendered at the top of the menu */
   header?: React.ReactNode;
@@ -26,7 +25,6 @@ export interface MenuType
   Divider: typeof MenuDivider;
 }
 
-/** @internal */
 export const Menu: MenuType = React.forwardRef<HTMLDivElement, MenuProps>(
   ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
@@ -57,7 +55,6 @@ Menu.Item = MenuItem;
 Menu.Divider = MenuDivider;
 Menu.displayName = 'Menu';
 
-/** @internal */
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`

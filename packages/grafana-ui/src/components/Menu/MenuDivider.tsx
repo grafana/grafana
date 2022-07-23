@@ -10,7 +10,6 @@ export function MenuDivider() {
   return <div className={styles.divider} />;
 }
 
-/** @internal */
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     divider: css({
