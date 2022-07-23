@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
+import { EditorRow } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../../datasource';
 import { CustomMetaData, MetricDescriptor, MetricQuery, SLOQuery } from '../../types';
