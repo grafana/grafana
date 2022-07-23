@@ -139,8 +139,7 @@ func setupTestMigratorServiceWithDeletionError(
 		secretsService,
 		remoteCheck,
 		kvstore,
-		getAllFuncOverride,
 	)
-
+	migratorService.overrideGetAllFunc(getAllFuncOverride)
 	return migratorService
 }

@@ -30,7 +30,6 @@ func ProvidePluginSecretMigrationService(
 	secretsService secrets.Service,
 	remoteCheck UseRemoteSecretsPluginCheck,
 	kvstore kvstore.KVStore,
-	getAllFunc func(ctx context.Context) ([]Item, error),
 ) *PluginSecretMigrationService {
 	return &PluginSecretMigrationService{
 		secretsStore:   secretsStore,
@@ -40,7 +39,6 @@ func ProvidePluginSecretMigrationService(
 		secretsService: secretsService,
 		remoteCheck:    remoteCheck,
 		kvstore:        kvstore,
-		getAllFunc:     getAllFunc,
 	}
 }
 
@@ -99,4 +97,9 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 		s.logger.Debug("deleted unified secrets after migration", "number of secrets", len(allSec))
 	}
 	return nil
+}
+
+// This is here to support testing and should normally not be called
+func (s *PluginSecretMigrationService) overrideGetAllFunc(getAllFunc func(ctx context.Context) ([]Item, error)) {
+	s.getAllFunc = getAllFunc
 }
