@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -103,20 +102,4 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 	}
 
 	return migratorService, secretsStoreForPlugin, secretsSql
-}
-
-type mockRemoteSecretsPluginCheck struct {
-	UseRemoteSecretsPluginCheck
-}
-
-func provideMockRemotePluginCheck() *mockRemoteSecretsPluginCheck {
-	return &mockRemoteSecretsPluginCheck{}
-}
-
-func (c *mockRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
-	return true
-}
-
-func (c *mockRemoteSecretsPluginCheck) StartAndReturnPlugin(ctx context.Context) (secretsmanagerplugin.SecretsManagerPlugin, error) {
-	return nil, nil
 }

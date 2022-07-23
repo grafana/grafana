@@ -2,13 +2,16 @@ package kvstore
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"google.golang.org/grpc"
 )
 
 func SetupTestService(t *testing.T) SecretsKVStore {
@@ -95,4 +98,61 @@ func (f fakeFeatureToggles) IsEnabled(feature string) bool {
 	return f.returnValue
 }
 
+// Fake Remote Secrets Plugin Check
+type mockRemoteSecretsPluginCheck struct {
+	UseRemoteSecretsPluginCheck
+	shouldReturnError bool
+}
+
+func provideMockRemotePluginCheck() *mockRemoteSecretsPluginCheck {
+	return &mockRemoteSecretsPluginCheck{}
+}
+
+func provideMockRemotePluginCheckWithErr() *mockRemoteSecretsPluginCheck {
+	return &mockRemoteSecretsPluginCheck{
+		shouldReturnError: true,
+	}
+}
+
+func (c *mockRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
+	return true
+}
+
+func (c *mockRemoteSecretsPluginCheck) StartAndReturnPlugin(ctx context.Context) (secretsmanagerplugin.SecretsManagerPlugin, error) {
+	var err error
+	if c.shouldReturnError {
+		err = errors.New("bogus")
+	}
+	return &fakeGRPCSecretsPlugin{}, err
+}
+
+// Fake grpc secrets plugin impl
+type fakeGRPCSecretsPlugin struct{}
+
+func (c *fakeGRPCSecretsPlugin) GetSecret(ctx context.Context, in *secretsmanagerplugin.GetSecretRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.GetSecretResponse, error) {
+	return &secretsmanagerplugin.GetSecretResponse{
+		DecryptedValue: "bogus",
+		Exists:         true,
+	}, nil
+}
+
+func (c *fakeGRPCSecretsPlugin) SetSecret(ctx context.Context, in *secretsmanagerplugin.SetSecretRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.SetSecretResponse, error) {
+	return &secretsmanagerplugin.SetSecretResponse{}, nil
+}
+
+func (c *fakeGRPCSecretsPlugin) DeleteSecret(ctx context.Context, in *secretsmanagerplugin.DeleteSecretRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.DeleteSecretResponse, error) {
+	return &secretsmanagerplugin.DeleteSecretResponse{}, nil
+}
+
+func (c *fakeGRPCSecretsPlugin) ListSecrets(ctx context.Context, in *secretsmanagerplugin.ListSecretsRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.ListSecretsResponse, error) {
+	return &secretsmanagerplugin.ListSecretsResponse{
+		Keys: make([]*secretsmanagerplugin.Key, 0),
+	}, nil
+}
+
+func (c *fakeGRPCSecretsPlugin) RenameSecret(ctx context.Context, in *secretsmanagerplugin.RenameSecretRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.RenameSecretResponse, error) {
+	return &secretsmanagerplugin.RenameSecretResponse{}, nil
+}
+
 var _ SecretsKVStore = FakeSecretsKVStore{}
+var _ secretsmanagerplugin.SecretsManagerPlugin = &fakeGRPCSecretsPlugin{}
