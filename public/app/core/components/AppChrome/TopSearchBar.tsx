@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FilterInput, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, FilterInput, Icon, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -36,12 +36,27 @@ export function TopSearchBar() {
           </button>
         </Tooltip>
         <Tooltip placement="bottom" content="User profile (todo)">
-          <button className={styles.actionItem}>
-            <img src={contextSrv.user.gravatarUrl} />
-          </button>
+          <Dropdown overlay={ProfileMenu}>
+            <button className={styles.actionItem}>
+              <img src={contextSrv.user.gravatarUrl} />
+            </button>
+          </Dropdown>
         </Tooltip>
       </div>
     </div>
+  );
+}
+
+/**
+ * This is just temporary, needs syncing with the backend option like DisableSignoutMenu
+ */
+export function ProfileMenu() {
+  return (
+    <Menu>
+      <MenuItem url="profile" label="Your profile" />
+      <MenuItem url="profile/notifications" label="Your notifications" />
+      <MenuItem url="logout" label="Sign out" />
+    </Menu>
   );
 }
 

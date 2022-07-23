@@ -50,7 +50,7 @@ export function Examples() {
       <StoryExample name="Trigger hover">
         <ButtonGroup>
           <Button>Submit</Button>
-          <Dropdown overlay={menu} placement="bottom-end" trigger={['hover', 'click']}>
+          <Dropdown overlay={menu} placement="bottom-end" trigger={['hover']}>
             <Button icon="ellipsis-v" />
           </Dropdown>
         </ButtonGroup>

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { CSSTransition } from 'react-transition-group';
 
@@ -11,18 +11,18 @@ type OverlayFunc = () => React.ReactElement;
 
 export interface Props {
   overlay: React.ReactElement | OverlayFunc;
-  /** Set to true force dropdown overlay to be visible */
-  show?: boolean;
   placement?: TooltipPlacement;
   children: React.ReactElement;
   /** Defaults to click */
   trigger?: Array<'click' | 'hover'>;
 }
 
-export const Dropdown = React.memo(({ children, overlay, show, placement, trigger = ['click'] }: Props) => {
+export const Dropdown = React.memo(({ children, overlay, placement, trigger = ['click'] }: Props) => {
+  const [show, setShow] = useState(false);
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible } = usePopperTooltip({
     visible: show,
     placement: placement,
+    onVisibleChange: setShow,
     interactive: true,
     delayHide: 200,
     delayShow: 150,
@@ -33,6 +33,10 @@ export const Dropdown = React.memo(({ children, overlay, show, placement, trigge
   const animationDuration = 150;
   const animationStyles = getStyles(animationDuration);
 
+  const onOverlayClicked = () => {
+    setShow(false);
+  };
+
   return (
     <>
       {React.cloneElement(children, {
@@ -40,9 +44,14 @@ export const Dropdown = React.memo(({ children, overlay, show, placement, trigge
       })}
       {visible && (
         <Portal>
-          <div ref={setTooltipRef} {...getTooltipProps()}>
+          <div ref={setTooltipRef} {...getTooltipProps()} onClick={onOverlayClicked}>
             <div {...getArrowProps({ className: 'tooltip-arrow' })} />
-            <CSSTransition appear={true} in={true} timeout={animationDuration} classNames={animationStyles}>
+            <CSSTransition
+              appear={true}
+              in={true}
+              timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
+              classNames={animationStyles}
+            >
               {ReactUtils.renderOrCallToRender(overlay)}
             </CSSTransition>
           </div>
@@ -57,14 +66,12 @@ Dropdown.displayName = 'Dropdown';
 const getStyles = (duration: number) => {
   return {
     appear: css`
-      label: enter;
       opacity: 0;
       position: relative;
       transform: scaleY(0.5);
       transform-origin: top;
     `,
     appearActive: css`
-      label: enterActive;
       opacity: 1;
       transform: scaleY(1);
       transition: transform ${duration}ms cubic-bezier(0.2, 0, 0.2, 1),
