@@ -456,7 +456,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with label format', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | label_format newLabel=oldLabel')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | label_format renameTo=original')).toEqual(
       noErrors({
         labels: [
           {
@@ -465,13 +465,13 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: 'label_format', params: ['newLabel', 'oldLabel'] }],
+        operations: [{ id: 'label_format', params: ['original', 'renameTo'] }],
       })
     );
   });
 
   it('parses query with multiple label format', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | label_format newLabel=oldLabel, bar="baz"')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | label_format renameTo=original, bar=baz')).toEqual(
       noErrors({
         labels: [
           {
@@ -481,8 +481,8 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'label_format', params: ['newLabel', 'oldLabel'] },
-          { id: 'label_format', params: ['bar', 'baz'] },
+          { id: 'label_format', params: ['original', 'renameTo'] },
+          { id: 'label_format', params: ['baz', 'bar'] },
         ],
       })
     );
