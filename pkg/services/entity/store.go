@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/gogo/status"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/entity"
@@ -36,7 +37,7 @@ func ProvideService() EntityStore {
 		// Images
 		//----------------------
 		entity.NewRawFileKind(
-			&entity.KindInfo{
+			entity.KindInfo{
 				ID:          "png",
 				Description: "image",
 				PathSuffix:  ".png",
@@ -44,7 +45,7 @@ func ProvideService() EntityStore {
 			nil, // could add a sanitizer here
 		),
 		entity.NewRawFileKind(
-			&entity.KindInfo{
+			entity.KindInfo{
 				ID:          "gif",
 				Description: "image",
 				PathSuffix:  ".gif",
@@ -52,7 +53,7 @@ func ProvideService() EntityStore {
 			nil, // could add a sanitizer here
 		),
 		entity.NewRawFileKind(
-			&entity.KindInfo{
+			entity.KindInfo{
 				ID:          "webp",
 				Description: "image",
 				PathSuffix:  ".webp",
@@ -60,7 +61,7 @@ func ProvideService() EntityStore {
 			nil, // could add a sanitizer here
 		),
 		entity.NewRawFileKind(
-			&entity.KindInfo{
+			entity.KindInfo{
 				ID:          "svg",
 				Description: "image",
 				PathSuffix:  ".svg",
@@ -146,10 +147,23 @@ func (s *StandardEntityStoreServer) CreatePR(context.Context, *entity.CreatePull
 func (s *StandardEntityStoreServer) ListKinds(context.Context, *entity.ListKindsRequest) (*entity.ListKindsResponse, error) {
 	kinds := s.kinds.List()
 	rsp := &entity.ListKindsResponse{
-		Kinds: make([]*entity.KindInfo, len(kinds)),
+		Kinds: make([]*entity.KindSummary, len(kinds)),
 	}
 	for i, k := range kinds {
-		rsp.Kinds[i] = k.Info()
+		info := k.Info()
+		gtype := reflect.TypeOf(k.GoType())
+		rsp.Kinds[i] = &entity.KindSummary{
+			ID:            info.ID,
+			Description:   info.Description,
+			Category:      info.Category,
+			PathSuffix:    info.PathSuffix,
+			HasSecureKeys: info.HasSecureKeys,
+			IsRaw:         info.IsRaw,
+			ContentType:   info.ContentType,
+
+			// Things not copied from the info
+			GoType: fmt.Sprintf("%s // %s", gtype.String(), gtype.PkgPath()),
+		}
 	}
 	return rsp, nil
 }

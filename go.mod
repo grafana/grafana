@@ -14,7 +14,7 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
 // Local SDK development
-//replace github.com/grafana/grafana-plugin-sdk-go => /Users/ryan/workspace/grafana/more/grafana-plugin-sdk-go
+replace github.com/grafana/grafana-plugin-sdk-go => /Users/ryan/workspace/grafana/more/grafana-plugin-sdk-go
 
 require (
 	cloud.google.com/go/storage v1.21.0

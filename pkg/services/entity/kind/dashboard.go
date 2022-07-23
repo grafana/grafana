@@ -19,8 +19,8 @@ var _ entity.Kind = &DashboardKind{}
 
 type DashboardKind struct{}
 
-func (k *DashboardKind) Info() *entity.KindInfo {
-	return &entity.KindInfo{
+func (k *DashboardKind) Info() entity.KindInfo {
+	return entity.KindInfo{
 		ID:          "dashboard",
 		Description: "Core dashboard model",
 		PathSuffix:  "-dash.json",
