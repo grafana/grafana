@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Stack } from '@grafana/experimental';
+import { Stack } from '@grafana/ui';
 
 import promqlGrammar from '../../promql';
 import { promQueryModeller } from '../PromQueryModeller';

@@ -2618,7 +2618,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
             }
           },
           {
@@ -2976,7 +2976,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
             }
           },
           {
@@ -4218,7 +4218,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "$ref": "#/responses/folderResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4368,7 +4368,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
             }
           }
         ],
@@ -7866,7 +7866,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/okResponse"
+            "$ref": "#/responses/getTeamMembersResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -9120,82 +9120,6 @@
         }
       }
     },
-    "Alert": {
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "DashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "EvalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "ExecutionError": {
-          "type": "string"
-        },
-        "For": {
-          "$ref": "#/definitions/Duration"
-        },
-        "Frequency": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Handler": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Message": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "NewStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PanelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "Severity": {
-          "type": "string"
-        },
-        "Silenced": {
-          "type": "boolean"
-        },
-        "State": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "StateChanges": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "AlertListItemDTO": {
       "type": "object",
       "properties": {
@@ -9889,7 +9813,7 @@
         }
       }
     },
-    "DashboardAclInfoDTO": {
+    "DashboardACLInfoDTO": {
       "type": "object",
       "properties": {
         "created": {
@@ -9964,7 +9888,7 @@
         }
       }
     },
-    "DashboardAclUpdateItem": {
+    "DashboardACLUpdateItem": {
       "type": "object",
       "properties": {
         "permission": {
@@ -10077,6 +10001,9 @@
         },
         "publicDashboardAccessToken": {
           "type": "string"
+        },
+        "publicDashboardEnabled": {
+          "type": "boolean"
         },
         "slug": {
           "type": "string"
@@ -10547,6 +10474,10 @@
         }
       }
     },
+    "DataTopic": {
+      "type": "string",
+      "title": "DataTopic is used to identify which topic the frame should be assigned to."
+    },
     "DeleteTokenCommand": {
       "type": "object",
       "properties": {
@@ -10624,7 +10555,7 @@
           "$ref": "#/definitions/FieldConfig"
         },
         "labels": {
-          "$ref": "#/definitions/Labels"
+          "$ref": "#/definitions/FrameLabels"
         },
         "name": {
           "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
@@ -10835,6 +10766,13 @@
         }
       }
     },
+    "FrameLabels": {
+      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "FrameMeta": {
       "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
       "type": "object",
@@ -10847,6 +10785,9 @@
         "custom": {
           "description": "Custom datasource specific values.",
           "type": "object"
+        },
+        "dataTopic": {
+          "$ref": "#/definitions/DataTopic"
         },
         "executedQueryString": {
           "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
@@ -11175,11 +11116,80 @@
     "Json": {
       "type": "object"
     },
-    "Labels": {
-      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+    "LegacyAlert": {
       "type": "object",
-      "additionalProperties": {
-        "type": "string"
+      "properties": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "DashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "EvalData": {
+          "$ref": "#/definitions/Json"
+        },
+        "ExecutionError": {
+          "type": "string"
+        },
+        "For": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Frequency": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Handler": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Message": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "NewStateDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "OrgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PanelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "Severity": {
+          "type": "string"
+        },
+        "Silenced": {
+          "type": "boolean"
+        },
+        "State": {
+          "$ref": "#/definitions/AlertStateType"
+        },
+        "StateChanges": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
+        }
       }
     },
     "LibraryElementConnectionDTO": {
@@ -12270,7 +12280,7 @@
       }
     },
     "Responses": {
-      "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataRespones' frames based on these RefIDs.",
+      "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
       "type": "object",
       "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses.",
       "additionalProperties": {
@@ -13164,13 +13174,13 @@
         }
       }
     },
-    "UpdateDashboardAclCommand": {
+    "UpdateDashboardACLCommand": {
       "type": "object",
       "properties": {
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DashboardAclUpdateItem"
+            "$ref": "#/definitions/DashboardACLUpdateItem"
           }
         }
       }
@@ -14058,10 +14068,7 @@
     "getAlertResponse": {
       "description": "",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Alert"
-        }
+        "$ref": "#/definitions/LegacyAlert"
       }
     },
     "getAlertsResponse": {
@@ -14126,7 +14133,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/DashboardAclInfoDTO"
+          "$ref": "#/definitions/DashboardACLInfoDTO"
         }
       }
     },

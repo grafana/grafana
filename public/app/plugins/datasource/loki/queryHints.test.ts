@@ -70,4 +70,45 @@ describe('getQueryHints', () => {
       expect(getQueryHints('{job="grafana" | json', [jsonAndLogfmtSeries])).toEqual([]);
     });
   });
+
+  describe('when series with level-like label', () => {
+    const createSeriesWithLabel = (labelName?: string): DataFrame => {
+      const labelVariable: { [key: string]: string } = { job: 'a' };
+      if (labelName) {
+        labelVariable[labelName] = 'error';
+      }
+      return {
+        name: 'logs',
+        length: 2,
+        fields: [
+          {
+            name: 'Line',
+            type: FieldType.string,
+            config: {},
+            values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            config: {},
+            values: new ArrayVector([labelVariable, { job: 'baz', foo: 'bar' }]),
+          },
+        ],
+      };
+    };
+
+    it('suggest level renaming when no level label', () => {
+      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('lvl')])).toMatchObject([
+        { type: 'ADD_JSON_PARSER' },
+        { type: 'ADD_LOGFMT_PARSER' },
+        { type: 'ADD_LEVEL_LABEL_FORMAT' },
+      ]);
+    });
+    it('does not suggest level renaming if level label', () => {
+      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('level')])).toMatchObject([
+        { type: 'ADD_JSON_PARSER' },
+        { type: 'ADD_LOGFMT_PARSER' },
+      ]);
+    });
+  });
 });

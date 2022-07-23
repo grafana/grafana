@@ -1,14 +1,14 @@
-import { Meta, Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ButtonGroup } from '../Button';
 
-import { ToolbarButton, ToolbarButtonProps } from './ToolbarButton';
+import { ToolbarButton } from './ToolbarButton';
 import mdx from './ToolbarButton.mdx';
 import { ToolbarButtonRow } from './ToolbarButtonRow';
 
-export default {
+const meta: ComponentMeta<typeof ToolbarButton> = {
   title: 'Buttons/ToolbarButton',
   component: ToolbarButton,
   decorators: [withCenteredStory],
@@ -17,16 +17,15 @@ export default {
       page: mdx,
     },
     controls: {
-      exclude: ['imgSrc', 'imgAlt', 'iconOnly', 'narrow'],
+      exclude: ['imgSrc', 'imgAlt', 'narrow'],
     },
   },
   args: {
     variant: 'default',
     fullWidth: false,
     disabled: false,
-    toolbarButtonText: 'Just text',
+    children: 'Just text',
     icon: 'cloud',
-    showDropdown: false,
     isOpen: false,
     tooltip: 'This is a tooltip',
     isHighlighted: false,
@@ -47,36 +46,36 @@ export default {
       },
     },
   },
-} as Meta;
+};
 
-interface StoryProps extends Partial<ToolbarButtonProps> {
-  toolbarButtonText: string;
-  showDropdown: boolean;
-}
-
-export const BasicWithText: Story<StoryProps> = (args) => {
+export const BasicWithText: ComponentStory<typeof ToolbarButton> = (args) => {
   return (
     <ToolbarButton
       variant={args.variant}
       disabled={args.disabled}
       fullWidth={args.fullWidth}
+      icon={args.icon}
       tooltip={args.tooltip}
-      isOpen={args.showDropdown ? args.isOpen : undefined}
+      isOpen={args.isOpen}
       isHighlighted={args.isHighlighted}
       imgSrc={args.imgSrc}
       imgAlt={args.imgAlt}
     >
-      {args.toolbarButtonText}
+      {args.children}
     </ToolbarButton>
   );
 };
+BasicWithText.args = {
+  icon: undefined,
+  iconOnly: false,
+};
 
-export const BasicWithIcon: Story<StoryProps> = (args) => {
+export const BasicWithIcon: ComponentStory<typeof ToolbarButton> = (args) => {
   return (
     <ToolbarButton
       variant={args.variant}
       icon={args.icon}
-      isOpen={args.showDropdown ? args.isOpen : undefined}
+      isOpen={args.isOpen}
       tooltip={args.tooltip}
       disabled={args.disabled}
       fullWidth={args.fullWidth}
@@ -86,8 +85,11 @@ export const BasicWithIcon: Story<StoryProps> = (args) => {
     />
   );
 };
+BasicWithIcon.args = {
+  iconOnly: true,
+};
 
-export const List: Story<ToolbarButtonProps> = (args) => {
+export const List: ComponentStory<typeof ToolbarButton> = (args) => {
   return (
     <ToolbarButtonRow>
       <ToolbarButton variant={args.variant} iconOnly={false} isOpen={false}>
@@ -101,3 +103,5 @@ export const List: Story<ToolbarButtonProps> = (args) => {
     </ToolbarButtonRow>
   );
 };
+
+export default meta;
