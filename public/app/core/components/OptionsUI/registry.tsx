@@ -147,8 +147,8 @@ export const getAllOptionEditors = () => {
 
   const timeZone: StandardEditorsRegistryItem<TimeZone> = {
     id: 'timezone',
-    name: 'Time Zone',
-    description: 'Time zone selection',
+    name: 'Time zone',
+    description: 'Timezone selection',
     editor: TimeZonePicker as any,
   };
 
