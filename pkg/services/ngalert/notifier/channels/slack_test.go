@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -26,32 +25,14 @@ import (
 func TestSlackNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
-	// Create our temporary image file.
-	f, err := os.CreateTemp("", "ngalert-images-example*.png")
-	if err != nil {
-		panic("Temp file error!")
-	}
-	defer func() { _ = os.Remove(f.Name()) }()
-
 	fakeImageStore := &fakeImageStore{
 		Images: []*models.Image{
 			{
 				Token: "test-with-url",
 				URL:   "https://www.example.com/image.jpg",
 			},
-			{
-				Token: "test-with-path-not-found",
-				Path:  "usr/home/nouser/noway.jpg",
-			},
-			{
-				Token: "test-with-path-found",
-				Path:  f.Name(), // Has the full path because of how CreateTemp works.
-			},
 		},
 	}
-
-	_, _ = f.Write([]byte("test image"))
-	_ = f.Close()
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -83,6 +64,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -118,6 +100,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -147,12 +130,13 @@ func TestSlackNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-with-url"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertImageToken__": "test-with-url"},
 					},
 				},
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -171,78 +155,6 @@ func TestSlackNotifier(t *testing.T) {
 				},
 			},
 			expMsgError: nil,
-		},
-		{
-			name: "Image URL with path but no file creates message with no error",
-			settings: `{
-				"token": "1234",
-				"image_upload_url": "https://www.webhook.com",
-				"recipient": "#testchannel",
-				"icon_emoji": ":emoji:"
-			}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-with-path-not-found"},
-					},
-				},
-			},
-			expMsg: &slackMessage{
-				Channel:   "#testchannel",
-				Username:  "Grafana",
-				IconEmoji: ":emoji:",
-				Attachments: []attachment{
-					{
-						Title:      "[FIRING:1]  (val1)",
-						TitleLink:  "http://localhost/alerting/list",
-						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
-						Fallback:   "[FIRING:1]  (val1)",
-						Fields:     nil,
-						Footer:     "Grafana v" + setting.BuildVersion,
-						FooterIcon: "https://grafana.com/assets/img/fav32.png",
-						Color:      "#D63232",
-						Ts:         0,
-					},
-				},
-			},
-			expMsgError: nil,
-		},
-		{
-			name: "Image URL with path and file creates message and uploads image",
-			settings: `{
-				"token": "1234",
-				"recipient": "#testchannel",
-				"icon_emoji": ":emoji:"
-			}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-with-path-found"},
-					},
-				},
-			},
-			expMsg: &slackMessage{
-				Channel:   "#testchannel",
-				Username:  "Grafana",
-				IconEmoji: ":emoji:",
-				Attachments: []attachment{
-					{
-						Title:      "[FIRING:1]  (val1)",
-						TitleLink:  "http://localhost/alerting/list",
-						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
-						Fallback:   "[FIRING:1]  (val1)",
-						Fields:     nil,
-						Footer:     "Grafana v" + setting.BuildVersion,
-						FooterIcon: "https://grafana.com/assets/img/fav32.png",
-						Color:      "#D63232",
-						Ts:         0,
-					},
-				},
-			},
-			expMsgError:   nil,
-			expWebhookURL: SlackImageAPIEndpoint,
 		},
 		{
 			name: "Correct config with multiple alerts and template",
@@ -268,6 +180,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "2 firing, 0 resolved",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -316,6 +229,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -333,43 +247,6 @@ func TestSlackNotifier(t *testing.T) {
 				},
 			},
 			expMsgError: nil,
-		},
-		{
-			name: "Custom image upload URL",
-			settings: `{
-				"token": "1234",
-				"recipient": "#testchannel",
-				"icon_emoji": ":emoji:",
-				"imageUploadUrl": "https://custom-domain.upload"
-			}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-with-path-found"},
-					},
-				},
-			},
-			expMsg: &slackMessage{
-				Channel:   "#testchannel",
-				Username:  "Grafana",
-				IconEmoji: ":emoji:",
-				Attachments: []attachment{
-					{
-						Title:      "[FIRING:1]  (val1)",
-						TitleLink:  "http://localhost/alerting/list",
-						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
-						Fallback:   "[FIRING:1]  (val1)",
-						Fields:     nil,
-						Footer:     "Grafana v" + setting.BuildVersion,
-						FooterIcon: "https://grafana.com/assets/img/fav32.png",
-						Color:      "#D63232",
-						Ts:         0,
-					},
-				},
-			},
-			expMsgError:   nil,
-			expWebhookURL: "https://custom-domain.upload",
 		},
 	}
 

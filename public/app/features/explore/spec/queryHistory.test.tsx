@@ -11,12 +11,14 @@ import {
   assertDataSourceFilterVisibility,
   assertLoadMoreQueryHistoryNotVisible,
   assertQueryHistory,
+  assertQueryHistoryComment,
   assertQueryHistoryElementsShown,
   assertQueryHistoryExists,
   assertQueryHistoryIsStarred,
   assertQueryHistoryTabIsSelected,
 } from './helper/assert';
 import {
+  commentQueryHistory,
   closeQueryHistory,
   deleteQueryHistory,
   inputQuery,
@@ -52,6 +54,7 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasAccess: () => true,
+    isSignedIn: true,
   },
 }));
 
@@ -115,7 +118,6 @@ describe('Explore: Query History', () => {
     await openQueryHistory();
     await assertQueryHistoryExists(RAW_QUERY);
 
-    expect(reportInteractionMock).toBeCalledTimes(2);
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_opened', {
       queryHistoryEnabled: false,
     });
@@ -180,6 +182,25 @@ describe('Explore: Query History', () => {
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
       queryHistoryEnabled: false,
     });
+  });
+
+  it('add comments to query history', async () => {
+    const urlParams = {
+      left: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A', expr: 'query #1' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
+    };
+
+    const { datasources } = setupExplore({ urlParams });
+    (datasources.loki.query as jest.Mock).mockReturnValueOnce(makeLogsQueryResponse());
+    await waitForExplore();
+    await openQueryHistory();
+    await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.left);
+
+    await commentQueryHistory(0, 'test comment');
+    await assertQueryHistoryComment(['test comment'], ExploreId.left);
   });
 
   it('updates query history settings', async () => {

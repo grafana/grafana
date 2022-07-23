@@ -121,33 +121,44 @@ type SearchUsersWithPagingParams struct {
 	Query string `json:"query"`
 }
 
-// swagger:parameters getUserByID updateUser getUserOrgList getUserTeams
-// swagger:parameters setPassword setPermissions deleteUser getAuthTokens logoutUser revokeAuthToken
-// swagger:parameters syncLDAPUser disableUser enableUser getUserQuota updateUserQuota
-// swagger:parameters updateOrgUser deleteOrgUser adminUpdateOrgUser adminDeleteOrgUser
-// swagger:parameters updateTeamMember removeTeamMember
-// swagger:parameters listUserRoles addUserRole
-// swagger:parameters listUserRoles addUserRole removeUserRole setUserRoles listUserRoles
-type UserIDParam struct {
+// swagger:parameters getUserByID
+type GetUserByIDParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getUserOrgList
+type GetUserOrgListParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getUserTeams
+type GetUserTeamsParams struct {
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`
 }
 
 // swagger:parameters getUserByLoginOrEmail
-type GetUserByLoginOrEmailParam struct {
+type GetUserByLoginOrEmailParams struct {
 	// loginOrEmail of the user
 	// in:query
 	// required:true
 	LoginOrEmail string `json:"loginOrEmail"`
 }
 
-// swagger:parameters updateUser updateSignedInUser
-type UpdateUserParam struct {
+// swagger:parameters updateUser
+type UpdateUserParams struct {
 	// To change the email, name, login, theme, provide another one.
 	// in:body
 	// required:true
 	Body models.UpdateUserCommand `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
 }
 
 // swagger:response searchUsersResponse

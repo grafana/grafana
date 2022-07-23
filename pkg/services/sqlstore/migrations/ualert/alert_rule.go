@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	legacymodels "github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -13,6 +14,7 @@ import (
 )
 
 type alertRule struct {
+	ID              int64 `xorm:"pk autoincr 'id'"`
 	OrgID           int64 `xorm:"org_id"`
 	Title           string
 	Condition       string
@@ -22,6 +24,7 @@ type alertRule struct {
 	UID             string `xorm:"uid"`
 	NamespaceUID    string `xorm:"namespace_uid"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     string
 	ExecErrState    string
 	For             duration
@@ -35,6 +38,7 @@ type alertRuleVersion struct {
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
 	ParentVersion    int64
 	RestoredFrom     int64
 	Version          int64
@@ -59,6 +63,7 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		RuleUID:          a.UID,
 		RuleNamespaceUID: a.NamespaceUID,
 		RuleGroup:        a.RuleGroup,
+		RuleGroupIndex:   a.RuleGroupIndex,
 		ParentVersion:    0,
 		RestoredFrom:     0,
 		Version:          1,
@@ -77,9 +82,11 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 }
 
 func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
-	lbls := da.ParsedSettings.AlertRuleTags
-	if lbls == nil {
-		lbls = make(map[string]string)
+	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
+	lbls := make(map[string]string, len(tagsMap))
+
+	for k, v := range tagsMap {
+		lbls[k] = simplejson.NewFromAny(v).MustString()
 	}
 
 	annotations := make(map[string]string, 3)

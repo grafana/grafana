@@ -1,21 +1,18 @@
-import { Story } from '@storybook/react';
+import { Story, ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { GraphContextMenuHeader } from '..';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
 
-import { Menu, MenuProps } from './Menu';
+import { Menu } from './Menu';
 import { MenuGroup } from './MenuGroup';
 import { MenuItem } from './MenuItem';
 
-export default {
+const meta: ComponentMeta<typeof Menu> = {
   title: 'General/Menu',
   component: Menu,
-  argTypes: {
-    items: { control: { disable: true } },
-    icon: { control: { type: 'select' } },
-  },
+  argTypes: {},
   parameters: {
     knobs: {
       disabled: true,
@@ -29,7 +26,7 @@ export default {
   },
 };
 
-export const Simple: Story<MenuProps> = (args) => {
+export const Simple: Story = (args) => {
   return (
     <VerticalGroup>
       <StoryExample name="Simple">
@@ -93,3 +90,5 @@ Simple.args = {
     />
   ),
 };
+
+export default meta;

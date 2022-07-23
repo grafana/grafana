@@ -2,8 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu } from 'react-select-event';
-
-import { selectOptionInTest } from '@grafana/ui';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockPanelData from '../../__mocks__/panelData';
@@ -18,7 +17,7 @@ const variableOptionGroup = {
 };
 const user = userEvent.setup();
 
-describe('Azure Monitor QueryEditor', () => {
+describe(`Azure Monitor QueryEditor`, () => {
   const mockDatasource = createMockDatasource();
 
   it('should render a dimension filter', async () => {
@@ -41,8 +40,10 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const addDimension = await screen.findByText('Add new dimension');
+
+    const addDimension = await screen.findByLabelText('Add');
     await user.click(addDimension);
+
     mockQuery = appendDimensionFilter(mockQuery);
     expect(onQueryChange).toHaveBeenCalledWith({
       ...mockQuery,
@@ -100,8 +101,10 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const addDimension = await screen.findByText('Add new dimension');
+
+    const addDimension = await screen.findByLabelText('Add');
     await user.click(addDimension);
+
     mockQuery = appendDimensionFilter(mockQuery);
     rerender(
       <DimensionFields
@@ -233,7 +236,7 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const labelSelect = await screen.getByLabelText('dimension-labels-select');
+    const labelSelect = screen.getByLabelText('dimension-labels-select');
     await openMenu(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(2);
@@ -281,11 +284,11 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const labelSelect = await screen.getByLabelText('dimension-labels-select');
+    const labelSelect = screen.getByLabelText('dimension-labels-select');
     await user.click(labelSelect);
     await openMenu(labelSelect);
-    await screen.getByText('testlabel');
-    await screen.getByText('testlabel2');
+    screen.getByText('testlabel');
+    screen.getByText('testlabel2');
     await selectOptionInTest(labelSelect, 'testlabel');
     mockQuery = setDimensionFilterValue(mockQuery, 0, 'filters', ['testlabel']);
     expect(onQueryChange).toHaveBeenCalledWith({
@@ -319,7 +322,7 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const labelSelect2 = await screen.getByLabelText('dimension-labels-select');
+    const labelSelect2 = screen.getByLabelText('dimension-labels-select');
     await openMenu(labelSelect2);
     const refreshedOptions = await screen.findAllByLabelText('Select options menu');
     expect(refreshedOptions).toHaveLength(1);

@@ -6,6 +6,9 @@ package schema
 AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
+AxisColorMode:      "text" | "series"                                       @cuetsy(kind="enum")
+
+// TODO docs
 VisibilityMode:     "auto" | "never" | "always"                             @cuetsy(kind="enum")
 
 // TODO docs
@@ -85,12 +88,14 @@ ScaleDistributionConfig: {
 // TODO docs
 AxisConfig: {
 	axisPlacement?:     AxisPlacement
+	axisColorMode?:     AxisColorMode
 	axisLabel?:         string
 	axisWidth?:         number
 	axisSoftMin?:       number
 	axisSoftMax?:       number
 	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
+	axisCenteredZero?:   bool
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -169,6 +174,11 @@ OptionsWithLegend: {
 } @cuetsy(kind="interface")
 
 // TODO docs
+OptionsWithTimezones: {
+	timezones?: [...string]
+} @cuetsy(kind="interface")
+
+// TODO docs
 OptionsWithTextFormatting: {
 	text?: VizTextDisplayOptions
 } @cuetsy(kind="interface")
@@ -229,6 +239,7 @@ VizLegendOptions: {
 	isVisible?:   bool
   sortBy?:      string
   sortDesc?:    bool
+  width?:       number
 	calcs:        [...string]
 } @cuetsy(kind="interface")
 

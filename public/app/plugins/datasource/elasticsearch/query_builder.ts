@@ -112,13 +112,7 @@ export class ElasticQueryBuilder {
 
     const interval = settings.interval === 'auto' ? '$__interval' : settings.interval;
 
-    if (gte(this.esVersion, '8.0.0')) {
-      // The deprecation was actually introduced in 7.0.0, we might want to use that instead of the removal date,
-      // but it woudl be a breaking change on our side.
-      esAgg.fixed_interval = interval;
-    } else {
-      esAgg.interval = interval;
-    }
+    esAgg.fixed_interval = interval;
 
     return esAgg;
   }

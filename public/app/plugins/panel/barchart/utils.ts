@@ -30,7 +30,7 @@ import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
 import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig } from './models.gen';
-import { BarChartDisplayValues } from './types';
+import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
@@ -173,6 +173,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
 
+    // make barcharts start at 0 unless explicitly overridden
+    let softMin = customConfig.axisSoftMin;
+    let softMax = customConfig.axisSoftMax;
+
+    if (softMin == null && field.config.min == null) {
+      softMin = 0;
+    }
+
+    if (softMax == null && field.config.max == null) {
+      softMax = 0;
+    }
+
     builder.addSeries({
       scaleKey,
       pxAlign: true,
@@ -187,8 +199,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       thresholds: field.config.thresholds,
       hardMin: field.config.min,
       hardMax: field.config.max,
-      softMin: customConfig.axisSoftMin,
-      softMax: customConfig.axisSoftMax,
+      softMin,
+      softMax,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
@@ -207,8 +219,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       scaleKey,
       min: field.config.min,
       max: field.config.max,
-      softMin: customConfig.axisSoftMin,
-      softMax: customConfig.axisSoftMax,
+      softMin,
+      softMax,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
       distribution: customConfig.scaleDistribution?.type,
@@ -298,9 +310,9 @@ export function prepareBarChartDisplayValues(
   series: DataFrame[],
   theme: GrafanaTheme2,
   options: PanelOptions
-): BarChartDisplayValues {
+): BarChartDisplayValues | BarChartDisplayWarning {
   if (!series?.length) {
-    return { warn: 'No data in response' } as BarChartDisplayValues;
+    return { warn: 'No data in response' };
   }
 
   // Bar chart requires a single frame
@@ -312,7 +324,7 @@ export function prepareBarChartDisplayValues(
         )
       : outerJoinDataFrames({ frames: series });
   if (!frame) {
-    return { warn: 'Unable to join data' } as BarChartDisplayValues;
+    return { warn: 'Unable to join data' };
   }
 
   // Color by a field different than the input
@@ -320,7 +332,7 @@ export function prepareBarChartDisplayValues(
   if (options.colorByField) {
     colorByField = findField(frame, options.colorByField);
     if (!colorByField) {
-      return { warn: 'Color field not found' } as BarChartDisplayValues;
+      return { warn: 'Color field not found' };
     }
   }
 
@@ -328,7 +340,7 @@ export function prepareBarChartDisplayValues(
   if (options.xField) {
     xField = findField(frame, options.xField);
     if (!xField) {
-      return { warn: 'Configured x field not found' } as BarChartDisplayValues;
+      return { warn: 'Configured x field not found' };
     }
   }
 
@@ -398,13 +410,13 @@ export function prepareBarChartDisplayValues(
   if (!firstField) {
     return {
       warn: 'Bar charts requires a string or time field',
-    } as BarChartDisplayValues;
+    };
   }
 
   if (!fields.length) {
     return {
       warn: 'No numeric fields found',
-    } as BarChartDisplayValues;
+    };
   }
 
   // Show the first number value

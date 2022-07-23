@@ -22,7 +22,7 @@ import (
 // Get folder by uid.
 //
 // Responses:
-// 200:
+// 200: folderResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
@@ -95,11 +95,21 @@ type GetFoldersParams struct {
 }
 
 // swagger:parameters getFolderByUID updateFolder deleteFolder
-// swagger:parameters getFolderPermissions updateFolderPermissions
+// swagger:parameters getFolderPermissions
 type FolderUIDParam struct {
 	// in:path
 	// required:true
 	FolderUID string `json:"folder_uid"`
+}
+
+// swagger:parameters updateFolderPermissions
+type PostDashboardPermissionsParam struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardACLCommand
 }
 
 // swagger:parameters getFolderByID

@@ -106,7 +106,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
     {
       id: 'groupBy',
       label: 'Group by',
-      renderCell: (item) => item.data.groupBy.join(', ') || '-',
+      renderCell: (item) => (item.data.overrideGrouping && item.data.groupBy.join(', ')) || '-',
       size: 5,
     },
     {

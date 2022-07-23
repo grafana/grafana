@@ -4,7 +4,7 @@ import { webSocket } from 'rxjs/webSocket';
 
 import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
 
-import { appendResponseToBufferedData } from './result_transformer';
+import { appendResponseToBufferedData } from './live_streams_result_transformer';
 import { LokiTailResponse } from './types';
 
 /**

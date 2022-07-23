@@ -17,6 +17,8 @@ packages/grafana-toolkit/
 packages/grafana-ui/
 packages/jaeger-ui-components/
 packaging/
+pkg/coremodel/
+pkg/framework/coremodel/
 grafana-mixin/
 cue/
 ```

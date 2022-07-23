@@ -58,7 +58,7 @@ import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { isLegacyGraphHoverEvent } from './utils';
 
-const LegendWithThemeProvider = provideTheme(Legend);
+const LegendWithThemeProvider = provideTheme(Legend, config.theme2);
 
 class GraphElement {
   ctrl: GraphCtrl;
@@ -571,7 +571,7 @@ class GraphElement {
       }
     } catch (e) {
       console.error('flotcharts error', e);
-      this.ctrl.error = e.message || 'Render Error';
+      this.ctrl.error = e instanceof Error ? e.message : 'Render Error';
       this.ctrl.renderError = true;
     }
 

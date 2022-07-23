@@ -37,10 +37,10 @@ func TestMatrixResponses(t *testing.T) {
 		enableWideSeries := false
 		queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 		responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-		goldenFileName := filepath.Join("../testdata", test.filepath+".result.streaming.golden")
+		goldenFileName := test.filepath + ".result.streaming.golden"
 		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
 		enableWideSeries = true
-		goldenFileName = filepath.Join("../testdata", test.filepath+".result.streaming-wide.golden")
+		goldenFileName = test.filepath + ".result.streaming-wide.golden"
 		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
 	}
 }
@@ -60,20 +60,7 @@ func goldenScenario(name, queryFileName, responseFileName, goldenFileName string
 		dr, found := result.Responses["A"]
 		require.True(t, found)
 
-		actual, err := json.MarshalIndent(&dr, "", "  ")
-		require.NoError(t, err)
-
-		// nolint:gosec
-		// We can ignore the gosec G304 because this is a test with static defined paths
-		expected, err := ioutil.ReadFile(goldenFileName + ".json")
-		if err != nil || update {
-			err = os.WriteFile(goldenFileName+".json", actual, 0600)
-			require.NoError(t, err)
-		}
-
-		require.JSONEq(t, string(expected), string(actual))
-
-		require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName+".txt", &dr, update))
+		experimental.CheckGoldenJSONResponse(t, "../testdata", goldenFileName, &dr, update)
 	}
 }
 
@@ -131,7 +118,10 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 }
 
 func runQuery(response []byte, q *backend.QueryDataRequest, wide bool) (*backend.QueryDataResponse, error) {
-	tCtx := setup(wide)
+	tCtx, err := setup(wide)
+	if err != nil {
+		return nil, err
+	}
 	res := &http.Response{
 		StatusCode: 200,
 		Body:       ioutil.NopCloser(bytes.NewReader(response)),

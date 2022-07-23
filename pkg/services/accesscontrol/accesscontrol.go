@@ -21,10 +21,7 @@ type AccessControl interface {
 	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
 
 	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
-
-	// GetUserRoles returns user roles.
-	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
+	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]Permission, error)
 
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
@@ -36,11 +33,19 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
+
+	DeleteUserPermissions(ctx context.Context, userID int64) error
 }
 
-type PermissionsProvider interface {
+type RoleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles(ctx context.Context) error
+}
+
+type PermissionsStore interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
+	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	DeleteUserPermissions(ctx context.Context, userID int64) error
 }
 
 type TeamPermissionsService interface {
@@ -57,6 +62,10 @@ type DashboardPermissionsService interface {
 }
 
 type DatasourcePermissionsService interface {
+	PermissionsService
+}
+
+type ServiceAccountPermissionsService interface {
 	PermissionsService
 }
 
@@ -142,7 +151,7 @@ var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
 	return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR
 }
 
-func BuildPermissionsMap(permissions []*Permission) map[string]bool {
+func BuildPermissionsMap(permissions []Permission) map[string]bool {
 	permissionsMap := make(map[string]bool)
 	for _, p := range permissions {
 		permissionsMap[p.Action] = true
@@ -152,7 +161,7 @@ func BuildPermissionsMap(permissions []*Permission) map[string]bool {
 }
 
 // GroupScopesByAction will group scopes on action
-func GroupScopesByAction(permissions []*Permission) map[string][]string {
+func GroupScopesByAction(permissions []Permission) map[string][]string {
 	m := make(map[string][]string)
 	for _, p := range permissions {
 		m[p.Action] = append(m[p.Action], p.Scope)
@@ -256,4 +265,22 @@ func extractPrefixes(prefix string) (string, string, bool) {
 
 func IsDisabled(cfg *setting.Cfg) bool {
 	return !cfg.RBACEnabled
+}
+
+// GetOrgRoles returns legacy org roles for a user
+func GetOrgRoles(cfg *setting.Cfg, user *models.SignedInUser) []string {
+	roles := []string{string(user.OrgRole)}
+
+	// With built-in role simplifying, inheritance is performed upon role registration.
+	if cfg.RBACBuiltInRoleAssignmentEnabled {
+		for _, br := range user.OrgRole.Children() {
+			roles = append(roles, string(br))
+		}
+	}
+
+	if user.IsGrafanaAdmin {
+		roles = append(roles, RoleGrafanaAdmin)
+	}
+
+	return roles
 }

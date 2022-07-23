@@ -7,6 +7,8 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -28,7 +30,7 @@ func (r roleType) IsValid() bool {
 
 type permissionType int
 
-type dashboardAcl struct {
+type dashboardACL struct {
 	// nolint:stylecheck
 	Id          int64
 	OrgID       int64 `xorm:"org_id"`
@@ -118,8 +120,8 @@ func (m *folderHelper) createFolder(orgID int64, title string) (*dashboard, erro
 		return nil, err
 	}
 
-	dashVersion := &models.DashboardVersion{
-		DashboardId:   dash.Id,
+	dashVersion := &dashver.DashboardVersion{
+		DashboardID:   dash.Id,
 		ParentVersion: parentVersion,
 		RestoredFrom:  cmd.RestoredFrom,
 		Version:       dash.Version,
@@ -150,22 +152,22 @@ func (m *folderHelper) generateNewDashboardUid(orgId int64) (string, error) {
 		}
 	}
 
-	return "", models.ErrDashboardFailedGenerateUniqueUid
+	return "", dashboards.ErrDashboardFailedGenerateUniqueUid
 }
 
 // based on SQLStore.UpdateDashboardACL()
 // it should be called from inside a transaction
-func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboardAcl) error {
+func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboardACL) error {
 	if dashboardID <= 0 {
 		return fmt.Errorf("folder id must be greater than zero for a folder permission")
 	}
 
 	// userPermissionsMap is a map keeping the highest permission per user
 	// for handling conficting inherited (folder) and non-inherited (dashboard) user permissions
-	userPermissionsMap := make(map[int64]*dashboardAcl, len(items))
+	userPermissionsMap := make(map[int64]*dashboardACL, len(items))
 	// teamPermissionsMap is a map keeping the highest permission per team
 	// for handling conficting inherited (folder) and non-inherited (dashboard) team permissions
-	teamPermissionsMap := make(map[int64]*dashboardAcl, len(items))
+	teamPermissionsMap := make(map[int64]*dashboardACL, len(items))
 	for _, item := range items {
 		if item.UserID != 0 {
 			acl, ok := userPermissionsMap[item.UserID]
@@ -202,7 +204,7 @@ func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboard
 	seen := make(map[keyType]struct{}, len(items))
 	for _, item := range items {
 		if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-			return models.ErrDashboardAclInfoMissing
+			return models.ErrDashboardACLInfoMissing
 		}
 
 		// ignore duplicate user permissions
@@ -247,19 +249,19 @@ func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboard
 		seen[key] = struct{}{}
 	}
 
-	// Update dashboard HasAcl flag
-	dashboard := models.Dashboard{HasAcl: true}
+	// Update dashboard HasACL flag
+	dashboard := models.Dashboard{HasACL: true}
 	_, err := m.sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 	return err
 }
 
-// based on SQLStore.GetDashboardAclInfoList()
-func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardAcl, error) {
+// based on SQLStore.GetDashboardACLInfoList()
+func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardACL, error) {
 	var err error
 
 	falseStr := m.mg.Dialect.BooleanStr(false)
 
-	result := make([]*dashboardAcl, 0)
+	result := make([]*dashboardACL, 0)
 	rawSQL := `
 			-- get distinct permissions for the dashboard and its parent folder
 			SELECT DISTINCT

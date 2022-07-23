@@ -24,25 +24,24 @@ func loadTestData(tb testing.TB, file string) []byte {
 	return content
 }
 
-func checkTestData(tb testing.TB, file string) *backend.DataResponse {
-	tb.Helper()
+func checkTestData(t *testing.T, file string) *backend.DataResponse {
+	t.Helper()
 	// Safe to disable, this is a test.
 	// nolint:gosec
 	content, err := ioutil.ReadFile(filepath.Join("testdata", file+".txt"))
-	require.NoError(tb, err, "expected to be able to read file")
-	require.True(tb, len(content) > 0)
+	require.NoError(t, err, "expected to be able to read file")
+	require.True(t, len(content) > 0)
 
 	converter := NewConverter(WithUseLabelsColumn(true))
 	frameWrappers, err := converter.Convert(content)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 
 	dr := &backend.DataResponse{}
 	for _, w := range frameWrappers {
 		dr.Frames = append(dr.Frames, w.Frame())
 	}
 
-	err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", file+".golden.txt"), dr, *update)
-	require.NoError(tb, err)
+	experimental.CheckGoldenJSONResponse(t, "testdata", file, dr, false)
 	return dr
 }
 

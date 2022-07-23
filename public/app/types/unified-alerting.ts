@@ -193,3 +193,7 @@ export interface PromBasedDataSource {
   id: string | number;
   rulerConfig?: RulerDataSourceConfig;
 }
+
+export interface PaginationProps {
+  itemsPerPage: number;
+}

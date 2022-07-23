@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { PanelModel, FieldConfigSource } from '@grafana/data';
+import { PanelModel, FieldConfigSource, FieldMatcherID } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 import { graphPanelChangedHandler } from './migrations';
@@ -78,6 +78,8 @@ describe('Graph Migrations', () => {
     const panel = {} as PanelModel;
     panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
+    expect(panel.fieldConfig.overrides[0].matcher.id).toBe(FieldMatcherID.byRegexp);
+    expect(panel.fieldConfig.overrides[1].matcher.id).toBe(FieldMatcherID.byRegexp);
   });
 
   describe('legend', () => {
@@ -124,6 +126,23 @@ describe('Graph Migrations', () => {
       const panel = {} as PanelModel;
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel).toMatchSnapshot();
+    });
+    test('with sideWidth', () => {
+      const old: any = {
+        angular: {
+          legend: {
+            alignAsTable: true,
+            rightSide: true,
+            show: true,
+            sideWidth: 200,
+            total: true,
+            values: true,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.options.legend.width).toBe(200);
     });
   });
 
@@ -479,6 +498,11 @@ const customColor = {
       alias: 'A-series',
       color: 'rgba(165, 72, 170, 0.77)',
     },
+    {
+      $$hashKey: 'object:13',
+      alias: 'B-series',
+      color: 'rgba(16, 72, 170, 0.77)',
+    },
   ],
   spaceLength: 10,
   steppedLine: true,
@@ -536,6 +560,7 @@ const customColor = {
 
 const customColorRegex = cloneDeep(customColor);
 customColorRegex.seriesOverrides[0].alias = '/^A-/';
+customColorRegex.seriesOverrides[1].alias = '/.*Status: 2[0-9]+.*/i';
 
 const stairscase = {
   aliasColors: {},

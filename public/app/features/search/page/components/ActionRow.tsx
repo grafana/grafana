@@ -7,6 +7,7 @@ import { HorizontalGroup, RadioButtonGroup, useStyles2, Checkbox, Button } from 
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { SEARCH_SELECTED_LAYOUT } from '../../constants';
 import { DashboardQuery, SearchLayout } from '../../types';
 
 export const layoutOptions = [
@@ -26,6 +27,8 @@ interface Props {
   getTagOptions: () => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
   onDatasourceChange: (ds?: string) => void;
+  includePanels: boolean;
+  setIncludePanels: (v: boolean) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
   hideLayout?: boolean;
@@ -58,12 +61,19 @@ export const ActionRow: FC<Props> = ({
   query,
   showStarredFilter,
   hideLayout,
+  includePanels,
+  setIncludePanels,
 }) => {
   const styles = useStyles2(getStyles);
   const layout = getValidQueryLayout(query);
 
   // Disabled folder layout option when query is present
   const disabledOptions = query.query ? [SearchLayout.Folders] : [];
+
+  const updateLayoutPreference = (layout: SearchLayout) => {
+    localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
+    onLayoutChange(layout);
+  };
 
   return (
     <div className={styles.actionRow}>
@@ -73,7 +83,7 @@ export const ActionRow: FC<Props> = ({
             <RadioButtonGroup
               options={layoutOptions}
               disabledOptions={disabledOptions}
-              onChange={onLayoutChange}
+              onChange={updateLayoutPreference}
               value={layout}
             />
           )}
@@ -91,6 +101,10 @@ export const ActionRow: FC<Props> = ({
             Datasource: {query.datasource}
           </Button>
         )}
+        {layout !== SearchLayout.Folders && config.featureToggles.panelTitleSearch && (
+          <Checkbox value={includePanels} onChange={() => setIncludePanels(!includePanels)} label="Include panels" />
+        )}
+
         <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
       </HorizontalGroup>
     </div>

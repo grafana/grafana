@@ -25,7 +25,7 @@ The identifier (id) of a notification channel is an auto-incrementing numeric va
 The unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between
 multiple Grafana installs. It's automatically generated if not provided when creating a notification channel. The uid
 allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple
-Grafana installations, refer to [alert notification channel provisioning]({{< relref "../../administration/provisioning.md#alert-notification-channels" >}}).
+Grafana installations, refer to [alert notification channel provisioning]({{< relref "../../administration/provisioning/#alert-notification-channels" >}}).
 
 The uid can have a maximum length of 40 characters.
 
@@ -185,7 +185,7 @@ Content-Type: application/json
 
 ## Create notification channel
 
-You can find the full list of [supported notifiers](https://grafana.com/docs/grafana/latest/alerting/old-alerting/notifications/) on the alert notifiers page.
+You can find the full list of [supported notifiers]({{< ref "/docs/grafana/v8.5/alerting/old-alerting/notifications/" >}}) on the alert notifiers page.
 
 `POST /api/alert-notifications`
 

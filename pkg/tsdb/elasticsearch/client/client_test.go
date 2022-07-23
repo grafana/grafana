@@ -145,7 +145,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 
 		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 
-		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
+		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "fixed_interval").MustString())
 
 		assert.Equal(t, 200, res.Status)
 		require.Len(t, res.Responses, 1)
@@ -197,7 +197,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 
 		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 
-		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
+		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "fixed_interval").MustString())
 
 		assert.Equal(t, 200, res.Status)
 		require.Len(t, res.Responses, 1)
@@ -252,7 +252,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 
 		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 
-		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
+		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "fixed_interval").MustString())
 
 		assert.Equal(t, 200, res.Status)
 		require.Len(t, res.Responses, 1)
@@ -308,7 +308,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 
 		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 
-		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
+		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "fixed_interval").MustString())
 
 		assert.Equal(t, 200, res.Status)
 		require.Len(t, res.Responses, 1)
@@ -321,7 +321,7 @@ func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, erro
 	msb := c.MultiSearch()
 	s := msb.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
-		a.Interval = "$__interval"
+		a.FixedInterval = "$__interval"
 
 		ab.Metric("1", "avg", "@hostname", func(a *MetricAggregation) {
 			a.Settings["script"] = "$__interval_ms*@hostname"

@@ -1,4 +1,3 @@
-// go:build integration
 package accesscontrol
 
 import (

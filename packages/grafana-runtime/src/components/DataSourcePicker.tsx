@@ -14,6 +14,8 @@ import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@graf
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
+import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
+
 /**
  * Component props description for the {@link DataSourcePicker}
  *
@@ -117,6 +119,11 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     }
 
     const uid = getDataSourceUID(current);
+
+    if (uid === ExpressionDatasourceRef.uid || uid === ExpressionDatasourceRef.name) {
+      return { label: uid, value: uid, hideText: hideTextValue };
+    }
+
     return {
       label: (uid ?? 'no name') + ' - not found',
       value: uid ?? undefined,

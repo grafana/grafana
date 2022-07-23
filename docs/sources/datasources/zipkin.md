@@ -14,7 +14,7 @@ weight: 1600
 # Zipkin data source
 
 Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
 
 ## Adding the data source
 
@@ -33,7 +33,7 @@ To access Zipkin settings, click the **Configuration** (gear) icon, then click *
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
@@ -65,9 +65,19 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 -- **Enable Node Graph -** Enables the Node Graph visualization.
 
+### Span bar label
+
+You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
+
+Select one of the following four options. The default selection is Duration.
+
+- **None -** Do not show any additional information on the span bar row.
+- **Duration -** Show the span duration on the span bar row.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
+
 ## Query traces
 
-Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore" >}}).
+Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore/" >}}).
 
 {{< figure src="/static/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 
@@ -117,4 +127,4 @@ Here is an example JSON:
 
 ## Linking Trace ID from logs
 
-You can link to Zipkin trace from logs in Loki or Splunk by configuring a derived field with internal link. See [Loki documentation]({{< relref "loki#derived-fields" >}}) for details.
+You can link to Zipkin trace from logs in Loki or Splunk by configuring a derived field with internal link. See [Loki documentation]({{< relref "loki/#derived-fields" >}}) for details.

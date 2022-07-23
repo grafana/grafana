@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package queryhistory
 
 import (
@@ -11,6 +8,9 @@ import (
 )
 
 func TestIntegrationCreateQueryInQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenario(t, "When users tries to create query in query history it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			command := CreateQueryInQueryHistoryCommand{

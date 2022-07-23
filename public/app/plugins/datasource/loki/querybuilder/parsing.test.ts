@@ -187,16 +187,20 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
-  it('returns error for query with JSON expression parser', () => {
+  it('parses query with JSON parser with expression', () => {
     const context = buildVisualQueryFromString('{app="frontend"} | json label="value" ');
-    expect(context.errors).toEqual([
-      {
-        text: 'JsonExpressionParser not supported in visual query builder: json label="value"',
-        from: 19,
-        to: 37,
-        parentType: 'PipelineStage',
-      },
-    ]);
+    expect(context.query).toEqual({
+      labels: [{ label: 'app', op: '=', value: 'frontend' }],
+      operations: [{ id: 'json', params: ['label="value"'] }],
+    });
+  });
+
+  it('parses query with JSON parser with multiple expressions', () => {
+    const context = buildVisualQueryFromString('{app="frontend"} | json label="value", bar="baz", foo="bar" ');
+    expect(context.query).toEqual({
+      labels: [{ label: 'app', op: '=', value: 'frontend' }],
+      operations: [{ id: 'json', params: ['label="value"', 'bar="baz"', 'foo="bar"'] }],
+    });
   });
 
   it('parses query with with simple unwrap', () => {
@@ -374,6 +378,29 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses metrics query with vector aggregation with number', () => {
+    expect(
+      buildVisualQueryFromString('topk(10, sum(count_over_time({app="frontend"} | logfmt | __error__=`` [5m])))')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: '__label_filter_no_errors', params: [] },
+          { id: 'count_over_time', params: ['5m'] },
+          { id: 'sum', params: [] },
+          { id: 'topk', params: [10] },
+        ],
+      })
+    );
+  });
+
   it('parses template variables in strings', () => {
     expect(buildVisualQueryFromString('{instance="$label_variable"}')).toEqual(
       noErrors({
@@ -429,7 +456,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with label format', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | label_format newLabel=oldLabel')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | label_format renameTo=original')).toEqual(
       noErrors({
         labels: [
           {
@@ -438,13 +465,13 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: 'label_format', params: ['newLabel', 'oldLabel'] }],
+        operations: [{ id: 'label_format', params: ['original', 'renameTo'] }],
       })
     );
   });
 
   it('parses query with multiple label format', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | label_format newLabel=oldLabel, bar="baz"')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | label_format renameTo=original, bar=baz')).toEqual(
       noErrors({
         labels: [
           {
@@ -454,8 +481,8 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: 'label_format', params: ['newLabel', 'oldLabel'] },
-          { id: 'label_format', params: ['bar', 'baz'] },
+          { id: 'label_format', params: ['original', 'renameTo'] },
+          { id: 'label_format', params: ['baz', 'bar'] },
         ],
       })
     );

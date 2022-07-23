@@ -46,12 +46,16 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a vector response with special values", filepath: "vector_special_values", query: vectorQuery},
 
 		{name: "parse a simple streams response", filepath: "streams_simple", query: streamsQuery},
+
+		{name: "parse a streams response with parse errors", filepath: "streams_parse_errors", query: streamsQuery},
+
+		{name: "parse an empty response", filepath: "empty", query: matrixQuery},
 	}
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			responseFileName := filepath.Join("testdata", test.filepath+".json")
-			goldenFileName := filepath.Join("testdata", test.filepath+".golden.txt")
+			goldenFileName := test.filepath + ".golden"
 
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
@@ -63,9 +67,7 @@ func TestSuccessResponse(t *testing.T) {
 				Frames: frames,
 				Error:  err,
 			}
-
-			err = experimental.CheckGoldenDataResponse(goldenFileName, dr, true)
-			require.NoError(t, err)
+			experimental.CheckGoldenJSONResponse(t, "testdata", goldenFileName, dr, true)
 		})
 	}
 }

@@ -3,7 +3,6 @@ import 'angular-route';
 import 'angular-sanitize';
 import 'angular-bindonce';
 import 'vendor/bootstrap/bootstrap';
-import 'vendor/angular-other/angular-strap';
 
 import angular from 'angular'; // eslint-disable-line no-duplicate-imports
 import { extend } from 'lodash';
@@ -78,14 +77,7 @@ export class AngularApp {
       }
     );
 
-    this.ngModuleDependencies = [
-      'grafana.core',
-      'ngSanitize',
-      '$strap.directives',
-      'grafana',
-      'pasvaz.bindonce',
-      'react',
-    ];
+    this.ngModuleDependencies = ['grafana.core', 'ngSanitize', 'grafana', 'pasvaz.bindonce', 'react'];
 
     // makes it possible to add dynamic stuff
     angularModules.forEach((m: angular.IModule) => {

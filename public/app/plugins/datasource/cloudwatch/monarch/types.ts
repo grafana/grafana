@@ -1,5 +1,7 @@
 import { monacoTypes } from '@grafana/ui';
 
+import { LanguageDefinition } from './register';
+
 export interface TokenTypes {
   Parenthesis: string;
   Whitespace: string;
@@ -97,4 +99,11 @@ export interface Monaco {
   editor: Editor;
   Range: Range;
   languages: Languages;
+}
+
+export interface Completeable {
+  getCompletionProvider(
+    monaco: Monaco,
+    languageDefinition: LanguageDefinition
+  ): monacoTypes.languages.CompletionItemProvider;
 }

@@ -1,0 +1,120 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "custom": {
+//          "frameType": "LabeledTimeValues"
+//      },
+//      "executedQueryString": "Expr: query1"
+//  }
+//  Name: 
+//  Dimensions: 5 Fields by 4 Rows
+//  +------------------------------------------------+-------------------------------+----------------+---------------------+-------------------------------+
+//  | Name: labels                                   | Name: Time                    | Name: Line     | Name: tsNs          | Name: id                      |
+//  | Labels:                                        | Labels:                       | Labels:        | Labels:             | Labels:                       |
+//  | Type: []json.RawMessage                        | Type: []time.Time             | Type: []string | Type: []string      | Type: []string                |
+//  +------------------------------------------------+-------------------------------+----------------+---------------------+-------------------------------+
+//  | {"__error__":"LogfmtParserErr","place":"moon"} | 2022-06-17 06:49:51 +0000 UTC | "hello1        | 1655448591000000000 | 1655448591000000000_44cbf4ec_ |
+//  | {"__error__":"LogfmtParserErr","place":"moon"} | 2022-06-17 06:49:54 +0000 UTC | "hello4        | 1655448594000000000 | 1655448594000000000_408b3f5b_ |
+//  | {"place":"moon","text":"hello3"}               | 2022-06-17 06:49:52 +0000 UTC | text=hello2    | 1655448592000000000 | 1655448592000000000_d1b2086_  |
+//  | {"place":"moon","text":"hello4"}               | 2022-06-17 06:49:53 +0000 UTC | text=hello3    | 1655448593000000000 | 1655448593000000000_45714922_ |
+//  +------------------------------------------------+-------------------------------+----------------+---------------------+-------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "custom": {
+            "frameType": "LabeledTimeValues"
+          },
+          "executedQueryString": "Expr: query1"
+        },
+        "fields": [
+          {
+            "name": "labels",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Line",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "tsNs",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            {
+              "__error__": "LogfmtParserErr",
+              "place": "moon"
+            },
+            {
+              "__error__": "LogfmtParserErr",
+              "place": "moon"
+            },
+            {
+              "place": "moon",
+              "text": "hello3"
+            },
+            {
+              "place": "moon",
+              "text": "hello4"
+            }
+          ],
+          [
+            1655448591000,
+            1655448594000,
+            1655448592000,
+            1655448593000
+          ],
+          [
+            "\"hello1",
+            "\"hello4",
+            "text=hello2",
+            "text=hello3"
+          ],
+          [
+            "1655448591000000000",
+            "1655448594000000000",
+            "1655448592000000000",
+            "1655448593000000000"
+          ],
+          [
+            "1655448591000000000_44cbf4ec_",
+            "1655448594000000000_408b3f5b_",
+            "1655448592000000000_d1b2086_",
+            "1655448593000000000_45714922_"
+          ]
+        ]
+      }
+    }
+  ]
+}

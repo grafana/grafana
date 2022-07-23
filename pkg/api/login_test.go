@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -331,8 +332,8 @@ func TestLoginPostRedirect(t *testing.T) {
 		return hs.LoginPost(c)
 	})
 
-	user := &models.User{
-		Id:    42,
+	user := &user.User{
+		ID:    42,
 		Email: "",
 	}
 
@@ -614,14 +615,14 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 	testHook := loginHookTest{}
 	hookService.AddLoginHook(testHook.LoginHook)
 
-	testUser := &models.User{
-		Id:    42,
+	testUser := &user.User{
+		ID:    42,
 		Email: "",
 	}
 
 	testCases := []struct {
 		desc       string
-		authUser   *models.User
+		authUser   *user.User
 		authModule string
 		authErr    error
 		info       models.LoginInfo
@@ -680,7 +681,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 			if c.info.User != nil {
 				require.NotEmpty(t, info.User)
-				assert.Equal(t, c.info.User.Id, info.User.Id)
+				assert.Equal(t, c.info.User.ID, info.User.ID)
 			}
 		})
 	}
@@ -716,7 +717,7 @@ func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error)
 }
 
 type fakeAuthenticator struct {
-	ExpectedUser       *models.User
+	ExpectedUser       *user.User
 	ExpectedAuthModule string
 	ExpectedError      error
 }

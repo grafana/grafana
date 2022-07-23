@@ -15,6 +15,11 @@ export enum AxisPlacement {
   Top = 'top',
 }
 
+export enum AxisColorMode {
+  Series = 'series',
+  Text = 'text',
+}
+
 export enum VisibilityMode {
   Always = 'always',
   Auto = 'auto',
@@ -78,7 +83,7 @@ export enum ScaleDirection {
 
 export interface LineStyle {
   dash?: number[];
-  fill?: 'solid' | 'dash' | 'dot' | 'square';
+  fill?: ('solid' | 'dash' | 'dot' | 'square');
 }
 
 export const defaultLineStyle: Partial<LineStyle> = {
@@ -90,7 +95,7 @@ export interface LineConfig {
   lineInterpolation?: LineInterpolation;
   lineStyle?: LineStyle;
   lineWidth?: number;
-  spanNulls?: boolean | number;
+  spanNulls?: (boolean | number);
 }
 
 export interface BarConfig {
@@ -118,6 +123,8 @@ export interface ScaleDistributionConfig {
 }
 
 export interface AxisConfig {
+  axisCenteredZero?: boolean;
+  axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
@@ -158,7 +165,7 @@ export interface GraphThresholdsStyleConfig {
   mode: GraphTresholdsStyleMode;
 }
 
-export type LegendPlacement = 'bottom' | 'right';
+export type LegendPlacement = ('bottom' | 'right');
 
 export enum LegendDisplayMode {
   Hidden = 'hidden',
@@ -201,6 +208,14 @@ export interface OptionsWithLegend {
   legend: VizLegendOptions;
 }
 
+export interface OptionsWithTimezones {
+  timezones?: string[];
+}
+
+export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
+  timezones: [],
+};
+
 export interface OptionsWithTextFormatting {
   text?: VizTextDisplayOptions;
 }
@@ -230,7 +245,7 @@ export enum BigValueTextMode {
   ValueAndName = 'value_and_name',
 }
 
-export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';
+export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 export enum TableCellDisplayMode {
   Auto = 'auto',
@@ -276,6 +291,7 @@ export interface VizLegendOptions {
   placement: LegendPlacement;
   sortBy?: string;
   sortDesc?: boolean;
+  width?: number;
 }
 
 export const defaultVizLegendOptions: Partial<VizLegendOptions> = {

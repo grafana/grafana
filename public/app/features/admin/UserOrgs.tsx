@@ -60,7 +60,8 @@ export class UserOrgs extends PureComponent<Props, State> {
     const addToOrgContainerClass = css`
       margin-top: 0.8rem;
     `;
-    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
+
+    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
     return (
       <>
         <h3 className="page-heading">Organizations</h3>
@@ -163,8 +164,12 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
 
   onOrgRemove = async () => {
     const { org, user } = this.props;
-    user && (await updateUserRoles([], user.id, org.orgId));
     this.props.onOrgRemove(org.orgId);
+    if (contextSrv.licensedAccessControlEnabled()) {
+      if (contextSrv.hasPermission(AccessControlAction.OrgUsersRemove)) {
+        user && (await updateUserRoles([], user.id, org.orgId));
+      }
+    }
   };
 
   onChangeRoleClick = () => {
@@ -193,7 +198,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     const { currentRole, isChangingRole } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
-    const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
+    const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite);
     const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
     const rolePickerDisabled = isExternalUser || !canChangeRole;
 
@@ -328,7 +333,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     this.props.onOrgAdd(selectedOrg!.id, role);
     // add the stored userRoles also
     if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate)) {
+      if (contextSrv.hasPermission(AccessControlAction.OrgUsersWrite)) {
         if (this.state.pendingUserId) {
           await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
           // clear pending state

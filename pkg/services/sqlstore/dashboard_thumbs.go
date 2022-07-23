@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 func (ss *SQLStore) GetThumbnail(ctx context.Context, query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
@@ -25,7 +26,7 @@ func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboard
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
-		if err != nil && !errors.Is(err, models.ErrDashboardThumbnailNotFound) {
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardThumbnailNotFound) {
 			return err
 		}
 
@@ -150,7 +151,7 @@ func findThumbnailByMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*
 	exists, err := sess.Get(result)
 
 	if !exists {
-		return nil, models.ErrDashboardThumbnailNotFound
+		return nil, dashboards.ErrDashboardThumbnailNotFound
 	}
 
 	if err != nil {
@@ -174,7 +175,7 @@ func findDashboardIdByThumbMeta(sess *DBSession, meta models.DashboardThumbnailM
 		return nil, err
 	}
 	if !exists {
-		return nil, models.ErrDashboardNotFound
+		return nil, dashboards.ErrDashboardNotFound
 	}
 
 	return result, err

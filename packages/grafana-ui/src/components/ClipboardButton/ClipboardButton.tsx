@@ -1,47 +1,65 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 
 import { Button, ButtonProps } from '../Button';
-
-/** @deprecated Will be removed in next major release */
-interface ClipboardEvent {
-  action: string;
-  text: string;
-  trigger: Element;
-  clearSelection(): void;
-}
 
 export interface Props extends ButtonProps {
   /** A function that returns text to be copied */
   getText(): string;
   /** Callback when the text has been successfully copied */
-  onClipboardCopy?(e: ClipboardEvent): void;
+  onClipboardCopy?(copiedText: string): void;
   /** Callback when there was an error copying the text */
-  onClipboardError?(e: ClipboardEvent): void;
+  onClipboardError?(copiedText: string, error: unknown): void;
 }
 
-const dummyClearFunc = () => {};
+const SHOW_SUCCESS_DURATION = 2 * 1000;
 
-export function ClipboardButton({ onClipboardCopy, onClipboardError, children, getText, ...buttonProps }: Props) {
+export function ClipboardButton({
+  onClipboardCopy,
+  onClipboardError,
+  children,
+  getText,
+  icon,
+  variant,
+  ...buttonProps
+}: Props) {
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    if (showCopySuccess) {
+      timeoutId = setTimeout(() => {
+        setShowCopySuccess(false);
+      }, SHOW_SUCCESS_DURATION);
+    }
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [showCopySuccess]);
+
   const buttonRef = useRef<null | HTMLButtonElement>(null);
   const copyTextCallback = useCallback(async () => {
     const textToCopy = getText();
-    // Can be removed in 9.x
-    const dummyEvent: ClipboardEvent = {
-      action: 'copy',
-      clearSelection: dummyClearFunc,
-      text: textToCopy,
-      trigger: buttonRef.current!,
-    };
+
     try {
       await copyText(textToCopy, buttonRef);
-      onClipboardCopy?.(dummyEvent);
-    } catch {
-      onClipboardError?.(dummyEvent);
+      setShowCopySuccess(true);
+      onClipboardCopy?.(textToCopy);
+    } catch (e) {
+      onClipboardError?.(textToCopy, e);
     }
   }, [getText, onClipboardCopy, onClipboardError]);
 
   return (
-    <Button onClick={copyTextCallback} {...buttonProps} ref={buttonRef}>
+    <Button
+      onClick={copyTextCallback}
+      icon={showCopySuccess ? 'check' : icon}
+      variant={showCopySuccess ? 'success' : variant}
+      aria-label={showCopySuccess ? 'Copied' : undefined}
+      {...buttonProps}
+      ref={buttonRef}
+    >
       {children}
     </Button>
   );

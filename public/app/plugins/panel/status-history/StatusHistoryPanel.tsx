@@ -7,6 +7,7 @@ import { TimelineChart } from '../state-timeline/TimelineChart';
 import { TimelineMode } from '../state-timeline/types';
 import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getTimezones } from '../timeseries/utils';
 
 import { StatusPanelOptions } from './types';
 
@@ -26,12 +27,17 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
 }) => {
   const theme = useTheme2();
 
-  const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, false, theme), [data, theme]);
+  const { frames, warn } = useMemo(
+    () => prepareTimelineFields(data?.series, false, timeRange, theme),
+    [data, timeRange, theme]
+  );
 
   const legendItems = useMemo(
     () => prepareTimelineLegendItems(frames, options.legend, theme),
     [frames, options.legend, theme]
   );
+
+  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
 
   if (!frames || warn) {
     return (
@@ -59,7 +65,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZone={timeZone}
+      timeZones={timezones}
       width={width}
       height={height}
       legendItems={legendItems}

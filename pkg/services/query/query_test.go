@@ -6,22 +6,22 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestQueryData(t *testing.T) {
@@ -61,17 +61,54 @@ func TestQueryData(t *testing.T) {
 		}
 		require.Equal(t, expected, tc.pluginContext.req.Headers)
 	})
+
+	t.Run("it doesn't add cookie header to the request when keepCookies configured and no cookies provided", func(t *testing.T) {
+		tc := setup(t)
+		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "foo", "bar" ]}`))
+		require.NoError(t, err)
+		tc.dataSourceCache.ds.JsonData = json
+
+		metricReq := metricRequest()
+		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		metricReq.HTTPRequest = httpReq
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		require.NoError(t, err)
+
+		require.Empty(t, tc.pluginContext.req.Headers)
+	})
+
+	t.Run("it adds cookie header to the request when keepCookies configured and cookie provided", func(t *testing.T) {
+		tc := setup(t)
+		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "foo", "bar" ]}`))
+		require.NoError(t, err)
+		tc.dataSourceCache.ds.JsonData = json
+
+		metricReq := metricRequest()
+		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		httpReq.AddCookie(&http.Cookie{Name: "a"})
+		httpReq.AddCookie(&http.Cookie{Name: "bar", Value: "rab"})
+		httpReq.AddCookie(&http.Cookie{Name: "b"})
+		httpReq.AddCookie(&http.Cookie{Name: "foo", Value: "oof"})
+		httpReq.AddCookie(&http.Cookie{Name: "c"})
+		metricReq.HTTPRequest = httpReq
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		require.NoError(t, err)
+
+		require.Equal(t, map[string]string{"Cookie": "bar=rab; foo=oof"}, tc.pluginContext.req.Headers)
+	})
 }
 
 func setup(t *testing.T) *testContext {
 	pc := &fakePluginClient{}
-	dc := &fakeDataSourceCache{ds: &models.DataSource{}}
+	dc := &fakeDataSourceCache{ds: &datasources.DataSource{}}
 	tc := &fakeOAuthTokenService{}
 	rv := &fakePluginRequestValidator{}
 
 	ss := kvstore.SetupTestService(t)
 	ssvc := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	ds := datasources.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+	ds := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 	return &testContext{
 		pluginContext:          pc,
@@ -119,19 +156,19 @@ func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.S
 	return ts.token
 }
 
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool {
+func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
 	return ts.passThruEnabled
 }
 
 type fakeDataSourceCache struct {
-	ds *models.DataSource
+	ds *datasources.DataSource
 }
 
-func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
+func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	return c.ds, nil
 }
 
-func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
+func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	return c.ds, nil
 }
 
