@@ -29,7 +29,9 @@ export function GrafanaRoute(props: Props) {
       navigationLogger('GrafanaRoute', false, 'Unmounted', props.route);
       updateBodyClassNames(props.route, true);
     };
-  }, [chrome, props.route, props.match]);
+    // props.match instance change even though only query params changed so to make this effect only trigger on route mount we have to disable the exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     cleanupDOM();

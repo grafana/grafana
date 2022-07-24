@@ -8,7 +8,7 @@ import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { RouteDescriptor } from '../../navigation/types';
 
 export interface AppChromeState {
-  chromeless: boolean;
+  chromeless?: boolean;
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
@@ -20,6 +20,8 @@ const defaultSection: NavModelItem = { text: 'Grafana' };
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
+  private currentRoute?: RouteDescriptor;
+  private routeChangeHandled?: boolean;
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
@@ -28,20 +30,31 @@ export class AppChromeService {
   });
 
   routeMounted(route: RouteDescriptor) {
-    this.update({
-      chromeless: route.chromeless === true,
-      sectionNav: defaultSection,
-      pageNav: undefined,
-      actions: undefined,
-    });
+    this.currentRoute = route;
+    this.routeChangeHandled = false;
   }
 
-  update(state: Partial<AppChromeState>) {
+  update(update: Partial<AppChromeState>) {
     const current = this.state.getValue();
     const newState: AppChromeState = {
       ...current,
-      ...state,
+      ...update,
     };
+
+    // when route change update props from route and clear fields
+    if (!this.routeChangeHandled) {
+      // Clear some state on route change unless supplied
+      if (!update.actions) {
+        newState.actions = undefined;
+      }
+
+      if (!update.sectionNav) {
+        newState.sectionNav = defaultSection;
+      }
+
+      newState.chromeless = this.currentRoute?.chromeless;
+      this.routeChangeHandled = true;
+    }
 
     if (!isShallowEqual(current, newState)) {
       this.state.next(newState);
