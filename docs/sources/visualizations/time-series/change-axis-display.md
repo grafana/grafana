@@ -22,6 +22,10 @@ Use the following field settings to refine how your axes display.
 
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
+## Time zone
+
+TODO...
+
 ## Placement
 
 Select the placement of the Y-axis.
@@ -64,6 +68,22 @@ Set a fixed width of the axis. By default, Grafana dynamically calculates the wi
 
 By setting the width of the axis, data whose axes types are different can share the same display proportions. This makes it easier to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity of each other.
 
+## Show grid lines
+
+TODO: ...
+
+## Color
+
+TODO: text vs series
+
+## Scale
+
+Set the scale to use for the Y-axis values.
+
+## Centered zero
+
+TODO: ...
+
 ## Soft min and soft max
 
 Set a **Soft min** or **soft max** option for better control of Y-axis limits. By default, Grafana sets the range for the Y-axis automatically based on the dataset.
@@ -73,10 +93,6 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Configure standard options]({{< relref "../../panels/configure-standard-options/#max" >}}).
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
-
-## Scale
-
-Set the scale to use for the Y-axis values.
 
 ### Linear
 
