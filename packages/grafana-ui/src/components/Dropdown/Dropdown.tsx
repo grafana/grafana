@@ -8,10 +8,8 @@ import { ReactUtils } from '../../utils';
 import { Portal } from '../Portal/Portal';
 import { TooltipPlacement } from '../Tooltip/types';
 
-type OverlayFunc = () => React.ReactElement;
-
 export interface Props {
-  overlay: React.ReactElement | OverlayFunc;
+  overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
   children: React.ReactElement;
   /** Defaults to click */
