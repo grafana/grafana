@@ -399,6 +399,10 @@ func TestExpandTemplate(t *testing.T) {
 		name:     "check that safeHtml doesn't error or panic",
 		text:     "{{ \"<b>\" | safeHtml }}",
 		expected: "<b>",
+	}, {
+		name:     "Check if sprig template available",
+		text:     "{{ $list := list \"a\" }}{{ $list = append $list \"a\" }}{{ $list = append $list \"b\" }}{{range $item := $list}}{{$item}}{{end}}{{range $item := (uniq $list)}}{{$item}}{{end}}",
+		expected: "aabab",
 	},
 	}
 

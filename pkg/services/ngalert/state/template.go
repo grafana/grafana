@@ -11,6 +11,7 @@ import (
 
 	text_template "text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/timestamp"
@@ -57,7 +58,7 @@ func expandTemplate(ctx context.Context, name, text string, labels map[string]st
 		[]string{"missingkey=invalid"},
 	)
 
-	expander.Funcs(text_template.FuncMap{
+	functions := text_template.FuncMap{
 		"graphLink": graphLink,
 		"tableLink": tableLink,
 
@@ -65,7 +66,14 @@ func expandTemplate(ctx context.Context, name, text string, labels map[string]st
 		"strvalue": func(value templateCaptureValue) string {
 			return ""
 		},
-	})
+	}
+
+	sprigFuncMap := sprig.FuncMap()
+	for k, v := range sprigFuncMap {
+		functions[k] = v
+	}
+
+	expander.Funcs(functions)
 
 	return expander.Expand()
 }
