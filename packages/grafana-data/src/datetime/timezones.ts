@@ -341,7 +341,7 @@ const countryByCode: Record<string, string> = {
   OM: 'Oman',
   PK: 'Pakistan',
   PW: 'Palau',
-  PS: 'Palestinian Territory',
+  PS: 'Palestine, State of',
   PA: 'Panama',
   PG: 'Papua New Guinea',
   PY: 'Paraguay',
