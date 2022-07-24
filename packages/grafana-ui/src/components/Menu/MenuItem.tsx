@@ -162,7 +162,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.primary};
       display: flex;
       align-items: center;
-      padding: 5px 12px 5px 10px;
+      padding: ${theme.spacing(0.5, 2)};
+      min-height: ${theme.spacing(4)};
       margin: 0;
       border: none;
       width: 100%;
@@ -204,6 +205,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     icon: css`
       opacity: 0.7;
       margin-right: 10px;
+      margin-left: -4px;
       color: ${theme.colors.text.secondary};
     `,
   };
