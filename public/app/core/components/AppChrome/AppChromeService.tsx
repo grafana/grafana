@@ -29,32 +29,29 @@ export class AppChromeService {
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
   });
 
-  routeMounted(route: RouteDescriptor) {
-    this.currentRoute = route;
-    this.routeChangeHandled = false;
+  registerRouteRender(route: RouteDescriptor) {
+    if (this.currentRoute !== route) {
+      this.currentRoute = route;
+      this.routeChangeHandled = false;
+    }
   }
 
   update(update: Partial<AppChromeState>) {
     const current = this.state.getValue();
     const newState: AppChromeState = {
       ...current,
-      ...update,
     };
 
     // when route change update props from route and clear fields
     if (!this.routeChangeHandled) {
-      // Clear some state on route change unless supplied
-      if (!update.actions) {
-        newState.actions = undefined;
-      }
-
-      if (!update.sectionNav) {
-        newState.sectionNav = defaultSection;
-      }
-
+      newState.actions = undefined;
+      newState.pageNav = undefined;
+      newState.sectionNav = defaultSection;
       newState.chromeless = this.currentRoute?.chromeless;
       this.routeChangeHandled = true;
     }
+
+    Object.assign(newState, update);
 
     if (!isShallowEqual(current, newState)) {
       this.state.next(newState);
