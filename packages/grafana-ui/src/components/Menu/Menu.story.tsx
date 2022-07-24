@@ -7,8 +7,6 @@ import { VerticalGroup } from '../Layout/Layout';
 
 import { Menu } from './Menu';
 import mdx from './Menu.mdx';
-import { MenuGroup } from './MenuGroup';
-import { MenuItem } from './MenuItem';
 
 const meta: ComponentMeta<typeof Menu> = {
   title: 'General/Menu',
@@ -66,37 +64,37 @@ export const Examples: Story = (args) => {
           }
           ariaLabel="Menu header"
         >
-          <MenuGroup label="Group 1">
-            <MenuItem label="item1" icon="history" />
-            <MenuItem label="item2" icon="filter" />
-          </MenuGroup>
-          <MenuGroup label="Group 2">
-            <MenuItem label="item1" icon="history" />
-          </MenuGroup>
+          <Menu.Group label="Group 1">
+            <Menu.Item label="item1" icon="history" />
+            <Menu.Item label="item2" icon="filter" />
+          </Menu.Group>
+          <Menu.Group label="Group 2">
+            <Menu.Item label="item1" icon="history" />
+          </Menu.Group>
         </Menu>
       </StoryExample>
       <StoryExample name="With submenu">
         <Menu>
-          <MenuItem label="item1" icon="history" />
-          <MenuItem
+          <Menu.Item label="item1" icon="history" />
+          <Menu.Item
             label="item2"
             icon="apps"
             childItems={[
-              <MenuItem key="subitem1" label="subitem1" icon="history" />,
-              <MenuItem key="subitem2" label="subitem2" icon="apps" />,
-              <MenuItem
+              <Menu.Item key="subitem1" label="subitem1" icon="history" />,
+              <Menu.Item key="subitem2" label="subitem2" icon="apps" />,
+              <Menu.Item
                 key="subitem3"
                 label="subitem3"
                 icon="search-plus"
                 childItems={[
-                  <MenuItem key="subitem1" label="subitem1" icon="history" />,
-                  <MenuItem key="subitem2" label="subitem2" icon="apps" />,
-                  <MenuItem key="subitem3" label="subitem3" icon="search-plus" />,
+                  <Menu.Item key="subitem1" label="subitem1" icon="history" />,
+                  <Menu.Item key="subitem2" label="subitem2" icon="apps" />,
+                  <Menu.Item key="subitem3" label="subitem3" icon="search-plus" />,
                 ]}
               />,
             ]}
           />
-          <MenuItem label="item3" icon="filter" />
+          <Menu.Item label="item3" icon="filter" />
         </Menu>
       </StoryExample>
     </VerticalGroup>

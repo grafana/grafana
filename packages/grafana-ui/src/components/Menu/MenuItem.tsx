@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactElement, useCallback, useMemo, useState, useRef, useImperativeHandle } from 'react';
+import React, { ReactElement, useCallback, useState, useRef, useImperativeHandle } from 'react';
 
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 
@@ -72,8 +72,9 @@ export const MenuItem = React.memo(
       setIsSubMenuOpen(false);
       setIsActive(false);
     }, []);
-    const hasSubMenu = useMemo(() => childItems && childItems.length > 0, [childItems]);
-    const Wrapper = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
+
+    const hasSubMenu = childItems && childItems.length > 0;
+    const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
     const itemStyle = cx(
       {
         [styles.item]: true,
@@ -109,7 +110,7 @@ export const MenuItem = React.memo(
     };
 
     return (
-      <Wrapper
+      <ItemElement
         target={target}
         className={itemStyle}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
@@ -146,7 +147,7 @@ export const MenuItem = React.memo(
             close={closeSubMenu}
           />
         )}
-      </Wrapper>
+      </ItemElement>
     );
   })
 );
