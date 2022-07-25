@@ -14,11 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type errorResponseBody struct {
-	Message string `json:"message"`
-	Error   string `json:"error"`
-}
-
 func TestIntegrationCreateCorrelation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

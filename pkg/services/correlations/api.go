@@ -20,7 +20,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
-		entities.Delete("/:correlationUid", authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
+		entities.Delete("/:correlationUid", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
 	})
 }
 
@@ -59,6 +59,10 @@ func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Respo
 
 	err := s.DeleteCorrelation(c.Req.Context(), cmd)
 	if err != nil {
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Data source not found", err)
+		}
+
 		if errors.Is(err, ErrCorrelationNotFound) {
 			return response.Error(http.StatusNotFound, "Correlation not found", err)
 		}
