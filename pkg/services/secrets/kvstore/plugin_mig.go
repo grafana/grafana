@@ -76,6 +76,7 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 				return err
 			}
 		}
+		s.logger.Debug("migrated unified secrets to plugin", "number of secrets", len(allSec))
 		// as no err was returned, when we delete all the secrets from the sql store
 		for index, sec := range allSec {
 			err = secretsSql.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
@@ -93,6 +94,7 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 				return err
 			}
 		}
+		s.logger.Debug("deleted unified secrets after migration", "number of secrets", len(allSec))
 	}
 	return nil
 }
