@@ -92,7 +92,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
         </EditorField>
         {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">
-            <EditorSwitch value={query.exemplar} onChange={onExemplarChange} />
+            <EditorSwitch value={query.exemplar || false} onChange={onExemplarChange} />
           </EditorField>
         )}
         {query.intervalFactor && query.intervalFactor > 1 && (
