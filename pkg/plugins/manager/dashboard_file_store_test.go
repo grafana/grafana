@@ -190,30 +190,32 @@ func setupPluginDashboardsForTest(t *testing.T) *PluginManager {
 	t.Helper()
 
 	return &PluginManager{
-		store: map[string]*plugins.Plugin{
-			"pluginWithoutDashboards": {
-				JSONData: plugins.JSONData{
-					Includes: []*plugins.Includes{
-						{
-							Type: "page",
+		pluginRegistry: &fakePluginRegistry{
+			store: map[string]*plugins.Plugin{
+				"pluginWithoutDashboards": {
+					JSONData: plugins.JSONData{
+						Includes: []*plugins.Includes{
+							{
+								Type: "page",
+							},
 						},
 					},
 				},
-			},
-			"pluginWithDashboards": {
-				PluginDir: "plugins/plugin-id",
-				JSONData: plugins.JSONData{
-					Includes: []*plugins.Includes{
-						{
-							Type: "page",
-						},
-						{
-							Type: "dashboard",
-							Path: "dashboards/dash1.json",
-						},
-						{
-							Type: "dashboard",
-							Path: "dashboards/dash2.json",
+				"pluginWithDashboards": {
+					PluginDir: "plugins/plugin-id",
+					JSONData: plugins.JSONData{
+						Includes: []*plugins.Includes{
+							{
+								Type: "page",
+							},
+							{
+								Type: "dashboard",
+								Path: "dashboards/dash1.json",
+							},
+							{
+								Type: "dashboard",
+								Path: "dashboards/dash2.json",
+							},
 						},
 					},
 				},

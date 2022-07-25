@@ -1,13 +1,19 @@
-import React from 'react';
-import { LokiVisualQuery } from '../types';
-import { LokiDatasource } from '../../datasource';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue } from '@grafana/data';
+import { EditorRow } from '@grafana/ui';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
-import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import { lokiQueryModeller } from '../LokiQueryModeller';
-import { DataSourceApi, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
 import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
+import { QueryBuilderHints } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryBuilderHints';
+import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+
+import { LokiDatasource } from '../../datasource';
+import { escapeLabelValueInSelector } from '../../language_utils';
+import { lokiQueryModeller } from '../LokiQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
+import { LokiOperationId, LokiVisualQuery } from '../types';
+
 import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
@@ -15,10 +21,11 @@ export interface Props {
   datasource: LokiDatasource;
   onChange: (update: LokiVisualQuery) => void;
   onRunQuery: () => void;
-  nested?: boolean;
 }
 
-export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, onChange, onRunQuery }) => {
+export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery }) => {
+  const [sampleData, setSampleData] = useState<PanelData>();
+
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -46,16 +53,41 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
       return [];
     }
 
+    let values;
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     if (labelsToConsider.length === 0) {
-      return await datasource.languageProvider.fetchLabelValues(forLabel.label);
+      values = await datasource.languageProvider.fetchLabelValues(forLabel.label);
+    } else {
+      const expr = lokiQueryModeller.renderLabels(labelsToConsider);
+      const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+      values = result[datasource.interpolateString(forLabel.label)];
     }
 
-    const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
-    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
-    return result[forLabelInterpolated] ?? [];
+    return values ? values.map((v) => escapeLabelValueInSelector(v, forLabel.op)) : []; // Escape values in return
   };
+
+  const labelFilterError: string | undefined = useMemo(() => {
+    const { labels, operations: op } = query;
+    if (!labels.length && op.length) {
+      // We don't want to show error for initial state with empty line contains operation
+      if (op.length === 1 && op[0].id === LokiOperationId.LineContains && op[0].params[0] === '') {
+        return undefined;
+      }
+      return 'You need to specify at least 1 label filter (stream selector)';
+    }
+    return undefined;
+  }, [query]);
+
+  useEffect(() => {
+    const onGetSampleData = async () => {
+      const lokiQuery = { expr: lokiQueryModeller.renderQuery(query), refId: 'data-samples' };
+      const series = await datasource.getDataSamples(lokiQuery);
+      const sampleData = { series, state: LoadingState.Done, timeRange: getDefaultTimeRange() };
+      setSampleData(sampleData);
+    };
+
+    onGetSampleData().catch(console.error);
+  }, [datasource, query]);
 
   return (
     <>
@@ -69,6 +101,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
           }
           labelsFilters={query.labels}
           onChange={onChangeLabels}
+          error={labelFilterError}
         />
       </EditorRow>
       <OperationsEditorRow>
@@ -78,6 +111,14 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
           onChange={onChange}
           onRunQuery={onRunQuery}
           datasource={datasource as DataSourceApi}
+        />
+        <QueryBuilderHints<LokiVisualQuery>
+          datasource={datasource}
+          query={query}
+          onChange={onChange}
+          data={sampleData}
+          queryModeller={lokiQueryModeller}
+          buildVisualQueryFromString={buildVisualQueryFromString}
         />
       </OperationsEditorRow>
       {query.binaryQueries && query.binaryQueries.length > 0 && (

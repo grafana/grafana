@@ -1,9 +1,16 @@
 import { debounce, trim } from 'lodash';
+
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
-import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+
 import { variableAdapters } from '../../adapters';
+import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../../state/selectors';
+import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
+import { KeyedVariableIdentifier } from '../../state/types';
+import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+import { containsSearchFilter, getCurrentValue, toVariablePayload } from '../../utils';
 import { NavigationKey } from '../types';
+
 import {
   hideOptions,
   moveOptionsHighlight,
@@ -14,10 +21,6 @@ import {
   updateOptionsFromSearch,
   updateSearchQuery,
 } from './reducer';
-import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
-import { KeyedVariableIdentifier } from '../../state/types';
-import { containsSearchFilter, getCurrentText, toVariablePayload } from '../../utils';
-import { toKeyedAction } from '../../state/keyedVariablesReducer';
 
 export const navigateOptions = (rootStateKey: string, key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -87,7 +90,7 @@ export const commitChangesToVariable = (key: string, callback?: (updated: any) =
     const updated = getVariable<VariableWithMultiSupport>(identifier, getState());
     dispatch(toKeyedAction(key, hideOptions()));
 
-    if (getCurrentText(existing) === getCurrentText(updated)) {
+    if (getCurrentValue(existing) === getCurrentValue(updated)) {
       return;
     }
 

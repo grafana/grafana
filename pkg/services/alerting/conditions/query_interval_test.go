@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -127,7 +127,7 @@ type fakeIntervalTestReqHandler struct {
 }
 
 //nolint: staticcheck // legacydata.DataResponse deprecated
-func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *models.DataSource, query legacydata.DataQuery) (
+func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *datasources.DataSource, query legacydata.DataQuery) (
 	legacydata.DataResponse, error) {
 	q := query.Queries[0]
 	rh.verifier(q)
@@ -138,7 +138,7 @@ func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *
 func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query legacydata.DataSubQuery)) {
 	t.Run("desc", func(t *testing.T) {
 		store := mockstore.NewSQLStoreMock()
-		store.ExpectedDatasource = &models.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
+		store.ExpectedDatasource = &datasources.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
 
 		ctx := &queryIntervalTestContext{}
 		ctx.result = &alerting.EvalContext{

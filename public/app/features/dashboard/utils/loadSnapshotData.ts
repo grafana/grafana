@@ -1,10 +1,12 @@
 import { applyFieldOverrides, ArrayDataFrame, getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import { config } from 'app/core/config';
-import { DashboardModel, PanelModel } from '../state';
-import { getProcessedDataFrames } from '../../query/state/runRequest';
+
 import { SnapshotWorker } from '../../query/state/DashboardQueryRunner/SnapshotWorker';
-import { applyPanelTimeOverrides } from './panel';
+import { getProcessedDataFrames } from '../../query/state/runRequest';
 import { getTimeSrv } from '../services/TimeSrv';
+import { DashboardModel, PanelModel } from '../state';
+
+import { applyPanelTimeOverrides } from './panel';
 
 export function loadSnapshotData(panel: PanelModel, dashboard: DashboardModel): PanelData {
   const data = getProcessedDataFrames(panel.snapshotData);

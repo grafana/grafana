@@ -1,6 +1,8 @@
+import { defaults } from 'lodash';
 import React, { ChangeEvent } from 'react';
 import { of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 import {
   BinaryOperationID,
   binaryOperators,
@@ -15,7 +17,6 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 import {
   BinaryOptions,
   CalculateFieldMode,
@@ -23,8 +24,7 @@ import {
   getNameFromOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
-
-import { defaults } from 'lodash';
+import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -300,7 +300,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         <div className="gf-form">
           <Select
-            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             options={leftNames}
@@ -309,14 +308,12 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             onChange={this.onBinaryLeftChanged}
           />
           <Select
-            menuShouldPortal
             className="width-8 gf-form-spacing"
             options={ops}
             value={options.operator ?? ops[0].value}
             onChange={this.onBinaryOperationChanged}
           />
           <Select
-            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             className="min-width-10"
@@ -344,7 +341,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           <div className="gf-form">
             <div className="gf-form-label width-8">Mode</div>
             <Select
-              menuShouldPortal
               className="width-18"
               options={calculationModes}
               value={calculationModes.find((v) => v.value === mode)}

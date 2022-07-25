@@ -1,6 +1,8 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { PromBasedDataSource } from 'app/types/unified-alerting';
+
 import { getDataSourceByName } from '../utils/datasource';
+
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export function useRulesSourcesWithRuler(): DataSourceInstanceSettings[] {

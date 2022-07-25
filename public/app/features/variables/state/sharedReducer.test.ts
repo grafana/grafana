@@ -1,7 +1,19 @@
 import { cloneDeep } from 'lodash';
+
 import { LoadingState, VariableType } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { variableAdapters } from '../adapters';
+import { createConstantVariableAdapter } from '../constant/adapter';
+import { initialConstantVariableModelState } from '../constant/reducer';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { changeVariableNameSucceeded } from '../editor/reducer';
+import { createQueryVariableAdapter } from '../query/adapter';
+import { initialQueryVariableModelState } from '../query/reducer';
+import { ConstantVariableModel, QueryVariableModel, VariableHide, VariableOption } from '../types';
+import { toVariablePayload } from '../utils';
+
+import { getVariableState, getVariableTestContext } from './helpers';
 import {
   addVariable,
   changeVariableOrder,
@@ -16,17 +28,7 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import { ConstantVariableModel, QueryVariableModel, VariableHide, VariableOption } from '../types';
 import { initialVariablesState, KeyedVariableIdentifier, VariablesState } from './types';
-import { variableAdapters } from '../adapters';
-import { createQueryVariableAdapter } from '../query/adapter';
-import { initialQueryVariableModelState } from '../query/reducer';
-import { getVariableState, getVariableTestContext } from './helpers';
-import { changeVariableNameSucceeded } from '../editor/reducer';
-import { createConstantVariableAdapter } from '../constant/adapter';
-import { initialConstantVariableModelState } from '../constant/reducer';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [createQueryVariableAdapter(), createConstantVariableAdapter()]);
 

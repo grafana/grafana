@@ -1,9 +1,11 @@
-import React from 'react';
-import { useStyles2 } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { Icon } from '../Icon/Icon';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
+import { Icon } from '../Icon/Icon';
 
 export interface FilterPillProps {
   selected: boolean;

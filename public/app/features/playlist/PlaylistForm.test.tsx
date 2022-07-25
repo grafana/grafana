@@ -1,10 +1,10 @@
-import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { within } from '@testing-library/dom';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
-import { Playlist } from './types';
 import { PlaylistForm } from './PlaylistForm';
+import { Playlist } from './types';
 
 jest.mock('../../core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
@@ -12,9 +12,9 @@ jest.mock('../../core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
+function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
   const onSubmitMock = jest.fn();
-  const playlist = { name, items, interval } as unknown as Playlist;
+  const playlist = { name, items, interval, uid } as unknown as Playlist;
   const { rerender } = render(<PlaylistForm onSubmit={onSubmitMock} playlist={playlist} />);
 
   return { onSubmitMock, playlist, rerender };
@@ -28,6 +28,7 @@ const playlist: Playlist = {
     { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
     { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
   ],
+  uid: 'foo',
 };
 
 function rows() {
@@ -96,11 +97,11 @@ describe('PlaylistForm', () => {
   });
 
   describe('when deleting a playlist item', () => {
-    it('then the item should be removed and other items should be correct', () => {
+    it('then the item should be removed and other items should be correct', async () => {
       getTestContext(playlist);
 
       expect(rows()).toHaveLength(3);
-      userEvent.click(within(rows()[2]).getByRole('button', { name: /delete playlist item/i }));
+      await userEvent.click(within(rows()[2]).getByRole('button', { name: /delete playlist item/i }));
       expect(rows()).toHaveLength(2);
       expectCorrectRow({ index: 0, type: 'id', title: 'first item', first: true });
       expectCorrectRow({ index: 1, type: 'id', title: 'middle item', last: true });
@@ -108,10 +109,10 @@ describe('PlaylistForm', () => {
   });
 
   describe('when moving a playlist item up', () => {
-    it('then the item should be removed and other items should be correct', () => {
+    it('then the item should be removed and other items should be correct', async () => {
       getTestContext(playlist);
 
-      userEvent.click(within(rows()[2]).getByRole('button', { name: /move playlist item order up/i }));
+      await userEvent.click(within(rows()[2]).getByRole('button', { name: /move playlist item order up/i }));
       expectCorrectRow({ index: 0, type: 'id', title: 'first item', first: true });
       expectCorrectRow({ index: 1, type: 'tag', title: 'last item' });
       expectCorrectRow({ index: 2, type: 'id', title: 'middle item', last: true });
@@ -119,10 +120,10 @@ describe('PlaylistForm', () => {
   });
 
   describe('when moving a playlist item down', () => {
-    it('then the item should be removed and other items should be correct', () => {
+    it('then the item should be removed and other items should be correct', async () => {
       getTestContext(playlist);
 
-      userEvent.click(within(rows()[0]).getByRole('button', { name: /move playlist item order down/i }));
+      await userEvent.click(within(rows()[0]).getByRole('button', { name: /move playlist item order down/i }));
       expectCorrectRow({ index: 0, type: 'id', title: 'middle item', first: true });
       expectCorrectRow({ index: 1, type: 'id', title: 'first item' });
       expectCorrectRow({ index: 2, type: 'tag', title: 'last item', last: true });
@@ -133,17 +134,25 @@ describe('PlaylistForm', () => {
     it('then the correct item should be submitted', async () => {
       const { onSubmitMock } = getTestContext(playlist);
 
-      fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-      await waitFor(() => expect(onSubmitMock).toHaveBeenCalledTimes(1));
-      expect(onSubmitMock).toHaveBeenCalledWith(playlist);
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(onSubmitMock).toHaveBeenCalledTimes(1);
+      expect(onSubmitMock).toHaveBeenCalledWith({
+        name: 'A test playlist',
+        interval: '10m',
+        items: [
+          { title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' },
+          { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
+          { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
+        ],
+      });
     });
 
     describe('and name is missing', () => {
       it('then an alert should appear and nothing should be submitted', async () => {
         const { onSubmitMock } = getTestContext({ ...playlist, name: undefined });
 
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-        expect(await screen.findAllByRole('alert')).toHaveLength(1);
+        await userEvent.click(screen.getByRole('button', { name: /save/i }));
+        expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(onSubmitMock).not.toHaveBeenCalled();
       });
     });
@@ -152,9 +161,9 @@ describe('PlaylistForm', () => {
       it('then an alert should appear and nothing should be submitted', async () => {
         const { onSubmitMock } = getTestContext(playlist);
 
-        userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-        expect(await screen.findAllByRole('alert')).toHaveLength(1);
+        await userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
+        await userEvent.click(screen.getByRole('button', { name: /save/i }));
+        expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(onSubmitMock).not.toHaveBeenCalled();
       });
     });

@@ -1,5 +1,7 @@
+import { isEqual } from 'lodash';
 import React, { PureComponent } from 'react';
 import { AlignedData, Range } from 'uplot';
+
 import {
   compareDataFrameStructures,
   DataFrame,
@@ -17,12 +19,13 @@ import {
   ScaleDirection,
   ScaleOrientation,
 } from '@grafana/schema';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { UPlotChart } from '../uPlot/Plot';
+
 import { Themeable2 } from '../../types';
+import { UPlotChart } from '../uPlot/Plot';
+import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { preparePlotData2, getStackingGroups } from '../uPlot/utils';
+
 import { preparePlotFrame } from './utils';
-import { isEqual } from 'lodash';
 
 export interface SparklineProps extends Themeable2 {
   width: number;

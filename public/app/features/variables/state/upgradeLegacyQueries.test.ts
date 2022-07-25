@@ -1,12 +1,14 @@
-import { customBuilder, queryBuilder } from '../shared/testing/builders';
 import { VariableSupportType } from '@grafana/data';
-import { upgradeLegacyQueries } from './actions';
-import { changeVariableProp } from './sharedReducer';
+
 import { thunkTester } from '../../../../test/core/thunk/thunkTester';
+import { customBuilder, queryBuilder } from '../shared/testing/builders';
 import { TransactionStatus, VariableModel } from '../types';
-import { toKeyedAction } from './keyedVariablesReducer';
-import { getPreloadedState } from './helpers';
 import { toKeyedVariableIdentifier } from '../utils';
+
+import { upgradeLegacyQueries } from './actions';
+import { getPreloadedState } from './helpers';
+import { toKeyedAction } from './keyedVariablesReducer';
+import { changeVariableProp } from './sharedReducer';
 
 interface Args {
   query?: any;

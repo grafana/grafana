@@ -1,5 +1,17 @@
 import React from 'react';
 import uPlot, { AlignedData } from 'uplot';
+
+import {
+  DataFrame,
+  formattedValueToString,
+  getFieldColorModeForField,
+  getFieldSeriesColor,
+  GrafanaTheme2,
+} from '@grafana/data';
+import {
+  histogramBucketSizes,
+  histogramFrameBucketMaxFieldName,
+} from '@grafana/data/src/transformations/transformers/histogram';
 import {
   VizLegendOptions,
   LegendDisplayMode,
@@ -8,13 +20,6 @@ import {
   ScaleDirection,
   ScaleOrientation,
 } from '@grafana/schema';
-import {
-  DataFrame,
-  formattedValueToString,
-  getFieldColorModeForField,
-  getFieldSeriesColor,
-  GrafanaTheme2,
-} from '@grafana/data';
 import {
   Themeable2,
   UPlotConfigBuilder,
@@ -25,10 +30,6 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import {
-  histogramBucketSizes,
-  histogramFrameBucketMaxFieldName,
-} from '@grafana/data/src/transformations/transformers/histogram';
 import { PanelOptions } from './models.gen';
 
 function incrRoundDn(num: number, incr: number) {
@@ -220,7 +221,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 };
 
 const preparePlotData = (frame: DataFrame) => {
-  let data: AlignedData = [] as any;
+  let data = [];
 
   for (const field of frame.fields) {
     if (field.name !== histogramFrameBucketMaxFieldName) {
@@ -239,7 +240,7 @@ const preparePlotData = (frame: DataFrame) => {
     }
   }
 
-  return data;
+  return data as AlignedData;
 };
 
 interface State {

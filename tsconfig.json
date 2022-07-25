@@ -7,7 +7,7 @@
     "allowJs": true,
     "strict": true,
     "resolveJsonModule": true,
-    "useUnknownInCatchVariables": false,
+    "useUnknownInCatchVariables": true,
     "incremental": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
   },

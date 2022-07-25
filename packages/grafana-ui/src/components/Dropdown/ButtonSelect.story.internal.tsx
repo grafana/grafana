@@ -1,13 +1,16 @@
-import React from 'react';
 import { action } from '@storybook/addon-actions';
-import { Meta, Story } from '@storybook/react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { UseState } from '../../utils/storybook/UseState';
-import { SelectableValue } from '@grafana/data';
-import { ButtonSelect } from './ButtonSelect';
-import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
+import React from 'react';
 
-export default {
+import { SelectableValue } from '@grafana/data';
+
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { ButtonSelect } from './ButtonSelect';
+
+const meta: ComponentMeta<typeof ButtonSelect> = {
   title: 'Forms/Select/ButtonSelect',
   component: ButtonSelect,
   decorators: [withCenteredStory],
@@ -16,9 +19,9 @@ export default {
       exclude: ['className', 'options', 'value', 'tooltipContent'],
     },
   },
-} as Meta;
+};
 
-export const Basic: Story = (args) => {
+export const Basic: ComponentStory<typeof ButtonSelect> = (args) => {
   const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
   const options: Array<SelectableValue<string>> = [initialValue, { label: 'Another label', value: 'Another value' }];
   return (
@@ -48,3 +51,5 @@ Basic.args = {
   narrow: true,
   variant: 'default',
 };
+
+export default meta;

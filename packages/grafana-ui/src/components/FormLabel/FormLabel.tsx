@@ -1,7 +1,8 @@
-import React, { FunctionComponent, ReactNode } from 'react';
 import classNames from 'classnames';
-import { Tooltip, PopoverContent } from '../Tooltip';
+import React, { FunctionComponent, ReactNode } from 'react';
+
 import { Icon } from '../Icon/Icon';
+import { Tooltip, PopoverContent } from '../Tooltip';
 
 interface Props {
   children: ReactNode;

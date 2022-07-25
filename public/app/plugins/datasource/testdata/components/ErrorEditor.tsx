@@ -1,5 +1,7 @@
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 import React from 'react';
+
+import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+
 import { EditorProps } from '../QueryEditor';
 
 const ERROR_OPTIONS = [

@@ -9,34 +9,36 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	t.Helper()
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = true
 
 	ac := &OSSAccessControlService{
-		features:      featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
-		log:           log.New("accesscontrol"),
-		registrations: accesscontrol.RegistrationList{},
-		scopeResolver: accesscontrol.NewScopeResolver(),
-		provider:      database.ProvideService(sqlstore.InitTestDB(t)),
-		roles:         accesscontrol.BuildMacroRoleDefinitions(),
+		cfg:            cfg,
+		log:            log.New("accesscontrol"),
+		registrations:  accesscontrol.RegistrationList{},
+		scopeResolvers: accesscontrol.NewScopeResolvers(),
+		store:          database.ProvideService(sqlstore.InitTestDB(t)),
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
 }
 
 // extractRawPermissionsHelper extracts action and scope fields only from a permission slice
-func extractRawPermissionsHelper(perms []*accesscontrol.Permission) []*accesscontrol.Permission {
-	res := make([]*accesscontrol.Permission, len(perms))
+func extractRawPermissionsHelper(perms []accesscontrol.Permission) []accesscontrol.Permission {
+	res := make([]accesscontrol.Permission, len(perms))
 	for i, p := range perms {
-		res[i] = &accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
+		res[i] = accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
 	}
 	return res
 }
@@ -134,19 +136,18 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			usagestatsmock := &usagestats.UsageStatsMock{T: t}
-
-			_, errInitAc := ProvideService(
-				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
-				usagestatsmock,
+			cfg := setting.NewCfg()
+			if tt.enabled {
+				cfg.RBACEnabled = true
+			}
+			s, errInitAc := ProvideService(
+				featuremgmt.WithFeatures(),
+				cfg,
 				database.ProvideService(sqlstore.InitTestDB(t)),
 				routing.NewRouteRegister(),
 			)
 			require.NoError(t, errInitAc)
-			report, err := usagestatsmock.GetUsageReport(context.Background())
-			assert.Nil(t, err)
-
-			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
+			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
 	}
 }
@@ -199,8 +200,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Name: "fixed:test:test",
 					},
 					Grants: []string{"Admin"},
 				},
@@ -212,8 +212,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "custom:test:test",
+						Name: "custom:test:test",
 					},
 					Grants: []string{"Admin"},
 				},
@@ -226,8 +225,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Name: "fixed:test:test",
 					},
 					Grants: []string{"WrongAdmin"},
 				},
@@ -240,15 +238,13 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Name: "fixed:test:test",
 					},
 					Grants: []string{"Admin"},
 				},
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test2:test2",
+						Name: "fixed:test2:test2",
 					},
 					Grants: []string{"Admin"},
 				},
@@ -298,7 +294,6 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version:     1,
 						Name:        "fixed:test:test",
 						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
 					},
@@ -312,7 +307,6 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version:     1,
 						Name:        "fixed:test:test",
 						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
 					},
@@ -320,8 +314,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 				},
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test2:test2",
+						Name: "fixed:test2:test2",
 						Permissions: []accesscontrol.Permission{
 							{Action: "test:test2"},
 							{Action: "test:test3", Scope: "test:*"},
@@ -375,7 +368,6 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 	}
 	registration := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
 			UID:         "fixed:test:test",
 			Name:        "fixed:test:test",
 			Description: "Test role",
@@ -420,8 +412,8 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			rawUserPerms := extractRawPermissionsHelper(userPerms)
 
-			assert.Contains(t, rawUserPerms, &tt.wantPerm, "Expected resolution of raw permission")
-			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
+			assert.Contains(t, rawUserPerms, tt.wantPerm, "Expected resolution of raw permission")
+			assert.NotContains(t, rawUserPerms, tt.rawPerm, "Expected raw permission to have been resolved")
 		})
 	}
 }
@@ -438,7 +430,6 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 	}
 	registration := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
 			UID:         "fixed:test:test",
 			Name:        "fixed:test:test",
 			Description: "Test role",
@@ -446,12 +437,12 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 		},
 		Grants: []string{"Viewer"},
 	}
-	userLoginScopeSolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+	userLoginScopeSolver := accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		if initialScope == "users:login:testUser" {
-			return "users:id:2", nil
+			return []string{"users:id:2"}, nil
 		}
-		return initialScope, nil
-	}
+		return []string{initialScope}, nil
+	})
 
 	tests := []struct {
 		name       string
@@ -482,7 +473,7 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			ac := setupTestEnv(t)
-			ac.RegisterAttributeScopeResolver("users:login:", userLoginScopeSolver)
+			ac.RegisterScopeAttributeResolver("users:login:", userLoginScopeSolver)
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
 			err := ac.DeclareFixedRoles(registration)

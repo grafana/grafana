@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/shared/visualizations/tooltip-mode/
 title: Tooltip mode
 ---
 

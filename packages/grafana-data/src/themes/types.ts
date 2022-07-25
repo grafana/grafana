@@ -1,14 +1,15 @@
 import { GrafanaTheme } from '../types/theme';
+
 import { ThemeBreakpoints } from './breakpoints';
-import { ThemeComponents } from './createComponents';
 import { ThemeColors } from './createColors';
+import { ThemeComponents } from './createComponents';
 import { ThemeShadows } from './createShadows';
 import { ThemeShape } from './createShape';
 import { ThemeSpacing } from './createSpacing';
 import { ThemeTransitions } from './createTransitions';
 import { ThemeTypography } from './createTypography';
-import { ThemeZIndices } from './zIndex';
 import { ThemeVisualizationColors } from './createVisualizationColors';
+import { ThemeZIndices } from './zIndex';
 
 /**
  * @beta
@@ -29,6 +30,8 @@ export interface GrafanaTheme2 {
   visualization: ThemeVisualizationColors;
   transitions: ThemeTransitions;
   v1: GrafanaTheme;
+  /** feature flags that might impact component looks */
+  flags: { topnav?: boolean };
 }
 
 /** @alpha */

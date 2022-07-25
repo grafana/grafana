@@ -1,7 +1,8 @@
 import React from 'react';
+import { Subscription } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
 import uPlot, { AlignedData } from 'uplot';
-import { Themeable2 } from '../../types';
-import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
+
 import {
   DataFrame,
   DataHoverClearEvent,
@@ -13,17 +14,19 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 import { VizLegendOptions } from '@grafana/schema';
+
+import { Themeable2 } from '../../types';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
-import { Subscription } from 'rxjs';
-import { throttleTime } from 'rxjs/operators';
-import { GraphNGLegendEvent, XYFieldMatchers } from './types';
-import { Renderers, UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { UPlotChart } from '../uPlot/Plot';
-import { ScaleProps } from '../uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '../uPlot/config/UPlotAxisBuilder';
+import { Renderers, UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { ScaleProps } from '../uPlot/config/UPlotScaleBuilder';
+import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
+
+import { GraphNGLegendEvent, XYFieldMatchers } from './types';
+import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 
 /**
  * @internal -- not a public API
@@ -41,7 +44,7 @@ export interface GraphNGProps extends Themeable2 {
   width: number;
   height: number;
   timeRange: TimeRange;
-  timeZone: TimeZone;
+  timeZones: TimeZone[] | TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   renderers?: Renderers;
@@ -213,17 +216,17 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZone, propsToDiff } = this.props;
+    const { frames, structureRev, timeZones, propsToDiff } = this.props;
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
-    if (frames !== prevProps.frames || propsChanged || timeZone !== prevProps.timeZone) {
+    if (frames !== prevProps.frames || propsChanged || timeZones !== prevProps.timeZones) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
           this.state.config === undefined ||
-          timeZone !== prevProps.timeZone ||
+          timeZones !== prevProps.timeZones ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
           propsChanged;

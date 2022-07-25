@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -34,7 +35,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]*accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 			})
 
@@ -42,7 +43,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1, data2},
 					Now:       time.Time{},
@@ -56,25 +57,25 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]*accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
 
-			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 				{Uid: data2.DatasourceUID},
 			}}
 
 			evaluator := &eval.FakeEvaluator{}
 			var result []eval.Result
-			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything).Return(result)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1, data2},
 					Now:       time.Time{},
@@ -102,19 +103,19 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
-			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 			}}
 
 			evaluator := &eval.FakeEvaluator{}
 			var result []eval.Result
-			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything).Return(result)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1},
 					Now:       time.Time{},
@@ -128,7 +129,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			response = srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1},
 					Now:       time.Time{},
@@ -157,7 +158,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]*accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 			})
 
@@ -177,12 +178,12 @@ func TestRouteEvalQueries(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]*accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
 
-			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 				{Uid: data2.DatasourceUID},
 			}}
@@ -196,7 +197,7 @@ func TestRouteEvalQueries(t *testing.T) {
 					},
 				},
 			}
-			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
@@ -226,7 +227,7 @@ func TestRouteEvalQueries(t *testing.T) {
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
-			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 			}}
 
@@ -239,7 +240,7 @@ func TestRouteEvalQueries(t *testing.T) {
 					},
 				},
 			}
-			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
@@ -265,7 +266,7 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 }
 
-func createTestingApiSrv(ds *datasources.FakeCacheService, ac *acMock.Mock, evaluator *eval.FakeEvaluator) *TestingApiSrv {
+func createTestingApiSrv(ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator *eval.FakeEvaluator) *TestingApiSrv {
 	if ac == nil {
 		ac = acMock.New().WithDisabled()
 	}

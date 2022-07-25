@@ -1,8 +1,12 @@
+import { FeatureLike } from 'ol/Feature';
+import BaseLayer from 'ol/layer/Base';
+import Units from 'ol/proj/Units';
+import { Subject } from 'rxjs';
+
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
 import { HideableFieldConfig } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
-import BaseLayer from 'ol/layer/Base';
-import Units from 'ol/proj/Units';
+
 import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
 
@@ -22,6 +26,15 @@ export interface ControlsOptions {
 
   // Show debug
   showDebug?: boolean;
+}
+
+export enum TooltipMode {
+  None = 'none',
+  Details = 'details',
+}
+
+export interface TooltipOptions {
+  mode: TooltipMode;
 }
 
 export interface MapViewConfig {
@@ -51,6 +64,7 @@ export interface GeomapPanelOptions {
   controls: ControlsOptions;
   basemap: MapLayerOptions;
   layers: MapLayerOptions[];
+  tooltip: TooltipOptions;
 }
 export interface FeatureStyleConfig {
   style?: StyleConfig;
@@ -80,4 +94,5 @@ export interface MapLayerState<TConfig = any> extends LayerElement {
   layer: BaseLayer; // the openlayers instance
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
   isBasemap?: boolean;
+  mouseEvents: Subject<FeatureLike | undefined>;
 }

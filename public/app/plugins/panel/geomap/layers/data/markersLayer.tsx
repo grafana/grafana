@@ -5,6 +5,7 @@ import {
   PanelData,
   GrafanaTheme2,
   FrameGeometrySourceMode,
+  EventBus,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
@@ -53,6 +54,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   description: 'Use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
+  hideOpacity: true,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -60,18 +62,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
       ...options?.config,
     };
-
-    const legendProps = new ReplaySubject<MarkersLegendProps>(1);
-    let legend: ReactNode = null;
-    if (config.showLegend) {
-      legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
-    }
 
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
@@ -79,6 +75,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const vectorLayer = new VectorLayer({
       source,
     });
+
+    const legendProps = new ReplaySubject<MarkersLegendProps>(1);
+    let legend: ReactNode = null;
+    if (config.showLegend) {
+      legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
+    }
 
     if (!style.fields) {
       // Set a global style
@@ -142,6 +144,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               styleConfig: style,
               size: style.dims?.size,
               layerName: options.name,
+              layer: vectorLayer,
             });
           }
 

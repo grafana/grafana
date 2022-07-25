@@ -1,7 +1,8 @@
-import React, { FC } from 'react';
-import { useStyles } from '@grafana/ui';
 import { cx, css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+import { useStyles } from '@grafana/ui';
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 

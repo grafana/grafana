@@ -1,28 +1,30 @@
-import { Subject } from 'rxjs';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import { locationService, setEchoSrv } from '@grafana/runtime';
+import { Subject } from 'rxjs';
 
-import { initDashboard, InitDashboardArgs } from './initDashboard';
-import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+import { FetchError, locationService, setEchoSrv } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
-import { Echo } from '../../../core/services/echo/Echo';
+import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
-import { initialTransactionState, variablesInitTransaction } from '../../variables/state/transactionReducer';
-import { keybindingSrv } from 'app/core/services/keybindingSrv';
-import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
-import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
-import { getDashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
+import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+
+import { Echo } from '../../../core/services/echo/Echo';
 import {
   getDashboardQueryRunner,
   setDashboardQueryRunnerFactory,
 } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
-import { TransactionStatus } from '../../variables/types';
 import { getPreloadedState } from '../../variables/state/helpers';
+import { initialTransactionState, variablesInitTransaction } from '../../variables/state/transactionReducer';
+import { TransactionStatus } from '../../variables/types';
+import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
+import { getDashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
+import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
+
+import { initDashboard, InitDashboardArgs } from './initDashboard';
+import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -206,7 +208,15 @@ describeInitScenario('Initializing home dashboard', (ctx) => {
 describeInitScenario('Initializing home dashboard cancelled', (ctx) => {
   ctx.setup(() => {
     ctx.args.routeName = DashboardRoutes.Home;
-    ctx.backendSrv.get.mockRejectedValue({ cancelled: true });
+    const fetchError: FetchError = {
+      cancelled: true,
+      config: {
+        url: '/api/dashboards/home',
+      },
+      data: 'foo',
+      status: 500,
+    };
+    ctx.backendSrv.get.mockRejectedValue(fetchError);
   });
 
   it('Should abort init process', () => {

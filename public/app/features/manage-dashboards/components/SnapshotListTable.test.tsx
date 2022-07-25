@@ -1,4 +1,5 @@
 import { locationService } from '@grafana/runtime';
+
 import { getSnapshots } from './SnapshotListTable';
 
 jest.mock('@grafana/runtime', () => ({

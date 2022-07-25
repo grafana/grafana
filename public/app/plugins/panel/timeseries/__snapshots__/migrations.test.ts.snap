@@ -12,7 +12,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 5,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "nullValueMode": "null",
       "unit": "short",
@@ -120,7 +120,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 1,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "nullValueMode": "null",
       "unit": "short",
@@ -136,6 +136,21 @@ Object {
             "id": "color",
             "value": Object {
               "fixedColor": "rgba(165, 72, 170, 0.77)",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "B-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "rgba(16, 72, 170, 0.77)",
               "mode": "fixed",
             },
           },
@@ -176,7 +191,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 1,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "nullValueMode": "null",
       "unit": "short",
@@ -192,6 +207,21 @@ Object {
             "id": "color",
             "value": Object {
               "fixedColor": "rgba(165, 72, 170, 0.77)",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+      Object {
+        "matcher": Object {
+          "id": "byRegexp",
+          "options": "/.*Status: 2[0-9]+.*/i",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "rgba(16, 72, 170, 0.77)",
               "mode": "fixed",
             },
           },
@@ -259,7 +289,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 5,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
         "stacking": Object {
           "group": "A",
           "mode": "normal",
@@ -346,7 +376,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 5,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
         "stacking": Object {
           "group": "A",
           "mode": "normal",
@@ -404,7 +434,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 1,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "displayName": "DISPLAY NAME",
       "nullValueMode": "null",
@@ -444,7 +474,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 5,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "nullValueMode": "null",
       "unit": "short",
@@ -554,7 +584,7 @@ Object {
           "type": "log",
         },
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "decimals": 3,
       "max": 1000,

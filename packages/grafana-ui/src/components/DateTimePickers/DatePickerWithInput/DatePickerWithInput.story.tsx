@@ -1,9 +1,12 @@
+import { ComponentMeta } from '@storybook/react';
 import React, { useState } from 'react';
-import { DatePickerWithInput } from './DatePickerWithInput';
+
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
+
+import { DatePickerWithInput } from './DatePickerWithInput';
 import mdx from './DatePickerWithInput.mdx';
 
-export default {
+const meta: ComponentMeta<typeof DatePickerWithInput> = {
   title: 'Pickers and Editors/TimePickers/DatePickerWithInput',
   component: DatePickerWithInput,
   decorators: [withCenteredStory],
@@ -19,3 +22,5 @@ export const Basic = () => {
 
   return <DatePickerWithInput width={40} value={date} onChange={(newDate) => setDate(newDate)} />;
 };
+
+export default meta;

@@ -1,7 +1,10 @@
 import React from 'react';
-import { DeleteDashboardModal } from './DeleteDashboardModal';
+
 import { Button, ModalsController } from '@grafana/ui';
+
 import { DashboardModel } from '../../state';
+
+import { DeleteDashboardModal } from './DeleteDashboardModal';
 
 type Props = {
   dashboard: DashboardModel;

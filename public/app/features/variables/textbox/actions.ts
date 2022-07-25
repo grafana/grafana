@@ -1,14 +1,16 @@
-import { TextBoxVariableModel } from '../types';
-import { ThunkResult } from '../../../types';
-import { getVariable } from '../state/selectors';
-import { variableAdapters } from '../adapters';
-import { createTextBoxOptions } from './reducer';
-import { KeyedVariableIdentifier } from '../state/types';
-import { setOptionFromUrl } from '../state/actions';
 import { UrlQueryValue } from '@grafana/data';
-import { changeVariableProp } from '../state/sharedReducer';
-import { ensureStringValues, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { ThunkResult } from '../../../types';
+import { variableAdapters } from '../adapters';
+import { setOptionFromUrl } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getVariable } from '../state/selectors';
+import { changeVariableProp } from '../state/sharedReducer';
+import { KeyedVariableIdentifier } from '../state/types';
+import { TextBoxVariableModel } from '../types';
+import { ensureStringValues, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { createTextBoxOptions } from './reducer';
 
 export const updateTextBoxVariableOptions = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {

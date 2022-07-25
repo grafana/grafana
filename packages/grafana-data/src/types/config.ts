@@ -1,10 +1,12 @@
+import { SystemDateFormatSettings } from '../datetime';
+import { MapLayerOptions } from '../geo/layer';
+import { GrafanaTheme2 } from '../themes';
+
 import { DataSourceInstanceSettings } from './datasource';
+import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
-import { SystemDateFormatSettings } from '../datetime';
-import { GrafanaTheme2 } from '../themes';
-import { MapLayerOptions } from '../geo/layer';
-import { FeatureToggles } from './featureToggles.gen';
+
 import { NavLinkDTO, OrgRole } from '.';
 
 /**
@@ -42,6 +44,7 @@ export interface LicenseInfo {
   stateInfo: string;
   edition: GrafanaEdition;
   enabledFeatures: { [key: string]: boolean };
+  trialExpiry?: number;
 }
 
 /**
@@ -54,6 +57,20 @@ export interface SentryConfig {
   dsn: string;
   customEndpoint: string;
   sampleRate: number;
+}
+
+/**
+ * Describes GrafanaJavascriptAgentConfig integration config
+ *
+ * @public
+ */
+export interface GrafanaJavascriptAgentConfig {
+  enabled: boolean;
+  customEndpoint: string;
+  errorInstrumentalizationEnabled: boolean;
+  consoleInstrumentalizationEnabled: boolean;
+  webVitalsInstrumentalizationEnabled: boolean;
+  apiKey: string;
 }
 
 /**
@@ -130,6 +147,7 @@ export interface BootData {
  * @internal
  */
 export interface GrafanaConfig {
+  isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
   minRefreshInterval: string;
@@ -150,6 +168,7 @@ export interface GrafanaConfig {
   alertingMinInterval: number;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
+  queryHistoryEnabled: boolean;
   helpEnabled: boolean;
   profileEnabled: boolean;
   ldapEnabled: boolean;
@@ -158,6 +177,8 @@ export interface GrafanaConfig {
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
+  rbacEnabled: boolean;
+  rbacBuiltInRoleAssignmentEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
   passwordHint: string;
@@ -175,10 +196,17 @@ export interface GrafanaConfig {
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
+  grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
   customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
+  secretsManagerPluginEnabled: boolean;
+  googleAnalyticsId: string | undefined;
+  rudderstackWriteKey: string | undefined;
+  rudderstackDataPlaneUrl: string | undefined;
+  rudderstackSdkUrl: string | undefined;
+  rudderstackConfigUrl: string | undefined;
 }

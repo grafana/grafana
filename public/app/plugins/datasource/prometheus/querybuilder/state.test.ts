@@ -1,11 +1,12 @@
 import { CoreApp } from '@grafana/data';
+
 import { QueryEditorMode } from './shared/types';
 import { changeEditorMode, getQueryWithDefaults } from './state';
 
 describe('getQueryWithDefaults(', () => {
   it('should set defaults', () => {
     expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Dashboard)).toEqual({
-      editorMode: 'code',
+      editorMode: 'builder',
       expr: '',
       legendFormat: '__auto',
       range: true,
@@ -15,7 +16,7 @@ describe('getQueryWithDefaults(', () => {
 
   it('should set both range and instant to true when in Explore', () => {
     expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Explore)).toEqual({
-      editorMode: 'code',
+      editorMode: 'builder',
       expr: '',
       legendFormat: '__auto',
       range: true,
@@ -24,7 +25,7 @@ describe('getQueryWithDefaults(', () => {
     });
   });
 
-  it('Changing editor mode with blank query should change default', () => {
+  it('changing editor mode with blank query should change default', () => {
     changeEditorMode({ refId: 'A', expr: '' }, QueryEditorMode.Code, (query) => {
       expect(query.editorMode).toBe(QueryEditorMode.Code);
     });

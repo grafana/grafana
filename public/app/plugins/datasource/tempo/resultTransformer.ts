@@ -1,9 +1,13 @@
+import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
+import { collectorTypes } from '@opentelemetry/exporter-collector';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import differenceInHours from 'date-fns/differenceInHours';
+import formatDistance from 'date-fns/formatDistance';
+
 import {
-  ArrayVector,
   DataFrame,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  Field,
   FieldType,
   MutableDataFrame,
   TraceKeyValuePair,
@@ -12,11 +16,7 @@ import {
   TraceSpanRow,
   dateTimeFormat,
 } from '@grafana/data';
-import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
-import { collectorTypes } from '@opentelemetry/exporter-collector';
-import formatDistance from 'date-fns/formatDistance';
-import differenceInHours from 'date-fns/differenceInHours';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+
 import { createGraphFrames } from './graphTransform';
 
 export function createTableFrame(
@@ -532,20 +532,10 @@ function getOTLPReferences(
 }
 
 export function transformTrace(response: DataQueryResponse, nodeGraph = false): DataQueryResponse {
-  // We need to parse some of the fields which contain stringified json.
-  // Seems like we can't just map the values as the frame we got from backend has some default processing
-  // and will stringify the json back when we try to set it. So we create a new field and swap it instead.
   const frame: DataFrame = response.data[0];
 
   if (!frame) {
     return emptyDataQueryResponse;
-  }
-
-  try {
-    parseJsonFields(frame);
-  } catch (error) {
-    console.error(error);
-    return { error: { message: 'Unable to parse trace response: ' + error }, data: [] };
   }
 
   let data = [...response.data];
@@ -557,30 +547,6 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
     ...response,
     data,
   };
-}
-
-/**
- * Change fields which are json string into JS objects. Modifies the frame in place.
- */
-function parseJsonFields(frame: DataFrame) {
-  for (const fieldName of ['serviceTags', 'logs', 'tags', 'references']) {
-    const field = frame.fields.find((f) => f.name === fieldName);
-    if (field) {
-      const fieldIndex = frame.fields.indexOf(field);
-      const values = new ArrayVector();
-      const newField: Field = {
-        ...field,
-        values,
-        type: FieldType.other,
-      };
-
-      for (let i = 0; i < field.values.length; i++) {
-        const value = field.values.get(i);
-        values.set(i, value === '' ? undefined : JSON.parse(value));
-      }
-      frame.fields[fieldIndex] = newField;
-    }
-  }
 }
 
 export type SearchResponse = {
@@ -598,6 +564,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
         name: 'traceID',
         type: FieldType.string,
         config: {
+          unit: 'string',
           displayNameFromDS: 'Trace ID',
           links: [
             {

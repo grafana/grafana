@@ -1,6 +1,7 @@
-import { ArrayVector, DataFrame, Field, FieldType, getFieldTypeFromValue } from '@grafana/data';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Geometry } from 'ol/geom';
+
+import { ArrayVector, DataFrame, Field, FieldType, getFieldTypeFromValue } from '@grafana/data';
 
 interface FieldInfo {
   values: any[];

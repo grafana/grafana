@@ -1,15 +1,17 @@
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { lastValueFrom } from 'rxjs';
-import { css, cx } from '@emotion/css';
+
 import { AnnotationEventMappings, AnnotationQuery, DataQuery, DataSourceApi, LoadingState } from '@grafana/data';
 import { Button, Icon, IconName, Spinner } from '@grafana/ui';
-
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { standardAnnotationSupport } from '../standardAnnotationSupport';
-import { executeAnnotationQuery } from '../executeAnnotationQuery';
 import { PanelModel } from 'app/features/dashboard/state';
+
+import { executeAnnotationQuery } from '../executeAnnotationQuery';
+import { shouldUseLegacyRunner, shouldUseMappingUI, standardAnnotationSupport } from '../standardAnnotationSupport';
 import { AnnotationQueryResponse } from '../types';
+
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
 interface Props {
@@ -31,7 +33,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   componentDidUpdate(oldProps: Props) {
-    if (this.props.annotation !== oldProps.annotation) {
+    if (this.props.annotation !== oldProps.annotation && !shouldUseLegacyRunner(this.props.datasource)) {
       this.verifyDataSource();
     }
   }
@@ -55,6 +57,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   onRunQuery = async () => {
     const { datasource, annotation } = this.props;
+    if (shouldUseLegacyRunner(datasource)) {
+      // In the new UI the running of query is done so the data can be mapped. In the legacy annotations this does
+      // not exist as the annotationQuery already returns annotation events which cannot be mapped. This means that
+      // right now running a query for data source with legacy runner does not make much sense.
+      return;
+    }
+
     const dashboard = getDashboardSrv().getCurrent();
     if (!dashboard) {
       return;
@@ -67,7 +76,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       executeAnnotationQuery(
         {
           range: getTimeSrv().timeRange(),
-          panel: {} as PanelModel,
+          panel: new PanelModel({}),
           dashboard,
         },
         datasource,
@@ -154,11 +163,15 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     );
   }
 
+  onAnnotationChange = (annotation: AnnotationQuery) => {
+    this.props.onChange(annotation);
+  };
+
   render() {
     const { datasource, annotation } = this.props;
     const { response } = this.state;
 
-    // Find the annotaiton runner
+    // Find the annotation runner
     let QueryEditor = datasource.annotations?.QueryEditor || datasource.components?.QueryEditor;
     if (!QueryEditor) {
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
@@ -175,8 +188,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           onRunQuery={this.onRunQuery}
           data={response?.panelData}
           range={getTimeSrv().timeRange()}
+          annotation={annotation}
+          onAnnotationChange={this.onAnnotationChange}
         />
-        {datasource.type !== 'datasource' && (
+        {shouldUseMappingUI(datasource) && (
           <>
             {this.renderStatus()}
             <AnnotationFieldMapper response={response} mappings={annotation.mappings} change={this.onMappingChange} />

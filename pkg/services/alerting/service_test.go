@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -111,6 +112,26 @@ func TestService(t *testing.T) {
 		}
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
+	})
+
+	t.Run("create alert notification should reject an invalid command", func(t *testing.T) {
+		uid := strings.Repeat("A", 41)
+
+		err := s.CreateAlertNotificationCommand(context.Background(), &models.CreateAlertNotificationCommand{Uid: uid})
+		require.ErrorIs(t, err, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"})
+	})
+
+	t.Run("update alert notification should reject an invalid command", func(t *testing.T) {
+		ctx := context.Background()
+
+		uid := strings.Repeat("A", 41)
+		expectedErr := ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
+
+		err := s.UpdateAlertNotification(ctx, &models.UpdateAlertNotificationCommand{Uid: uid})
+		require.ErrorIs(t, err, expectedErr)
+
+		err = s.UpdateAlertNotificationWithUid(ctx, &models.UpdateAlertNotificationWithUidCommand{NewUid: uid})
+		require.ErrorIs(t, err, expectedErr)
 	})
 }
 

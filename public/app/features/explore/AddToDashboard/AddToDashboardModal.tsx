@@ -1,31 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
-import { locationUtil, SelectableValue } from '@grafana/data';
-import { setDashboardInLocalStorage, AddToDashboardError } from './addToDashboard';
-import { useSelector } from 'react-redux';
-import { ExploreId } from 'app/types';
-import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { DeepMap, FieldError, useForm } from 'react-hook-form';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { getExploreItemSelector } from '../state/selectors';
 import { partial } from 'lodash';
+import React, { useEffect, useState } from 'react';
+import { DeepMap, FieldError, useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
+
+import { locationUtil, SelectableValue } from '@grafana/data';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+import { contextSrv } from 'app/core/services/context_srv';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
+import { ExploreId, AccessControlAction } from 'app/types';
+
+import { getExploreItemSelector } from '../state/selectors';
+
+import { setDashboardInLocalStorage, AddToDashboardError } from './addToDashboard';
 
 enum SaveTarget {
   NewDashboard = 'new-dashboard',
   ExistingDashboard = 'existing-dashboard',
 }
-
-const SAVE_TARGETS: Array<SelectableValue<SaveTarget>> = [
-  {
-    label: 'New Dashboard',
-    value: SaveTarget.NewDashboard,
-  },
-  {
-    label: 'Existing Dashboard',
-    value: SaveTarget.ExistingDashboard,
-  },
-];
 
 interface SaveTargetDTO {
   saveTarget: SaveTarget;
@@ -79,7 +72,27 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
   } = useForm<FormDTO>({
     defaultValues: { saveTarget: SaveTarget.NewDashboard },
   });
-  const saveTarget = watch('saveTarget');
+
+  const canCreateDashboard = contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
+  const canWriteDashboard = contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
+
+  const saveTargets: Array<SelectableValue<SaveTarget>> = [];
+  if (canCreateDashboard) {
+    saveTargets.push({
+      label: 'New dashboard',
+      value: SaveTarget.NewDashboard,
+    });
+  }
+  if (canWriteDashboard) {
+    saveTargets.push({
+      label: 'Existing dashboard',
+      value: SaveTarget.ExistingDashboard,
+    });
+  }
+
+  const saveTarget = saveTargets.length > 1 ? watch('saveTarget') : saveTargets[0].value;
+
+  const modalTitle = `Add panel to ${saveTargets.length > 1 ? 'dashboard' : saveTargets[0].label!.toLowerCase()}`;
 
   const onSubmit = async (openInNewTab: boolean, data: FormDTO) => {
     setSubmissionError(undefined);
@@ -136,17 +149,19 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
   }, []);
 
   return (
-    <Modal title="Add panel to dashboard" onDismiss={onClose} isOpen>
+    <Modal title={modalTitle} onDismiss={onClose} isOpen>
       <form>
-        <InputControl
-          control={control}
-          render={({ field: { ref, ...field } }) => (
-            <Field label="Target dashboard" description="Start a new dashboard or save the panel in an existing one.">
-              <RadioButtonGroup options={SAVE_TARGETS} {...field} id="e2d-save-target" />
-            </Field>
-          )}
-          name="saveTarget"
-        />
+        {saveTargets.length > 1 && (
+          <InputControl
+            control={control}
+            render={({ field: { ref, ...field } }) => (
+              <Field label="Target dashboard" description="Choose where to add the panel.">
+                <RadioButtonGroup options={saveTargets} {...field} id="e2d-save-target" />
+              </Field>
+            )}
+            name="saveTarget"
+          />
+        )}
 
         {saveTarget === SaveTarget.ExistingDashboard &&
           (() => {
@@ -195,7 +210,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
             Open in new tab
           </Button>
           <Button type="submit" variant="primary" onClick={handleSubmit(partial(onSubmit, false))} icon="apps">
-            Open
+            Open dashboard
           </Button>
         </Modal.ButtonRow>
       </form>

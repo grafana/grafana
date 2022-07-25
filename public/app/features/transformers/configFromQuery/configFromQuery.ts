@@ -1,4 +1,5 @@
 import { map } from 'rxjs/operators';
+
 import {
   ArrayVector,
   DataFrame,
@@ -10,6 +11,7 @@ import {
   MatcherConfig,
   reduceField,
 } from '@grafana/data';
+
 import {
   getFieldConfigFromFrame,
   FieldToConfigMapping,

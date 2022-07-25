@@ -1,10 +1,13 @@
-import { Select } from '@grafana/ui';
 import { cx } from '@emotion/css';
-import { ResultFormat } from '../../types';
 import React from 'react';
-import { unwrap } from './unwrap';
+
+import { Select } from '@grafana/ui';
+
+import { ResultFormat } from '../../types';
 import { RESULT_FORMATS } from '../constants';
+
 import { paddingRightClass } from './styles';
+import { unwrap } from './unwrap';
 
 type Props = {
   inputId?: string;

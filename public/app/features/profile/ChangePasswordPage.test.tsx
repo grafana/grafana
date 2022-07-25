@@ -1,11 +1,13 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import config from 'app/core/config';
+
+import { backendSrv } from '../../core/services/backend_srv';
+
 import { Props, ChangePasswordPage } from './ChangePasswordPage';
 import { initialUserState } from './state/reducers';
-import { getNavModel } from '../../core/selectors/navModel';
-import { backendSrv } from '../../core/services/backend_srv';
 
 const defaultProps: Props = {
   ...initialUserState,
@@ -19,23 +21,6 @@ const defaultProps: Props = {
     orgId: 0,
     authLabels: ['github'],
   },
-  navModel: getNavModel(
-    {
-      'profile-settings': {
-        icon: 'sliders-v-alt',
-        id: 'profile-settings',
-        parentItem: {
-          id: 'profile',
-          text: 'Test User',
-          img: '/avatar/46d229b033af06a191ff2267bca9ae56',
-          url: '/profile',
-        },
-        text: 'Preferences',
-        url: '/profile',
-      },
-    },
-    'profile-settings'
-  ),
   loadUser: jest.fn(),
   changePassword: jest.fn(),
 };
@@ -83,9 +68,9 @@ describe('ChangePasswordPage', () => {
   it('should call changePassword if change password is valid', async () => {
     const { props } = await getTestContext();
 
-    userEvent.type(screen.getByLabelText('Old password'), 'test');
-    userEvent.type(screen.getByLabelText('New password'), 'admin');
-    userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
+    await userEvent.type(screen.getByLabelText('Old password'), 'test');
+    await userEvent.type(screen.getByLabelText('New password'), 'admin');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
     fireEvent.click(screen.getByRole('button', { name: 'Change Password' }));
     await waitFor(() => {
       expect(props.changePassword).toHaveBeenCalledTimes(1);

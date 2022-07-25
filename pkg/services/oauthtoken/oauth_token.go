@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
-	"golang.org/x/oauth2"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -22,7 +25,7 @@ type Service struct {
 
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token
-	IsOAuthPassThruEnabled(*models.DataSource) bool
+	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService) *Service {
@@ -33,19 +36,19 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth2.Token {
-	if user == nil {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *models.SignedInUser) *oauth2.Token {
+	if usr == nil {
 		// No user, therefore no token
 		return nil
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: user.UserId}
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.UserId}
 	if err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
-			logger.Debug("no OAuth token for user found", "userId", user.UserId, "username", user.Login)
+			logger.Debug("no OAuth token for user found", "userId", usr.UserId, "username", usr.Login)
 		} else {
-			logger.Error("failed to get OAuth token for user", "userId", user.UserId, "username", user.Login, "error", err)
+			logger.Error("failed to get OAuth token for user", "userId", usr.UserId, "username", usr.Login, "error", err)
 		}
 		return nil
 	}
@@ -78,7 +81,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	if err != nil {
-		logger.Error("failed to retrieve OAuth access token", "provider", authInfoQuery.Result.AuthModule, "userId", user.UserId, "username", user.Login, "error", err)
+		logger.Error("failed to retrieve OAuth access token", "provider", authInfoQuery.Result.AuthModule, "userId", usr.UserId, "username", usr.Login, "error", err)
 		return nil
 	}
 
@@ -91,16 +94,16 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 			OAuthToken: token,
 		}
 		if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
-			logger.Error("failed to update auth info during token refresh", "userId", user.UserId, "username", user.Login, "error", err)
+			logger.Error("failed to update auth info during token refresh", "userId", usr.UserId, "username", usr.Login, "error", err)
 			return nil
 		}
-		logger.Debug("updated OAuth info for user", "userId", user.UserId, "username", user.Login)
+		logger.Debug("updated OAuth info for user", "userId", usr.UserId, "username", usr.Login)
 	}
 	return token
 }
 
 // IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
-func (o *Service) IsOAuthPassThruEnabled(ds *models.DataSource) bool {
+func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }
 

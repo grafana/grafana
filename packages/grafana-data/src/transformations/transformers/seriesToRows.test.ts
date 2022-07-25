@@ -1,9 +1,10 @@
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, Field, FieldType } from '../../types';
-import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe';
-import { transformDataFrame } from '../transformDataFrame';
+import { DataTransformerConfig, Field, FieldType } from '../../types';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { DataTransformerID } from './ids';
 import { seriesToRowsTransformer, SeriesToRowsTransformerOptions } from './seriesToRows';
 
 describe('Series to rows', () => {

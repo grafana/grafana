@@ -1,9 +1,10 @@
 import React, { ChangeEvent, MouseEvent, FC } from 'react';
-import { Input } from '../Input/Input';
+
 import { Button } from '../Button';
-import { TextArea } from '../TextArea/TextArea';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
+import { Input } from '../Input/Input';
+import { TextArea } from '../TextArea/TextArea';
 
 interface Props {
   label: string;

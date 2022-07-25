@@ -1,14 +1,16 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
 
 import { AppPlugin, GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { CatalogPlugin, PluginTabIds } from '../types';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
+import { CatalogPlugin, PluginTabIds } from '../types';
+
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
+import { PluginUsage } from './PluginUsage';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -59,6 +61,14 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     }
   }
 
+  if (pageId === PluginTabIds.USAGE && pluginConfig) {
+    return (
+      <div className={styles.container}>
+        <PluginUsage plugin={pluginConfig?.meta} />
+      </div>
+    );
+  }
+
   if (pageId === PluginTabIds.DASHBOARDS && pluginConfig) {
     return (
       <div className={styles.container}>
@@ -77,6 +87,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 export const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     padding: ${theme.spacing(3, 4)};
+    height: 100%;
   `,
   readme: css`
     & img {
@@ -98,6 +109,15 @@ export const getStyles = (theme: GrafanaTheme2) => ({
       margin-left: ${theme.spacing(2)};
       & > p {
         margin: ${theme.spacing()} 0;
+      }
+    }
+
+    a {
+      color: ${theme.colors.text.link};
+
+      &:hover {
+        color: ${theme.colors.text.link};
+        text-decoration: underline;
       }
     }
   `,

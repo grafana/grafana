@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { HorizontalGroup, Tooltip, Button } from '@grafana/ui';
 
 type VersionsButtonsType = {
@@ -22,7 +23,7 @@ export const VersionsHistoryButtons: React.FC<VersionsButtonsType> = ({
       </Button>
     )}
     <Tooltip content="Select two versions to start comparing" placement="bottom">
-      <Button type="button" disabled={canCompare} onClick={getDiff} icon="code-branch">
+      <Button type="button" disabled={!canCompare} onClick={getDiff} icon="code-branch">
         Compare versions
       </Button>
     </Tooltip>

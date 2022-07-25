@@ -1,24 +1,42 @@
-import React, { HTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import React, { HTMLAttributes, useEffect } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportExperimentView } from '@grafana/runtime/src';
+import { Button, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 
 type ComponentSize = 'sm' | 'md';
 
 export interface Props extends HTMLAttributes<HTMLOrSVGElement> {
   featureName: string;
   size?: ComponentSize;
+  text?: string;
+  eventVariant?: string;
+  featureId: string;
 }
 
-export const UpgradeBox = ({ featureName, className, children, size = 'md', ...htmlProps }: Props) => {
+export const UpgradeBox = ({
+  featureName,
+  className,
+  children,
+  text,
+  featureId,
+  eventVariant = '',
+  size = 'md',
+  ...htmlProps
+}: Props) => {
   const styles = useStyles2((theme) => getUpgradeBoxStyles(theme, size));
+
+  useEffect(() => {
+    reportExperimentView(`feature-highlights-${featureId}`, 'test', eventVariant);
+  }, [eventVariant, featureId]);
 
   return (
     <div className={cx(styles.box, className)} {...htmlProps}>
       <Icon name={'rocket'} className={styles.icon} />
       <div className={styles.inner}>
         <p className={styles.text}>
-          You’ve discovered a Pro feature! Get the Grafana Pro plan to access {featureName}.
+          You’ve discovered a Pro feature! {text || `Get the Grafana Pro plan to access ${featureName}.`}
         </p>
         <LinkButton
           variant="secondary"
@@ -92,6 +110,11 @@ export interface UpgradeContentProps {
   description?: string;
   listItems: string[];
   caption?: string;
+  action?: {
+    text: string;
+    link?: string;
+    onClick?: () => void;
+  };
 }
 
 export const UpgradeContent = ({
@@ -101,6 +124,7 @@ export const UpgradeContent = ({
   featureName,
   description,
   caption,
+  action,
 }: UpgradeContentProps) => {
   const styles = useStyles2(getUpgradeContentStyles);
   return (
@@ -115,6 +139,16 @@ export const UpgradeContent = ({
             </li>
           ))}
         </ul>
+        {action?.link && (
+          <LinkButton variant={'primary'} href={action.link}>
+            {action.text}
+          </LinkButton>
+        )}
+        {action?.onClick && (
+          <Button variant={'primary'} onClick={action.onClick}>
+            {action.text}
+          </Button>
+        )}
         {featureUrl && (
           <LinkButton fill={'text'} href={featureUrl} className={styles.link} target="_blank" rel="noreferrer noopener">
             Learn more
@@ -146,6 +180,9 @@ const getUpgradeContentStyles = (theme: GrafanaTheme2) => {
         width: 100%;
       }
     `,
+    title: css`
+      color: ${theme.colors.text.maxContrast};
+    `,
     description: css`
       color: ${theme.colors.text.primary};
       font-weight: ${theme.typography.fontWeightLight};
@@ -167,9 +204,6 @@ const getUpgradeContentStyles = (theme: GrafanaTheme2) => {
     `,
     link: css`
       margin-left: ${theme.spacing(2)};
-    `,
-    title: css`
-      color: ${theme.colors.text.maxContrast};
     `,
     caption: css`
       font-weight: ${theme.typography.fontWeightLight};

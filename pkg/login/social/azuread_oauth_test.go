@@ -258,7 +258,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, ""),
 			},
 			claims: &azureClaims{
 				ID:                "1",
@@ -289,6 +289,22 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:             "me@example.com",
 				PreferredUsername: "",
 				Roles:             []string{"foo"},
+				Groups:            []string{},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Fetch empty role when strict attribute role is true and no role claims returned",
+			fields: fields{
+				roleAttributeStrict: true,
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
 				Groups:            []string{},
 				Name:              "My Name",
 				ID:                "1234",

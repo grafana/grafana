@@ -1,13 +1,14 @@
-import { GraphiteDatasource } from './datasource';
 import { isArray } from 'lodash';
-
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { AbstractLabelMatcher, AbstractLabelOperator, dateTime, getFrameDisplayName } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
-import { DEFAULT_GRAPHITE_VERSION } from './versions';
+
+import { AbstractLabelMatcher, AbstractLabelOperator, dateTime, getFrameDisplayName } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import { fromString } from './configuration/parseLokiLabelMappings';
+import { GraphiteDatasource } from './datasource';
+import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -112,7 +113,7 @@ describe('graphiteDatasource', () => {
     const query = {
       panelId: 3,
       dashboardId: 5,
-      range: { raw: { from: 'now-1h', to: 'now' } },
+      range: { from: dateTime('2022-04-01T00:00:00'), to: dateTime('2022-07-01T00:00:00') },
       targets: [{ target: 'prod1.count' }, { target: 'prod2.count' }],
       maxDataPoints: 500,
     };
@@ -156,8 +157,8 @@ describe('graphiteDatasource', () => {
       const params = requestOptions.data.split('&');
       expect(params).toContain('target=prod1.count');
       expect(params).toContain('target=prod2.count');
-      expect(params).toContain('from=-1h');
-      expect(params).toContain('until=now');
+      expect(params).toContain('from=1648789200');
+      expect(params).toContain('until=1656655200');
     });
 
     it('should exclude undefined params', () => {
@@ -301,14 +302,6 @@ describe('graphiteDatasource', () => {
           ],
         },
       });
-    });
-
-    it('should use hardcoded list of functions when no functions are returned', async () => {
-      fetchMock.mockImplementation(() => {
-        return of(createFetchResponse('{}'));
-      });
-      const funcDefs = await ctx.ds.getFuncDefs();
-      expect(Object.keys(funcDefs)).not.toHaveLength(0);
     });
   });
 

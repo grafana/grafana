@@ -6,8 +6,10 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
+
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+
+import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
 
 describe('SeriesToColumns Transformer', () => {
   beforeAll(() => {

@@ -1,17 +1,20 @@
 import React, { useMemo } from 'react';
+
 import { Field, PanelProps } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, KeyboardPlugin } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+
+import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-import { TimeSeriesOptions } from './types';
-import { prepareGraphableFields } from './utils';
-import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
+import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
-import { config } from 'app/core/config';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { TimeSeriesOptions } from './types';
+import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -33,7 +36,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
+  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
+  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
 
   if (!frames) {
     return (
@@ -54,7 +58,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZone={timeZone}
+      timeZones={timezones}
       width={width}
       height={height}
       legend={options.legend}
@@ -134,6 +138,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 onThresholdsChange={onThresholdsChange}
               />
             )}
+
+            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
@@ -12,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,12 +24,13 @@ var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
+var _ plugins.SecretsPluginManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg             *plugins.Cfg
-	store           map[string]*plugins.Plugin
-	pluginInstaller plugins.Installer
-	pluginLoader    plugins.Loader
+	pluginRegistry  registry.Service
+	pluginInstaller installer.Service
+	pluginLoader    loader.Service
 	pluginsMu       sync.RWMutex
 	pluginSources   []PluginSource
 	log             log.Logger
@@ -39,8 +41,8 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), []PluginSource{
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginManager, error) {
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
@@ -51,12 +53,12 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*Plug
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginSources []PluginSource, pluginLoader plugins.Loader) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
-		store:           make(map[string]*plugins.Plugin),
+		pluginRegistry:  pluginRegistry,
 		log:             log.New("plugin.manager"),
 		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
@@ -91,7 +93,7 @@ func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pa
 		}
 	}
 
-	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, m.registeredPlugins())
+	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, m.registeredPlugins(ctx))
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
 		return err
@@ -107,8 +109,18 @@ func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pa
 }
 
 func (m *PluginManager) Renderer() *plugins.Plugin {
-	for _, p := range m.plugins() {
+	for _, p := range m.availablePlugins(context.TODO()) {
 		if p.IsRenderer() {
+			return p
+		}
+	}
+
+	return nil
+}
+
+func (m *PluginManager) SecretsManager() *plugins.Plugin {
+	for _, p := range m.availablePlugins(context.TODO()) {
+		if p.IsSecretsManager() {
 			return p
 		}
 	}
@@ -119,7 +131,7 @@ func (m *PluginManager) Renderer() *plugins.Plugin {
 func (m *PluginManager) Routes() []*plugins.StaticRoute {
 	staticRoutes := make([]*plugins.StaticRoute, 0)
 
-	for _, p := range m.plugins() {
+	for _, p := range m.availablePlugins(context.TODO()) {
 		if p.StaticRoute() != nil {
 			staticRoutes = append(staticRoutes, p.StaticRoute())
 		}
@@ -127,33 +139,16 @@ func (m *PluginManager) Routes() []*plugins.StaticRoute {
 	return staticRoutes
 }
 
-func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Plugin) error {
-	err := m.register(plugin)
-	if err != nil {
+func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin) error {
+	if err := m.pluginRegistry.Add(ctx, p); err != nil {
 		return err
 	}
-
-	if !m.isRegistered(plugin.ID) {
-		return fmt.Errorf("plugin %s is not registered", plugin.ID)
-	}
-
-	return m.start(ctx, plugin)
-}
-
-func (m *PluginManager) register(p *plugins.Plugin) error {
-	if m.isRegistered(p.ID) {
-		return fmt.Errorf("plugin %s is already registered", p.ID)
-	}
-
-	m.pluginsMu.Lock()
-	m.store[p.ID] = p
-	m.pluginsMu.Unlock()
 
 	if !p.IsCorePlugin() {
 		m.log.Info("Plugin registered", "pluginId", p.ID)
 	}
 
-	return nil
+	return m.start(ctx, p)
 }
 
 func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
@@ -169,7 +164,9 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 		return err
 	}
 
-	delete(m.store, p.ID)
+	if err := m.pluginRegistry.Remove(ctx, p.ID); err != nil {
+		return err
+	}
 
 	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
 	return nil
@@ -181,7 +178,7 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 		return nil
 	}
 
-	if !m.isRegistered(p.ID) {
+	if _, exists := m.pluginRegistry.Plugin(ctx, p.ID); !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
 
@@ -245,7 +242,7 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 // shutdown stops all backend plugin processes
 func (m *PluginManager) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, p := range m.plugins() {
+	for _, p := range m.availablePlugins(ctx) {
 		wg.Add(1)
 		go func(p backendplugin.Plugin, ctx context.Context) {
 			defer wg.Done()

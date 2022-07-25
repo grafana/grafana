@@ -1,4 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { toVariablePayload } from '../utils';
+
 import {
   addVariableEditorError,
   changeVariableEditorExtended,
@@ -14,7 +16,6 @@ import {
   VariableEditorState,
   variableEditorUnMounted,
 } from './reducer';
-import { toVariablePayload } from '../utils';
 
 describe('variableEditorReducer', () => {
   describe('when setIdInEditor is dispatched', () => {

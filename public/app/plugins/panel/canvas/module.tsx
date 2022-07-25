@@ -1,10 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
+import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
-import { PanelOptions } from './models.gen';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
-import { GroupState } from 'app/features/canvas/runtime/group';
+import { getTreeViewEditor } from './editor/treeViewEditor';
+import { PanelOptions } from './models.gen';
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges
@@ -20,12 +21,13 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
     });
 
     if (state) {
+      builder.addNestedOptions(getTreeViewEditor(state));
       builder.addNestedOptions(getLayerEditor(state));
 
       const selection = state.selected;
       if (selection?.length === 1) {
         const element = selection[0];
-        if (!(element instanceof GroupState)) {
+        if (!(element instanceof FrameState)) {
           builder.addNestedOptions(
             getElementEditor({
               category: [`Selected element (${element.options.name})`],

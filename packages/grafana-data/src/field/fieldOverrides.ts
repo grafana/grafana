@@ -1,6 +1,13 @@
+import { isNumber, set, unset, get, cloneDeep } from 'lodash';
+
+import { guessFieldTypeForField } from '../dataframe';
+import { getTimeField } from '../dataframe/processDataFrame';
+import { asHexString } from '../themes/colorManipulator';
+import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import {
   ApplyFieldOverrideOptions,
   DataFrame,
+  DataLink,
   DisplayProcessor,
   DisplayValue,
   DynamicConfigValue,
@@ -17,21 +24,17 @@ import {
   TimeZone,
   ValueLinkConfig,
 } from '../types';
-import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
-import { isNumber, set, unset, get, cloneDeep } from 'lodash';
-import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import { guessFieldTypeForField } from '../dataframe';
-import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
-import { formattedValueToString } from '../valueFormats';
-import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
-import { getFrameDisplayName } from './fieldState';
-import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
+import { formattedValueToString } from '../valueFormats';
+
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getFrameDisplayName } from './fieldState';
+import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { getTemplateProxyForField } from './templateProxies';
-import { asHexString } from '../themes/colorManipulator';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -352,7 +355,7 @@ export const getLinksSupplier =
     const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
     const { timeField } = getTimeField(frame);
 
-    return field.config.links.map((link) => {
+    return field.config.links.map((link: DataLink) => {
       const variablesQuery = locationUtil.getVariablesUrlParams();
       let dataFrameVars = {};
       let valueVars = {};
@@ -438,7 +441,7 @@ export const getLinksSupplier =
       }
 
       let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
-      href = replaceVariables(href, variables, encodeURIComponent);
+      href = replaceVariables(href, variables);
       href = locationUtil.processUrl(href);
 
       const info: LinkModel<Field> = {

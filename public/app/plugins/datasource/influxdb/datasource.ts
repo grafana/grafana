@@ -2,15 +2,10 @@ import { cloneDeep, extend, get, groupBy, has, isString, map as _map, omit, pick
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  BackendDataSourceResponse,
-  DataSourceWithBackend,
-  FetchResponse,
-  frameToMetricFindValue,
-  getBackendSrv,
-} from '@grafana/runtime';
+
 import {
   AnnotationEvent,
+  AnnotationQueryRequest,
   ArrayVector,
   DataFrame,
   DataQueryError,
@@ -27,17 +22,24 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
-  AnnotationQueryRequest,
 } from '@grafana/data';
-import InfluxSeries from './influx_series';
-import InfluxQueryModel from './influx_query_model';
-import ResponseParser from './response_parser';
-import { InfluxQueryBuilder } from './query_builder';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { FluxQueryEditor } from './components/FluxQueryEditor';
-import { buildRawQuery } from './queryUtils';
+import {
+  BackendDataSourceResponse,
+  DataSourceWithBackend,
+  FetchResponse,
+  frameToMetricFindValue,
+  getBackendSrv,
+} from '@grafana/runtime';
 import config from 'app/core/config';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
+import { FluxQueryEditor } from './components/FluxQueryEditor';
+import InfluxQueryModel from './influx_query_model';
+import InfluxSeries from './influx_series';
+import { buildRawQuery } from './queryUtils';
+import { InfluxQueryBuilder } from './query_builder';
+import ResponseParser from './response_parser';
+import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {
@@ -366,7 +368,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         datasource: this.getRef(),
-        query: this.templateSrv.replace(options.annotation.query ?? ''),
+        query: this.templateSrv.replace(options.annotation.query ?? '', undefined, 'regex'),
         rawQuery: true,
       };
 
@@ -424,7 +426,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return {
           ...query,
           datasource: this.getRef(),
-          query: this.templateSrv.replace(query.query ?? '', scopedVars), // The raw query text
+          query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'), // The raw query text
         };
       }
 
@@ -473,7 +475,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     return {
       ...expandedQuery,
-      query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
+      query: this.templateSrv.replace(query.query ?? '', rest, 'regex'), // The raw query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
       measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),

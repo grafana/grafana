@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // AzureResourceGraphResponse is the json response object from the Azure Resource Graph Analytics API.
@@ -47,7 +46,7 @@ type AzureResourceGraphQuery struct {
 	TimeRange         backend.TimeRange
 }
 
-const argAPIVersion = "2021-06-01-preview"
+const ArgAPIVersion = "2021-06-01-preview"
 const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
 
 func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
@@ -124,7 +123,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
-	params.Add("api-version", argAPIVersion)
+	params.Add("api-version", ArgAPIVersion)
 
 	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
 		dataResponse = backend.DataResponse{Error: err}
@@ -189,7 +188,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data)
+	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, loganalytics.AzureLogAnalyticsResponse{})
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -229,7 +228,7 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("failed to create request", err)
+		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")

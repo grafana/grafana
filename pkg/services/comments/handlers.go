@@ -146,7 +146,13 @@ func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *models.Sig
 	}
 
 	// NOTE: probably replace with comment and user table join.
-	query := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter(userIds)}, Page: 0, Limit: len(userIds)}
+	query := &models.SearchUsersQuery{
+		Query:        "",
+		Page:         0,
+		Limit:        len(userIds),
+		SignedInUser: signedInUser,
+		Filters:      []models.Filter{NewIDFilter(userIds)},
+	}
 	if err := s.sqlStore.SearchUsers(ctx, query); err != nil {
 		return nil, err
 	}

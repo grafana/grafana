@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -12,8 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSavingTags(t *testing.T) {
-	InitTestDB(t)
+func TestIntegrationSavingTags(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	ss := InitTestDB(t)
 
 	tagPairs := []*models.Tag{
 		{Key: "outage"},
@@ -21,7 +21,7 @@ func TestSavingTags(t *testing.T) {
 		{Key: "server", Value: "server-1"},
 		{Key: "error"},
 	}
-	tags, err := EnsureTagsExist(newSession(context.Background()), tagPairs)
+	tags, err := EnsureTagsExist(ss.newSession(context.Background()), tagPairs)
 
 	require.Nil(t, err)
 	require.Equal(t, 4, len(tags))

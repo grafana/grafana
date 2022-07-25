@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useState } from 'react';
 import debounce from 'debounce-promise';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
-import { DashboardSearchHit } from 'app/features/search/types';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardSearchHit } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
-interface Props
-  extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | 'menuShouldPortal'> {
+interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
   value?: DashboardPickerDTO['uid'];
   onChange?: (value?: DashboardPickerDTO) => void;
 }
@@ -77,7 +77,6 @@ export const DashboardPicker = ({
 
   return (
     <AsyncSelect
-      menuShouldPortal
       loadOptions={getDashboards}
       onChange={onPicked}
       placeholder={placeholder}

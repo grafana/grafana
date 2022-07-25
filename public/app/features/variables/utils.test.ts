@@ -1,3 +1,6 @@
+import { UrlQueryMap } from '@grafana/data';
+
+import { VariableRefresh } from './types';
 import {
   containsVariable,
   ensureStringValues,
@@ -6,8 +9,6 @@ import {
   getVariableRefresh,
   isAllVariable,
 } from './utils';
-import { VariableRefresh } from './types';
-import { UrlQueryMap } from '@grafana/data';
 
 describe('isAllVariable', () => {
   it.each`

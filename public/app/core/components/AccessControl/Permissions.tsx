@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { sortBy } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
 import { PermissionTarget, ResourcePermission, SetPermission, Description } from './types';
@@ -15,6 +16,7 @@ const INITIAL_DESCRIPTION: Description = {
   assignments: {
     teams: false,
     users: false,
+    serviceAccounts: false,
     builtInRoles: false,
   },
 };
@@ -28,8 +30,6 @@ export type Props = {
   addPermissionTitle?: string;
   resource: string;
   resourceId: ResourceId;
-
-  canListUsers: boolean;
   canSetPermissions: boolean;
 };
 
@@ -38,7 +38,6 @@ export const Permissions = ({
   buttonLabel = 'Add a permission',
   resource,
   resourceId,
-  canListUsers,
   canSetPermissions,
   addPermissionTitle,
 }: Props) => {
@@ -59,7 +58,7 @@ export const Permissions = ({
 
   const onAdd = (state: SetPermission) => {
     let promise: Promise<void> | null = null;
-    if (state.target === PermissionTarget.User) {
+    if (state.target === PermissionTarget.User || state.target === PermissionTarget.ServiceAccount) {
       promise = setUserPermission(resource, resourceId, state.userId!, state.permission);
     } else if (state.target === PermissionTarget.Team) {
       promise = setTeamPermission(resource, resourceId, state.teamId!, state.permission);
@@ -111,7 +110,15 @@ export const Permissions = ({
   const users = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.userId),
+        items.filter((i) => i.userId && !i.userIsServiceAccount),
+        ['userLogin']
+      ),
+    [items]
+  );
+  const serviceAccounts = useMemo(
+    () =>
+      sortBy(
+        items.filter((i) => i.userId && i.userIsServiceAccount),
         ['userLogin']
       ),
     [items]
@@ -144,7 +151,6 @@ export const Permissions = ({
             onAdd={onAdd}
             permissions={desc.permissions}
             assignments={desc.assignments}
-            canListUsers={canListUsers}
             onCancel={() => setIsAdding(false)}
           />
         </SlideDown>
@@ -159,6 +165,14 @@ export const Permissions = ({
         <PermissionList
           title="User"
           items={users}
+          permissionLevels={desc.permissions}
+          onChange={onChange}
+          onRemove={onRemove}
+          canSet={canSetPermissions}
+        />
+        <PermissionList
+          title="Service Account"
+          items={serviceAccounts}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}

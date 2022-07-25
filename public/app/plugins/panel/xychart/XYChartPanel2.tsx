@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
+
 import { PanelProps } from '@grafana/data';
-import { XYChartOptions } from './models.gen';
-import { ScatterHoverEvent, ScatterSeries } from './types';
+import { config } from '@grafana/runtime';
 import {
   LegendDisplayMode,
   Portal,
@@ -13,9 +13,11 @@ import {
   VizTooltipContainer,
 } from '@grafana/ui';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
-import { prepData, prepScatter } from './scatter';
-import { config } from '@grafana/runtime';
+
 import { TooltipView } from './TooltipView';
+import { XYChartOptions } from './models.gen';
+import { prepData, prepScatter } from './scatter';
+import { ScatterHoverEvent, ScatterSeries } from './types';
 
 type Props = PanelProps<XYChartOptions>;
 type State = {

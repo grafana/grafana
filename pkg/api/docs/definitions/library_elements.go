@@ -97,15 +97,36 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:parameters getLibraryElementByUID getLibraryElementConnections updateLibraryElement deleteLibraryElementByUID
+// swagger:parameters getLibraryElementByUID getLibraryElementConnections
 type LibraryElementByUID struct {
 	// in:path
 	// required:true
 	UID string `json:"library_element_uid"`
 }
 
+// swagger:parameters getLibraryElementByUID
+type GetLibraryElementByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"library_element_uid"`
+}
+
+// swagger:parameters GetLibraryElementConnectionsParams
+type GetLibraryElementConnectionsParams struct {
+	// in:path
+	// required:true
+	UID string `json:"library_element_uid"`
+}
+
+// swagger:parameters deleteLibraryElementByUID
+type DeleteLibraryElementByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"library_element_uid"`
+}
+
 // swagger:parameters getLibraryElementByName
-type LibraryElementByName struct {
+type LibraryElementByNameParams struct {
 	// in:path
 	// required:true
 	Name string `json:"library_element_name"`
@@ -158,7 +179,7 @@ type GetLibraryElementsParams struct {
 }
 
 // swagger:parameters createLibraryElement
-type CreateLibraryElementParam struct {
+type CreateLibraryElementParams struct {
 	// in:body
 	// required:true
 	Body libraryelements.CreateLibraryElementCommand `json:"body"`
@@ -169,6 +190,9 @@ type UpdateLibraryElementParam struct {
 	// in:body
 	// required:true
 	Body libraryelements.PatchLibraryElementCommand `json:"body"`
+	// in:path
+	// required:true
+	UID string `json:"library_element_uid"`
 }
 
 // swagger:response getLibraryElementsResponse

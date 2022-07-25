@@ -1,9 +1,11 @@
 import React from 'react';
+
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup } from '@grafana/ui';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { SaveDashboardFormProps } from '../types';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+
+import { SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardAsFormDTO {
   title: string;
@@ -17,7 +19,6 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
   clone.uid = '';
   clone.title += ' Copy';
   clone.editable = true;
-  clone.hideControls = false;
 
   // remove alerts if source dashboard is already persisted
   // do not want to create alert dupes
@@ -62,7 +63,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
       await validationSrv.validateNewDashboardName(getFormValues().$folder.id, dashboardName);
       return true;
     } catch (e) {
-      return e.message;
+      return e instanceof Error ? e.message : 'Dashboard name is invalid';
     }
   };
 

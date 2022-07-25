@@ -1,5 +1,7 @@
-import { VariableType } from '@grafana/data';
 import { cloneDeep } from 'lodash';
+
+import { VariableType } from '@grafana/data';
+
 import { ThunkResult } from '../../../types';
 import { variableAdapters } from '../adapters';
 import { initInspect } from '../inspect/reducer';
@@ -11,6 +13,7 @@ import { addVariable, removeVariable } from '../state/sharedReducer';
 import { AddVariable, KeyedVariableIdentifier, VariableIdentifier } from '../state/types';
 import { VariableModel } from '../types';
 import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from '../utils';
+
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,

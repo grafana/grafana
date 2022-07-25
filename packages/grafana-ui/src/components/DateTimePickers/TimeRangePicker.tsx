@@ -1,16 +1,9 @@
-// Libraries
-import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
 import { css } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
+import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
 
-// Components
-import { Tooltip } from '../Tooltip/Tooltip';
-import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
-
-// Utils & Services
-import { stylesFactory } from '../../themes/stylesFactory';
-import { withTheme, useTheme } from '../../themes/ThemeContext';
-
-// Types
 import {
   isDateTime,
   rangeUtil,
@@ -21,13 +14,17 @@ import {
   TimeZone,
   dateMath,
 } from '@grafana/data';
-import { Themeable } from '../../types';
-import { quickOptions } from './options';
-import { ButtonGroup, ToolbarButton } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
-import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
-import { FocusScope } from '@react-aria/focus';
+
+import { withTheme, useTheme } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { Themeable } from '../../types';
+import { ButtonGroup } from '../Button';
+import { ToolbarButton } from '../ToolbarButton';
+import { Tooltip } from '../Tooltip/Tooltip';
+
+import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { quickOptions } from './options';
 
 /** @public */
 export interface TimeRangePickerProps extends Themeable {
@@ -45,6 +42,7 @@ export interface TimeRangePickerProps extends Themeable {
   onZoom: () => void;
   history?: TimeRange[];
   hideQuickRanges?: boolean;
+  widthOverride?: number;
 }
 
 export interface State {
@@ -68,6 +66,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
     hideQuickRanges,
+    widthOverride,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -119,7 +118,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
         </ToolbarButton>
       </Tooltip>
       {isOpen && (
-        <FocusScope contain autoFocus restoreFocus>
+        <FocusScope contain autoFocus>
           <section ref={ref} {...overlayProps} {...dialogProps}>
             <TimePickerContent
               timeZone={timeZone}
@@ -129,6 +128,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
               quickOptions={quickOptions}
               history={history}
               showHistory
+              widthOverride={widthOverride}
               onChangeTimeZone={onChangeTimeZone}
               onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
               hideQuickRanges={hideQuickRanges}

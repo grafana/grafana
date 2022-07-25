@@ -1,5 +1,6 @@
-import React from 'react';
 import { Placement } from '@popperjs/core';
+import React from 'react';
+
 import { PopoverContent } from './types';
 
 type PopperControllerRenderProp = (

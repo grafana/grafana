@@ -50,7 +50,7 @@ func TestDingDingNotifier(t *testing.T) {
 				&alerting.Rule{
 					State:   models.AlertStateAlerting,
 					Message: `{host="localhost"}`,
-				}, &validations.OSSPluginRequestValidator{}, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil)
 			_, err = notifier.genBody(evalContext, "")
 			require.Nil(t, err)
 		})

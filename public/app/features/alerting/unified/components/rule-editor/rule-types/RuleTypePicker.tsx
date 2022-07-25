@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { Stack } from '@grafana/experimental';
-import { useStyles2 } from '@grafana/ui';
 import { isEmpty } from 'lodash';
 import React, { FC } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { Stack, useStyles2 } from '@grafana/ui';
+
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType } from '../../../types/rule-form';
+
 import { GrafanaManagedRuleType } from './GrafanaManagedAlert';
 import { MimirFlavoredType } from './MimirOrLokiAlert';
 import { RecordingRuleType } from './MimirOrLokiRecordingRule';

@@ -3,7 +3,6 @@
   "name": "Alertmanager",
   "id": "alertmanager",
   "metrics": false,
-  "state": "alpha",
   "routes": [
     {
       "method": "POST",

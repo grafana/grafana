@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
+
 import { Spinner, HorizontalGroup } from '@grafana/ui';
+
 import { DashboardModel } from '../../state/DashboardModel';
 import {
   historySrv,
@@ -81,8 +83,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
       isLoading: true,
     });
 
-    const lhs = await historySrv.getDashboardVersion(this.props.dashboard.id, baseInfo.version);
-    const rhs = await historySrv.getDashboardVersion(this.props.dashboard.id, newInfo.version);
+    const lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.version);
+    const rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.version);
 
     this.setState({
       baseInfo,
@@ -133,7 +135,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
 
   render() {
     const { versions, viewMode, baseInfo, newInfo, isNewLatest, isLoading, diffData } = this.state;
-    const canCompare = versions.filter((version) => version.checked).length !== 2;
+    const canCompare = versions.filter((version) => version.checked).length === 2;
     const showButtons = versions.length > 1;
     const hasMore = versions.length >= this.limit;
 
@@ -167,7 +169,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
         {isLoading ? (
           <VersionsHistorySpinner msg="Fetching history list&hellip;" />
         ) : (
-          <VersionHistoryTable versions={versions} onCheck={this.onCheck} />
+          <VersionHistoryTable versions={versions} onCheck={this.onCheck} canCompare={canCompare} />
         )}
         {this.state.isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
         {showButtons && (

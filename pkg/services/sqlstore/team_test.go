@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -13,31 +10,44 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestTeamCommandsAndQueries(t *testing.T) {
+func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Testing Team commands & queries", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
+		testUser := &models.SignedInUser{
+			OrgId: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
+					ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+				},
+			},
+		}
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
 			var userIds []int64
 			const testOrgID int64 = 1
 			var team1, team2 models.Team
-			var user *models.User
-			var userCmd models.CreateUserCommand
+			var usr *user.User
+			var userCmd user.CreateUserCommand
 			var err error
 
 			setup := func() {
 				for i := 0; i < 5; i++ {
-					userCmd = models.CreateUserCommand{
+					userCmd = user.CreateUserCommand{
 						Email: fmt.Sprint("user", i, "@test.com"),
 						Name:  fmt.Sprint("user", i),
 						Login: fmt.Sprint("loginuser", i),
 					}
-					user, err = sqlStore.CreateUser(context.Background(), userCmd)
+					usr, err = sqlStore.CreateUser(context.Background(), userCmd)
 					require.NoError(t, err)
-					userIds = append(userIds, user.Id)
+					userIds = append(userIds, usr.ID)
 				}
 				team1, err = sqlStore.CreateTeam("group1 name", "test1@test.com", testOrgID)
 				require.NoError(t, err)
@@ -47,7 +57,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			setup()
 
 			t.Run("Should be able to create teams and add users", func(t *testing.T) {
-				query := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10}
+				query := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10, SignedInUser: testUser}
 				err = sqlStore.SearchTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, query.Page, 1)
@@ -63,7 +73,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, true, 0)
 				require.NoError(t, err)
 
-				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
+				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), q1)
 				require.NoError(t, err)
 				require.Equal(t, len(q1.Result), 2)
@@ -75,7 +85,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, q1.Result[1].OrgId, testOrgID)
 				require.Equal(t, q1.Result[1].External, true)
 
-				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
+				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), q2)
 				require.NoError(t, err)
 				require.Equal(t, len(q2.Result), 1)
@@ -89,7 +99,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				team1 = query.Result.Teams[0]
 				require.EqualValues(t, team1.MemberCount, 2)
 
-				getTeamQuery := &models.GetTeamByIdQuery{OrgId: testOrgID, Id: team1.Id}
+				getTeamQuery := &models.GetTeamByIdQuery{OrgId: testOrgID, Id: team1.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamById(context.Background(), getTeamQuery)
 				require.NoError(t, err)
 				team1 = getTeamQuery.Result
@@ -104,7 +114,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				setup()
 				userId := userIds[1]
 
-				teamQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10}
+				teamQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10, SignedInUser: testUser}
 				err = sqlStore.SearchTeams(context.Background(), teamQuery)
 				require.NoError(t, err)
 				require.Equal(t, teamQuery.Page, 1)
@@ -114,7 +124,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(userId, testOrgID, team1.Id, true, 0)
 				require.NoError(t, err)
 
-				memberQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
+				memberQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), memberQuery)
 				require.NoError(t, err)
 				require.Equal(t, len(memberQuery.Result), 1)
@@ -130,7 +140,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(userId, testOrgID, team.Id, false, 0)
 				require.NoError(t, err)
 
-				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
+				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), qBeforeUpdate)
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
@@ -144,7 +154,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 				require.NoError(t, err)
 
-				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
+				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
 				require.Equal(t, qAfterUpdate.Result[0].Permission, models.PERMISSION_ADMIN)
@@ -158,7 +168,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(userID, testOrgID, team.Id, false, 0)
 				require.NoError(t, err)
 
-				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
+				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), qBeforeUpdate)
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
@@ -173,7 +183,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 				require.NoError(t, err)
 
-				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
+				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
 				require.EqualValues(t, qAfterUpdate.Result[0].Permission, 0)
@@ -193,13 +203,13 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to search for teams", func(t *testing.T) {
-				query := &models.SearchTeamsQuery{OrgId: testOrgID, Query: "group", Page: 1}
+				query := &models.SearchTeamsQuery{OrgId: testOrgID, Query: "group", Page: 1, SignedInUser: testUser}
 				err = sqlStore.SearchTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result.Teams), 2)
 				require.EqualValues(t, query.Result.TotalCount, 2)
 
-				query2 := &models.SearchTeamsQuery{OrgId: testOrgID, Query: ""}
+				query2 := &models.SearchTeamsQuery{OrgId: testOrgID, Query: "", SignedInUser: testUser}
 				err = sqlStore.SearchTeams(context.Background(), query2)
 				require.NoError(t, err)
 				require.Equal(t, len(query2.Result.Teams), 2)
@@ -212,7 +222,14 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err := sqlStore.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
 
-				query := &models.GetTeamsByUserQuery{OrgId: testOrgID, UserId: userIds[0]}
+				query := &models.GetTeamsByUserQuery{
+					OrgId:  testOrgID,
+					UserId: userIds[0],
+					SignedInUser: &models.SignedInUser{
+						OrgId:       testOrgID,
+						Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}, ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
+					},
+				}
 				err = sqlStore.GetTeamsByUser(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
@@ -227,7 +244,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
 				require.NoError(t, err)
 
-				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
+				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), q2)
 				require.NoError(t, err)
 				require.Equal(t, len(q2.Result), 0)
@@ -274,7 +291,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[2], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
-				err = updateDashboardAcl(t, sqlStore, 1, &models.DashboardAcl{
+				err = updateDashboardACL(t, sqlStore, 1, &models.DashboardACL{
 					DashboardID: 1, OrgID: testOrgID, Permission: models.PERMISSION_EDIT, TeamID: groupId,
 				})
 				require.NoError(t, err)
@@ -285,8 +302,8 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.GetTeamById(context.Background(), query)
 				require.Equal(t, err, models.ErrTeamNotFound)
 
-				permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: testOrgID}
-				err = sqlStore.GetDashboardAclInfoList(context.Background(), permQuery)
+				permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: testOrgID}
+				err = getDashboardACLInfoList(sqlStore, permQuery)
 				require.NoError(t, err)
 
 				require.Equal(t, len(permQuery.Result), 0)
@@ -302,12 +319,12 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 
 				query := &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[0]}}
-				err = IsAdminOfTeams(context.Background(), query)
+				err = sqlStore.IsAdminOfTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.False(t, query.Result)
 
 				query = &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[1]}}
-				err = IsAdminOfTeams(context.Background(), query)
+				err = sqlStore.IsAdminOfTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.True(t, query.Result)
 			})
@@ -315,7 +332,16 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
 				sqlStore = InitTestDB(t)
 				setup()
-				signedInUser := &models.SignedInUser{Login: "loginuser0"}
+				signedInUser := &models.SignedInUser{
+					Login: "loginuser0",
+					OrgId: testOrgID,
+					Permissions: map[int64]map[string][]string{
+						testOrgID: {
+							ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
+							ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+						},
+					},
+				}
 				hiddenUsers := map[string]struct{}{"loginuser0": {}, "loginuser1": {}}
 
 				teamId := team1.Id
@@ -345,11 +371,57 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, getTeamQuery.Result.MemberCount, 2)
 			})
+
+			t.Run("Should be able to add service accounts to teams, list it as a team member and remove it from team", func(t *testing.T) {
+				sqlStore = InitTestDB(t)
+				setup()
+
+				signedInUser := &models.SignedInUser{
+					Login: "loginuser0",
+					OrgId: testOrgID,
+					Permissions: map[int64]map[string][]string{
+						testOrgID: {
+							ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
+							ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+						},
+					},
+				}
+
+				userCmd = user.CreateUserCommand{
+					Email:            fmt.Sprint("sa", 1, "@test.com"),
+					Name:             fmt.Sprint("sa", 1),
+					Login:            fmt.Sprint("login-sa", 1),
+					IsServiceAccount: true,
+				}
+				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
+				require.NoError(t, err)
+
+				teamId := team1.Id
+				err = sqlStore.AddTeamMember(serviceAccount.ID, testOrgID, teamId, false, 0)
+				require.NoError(t, err)
+
+				getTeamMembersQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: teamId, SignedInUser: signedInUser}
+				err = sqlStore.GetTeamMembers(context.Background(), getTeamMembersQuery)
+				require.NoError(t, err)
+				require.EqualValues(t, 1, len(getTeamMembersQuery.Result))
+				require.EqualValues(t, serviceAccount.ID, getTeamMembersQuery.Result[0].UserId)
+
+				removeTeamMemberCmd := &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: teamId, UserId: serviceAccount.ID}
+				err = sqlStore.RemoveTeamMember(context.Background(), removeTeamMemberCmd)
+				require.NoError(t, err)
+
+				err = sqlStore.GetTeamMembers(context.Background(), getTeamMembersQuery)
+				require.NoError(t, err)
+				require.EqualValues(t, 0, len(getTeamMembersQuery.Result))
+			})
 		})
 	})
 }
 
-func TestSQLStore_SearchTeams(t *testing.T) {
+func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	type searchTeamsTestCase struct {
 		desc             string
 		query            *models.SearchTeamsQuery
@@ -396,7 +468,7 @@ func TestSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+	store := InitTestDB(t, InitTestDBOpt{})
 
 	// Seed 10 teams
 	for i := 1; i <= 10; i++ {
@@ -422,27 +494,32 @@ func TestSQLStore_SearchTeams(t *testing.T) {
 
 // TestSQLStore_GetTeamMembers_ACFilter tests the accesscontrol filtering of
 // team members based on the signed in user permissions
-func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
+func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testOrgID := int64(2)
-	userIds := make([]int64, 4)
+	userIds := make([]int64, 5)
 
 	// Seed 2 teams with 2 members
 	setup := func(store *SQLStore) {
-
 		team1, errCreateTeam := store.CreateTeam("group1 name", "test1@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
 		team2, errCreateTeam := store.CreateTeam("group2 name", "test2@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
 
-		for i := 0; i < 4; i++ {
-			userCmd := models.CreateUserCommand{
+		for i := 0; i < 5; i++ {
+			userCmd := user.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@example.org"),
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
 			}
+			if i >= 3 {
+				userCmd.IsServiceAccount = true
+			}
 			user, errCreateUser := store.CreateUser(context.Background(), userCmd)
 			require.NoError(t, errCreateUser)
-			userIds[i] = user.Id
+			userIds[i] = user.ID
 		}
 
 		errAddMember := store.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
@@ -453,9 +530,11 @@ func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMember)
 		errAddMember = store.AddTeamMember(userIds[3], testOrgID, team2.Id, false, 0)
 		require.NoError(t, errAddMember)
+		errAddMember = store.AddTeamMember(userIds[4], testOrgID, team2.Id, false, 0)
+		require.NoError(t, errAddMember)
 	}
 
-	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+	store := InitTestDB(t, InitTestDBOpt{})
 	setup(store)
 
 	type getTeamMembersTestCase struct {
@@ -470,11 +549,14 @@ func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			query: &models.GetTeamMembersQuery{
 				OrgId: testOrgID,
 				SignedInUser: &models.SignedInUser{
-					OrgId:       testOrgID,
-					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
+					OrgId: testOrgID,
+					Permissions: map[int64]map[string][]string{testOrgID: {
+						ac.ActionOrgUsersRead:      {ac.ScopeUsersAll},
+						serviceaccounts.ActionRead: {serviceaccounts.ScopeAll},
+					}},
 				},
 			},
-			expectedNumUsers: 4,
+			expectedNumUsers: 5,
 		},
 		{
 			desc: "should return no team members",
@@ -494,11 +576,15 @@ func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 				OrgId: testOrgID,
 				SignedInUser: &models.SignedInUser{
 					OrgId: testOrgID,
-					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {
-						ac.Scope("users", "id", fmt.Sprintf("%d", userIds[0])),
-						ac.Scope("users", "id", fmt.Sprintf("%d", userIds[2])),
-						ac.Scope("users", "id", fmt.Sprintf("%d", userIds[3])),
-					}}},
+					Permissions: map[int64]map[string][]string{testOrgID: {
+						ac.ActionOrgUsersRead: {
+							ac.Scope("users", "id", fmt.Sprintf("%d", userIds[0])),
+							ac.Scope("users", "id", fmt.Sprintf("%d", userIds[2])),
+						},
+						serviceaccounts.ActionRead: {
+							ac.Scope("serviceaccounts", "id", fmt.Sprintf("%d", userIds[3])),
+						},
+					}},
 				},
 			},
 			expectedNumUsers: 3,
@@ -512,10 +598,20 @@ func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionOrgUsersRead) {
 				for _, member := range tt.query.Result {
-					assert.Contains(t,
-						tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgId][ac.ActionOrgUsersRead],
-						ac.Scope("users", "id", fmt.Sprintf("%d", member.UserId)),
-					)
+					hasPermission := false
+					for _, scope := range tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgId][ac.ActionOrgUsersRead] {
+						if scope == ac.Scope("users", "id", fmt.Sprintf("%d", member.UserId)) {
+							hasPermission = true
+							break
+						}
+					}
+					for _, scope := range tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgId][serviceaccounts.ActionRead] {
+						if scope == ac.Scope("serviceaccounts", "id", fmt.Sprintf("%d", member.UserId)) {
+							hasPermission = true
+							break
+						}
+					}
+					assert.True(t, hasPermission)
 				}
 			}
 		})

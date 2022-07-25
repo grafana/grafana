@@ -141,7 +141,7 @@ const getExistingDisplayNames = (rule: SystemConfigOverrideRule): string[] => {
   if (!Array.isArray(names)) {
     return [];
   }
-  return names;
+  return [...names];
 };
 
 const allFieldsAreExcluded = (override: SystemConfigOverrideRule, data: DataFrame[]): boolean => {

@@ -1,4 +1,5 @@
 import { getCenterPointWGS84 } from 'app/features/transformers/spatial/utils';
+
 import { getGazetteer } from './gazetteer';
 
 let backendResults: any = { hello: 'world' };

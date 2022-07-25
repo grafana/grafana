@@ -5,6 +5,8 @@ import { DataSourceJsonData } from '@grafana/data';
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
   alertmanager_config: AlertmanagerConfig;
+  /** { [name]: provenance } */
+  template_file_provenances?: Record<string, string>;
 };
 
 export type TLSConfig = {
@@ -72,6 +74,7 @@ export type GrafanaManagedReceiverConfig = {
   name: string;
   updated?: string;
   created?: string;
+  provenance?: string;
 };
 
 export type Receiver = {
@@ -106,6 +109,8 @@ export type Route = {
   repeat_interval?: string;
   routes?: Route[];
   mute_time_intervals?: string[];
+  /** only the root policy might have a provenance field defined */
+  provenance?: string;
 };
 
 export type InhibitRule = {
@@ -143,6 +148,8 @@ export type AlertmanagerConfig = {
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
   mute_time_intervals?: MuteTimeInterval[];
+  /** { [name]: provenance } */
+  muteTimeProvenances?: Record<string, string>;
 };
 
 export type Matcher = {
@@ -280,6 +287,7 @@ export interface ExternalAlertmanagerConfig {
 
 export enum AlertManagerImplementation {
   cortex = 'cortex',
+  mimir = 'mimir',
   prometheus = 'prometheus',
 }
 
@@ -299,6 +307,7 @@ export interface TimeInterval {
 export type MuteTimeInterval = {
   name: string;
   time_intervals: TimeInterval[];
+  provenance?: string;
 };
 
 export type AlertManagerDataSourceJsonData = DataSourceJsonData & { implementation?: AlertManagerImplementation };

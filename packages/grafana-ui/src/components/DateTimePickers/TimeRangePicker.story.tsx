@@ -1,16 +1,18 @@
-import { Story } from '@storybook/react';
-import React from 'react';
 import { action } from '@storybook/addon-actions';
+import { Meta, Story } from '@storybook/react';
+import React from 'react';
 
+import { dateTime, TimeRange, DefaultTimeZone, TimeZone, isDateTime } from '@grafana/data';
 import { Button, TimeRangePicker } from '@grafana/ui';
+
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { dateTime, TimeRange, DefaultTimeZone, TimeZone, isDateTime } from '@grafana/data';
-import { TimeRangePickerProps } from './TimeRangePicker';
-import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-export default {
+import { TimeRangePickerProps } from './TimeRangePicker';
+
+const meta: Meta = {
   title: 'Pickers and Editors/TimePickers/TimeRangePicker',
   component: TimeRangePicker,
   decorators: [withCenteredStory],
@@ -124,3 +126,5 @@ export const Absolute: Story<TimeRangePickerProps> = (props) => {
     props
   );
 };
+
+export default meta;

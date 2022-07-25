@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import * as React from 'react';
 
-import BreakableText from './BreakableText';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
 import { FALLBACK_TRACE_NAME } from '../constants';
 import { TNil } from '../types';
+
+import BreakableText from './BreakableText';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

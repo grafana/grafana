@@ -1,5 +1,6 @@
-import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 import { PanelModel } from '@grafana/data';
+
+import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 
 describe('sharedSingleStatMigrationHandler', () => {
   it('from old valueOptions model without pluginVersion', () => {

@@ -1,5 +1,4 @@
 import React, { FC, memo, useCallback, useEffect, useMemo } from 'react';
-import { DataFrame, getFieldDisplayName } from '@grafana/data';
 import {
   Cell,
   Column,
@@ -12,7 +11,17 @@ import {
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
+
+import { DataFrame, getFieldDisplayName } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { Pagination } from '../Pagination/Pagination';
+
+import { FooterRow } from './FooterRow';
+import { HeaderRow } from './HeaderRow';
+import { TableCell } from './TableCell';
+import { getTableStyles } from './styles';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
@@ -20,13 +29,7 @@ import {
   TableSortByActionCallback,
   TableSortByFieldState,
 } from './types';
-import { getTableStyles } from './styles';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { TableCell } from './TableCell';
-import { useStyles2 } from '../../themes';
-import { FooterRow } from './FooterRow';
-import { HeaderRow } from './HeaderRow';
-import { Pagination } from '../Pagination/Pagination';
+import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -180,6 +183,7 @@ export const Table: FC<Props> = memo((props: Props) => {
       disableResizing: !resizable,
       stateReducer: stateReducer,
       initialState: getInitialState(initialSortBy, memoizedColumns),
+      autoResetFilters: false,
       sortTypes: {
         number: sortNumber, // the builtin number type on react-table does not handle NaN values
         'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
@@ -248,18 +252,19 @@ export const Table: FC<Props> = memo((props: Props) => {
     [gotoPage]
   );
 
-  const itemCount = enablePagination ? page.length : data.length;
+  const itemCount = enablePagination ? page.length : rows.length;
   let paginationEl = null;
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
     let itemsRangeEnd = itemsRangeStart + state.pageSize - 1;
-    const isSmall = width < 500;
+    const isSmall = width < 550;
     if (itemsRangeEnd > data.length) {
       itemsRangeEnd = data.length;
     }
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
-        <div>
+        {isSmall ? null : <div className={tableStyles.paginationItem} />}
+        <div className={tableStyles.paginationCenterItem}>
           <Pagination
             currentPage={state.pageIndex + 1}
             numberOfPages={pageOptions.length}
@@ -279,7 +284,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
-          {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
+          {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {itemCount > 0 ? (
             <FixedSizeList
               height={listHeight}

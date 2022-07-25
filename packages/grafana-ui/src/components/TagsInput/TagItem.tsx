@@ -1,8 +1,10 @@
-import React, { FC } from 'react';
 import { css } from '@emotion/css';
-import { getTagColorsFromName } from '../../utils';
-import { stylesFactory, useTheme } from '../../themes';
+import React, { FC } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+
+import { stylesFactory, useTheme } from '../../themes';
+import { getTagColorsFromName } from '../../utils';
 import { IconButton } from '../IconButton/IconButton';
 
 interface Props {

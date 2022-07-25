@@ -1,5 +1,5 @@
-import { locationSearchToObject, locationService, navigationLogger } from '@grafana/runtime';
 import { deprecationWarning, urlUtil } from '@grafana/data';
+import { locationSearchToObject, locationService, navigationLogger } from '@grafana/runtime';
 
 // Ref: https://github.com/angular/angular.js/blob/ae8e903edf88a83fedd116ae02c0628bf72b150c/src/ng/location.js#L5
 const DEFAULT_PORTS: Record<string, number> = { http: 80, https: 443, ftp: 21 };

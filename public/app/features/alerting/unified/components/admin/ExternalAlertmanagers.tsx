@@ -1,6 +1,7 @@
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { css, cx } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
@@ -14,14 +15,16 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { AddAlertManagerModal } from './AddAlertManagerModal';
+import { StoreState } from 'app/types/store';
+
+import { useExternalAmSelector } from '../../hooks/useExternalAmSelector';
 import {
   addExternalAlertmanagersAction,
   fetchExternalAlertmanagersAction,
   fetchExternalAlertmanagersConfigAction,
 } from '../../state/actions';
-import { useExternalAmSelector } from '../../hooks/useExternalAmSelector';
-import { StoreState } from 'app/types/store';
+
+import { AddAlertManagerModal } from './AddAlertManagerModal';
 
 const alertmanagerChoices = [
   { value: 'internal', label: 'Only Internal' },

@@ -1,4 +1,5 @@
 import { ComponentType } from 'react';
+
 import {
   BusEventWithPayload,
   DataQuery,
@@ -145,7 +146,6 @@ export const initialVariableModelState: VariableModel = {
   id: NEW_VARIABLE_ID,
   rootStateKey: null,
   name: '',
-  label: null,
   type: '' as unknown as VariableType,
   global: false,
   index: -1,

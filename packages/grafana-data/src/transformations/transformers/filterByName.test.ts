@@ -1,10 +1,11 @@
-import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { filterFieldsByNameTransformer } from './filterByName';
-import { filterFieldsTransformer } from './filter';
 import { transformDataFrame } from '../transformDataFrame';
+
+import { filterFieldsTransformer } from './filter';
+import { filterFieldsByNameTransformer } from './filterByName';
+import { DataTransformerID } from './ids';
 
 export const seriesWithNamesToMatch = toDataFrame({
   fields: [

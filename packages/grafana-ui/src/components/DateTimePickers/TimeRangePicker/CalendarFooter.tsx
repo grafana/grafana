@@ -1,8 +1,11 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../../themes';
 import { Button } from '../../Button';
-import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+
 import { TimePickerCalendarProps } from './TimePickerCalendar';
 
 export function Footer({ onClose, onApply }: TimePickerCalendarProps) {

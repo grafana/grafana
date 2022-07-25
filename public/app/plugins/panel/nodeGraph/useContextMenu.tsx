@@ -1,10 +1,12 @@
-import React, { MouseEvent, useCallback, useState } from 'react';
-import { EdgeDatum, NodeDatum } from './types';
-import { DataFrame, Field, GrafanaTheme, LinkModel } from '@grafana/data';
-import { getEdgeFields, getNodeFields } from './utils';
 import { css } from '@emotion/css';
-import { Config } from './layout';
+import React, { MouseEvent, useCallback, useState } from 'react';
+
+import { DataFrame, Field, GrafanaTheme, LinkModel } from '@grafana/data';
 import { ContextMenu, MenuGroup, MenuItem, stylesFactory, useTheme } from '@grafana/ui';
+
+import { Config } from './layout';
+import { EdgeDatum, NodeDatum } from './types';
+import { getEdgeFields, getNodeFields } from './utils';
 
 /**
  * Hook that contains state of the context menu, both for edges and nodes and provides appropriate component when
@@ -170,8 +172,20 @@ function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
 function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const index = props.edge.dataFrameRowIndex;
   const fields = getEdgeFields(props.edges);
+  const styles = getLabelStyles(useTheme());
+  const valueSource = fields.source?.values.get(index) || '';
+  const valueTarget = fields.target?.values.get(index) || '';
+
   return (
     <div>
+      {fields.source && fields.target && (
+        <div className={styles.label}>
+          <div>Source → Target</div>
+          <span className={styles.value}>
+            {valueSource} → {valueTarget}
+          </span>
+        </div>
+      )}
       {fields.details.map((f) => (
         <Label key={f.name} field={f} index={index} />
       ))}

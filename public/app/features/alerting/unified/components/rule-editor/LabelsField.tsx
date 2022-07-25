@@ -1,8 +1,9 @@
-import React, { FC } from 'react';
-import { Button, Field, FieldArray, Input, InlineLabel, Label, useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React, { FC } from 'react';
 import { useFormContext } from 'react-hook-form';
+
+import { GrafanaTheme } from '@grafana/data';
+import { Button, Field, FieldArray, Input, InlineLabel, Label, useStyles } from '@grafana/ui';
 
 interface Props {
   className?: string;
@@ -97,7 +98,7 @@ const LabelsField: FC<Props> = ({ className }) => {
 const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
-      margin-top: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing.xl};
     `,
     flexColumn: css`
       display: flex;
@@ -130,7 +131,7 @@ const getStyles = (theme: GrafanaTheme) => {
       margin-left: ${theme.spacing.xs};
     `,
     labelInput: css`
-      width: 183px;
+      width: 175px;
       margin-bottom: ${theme.spacing.sm};
       & + & {
         margin-left: ${theme.spacing.sm};

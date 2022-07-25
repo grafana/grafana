@@ -1,7 +1,9 @@
-import { LoadingState } from '@grafana/data';
 import { lastValueFrom } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
+
+import { LoadingState } from '@grafana/data';
+
 import { MIXED_DATASOURCE_NAME } from './MixedDataSource';
 import { MixedDatasource } from './module';
 

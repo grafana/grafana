@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import { useFocusRing } from '@react-aria/focus';
 import React from 'react';
 import tinycolor from 'tinycolor2';
-import { useTheme2 } from '../../themes/ThemeContext';
-import { selectors } from '@grafana/e2e-selectors';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { useTheme2 } from '../../themes/ThemeContext';
 
 /** @internal */
 export enum ColorSwatchVariant {

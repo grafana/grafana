@@ -1,18 +1,21 @@
-import React, { FC } from 'react';
+import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
+import React, { FC } from 'react';
+
 import { AlertState, dateTimeFormat, GrafanaTheme } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles } from '@grafana/ui';
-import { css } from '@emotion/css';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { AlertStateTag } from './AlertStateTag';
+import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
 import { useManagedAlertStateHistory } from '../../hooks/useManagedAlertStateHistory';
 import { AlertLabel } from '../AlertLabel';
-import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+
+import { AlertStateTag } from './AlertStateTag';
 
 type StateHistoryRowItem = {
   id: string;
-  state: PromAlertingRuleState | GrafanaAlertState | AlertState;
+  state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState;
   text?: string;
   data?: StateHistoryItemData;
   timestamp?: number;
@@ -22,32 +25,6 @@ type StateHistoryRow = DynamicTableItemProps<StateHistoryRowItem>;
 
 interface RuleStateHistoryProps {
   alertId: string;
-}
-
-function sortStateHistory(a: StateHistoryItem, b: StateHistoryItem): number {
-  const compareDesc = (a: number, b: number): number => {
-    // Larger numbers first.
-    if (a > b) {
-      return -1;
-    }
-
-    if (b > a) {
-      return 1;
-    }
-    return 0;
-  };
-
-  const endNeq = compareDesc(a.timeEnd, b.timeEnd);
-  if (endNeq) {
-    return endNeq;
-  }
-
-  const timeNeq = compareDesc(a.time, b.time);
-  if (timeNeq) {
-    return timeNeq;
-  }
-
-  return compareDesc(a.id, b.id);
 }
 
 const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
@@ -68,7 +45,6 @@ const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   ];
 
   const items: StateHistoryRow[] = result
-    .sort(sortStateHistory)
     .reduce((acc: StateHistoryRowItem[], item, index) => {
       acc.push({
         id: String(item.id),
@@ -150,7 +126,4 @@ function hasMatchingPrecedingState(index: number, items: StateHistoryItem[]): bo
   return previousHistoryItem.newState === currentHistoryItem.prevState;
 }
 
-export {
-  StateHistory,
-  sortStateHistory, // exported for testing.
-};
+export { StateHistory };

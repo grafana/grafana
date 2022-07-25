@@ -1,9 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
 
-import { Field } from '../Field';
+import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { Field } from '../Field';
+
 import { setMetricName } from './setQueryValue';
 
 interface MetricNameProps extends AzureQueryEditorFieldProps {
@@ -28,12 +30,10 @@ const MetricNameField: React.FC<MetricNameProps> = ({ metricNames, query, variab
   return (
     <Field label="Metric">
       <Select
-        menuShouldPortal
         inputId="azure-monitor-metrics-metric-field"
         value={query.azureMonitor?.metricName ?? null}
         onChange={handleChange}
         options={options}
-        width={38}
         allowCustomValue
       />
     </Field>

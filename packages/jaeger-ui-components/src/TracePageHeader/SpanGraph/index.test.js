@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
 
-import CanvasSpanGraph from './CanvasSpanGraph';
-import SpanGraph from './index';
-import TickLabels from './TickLabels';
-import ViewingLayer from './ViewingLayer';
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
+
+import CanvasSpanGraph from './CanvasSpanGraph';
+import TickLabels from './TickLabels';
+import ViewingLayer from './ViewingLayer';
+
+import SpanGraph from './index';
 
 describe('<SpanGraph>', () => {
   polyfillAnimationFrame(window);

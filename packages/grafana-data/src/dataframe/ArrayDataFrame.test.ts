@@ -1,6 +1,7 @@
+import { FieldType, DataFrame } from '../types';
+
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { toDataFrameDTO } from './processDataFrame';
-import { FieldType, DataFrame } from '../types';
 
 describe('Array DataFrame', () => {
   const input = [

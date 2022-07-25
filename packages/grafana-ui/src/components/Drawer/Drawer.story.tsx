@@ -1,12 +1,14 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
-import { Story } from '@storybook/react';
+
 import { Button, Drawer, Tab, TabsBar } from '@grafana/ui';
+
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './Drawer.mdx';
-import { Props } from './Drawer';
 
-export default {
+import mdx from './Drawer.mdx';
+
+const meta: ComponentMeta<typeof Drawer> = {
   title: 'Overlays/Drawer',
   component: Drawer,
   decorators: [withCenteredStory],
@@ -35,7 +37,7 @@ export default {
   },
 };
 
-export const Global: Story<Props> = (args) => {
+export const Global: ComponentStory<typeof Drawer> = (args) => {
   return (
     <UseState initialState={{ isOpen: false }}>
       {(state, updateValue) => {
@@ -77,7 +79,7 @@ Global.args = {
   title: 'Drawer title',
 };
 
-export const LongContent: Story<Props> = (args) => {
+export const LongContent: ComponentStory<typeof Drawer> = (args) => {
   return (
     <UseState initialState={{ isOpen: true }}>
       {(state, updateValue) => {
@@ -178,7 +180,7 @@ LongContent.args = {
   title: 'Drawer title with long content',
 };
 
-export const InLine: Story<Props> = (args) => {
+export const InLine: ComponentStory<typeof Drawer> = (args) => {
   return (
     <UseState initialState={{ isOpen: false }}>
       {(state, updateValue) => {
@@ -252,3 +254,5 @@ export function WithTabs() {
     </Drawer>
   );
 }
+
+export default meta;

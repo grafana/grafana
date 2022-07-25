@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -11,7 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetDBHealthQuery(t *testing.T) {
+func TestIntegrationGetDBHealthQuery(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	store := InitTestDB(t)
 
 	query := models.GetDBHealthQuery{}

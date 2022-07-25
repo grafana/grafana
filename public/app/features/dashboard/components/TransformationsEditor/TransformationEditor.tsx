@@ -1,7 +1,7 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { mergeMap } from 'rxjs/operators';
-import { css } from '@emotion/css';
-import { Icon, JSONFormatter, useStyles } from '@grafana/ui';
+
 import {
   DataFrame,
   DataTransformerConfig,
@@ -10,6 +10,7 @@ import {
   TransformerRegistryItem,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Icon, JSONFormatter, useStyles } from '@grafana/ui';
 
 import { TransformationsEditorTransformation } from './types';
 

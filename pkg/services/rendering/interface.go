@@ -41,6 +41,7 @@ func getRequestTimeout(opt TimeoutOpts) time.Duration {
 type Opts struct {
 	TimeoutOpts
 	AuthOpts
+	ErrorOpts
 	Width             int
 	Height            int
 	Path              string
@@ -50,6 +51,24 @@ type Opts struct {
 	DeviceScaleFactor float64
 	Headers           map[string][]string
 	Theme             models.Theme
+}
+
+type ErrorOpts struct {
+	// ErrorConcurrentLimitReached returns an ErrConcurrentLimitReached
+	// error instead of a rendering limit exceeded image.
+	ErrorConcurrentLimitReached bool
+	// ErrorRenderUnavailable returns an ErrRunderUnavailable error
+	// instead of a rendering unavailable image.
+	ErrorRenderUnavailable bool
+}
+
+type SanitizeSVGRequest struct {
+	Filename string
+	Content  []byte
+}
+
+type SanitizeSVGResponse struct {
+	Sanitized []byte
 }
 
 type CSVOpts struct {
@@ -73,6 +92,7 @@ type RenderCSVResult struct {
 
 type renderFunc func(ctx context.Context, renderKey string, options Opts) (*RenderResult, error)
 type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
+type sanitizeFunc func(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 
 type renderKeyProvider interface {
 	get(ctx context.Context, opts AuthOpts) (string, error)
@@ -94,6 +114,7 @@ type CapabilitySupportRequestResult struct {
 	SemverConstraint string
 }
 
+//go:generate mockgen -destination=mock.go -package=rendering github.com/grafana/grafana/pkg/services/rendering Service
 type Service interface {
 	IsAvailable() bool
 	Version() string
@@ -103,4 +124,5 @@ type Service interface {
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
 	HasCapability(capability CapabilityName) (CapabilitySupportRequestResult, error)
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
+	SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 }

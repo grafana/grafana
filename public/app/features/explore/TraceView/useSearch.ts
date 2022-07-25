@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+
 import { filterSpans, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 
 /**

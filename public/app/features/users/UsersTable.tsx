@@ -1,11 +1,13 @@
 import React, { FC, useEffect, useState } from 'react';
-import { AccessControlAction, OrgUser, Role } from 'app/types';
-import { OrgRolePicker } from '../admin/OrgRolePicker';
-import { Button, ConfirmModal } from '@grafana/ui';
+
 import { OrgRole } from '@grafana/data';
-import { contextSrv } from 'app/core/core';
-import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { Button, ConfirmModal } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, OrgUser, Role } from 'app/types';
+
+import { OrgRolePicker } from '../admin/OrgRolePicker';
 
 export interface Props {
   users: OrgUser[];
@@ -28,7 +30,10 @@ const UsersTable: FC<Props> = (props) => {
           setRoleOptions(options);
         }
 
-        if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+        if (
+          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
+        ) {
           const builtInRoles = await fetchBuiltinRoles(orgId);
           setBuiltinRoles(builtInRoles);
         }
@@ -89,13 +94,13 @@ const UsersTable: FC<Props> = (props) => {
                       onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
                       roleOptions={roleOptions}
                       builtInRoles={builtinRoles}
-                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
+                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
                     />
                   ) : (
                     <OrgRolePicker
                       aria-label="Role"
                       value={user.role}
-                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
+                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
                       onChange={(newRole) => onRoleChange(newRole, user)}
                     />
                   )}

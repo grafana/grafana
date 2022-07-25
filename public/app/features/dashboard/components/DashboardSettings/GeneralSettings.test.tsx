@@ -1,28 +1,37 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from '@grafana/ui';
-
+import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
-import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
-import { DashboardModel } from '../../state';
+
 import { selectors } from '@grafana/e2e-selectors';
+import { setBackendSrv } from '@grafana/runtime';
+
+import { DashboardModel } from '../../state';
+
+import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
+
+setBackendSrv({
+  get: jest.fn().mockResolvedValue([]),
+} as any);
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
-    dashboard: {
-      title: 'test dashboard title',
-      description: 'test dashboard description',
-      timepicker: {
-        refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
-        time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
+    dashboard: new DashboardModel(
+      {
+        title: 'test dashboard title',
+        description: 'test dashboard description',
+        timepicker: {
+          refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
+          time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
+        },
+        timezone: 'utc',
       },
-      meta: {
+      {
         folderId: 1,
         folderTitle: 'test',
-      },
-      timezone: 'utc',
-    } as unknown as DashboardModel,
+      }
+    ),
     updateTimeZone: jest.fn(),
     updateWeekStart: jest.fn(),
   };
@@ -48,9 +57,9 @@ describe('General Settings', () => {
   describe('when timezone is changed', () => {
     it('should call update function', async () => {
       const { props } = setupTestContext({});
-      userEvent.click(screen.getByTestId(selectors.components.TimeZonePicker.containerV2));
+      await userEvent.click(screen.getByTestId(selectors.components.TimeZonePicker.containerV2));
       const timeZonePicker = screen.getByTestId(selectors.components.TimeZonePicker.containerV2);
-      userEvent.click(byRole('combobox').get(timeZonePicker));
+      await userEvent.click(byRole('combobox').get(timeZonePicker));
       await selectOptionInTest(timeZonePicker, 'Browser Time');
       expect(props.updateTimeZone).toHaveBeenCalledWith('browser');
       expect(props.dashboard.timezone).toBe('browser');

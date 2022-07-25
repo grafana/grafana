@@ -1,8 +1,11 @@
-import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZone } from '@grafana/data';
 import uPlot, { Axis } from 'uplot';
-import { PlotConfigBuilder } from '../types';
-import { measureText } from '../../../utils/measureText';
+
+import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZone } from '@grafana/data';
 import { AxisPlacement } from '@grafana/schema';
+
+import { measureText } from '../../../utils/measureText';
+import { PlotConfigBuilder } from '../types';
+
 import { optMinMax } from './UPlotScaleBuilder';
 
 export interface AxisProps {
@@ -24,6 +27,8 @@ export interface AxisProps {
   values?: Axis.Values;
   isTime?: boolean;
   timeZone?: TimeZone;
+  color?: uPlot.Axis.Stroke;
+  border?: uPlot.Axis.Border;
 }
 
 export const UPLOT_AXIS_FONT_SIZE = 12;
@@ -103,6 +108,8 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       theme,
       tickLabelRotation,
       size,
+      color,
+      border,
     } = this.props;
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
@@ -116,7 +123,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     let config: Axis = {
       scale: scaleKey,
       show,
-      stroke: theme.colors.text.primary,
+      stroke: color ?? theme.colors.text.primary,
       side: getUPlotSideFromAxis(placement),
       font,
       size:
@@ -144,7 +151,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         ticks
       ),
       splits,
-      values: values,
+      values,
       space:
         space ??
         ((self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -152,6 +159,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         }),
       filter,
     };
+
+    if (border != null) {
+      config.border = border;
+    }
 
     if (label != null && label.length > 0) {
       config.label = label;
@@ -201,7 +212,7 @@ export function formatTime(
   let format = systemDateFormats.interval.year;
 
   if (foundIncr < timeUnitSize.second) {
-    format = systemDateFormats.interval.second.replace('ss', 'ss.SS');
+    format = systemDateFormats.interval.millisecond;
   } else if (foundIncr <= timeUnitSize.minute) {
     format = systemDateFormats.interval.second;
   } else if (range <= timeUnitSize.day) {
@@ -216,7 +227,7 @@ export function formatTime(
     format = systemDateFormats.interval.month;
   }
 
-  return splits.map((v) => dateTimeFormat(v, { format, timeZone }));
+  return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
 }
 
 export function getUPlotSideFromAxis(axis: AxisPlacement) {

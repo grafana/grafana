@@ -1,4 +1,5 @@
 import { css } from '@emotion/react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 
 export function getAgularPanelStyles(theme: GrafanaTheme2) {
@@ -24,6 +25,7 @@ export function getAgularPanelStyles(theme: GrafanaTheme2) {
     .panel-options-group__icon {
       color: ${theme.colors.text.secondary};
       margin-right: ${theme.spacing(1)};
+      padding: ${theme.spacing(0, 0.9, 0, 0.6)};
     }
 
     .panel-options-group__title {

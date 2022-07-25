@@ -1,5 +1,6 @@
-import { scaledUnits, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
+
+import { scaledUnits, ValueFormatter } from './valueFormats';
 
 export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];
@@ -18,54 +19,22 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   };
 }
 
+const SI_PREFIXES = ['f', 'p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+const SI_BASE_INDEX = SI_PREFIXES.indexOf('');
+
 export function getOffsetFromSIPrefix(c: string): number {
-  switch (c) {
-    case 'f':
-      return -5;
-    case 'p':
-      return -4;
-    case 'n':
-      return -3;
-    case 'μ': // Two different unicode chars for µ
-    case 'µ':
-      return -2;
-    case 'm':
-      return -1;
-    case '':
-      return 0;
-    case 'k':
-      return 1;
-    case 'M':
-      return 2;
-    case 'G':
-      return 3;
-    case 'T':
-      return 4;
-    case 'P':
-      return 5;
-    case 'E':
-      return 6;
-    case 'Z':
-      return 7;
-    case 'Y':
-      return 8;
-  }
-  return 0;
+  const charIndex = SI_PREFIXES.findIndex((prefix) => prefix.normalize('NFKD') === c.normalize('NFKD'));
+  return charIndex < 0 ? 0 : charIndex - SI_BASE_INDEX;
 }
 
+const BIN_PREFIXES = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'];
+
 export function binaryPrefix(unit: string, offset = 0): ValueFormatter {
-  const prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
-  const units = prefixes.map((p) => {
-    return ' ' + p + unit;
-  });
-  return scaledUnits(1024, units);
+  const units = BIN_PREFIXES.map((p) => ' ' + p + unit);
+  return scaledUnits(1024, units, offset);
 }
 
 export function SIPrefix(unit: string, offset = 0): ValueFormatter {
-  let prefixes = ['f', 'p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
-  prefixes = prefixes.slice(5 + (offset || 0));
-  const units = prefixes.map((p) => {
-    return ' ' + p + unit;
-  });
-  return scaledUnits(1000, units);
+  const units = SI_PREFIXES.map((p) => ' ' + p + unit);
+  return scaledUnits(1000, units, SI_BASE_INDEX + offset);
 }

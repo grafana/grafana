@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { LegacyForms } from '@grafana/ui';
-const { FormField } = LegacyForms;
-import { DerivedFieldConfig } from '../types';
+import React, { useState } from 'react';
+
 import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';
+import { LegacyForms } from '@grafana/ui';
+
 import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
+import { DerivedFieldConfig } from '../types';
+
+const { FormField } = LegacyForms;
 
 type Props = {
   derivedFields?: DerivedFieldConfig[];

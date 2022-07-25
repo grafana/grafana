@@ -1,43 +1,46 @@
-import React, { Component, ReactNode } from 'react';
-import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
+import { css } from '@emotion/css';
+import { Global } from '@emotion/react';
+import { cloneDeep } from 'lodash';
 import { Collection, Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
+import { FeatureLike } from 'ol/Feature';
 import Attribution from 'ol/control/Attribution';
-import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
-import { createEmpty, extend, isEmpty } from 'ol/extent';
+import Zoom from 'ol/control/Zoom';
+import { Coordinate } from 'ol/coordinate';
+import { isEmpty } from 'ol/extent';
 import { defaults as interactionDefaults } from 'ol/interaction';
-import BaseLayer from 'ol/layer/Base';
-import VectorLayer from 'ol/layer/Vector';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
+import BaseLayer from 'ol/layer/Base';
+import { fromLonLat, toLonLat } from 'ol/proj';
+import React, { Component, ReactNode } from 'react';
+import { Subject, Subscription } from 'rxjs';
 
 import {
-  PanelData,
-  MapLayerOptions,
-  PanelProps,
-  GrafanaTheme,
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  DataFrame,
   FrameGeometrySourceMode,
+  getFrameMatchers,
+  GrafanaTheme,
+  MapLayerHandler,
+  MapLayerOptions,
+  PanelData,
+  PanelProps,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-
-import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig } from './types';
-import { centerPointRegistry, MapCenterID } from './view';
-import { fromLonLat, toLonLat } from 'ol/proj';
-import { Coordinate } from 'ol/coordinate';
-import { css } from '@emotion/css';
 import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
-import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
-import { DebugOverlay } from './components/DebugOverlay';
-import { getGlobalStyles } from './globalStyles';
-import { Global } from '@emotion/react';
-import { GeomapHoverPayload, GeomapLayerHover } from './event';
-import { Subscription } from 'rxjs';
 import { PanelEditExitedEvent } from 'app/types/events';
-import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
-import { cloneDeep } from 'lodash';
+
+import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { GeomapTooltip } from './GeomapTooltip';
+import { DebugOverlay } from './components/DebugOverlay';
+import { GeomapHoverPayload, GeomapLayerHover } from './event';
+import { getGlobalStyles } from './globalStyles';
+import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
+import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig, TooltipMode } from './types';
+import { getLayersExtent } from './utils/getLayersExtent';
+import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
@@ -97,6 +100,13 @@ export class GeomapPanel extends Component<Props, State> {
     this.panelContext = this.context as PanelContext;
   }
 
+  componentWillUnmount() {
+    this.subs.unsubscribe();
+    for (const lyr of this.layers) {
+      lyr.handler.dispose?.();
+    }
+  }
+
   shouldComponentUpdate(nextProps: Props) {
     if (!this.map) {
       return true; // not yet initialized
@@ -123,6 +133,10 @@ export class GeomapPanel extends Component<Props, State> {
   componentDidUpdate(prevProps: Props) {
     if (this.map && (this.props.height !== prevProps.height || this.props.width !== prevProps.width)) {
       this.map.updateSize();
+    }
+    // Check for a difference between previous data and component data
+    if (this.map && this.props.data !== prevProps.data) {
+      this.dataChanged(this.props.data);
     }
   }
 
@@ -249,9 +263,10 @@ export class GeomapPanel extends Component<Props, State> {
    * Called when PanelData changes (query results etc)
    */
   dataChanged(data: PanelData) {
-    for (const state of this.layers) {
-      if (state.handler.update) {
-        state.handler.update(data);
+    // Only update if panel data matches component data
+    if (data === this.props.data) {
+      for (const state of this.layers) {
+        this.applyLayerFilter(state.handler, state.options);
       }
     }
   }
@@ -313,7 +328,7 @@ export class GeomapPanel extends Component<Props, State> {
       this.props.eventBus.publish(new DataHoverClearEvent());
     });
 
-    // Notify the the panel editor
+    // Notify the panel editor
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         map: this.map,
@@ -340,6 +355,7 @@ export class GeomapPanel extends Component<Props, State> {
     if (this.pointerMoveListener(evt)) {
       evt.preventDefault();
       evt.stopPropagation();
+      this.mapDiv!.style.cursor = 'auto';
       this.setState({ ttipOpen: true });
     }
   };
@@ -353,8 +369,8 @@ export class GeomapPanel extends Component<Props, State> {
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
 
     const { hoverPayload } = this;
-    hoverPayload.pageX = mouse.pageX;
-    hoverPayload.pageY = mouse.pageY;
+    hoverPayload.pageX = mouse.offsetX;
+    hoverPayload.pageY = mouse.offsetY;
     hoverPayload.point = {
       lat: hover[1],
       lon: hover[0],
@@ -371,6 +387,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.map.forEachFeatureAtPixel(
       pixel,
       (feature, layer, geo) => {
+        const s: MapLayerState = (layer as any).__state;
         //match hover layer to layer in layers
         //check if the layer show tooltip is enabled
         //then also pass the list of tooltip fields if exists
@@ -382,9 +399,12 @@ export class GeomapPanel extends Component<Props, State> {
             hoverPayload.data = ttip.data = frame as DataFrame;
             hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
           }
+
+          if (s?.mouseEvents) {
+            s.mouseEvents.next(feature);
+          }
         }
 
-        const s: MapLayerState = (layer as any).__state;
         if (s) {
           let h = layerLookup.get(s);
           if (!h) {
@@ -398,7 +418,7 @@ export class GeomapPanel extends Component<Props, State> {
       {
         layerFilter: (l) => {
           const hoverLayerState = (l as any).__state as MapLayerState;
-          return hoverLayerState.options.tooltip !== false;
+          return hoverLayerState?.options?.tooltip !== false;
         },
       }
     );
@@ -406,7 +426,17 @@ export class GeomapPanel extends Component<Props, State> {
     this.props.eventBus.publish(this.hoverEvent);
 
     this.setState({ ttip: { ...hoverPayload } });
-    return layers.length ? true : false;
+
+    if (!layers.length) {
+      // clear mouse events
+      this.layers.forEach((layer) => {
+        layer.mouseEvents.next(undefined);
+      });
+    }
+
+    const found = layers.length ? true : false;
+    this.mapDiv!.style.cursor = found ? 'pointer' : 'auto';
+    return found;
   };
 
   private updateLayer = async (uid: string, newOptions: MapLayerOptions): Promise<boolean> => {
@@ -451,13 +481,12 @@ export class GeomapPanel extends Component<Props, State> {
     const layers = this.layers.slice(0);
     try {
       const info = await this.initLayer(this.map, newOptions, current.isBasemap);
+      layers[layerIndex]?.handler.dispose?.();
       layers[layerIndex] = info;
       group.setAt(layerIndex, info.layer);
 
       // initialize with new data
-      if (info.handler.update) {
-        info.handler.update(this.props.data);
-      }
+      this.applyLayerFilter(info.handler, newOptions);
     } catch (err) {
       console.warn('ERROR', err);
       return false;
@@ -490,11 +519,10 @@ export class GeomapPanel extends Component<Props, State> {
       return Promise.reject('unknown layer: ' + options.type);
     }
 
-    const handler = await item.create(map, options, config.theme2);
+    const handler = await item.create(map, options, this.props.eventBus, config.theme2);
     const layer = handler.init();
-
-    if (handler.update) {
-      handler.update(this.props.data);
+    if (options.opacity != null) {
+      layer.setOpacity(options.opacity);
     }
 
     if (!options.name) {
@@ -508,6 +536,7 @@ export class GeomapPanel extends Component<Props, State> {
       options,
       layer,
       handler,
+      mouseEvents: new Subject<FeatureLike | undefined>(),
 
       getName: () => UID,
 
@@ -519,7 +548,24 @@ export class GeomapPanel extends Component<Props, State> {
 
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
+
+    this.applyLayerFilter(handler, options);
+
     return state;
+  }
+
+  applyLayerFilter(handler: MapLayerHandler<any>, options: MapLayerOptions<any>): void {
+    if (handler.update) {
+      let panelData = this.props.data;
+      if (options.filterData) {
+        const matcherFunc = getFrameMatchers(options.filterData);
+        panelData = {
+          ...panelData,
+          series: panelData.series.filter(matcherFunc),
+        };
+      }
+      handler.update(panelData);
+    }
   }
 
   initMapView(config: MapViewConfig, layers?: Collection<BaseLayer>): View {
@@ -551,11 +597,7 @@ export class GeomapPanel extends Component<Props, State> {
         if (v.id === MapCenterID.Coordinates) {
           coord = [config.lon ?? 0, config.lat ?? 0];
         } else if (v.id === MapCenterID.Fit) {
-          var extent = layers
-            .getArray()
-            .filter((l) => l instanceof VectorLayer)
-            .map((l) => (l as VectorLayer<any>).getSource().getExtent() ?? [])
-            .reduce(extend, createEmpty());
+          const extent = getLayersExtent(layers);
           if (!isEmpty(extent)) {
             view.fit(extent, {
               padding: [30, 30, 30, 30],
@@ -630,14 +672,19 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    const { ttip, ttipOpen, topRight, legends } = this.state;
+    let { ttip, ttipOpen, topRight, legends } = this.state;
+    const { options } = this.props;
+    const showScale = options.controls.showScale;
+    if (!ttipOpen && options.tooltip?.mode === TooltipMode.None) {
+      ttip = undefined;
+    }
 
     return (
       <>
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay bottomLeft={legends} topRight={topRight} />
+          <GeomapOverlay bottomLeft={legends} topRight={topRight} blStyle={{ bottom: showScale ? '35px' : '8px' }} />
         </div>
         <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>

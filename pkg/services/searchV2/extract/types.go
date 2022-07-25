@@ -1,7 +1,10 @@
 package extract
 
-// empty everything will return the default
-type DatasourceLookup = func(ref *DataSourceRef) *DataSourceRef
+type DatasourceLookup interface {
+	// ByRef will return the default DS given empty reference (nil ref, or empty ref.uid and ref.type)
+	ByRef(ref *DataSourceRef) *DataSourceRef
+	ByType(dsType string) []DataSourceRef
+}
 
 type DataSourceRef struct {
 	UID  string `json:"uid,omitempty"`
@@ -9,21 +12,21 @@ type DataSourceRef struct {
 }
 
 type PanelInfo struct {
-	ID              int64           `json:"id"`
-	Title           string          `json:"title"`
-	Description     string          `json:"description,omitempty"`
-	Type            string          `json:"type,omitempty"` // PluginID
-	PluginVersion   string          `json:"pluginVersion,omitempty"`
-	Datasource      []DataSourceRef `json:"datasource,omitempty"`      // UIDs
-	Transformations []string        `json:"transformations,omitempty"` // ids of the transformation steps
+	ID            int64           `json:"id"`
+	Title         string          `json:"title"`
+	Description   string          `json:"description,omitempty"`
+	Type          string          `json:"type,omitempty"` // PluginID
+	PluginVersion string          `json:"pluginVersion,omitempty"`
+	Datasource    []DataSourceRef `json:"datasource,omitempty"`  // UIDs
+	Transformer   []string        `json:"transformer,omitempty"` // ids of the transformation steps
 
 	// Rows define panels as sub objects
 	Collapsed []PanelInfo `json:"collapsed,omitempty"`
 }
 
 type DashboardInfo struct {
-	ID            int64           `json:"id,omitempty"` // internal ID
 	UID           string          `json:"uid,omitempty"`
+	ID            int64           `json:"id,omitempty"` // internal ID
 	Title         string          `json:"title"`
 	Description   string          `json:"description,omitempty"`
 	Tags          []string        `json:"tags"`

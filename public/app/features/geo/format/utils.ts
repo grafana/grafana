@@ -1,8 +1,11 @@
-import { ArrayVector, Field, FieldConfig, FieldType } from '@grafana/data';
-import { getCenterPoint } from 'app/features/transformers/spatial/utils';
 import { Geometry, GeometryCollection, LineString, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+
+import { ArrayVector, Field, FieldConfig, FieldType } from '@grafana/data';
+import { getCenterPoint } from 'app/features/transformers/spatial/utils';
+
 import { Gazetteer } from '../gazetteer/gazetteer';
+
 import { decodeGeohash } from './geohash';
 
 export function pointFieldFromGeohash(geohash: Field<string>): Field<Point> {

@@ -1,6 +1,7 @@
 import React from 'react';
-import { LoadingIndicator } from './LoadingIndicator';
+
 import { ErrorIndicator } from './ErrorIndicator';
+import { LoadingIndicator } from './LoadingIndicator';
 import { PanelChrome as PanelChromeComponent, PanelChromeProps } from './PanelChrome';
 
 /**

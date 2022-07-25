@@ -1,7 +1,10 @@
 import React from 'react';
+
 import { PluginState, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
-import { rowsToFieldsTransformer, RowToFieldsTransformOptions } from './rowsToFields';
+
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
+
+import { rowsToFieldsTransformer, RowToFieldsTransformOptions } from './rowsToFields';
 
 export interface Props extends TransformerUIProps<RowToFieldsTransformOptions> {}
 

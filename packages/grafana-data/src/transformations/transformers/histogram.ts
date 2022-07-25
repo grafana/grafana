@@ -1,12 +1,13 @@
-import { SynchronousDataTransformerInfo } from '../../types';
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID } from './ids';
-import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
-import { ArrayVector } from '../../vector/ArrayVector';
-import { AlignedData, join } from './joinDataFrames';
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
+import { SynchronousDataTransformerInfo } from '../../types';
+import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
+import { ArrayVector } from '../../vector/ArrayVector';
+
+import { DataTransformerID } from './ids';
+import { AlignedData, join } from './joinDataFrames';
 
 /**
  * @internal
@@ -159,12 +160,12 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     for (const frame of frames) {
       for (const field of frame.fields) {
         if (field.type === FieldType.number) {
-          allValues = allValues.concat(
-            field.values.toArray().map((val: number) => Number(val.toFixed(field.config.decimals ?? 0)))
-          );
+          allValues = allValues.concat(field.values.toArray());
         }
       }
     }
+
+    allValues = allValues.filter((v) => v != null);
 
     allValues.sort((a, b) => a - b);
 
@@ -203,6 +204,9 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
   const getBucket = (v: number) => incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset;
 
+  // guess number of decimals
+  let bucketDecimals = (('' + bucketSize).match(/\.\d+$/) ?? ['.'])[0].length - 1;
+
   let histograms: AlignedData[] = [];
   let counts: Field[] = [];
   let config: FieldConfig | undefined = undefined;
@@ -219,7 +223,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
             unit: undefined,
           },
         });
-        if (!config && Object.keys(field.config).length) {
+        if (!config && field.config.unit) {
           config = field.config;
         }
       }
@@ -250,7 +254,13 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
     state: undefined,
-    config: config ?? {},
+    config:
+      bucketDecimals === 0
+        ? config ?? {}
+        : {
+            ...config,
+            decimals: bucketDecimals,
+          },
   };
   const bucketMax = {
     ...bucketMin,

@@ -1,10 +1,7 @@
-import React from 'react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import { merge } from 'lodash';
-import { Table } from '@grafana/ui';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Meta, Story } from '@storybook/react';
-import { useTheme2 } from '../../themes';
-import mdx from './Table.mdx';
+import React from 'react';
+
 import {
   DataFrame,
   FieldType,
@@ -15,10 +12,16 @@ import {
   FieldConfig,
   formattedValueToString,
 } from '@grafana/data';
+import { Table } from '@grafana/ui';
+
+import { useTheme2 } from '../../themes';
 import { prepDataForStorybook } from '../../utils/storybook/data';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import mdx from './Table.mdx';
 import { FooterItem } from './types';
 
-export default {
+const meta: ComponentMeta<typeof Table> = {
   title: 'Visualizations/Table',
   component: Table,
   decorators: [withCenteredStory],
@@ -35,7 +38,7 @@ export default {
     height: 500,
     columnMinWidth: 150,
   },
-} as Meta;
+};
 
 function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame {
   const data = new MutableDataFrame({
@@ -126,18 +129,18 @@ const defaultThresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
 };
 
-export const Basic: Story = (args) => {
+export const Basic: ComponentStory<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={args.height} width={args.width} {...args} />
+      <Table {...args} data={data} />
     </div>
   );
 };
 
-export const BarGaugeCell: Story = (args) => {
+export const BarGaugeCell: ComponentStory<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {
     Progress: {
@@ -151,12 +154,12 @@ export const BarGaugeCell: Story = (args) => {
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={args.height} width={args.width} {...args} />
+      <Table {...args} data={data} />
     </div>
   );
 };
 
-export const ColoredCells: Story = (args) => {
+export const ColoredCells: ComponentStory<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {
     Progress: {
@@ -170,24 +173,26 @@ export const ColoredCells: Story = (args) => {
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={args.height} width={args.width} {...args} />
+      <Table {...args} data={data} />
     </div>
   );
 };
 
-export const Footer: Story = (args) => {
+export const Footer: ComponentStory<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
   const footer = buildFooterData(data);
 
   return (
     <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
-      <Table data={data} height={args.height} width={args.width} footerValues={footer} {...args} />
+      <Table {...args} data={data} footerValues={footer} />
     </div>
   );
 };
 
-export const Pagination: Story = (args) => <Basic {...args} />;
+export const Pagination: ComponentStory<typeof Table> = (args) => <Basic {...args} />;
 Pagination.args = {
-  pageSize: 10,
+  enablePagination: true,
 };
+
+export default meta;

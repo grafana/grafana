@@ -1,19 +1,22 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { Alert, Button, ConfirmModal, Container, CustomScrollbar, HorizontalGroup, IconName, Modal } from '@grafana/ui';
+
+import { EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, config, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
-import { getAlertingValidationMessage } from './getAlertingValidationMessage';
+import { Alert, Button, ConfirmModal, Container, CustomScrollbar, HorizontalGroup, IconName, Modal } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import StateHistory from './StateHistory';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
+import { AppNotificationSeverity, StoreState } from 'app/types';
+
+import { AlertState } from '../../plugins/datasource/alertmanager/types';
+import { PanelNotSupported } from '../dashboard/components/PanelEditor/PanelNotSupported';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
+
+import StateHistory from './StateHistory';
 import { TestRuleResult } from './TestRuleResult';
-import { AppNotificationSeverity, StoreState } from 'app/types';
-import { PanelNotSupported } from '../dashboard/components/PanelEditor/PanelNotSupported';
-import { AlertState } from '../../plugins/datasource/alertmanager/types';
-import { EventBusSrv } from '@grafana/data';
-import { getPanelStateForModel } from 'app/features/panel/state/selectors';
+import { getAlertingValidationMessage } from './getAlertingValidationMessage';
 
 interface AngularPanelController {
   _enableAlert: () => void;

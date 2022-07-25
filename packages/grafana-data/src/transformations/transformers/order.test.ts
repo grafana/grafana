@@ -6,8 +6,10 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
+
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+
+import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
 
 describe('Order Transformer', () => {
   beforeAll(() => {

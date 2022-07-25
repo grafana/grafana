@@ -1,7 +1,8 @@
-import { DashboardAcl } from './acl';
 import { DataQuery } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { VariableModel } from 'app/features/variables/types';
+
+import { DashboardAcl } from './acl';
 
 export interface DashboardDTO {
   redirectUri?: string;
@@ -10,6 +11,8 @@ export interface DashboardDTO {
 }
 
 export interface DashboardMeta {
+  slug?: string;
+  uid?: string;
   canSave?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
@@ -26,6 +29,7 @@ export interface DashboardMeta {
   isStarred?: boolean;
   showSettings?: boolean;
   expires?: string;
+  isFolder?: boolean;
   isSnapshot?: boolean;
   folderTitle?: string;
   folderUrl?: string;
@@ -37,6 +41,8 @@ export interface DashboardMeta {
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
+  publicDashboardAccessToken?: string;
+  publicDashboardEnabled?: boolean;
 }
 
 export interface AnnotationActions {
@@ -57,13 +63,18 @@ export interface DashboardDataDTO {
     list: VariableModel[];
   };
   panels?: any[];
+
+  /** @deprecated -- components should key on uid rather than id */
+  id?: number;
 }
 
 export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
+  Path = 'path-dashboard',
   Scripted = 'scripted-dashboard',
+  Public = 'public-dashboard',
 }
 
 export enum DashboardInitPhase {

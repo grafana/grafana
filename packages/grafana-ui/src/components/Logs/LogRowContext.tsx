@@ -1,14 +1,16 @@
-import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
-import { GrafanaTheme, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
 
-import { Alert } from '../Alert/Alert';
-import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
+import { GrafanaTheme, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
+
 import { useStyles, useTheme } from '../../themes/ThemeContext';
+import { Alert } from '../Alert/Alert';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { List } from '../List/List';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
+
 import { LogMessageAnsi } from './LogMessageAnsi';
+import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
 
 interface LogRowContextProps {
   row: LogRowModel;
@@ -135,10 +137,12 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   const listContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
 
   useLayoutEffect(() => {
-    if (shouldScrollToBottom && listContainerRef.current) {
+    // We want to scroll to bottom only when we receive first 10 log lines
+    const shouldScrollRows = rows.length > 0 && rows.length <= 10;
+    if (shouldScrollToBottom && shouldScrollRows && listContainerRef.current) {
       setScrollTop(listContainerRef.current.offsetHeight);
     }
-  }, [shouldScrollToBottom]);
+  }, [shouldScrollToBottom, rows]);
 
   const headerProps = {
     row,

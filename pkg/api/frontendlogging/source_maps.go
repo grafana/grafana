@@ -114,7 +114,7 @@ func (store *SourceMapStore) getSourceMap(sourceURL string) (*sourceMap, error) 
 		return nil, nil
 	}
 	path := strings.ReplaceAll(sourceMapLocation.path, "../", "") // just in case
-	b, err := store.readSourceMap(sourceMapLocation.dir, path)
+	content, err := store.readSourceMap(sourceMapLocation.dir, path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Cache nil value for sourceURL, since we want to flag that it wasn't found in the filesystem and not try again
@@ -124,7 +124,7 @@ func (store *SourceMapStore) getSourceMap(sourceURL string) (*sourceMap, error) 
 		return nil, err
 	}
 
-	consumer, err := sourcemap.Parse(sourceURL+".map", b)
+	consumer, err := sourcemap.Parse(sourceURL+".map", content)
 	if err != nil {
 		return nil, err
 	}

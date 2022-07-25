@@ -1,10 +1,12 @@
-import { SelectableValue } from '@grafana/data';
-import { Select } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';
 
-import { QueryEditorField } from '.';
+import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+
 import { getAggregationOptionsByMetric } from '../functions';
 import { MetricDescriptor, MetricKind, ValueTypes } from '../types';
+
+import { QueryEditorField } from '.';
 
 export interface Props {
   refId: string;
@@ -27,7 +29,6 @@ export const Aggregation: FC<Props> = (props) => {
       htmlFor={`${props.refId}-group-by-function`}
     >
       <Select
-        menuShouldPortal
         width={16}
         onChange={({ value }) => props.onChange(value!)}
         value={selected}

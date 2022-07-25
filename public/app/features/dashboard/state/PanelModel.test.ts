@@ -1,5 +1,5 @@
-import { PanelModel } from './PanelModel';
-import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { ComponentClass } from 'react';
+
 import {
   DataLinkBuiltInVars,
   FieldConfigProperty,
@@ -10,16 +10,19 @@ import {
   dateTime,
   TimeRange,
 } from '@grafana/data';
-import { ComponentClass } from 'react';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { setTimeSrv } from '../services/TimeSrv';
-import { TemplateSrv } from '../../templating/template_srv';
 import { setTemplateSrv } from '@grafana/runtime';
+import { queryBuilder } from 'app/features/variables/shared/testing/builders';
+
+import { mockStandardFieldConfigOptions } from '../../../../test/helpers/fieldConfig';
+import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../../variables/adapters';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
-import { mockStandardFieldConfigOptions } from '../../../../test/helpers/fieldConfig';
-import { queryBuilder } from 'app/features/variables/shared/testing/builders';
+import { setTimeSrv } from '../services/TimeSrv';
 import { TimeOverrideResult } from '../utils/panel';
+
+import { PanelModel } from './PanelModel';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
@@ -429,6 +432,26 @@ describe('PanelModel', () => {
 
         model.restoreModel({});
         expect(model.transparent).toBe(false);
+      });
+    });
+
+    describe('updateGridPos', () => {
+      it('Should not have changes if no change', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 1, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(false);
+      });
+
+      it('Should have changes if gridPos is different', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(true);
+      });
+
+      it('Should not have changes if not manually updated', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 }, false);
+        expect(model.hasChanged).toBe(false);
       });
     });
 

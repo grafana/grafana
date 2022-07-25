@@ -1,12 +1,13 @@
 import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { of } from 'rxjs';
+
 import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
+import { FetchResponse } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { PromOptions } from './types';
-import { FetchResponse } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -17,6 +18,7 @@ const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
 const instanceSettings = {
   url: 'proxied',
+  id: 1,
   directUrl: 'direct',
   user: 'test',
   password: 'mupp',
@@ -74,8 +76,9 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        url: `/api/datasources/1/resources/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
+        showErrorAlert: false,
         headers: {},
       });
     });
@@ -93,7 +96,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        url: `/api/datasources/1/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });
@@ -116,10 +119,11 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/series?match${encodeURIComponent(
+        url: `/api/datasources/1/resources/api/v1/series?match${encodeURIComponent(
           '[]'
         )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
+        showErrorAlert: false,
         headers: {},
       });
     });
@@ -141,8 +145,9 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: 'proxied/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
+        url: '/api/datasources/1/resources/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
         hideFromInspector: true,
+        showErrorAlert: false,
         headers: {},
       });
     });
@@ -158,7 +163,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results: any = await query.process();
+      const results = await query.process();
 
       expect(results).toHaveLength(2);
       expect(results[0].text).toBe('value1');
@@ -166,10 +171,11 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/series?match${encodeURIComponent(
+        url: `/api/datasources/1/resources/api/v1/series?match${encodeURIComponent(
           '[]'
         )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
+        showErrorAlert: false,
         headers: {},
       });
     });
@@ -187,7 +193,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/label/__name__/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        url: `/api/datasources/1/resources/api/v1/label/__name__/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });
@@ -208,7 +214,7 @@ describe('PrometheusMetricFindQuery', () => {
           },
         },
       });
-      const results: any = await query.process();
+      const results = await query.process();
 
       expect(results).toHaveLength(1);
       expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
@@ -216,6 +222,28 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
         url: `proxied/api/v1/query?query=metric&time=${raw.to.unix()}`,
+        requestId: undefined,
+        headers: {},
+      });
+    });
+
+    it('query_result(metric) should handle scalar resultTypes separately', async () => {
+      const query = setupMetricFindQuery({
+        query: 'query_result(1+1)',
+        response: {
+          data: {
+            resultType: 'scalar',
+            result: [1443454528.0, '2'],
+          },
+        },
+      });
+      const results = await query.process();
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe('2');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: `proxied/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
         requestId: undefined,
         headers: {},
       });
@@ -232,7 +260,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results: any = await query.process();
+      const results = await query.process();
 
       expect(results).toHaveLength(3);
       expect(results[0].text).toBe('up{instance="127.0.0.1:1234",job="job1"}');
@@ -241,10 +269,11 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
+        url: `/api/datasources/1/resources/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
           'up{job="job1"}'
         )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
+        showErrorAlert: false,
         headers: {},
       });
     });

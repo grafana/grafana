@@ -1,6 +1,9 @@
 import React, { PureComponent } from 'react';
-import InfluxDatasource from '../datasource';
+
 import { InlineFormLabel, TextArea } from '@grafana/ui';
+
+import InfluxDatasource from '../datasource';
+
 import { FluxQueryEditor } from './FluxQueryEditor';
 
 interface Props {

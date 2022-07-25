@@ -1,12 +1,6 @@
+import { isNumber } from 'lodash';
 import React, { PureComponent } from 'react';
-import {
-  BigValue,
-  BigValueGraphMode,
-  DataLinksContextMenu,
-  VizRepeater,
-  VizRepeaterRenderValueProps,
-  BigValueTextMode,
-} from '@grafana/ui';
+
 import {
   DisplayValueAlignmentFactors,
   FieldDisplay,
@@ -16,14 +10,15 @@ import {
   NumericRange,
   PanelProps,
 } from '@grafana/data';
-
-import { config } from 'app/core/config';
-import { StatPanelOptions } from './types';
-import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { findNumericFieldMinMax } from '@grafana/data/src/field/fieldOverrides';
-import { isNumber } from 'lodash';
+import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
+import { BigValue, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+import { config } from 'app/core/config';
 
-export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
+import { PanelOptions } from './models.gen';
+
+export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
@@ -73,7 +68,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks} config={value.field}>
+        <DataLinksContextMenu links={getLinks}>
           {(api) => {
             return this.renderComponent(valueProps, api);
           }}

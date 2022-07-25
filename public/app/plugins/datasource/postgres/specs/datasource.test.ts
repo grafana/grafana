@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
-import { FetchResponse } from '@grafana/runtime';
+
 import {
   dataFrameToJSON,
   DataQueryRequest,
@@ -8,11 +8,12 @@ import {
   dateTime,
   MutableDataFrame,
 } from '@grafana/data';
-
-import { PostgresDatasource } from '../datasource';
+import { FetchResponse } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
+import { PostgresDatasource } from '../datasource';
 import { PostgresOptions, PostgresQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({

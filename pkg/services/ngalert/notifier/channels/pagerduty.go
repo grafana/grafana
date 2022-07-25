@@ -7,13 +7,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -39,6 +41,7 @@ type PagerdutyNotifier struct {
 	tmpl          *template.Template
 	log           log.Logger
 	ns            notifications.WebhookSender
+	images        ImageStore
 }
 
 type PagerdutyConfig struct {
@@ -59,7 +62,7 @@ func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewPagerdutyNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewPagerdutyNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewPagerdutyConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*PagerdutyConfig, error) {
@@ -79,7 +82,7 @@ func NewPagerdutyConfig(config *NotificationChannelConfig, decryptFunc GetDecryp
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSender, t *template.Template) *PagerdutyNotifier {
+func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *PagerdutyNotifier {
 	return &PagerdutyNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -103,6 +106,7 @@ func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSende
 		tmpl:      t,
 		log:       log.New("alerting.notifier." + config.Name),
 		ns:        ns,
+		images:    images,
 	}
 }
 
@@ -110,7 +114,7 @@ func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSende
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
-		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
+		pn.log.Debug("not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
 		return true, nil
 	}
 
@@ -124,7 +128,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
+	pn.log.Info("notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
 		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
@@ -184,6 +188,16 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 	}
 
+	_ = withStoredImages(ctx, pn.log, pn.images,
+		func(_ int, image ngmodels.Image) error {
+			if len(image.URL) != 0 {
+				msg.Images = append(msg.Images, pagerDutyImage{Src: image.URL})
+			}
+
+			return nil
+		},
+		as...)
+
 	if len(msg.Payload.Summary) > 1024 {
 		// This is the Pagerduty limit.
 		msg.Payload.Summary = msg.Payload.Summary[:1021] + "..."
@@ -215,11 +229,16 @@ type pagerDutyMessage struct {
 	Client      string           `json:"client,omitempty"`
 	ClientURL   string           `json:"client_url,omitempty"`
 	Links       []pagerDutyLink  `json:"links,omitempty"`
+	Images      []pagerDutyImage `json:"images,omitempty"`
 }
 
 type pagerDutyLink struct {
 	HRef string `json:"href"`
 	Text string `json:"text"`
+}
+
+type pagerDutyImage struct {
+	Src string `json:"src"`
 }
 
 type pagerDutyPayload struct {

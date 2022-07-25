@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { of, throwError } from 'rxjs';
+
 import {
   CoreApp,
   DataQueryRequest,
@@ -11,6 +12,9 @@ import {
   LoadingState,
   toDataFrame,
 } from '@grafana/data';
+import { QueryOptions } from 'app/types';
+
+import { VariableHide } from '../../../features/variables/types';
 
 import {
   alignRange,
@@ -20,9 +24,6 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import { PromOptions, PromQuery } from './types';
-import { VariableHide } from '../../../features/variables/types';
-import { describe } from '../../../../test/lib/common';
-import { QueryOptions } from 'app/types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -57,6 +58,7 @@ describe('PrometheusDatasource', () => {
   let ds: PrometheusDatasource;
   const instanceSettings = {
     url: 'proxied',
+    id: 1,
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
@@ -147,7 +149,7 @@ describe('PrometheusDatasource', () => {
       it('added to metadata request', () => {
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
       });
 
       it('adds params to timeseries query', () => {
@@ -182,13 +184,13 @@ describe('PrometheusDatasource', () => {
       it('added to metadata request with non-POST endpoint', () => {
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
       });
 
       it('added to metadata request with POST endpoint', () => {
         promDs.metadataRequest('/api/v1/labels');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/api/v1/labels');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/api/v1/labels');
         expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
       });
 
@@ -429,7 +431,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('Prometheus regular escaping', () => {
+  describe('Prometheus regular escaping', () => {
     it('should not escape non-string', () => {
       expect(prometheusRegularEscape(12)).toEqual(12);
     });
@@ -455,7 +457,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('Prometheus regexes escaping', () => {
+  describe('Prometheus regexes escaping', () => {
     it('should not escape simple string', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
@@ -2152,7 +2154,7 @@ describe('modifyQuery', () => {
     describe('and query has no labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
-        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER' };
+        const action = { options: { key: 'cluster', value: 'us-cluster' }, type: 'ADD_FILTER' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
@@ -2166,7 +2168,7 @@ describe('modifyQuery', () => {
     describe('and query has labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
-        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER' };
+        const action = { options: { key: 'pod', value: 'pod-123' }, type: 'ADD_FILTER' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
@@ -2182,7 +2184,7 @@ describe('modifyQuery', () => {
     describe('and query has no labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
-        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER_OUT' };
+        const action = { options: { key: 'cluster', value: 'us-cluster' }, type: 'ADD_FILTER_OUT' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
@@ -2196,7 +2198,7 @@ describe('modifyQuery', () => {
     describe('and query has labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
-        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER_OUT' };
+        const action = { options: { key: 'pod', value: 'pod-123' }, type: 'ADD_FILTER_OUT' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 

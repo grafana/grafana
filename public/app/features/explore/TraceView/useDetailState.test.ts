@@ -1,7 +1,9 @@
-import { act, renderHook } from '@testing-library/react-hooks';
-import { useDetailState } from './useDetailState';
 import { TraceLog } from '@jaegertracing/jaeger-ui-components/src/types/trace';
+import { act, renderHook } from '@testing-library/react-hooks';
+
 import { DataFrame } from '@grafana/data';
+
+import { useDetailState } from './useDetailState';
 
 const sampleFrame: DataFrame = {
   name: 'trace',

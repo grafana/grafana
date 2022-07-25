@@ -1,6 +1,7 @@
 import { parser } from 'lezer-promql';
-import { buildVisualQueryFromString } from './querybuilder/parsing';
+
 import { PromQueryModeller } from './querybuilder/PromQueryModeller';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
 import { PromVisualQuery } from './querybuilder/types';
 

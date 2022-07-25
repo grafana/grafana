@@ -1,4 +1,5 @@
 import { Value, Editor as CoreEditor } from 'slate';
+
 import { SearchFunctionType } from '../utils';
 
 /**

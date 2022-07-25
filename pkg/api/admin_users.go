@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -19,12 +20,12 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd := models.CreateUserCommand{
+	cmd := user.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
 		Password: form.Password,
 		Name:     form.Name,
-		OrgId:    form.OrgId,
+		OrgID:    form.OrgId,
 	}
 
 	if len(cmd.Login) == 0 {
@@ -38,13 +39,13 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 		return response.Error(400, "Password is missing or too short", nil)
 	}
 
-	user, err := hs.Login.CreateUser(cmd)
+	usr, err := hs.Login.CreateUser(cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(400, err.Error(), nil)
 		}
 
-		if errors.Is(err, models.ErrUserAlreadyExists) {
+		if errors.Is(err, user.ErrUserAlreadyExists) {
 			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
@@ -55,7 +56,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 
 	result := models.UserIdDTO{
 		Message: "User created",
-		Id:      user.Id,
+		Id:      usr.ID,
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -112,8 +113,8 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 
 	err = hs.SQLStore.UpdateUserPermissions(userID, form.IsGrafanaAdmin)
 	if err != nil {
-		if errors.Is(err, models.ErrLastGrafanaAdmin) {
-			return response.Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
+		if errors.Is(err, user.ErrLastGrafanaAdmin) {
+			return response.Error(400, user.ErrLastGrafanaAdmin.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to update user permissions", err)
@@ -131,8 +132,8 @@ func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 	cmd := models.DeleteUserCommand{UserId: userID}
 
 	if err := hs.SQLStore.DeleteUser(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to delete user", err)
 	}
@@ -149,14 +150,14 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not disable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
 	if err := hs.SQLStore.DisableUser(c.Req.Context(), &disableCmd); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to disable user", err)
 	}
@@ -178,14 +179,14 @@ func (hs *HTTPServer) AdminEnableUser(c *models.ReqContext) response.Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not enable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
 	if err := hs.SQLStore.DisableUser(c.Req.Context(), &disableCmd); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to enable user", err)
 	}

@@ -1,10 +1,12 @@
+import { Story } from '@storybook/react';
 import React from 'react';
 
-import { Story } from '@storybook/react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
-import { LegendDisplayMode } from '@grafana/schema';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
+import { LegendDisplayMode } from '@grafana/schema';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
 
 export default {
   title: 'Visualizations/Graph/GraphWithLegend',

@@ -1,4 +1,5 @@
 import { ComponentType } from 'react';
+
 import { KeyValue } from './data';
 
 /** Describes plugins life cycle status */
@@ -15,6 +16,7 @@ export enum PluginType {
   datasource = 'datasource',
   app = 'app',
   renderer = 'renderer',
+  secretsmanager = 'secretsmanager',
 }
 
 /** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature} */

@@ -1,12 +1,16 @@
-import React, { ChangeEvent, useState } from 'react';
 import { css } from '@emotion/css';
+import { ComponentMeta } from '@storybook/react';
+import React, { ChangeEvent, useState } from 'react';
+
 import { Input, Field, Icon } from '@grafana/ui';
+
+import { useTheme } from '../../themes';
 import { getAvailableIcons, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { useTheme } from '../../themes';
+
 import mdx from './Icon.mdx';
 
-export default {
+const meta: ComponentMeta<typeof Icon> = {
   title: 'Docs overview/Icon',
   component: Icon,
   decorators: [withCenteredStory],
@@ -92,3 +96,5 @@ export const IconsOverview = () => {
     </div>
   );
 };
+
+export default meta;

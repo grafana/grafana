@@ -1,6 +1,8 @@
 import React, { CSSProperties } from 'react';
-import { useTheme2 } from '../../themes';
+
 import { fieldColorModeRegistry } from '@grafana/data';
+
+import { useTheme2 } from '../../themes';
 
 export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   color?: string;

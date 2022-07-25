@@ -1,10 +1,13 @@
-import React, { useCallback } from 'react';
-import { useStyles2 } from '../../../themes';
-import Calendar from 'react-calendar';
 import { css } from '@emotion/css';
-import { Icon } from '../../Icon/Icon';
-import { TimePickerCalendarProps } from './TimePickerCalendar';
+import React, { useCallback } from 'react';
+import Calendar from 'react-calendar';
+
 import { GrafanaTheme2, dateTime, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
+
+import { useStyles2 } from '../../../themes';
+import { Icon } from '../../Icon/Icon';
+
+import { TimePickerCalendarProps } from './TimePickerCalendar';
 
 export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) {
   const value = inputToValue(from, to);
@@ -29,7 +32,7 @@ export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) 
 
 Body.displayName = 'Body';
 
-export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): Date[] {
+export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): [Date, Date] {
   const fromAsDate = from.toDate();
   const toAsDate = to.toDate();
   const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;

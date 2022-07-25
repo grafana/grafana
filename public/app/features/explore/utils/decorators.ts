@@ -1,3 +1,7 @@
+import { groupBy } from 'lodash';
+import { Observable, of } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -9,10 +13,8 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { groupBy } from 'lodash';
-import { Observable, of } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
-import { dataFrameToLogsModel } from '../../../core/logs_model';
+
+import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
 import { preProcessPanelData } from '../../query/state/runRequest';

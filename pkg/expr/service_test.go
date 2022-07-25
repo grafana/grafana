@@ -10,11 +10,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
+	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService(t *testing.T) {
@@ -28,18 +28,16 @@ func TestService(t *testing.T) {
 
 	cfg := setting.NewCfg()
 
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-
 	s := Service{
-		cfg:            cfg,
-		dataService:    me,
-		secretsService: secretsService,
+		cfg:               cfg,
+		dataService:       me,
+		dataSourceService: &datafakes.FakeDataSourceService{},
 	}
 
 	queries := []Query{
 		{
 			RefID: "A",
-			DataSource: &models.DataSource{
+			DataSource: &datasources.DataSource{
 				OrgId: 1,
 				Uid:   "test",
 				Type:  "test",

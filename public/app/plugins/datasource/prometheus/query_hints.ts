@@ -1,5 +1,7 @@
 import { size } from 'lodash';
+
 import { QueryHint, QueryFix } from '@grafana/data';
+
 import { PrometheusDatasource } from './datasource';
 
 /**
@@ -101,7 +103,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
           action: {
             type: 'EXPAND_RULES',
             query,
-            mapping: mappingForQuery,
+            options: mappingForQuery,
           },
         } as any as QueryFix,
       });

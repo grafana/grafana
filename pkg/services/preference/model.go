@@ -42,12 +42,14 @@ type SavePreferenceCommand struct {
 	OrgID  int64
 	TeamID int64
 
-	HomeDashboardID int64                   `json:"homeDashboardId,omitempty"`
-	Timezone        string                  `json:"timezone,omitempty"`
-	WeekStart       string                  `json:"weekStart,omitempty"`
-	Theme           string                  `json:"theme,omitempty"`
-	Navbar          *NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	HomeDashboardID  int64                   `json:"homeDashboardId,omitempty"`
+	HomeDashboardUID *string                 `json:"homeDashboardUID,omitempty"`
+	Timezone         string                  `json:"timezone,omitempty"`
+	WeekStart        string                  `json:"weekStart,omitempty"`
+	Theme            string                  `json:"theme,omitempty"`
+	Locale           string                  `json:"locale,omitempty"`
+	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 type PatchPreferenceCommand struct {
@@ -55,12 +57,14 @@ type PatchPreferenceCommand struct {
 	OrgID  int64
 	TeamID int64
 
-	HomeDashboardID *int64                  `json:"homeDashboardId,omitempty"`
-	Timezone        *string                 `json:"timezone,omitempty"`
-	WeekStart       *string                 `json:"weekStart,omitempty"`
-	Theme           *string                 `json:"theme,omitempty"`
-	Navbar          *NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	HomeDashboardID  *int64                  `json:"homeDashboardId,omitempty"`
+	HomeDashboardUID *string                 `json:"homeDashboardUID,omitempty"`
+	Timezone         *string                 `json:"timezone,omitempty"`
+	WeekStart        *string                 `json:"weekStart,omitempty"`
+	Theme            *string                 `json:"theme,omitempty"`
+	Locale           *string                 `json:"locale,omitempty"`
+	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 type NavLink struct {
@@ -75,6 +79,7 @@ type NavbarPreference struct {
 }
 
 type PreferenceJSONData struct {
+	Locale       string                 `json:"locale"`
 	Navbar       NavbarPreference       `json:"navbar"`
 	QueryHistory QueryHistoryPreference `json:"queryHistory"`
 }

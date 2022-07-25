@@ -1,18 +1,20 @@
-import { locationService } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
-import React, { useContext, useEffect, useState } from 'react';
-import { Prompt } from 'react-router-dom';
-import { DashboardModel } from '../../state/DashboardModel';
-import { each, filter, find } from 'lodash';
-import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 import * as H from 'history';
-import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
-import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { each, find } from 'lodash';
+import React, { useContext, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
+import { Prompt } from 'react-router-dom';
+
+import { locationService } from '@grafana/runtime';
 import { ModalsContext } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
+import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
+import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { DashboardSavedEvent } from 'app/types/events';
+
+import { DashboardModel } from '../../state/DashboardModel';
+import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
+import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -179,25 +181,7 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
   dash.schemaVersion = 0;
   dash.timezone = 0;
 
-  // ignore iteration property
-  delete dash.iteration;
-
-  dash.panels = filter(dash.panels, (panel) => {
-    if (panel.repeatPanelId) {
-      return false;
-    }
-
-    // remove scopedVars
-    panel.scopedVars = undefined;
-
-    // ignore panel legend sort
-    if (panel.legend) {
-      delete panel.legend.sort;
-      delete panel.legend.sortDesc;
-    }
-
-    return true;
-  });
+  dash.panels = [];
 
   // ignore template variable values
   each(dash.getVariables(), (variable: any) => {
@@ -210,6 +194,10 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
 }
 
 export function hasChanges(current: DashboardModel, original: any) {
+  if (current.hasUnsavedChanges()) {
+    return true;
+  }
+
   const currentClean = cleanDashboardFromIgnoredChanges(current.getSaveModelClone());
   const originalClean = cleanDashboardFromIgnoredChanges(original);
 

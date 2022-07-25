@@ -1,7 +1,8 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
-import { Props, UsersActionBar } from './UsersActionBar';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+
+import { Props, UsersActionBar } from './UsersActionBar';
 import { setUsersSearchQuery } from './state/reducers';
 
 jest.mock('app/core/core', () => ({
@@ -25,37 +26,40 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<UsersActionBar {...props} />);
+  const { rerender } = render(<UsersActionBar {...props} />);
+
+  return { rerender, props };
 };
 
 describe('Render', () => {
   it('should render component', () => {
-    const wrapper = setup();
+    setup();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByTestId('users-action-bar')).toBeInTheDocument();
   });
 
   it('should render pending invites button', () => {
-    const wrapper = setup({
+    setup({
       pendingInvitesCount: 5,
     });
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByRole('radio', { name: 'Pending Invites (5)' })).toBeInTheDocument();
   });
 
   it('should show invite button', () => {
-    const wrapper = setup({
+    setup({
       canInvite: true,
     });
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByRole('link', { name: 'Invite' })).toHaveAttribute('href', 'org/users/invite');
   });
 
   it('should show external user management button', () => {
-    const wrapper = setup({
+    setup({
       externalUserMngLinkUrl: 'some/url',
+      externalUserMngLinkName: 'someUrl',
     });
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute('href', 'some/url');
   });
 });

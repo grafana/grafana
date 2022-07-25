@@ -1,9 +1,11 @@
-import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
+import { invert } from 'lodash';
+import { Token } from 'prismjs';
+
+import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
+
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
-import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
-import { Token } from 'prismjs';
-import { invert } from 'lodash';
+import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();

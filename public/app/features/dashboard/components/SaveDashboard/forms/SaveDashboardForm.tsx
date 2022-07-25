@@ -1,11 +1,10 @@
 import React, { useMemo, useState } from 'react';
 
-import { Button, Checkbox, Form, TextArea } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-
+import { Button, Checkbox, Form, Stack, TextArea } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
+
 import { SaveDashboardData, SaveDashboardOptions } from '../types';
-import { Stack } from '@grafana/experimental';
 
 interface FormDTO {
   message: string;
@@ -61,7 +60,7 @@ export const SaveDashboardForm = ({
         <Stack direction="column" gap={2}>
           {hasTimeChanged && (
             <Checkbox
-              checked={options.saveTimerange}
+              checked={!!options.saveTimerange}
               onChange={() =>
                 onOptionsChange({
                   ...options,
@@ -74,7 +73,7 @@ export const SaveDashboardForm = ({
           )}
           {hasVariableChanged && (
             <Checkbox
-              checked={options.saveVariables}
+              checked={!!options.saveVariables}
               onChange={() =>
                 onOptionsChange({
                   ...options,

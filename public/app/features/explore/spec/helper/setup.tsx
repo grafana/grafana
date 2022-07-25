@@ -1,22 +1,25 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
 import { within } from '@testing-library/dom';
+import { render, screen } from '@testing-library/react';
+import { fromPairs } from 'lodash';
+import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
-import { fromPairs } from 'lodash';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataSourceApi, DataSourceInstanceSettings, QueryEditorProps, ScopedVars } from '@grafana/data';
+import { DataSourceApi, DataSourceInstanceSettings, DataSourceRef, QueryEditorProps, ScopedVars } from '@grafana/data';
 import { locationService, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
 
-import Wrapper from '../../Wrapper';
-import { initialUserState } from '../../../profile/state/reducers';
-
+import { RICH_HISTORY_KEY, RichHistoryLocalStorageDTO } from '../../../../core/history/RichHistoryLocalStorage';
+import { RICH_HISTORY_SETTING_KEYS } from '../../../../core/history/richHistoryLocalStorageUtils';
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreId } from '../../../../types';
+import { initialUserState } from '../../../profile/state/reducers';
+import Wrapper from '../../Wrapper';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -52,8 +55,8 @@ export function setupExplore(options?: SetupOptions): {
     getList(): DataSourceInstanceSettings[] {
       return dsSettings.map((d) => d.settings);
     },
-    getInstanceSettings(name: string) {
-      return dsSettings.map((d) => d.settings).find((x) => x.name === name || x.uid === name);
+    getInstanceSettings(ref: DataSourceRef) {
+      return dsSettings.map((d) => d.settings).find((x) => x.name === ref || x.uid === ref || x.uid === ref.uid);
     },
     get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
       return Promise.resolve(
@@ -91,9 +94,11 @@ export function setupExplore(options?: SetupOptions): {
 
   const { unmount, container } = render(
     <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Route path="/explore" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
-      </Router>
+      <GrafanaContext.Provider value={getGrafanaContextMock()}>
+        <Router history={locationService.getHistory()}>
+          <Route path="/explore" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+        </Router>
+      </GrafanaContext.Provider>
     </Provider>
   );
 
@@ -156,4 +161,23 @@ export const tearDown = () => {
 export const withinExplore = (exploreId: ExploreId) => {
   const container = screen.getAllByTestId('data-testid Explore');
   return within(container[exploreId === ExploreId.left ? 0 : 1]);
+};
+
+export const localStorageHasAlreadyBeenMigrated = () => {
+  window.localStorage.setItem(RICH_HISTORY_SETTING_KEYS.migrated, 'true');
+};
+
+export const setupLocalStorageRichHistory = (dsName: string) => {
+  window.localStorage.setItem(
+    RICH_HISTORY_KEY,
+    JSON.stringify([
+      {
+        ts: Date.now(),
+        datasourceName: dsName,
+        starred: true,
+        comment: '',
+        queries: [{ refId: 'A' }],
+      } as RichHistoryLocalStorageDTO,
+    ])
+  );
 };

@@ -1,12 +1,15 @@
-import React, { useState, useCallback } from 'react';
 import { action } from '@storybook/addon-actions';
 import { Meta, Story } from '@storybook/react';
-import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
-import { UseState } from '../../../../utils/storybook/UseState';
+import React, { useState, useCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
+
+import { UseState } from '../../../../utils/storybook/UseState';
+import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
+
 import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
 
-export default {
+const meta: Meta = {
   title: 'Forms/Legacy/Select',
   component: Select,
   decorators: [withCenteredStory],
@@ -49,7 +52,7 @@ export default {
   argTypes: {
     width: { control: { type: 'range', min: 5, max: 30 } },
   },
-} as Meta;
+};
 
 const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
 
@@ -69,7 +72,6 @@ export const Basic: Story = (args) => {
       {(value, updateValue) => {
         return (
           <Select
-            menuShouldPortal
             {...args}
             onChange={(value: SelectableValue<string>) => {
               action('onChanged fired')(value);
@@ -89,7 +91,7 @@ Basic.args = {
 
 export const AsyncSelect: Story = (args) => {
   const [isLoading, setIsLoading] = useState<boolean>(args.loading);
-  const [asyncValue, setAsyncValue] = useState<SelectableValue<any>>();
+  const [asyncValue, setAsyncValue] = useState<SelectableValue<string>>();
   const loadAsyncOptions = useCallback((inputValue) => {
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(() => {
@@ -116,3 +118,5 @@ AsyncSelect.args = {
   defaultOptions: true,
   width: 20,
 };
+
+export default meta;

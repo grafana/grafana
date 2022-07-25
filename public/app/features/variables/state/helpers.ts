@@ -1,7 +1,11 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import { LoadingState } from '@grafana/data';
 
-import { VariablesState } from './types';
+import { LoadingState } from '@grafana/data';
+import { dashboardReducer } from 'app/features/dashboard/state/reducers';
+
+import { DashboardState, StoreState } from '../../../types';
+import { VariableAdapter } from '../adapters';
+import { NEW_VARIABLE_ID } from '../constants';
 import {
   DashboardVariableModel,
   initialVariableModelState,
@@ -11,12 +15,9 @@ import {
   VariableModel,
 } from '../types';
 
-import { VariableAdapter } from '../adapters';
-import { dashboardReducer } from 'app/features/dashboard/state/reducers';
-import { DashboardState, StoreState } from '../../../types';
-import { NEW_VARIABLE_ID } from '../constants';
 import { keyedVariablesReducer, KeyedVariablesState } from './keyedVariablesReducer';
 import { getInitialTemplatingState, TemplatingState } from './reducers';
+import { VariablesState } from './types';
 
 export const getVariableState = (
   noOfVariables: number,
