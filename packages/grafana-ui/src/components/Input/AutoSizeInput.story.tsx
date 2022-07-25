@@ -19,7 +19,7 @@ const prefixSuffixOpts = {
   ...icons,
 };
 
-export default {
+const meta: Meta = {
   title: 'Forms/Input/AutoSizeInput',
   component: AutoSizeInput,
   decorators: [withCenteredStory],
@@ -60,7 +60,7 @@ export default {
     },
     minWidth: { control: { type: 'range', min: 10, max: 200, step: 10 } },
   },
-} as Meta;
+};
 
 export const Simple: Story = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
@@ -98,3 +98,5 @@ Simple.args = {
   after: false,
   placeholder: 'Enter your name here...',
 };
+
+export default meta;

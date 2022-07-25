@@ -45,8 +45,8 @@
   },
   "types": "src/index.ts",
   "dependencies": {
-    "@babel/core": "7.18.2",
-    "@babel/preset-env": "7.18.2",
+    "@babel/core": "7.18.9",
+    "@babel/preset-env": "7.18.9",
     "@cypress/webpack-preprocessor": "5.12.0",
     "@grafana/e2e-selectors": "9.1.0-pre",
     "@grafana/tsconfig": "^1.2.0-rc1",
@@ -64,9 +64,9 @@
     "resolve-as-bin": "2.1.0",
     "rimraf": "3.0.2",
     "tracelib": "1.0.1",
-    "ts-loader": "6.2.1",
+    "ts-loader": "6.2.2",
     "tslib": "2.4.0",
-    "typescript": "4.6.4",
+    "typescript": "4.7.4",
     "uuid": "8.3.2",
     "yaml": "^2.0.0"
   }

@@ -36,6 +36,10 @@ func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer traci
 		middlewares = append(middlewares, SigV4Middleware(cfg.SigV4VerboseLogging))
 	}
 
+	if httpLoggingEnabled(cfg.PluginSettings) {
+		middlewares = append(middlewares, HTTPLoggerMiddleware(cfg.PluginSettings))
+	}
+
 	setDefaultTimeoutOptions(cfg)
 
 	return newProviderFunc(sdkhttpclient.ProviderOptions{

@@ -55,7 +55,6 @@ import { VariableHide } from '../../variables/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
-import { Condition } from 'app/features/expressions/components/Condition';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -784,7 +783,7 @@ export class DashboardMigrator {
           panel.options.legend.displayMode = 'list';
           panel.options.legend.showLegend = false;
         } else if (panel.options?.legend) {
-          panel.options.legend = {...panel.options?.legend, showLegend: true};
+          panel.options.legend = { ...panel.options?.legend, showLegend: true };
         }
         return panel;
       });

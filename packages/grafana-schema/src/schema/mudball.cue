@@ -95,6 +95,7 @@ AxisConfig: {
 	axisSoftMax?:       number
 	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
+	axisCenteredZero?:   bool
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -170,6 +171,11 @@ OptionsWithTooltip: {
 // TODO docs
 OptionsWithLegend: {
 	legend: VizLegendOptions
+} @cuetsy(kind="interface")
+
+// TODO docs
+OptionsWithTimezones: {
+	timezones?: [...string]
 } @cuetsy(kind="interface")
 
 // TODO docs

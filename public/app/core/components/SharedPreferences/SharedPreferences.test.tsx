@@ -25,20 +25,32 @@ jest.mock('@grafana/runtime', () => {
 jest.mock('app/core/services/backend_srv', () => {
   return {
     backendSrv: {
+      getDashboardByUid: jest.fn().mockResolvedValue({
+        dashboard: {
+          id: 2,
+          title: 'My Dashboard',
+          uid: 'myDash',
+          templating: {
+            list: [],
+          },
+          panels: [],
+        },
+        meta: {},
+      }),
       search: jest.fn().mockResolvedValue([
         {
           id: 2,
           title: 'My Dashboard',
           tags: [],
           type: '',
-          uid: '',
+          uid: 'myDash',
           uri: '',
           url: '',
           folderId: 0,
           folderTitle: '',
           folderUid: '',
           folderUrl: '',
-          isStarred: false,
+          isStarred: true,
           slug: '',
           items: [],
         },
@@ -47,14 +59,14 @@ jest.mock('app/core/services/backend_srv', () => {
           title: 'Another Dashboard',
           tags: [],
           type: '',
-          uid: '',
+          uid: 'anotherDash',
           uri: '',
           url: '',
           folderId: 0,
           folderTitle: '',
           folderUid: '',
           folderUrl: '',
-          isStarred: false,
+          isStarred: true,
           slug: '',
           items: [],
         },
@@ -67,7 +79,7 @@ const mockPreferences: UserPreferencesDTO = {
   timezone: 'browser',
   weekStart: 'monday',
   theme: 'light',
-  homeDashboardId: 2,
+  homeDashboardUID: 'myDash',
   queryHistory: {
     homeTab: '',
   },
@@ -159,11 +171,11 @@ describe('SharedPreferences', () => {
       timezone: 'Australia/Sydney',
       weekStart: 'saturday',
       theme: 'dark',
-      homeDashboardId: 3,
+      homeDashboardUID: 'anotherDash',
       queryHistory: {
         homeTab: '',
       },
-      locale: 'fr',
+      locale: 'fr-FR',
     });
   });
 
@@ -181,7 +193,7 @@ describe('SharedPreferences', () => {
       timezone: 'browser',
       weekStart: '',
       theme: '',
-      homeDashboardId: 0,
+      homeDashboardUID: undefined,
       queryHistory: {
         homeTab: '',
       },

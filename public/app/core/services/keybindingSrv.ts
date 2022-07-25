@@ -3,7 +3,7 @@ import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
@@ -47,6 +47,10 @@ export class KeybindingSrv {
 
     this.bind('t t', () => toggleTheme(false));
     this.bind('t r', () => toggleTheme(true));
+
+    if (process.env.NODE_ENV === 'development') {
+      this.bind('t n', () => this.toggleNav());
+    }
   }
 
   globalEsc() {
@@ -73,6 +77,12 @@ export class KeybindingSrv {
 
     // ok no focused input or editor that should block this, let exist!
     this.exit();
+  }
+
+  toggleNav() {
+    window.location.href = locationUtil.getUrlForPartial(locationService.getLocation(), {
+      '__feature.topnav': (!config.featureToggles.topnav).toString(),
+    });
   }
 
   private openSearch() {

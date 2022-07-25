@@ -1,8 +1,7 @@
 import { debounce } from 'lodash';
 import React, { FunctionComponent, useState } from 'react';
 
-import { EditorRow, EditorField } from '@grafana/experimental';
-import { Input } from '@grafana/ui';
+import { EditorField, EditorRow, Input } from '@grafana/ui';
 
 import { SELECT_WIDTH } from '../../constants';
 
