@@ -99,7 +99,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           padding: 0;
           text-decoration: none;
           vertical-align: top;
-          cursor: pointer;
+          cursor: grab;
           flex-grow: 1;
         }
         span {

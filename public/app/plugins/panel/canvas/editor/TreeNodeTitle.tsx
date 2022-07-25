@@ -1,11 +1,11 @@
-import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { css } from '@emotion/css';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
-import { EditLayerName } from '../../../../core/components/Layers/EditLayerName';
+import { LayerName } from '../../../../core/components/Layers/LayerName';
 import { TreeElement } from '../tree';
 import { LayerActionID } from '../types';
 
@@ -18,12 +18,8 @@ interface Props {
 }
 
 export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) => {
-  const [editElementId, setEditElementId] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-
   const element = nodeData.dataRef;
   const name = nodeData.dataRef.getName();
-  const UID = nodeData.dataRef.UID;
 
   const styles = useStyles2(getStyles);
 
@@ -63,26 +59,16 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
     return element.options.type;
   };
 
-  const onEdit = (element: ElementState) => {
-    setEditElementId(element.UID);
-    setIsEditing(!isEditing);
-  };
-
   return (
     <>
-      <EditLayerName
+      <LayerName
         name={name}
-        UID={UID}
-        editElementId={editElementId}
-        isEditing={isEditing}
-        onChange={(v: string) => onNameChange(element, v)}
-        setEditElementId={setEditElementId}
+        onChange={(v) => onNameChange(element, v)}
         verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined}
       />
 
       <div className={styles.textWrapper}>&nbsp; {getLayerInfo(element)}</div>
 
-      <IconButton name="pen" className={styles.actionIcon} size="sm" onClick={() => onEdit(element)} />
       {!nodeData.children && (
         <>
           <IconButton
@@ -94,7 +80,7 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
           <IconButton
             name="trash-alt"
             title={'remove'}
-            className={cx(styles.actionIcon, styles.dragIcon)}
+            className={styles.actionIcon}
             onClick={() => onDelete(element)}
           />
         </>
@@ -106,12 +92,10 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
 const getStyles = (theme: GrafanaTheme2) => ({
   actionIcon: css`
     color: ${theme.colors.text.secondary};
+    cursor: pointer;
     &:hover {
       color: ${theme.colors.text.primary};
     }
-  `,
-  dragIcon: css`
-    cursor: drag;
   `,
   textWrapper: css`
     display: flex;
