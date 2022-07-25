@@ -194,9 +194,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		}
 	})
 
-	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, storageServiceConfig{
-		allowUnsanitizedSvgUpload: false,
-	})
+	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
 }
 
 func createSystemBrandingPathFilter() filestorage.PathFilter {
@@ -207,7 +205,7 @@ func createSystemBrandingPathFilter() filestorage.PathFilter {
 		nil)
 }
 
-func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime, authService storageAuthService, cfg storageServiceConfig) *standardStorageService {
+func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime, authService storageAuthService, cfg *setting.Cfg) *standardStorageService {
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
 
@@ -220,7 +218,9 @@ func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRunt
 		sql:         sql,
 		tree:        res,
 		authService: authService,
-		cfg:         cfg,
+		cfg: storageServiceConfig{
+			allowUnsanitizedSvgUpload: cfg.Storage.AllowUnsanitizedSvgUpload,
+		},
 	}
 }
 
