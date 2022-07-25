@@ -15,6 +15,7 @@ import (
 	_ "github.com/lib/pq"
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,9 +27,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -44,6 +45,7 @@ type SQLStore struct {
 	Cfg          *setting.Cfg
 	CacheService *localcache.CacheService
 
+	bus                         bus.Bus
 	dbCfg                       DatabaseConfig
 	engine                      *xorm.Engine
 	log                         log.Logger
@@ -53,12 +55,12 @@ type SQLStore struct {
 	tracer                      tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, tracer tracing.Tracer) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, cacheService, nil, migrations, tracer)
+	s, err := newSQLStore(cfg, cacheService, nil, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -79,13 +81,14 @@ func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, er
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
-	migrations registry.DatabaseMigrator, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
+	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
 		CacheService:                cacheService,
 		log:                         log.New("sqlstore"),
 		skipEnsureDefaultOrgAndUser: false,
 		migrations:                  migrations,
+		bus:                         bus,
 		tracer:                      tracer,
 	}
 	for _, opt := range opts {
@@ -95,7 +98,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 	}
 
 	if err := ss.initEngine(engine); err != nil {
-		return nil, errutil.Wrap("failed to connect to database", err)
+		return nil, fmt.Errorf("%v: %w", "failed to connect to database", err)
 	}
 
 	ss.Dialect = migrator.NewDialect(ss.engine)
@@ -154,6 +157,11 @@ func (ss *SQLStore) Quote(value string) string {
 	return ss.engine.Quote(value)
 }
 
+// GetDialect return the dialect
+func (ss *SQLStore) GetDialect() migrator.Dialect {
+	return ss.Dialect
+}
+
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
@@ -173,12 +181,12 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
-			if _, err := ss.createUser(ctx, sess, userCreationArgs{
+			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
 				Login:    ss.Cfg.AdminUser,
 				Email:    ss.Cfg.AdminUser + "@localhost",
 				Password: ss.Cfg.AdminPassword,
 				IsAdmin:  true,
-			}, false); err != nil {
+			}); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)
 			}
 
@@ -260,7 +268,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 	case migrator.Postgres:
 		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
 		if err != nil {
-			return "", errutil.Wrapf(err, "Invalid host specifier '%s'", ss.dbCfg.Host)
+			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
 		}
 
 		if ss.dbCfg.Pwd == "" {
@@ -313,7 +321,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		!strings.HasPrefix(connectionString, "file::memory:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
 		if err != nil {
-			return errutil.Wrapf(err, "can't check for existence of %q", ss.dbCfg.Path)
+			return fmt.Errorf("can't check for existence of %q: %w", ss.dbCfg.Path, err)
 		}
 
 		const perms = 0640
@@ -321,15 +329,15 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 			ss.log.Info("Creating SQLite database file", "path", ss.dbCfg.Path)
 			f, err := os.OpenFile(ss.dbCfg.Path, os.O_CREATE|os.O_RDWR, perms)
 			if err != nil {
-				return errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+				return fmt.Errorf("failed to create SQLite database file %q: %w", ss.dbCfg.Path, err)
 			}
 			if err := f.Close(); err != nil {
-				return errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+				return fmt.Errorf("failed to create SQLite database file %q: %w", ss.dbCfg.Path, err)
 			}
 		} else {
 			fi, err := os.Lstat(ss.dbCfg.Path)
 			if err != nil {
-				return errutil.Wrapf(err, "failed to stat SQLite database file %q", ss.dbCfg.Path)
+				return fmt.Errorf("failed to stat SQLite database file %q: %w", ss.dbCfg.Path, err)
 			}
 			m := fi.Mode() & os.ModePerm
 			if m|perms != perms {
@@ -535,11 +543,9 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
-		tracer, err := tracing.InitializeTracerForTest()
-		if err != nil {
-			return nil, err
-		}
-		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, tracer, opts...)
+		tracer := tracing.InitializeTracerForTest()
+		bus := bus.ProvideBus(tracer)
+		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, opts...)
 		if err != nil {
 			return nil, err
 		}

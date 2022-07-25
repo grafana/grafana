@@ -23,16 +23,26 @@
     "node-fetch", // we should bump this once we move to esm modules
     "react-hook-form", // due to us exposing these hooks via @grafana/ui form components bumping can break plugins
     "react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
+    "react-redux", // react-beautiful-dnd depends on react-redux 7.x, we need to update that one first
     "react-router-dom", // we should bump this together with history
     "slate",
     "slate-plain-serializer",
     "systemjs",
     "copy-webpack-plugin", // try to upgrade with newer yarn release. Not working with 3.1.1
     "ts-loader", // we should remove ts-loader and use babel-loader instead
-    "ora" // we should bump this once we move to esm modules
+    "ora", // we should bump this once we move to esm modules
+
+    // dep updates blocked by React 18
+    "@testing-library/react",
+    "@types/react",
+    "@types/react-dom",
+    "@types/react-test-renderer",
+    "react",
+    "react-dom",
+    "react-test-renderer"
   ],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
-  "labels": ["area/frontend", "dependencies"],
+  "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],

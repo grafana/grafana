@@ -8,17 +8,20 @@ export interface Folder {
   id: number;
 }
 
-export interface Props extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
+export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
   value?: Folder;
 }
 
-export const RuleFolderPicker: FC<Props> = ({ value, ...props }) => (
-  <FolderPicker
-    showRoot={false}
-    allowEmpty={true}
-    initialTitle={value?.title}
-    initialFolderId={value?.id}
-    {...props}
-    permissionLevel={PermissionLevelString.View}
-  />
-);
+export const RuleFolderPicker: FC<RuleFolderPickerProps> = ({ value, ...props }) => {
+  return (
+    <FolderPicker
+      showRoot={false}
+      allowEmpty={true}
+      initialTitle={value?.title}
+      initialFolderId={value?.id}
+      accessControlMetadata
+      {...props}
+      permissionLevel={PermissionLevelString.View}
+    />
+  );
+};

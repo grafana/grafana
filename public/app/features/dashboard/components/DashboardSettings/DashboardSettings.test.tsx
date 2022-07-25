@@ -19,7 +19,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 setBackendSrv({
-  get: jest.fn().mockResolvedValue({}),
+  get: jest.fn().mockResolvedValue([]),
 } as any);
 
 describe('DashboardSettings', () => {

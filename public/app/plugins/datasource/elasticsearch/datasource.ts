@@ -25,12 +25,14 @@ import {
   ScopedVars,
   TimeRange,
   toUtc,
+  QueryFixAction,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { queryLogsVolume } from 'app/core/logs_model';
+import { queryLogsVolume } from 'app/core/logsModel';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import {
   BucketAggregation,
   isBucketAggregationWithField,
@@ -117,6 +119,9 @@ export class ElasticDatasource
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
     this.includeFrozen = settingsData.includeFrozen ?? false;
+    this.annotations = {
+      QueryEditor: ElasticsearchAnnotationsQueryEditor,
+    };
 
     if (this.logMessageField === '') {
       this.logMessageField = undefined;
@@ -947,6 +952,31 @@ export class ElasticDatasource
     }
 
     return false;
+  }
+
+  modifyQuery(query: ElasticsearchQuery, action: QueryFixAction): ElasticsearchQuery {
+    if (!action.options) {
+      return query;
+    }
+
+    let expression = query.query ?? '';
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        if (expression.length > 0) {
+          expression += ' AND ';
+        }
+        expression += `${action.options.key}:"${action.options.value}"`;
+        break;
+      }
+      case 'ADD_FILTER_OUT': {
+        if (expression.length > 0) {
+          expression += ' AND ';
+        }
+        expression += `-${action.options.key}:"${action.options.value}"`;
+        break;
+      }
+    }
+    return { ...query, query: expression };
   }
 }
 

@@ -340,7 +340,7 @@ describe('ElasticDatasource', function (this: any) {
         data: '{\n    "reason": "all shards failed"\n}',
         message: 'all shards failed',
         config: {
-          url: 'http://localhost:3000/api/tsdb/query',
+          url: 'http://localhost:3000/api/ds/query',
         },
       };
 
@@ -357,8 +357,8 @@ describe('ElasticDatasource', function (this: any) {
           message: 'Authentication to data source failed',
         },
         status: 400,
-        url: 'http://localhost:3000/api/tsdb/query',
-        config: { url: 'http://localhost:3000/api/tsdb/query' },
+        url: 'http://localhost:3000/api/ds/query',
+        config: { url: 'http://localhost:3000/api/ds/query' },
         type: 'basic',
         statusText: 'Bad Request',
         redirected: false,
@@ -401,7 +401,7 @@ describe('ElasticDatasource', function (this: any) {
         data: '{}',
         message: 'Unknown elastic error response',
         config: {
-          url: 'http://localhost:3000/api/tsdb/query',
+          url: 'http://localhost:3000/api/ds/query',
         },
       };
 
@@ -1018,6 +1018,58 @@ describe('enhanceDataFrame', () => {
     enhanceDataFrame(df, [], 10);
 
     expect(df.meta?.limit).toBe(10);
+  });
+});
+
+describe('modifyQuery', () => {
+  let ds: ElasticDatasource;
+  beforeEach(() => {
+    ds = getTestContext().ds;
+  });
+  describe('with empty query', () => {
+    let query: ElasticsearchQuery;
+    beforeEach(() => {
+      query = { query: '', refId: 'A' };
+    });
+
+    it('should add the filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'foo:"bar"'
+      );
+    });
+
+    it('should add the negative filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        '-foo:"bar"'
+      );
+    });
+
+    it('should do nothing on unknown type', () => {
+      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
+    });
+  });
+
+  describe('with non-empty query', () => {
+    let query: ElasticsearchQuery;
+    beforeEach(() => {
+      query = { query: 'test:"value"', refId: 'A' };
+    });
+
+    it('should add the filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'test:"value" AND foo:"bar"'
+      );
+    });
+
+    it('should add the negative filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'test:"value" AND -foo:"bar"'
+      );
+    });
+
+    it('should do nothing on unknown type', () => {
+      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
+    });
   });
 });
 

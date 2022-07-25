@@ -20,7 +20,7 @@ you can get event description and event tags. The text field can include links t
 
 ## Native annotations
 
-Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../developers/http_api/annotations.md" >}}).
+Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../developers/http_api/annotations/" >}}).
 
 ## Adding annotations
 
@@ -76,4 +76,4 @@ to show.
 
 ### Annotation query details
 
-The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source]({{< relref "../datasources/_index.md" >}}) topic.
+The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source]({{< relref "../datasources/" >}}) topic.

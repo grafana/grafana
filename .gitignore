@@ -99,6 +99,7 @@ debug.test
 /packaging/**/*.deb
 /packaging/**/*.tar.gz
 /packaging/**/*.tar.gz.sha256
+pkg/cmd/grafana-server/__debug_bin
 
 # Ignore OSX indexing
 .DS_Store
@@ -159,10 +160,12 @@ compilation-stats.json
 *_gen.go
 !pkg/services/featuremgmt/toggles_gen.go
 !pkg/coremodel/**/*_gen.go
+!pkg/framework/**/*_gen.go
 
-# Auto-generated localisation files
+# Auto-generated internationalization files
 public/locales/_build/
 public/locales/**/*.js
 
 deployment_tools_config.json
 
+.betterer.cache

@@ -4,6 +4,7 @@ import selectEvent from 'react-select-event';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import * as ui from '@grafana/ui';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CustomVariableModel, initialVariableModelState } from '../../../../../features/variables/types';
@@ -11,6 +12,13 @@ import { CloudWatchDatasource } from '../../datasource';
 import { CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../../types';
 
 import { MetricsQueryEditor, Props } from './MetricsQueryEditor';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual<typeof ui>('@grafana/ui'),
+  CodeEditor: function CodeEditor({ value }: { value: string }) {
+    return <pre>{value}</pre>;
+  },
+}));
 
 const setup = () => {
   const instanceSettings = {
@@ -173,9 +181,7 @@ describe('QueryEditor', () => {
 
         expect(screen.getByText('Label')).toBeInTheDocument();
         expect(screen.queryByText('Alias')).toBeNull();
-        expect(screen.getByLabelText('Label - optional')).toHaveValue(
-          "Period: ${PROP('Period')} InstanceId: ${PROP('Dim.InstanceId')}"
-        );
+        expect(screen.getByText("Period: ${PROP('Period')} InstanceId: ${PROP('Dim.InstanceId')}"));
 
         config.featureToggles.cloudWatchDynamicLabels = originalValue;
       });

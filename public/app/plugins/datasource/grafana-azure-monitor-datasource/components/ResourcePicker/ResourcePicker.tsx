@@ -4,7 +4,7 @@ import { useEffectOnce } from 'react-use';
 
 import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2, Collapse, Label } from '@grafana/ui';
 
-import ResourcePickerData from '../../resourcePicker/resourcePickerData';
+import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import messageFromError from '../../utils/messageFromError';
 import { Space } from '../Space';
 
@@ -18,6 +18,7 @@ interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;
   resourceURI: string | undefined;
   selectableEntryTypes: ResourceRowType[];
+  queryType: ResourcePickerQueryType;
 
   onApply: (resourceURI: string | undefined) => void;
   onCancel: () => void;
@@ -29,6 +30,7 @@ const ResourcePicker = ({
   onApply,
   onCancel,
   selectableEntryTypes,
+  queryType,
 }: ResourcePickerProps) => {
   const styles = useStyles2(getStyles);
 
@@ -49,14 +51,14 @@ const ResourcePicker = ({
     if (!isLoading) {
       try {
         setIsLoading(true);
-        const resources = await resourcePickerData.fetchInitialRows(internalSelectedURI || '');
+        const resources = await resourcePickerData.fetchInitialRows(queryType, internalSelectedURI || '');
         setRows(resources);
       } catch (error) {
         setErrorMessage(messageFromError(error));
       }
       setIsLoading(false);
     }
-  }, [internalSelectedURI, isLoading, resourcePickerData]);
+  }, [internalSelectedURI, isLoading, resourcePickerData, queryType]);
 
   useEffectOnce(() => {
     loadInitialData();
@@ -91,14 +93,14 @@ const ResourcePicker = ({
       }
 
       try {
-        const nestedRows = await resourcePickerData.fetchAndAppendNestedRow(rows, parentRow);
+        const nestedRows = await resourcePickerData.fetchAndAppendNestedRow(rows, parentRow, queryType);
         setRows(nestedRows);
       } catch (error) {
         setErrorMessage(messageFromError(error));
         throw error;
       }
     },
-    [resourcePickerData, rows]
+    [resourcePickerData, rows, queryType]
   );
 
   const handleSelectionChanged = useCallback((row: ResourceRow, isSelected: boolean) => {
@@ -122,8 +124,7 @@ const ResourcePicker = ({
 
       try {
         setIsLoading(true);
-        const searchType = selectableEntryTypes.length > 1 ? 'logs' : 'metrics';
-        const searchResults = await resourcePickerData.search(searchWord, searchType);
+        const searchResults = await resourcePickerData.search(searchWord, queryType);
         setRows(searchResults);
         if (searchResults.length >= resourcePickerData.resultLimit) {
           setShouldShowLimitFlag(true);
@@ -133,7 +134,7 @@ const ResourcePicker = ({
       }
       setIsLoading(false);
     },
-    [loadInitialData, selectableEntryTypes.length, resourcePickerData]
+    [loadInitialData, resourcePickerData, queryType]
   );
 
   return (

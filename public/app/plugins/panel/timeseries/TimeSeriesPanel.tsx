@@ -14,7 +14,7 @@ import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { TimeSeriesOptions } from './types';
-import { prepareGraphableFields } from './utils';
+import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -36,7 +36,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
+  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
+  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
 
   if (!frames) {
     return (
@@ -57,7 +58,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZone={timeZone}
+      timeZones={timezones}
       width={width}
       height={height}
       legend={options.legend}

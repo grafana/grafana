@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 	grafanaLoginScenario(t, "When login with non-existing user", func(sc *grafanaLoginScenarioContext) {
 		sc.withNonExistingUser()
 		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
-		require.EqualError(t, err, models.ErrUserNotFound.Error())
+		require.EqualError(t, err, user.ErrUserNotFound.Error())
 
 		assert.False(t, sc.validatePasswordCalled)
 		assert.Nil(t, sc.loginUserQuery.User)
@@ -96,16 +97,16 @@ func mockPasswordValidation(valid bool, sc *grafanaLoginScenarioContext) {
 	}
 }
 
-func (sc *grafanaLoginScenarioContext) getUserByLoginQueryReturns(user *models.User) {
-	sc.store.ExpectedUser = user
-	if user == nil {
-		sc.store.ExpectedError = models.ErrUserNotFound
+func (sc *grafanaLoginScenarioContext) getUserByLoginQueryReturns(usr *user.User) {
+	sc.store.ExpectedUser = usr
+	if usr == nil {
+		sc.store.ExpectedError = user.ErrUserNotFound
 	}
 }
 
 func (sc *grafanaLoginScenarioContext) withValidCredentials() {
-	sc.getUserByLoginQueryReturns(&models.User{
-		Id:       1,
+	sc.getUserByLoginQueryReturns(&user.User{
+		ID:       1,
 		Login:    sc.loginUserQuery.Username,
 		Password: sc.loginUserQuery.Password,
 		Salt:     "salt",
@@ -118,7 +119,7 @@ func (sc *grafanaLoginScenarioContext) withNonExistingUser() {
 }
 
 func (sc *grafanaLoginScenarioContext) withInvalidPassword() {
-	sc.getUserByLoginQueryReturns(&models.User{
+	sc.getUserByLoginQueryReturns(&user.User{
 		Password: sc.loginUserQuery.Password,
 		Salt:     "salt",
 	})
@@ -126,7 +127,7 @@ func (sc *grafanaLoginScenarioContext) withInvalidPassword() {
 }
 
 func (sc *grafanaLoginScenarioContext) withDisabledUser() {
-	sc.getUserByLoginQueryReturns(&models.User{
+	sc.getUserByLoginQueryReturns(&user.User{
 		IsDisabled: true,
 	})
 }

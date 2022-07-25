@@ -1,5 +1,4 @@
 import React from 'react';
-import { expect } from 'test/lib/common';
 
 import { DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -212,7 +211,7 @@ describe('query actions', () => {
     silenceConsoleOutput();
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
-      const error = { message: 'failed to fetch metrics' };
+      const error = new Error('failed to fetch metrics');
 
       mocks[variable.datasource!.uid!].metricFindQuery = jest.fn(() => Promise.reject(error));
 
@@ -234,10 +233,7 @@ describe('query actions', () => {
           toKeyedAction('key', addVariableEditorError({ errorProp: 'update', errorText: error.message }))
         );
         expect(dispatchedActions[3]).toEqual(
-          toKeyedAction(
-            'key',
-            variableStateFailed(toVariablePayload(variable, { error: { message: 'failed to fetch metrics' } }))
-          )
+          toKeyedAction('key', variableStateFailed(toVariablePayload(variable, { error })))
         );
         expect(dispatchedActions[4].type).toEqual(notifyApp.type);
         expect(dispatchedActions[4].payload.title).toEqual('Templating [0]');

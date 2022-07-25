@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type NetworkAddress struct {
@@ -43,7 +41,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 
 	host, port, err := net.SplitHostPort(input)
 	if err != nil {
-		return addr, errutil.Wrapf(err, "net.SplitHostPort failed for '%s'", input)
+		return addr, fmt.Errorf("net.SplitHostPort failed for '%s': %w", input, err)
 	}
 
 	if len(host) > 0 {

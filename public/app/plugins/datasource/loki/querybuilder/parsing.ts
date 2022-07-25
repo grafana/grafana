@@ -14,7 +14,7 @@ import {
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarDefs } from './binaryScalarOperations';
-import { LokiVisualQuery, LokiVisualQueryBinary } from './types';
+import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 interface Context {
   query: LokiVisualQuery;
@@ -49,9 +49,11 @@ export function buildVisualQueryFromString(expr: string): Context {
   } catch (err) {
     // Not ideal to log it here, but otherwise we would lose the stack trace.
     console.error(err);
-    context.errors.push({
-      text: err.message,
-    });
+    if (err instanceof Error) {
+      context.errors.push({
+        text: err.message,
+      });
+    }
   }
 
   // If we have empty query, we want to reset errors
@@ -101,12 +103,9 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       }
       break;
     }
-
     case 'JsonExpressionParser': {
-      // JsonExpressionParser is not supported in query builder
-      const error = 'JsonExpressionParser not supported in visual query builder';
-
-      context.errors.push(createNotSupportedError(expr, node, error));
+      visQuery.operations.push(getJsonExpressionParser(expr, node));
+      break;
     }
 
     case 'LineFormatExpr': {
@@ -183,22 +182,24 @@ function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
 }
 
 function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
-  // Check for nodes not supported in visual builder and return error
-  const ipLineFilter = getAllByType(expr, node, 'Ip');
-  if (ipLineFilter.length > 0) {
-    return {
-      error: 'Matching ip addresses not supported in query builder',
-    };
-  }
-
-  const mapFilter: any = {
-    '|=': '__line_contains',
-    '!=': '__line_contains_not',
-    '|~': '__line_matches_regex',
-    '!~': '"__line_matches_regex"_not',
-  };
   const filter = getString(expr, node.getChild('Filter'));
   const filterExpr = handleQuotes(getString(expr, node.getChild('String')));
+  const ipLineFilter = node.getChild('FilterOp')?.getChild('Ip');
+
+  if (ipLineFilter) {
+    return {
+      operation: {
+        id: LokiOperationId.LineFilterIpMatches,
+        params: [filter, filterExpr],
+      },
+    };
+  }
+  const mapFilter: any = {
+    '|=': LokiOperationId.LineContains,
+    '!=': LokiOperationId.LineContainsNot,
+    '|~': LokiOperationId.LineMatchesRegex,
+    '!~': LokiOperationId.LineMatchesRegexNot,
+  };
 
   return {
     operation: {
@@ -220,6 +221,17 @@ function getLabelParser(expr: string, node: SyntaxNode): QueryBuilderOperation {
   };
 }
 
+function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOperation {
+  const parserNode = node.getChild('Json');
+  const parser = getString(expr, parserNode);
+
+  const params = [...getAllByType(expr, node, 'JsonExpression')];
+  return {
+    id: parser,
+    params,
+  };
+}
+
 function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
   // Check for nodes not supported in visual builder and return error
   if (node.getChild('Or') || node.getChild('And') || node.getChild('Comma')) {
@@ -228,8 +240,17 @@ function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuil
     };
   }
   if (node.firstChild!.name === 'IpLabelFilter') {
+    const ipLabelFilter = node.firstChild;
+    const label = ipLabelFilter?.getChild('Identifier');
+    const op = label?.nextSibling;
+    const value = ipLabelFilter?.getChild('String');
+    const valueString = handleQuotes(getString(expr, value));
+
     return {
-      error: 'IpLabelFilter not supported in query builder',
+      operation: {
+        id: LokiOperationId.LabelFilterIpMatches,
+        params: [getString(expr, label), getString(expr, op), valueString],
+      },
     };
   }
 
@@ -285,15 +306,13 @@ function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 
 function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   const id = 'label_format';
-  const identifier = node.getChild('Identifier');
-  const op = identifier!.nextSibling;
-  const value = op!.nextSibling;
-
-  let valueString = handleQuotes(getString(expr, value));
+  const renameTo = node.getChild('Identifier');
+  const op = renameTo!.nextSibling;
+  const originalLabel = op!.nextSibling;
 
   return {
     id,
-    params: [getString(expr, identifier), valueString],
+    params: [getString(expr, originalLabel), handleQuotes(getString(expr, renameTo))],
   };
 }
 
@@ -315,16 +334,21 @@ function handleUnwrapExpr(
   }
 
   if (unwrapChild) {
-    if (unwrapChild?.nextSibling?.type.name === 'ConvOp') {
+    if (unwrapChild.nextSibling?.type.name === 'ConvOp') {
+      const convOp = unwrapChild.nextSibling;
+      const identifier = convOp.nextSibling;
       return {
-        error: 'Unwrap with conversion operator not supported in query builder',
+        operation: {
+          id: 'unwrap',
+          params: [getString(expr, identifier), getString(expr, convOp)],
+        },
       };
     }
 
     return {
       operation: {
         id: 'unwrap',
-        params: [getString(expr, unwrapChild?.nextSibling)],
+        params: [getString(expr, unwrapChild?.nextSibling), ''],
       },
     };
   }
@@ -360,7 +384,13 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   let funcName = getString(expr, nameNode);
 
   const grouping = node.getChild('Grouping');
-  const labels: string[] = [];
+  const params = [];
+
+  const numberNode = node.getChild('Number');
+
+  if (numberNode) {
+    params.push(Number(getString(expr, numberNode)));
+  }
 
   if (grouping) {
     const byModifier = grouping.getChild(`By`);
@@ -373,11 +403,11 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, grouping, 'Identifier'));
+    params.push(...getAllByType(expr, grouping, 'Identifier'));
   }
 
   const metricExpr = node.getChild('MetricExpr');
-  const op: QueryBuilderOperation = { id: funcName, params: labels };
+  const op: QueryBuilderOperation = { id: funcName, params };
 
   if (metricExpr) {
     handleExpression(expr, metricExpr, context);

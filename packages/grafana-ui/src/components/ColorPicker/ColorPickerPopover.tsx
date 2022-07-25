@@ -10,7 +10,6 @@ import { PopoverContentProps } from '../Tooltip';
 
 import { NamedColorsPalette } from './NamedColorsPalette';
 import SpectrumPalette from './SpectrumPalette';
-import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 
 export type ColorPickerChangeHandler = (color: string) => void;
 
@@ -18,10 +17,6 @@ export interface ColorPickerProps extends Themeable2 {
   color: string;
   onChange: ColorPickerChangeHandler;
 
-  /**
-   * @deprecated Use onChange instead
-   */
-  onColorChange?: ColorPickerChangeHandler;
   enableNamedColors?: boolean;
 }
 
@@ -48,7 +43,6 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     this.state = {
       activePicker: 'palette',
     };
-    warnAboutColorPickerPropsDeprecation('ColorPickerPopover', props);
   }
 
   getTabClassName = (tabName: PickerType | keyof T) => {
@@ -57,12 +51,11 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
   };
 
   handleChange = (color: any) => {
-    const { onColorChange, onChange, enableNamedColors, theme } = this.props;
-    const changeHandler = onColorChange || onChange;
+    const { onChange, enableNamedColors, theme } = this.props;
     if (enableNamedColors) {
-      return changeHandler(color);
+      return onChange(color);
     }
-    changeHandler(colorManipulator.asHexString(theme.visualization.getColorByName(color)));
+    onChange(colorManipulator.asHexString(theme.visualization.getColorByName(color)));
   };
 
   onTabChange = (tab: PickerType | keyof T) => {

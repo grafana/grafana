@@ -1,3 +1,4 @@
+import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import svg from 'rollup-plugin-svg-import';
@@ -28,7 +29,6 @@ const buildCjsPackage = ({ env }) => {
     external: [
       'react',
       'react-dom',
-      '@grafana/aws-sdk',
       '@grafana/data',
       '@grafana/schema',
       '@grafana/e2e-selectors',
@@ -39,6 +39,9 @@ const buildCjsPackage = ({ env }) => {
       '@emotion/css',
     ],
     plugins: [
+      // rc-time-picker has a transitive dependency on component-indexof which
+      // when bundled via `component-classes` imports a nonexistent `indexof` module.
+      alias({ entries: [{ find: 'indexof', replacement: 'component-indexof' }] }),
       commonjs({
         include: /node_modules/,
         ignoreTryCatch: false,

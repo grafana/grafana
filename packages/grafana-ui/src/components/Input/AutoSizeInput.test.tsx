@@ -46,4 +46,52 @@ describe('AutoSizeInput', () => {
     fireEvent.change(input, { target: { value: 'very very long value' } });
     expect(getComputedStyle(inputWrapper).width).toBe('304px');
   });
+
+  it('should call onBlur if set when blurring', () => {
+    const onBlur = jest.fn();
+    const onCommitChange = jest.fn();
+    render(<AutoSizeInput onBlur={onBlur} onCommitChange={onCommitChange} />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+
+    fireEvent.blur(input);
+
+    expect(onBlur).toHaveBeenCalled();
+    expect(onCommitChange).not.toHaveBeenCalled();
+  });
+
+  it('should call onCommitChange if not set when blurring', () => {
+    const onCommitChange = jest.fn();
+    render(<AutoSizeInput onCommitChange={onCommitChange} />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+
+    fireEvent.blur(input);
+
+    expect(onCommitChange).toHaveBeenCalled();
+  });
+
+  it('should call onKeyDown if set when keydown', () => {
+    const onKeyDown = jest.fn();
+    const onCommitChange = jest.fn();
+    render(<AutoSizeInput onKeyDown={onKeyDown} onCommitChange={onCommitChange} />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onKeyDown).toHaveBeenCalled();
+    expect(onCommitChange).not.toHaveBeenCalled();
+  });
+
+  it('should call onCommitChange if not set when keydown', () => {
+    const onCommitChange = jest.fn();
+    render(<AutoSizeInput onCommitChange={onCommitChange} />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onCommitChange).toHaveBeenCalled();
+  });
 });

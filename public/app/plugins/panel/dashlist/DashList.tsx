@@ -232,7 +232,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: 'flex',
       alignSelf: 'center',
       cursor: 'pointer',
-      zIndex: 100,
+      zIndex: 1,
     }),
     checkBox: css({
       appearance: 'none',

@@ -10,6 +10,10 @@ import (
 type stubSearchService struct {
 }
 
+func (s *stubSearchService) TriggerReIndex() {
+	// noop.
+}
+
 func NewStubSearchService() SearchService {
 	return &stubSearchService{}
 }

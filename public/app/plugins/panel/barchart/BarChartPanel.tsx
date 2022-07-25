@@ -102,6 +102,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
   const frame0Ref = useRef<DataFrame>();
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
+  const chartDisplay = 'viz' in info ? info : null;
+
   const structureRef = useRef(10000);
   useMemo(() => {
     structureRef.current++;
@@ -109,14 +111,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   }, [options]); // change every time the options object changes (while editing)
 
   const structureRev = useMemo(() => {
-    const f0 = info.viz[0];
+    const f0 = chartDisplay?.viz[0];
     const f1 = frame0Ref.current;
     if (!(f0 && f1 && compareDataFrameStructures(f0, f1, true))) {
       structureRef.current++;
     }
     frame0Ref.current = f0;
     return (data.structureRev ?? 0) + structureRef.current;
-  }, [info, data.structureRev]);
+  }, [chartDisplay, data.structureRev]);
 
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
@@ -142,7 +144,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     }
   }, [height, options.xTickLabelRotation, options.xTickLabelMaxLength]);
 
-  if (!info.viz[0]?.fields.length) {
+  if ('warn' in info) {
     return (
       <PanelDataErrorView
         panelId={id}
@@ -234,7 +236,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       frame: alignedFrame,
       getTimeRange,
       theme,
-      timeZone,
+      timeZones: [timeZone],
       eventBus,
       orientation,
       barWidth,
@@ -264,7 +266,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       preparePlotFrame={(f) => f[0]} // already processed in by the panel above!
       renderLegend={renderLegend}
       legend={options.legend}
-      timeZone={timeZone}
+      timeZones={timeZone}
       timeRange={{ from: 1, to: 1 } as unknown as TimeRange} // HACK
       structureRev={structureRev}
       width={width}

@@ -181,6 +181,13 @@ export interface FieldState {
    * This is only related to the cached displayName property above.
    */
   multipleFrames?: boolean;
+
+  /**
+   * Boolean value is true if a null filling threshold has been applied
+   * against the frame of the field. This is used to avoid cases in which
+   * this would applied more than one time.
+   */
+  nullThresholdApplied?: boolean;
 }
 
 /** @public */

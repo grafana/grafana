@@ -127,77 +127,6 @@ export enum LegacyMappingType {
 }
 
 /**
- * @deprecated use MappingType instead
- * @internal
- */
-export interface LegacyBaseMap {
-  id: number; // this could/should just be the array index
-  text: string; // the final display value
-  type: LegacyMappingType;
-}
-
-/**
- * @deprecated use ValueMapping instead
- * @internal
- */
-export type LegacyValueMapping = LegacyValueMap | LegacyRangeMap;
-
-/**
- * @deprecated use ValueMap instead
- * @internal
- */
-export interface LegacyValueMap extends LegacyBaseMap {
-  value: string;
-}
-
-/**
- * @deprecated use RangeMap instead
- * @internal
- */
-export interface LegacyRangeMap extends LegacyBaseMap {
-  from: string;
-  to: string;
-}
-
-/**
- * @deprecated use getValueMappingResult instead
- * @internal
- */
-export function getMappedValue(valueMappings: LegacyValueMapping[], value: any): LegacyValueMapping {
-  const emptyResult = { type: LegacyMappingType.ValueToText, value: '', text: '', from: '', to: '', id: 0 };
-  if (!valueMappings?.length) {
-    return emptyResult;
-  }
-
-  const upgraded: ValueMapping[] = [];
-  for (const vm of valueMappings) {
-    if (isValueMapping(vm)) {
-      upgraded.push(vm);
-      continue;
-    }
-    upgraded.push(upgradeOldAngularValueMapping(vm));
-  }
-
-  if (!upgraded?.length) {
-    return emptyResult;
-  }
-
-  const result = getValueMappingResult(upgraded, value);
-  if (!result) {
-    return emptyResult;
-  }
-
-  return {
-    type: LegacyMappingType.ValueToText,
-    value: result.text,
-    text: result.text ?? '',
-    from: '',
-    to: '',
-    id: result.index ?? 0,
-  };
-}
-
-/**
  * @alpha
  * Converts the old Angular value mappings to new react style
  */
@@ -308,12 +237,4 @@ function upgradeOldAngularValueMapping(old: any, thresholds?: ThresholdsConfig):
   }
 
   return newMappings[0];
-}
-
-function isValueMapping(map: any): map is ValueMapping {
-  if (!map) {
-    return false;
-  }
-
-  return map.hasOwnProperty('options') && typeof map.options === 'object';
 }

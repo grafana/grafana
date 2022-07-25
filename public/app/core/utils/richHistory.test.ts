@@ -76,7 +76,7 @@ const key = 'grafana.explore.richHistory';
 
 describe('richHistory', () => {
   beforeEach(() => {
-    jest.useFakeTimers('modern');
+    jest.useFakeTimers();
     jest.setSystemTime(new Date(1970, 0, 1));
 
     richHistoryStorageMock.addToRichHistory = jest.fn((r) => {

@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package postgres
 
 import (
@@ -26,6 +23,9 @@ import (
 
 // Test generateConnectionString.
 func TestIntegrationGenerateConnectionString(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 
@@ -173,6 +173,9 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestIntegrationPostgres(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 

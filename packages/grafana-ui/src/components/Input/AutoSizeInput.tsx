@@ -32,19 +32,17 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
       }}
       width={inputWidth}
       onBlur={(event) => {
-        if (onCommitChange) {
-          onCommitChange(event);
-        }
         if (onBlur) {
           onBlur(event);
+        } else if (onCommitChange) {
+          onCommitChange(event);
         }
       }}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' && onCommitChange) {
-          onCommitChange(event);
-        }
         if (onKeyDown) {
           onKeyDown(event);
+        } else if (event.key === 'Enter' && onCommitChange) {
+          onCommitChange(event);
         }
       }}
       data-testid={'autosize-input'}

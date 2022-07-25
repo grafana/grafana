@@ -36,7 +36,7 @@ import {
   isMulti,
   isQuery,
 } from '../guard';
-import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
+import { getAllAffectedPanelIdsForVariableChange, getPanelVars } from '../inspect/utils';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
 import {
@@ -549,7 +549,7 @@ export const setOptionAsCurrent = (
   };
 };
 
-const createGraph = (variables: VariableModel[]) => {
+export const createGraph = (variables: VariableModel[]) => {
   const g = new Graph();
 
   variables.forEach((v) => {
@@ -594,9 +594,14 @@ export const variableUpdated = (
     const variables = getVariablesByKey(rootStateKey, state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
+    const panelVars = getPanelVars(panels);
+
     const event: VariablesChangedEvent = isAdHoc(variableInState)
       ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
-      : { refreshAll: false, panelIds: getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels) };
+      : {
+          refreshAll: false,
+          panelIds: Array.from(getAllAffectedPanelIdsForVariableChange([variableInState.id], g, panelVars)),
+        };
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
@@ -643,7 +648,7 @@ export const onTimeRangeUpdated =
     }) as VariableWithOptions[];
 
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
-    const promises = variablesThatNeedRefresh.map((variable: VariableWithOptions) =>
+    const promises = variablesThatNeedRefresh.map((variable) =>
       dispatch(timeRangeUpdated(toKeyedVariableIdentifier(variable)))
     );
 
@@ -678,7 +683,9 @@ export const templateVarsChangedInUrl =
   async (dispatch, getState) => {
     const update: Array<Promise<any>> = [];
     const dashboard = getState().dashboard.getModel();
-    for (const variable of getVariablesByKey(key, getState())) {
+    const variables = getVariablesByKey(key, getState());
+
+    for (const variable of variables) {
       const key = `var-${variable.name}`;
       if (!vars.hasOwnProperty(key)) {
         // key not found quick exit
@@ -708,9 +715,27 @@ export const templateVarsChangedInUrl =
       update.push(promise);
     }
 
+    const filteredVars = variables.filter((v) => {
+      const key = `var-${v.name}`;
+      return vars.hasOwnProperty(key) && isVariableUrlValueDifferentFromCurrent(v, vars[key].value) && !isAdHoc(v);
+    });
+    const varGraph = createGraph(variables);
+    const panelVars = getPanelVars(dashboard?.panels ?? []);
+    const affectedPanels = getAllAffectedPanelIdsForVariableChange(
+      filteredVars.map((v) => v.id),
+      varGraph,
+      panelVars
+    );
+
     if (update.length) {
       await Promise.all(update);
-      events.publish(new VariablesChangedInUrl({ panelIds: [], refreshAll: true }));
+
+      events.publish(
+        new VariablesChangedInUrl({
+          refreshAll: affectedPanels.size === 0,
+          panelIds: Array.from(affectedPanels),
+        })
+      );
     }
   };
 

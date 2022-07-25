@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type setUserResourcePermissionTest struct {
@@ -448,13 +449,13 @@ func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlst
 			org = &addedOrg
 		}
 
-		u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{
+		u, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
 			Login: fmt.Sprintf("user:%s%d", resourceID, i),
-			OrgId: org.Id,
+			OrgID: org.Id,
 		})
 		require.NoError(t, err)
 
-		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.Id}, types.SetResourcePermissionCommand{
+		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.ID}, types.SetResourcePermissionCommand{
 			Actions:           actions,
 			Resource:          resource,
 			ResourceID:        resourceID,

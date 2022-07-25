@@ -44,7 +44,6 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
         value={query.azureMonitor?.aggregation}
         onChange={handleChange}
         options={options}
-        width={38}
         isLoading={isLoading}
       />
     </Field>

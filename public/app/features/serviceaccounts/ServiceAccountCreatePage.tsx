@@ -1,28 +1,27 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { connect } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 
-import { NavModel } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { Form, Button, Input, Field } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { getBackendSrv, locationService } from '@grafana/runtime';
+import { Form, Button, Input, Field, FieldSet } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchBuiltinRoles, fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgRole, Role, ServiceAccountCreateApiResponse, ServiceAccountDTO } from 'app/types';
 
-import { getNavModel } from '../../core/selectors/navModel';
-import { StoreState } from '../../types';
+import { OrgRolePicker } from '../admin/OrgRolePicker';
 
-interface ServiceAccountCreatePageProps {
-  navModel: NavModel;
-}
+export interface Props {}
 
-const createServiceAccount = async (sa: ServiceAccountDTO) => getBackendSrv().post('/api/serviceaccounts/', sa);
+const createServiceAccount = async (sa: ServiceAccountDTO) => {
+  const result = await getBackendSrv().post('/api/serviceaccounts/', sa);
+  await contextSrv.fetchUserPermissions();
+  return result;
+};
+
 const updateServiceAccount = async (id: number, sa: ServiceAccountDTO) =>
   getBackendSrv().patch(`/api/serviceaccounts/${id}`, sa);
 
-const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ navModel }) => {
+export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
@@ -48,7 +47,10 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
           setRoleOptions(options);
         }
 
-        if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+        if (
+          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
+        ) {
           const builtInRoles = await fetchBuiltinRoles(currentOrgId);
           setBuiltinRoles(builtInRoles);
         }
@@ -60,8 +62,6 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
       fetchOptions();
     }
   }, [currentOrgId]);
-
-  const history = useHistory();
 
   const onSubmit = useCallback(
     async (data: ServiceAccountDTO) => {
@@ -79,13 +79,19 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
           tokens: response.tokens,
         };
         await updateServiceAccount(response.id, data);
-        await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
+        if (
+          contextSrv.licensedAccessControlEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+          contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove)
+        ) {
+          await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
+        }
       } catch (e) {
         console.error(e);
       }
-      history.push('/org/serviceaccounts/');
+      locationService.push(`/org/serviceaccounts/${response.id}`);
     },
-    [history, serviceAccount.role, pendingRoles]
+    [serviceAccount.role, pendingRoles]
   );
 
   const onRoleChange = (role: OrgRole) => {
@@ -101,37 +107,43 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
   };
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="serviceaccounts" pageNav={{ text: 'Create service account' }}>
       <Page.Contents>
-        <h1>Create service account</h1>
-        <Form onSubmit={onSubmit} validateOn="onBlur">
+        <Page.OldNavOnly>
+          <h3 className="page-sub-heading">Create service account</h3>
+        </Page.OldNavOnly>
+        <Form onSubmit={onSubmit} validateOn="onSubmit">
           {({ register, errors }) => {
             return (
               <>
-                <Field
-                  label="Display name"
-                  required
-                  invalid={!!errors.name}
-                  error={errors.name ? 'Display name is required' : undefined}
-                >
-                  <Input id="display-name-input" {...register('name', { required: true })} />
-                </Field>
-                {contextSrv.accessControlEnabled() && (
-                  <Field label="Role">
-                    <UserRolePicker
-                      userId={serviceAccount.id || 0}
-                      orgId={serviceAccount.orgId}
-                      builtInRole={serviceAccount.role}
-                      builtInRoles={builtinRoles}
-                      onBuiltinRoleChange={(newRole) => onRoleChange(newRole)}
-                      builtinRolesDisabled={false}
-                      roleOptions={roleOptions}
-                      updateDisabled={true}
-                      onApplyRoles={onPendingRolesUpdate}
-                      pendingRoles={pendingRoles}
-                    />
+                <FieldSet>
+                  <Field
+                    label="Display name"
+                    required
+                    invalid={!!errors.name}
+                    error={errors.name ? 'Display name is required' : undefined}
+                  >
+                    <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
                   </Field>
-                )}
+                  <Field label="Role">
+                    {contextSrv.licensedAccessControlEnabled() ? (
+                      <UserRolePicker
+                        userId={serviceAccount.id || 0}
+                        orgId={serviceAccount.orgId}
+                        builtInRole={serviceAccount.role}
+                        builtInRoles={builtinRoles}
+                        onBuiltinRoleChange={onRoleChange}
+                        builtinRolesDisabled={false}
+                        roleOptions={roleOptions}
+                        updateDisabled={true}
+                        onApplyRoles={onPendingRolesUpdate}
+                        pendingRoles={pendingRoles}
+                      />
+                    ) : (
+                      <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />
+                    )}
+                  </Field>
+                </FieldSet>
                 <Button type="submit">Create</Button>
               </>
             );
@@ -142,8 +154,4 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
   );
 };
 
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'serviceaccounts'),
-});
-
-export default connect(mapStateToProps)(ServiceAccountCreatePage);
+export default ServiceAccountCreatePage;

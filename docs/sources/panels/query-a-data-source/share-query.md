@@ -14,11 +14,9 @@ The Dashboard data source lets you select a panel in your dashboard that contain
 
 This strategy can drastically reduce the number of queries being made when you for example have several panels visualizing the same data.
 
-**To share data source queries with another panel**:
-
-1. [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+1. [Create a dashboard and add a panel]({{< relref "../../dashboards/add-organize-panels/#create-a-dashboard-and-add-a-panel" >}}).
 1. Change the title to "Source panel". You'll use this panel as a source for the other panels.
-1. Define the [query]({{< relref "add-a-query.md" >}}) or queries that you want share.
+1. Define the [query]({{< relref "add-a-query/" >}}) or queries that you want share.
 
    If you don't have a data source available, use the **Grafana** data source, which returns a random time series that you can use for testing.
 

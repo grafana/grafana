@@ -40,6 +40,7 @@ export function LokiQueryCodeEditor({
         history={[]}
         data={data}
         data-testid={testIds.editor}
+        app={app}
       />
     </div>
   );

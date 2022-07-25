@@ -15,7 +15,7 @@ weight: 800
 # Jaeger data source
 
 Grafana ships with built-in support for Jaeger, which provides open source, end-to-end distributed tracing.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/_index.md" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
 
 ## Add data source
 
@@ -66,9 +66,19 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 -- **Enable Node Graph -** Enables the Node Graph visualization.
 
+### Span bar label
+
+You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
+
+Select one of the following four options. The default selection is Duration.
+
+- **None -** Do not show any additional information on the span bar row.
+- **Duration -** Show the span duration on the span bar row.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
+
 ## Query traces
 
-You can query and display traces from Jaeger via [Explore]({{< relref "../explore/_index.md" >}}).
+You can query and display traces from Jaeger via [Explore]({{< relref "../explore/" >}}).
 
 {{< figure src="/static/img/docs/explore/jaeger-search-form.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 
@@ -143,7 +153,7 @@ Here is an example JSON:
 
 ## Linking Trace ID from logs
 
-You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) documentation for details.
+You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "loki/#derived-fields" >}}) section in the [Loki data source]({{< relref "loki/" >}}) documentation for details.
 
 ## Configure the data source with provisioning
 

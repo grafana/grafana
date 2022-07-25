@@ -18,7 +18,7 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Fetch settings
 
@@ -358,7 +358,7 @@ Content-Type: application/json
 }
 ```
 
-Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../administration/configuration.md#auto-assign-org" >}}) is set to `true`.
+Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../setup-grafana/configure-grafana/#auto-assign-org" >}}) is set to `true`.
 
 **Example Response**:
 
@@ -380,9 +380,9 @@ Change password for a specific user.
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                | Scope           |
-| --------------------- | --------------- |
-| users.password:update | global.users:\* |
+| Action               | Scope           |
+| -------------------- | --------------- |
+| users.password:write | global.users:\* |
 
 **Example Request**:
 
@@ -413,9 +413,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                   | Scope           |
-| ------------------------ | --------------- |
-| users.permissions:update | global.users:\* |
+| Action                  | Scope           |
+| ----------------------- | --------------- |
+| users.permissions:write | global.users:\* |
 
 **Example Request**:
 
@@ -471,6 +471,8 @@ Content-Type: application/json
 
 `POST /api/admin/pause-all-alerts`
 
+> **Note:** This API is relevant for the [legacy dashboard alerts]({{< relref "../../old-alerting/" >}}) only. For default alerting, use [silences]({{< relref "../../alerting/silences/" >}}) to stop alerts from being delivered.
+
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
@@ -516,7 +518,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
-| users.authtoken:list | global.users:\* |
+| users.authtoken:read | global.users:\* |
 
 **Example Request**:
 
@@ -573,9 +575,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                 | Scope           |
-| ---------------------- | --------------- |
-| users.authtoken:update | global.users:\* |
+| Action                | Scope           |
+| --------------------- | --------------- |
+| users.authtoken:write | global.users:\* |
 
 **Example Request**:
 
@@ -716,16 +718,75 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/rotate-data-keys`
 
-Rotates data encryption keys, so all the active keys are disabled
-and no longer used for encryption but kept for decryption operations.
-
-Secrets encrypted with one of the deactivated keys need to be re-encrypted
-to actually stop using those keys for both encryption and decryption.
+[Rotates]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#rotate-data-keys" >}}) data encryption keys.
 
 **Example Request**:
 
 ```http
 POST /api/admin/encryption/rotate-data-keys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 204
+Content-Type: application/json
+```
+
+## Re-encrypt data encryption keys
+
+`POST /api/admin/encryption/reencrypt-data-keys`
+
+[Re-encrypts]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-data-keys" >}}) data encryption keys.
+
+**Example Request**:
+
+```http
+POST /api/admin/encryption/reencrypt-data-keys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 204
+Content-Type: application/json
+```
+
+## Re-encrypt secrets
+
+`POST /api/admin/encryption/reencrypt-secrets`
+
+[Re-encrypts]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-secrets" >}}) secrets.
+
+**Example Request**:
+
+```http
+POST /api/admin/encryption/reencrypt-secrets HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 204
+Content-Type: application/json
+```
+
+## Roll back secrets
+
+`POST /api/admin/encryption/rollback-secrets`
+
+[Rolls back]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#roll-back-secrets" >}}) secrets.
+
+**Example Request**:
+
+```http
+POST /api/admin/encryption/rollback-secrets HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 ```

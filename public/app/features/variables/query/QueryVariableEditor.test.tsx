@@ -6,7 +6,6 @@ import { DataSourceApi } from '@grafana/data';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
-import { describe, expect } from '../../../../test/lib/common';
 import { NEW_VARIABLE_ID } from '../constants';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { KeyedVariableIdentifier } from '../state/types';

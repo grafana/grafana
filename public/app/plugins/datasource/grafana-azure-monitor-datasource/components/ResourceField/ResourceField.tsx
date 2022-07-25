@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import Datasource from '../../datasource';
+import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureQueryEditorFieldProps, AzureMonitorQuery, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
@@ -28,7 +29,10 @@ function parseResourceDetails(resourceURI: string) {
 interface ResourceFieldProps extends AzureQueryEditorFieldProps {
   setResource: (query: AzureMonitorQuery, resourceURI?: string) => AzureMonitorQuery;
   selectableEntryTypes: ResourceRowType[];
+  queryType: ResourcePickerQueryType;
   resourceUri?: string;
+  inlineField?: boolean;
+  labelWidth?: number;
 }
 
 const ResourceField: React.FC<ResourceFieldProps> = ({
@@ -37,7 +41,10 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
   onQueryChange,
   setResource,
   selectableEntryTypes,
+  queryType,
   resourceUri,
+  inlineField,
+  labelWidth,
 }) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
@@ -75,10 +82,10 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
           onApply={handleApply}
           onCancel={closePicker}
           selectableEntryTypes={selectableEntryTypes}
+          queryType={queryType}
         />
       </Modal>
-
-      <Field label="Resource">
+      <Field label="Resource" inlineField={inlineField} labelWidth={labelWidth}>
         <Button className={styles.resourceFieldButton} variant="secondary" onClick={handleOpenPicker} type="button">
           <ResourceLabel resource={resourceUri} datasource={datasource} />
         </Button>

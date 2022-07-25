@@ -14,8 +14,9 @@ var (
 
 type dataKeyCacheEntry struct {
 	id         string
-	name       string
+	label      string
 	dataKey    []byte
+	active     bool
 	expiration time.Time
 }
 
@@ -26,14 +27,14 @@ func (e dataKeyCacheEntry) expired() bool {
 type dataKeyCache struct {
 	mtx      sync.RWMutex
 	byId     map[string]*dataKeyCacheEntry
-	byName   map[string]*dataKeyCacheEntry
+	byLabel  map[string]*dataKeyCacheEntry
 	cacheTTL time.Duration
 }
 
 func newDataKeyCache(ttl time.Duration) *dataKeyCache {
 	return &dataKeyCache{
 		byId:     make(map[string]*dataKeyCacheEntry),
-		byName:   make(map[string]*dataKeyCacheEntry),
+		byLabel:  make(map[string]*dataKeyCacheEntry),
 		cacheTTL: ttl,
 	}
 }
@@ -56,15 +57,15 @@ func (c *dataKeyCache) getById(id string) (*dataKeyCacheEntry, bool) {
 	return entry, true
 }
 
-func (c *dataKeyCache) getByName(name string) (*dataKeyCacheEntry, bool) {
+func (c *dataKeyCache) getByLabel(label string) (*dataKeyCacheEntry, bool) {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	entry, exists := c.byName[name]
+	entry, exists := c.byLabel[label]
 
 	cacheReadsCounter.With(prometheus.Labels{
 		"hit":    strconv.FormatBool(exists),
-		"method": "byName",
+		"method": "byLabel",
 	}).Inc()
 
 	if !exists || entry.expired() {
@@ -81,7 +82,7 @@ func (c *dataKeyCache) add(entry *dataKeyCacheEntry) {
 	entry.expiration = now().Add(c.cacheTTL)
 
 	c.byId[entry.id] = entry
-	c.byName[entry.name] = entry
+	c.byLabel[entry.label] = entry
 }
 
 func (c *dataKeyCache) removeExpired() {
@@ -94,9 +95,9 @@ func (c *dataKeyCache) removeExpired() {
 		}
 	}
 
-	for name, entry := range c.byName {
+	for label, entry := range c.byLabel {
 		if entry.expired() {
-			delete(c.byName, name)
+			delete(c.byLabel, label)
 		}
 	}
 }
@@ -104,6 +105,6 @@ func (c *dataKeyCache) removeExpired() {
 func (c *dataKeyCache) flush() {
 	c.mtx.Lock()
 	c.byId = make(map[string]*dataKeyCacheEntry)
-	c.byName = make(map[string]*dataKeyCacheEntry)
+	c.byLabel = make(map[string]*dataKeyCacheEntry)
 	c.mtx.Unlock()
 }

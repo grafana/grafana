@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
-import { EditorRows, FlexItem } from '@grafana/experimental';
-import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, EditorRows, FlexItem, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
@@ -76,7 +75,6 @@ export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, 
           <PromQueryBuilder
             query={nestedQuery.query}
             datasource={datasource}
-            nested={true}
             onRunQuery={onRunQuery}
             onChange={(update) => {
               onChange(index, { ...nestedQuery, query: update });

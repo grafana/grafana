@@ -8,9 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func (m *PluginManager) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := m.plugin(pluginID)
-
+func (m *PluginManager) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := m.plugin(ctx, pluginID)
 	if !exists {
 		return plugins.PluginDTO{}, false
 	}
@@ -18,7 +17,7 @@ func (m *PluginManager) Plugin(_ context.Context, pluginID string) (plugins.Plug
 	return p.ToDTO(), true
 }
 
-func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+func (m *PluginManager) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
 	// if no types passed, assume all
 	if len(pluginTypes) == 0 {
 		pluginTypes = plugins.PluginTypes
@@ -30,7 +29,7 @@ func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) 
 	}
 
 	pluginsList := make([]plugins.PluginDTO, 0)
-	for _, p := range m.plugins() {
+	for _, p := range m.availablePlugins(ctx) {
 		if _, exists := requestedTypes[p.Type]; exists {
 			pluginsList = append(pluginsList, p.ToDTO())
 		}
@@ -38,44 +37,31 @@ func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) 
 	return pluginsList
 }
 
-func (m *PluginManager) plugin(pluginID string) (*plugins.Plugin, bool) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	p, exists := m.store[pluginID]
-
-	if !exists || (p.IsDecommissioned()) {
+// plugin finds a plugin with `pluginID` from the registry that is not decommissioned
+func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists || p.IsDecommissioned() {
 		return nil, false
 	}
 
 	return p, true
 }
 
-func (m *PluginManager) plugins() []*plugins.Plugin {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-
-	res := make([]*plugins.Plugin, 0)
-	for _, p := range m.store {
+// availablePlugins returns all non-decommissioned plugins from the registry
+func (m *PluginManager) availablePlugins(ctx context.Context) []*plugins.Plugin {
+	var res []*plugins.Plugin
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
 		if !p.IsDecommissioned() {
 			res = append(res, p)
 		}
 	}
-
 	return res
 }
 
-func (m *PluginManager) isRegistered(pluginID string) bool {
-	p, exists := m.plugin(pluginID)
-	if !exists {
-		return false
-	}
-
-	return !p.IsDecommissioned()
-}
-
-func (m *PluginManager) registeredPlugins() map[string]struct{} {
+// registeredPlugins returns all registered plugins from the registry
+func (m *PluginManager) registeredPlugins(ctx context.Context) map[string]struct{} {
 	pluginsByID := make(map[string]struct{})
-	for _, p := range m.store {
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
 		pluginsByID[p.ID] = struct{}{}
 	}
 
@@ -85,7 +71,7 @@ func (m *PluginManager) registeredPlugins() map[string]struct{} {
 func (m *PluginManager) Add(ctx context.Context, pluginID, version string) error {
 	var pluginZipURL string
 
-	if plugin, exists := m.plugin(pluginID); exists {
+	if plugin, exists := m.plugin(ctx, pluginID); exists {
 		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
@@ -126,7 +112,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string) error
 }
 
 func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
-	plugin, exists := m.plugin(pluginID)
+	plugin, exists := m.plugin(ctx, pluginID)
 	if !exists {
 		return plugins.ErrPluginNotInstalled
 	}
@@ -141,11 +127,8 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallOutsideOfPluginDir
 	}
 
-	if m.isRegistered(pluginID) {
-		err := m.unregisterAndStop(ctx, plugin)
-		if err != nil {
-			return err
-		}
+	if err := m.unregisterAndStop(ctx, plugin); err != nil {
+		return err
 	}
 
 	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)

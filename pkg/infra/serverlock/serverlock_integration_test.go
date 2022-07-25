@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package serverlock
 
 import (
@@ -12,6 +9,9 @@ import (
 )
 
 func TestIntegrationServerLok(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sl := createTestableServerLock(t)
 
 	counter := 0

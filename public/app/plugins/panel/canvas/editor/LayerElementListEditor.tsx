@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 
-import { AppEvents, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
@@ -10,11 +11,11 @@ import { CanvasElementOptions, canvasElementRegistry } from 'app/features/canvas
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
-import { SelectionParams } from 'app/features/canvas/runtime/scene';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelOptions } from '../models.gen';
 import { LayerActionID } from '../types';
+import { doSelect } from '../utils';
 
 import { LayerEditorProps } from './layerEditor';
 
@@ -47,26 +48,10 @@ export class LayerElementListEditor extends PureComponent<Props> {
     layer.reinitializeMoveable();
   };
 
-  onSelect = (item: any) => {
+  onSelect = (item: ElementState) => {
     const { settings } = this.props.item;
-
     if (settings?.scene) {
-      try {
-        let selection: SelectionParams = { targets: [] };
-        if (item instanceof FrameState) {
-          const targetElements: HTMLDivElement[] = [];
-          targetElements.push(item?.div!);
-          selection.targets = targetElements;
-          selection.frame = item;
-          settings.scene.select(selection);
-        } else if (item instanceof ElementState) {
-          const targetElement = [item?.div!];
-          selection.targets = targetElement;
-          settings.scene.select(selection);
-        }
-      } catch (error) {
-        appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
-      }
+      doSelect(settings.scene, item);
     }
   };
 
@@ -269,7 +254,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
               Clear selection
             </Button>
           )}
-          {selection.length > 1 && (
+          {selection.length > 1 && config.featureToggles.canvasPanelNesting && (
             <Button size="sm" variant="secondary" onClick={this.onFrameSelection}>
               Frame selection
             </Button>

@@ -6,12 +6,16 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type AlertRuleMutator func(*AlertRule)
+
 // AlertRuleGen provides a factory function that generates a random AlertRule.
 // The mutators arguments allows changing fields of the resulting structure
-func AlertRuleGen(mutators ...func(*AlertRule)) func() *AlertRule {
+func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 	return func() *AlertRule {
 		randNoDataState := func() NoDataState {
 			s := [...]NoDataState{
@@ -36,19 +40,11 @@ func AlertRuleGen(mutators ...func(*AlertRule)) func() *AlertRule {
 
 		var annotations map[string]string = nil
 		if rand.Int63()%2 == 0 {
-			qty := rand.Intn(5)
-			annotations = make(map[string]string, qty)
-			for i := 0; i < qty; i++ {
-				annotations[util.GenerateShortUID()] = util.GenerateShortUID()
-			}
+			annotations = GenerateAlertLabels(rand.Intn(5), "ann-")
 		}
 		var labels map[string]string = nil
 		if rand.Int63()%2 == 0 {
-			qty := rand.Intn(5)
-			labels = make(map[string]string, qty)
-			for i := 0; i < qty; i++ {
-				labels[util.GenerateShortUID()] = util.GenerateShortUID()
-			}
+			labels = GenerateAlertLabels(rand.Intn(5), "lbl-")
 		}
 
 		var dashUID *string = nil
@@ -74,6 +70,7 @@ func AlertRuleGen(mutators ...func(*AlertRule)) func() *AlertRule {
 			DashboardUID:    dashUID,
 			PanelID:         panelID,
 			RuleGroup:       "TEST-GROUP-" + util.GenerateShortUID(),
+			RuleGroupIndex:  rand.Int(),
 			NoDataState:     randNoDataState(),
 			ExecErrState:    randErrState(),
 			For:             forInterval,
@@ -86,6 +83,61 @@ func AlertRuleGen(mutators ...func(*AlertRule)) func() *AlertRule {
 		}
 		return rule
 	}
+}
+
+func WithNotEmptyLabels(count int, prefix string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Labels = GenerateAlertLabels(count, prefix)
+	}
+}
+func WithUniqueID() AlertRuleMutator {
+	usedID := make(map[int64]struct{})
+	return func(rule *AlertRule) {
+		for {
+			id := rand.Int63()
+			if _, ok := usedID[id]; !ok {
+				usedID[id] = struct{}{}
+				rule.ID = id
+				return
+			}
+		}
+	}
+}
+
+func WithGroupIndex(groupIndex int) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.RuleGroupIndex = groupIndex
+	}
+}
+
+func WithUniqueGroupIndex() AlertRuleMutator {
+	usedIdx := make(map[int]struct{})
+	return func(rule *AlertRule) {
+		for {
+			idx := rand.Int()
+			if _, ok := usedIdx[idx]; !ok {
+				usedIdx[idx] = struct{}{}
+				rule.RuleGroupIndex = idx
+				return
+			}
+		}
+	}
+}
+
+func WithSequentialGroupIndex() AlertRuleMutator {
+	idx := 1
+	return func(rule *AlertRule) {
+		rule.RuleGroupIndex = idx
+		idx++
+	}
+}
+
+func GenerateAlertLabels(count int, prefix string) data.Labels {
+	labels := make(data.Labels, count)
+	for i := 0; i < count; i++ {
+		labels[prefix+"key-"+util.GenerateShortUID()] = prefix + "value-" + util.GenerateShortUID()
+	}
+	return labels
 }
 
 func GenerateAlertQuery() AlertQuery {
@@ -133,7 +185,15 @@ func GenerateAlertRules(count int, f func() *AlertRule) []*AlertRule {
 	return result
 }
 
-// GenerateGroupKey generates many random alert rules. Does not guarantee that rules are unique (by UID)
+// GenerateRuleKey generates a random alert rule key
+func GenerateRuleKey(orgID int64) AlertRuleKey {
+	return AlertRuleKey{
+		OrgID: orgID,
+		UID:   util.GenerateShortUID(),
+	}
+}
+
+// GenerateGroupKey generates a random group key
 func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
 	return AlertRuleGroupKey{
 		OrgID:        orgID,
@@ -155,6 +215,7 @@ func CopyRule(r *AlertRule) *AlertRule {
 		UID:             r.UID,
 		NamespaceUID:    r.NamespaceUID,
 		RuleGroup:       r.RuleGroup,
+		RuleGroupIndex:  r.RuleGroupIndex,
 		NoDataState:     r.NoDataState,
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,

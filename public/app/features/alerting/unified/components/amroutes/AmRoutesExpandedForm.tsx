@@ -29,6 +29,7 @@ import {
   optionalPositiveInteger,
   stringToSelectableValue,
   stringsToSelectableValues,
+  commonGroupByOptions,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 
@@ -44,7 +45,6 @@ export interface AmRoutesExpandedFormProps {
 export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
-  const [overrideGrouping, setOverrideGrouping] = useState(routes.groupBy.length > 0);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
   const muteTimingOptions = useMuteTimingOptions();
 
@@ -159,13 +159,9 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             <Switch id="continue-toggle" {...register('continue')} />
           </Field>
           <Field label="Override grouping">
-            <Switch
-              id="override-grouping-toggle"
-              value={overrideGrouping}
-              onChange={() => setOverrideGrouping((overrideGrouping) => !overrideGrouping)}
-            />
+            <Switch id="override-grouping-toggle" {...register('overrideGrouping')} />
           </Field>
-          {overrideGrouping && (
+          {watch().overrideGrouping && (
             <Field
               label="Group by"
               description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
@@ -184,7 +180,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                       setValue('groupBy', [...field.value, opt]);
                     }}
                     onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-                    options={groupByOptions}
+                    options={[...commonGroupByOptions, groupByOptions]}
                   />
                 )}
                 control={control}

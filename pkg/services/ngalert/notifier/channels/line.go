@@ -7,11 +7,12 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
 )
 
 var (
@@ -74,7 +75,7 @@ type LineNotifier struct {
 
 // Notify send an alert notification to LINE
 func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	ln.log.Debug("Executing line notification", "notification", ln.Name)
+	ln.log.Debug("executing line notification", "notification", ln.Name)
 
 	ruleURL := path.Join(ln.tmpl.ExternalURL.String(), "/alerting/list")
 
@@ -105,7 +106,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	}
 
 	if err := ln.ns.SendWebhookSync(ctx, cmd); err != nil {
-		ln.log.Error("Failed to send notification to LINE", "error", err, "body", body)
+		ln.log.Error("failed to send notification to LINE", "err", err, "body", body)
 		return false, err
 	}
 

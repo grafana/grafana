@@ -593,7 +593,7 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 	resp, err := g.queryDataService.QueryData(client.Context(), user, false, req, true)
 	if err != nil {
 		logger.Error("Error query data", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
-		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusForbidden), Message: http.StatusText(http.StatusForbidden)}
 		}
 		var badQuery *query.ErrBadQuery
@@ -940,7 +940,6 @@ func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *models.Si
 
 // Publish sends the data to the channel without checking permissions etc.
 func (g *GrafanaLive) Publish(orgID int64, channel string, data []byte) error {
-	logger.Debug("publish into channel", "channel", channel, "orgId", orgID, "data", string(data))
 	_, err := g.node.Publish(orgchannel.PrependOrgID(orgID, channel), data)
 	return err
 }

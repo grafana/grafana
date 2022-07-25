@@ -130,3 +130,68 @@ func TestIsAddedDeleted_Collections(t *testing.T) {
 		}
 	})
 }
+
+func TestGetDiffsForField(t *testing.T) {
+	t.Run("should not include fields that starts has prefix", func(t *testing.T) {
+		diff := DiffReport{
+			Diff{
+				Path: "Property",
+			},
+			Diff{
+				Path: "PropertyData",
+			},
+		}
+
+		result := diff.GetDiffsForField("Property")
+		require.Len(t, result, 1)
+		require.Equal(t, "Property", result[0].Path)
+	})
+
+	t.Run("should return all changes by parent path", func(t *testing.T) {
+		diff := DiffReport{
+			Diff{
+				Path: "Property.Data.Value",
+			},
+			Diff{
+				Path: "Property.Array[0].Value",
+			},
+		}
+
+		result := diff.GetDiffsForField("Property")
+		require.Len(t, result, 2)
+	})
+
+	t.Run("should return all elements of array", func(t *testing.T) {
+		diff := DiffReport{
+			Diff{
+				Path: "Property[0].Data.Test",
+			},
+			Diff{
+				Path: "Property",
+			},
+			Diff{
+				Path: "Property[1]",
+			},
+		}
+
+		result := diff.GetDiffsForField("Property")
+		require.Len(t, result, 3)
+	})
+
+	t.Run("should find nothing if parent path does not exist", func(t *testing.T) {
+		diff := DiffReport{
+			Diff{
+				Path: "Property[0].Data.Test",
+			},
+			Diff{
+				Path: "Property",
+			},
+			Diff{
+				Path: "Property[1]",
+			},
+		}
+
+		result := diff.GetDiffsForField("Proper")
+		require.Empty(t, result)
+	})
+}
