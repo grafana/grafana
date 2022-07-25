@@ -5086,7 +5086,7 @@ __metadata:
     calculate-size: 1.1.1
     classnames: 2.3.1
     common-tags: 1.8.2
-    core-js: 3.23.0
+    core-js: 3.24.0
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.0.0
     csstype: 3.1.0
@@ -16301,10 +16301,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.23.0":
-  version: 3.23.0
-  resolution: "core-js@npm:3.23.0"
-  checksum: 4fcfec8133bd31ae34482bcdf891d8dcff4a64de656b82749c56d984b227cc107f755104aefb884b284f78d3e59fad24592de039ff7f78e60316cd4ade734af4
+"core-js@npm:3.24.0":
+  version: 3.24.0
+  resolution: "core-js@npm:3.24.0"
+  checksum: f1d1feef82bac7ecddd9e40e75b7126e7b5299a0d17aa046238bd8c78567d485b32c9c80b212704d9483ccc8b3f13b3ee35a5ec69fdca874377f654664068669
   languageName: node
   linkType: hard
 
@@ -21099,7 +21099,7 @@ __metadata:
     comlink: 4.3.1
     common-tags: 1.8.2
     copy-webpack-plugin: 9.0.1
-    core-js: 3.23.0
+    core-js: 3.24.0
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.0.0
     cypress: 9.5.1
