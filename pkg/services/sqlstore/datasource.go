@@ -61,6 +61,13 @@ func (ss *SQLStore) GetDataSources(ctx context.Context, query *datasources.GetDa
 	})
 }
 
+func (ss *SQLStore) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		query.Result = make([]*datasources.DataSource, 0)
+		return sess.Asc("name").Find(&query.Result)
+	})
+}
+
 // GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
 func (ss *SQLStore) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	if query.Type == "" {
@@ -69,6 +76,9 @@ func (ss *SQLStore) GetDataSourcesByType(ctx context.Context, query *datasources
 
 	query.Result = make([]*datasources.DataSource, 0)
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if query.OrgId > 0 {
+			return sess.Where("type=? AND org_id=?", query.Type, query.OrgId).Asc("id").Find(&query.Result)
+		}
 		return sess.Where("type=?", query.Type).Asc("id").Find(&query.Result)
 	})
 }
@@ -255,6 +265,9 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		sess.MustCols("password")
 		sess.MustCols("basic_auth_password")
 		sess.MustCols("user")
+		// Make sure secure json data is zeroed out if empty. We do this as we want to migrate secrets from
+		// secure json data to the unified secrets table.
+		sess.MustCols("secure_json_data")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { Form, Button, Input, Field } from '@grafana/ui';
+import { Form, Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchBuiltinRoles, fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
@@ -13,7 +13,11 @@ import { OrgRolePicker } from '../admin/OrgRolePicker';
 
 export interface Props {}
 
-const createServiceAccount = async (sa: ServiceAccountDTO) => getBackendSrv().post('/api/serviceaccounts/', sa);
+const createServiceAccount = async (sa: ServiceAccountDTO) => {
+  const result = await getBackendSrv().post('/api/serviceaccounts/', sa);
+  await contextSrv.fetchUserPermissions();
+  return result;
+};
 
 const updateServiceAccount = async (id: number, sa: ServiceAccountDTO) =>
   getBackendSrv().patch(`/api/serviceaccounts/${id}`, sa);
@@ -44,7 +48,10 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
           setRoleOptions(options);
         }
 
-        if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+        if (
+          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
+        ) {
           const builtInRoles = await fetchBuiltinRoles(currentOrgId);
           setBuiltinRoles(builtInRoles);
         }
@@ -75,7 +82,11 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
           tokens: response.tokens,
         };
         await updateServiceAccount(response.id, data);
-        if (contextSrv.licensedAccessControlEnabled()) {
+        if (
+          contextSrv.licensedAccessControlEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+          contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove)
+        ) {
           await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
         }
       } catch (e) {
@@ -99,39 +110,43 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   };
 
   return (
-    <Page navId="serviceaccounts">
+    <Page navId="serviceaccounts" pageNav={{ text: 'Create service account' }}>
       <Page.Contents>
-        <h1>Create service account</h1>
+        <Page.OldNavOnly>
+          <h3 className="page-sub-heading">Create service account</h3>
+        </Page.OldNavOnly>
         <Form onSubmit={onSubmit} validateOn="onSubmit">
           {({ register, errors }) => {
             return (
               <>
-                <Field
-                  label="Display name"
-                  required
-                  invalid={!!errors.name}
-                  error={errors.name ? 'Display name is required' : undefined}
-                >
-                  <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
-                </Field>
-                <Field label="Role">
-                  {contextSrv.licensedAccessControlEnabled() ? (
-                    <UserRolePicker
-                      userId={serviceAccount.id || 0}
-                      orgId={serviceAccount.orgId}
-                      builtInRole={serviceAccount.role}
-                      builtInRoles={builtinRoles}
-                      onBuiltinRoleChange={onRoleChange}
-                      builtinRolesDisabled={false}
-                      roleOptions={roleOptions}
-                      updateDisabled={true}
-                      onApplyRoles={onPendingRolesUpdate}
-                      pendingRoles={pendingRoles}
-                    />
-                  ) : (
-                    <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />
-                  )}
-                </Field>
+                <FieldSet>
+                  <Field
+                    label="Display name"
+                    required
+                    invalid={!!errors.name}
+                    error={errors.name ? 'Display name is required' : undefined}
+                  >
+                    <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
+                  </Field>
+                  <Field label="Role">
+                    {contextSrv.licensedAccessControlEnabled() ? (
+                      <UserRolePicker
+                        userId={serviceAccount.id || 0}
+                        orgId={serviceAccount.orgId}
+                        builtInRole={serviceAccount.role}
+                        builtInRoles={builtinRoles}
+                        onBuiltinRoleChange={onRoleChange}
+                        builtinRolesDisabled={false}
+                        roleOptions={roleOptions}
+                        updateDisabled={true}
+                        onApplyRoles={onPendingRolesUpdate}
+                        pendingRoles={pendingRoles}
+                      />
+                    ) : (
+                      <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />
+                    )}
+                  </Field>
+                </FieldSet>
                 <Button type="submit">Create</Button>
               </>
             );

@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
+import { EditorRow } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -139,6 +139,11 @@ async function getMetrics(
   // don't use it with the visual builder and there is no need to run all the start() setup anyway.
   if (!datasource.languageProvider.metricsMetadata) {
     await datasource.languageProvider.loadMetricsMetadata();
+  }
+
+  // Error handling for when metrics metadata returns as undefined
+  if (!datasource.languageProvider.metricsMetadata) {
+    datasource.languageProvider.metricsMetadata = {};
   }
 
   let metrics;

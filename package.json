@@ -72,9 +72,6 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
-    ],
-    "*.star": [
-      "make drone"
     ]
   },
   "devDependencies": {
@@ -90,6 +87,7 @@
     "@babel/preset-env": "7.18.2",
     "@babel/preset-react": "7.18.6",
     "@babel/preset-typescript": "7.18.6",
+    "@babel/runtime": "7.18.6",
     "@betterer/betterer": "5.3.5",
     "@betterer/cli": "5.3.5",
     "@betterer/eslint": "5.3.5",
@@ -253,12 +251,11 @@
     "@emotion/react": "11.9.0",
     "@grafana/agent-core": "^0.3.0",
     "@grafana/agent-web": "^0.3.0",
-    "@grafana/aws-sdk": "0.0.36",
+    "@grafana/aws-sdk": "0.0.37",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "^0.0.2-canary.32",
     "@grafana/google-sdk": "0.0.3",
-    "@grafana/lezer-logql": "^0.0.13",
+    "@grafana/lezer-logql": "^0.0.14",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/slate-react": "0.22.10-grafana",
@@ -287,6 +284,7 @@
     "@sentry/browser": "6.19.7",
     "@sentry/types": "6.19.7",
     "@sentry/utils": "6.19.7",
+    "@types/rc-tree": "^3.0.0",
     "@types/react-resizable": "3.0.0",
     "@types/webpack-env": "^1.17.0",
     "@visx/event": "2.6.0",
@@ -351,6 +349,7 @@
     "rc-drawer": "4.4.3",
     "rc-slider": "9.7.5",
     "rc-time-picker": "3.7.3",
+    "rc-tree": "^5.6.5",
     "re-resizable": "6.9.9",
     "react": "17.0.2",
     "react-awesome-query-builder": "^5.1.2",
@@ -389,12 +388,13 @@
     "semver": "7.3.7",
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
+    "sql-formatter-plus": "^1.3.6",
     "symbol-observable": "4.0.0",
     "test": "link:./public/test",
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.0",
-    "uplot": "1.6.21",
+    "uplot": "1.6.22",
     "uuid": "8.3.2",
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",

@@ -26,10 +26,13 @@ import {
   ScaleOrientation,
   StackingMode,
   GraphTransform,
+  AxisColorMode,
+  GraphGradientMode,
 } from '@grafana/schema';
 
 import { buildScaleKey } from '../GraphNG/utils';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
+import { getScaleGradientFn } from '../uPlot/config/gradientFills';
 import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
@@ -192,6 +195,36 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+      let axisColor: uPlot.Axis.Stroke | undefined;
+
+      if (customConfig.axisColorMode === AxisColorMode.Series) {
+        if (
+          colorMode.isByValue &&
+          field.config.custom?.gradientMode === GraphGradientMode.Scheme &&
+          colorMode.id === FieldColorModeId.Thresholds
+        ) {
+          axisColor = getScaleGradientFn(1, theme, colorMode, field.config.thresholds);
+        } else {
+          axisColor = seriesColor;
+        }
+      }
+
+      let axisColorOpts = {};
+
+      if (axisColor) {
+        axisColorOpts = {
+          border: {
+            show: true,
+            width: 1,
+            stroke: axisColor,
+          },
+          ticks: {
+            stroke: axisColor,
+          },
+          color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
+        };
+      }
+
       builder.addAxis(
         tweakAxis(
           {
@@ -203,6 +236,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             theme,
             grid: { show: customConfig.axisGridShow },
             show: customConfig.hideFrom?.viz === false,
+            ...axisColorOpts,
           },
           field
         )

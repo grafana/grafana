@@ -429,7 +429,8 @@ func doSearchQuery(
 		hasConstraints = true
 	}
 
-	if q.Query == "*" || q.Query == "" {
+	isMatchAllQuery := q.Query == "*" || q.Query == ""
+	if isMatchAllQuery {
 		if !hasConstraints {
 			fullQuery.AddShould(bluge.NewMatchAllQuery())
 		}
@@ -600,7 +601,11 @@ func doSearchQuery(
 		}
 
 		if q.Explain {
-			fScore.Append(match.Score)
+			if isMatchAllQuery {
+				fScore.Append(float64(fieldLen + q.From))
+			} else {
+				fScore.Append(match.Score)
+			}
 			if match.Explanation != nil {
 				js, _ := json.Marshal(&match.Explanation)
 				jsb := json.RawMessage(js)
