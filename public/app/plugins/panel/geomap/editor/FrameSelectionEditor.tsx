@@ -1,9 +1,19 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 
-import { FrameMatcherID, getFieldDisplayName, MatcherConfig, SelectableValue, StandardEditorProps } from '@grafana/data';
+import {
+  FrameMatcherID,
+  getFieldDisplayName,
+  MatcherConfig,
+  SelectableValue,
+  StandardEditorProps,
+} from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-const recoverRefIdMissing = (newRefIds: SelectableValue[], oldRefIds: SelectableValue[], previousValue: string | undefined): SelectableValue | undefined => {
+const recoverRefIdMissing = (
+  newRefIds: SelectableValue[],
+  oldRefIds: SelectableValue[],
+  previousValue: string | undefined
+): SelectableValue | undefined => {
   if (!previousValue) {
     return;
   }
@@ -21,17 +31,12 @@ const recoverRefIdMissing = (newRefIds: SelectableValue[], oldRefIds: Selectable
   return;
 };
 
-export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({
-  value,
-  context,
-  onChange,
-  item,
-}) => {
+export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({ value, context, onChange, item }) => {
   const listOfRefId = useMemo(() => {
-    return context.data.map(f => ({
+    return context.data.map((f) => ({
       value: f.refId,
       label: `Query: ${f.refId} (size: ${f.length})`,
-      description: f.fields.map(f => getFieldDisplayName(f)).join(', '),
+      description: f.fields.map((f) => getFieldDisplayName(f)).join(', '),
     }));
   }, [context.data]);
 
@@ -41,23 +46,39 @@ export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({
   });
 
   const currentValue = useMemo(() => {
-    return listOfRefId.find((refId) => refId.value === value?.options) ?? recoverRefIdMissing(listOfRefId, priorSelectionState.refIds, priorSelectionState.value);
-  }, [value, listOfRefId, priorSelectionState])
+    return (
+      listOfRefId.find((refId) => refId.value === value?.options) ??
+      recoverRefIdMissing(listOfRefId, priorSelectionState.refIds, priorSelectionState.value)
+    );
+  }, [value, listOfRefId, priorSelectionState]);
 
-  const onFilterChange = useCallback((v: SelectableValue<string>) => {
-    onChange(v?.value ? {
-      "id": FrameMatcherID.byRefId,
-      "options": v.value
-    } : undefined);
-  }, [context.options.name]);
+  const onFilterChange = useCallback(
+    (v: SelectableValue<string>) => {
+      onChange(
+        v?.value
+          ? {
+              id: FrameMatcherID.byRefId,
+              options: v.value,
+            }
+          : undefined
+      );
+    },
+    [onChange]
+  );
 
-  if (listOfRefId !== priorSelectionState.refIds || currentValue?.value !== priorSelectionState.value)  {
+  if (listOfRefId !== priorSelectionState.refIds || currentValue?.value !== priorSelectionState.value) {
     updatePriorSelectionState({
       refIds: listOfRefId,
-      value: currentValue?.value
+      value: currentValue?.value,
     });
   }
   return (
-    <Select options={listOfRefId} onChange={onFilterChange} isClearable={true} placeholder="Change filter" value={currentValue}/>
+    <Select
+      options={listOfRefId}
+      onChange={onFilterChange}
+      isClearable={true}
+      placeholder="Change filter"
+      value={currentValue}
+    />
   );
 };
