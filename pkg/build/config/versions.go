@@ -44,136 +44,122 @@ var Versions = map[string]Version{
 			},
 		},
 	},
+	"branch": {
+		Variants: []Variant{
+			VariantArmV6,
+			VariantArmV7,
+			VariantArmV7Musl,
+			VariantArm64,
+			VariantArm64Musl,
+			VariantDarwinAmd64,
+			VariantWindowsAmd64,
+			VariantLinuxAmd64,
+			VariantLinuxAmd64,
+		},
+		PluginSignature: PluginSignature{
+			Sign:      true,
+			AdminSign: true,
+		},
+		Docker: Docker{
+			ShouldSave: true,
+			Architectures: []Architecture{
+				ArchAMD64,
+				ArchARM64,
+				ArchARM,
+			},
+		},
+		PackagesBucket:            "grafana-downloads",
+		PackagesBucketEnterprise2: "grafana-downloads-enterprise2",
+		CDNAssetsBucket:           "grafana-static-assets",
+	},
+	"release": {
+		Variants: []Variant{
+			VariantArmV6,
+			VariantArmV7,
+			VariantArmV7Musl,
+			VariantArm64,
+			VariantArm64Musl,
+			VariantDarwinAmd64,
+			VariantWindowsAmd64,
+			VariantLinuxAmd64,
+			VariantLinuxAmd64,
+		},
+		PluginSignature: PluginSignature{
+			Sign:      true,
+			AdminSign: true,
+		},
+		Docker: Docker{
+			ShouldSave: true,
+			Architectures: []Architecture{
+				ArchAMD64,
+				ArchARM64,
+				ArchARM,
+			},
+		},
+		PackagesBucket:  "grafana-prerelease/artifacts/downloads",
+		CDNAssetsBucket: "grafana-prerelease",
+		CDNAssetsDir:    "artifacts/static-assets",
+		StorybookBucket: "grafana-prerelease",
+		StorybookSrcDir: "artifacts/storybook",
+	},
+	"beta": {
+		Variants: []Variant{
+			VariantArmV6,
+			VariantArmV7,
+			VariantArmV7Musl,
+			VariantArm64,
+			VariantArm64Musl,
+			VariantDarwinAmd64,
+			VariantWindowsAmd64,
+			VariantLinuxAmd64,
+			VariantLinuxAmd64,
+		},
+		PluginSignature: PluginSignature{
+			Sign:      true,
+			AdminSign: true,
+		},
+		Docker: Docker{
+			ShouldSave: true,
+			Architectures: []Architecture{
+				ArchAMD64,
+				ArchARM64,
+				ArchARM,
+			},
+		},
+		PackagesBucket:  "grafana-prerelease/artifacts/downloads",
+		CDNAssetsBucket: "grafana-prerelease",
+		CDNAssetsDir:    "artifacts/static-assets",
+		StorybookBucket: "grafana-prerelease",
+		StorybookSrcDir: "artifacts/storybook",
+	},
+	"test": {
+		Variants: []Variant{
+			VariantArmV6,
+			VariantArmV7,
+			VariantArmV7Musl,
+			VariantArm64,
+			VariantArm64Musl,
+			VariantDarwinAmd64,
+			VariantWindowsAmd64,
+			VariantLinuxAmd64,
+			VariantLinuxAmd64,
+		},
+		PluginSignature: PluginSignature{
+			Sign:      true,
+			AdminSign: true,
+		},
+		Docker: Docker{
+			ShouldSave: true,
+			Architectures: []Architecture{
+				ArchAMD64,
+				ArchARM64,
+				ArchARM,
+			},
+		},
+		PackagesBucket:  "grafana-prerelease/artifacts/downloads",
+		CDNAssetsBucket: "grafana-prerelease",
+		CDNAssetsDir:    "artifacts/static-assets",
+		StorybookBucket: "grafana-prerelease",
+		StorybookSrcDir: "artifacts/storybook",
+	},
 }
-
-// {
-//     "docker": {
-//       "shouldSave": false,
-//       "archs": [
-//         "amd64",
-//         "arm64",
-//         "armv7"
-//       ]
-//     },
-//     "packagesBucket": "grafana-downloads",
-//     "CDNAssetsBucket": "grafana-static-assets"
-//   },
-//   "branch": {
-//     "variants": [
-//       "linux-armv6",
-//       "linux-armv7",
-//       "linux-armv7-musl",
-//       "linux-arm64",
-//       "linux-arm64-musl",
-//       "darwin-amd64",
-//       "windows-amd64",
-//       "linux-amd64",
-//       "linux-amd64-musl"
-//     ],
-//     "pluginSignature": {
-//       "sign": true,
-//       "adminSign": true
-//     },
-//     "docker": {
-//       "shouldSave": true,
-//       "archs": [
-//         "amd64",
-//         "arm64",
-//         "armv7"
-//       ]
-//     },
-//     "packagesBucket": "grafana-downloads",
-//     "packagesBucketEnterprise2": "grafana-downloads-enterprise2",
-//     "CDNAssetsBucket": "grafana-static-assets"
-//   },
-//   "release": {
-//     "variants": [
-//       "linux-armv6",
-//       "linux-armv7",
-//       "linux-armv7-musl",
-//       "linux-arm64",
-//       "linux-arm64-musl",
-//       "darwin-amd64",
-//       "windows-amd64",
-//       "linux-amd64",
-//       "linux-amd64-musl"
-//     ],
-//     "pluginSignature": {
-//       "sign": true,
-//       "adminSign": true
-//     },
-//     "docker": {
-//       "shouldSave": true,
-//       "archs": [
-//         "amd64",
-//         "arm64",
-//         "armv7"
-//       ]
-//     },
-//     "packagesBucket": "grafana-prerelease/artifacts/downloads",
-//     "CDNAssetsBucket": "grafana-prerelease",
-//     "CDNAssetsDir": "artifacts/static-assets",
-//     "storybookBucket": "grafana-prerelease",
-//     "storybookSrcDir": "artifacts/storybook"
-//   },
-//   "beta": {
-//     "variants": [
-//       "linux-armv6",
-//       "linux-armv7",
-//       "linux-armv7-musl",
-//       "linux-arm64",
-//       "linux-arm64-musl",
-//       "darwin-amd64",
-//       "windows-amd64",
-//       "linux-amd64",
-//       "linux-amd64-musl"
-//     ],
-//     "pluginSignature": {
-//       "sign": true,
-//       "adminSign": true
-//     },
-//     "docker": {
-//       "shouldSave": true,
-//       "archs": [
-//         "amd64",
-//         "arm64",
-//         "armv7"
-//       ]
-//     },
-//     "packagesBucket": "grafana-prerelease/artifacts/downloads",
-//     "CDNAssetsBucket": "grafana-prerelease",
-//     "CDNAssetsDir": "artifacts/static-assets",
-//     "storybookBucket": "grafana-prerelease",
-//     "storybookSrcDir": "artifacts/storybook"
-//   },
-//   "test": {
-//     "variants": [
-//       "linux-armv6",
-//       "linux-armv7",
-//       "linux-armv7-musl",
-//       "linux-arm64",
-//       "linux-arm64-musl",
-//       "darwin-amd64",
-//       "windows-amd64",
-//       "linux-amd64",
-//       "linux-amd64-musl"
-//     ],
-//     "pluginSignature": {
-//       "sign": true,
-//       "adminSign": true
-//     },
-//     "docker": {
-//       "shouldSave": true,
-//       "archs": [
-//         "amd64",
-//         "arm64",
-//         "armv7"
-//       ]
-//     },
-//     "packagesBucket": "grafana-prerelease/artifacts/downloads",
-//     "CDNAssetsBucket": "grafana-prerelease",
-//     "CDNAssetsDir": "artifacts/static-assets",
-//     "storybookBucket": "grafana-prerelease",
-//     "storybookSrcDir": "artifacts/storybook"
-//   }
-// }
