@@ -555,7 +555,7 @@ describe('graphiteDatasource', () => {
       expect(data).toBeTruthy();
     });
 
-    it('should fetch from /render endpoint when queryType is not default', async () => {
+    it('should fetch from /render endpoint when queryType is value', async () => {
       fetchMock.mockImplementation((options: any) => {
         requestOptions = options;
         return of(
@@ -616,22 +616,9 @@ describe('graphiteDatasource', () => {
       fetchMock.mockImplementation((options: any) => {
         requestOptions = options;
         return of(
-          createFetchResponse([
-            {
-              target: 'metric.name.A',
-              datapoints: [
-                [10, 1],
-                [12, 1],
-              ],
-            },
-            {
-              target: 'metric.name.B',
-              datapoints: [
-                [20, 2],
-                [22, 2],
-              ],
-            },
-          ])
+          createFetchResponse({
+            results: ['apps.backend.backend_01', 'apps.backend.backend_02', 'apps.country.IE', 'apps.country.SE'],
+          })
         );
       });
 
@@ -642,11 +629,11 @@ describe('graphiteDatasource', () => {
         datasource: ctx.ds,
       };
       const data = await ctx.ds.metricFindQuery(fq);
-      expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
-      expect(data[0].value).toBe('metric.name.A');
-      expect(data[0].text).toBe('metric.name.A');
-      expect(data[1].value).toBe('metric.name.B');
-      expect(data[1].text).toBe('metric.name.B');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/expand');
+      expect(data[0].text).toBe('apps.backend.backend_01');
+      expect(data[1].text).toBe('apps.backend.backend_02');
+      expect(data[2].text).toBe('apps.country.IE');
+      expect(data[3].text).toBe('apps.country.SE');
     });
   });
 
