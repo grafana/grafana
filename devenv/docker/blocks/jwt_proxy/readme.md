@@ -31,6 +31,25 @@ Access Grafana through:
 http://127.0.0.1:8088
 ```
 
+## Devenv setup jwt auth iframe embedding
+
+- Add previous configuration and next snippet to grafana.ini
+
+```ini
+[security]
+allow_embedding = true
+```
+
+- Create dashboard and copy UID
+
+- Clone [https://github.com/grafana/grafana-iframe-oauth-sample](https://github.com/grafana/grafana-iframe-oauth-sample)
+
+- Change the dashboard URL in `grafana-iframe-oauth-sample/src/pages/restricted.tsx` to use the dashboard you created (keep URL query values)
+
+- Start sample app from the `grafana-iframe-oauth-sample` folder with: `yarn start`
+
+- Navigate to [http://localhost:4200](http://localhost:4200) and press restricted area
+
 ## Backing up keycloak DB
 
 In case you want to make changes to the devenv setup, you can dump keycloack's DB:
