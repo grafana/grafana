@@ -356,7 +356,13 @@ abstract class DataSourceApi<
    * Optionally, use this method to report information about queries
    * @alpha -- experimental
    */
-  queriesOnInitDashboard?(queries: TQuery[], dashboardId?: string, orgId?: number, userId?: number): void;
+  queriesOnInitDashboard?(
+    queries: TQuery[],
+    dashboardId?: string,
+    orgId?: number,
+    userId?: number,
+    grafanaVersion?: string
+  ): void;
 }
 
 export interface MetadataInspectorProps<

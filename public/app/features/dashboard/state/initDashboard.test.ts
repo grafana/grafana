@@ -2,7 +2,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { Subject } from 'rxjs';
 
-import { FetchError, locationService, setEchoSrv, reportInteraction } from '@grafana/runtime';
+import { FetchError, locationService, setEchoSrv } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
@@ -42,10 +42,23 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, orgName: 'TestOrg' },
   },
 }));
+const mockQueriesOnInitDashboard = jest.fn();
+const mockGetDS = jest.fn().mockImplementation((uid: string): Promise<{ queriesOnInitDashboard?: Function }> => {
+  if (uid === 'DSwithQueriesOnInitDashboard') {
+    return Promise.resolve({ queriesOnInitDashboard: mockQueriesOnInitDashboard });
+  } else {
+    return Promise.resolve({});
+  }
+});
 jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
   return {
-    ...jest.requireActual('@grafana/runtime'),
-    reportInteraction: jest.fn(),
+    ...original,
+    getDataSourceSrv: jest.fn().mockImplementation(() => ({
+      ...original.getDataSourceSrv(),
+      getInstanceSettings: jest.fn(),
+      get: mockGetDS,
+    })),
   };
 });
 
@@ -85,7 +98,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
                 {
                   datasource: {
                     type: 'grafana-azure-monitor-datasource',
-                    uid: 'ABCD',
+                    uid: 'DSwithQueriesOnInitDashboard',
                     name: 'azMonitor',
                   },
                   queryType: 'Azure Log Analytics',
@@ -248,10 +261,6 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
     expect(getDashboardQueryRunner().run).toBeCalled();
     expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
-
-  it('should not log dashboard_loaded event', () => {
-    expect(reportInteraction).not.toBeCalled();
-  });
 });
 
 describeInitScenario('Initializing home dashboard', (ctx) => {
@@ -304,51 +313,31 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   ctx.setup(() => {
     ctx.storeState.user.orgId = 12;
+    ctx.storeState.user.user = { id: 34 };
     ctx.storeState.explore.left.queries = mockQueries;
   });
 
   it('should log dashboard_loaded event', () => {
-    expect(reportInteraction).toBeCalledTimes(3);
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_loaded', {
-      dashboard_id: DASH_UID,
-      panel_id: 2,
-      panel_type: 'add-panel',
-      hidden: false,
-      collapsed: false,
-      datasource: 'grafana-azure-monitor-datasource',
-      query_type: 'Azure Log Analytics',
-      grafana_version: '1.0',
-    });
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_loaded', {
-      dashboard_id: DASH_UID,
-      panel_id: 2,
-      panel_type: 'add-panel',
-      hidden: false,
-      collapsed: false,
-      datasource: 'cloudwatch',
-      query_type: undefined,
-      grafana_version: '1.0',
-    });
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_loaded', {
-      dashboard_id: DASH_UID,
-      panel_id: 8,
-      panel_type: 'stat',
-      hidden: false,
-      collapsed: true,
-      datasource: 'grafana-redshift-datasource',
-      query_type: undefined,
-      grafana_version: '1.0',
-    });
-    expect(reportInteraction).not.toHaveBeenCalledWith('grafana_dashboard_loaded', {
-      dashboard_id: DASH_UID,
-      panel_id: 22,
-      panel_type: 'row',
-      hidden: false,
-      collapsed: true,
-      datasource: undefined,
-      query_type: undefined,
-      grafana_version: '1.0',
-    });
+    expect(mockGetDS).toBeCalledTimes(3);
+    expect(mockQueriesOnInitDashboard).toBeCalledTimes(1);
+    expect(mockQueriesOnInitDashboard).toHaveBeenCalledWith(
+      [
+        {
+          datasource: {
+            name: 'azMonitor',
+            type: 'grafana-azure-monitor-datasource',
+            uid: 'DSwithQueriesOnInitDashboard',
+          },
+          expr: 'old expr',
+          queryType: 'Azure Log Analytics',
+          refId: 'A',
+        },
+      ],
+      'DGmvKKxZz',
+      12,
+      34,
+      '1.0'
+    );
   });
 
   it('Should send action dashboardInitFetching', () => {

@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceApi, locationUtil, setWeekStart } from '@grafana/data';
+import { DataQuery, locationUtil, setWeekStart } from '@grafana/data';
 import { config, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -103,17 +103,22 @@ async function fetchDashboard(
   }
 }
 
-const queriesOnInitDashboard = (panels: PanelModel[], dashboardId: string, orgId?: number, userId?: number): void => {
+const queriesOnInitDashboard = (
+  panels: PanelModel[],
+  dashboardId: string,
+  orgId?: number,
+  userId?: number,
+  grafanaVersion?: string
+): void => {
   let queries: { [key: string]: DataQuery[] } = getQueriesFromDashboardPerDS(panels, {});
+  const datasourceSrv = getDataSourceSrv();
 
   Object.keys(queries).forEach((key) => {
-    getDataSourceSrv()
-      .get(key)
-      .then((value) => {
-        if (value.queriesOnInitDashboard) {
-          value.queriesOnInitDashboard(queries[key], dashboardId, orgId, userId);
-        }
-      });
+    datasourceSrv.get(key).then((value) => {
+      if (value.queriesOnInitDashboard) {
+        value.queriesOnInitDashboard(queries[key], dashboardId, orgId, userId, grafanaVersion);
+      }
+    });
   });
 };
 
@@ -247,7 +252,13 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // yay we are done
-    queriesOnInitDashboard(dashboard.panels, dashboard.uid, storeState.user.orgId, storeState.user.user?.id);
+    queriesOnInitDashboard(
+      dashboard.panels,
+      dashboard.uid,
+      storeState.user.orgId,
+      storeState.user.user?.id,
+      config.buildInfo.version
+    );
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
