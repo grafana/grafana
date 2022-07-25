@@ -99,7 +99,7 @@ services:
     logging: *default-logging
 
   loki:
-    image: grafana/loki:2.3.0
+    image: grafana/loki:main
     command:
       - -config.file=/etc/loki/local-config.yaml
       - -table-manager.retention-period=1d
