@@ -129,7 +129,6 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 
 			err = s.store.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
 				Contents:              data,
-				MimeType:              mimeType,
 				EntityType:            entityType,
 				Path:                  path,
 				OverwriteExistingFile: overwriteExistingFile,
