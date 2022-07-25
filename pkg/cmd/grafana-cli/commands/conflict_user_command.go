@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -35,24 +35,26 @@ import (
 - make sorting of users part of the display for conflicting users by their ids
 */
 
-func runConflictingUsersCommand() func(context *cli.Context) error {
+func getSqlStore(context *cli.Context) (*sqlstore.SQLStore, error) {
+	cmd := &utils.ContextCommandLine{Context: context}
+	cfg, err := initCfg(cmd)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to load configuration", err)
+	}
+	tracer, err := tracing.ProvideService(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
+	}
+	bus := bus.ProvideBus(tracer)
+	return sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
+}
+
+func runListConflictUsers() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
-		cmd := &utils.ContextCommandLine{Context: context}
-
-		cfg, err := initCfg(cmd)
+		sqlStore, err := getSqlStore(context)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+			return fmt.Errorf("%v: %w", "failed to get to sql", err)
 		}
-		tracer, err := tracing.ProvideService(cfg)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
-		}
-		bus := bus.ProvideBus(tracer)
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
-		}
-
 		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context.Context, sqlStore)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
@@ -61,123 +63,144 @@ func runConflictingUsersCommand() func(context *cli.Context) error {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
-
-		for _, cUser := range conflicts {
-			logger.Infof("A user conflict found. \n")
-
-			cType := cUser.Conflict()
-			switch cType {
-			case Merge:
-				// pretty print conflicting users
-				cUser.Print()
-
-				// waiting for user to choose which user to merge to
-				chosenUser, err := promptToMerge(cUser)
-				if err != nil {
-					return err
-				}
-
-				otherUsers := cUser.Ids
-				logger.Infof("this will merge users %s into the chosen user %d\n\n", otherUsers, chosenUser)
-				if confirm() {
-					err = mergeUser(context.Context, chosenUser, cUser, sqlStore)
-					if err != nil {
-						return fmt.Errorf("could not merge user with error %w", err)
-					}
-				}
-				logger.Infof(color.GreenString("successfully merged users"))
-			case SameIdentification:
-				// waiting for user to choose which user to merge to
-				chosenUser, err := promptToMerge(cUser)
-				if err != nil {
-					return err
-				}
-				if confirm() {
-					err = deDupeSameIdentification(context.Context, chosenUser, cUser, sqlStore)
-					if err != nil {
-						return fmt.Errorf("could not merge user with error %w", err)
-					}
-				}
-				logger.Infof(color.GreenString("successfully deduplicated users"))
-			default:
-				logger.Infof("could not identify the conflict resolution for found users %s", cUser.Ids)
-				continue
-			}
-		}
-
+		logger.Infof(conflicts.String())
 		return nil
 	}
+}
+
+func runCreateConflictUsersFile() func(context *cli.Context) error {
+	return func(context *cli.Context) error {
+		sqlStore, err := getSqlStore(context)
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to get to sql", err)
+		}
+		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context.Context, sqlStore)
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
+		}
+		if len(conflicts) < 1 {
+			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
+			return nil
+		}
+		tmpFile, err := ioutil.TempFile(os.TempDir(), "conflicting_user_*.diff")
+		if err != nil {
+			return err
+		}
+		if _, err := tmpFile.Write([]byte(conflicts.ToStringFileRepresentation())); err != nil {
+			return err
+		}
+		logger.Infof("edit the file \n%s\n\n", tmpFile.Name())
+		logger.Infof("Press any key to continue... which user to merge into:\n")
+		_ = bufio.NewReader(os.Stdin)
+		return nil
+	}
+}
+
+func runValidateConflictUsersFile() func(context *cli.Context) error {
+	return func(context *cli.Context) error { return fmt.Errorf("not implemented") }
+}
+
+func runIngestConflictUsersFile() func(context *cli.Context) error {
+	return func(context *cli.Context) error {
+		_, err := readFile()
+		if err != nil {
+			return fmt.Errorf("could not read file with error %s", err)
+		}
+		valid, err := validate()
+		if !valid {
+			return fmt.Errorf("could not validate file with error %s", err)
+		}
+		showChanges()
+		if !confirm() {
+			return fmt.Errorf("user cancelled")
+		}
+		err = mergeUsers()
+		if err != nil {
+			return fmt.Errorf("not able to merge")
+		}
+		return nil
+	}
+}
+
+func mergeUsers() error {
+	return fmt.Errorf("not implemented")
+}
+
+func validate() (bool, error) {
+	// TODO:
+	logger.Info("validating file")
+	return false, nil
+}
+
+func readFile() (string, error) {
+	// TODO:
+	users := "users"
+	logger.Info("read file")
+	return users, nil
+}
+
+func showChanges() {
+	// TODO:
+	logger.Info("show changes should be implemented\n")
 }
 
 // confirm function asks for user input
 // returns bool
 func confirm() bool {
-
 	var input string
-
 	fmt.Printf("Do you want to continue with this operation? [y|n]: ")
 	_, err := fmt.Scanln(&input)
 	if err != nil {
 		panic(err)
 	}
 	input = strings.ToLower(input)
-
 	if input == "y" || input == "yes" {
 		return true
 	}
 	return false
-
 }
 
-func promptToMerge(cUser ConflictingUsers) (int64, error) {
-	logger.Infof("Choose which user to merge into:")
-	scanner := bufio.NewScanner(os.Stdin)
-	if ok := scanner.Scan(); !ok {
-		if err := scanner.Err(); err != nil {
-			return -1, fmt.Errorf("can't read conflict option from stdin: %w", err)
+func (c *ConflictingUsers) String() string {
+	/*
+		hej@test.com+hej@test.com
+		id: 1, email: hej@test.com, login: hej@test.com
+		id: 2, email: HEJ@TEST.COM, login: HEJ@TEST.COM
+		id: 3, email: hej@TEST.com, login: hej@TEST.com
+	*/
+	userIdentifiersSeen := make(map[string]bool, 0)
+	str := ""
+	for _, user := range *c {
+		// print
+		if !userIdentifiersSeen[user.UserIdentifier] {
+			str += fmt.Sprintf("%s\n", user.UserIdentifier)
+			userIdentifiersSeen[user.UserIdentifier] = true
 		}
-		return -1, fmt.Errorf("can't read conflict option from stdin")
+		str += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 	}
-	chosenUser := scanner.Text()
-	if !strings.Contains(cUser.Ids, chosenUser) {
-		return -1, fmt.Errorf("not a conflicting user id")
-	}
-	v, err := strconv.ParseInt(chosenUser, 10, 64)
-	if err != nil {
-		return -1, fmt.Errorf("could not parse id from string")
-	}
-	return v, nil
+	return str
 }
 
-func promptSameIdentification(cUser ConflictingUsers) (int64, error) {
-	logger.Infof("Found same identification for users, choose which user to keep and update:")
-	scanner := bufio.NewScanner(os.Stdin)
-	if ok := scanner.Scan(); !ok {
-		if err := scanner.Err(); err != nil {
-			return -1, fmt.Errorf("can't read conflict option from stdin: %w", err)
+func (c *ConflictingUsers) ToStringFileRepresentation() string {
+	/*
+		hej@test.com+hej@test.com
+		+ id: 1, email: hej@test.com, login: hej@test.com
+		- id: 2, email: HEJ@TEST.COM, login: HEJ@TEST.COM
+		- id: 3, email: hej@TEST.com, login: hej@TEST.com
+	*/
+	userIdentifiersSeen := make(map[string]bool, 0)
+	str := ""
+	for _, user := range *c {
+		// print
+		if !userIdentifiersSeen[user.UserIdentifier] {
+			str += fmt.Sprintf("%s\n", user.UserIdentifier)
+			userIdentifiersSeen[user.UserIdentifier] = true
+			str += fmt.Sprintf("+ id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+			continue
 		}
-		return -1, fmt.Errorf("can't read conflict option from stdin")
+		// mergable users
+		str += fmt.Sprintf("- id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 	}
-	chosenUser := scanner.Text()
-	if !strings.Contains(cUser.Ids, chosenUser) {
-		return -1, fmt.Errorf("not a conflicting user id")
-	}
-	v, err := strconv.ParseInt(chosenUser, 10, 64)
-	if err != nil {
-		return -1, fmt.Errorf("could not parse id from string")
-	}
-	return v, nil
-}
-
-func (c ConflictingUsers) Print() {
-	ids := strings.Split(c.Ids, ",")
-	emails := strings.Split(c.ConflictEmails, ",")
-	logins := strings.Split(c.ConflictLogins, ",")
-	fmt.Printf("\n")
-	for i := 0; i < len(ids); i++ {
-		s := fmt.Sprintf("Id: %s, Email: %s, Login: %s\n---\n", ids[i], emails[i], logins[i])
-		logger.Info(color.HiYellowString((s)))
-	}
+	return str
 }
 
 type conflictType string
@@ -187,20 +210,8 @@ const (
 	SameIdentification conflictType = "same_identification"
 )
 
-func (cUser ConflictingUsers) Conflict() conflictType {
-	// FIXME:
-	// need to make sure that we get same identification when that happens instead of email/logins cased
-	var cType conflictType
-	if cUser.SameIdentificationConflictIds {
-		cType = SameIdentification
-	} else if cUser.ConflictEmails != "" || cUser.ConflictLogins != "" {
-		cType = Merge
-	}
-	return cType
-}
-
 func mergeUser(ctx context.Context, mergeIntoUser int64, cUser ConflictingUsers, sqlStore *sqlstore.SQLStore) error {
-	stringIds := strings.Split(cUser.Ids, ",")
+	stringIds := []string{""}
 	fromUserIds := make([]int64, 0, len(stringIds))
 	for _, raw := range stringIds {
 		v, err := strconv.ParseInt(raw, 10, 64)
@@ -212,38 +223,22 @@ func mergeUser(ctx context.Context, mergeIntoUser int64, cUser ConflictingUsers,
 	return sqlStore.MergeUser(ctx, mergeIntoUser, fromUserIds)
 }
 
-func deDupeSameIdentification(ctx context.Context, chosenUser int64, cUser ConflictingUsers, sqlStore *sqlstore.SQLStore) error {
-	err := sqlStore.UpdateUser(ctx, &models.UpdateUserCommand{UserId: chosenUser})
-	if err != nil {
-		return fmt.Errorf("could not update user with details %w", err)
-	}
-	otherUsers := strings.Split(cUser.Ids, ",")
-	for _, oUser := range otherUsers {
-		oUser, err := strconv.ParseInt(oUser, 10, 64)
-		if err != nil {
-			return err
-		}
-		err = sqlStore.DeleteUser(ctx, &models.DeleteUserCommand{UserId: oUser})
-		if err != nil {
-			return fmt.Errorf("could not update user with details %w", err)
-		}
-	}
-	return nil
-}
-
-type ConflictingUsers struct {
-	Ids string `xorm:"ids"`
+type ConflictingUser struct {
 	// IDENTIFIER
-	// userIdentifier = login + email
-	UserIdentifier                string `xorm:"user_identification"`
-	ConflictEmails                string `xorm:"conflicting_emails"`
-	ConflictLogins                string `xorm:"conflicting_logins"`
-	SameIdentificationConflictIds bool   `xorm:"same_identification_conflict_ids"`
+	// userIdentifier = login+email
+	UserIdentifier     string `xorm:"user_identification"`
+	Id                 string `xorm:"id"`
+	Email              string `xorm:"email"`
+	Login              string `xorm:"login"`
+	LastSeenAt         string `xorm:"last_seen_at"`
+	ConflictLoginEmail string `xorm:"conflict_login_email"`
+	ConflictId         bool   `xorm:"conflict_id"`
 }
-type allConflictingUserAggregates []ConflictingUsers
 
-func GetUsersWithConflictingEmailsOrLogins(ctx context.Context, s *sqlstore.SQLStore) (allConflictingUserAggregates, error) {
-	var stats allConflictingUserAggregates
+type ConflictingUsers []*ConflictingUser
+
+func GetUsersWithConflictingEmailsOrLogins(ctx context.Context, s *sqlstore.SQLStore) (ConflictingUsers, error) {
+	stats := make([]*ConflictingUser, 0)
 	outerErr := s.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		rawSQL := conflictingUserEntriesSQL(s)
 		err := dbSession.SQL(rawSQL).Find(&stats)
@@ -255,17 +250,17 @@ func GetUsersWithConflictingEmailsOrLogins(ctx context.Context, s *sqlstore.SQLS
 	return stats, nil
 }
 
+// conflictingUserEntriesSQL orders conflicting users by their user_identification
 func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 	userDialect := db.DB.GetDialect(s).Quote("user")
-	// this query counts how many users have the same login or email.
-	// which might be confusing, but gives a good indication
-	// we want this query to not require too much cpu
 	sqlQuery := `
 	SELECT
-	u1.login || u1.email AS user_identification,
-	group_concat(u1.id, ',') AS ids,
-	group_concat(u1.email, ',') AS conflicting_emails,
-	group_concat(u1.login, ',') AS conflicting_logins,
+	LOWER(u1.login || '+' ||  u1.email) AS user_identification,
+	u1.id,
+	u1.email,
+	u1.login,
+	u1.last_seen_at,
+	user_auth.auth_module,
 		( SELECT
 			u1.email
 		FROM
@@ -278,13 +273,12 @@ func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 		WHERE (LOWER(u1.login) = LOWER(u2.login) AND(u1.login != u2.login))) AS conflict_login,
 		( SELECT u1.id
 			FROM ` + userDialect + `
-		WHERE ((u1.login = u2.login) AND(u1.email = u2.email) AND(u1.id != u2.id))) AS same_identification_conflict_ids
+		WHERE ((u1.login = u2.login) AND(u1.email = u2.email) AND(u1.id != u2.id))) AS conflict_id
 	FROM
 		 ` + userDialect + ` AS u1, ` + userDialect + ` AS u2
+	LEFT JOIN user_auth on user_auth.user_id = u1.id
 	WHERE (conflict_email IS NOT NULL
-		OR conflict_login IS NOT NULL OR same_identification_conflict_ids IS NOT NULL)
-GROUP BY
-	LOWER(user_identification);
-	`
+		OR conflict_login IS NOT NULL OR conflict_id IS NOT NULL)
+	ORDER BY user_identification`
 	return sqlQuery
 }

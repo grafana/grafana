@@ -193,15 +193,30 @@ var adminCommands = []*cli.Command{
 		},
 	},
 	{
-		Name:  "users-manager",
-		Usage: "Runs different helpful user commands",
+		Name:  "conflict-users-manager",
+		Usage: "Runs different helpful conflict user commands",
 		Subcommands: []*cli.Command{
-			{
-				Name:   "list-duplicates",
-				Usage:  "list-duplicate-users returns a list of users with duplicate entries in the database. Safe to execute multiple times.",
-				Action: runConflictingUsersCommand(),
-			},
 			// TODO: reset password for user
+			{
+				Name:   "list-conflict-users",
+				Usage:  "returns a list of users with more than one entry in the database",
+				Action: runListConflictUsers(),
+			},
+			{
+				Name:   "create-conflict-users-file",
+				Usage:  "creates a conflict users file.. Safe to execute multiple times.",
+				Action: runCreateConflictUsersFile(),
+			},
+			{
+				Name:   "validate-conflict-users-file",
+				Usage:  "validates the conflict file",
+				Action: runValidateConflictUsersFile(),
+			},
+			{
+				Name:   "ingest-conflict-users-file",
+				Usage:  "ingests and executes the conflict file",
+				Action: runIngestConflictUsersFile(),
+			},
 		},
 	},
 }

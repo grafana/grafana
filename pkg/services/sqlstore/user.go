@@ -841,6 +841,31 @@ func UserUpdates() []string {
 
 func (ss *SQLStore) updateUserIds(intoUser user.User, fromUser user.User, sess *DBSession) error {
 	// TODO:
+	/*
+		tables that have user_id references
+
+			tbl_name |
+			--- |
+			temp_user |
+			star |
+			org_user |
+			dashboard_snapshot |
+			quota |
+			preferences |
+			annotation |
+			team_member |
+			dashboard_acl |
+			user_auth |
+			user_auth_token |
+			user_role |
+			query_history_star |
+
+			tables take using this query
+			```sql
+			select tbl_name, sql from sqlite_master where sql like '%CREATE TABLE%%user_id%'
+			and type = 'table';
+			```
+	*/
 	sql := `
 	UPDATE team_member
 	SET user_id = ?
