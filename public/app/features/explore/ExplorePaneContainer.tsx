@@ -70,7 +70,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
-      const queries = await ensureQueries(initialQueries);
+      const queries = await ensureQueries(initialQueries); // this will return an empty array if there are no datasources
       this.props.initializeExplore(
         exploreId,
         initialDatasource,

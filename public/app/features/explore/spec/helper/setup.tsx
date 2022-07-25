@@ -32,7 +32,7 @@ type SetupOptions = {
 };
 
 export function setupExplore(options?: SetupOptions): {
-  datasources: { [name: string]: DataSourceApi };
+  datasources: { [uid: string]: DataSourceApi };
   store: ReturnType<typeof configureStore>;
   unmount: () => void;
   container: HTMLElement;
@@ -58,15 +58,19 @@ export function setupExplore(options?: SetupOptions): {
     getInstanceSettings(ref: DataSourceRef) {
       return dsSettings.map((d) => d.settings).find((x) => x.name === ref || x.uid === ref || x.uid === ref.uid);
     },
-    get(datasource?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-      const datasourceStr = typeof datasource === 'string';
-      return Promise.resolve(
-        (datasource
-          ? dsSettings.find((d) =>
-              datasourceStr ? d.api.name === datasource || d.api.uid === datasource : d.api.uid === datasource?.uid
-            )
-          : dsSettings[0])!.api
-      );
+    get(datasource?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi | undefined> {
+      if (dsSettings.length === 0) {
+        return Promise.resolve(undefined);
+      } else {
+        const datasourceStr = typeof datasource === 'string';
+        return Promise.resolve(
+          (datasource
+            ? dsSettings.find((d) =>
+                datasourceStr ? d.api.name === datasource || d.api.uid === datasource : d.api.uid === datasource?.uid
+              )
+            : dsSettings[0])!.api
+        );
+      }
     },
   } as any);
 
@@ -149,7 +153,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
       name: name,
       uid: name,
       query: jest.fn(),
-      getRef: jest.fn().mockReturnValue(name),
+      getRef: jest.fn().mockReturnValue({ type: 'logs', uid: name }),
       meta,
     } as any,
   };
