@@ -239,3 +239,53 @@ roles:
 ```
 
 - Or use [RBAC HTTP API]({{< relref "../../../developers/http_api/access_control/#update-a-role" >}}).
+
+### Prevent Viewers from accessing an App Plugin
+
+By default, Viewers, Editors and Admins have access to all App Plugins that their organization role allows them to access.
+To change this default behavior and prevent Viewers from accessing an App plugin, you must [update a basic role's permissions]({{< relref "./manage-rbac-roles/#update-basic-role-permissions" >}}).
+
+In this example, three App plugins have been installed and enabled:
+| Name | ID | Required Org role |
+|--------------------|-----------------------------|-------------------|
+| On Call | grafana-oncall-app | Viewer |
+| Kentik Connect Pro | kentik-connect-app | Viewer |
+| Enterprise logs | grafana-enterprise-logs-app | Admin |
+
+By default, Viewers will hence be able to see both, On Call and Kentik Connect Pro App plugins.
+If you want to revoke their access to the On Call App plugin, you need to:
+
+1. Remove the permission to access all application plugins:
+   | Action | Scope |
+   |----------------------|-------------|
+   | `plugins.app:access` | `plugins:*` |
+1. Grant the permission to access the Kentik Connect Pro App plugin only:
+   | Action | Scope |
+   |----------------------|---------------------------------|
+   | `plugins.app:access` | `plugins:id:kentik-connect-app` |
+
+Here are two ways to achieve this:
+
+- Use the `role > from` list and `permission > state` option of your provisioning file:
+
+```yaml
+---
+apiVersion: 2
+
+roles:
+  - name: 'basic:viewer'
+    version: 8
+    global: true
+    from:
+      - name: 'basic:viewer'
+        global: true
+    permissions:
+      - action: 'plugins.app:access'
+        scope: 'plugins:*'
+        state: 'absent'
+      - action: 'plugins.app:access'
+        scope: 'plugins:id:kentik-connect-app'
+        state: 'present'
+```
+
+- Or use [RBAC HTTP API]({{< relref "../../../developers/http_api/access_control/#update-a-role" >}}).

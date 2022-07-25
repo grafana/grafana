@@ -2,15 +2,15 @@ package export
 
 // Export status.  Only one running at a time
 type ExportStatus struct {
-	Running  bool   `json:"running"`
-	Target   string `json:"target"` // description of where it is going (no secrets)
-	Started  int64  `json:"started,omitempty"`
-	Finished int64  `json:"finished,omitempty"`
-	Changed  int64  `json:"update,omitempty"`
-	Count    int64  `json:"count,omitempty"`
-	Current  int64  `json:"current,omitempty"`
-	Last     string `json:"last,omitempty"`
-	Status   string `json:"status"` // ERROR, SUCCESS, ETC
+	Running  bool           `json:"running"`
+	Target   string         `json:"target"` // description of where it is going (no secrets)
+	Started  int64          `json:"started,omitempty"`
+	Finished int64          `json:"finished,omitempty"`
+	Changed  int64          `json:"update,omitempty"`
+	Last     string         `json:"last,omitempty"`
+	Status   string         `json:"status"` // ERROR, SUCCESS, ETC
+	Index    int            `json:"index,omitempty"`
+	Count    map[string]int `json:"count,omitempty"`
 }
 
 // Basic export config (for now)

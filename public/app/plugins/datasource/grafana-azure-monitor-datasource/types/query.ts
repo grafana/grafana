@@ -10,6 +10,8 @@ export enum AzureQueryType {
   ResourceGroupsQuery = 'Azure Resource Groups',
   NamespacesQuery = 'Azure Namespaces',
   ResourceNamesQuery = 'Azure Resource Names',
+  MetricNamesQuery = 'Azure Metric Names',
+  WorkspacesQuery = 'Azure Workspaces',
   /** Deprecated */
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
 }
@@ -34,6 +36,7 @@ export interface AzureMonitorQuery extends DataQuery {
   /** Template variables params */
   resourceGroup?: string;
   namespace?: string;
+  resource?: string;
 }
 
 /**

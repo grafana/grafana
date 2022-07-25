@@ -173,7 +173,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	return cmd, nil
 }
 
-func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error {
+func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error {
 	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
 }
 
@@ -371,7 +371,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 	rtEditor := models.ROLE_EDITOR
 	rtViewer := models.ROLE_VIEWER
 
-	items := []*models.DashboardAcl{
+	items := []*models.DashboardACL{
 		{
 			OrgID:       orgID,
 			DashboardID: dashboardID,
@@ -384,7 +384,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 
 	if setViewAndEditPermissions {
 		items = append(items,
-			&models.DashboardAcl{
+			&models.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtEditor,
@@ -392,7 +392,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
-			&models.DashboardAcl{
+			&models.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtViewer,
@@ -470,7 +470,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	inFolder := dash.FolderId > 0
 	if !accesscontrol.IsDisabled(dr.cfg) {
 		var permissions []accesscontrol.SetResourcePermissionCommand
-		if !provisioned {
+		if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: dto.User.UserId, Permission: models.PERMISSION_ADMIN.String(),
 			})
@@ -492,7 +492,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		if err != nil {
 			return err
 		}
-	} else if dr.cfg.EditorsCanAdmin && !provisioned {
+	} else if dr.cfg.EditorsCanAdmin && !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
 		if err := dr.MakeUserAdmin(ctx, dto.OrgId, dto.User.UserId, dash.Id, !inFolder); err != nil {
 			return err
 		}
@@ -578,8 +578,8 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 	}
 }
 
-func (dr *DashboardServiceImpl) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-	return dr.dashboardStore.GetDashboardAclInfoList(ctx, query)
+func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
+	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
 func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
@@ -592,4 +592,8 @@ func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, 
 
 func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int64) error {
+	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
 }

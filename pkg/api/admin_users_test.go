@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,7 +35,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			IsGrafanaAdmin: false,
 		}
 		mock := &mockstore.SQLStoreMock{
-			ExpectedError: models.ErrLastGrafanaAdmin,
+			ExpectedError: user.ErrLastGrafanaAdmin,
 		}
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
 			"/api/admin/users/:id/permissions", role, updateCmd, func(sc *scenarioContext) {
@@ -54,7 +55,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 	t.Run("When a server admin attempts to logout a non-existing user from all devices", func(t *testing.T) {
 		mock := &mockstore.SQLStoreMock{
-			ExpectedError: models.ErrUserNotFound,
+			ExpectedError: user.ErrUserNotFound,
 		}
 		adminLogoutUserScenario(t, "Should return not found when calling POST on", "/api/admin/users/200/logout",
 			"/api/admin/users/:id/logout", func(sc *scenarioContext) {
@@ -66,7 +67,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	t.Run("When a server admin attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
 		mock := &mockstore.SQLStoreMock{
-			ExpectedError: models.ErrUserNotFound,
+			ExpectedError: user.ErrUserNotFound,
 		}
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
 			"/api/admin/users/200/revoke-auth-token", "/api/admin/users/:id/revoke-auth-token", cmd, func(sc *scenarioContext) {
@@ -77,7 +78,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 	t.Run("When a server admin gets auth tokens for a non-existing user", func(t *testing.T) {
 		mock := &mockstore.SQLStoreMock{
-			ExpectedError: models.ErrUserNotFound,
+			ExpectedError: user.ErrUserNotFound,
 		}
 		adminGetUserAuthTokensScenario(t, "Should return not found when calling GET on",
 			"/api/admin/users/200/auth-tokens", "/api/admin/users/:id/auth-tokens", func(sc *scenarioContext) {
@@ -90,8 +91,8 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminDisableUserScenario(t, "Should return user not found on a POST request", "enable",
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
 				store := sc.sqlStore.(*mockstore.SQLStoreMock)
-				sc.authInfoService.ExpectedError = models.ErrUserNotFound
-				store.ExpectedError = models.ErrUserNotFound
+				sc.authInfoService.ExpectedError = user.ErrUserNotFound
+				store.ExpectedError = user.ErrUserNotFound
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
@@ -107,8 +108,8 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminDisableUserScenario(t, "Should return user not found on a POST request", "disable",
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
 				store := sc.sqlStore.(*mockstore.SQLStoreMock)
-				sc.authInfoService.ExpectedError = models.ErrUserNotFound
-				store.ExpectedError = models.ErrUserNotFound
+				sc.authInfoService.ExpectedError = user.ErrUserNotFound
+				store.ExpectedError = user.ErrUserNotFound
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
@@ -152,8 +153,8 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	t.Run("When a server admin attempts to delete a nonexistent user", func(t *testing.T) {
 		adminDeleteUserScenario(t, "Should return user not found error", "/api/admin/users/42",
 			"/api/admin/users/:id", func(sc *scenarioContext) {
-				sc.sqlStore.(*mockstore.SQLStoreMock).ExpectedError = models.ErrUserNotFound
-				sc.authInfoService.ExpectedError = models.ErrUserNotFound
+				sc.sqlStore.(*mockstore.SQLStoreMock).ExpectedError = user.ErrUserNotFound
+				sc.authInfoService.ExpectedError = user.ErrUserNotFound
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 				userID := sc.sqlStore.(*mockstore.SQLStoreMock).LatestUserId
 

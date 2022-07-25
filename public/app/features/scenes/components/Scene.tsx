@@ -7,10 +7,10 @@ import { Page } from 'app/core/components/Page/Page';
 import { PageLayoutType } from 'app/core/components/Page/types';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneComponentProps, SceneObjectState, SceneObject } from '../core/types';
+import { SceneComponentProps, SceneObjectStatePlain, SceneObject } from '../core/types';
 import { UrlSyncManager } from '../services/UrlSyncManager';
 
-interface SceneState extends SceneObjectState {
+interface SceneState extends SceneObjectStatePlain {
   title: string;
   layout: SceneObject;
   actions?: SceneObject[];
