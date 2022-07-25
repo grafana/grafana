@@ -27,6 +27,17 @@ describe('Join by labels', () => {
           },
         ],
       }),
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [22, 28] },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [22, 77],
+            labels: { what: 'Cost', cluster: 'B', job: 'J1' },
+          },
+        ],
+      }),
     ];
 
     const result = joinByLabels(
@@ -41,29 +52,79 @@ describe('Join by labels', () => {
           "cluster",
           "job",
           "Price",
+          "Cost",
         ],
         "rows": Array [
           Array [
             "A",
             "J1",
             10,
+            undefined,
           ],
           Array [
             "A",
             "J1",
             200,
+            undefined,
           ],
           Array [
             "B",
             "J1",
             10,
+            22,
           ],
           Array [
             "B",
             "J1",
             200,
+            77,
           ],
         ],
+      }
+    `);
+  });
+
+  it('Error handling (no labels)', () => {
+    const input = [
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2] },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [10, 200],
+          },
+        ],
+      }),
+    ];
+
+    const result = joinByLabels(
+      {
+        value: 'what',
+      },
+      input
+    );
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "fields": Array [
+          Object {
+            "config": Object {},
+            "name": "Error",
+            "type": "string",
+            "values": Array [
+              "No labels in result",
+            ],
+          },
+        ],
+        "length": 0,
+        "meta": Object {
+          "notices": Array [
+            Object {
+              "severity": "error",
+              "text": "No labels in result",
+            },
+          ],
+        },
       }
     `);
   });
