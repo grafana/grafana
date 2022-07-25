@@ -44,7 +44,7 @@ There are three steps needed to package a plugin:
    zip myorg-simple-panel-1.0.0.zip myorg-simple-panel -r
    ```
 
-1. (Optional) Verify your plugin is packaged correctly using zipinfo. It should look something like this:
+1. (Optional) Verify your plugin is packaged correctly using [zipinfo](https://linux.die.net/man/1/zipinfo). It should look something like this:
 
 ```
 zipinfo grafana-clickhouse-datasource-1.1.2.zip
