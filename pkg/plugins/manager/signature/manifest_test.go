@@ -447,3 +447,102 @@ func Test_urlMatch_private(t *testing.T) {
 		})
 	}
 }
+
+func Test_validateManifest(t *testing.T) {
+	tcs := []struct {
+		name        string
+		manifest    *pluginManifest
+		expectedErr string
+	}{
+		{
+			name:        "Empty plugin field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.Plugin = "" }),
+			expectedErr: "valid manifest field plugin is required",
+		},
+		{
+			name:        "Empty keyId field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.KeyID = "" }),
+			expectedErr: "valid manifest field keyId is required",
+		},
+		{
+			name:        "Empty signedByOrg field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.SignedByOrg = "" }),
+			expectedErr: "valid manifest field signedByOrg is required",
+		},
+		{
+			name:        "Empty signedByOrgName field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.SignedByOrgName = "" }),
+			expectedErr: "valid manifest field SignedByOrgName is required",
+		},
+		{
+			name:        "Empty signatureType field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.SignatureType = "" }),
+			expectedErr: "valid manifest field signatureType is required",
+		},
+		{
+			name:        "Invalid signatureType field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.SignatureType = "invalidSignatureType" }),
+			expectedErr: "valid manifest field signatureType is required",
+		},
+		{
+			name:        "Empty files field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.Files = map[string]string{} }),
+			expectedErr: "valid manifest field files is required",
+		},
+		{
+			name:        "Empty time field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.Time = 0 }),
+			expectedErr: "valid manifest field time is required",
+		},
+		{
+			name:        "Empty version field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.Version = "" }),
+			expectedErr: "valid manifest field version is required",
+		},
+		{
+			name:        "Invalid version field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.Version = "2" }),
+			expectedErr: "valid manifest field version is required",
+		},
+		{
+			name:        "Empty manifestVersion field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.ManifestVersion = "" }),
+			expectedErr: "valid manifest field manifestVersion is required",
+		},
+		{
+			name:        "Invalid manifestVersion field",
+			manifest:    createManifest(t, func(m *pluginManifest) { m.Version = "1.0" }),
+			expectedErr: "valid manifest field manifestVersion is required",
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateManifest(*tc.manifest, nil)
+			require.Errorf(t, err, tc.expectedErr)
+		})
+	}
+}
+
+func createManifest(t *testing.T, cbs ...func(*pluginManifest)) *pluginManifest {
+	t.Helper()
+
+	m := &pluginManifest{
+		Plugin:  "grafana-test-app",
+		Version: "2.5.3",
+		KeyID:   "7e4d0c6a708866e7",
+		Time:    1586817677115,
+		Files: map[string]string{
+			"plugin.json": "55556b845e91935cc48fae3aa67baf0f22694c3f",
+		},
+		ManifestVersion: "2.0.0",
+		SignatureType:   plugins.GrafanaSignature,
+		SignedByOrg:     "grafana",
+		SignedByOrgName: "grafana",
+	}
+
+	for _, cb := range cbs {
+		cb(m)
+	}
+
+	return m
+}

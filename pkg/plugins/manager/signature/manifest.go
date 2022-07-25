@@ -15,7 +15,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/gobwas/glob"
+
 	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
 	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp"
@@ -88,15 +90,8 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to parse public key", err)
-	}
-
-	if _, err := openpgp.CheckDetachedSignature(keyring,
-		bytes.NewBuffer(block.Bytes),
-		block.ArmoredSignature.Body); err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to check signature", err)
+	if err = validateManifest(manifest, block); err != nil {
+		return nil, err
 	}
 
 	return &manifest, nil
@@ -132,7 +127,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
-		mlog.Debug("Plugin signature invalid", "id", plugin.ID)
+		mlog.Debug("Plugin signature invalid", "id", plugin.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -313,4 +308,67 @@ func urlMatch(specs []string, target string, signatureType plugins.SignatureType
 		}
 	}
 	return false, nil
+}
+
+type invalidFieldErr struct {
+	field string
+}
+
+func (r invalidFieldErr) Error() string {
+	return fmt.Sprintf("valid manifest field %s is required", r.field)
+}
+
+func validateManifest(m pluginManifest, block *clearsign.Block) error {
+	if len(m.Plugin) == 0 {
+		return invalidFieldErr{field: "plugin"}
+	}
+	if len(m.Version) == 0 || !isValidSemVer(m.Version) {
+		return invalidFieldErr{field: "version"}
+	}
+	if len(m.KeyID) == 0 {
+		return invalidFieldErr{field: "keyId"}
+	}
+	if m.Time == 0 {
+		return invalidFieldErr{field: "time"}
+	}
+	if len(m.Files) == 0 {
+		return invalidFieldErr{field: "files"}
+	}
+	if len(m.ManifestVersion) == 0 || !isValidSemVer(m.ManifestVersion) {
+		return invalidFieldErr{field: "manifestVersion"}
+	}
+	if len(m.SignedByOrg) == 0 {
+		return invalidFieldErr{field: "signedByOrg"}
+	}
+	if len(m.SignedByOrgName) == 0 {
+		return invalidFieldErr{field: "signedByOrgName"}
+	}
+
+	if !m.SignatureType.IsValid() {
+		return fmt.Errorf("%s is not a valid signature type", m.SignatureType)
+	}
+
+	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse public key", err)
+	}
+
+	if _, err = openpgp.CheckDetachedSignature(keyring,
+		bytes.NewBuffer(block.Bytes),
+		block.ArmoredSignature.Body); err != nil {
+		return fmt.Errorf("%v: %w", "failed to check signature", err)
+	}
+
+	return nil
+}
+
+func isValidSemVer(version string) bool {
+	if version == "" {
+		return false
+	}
+	if _, err := semver.StrictNewVersion(version); err == nil {
+		return true
+	}
+
+	return false
 }
