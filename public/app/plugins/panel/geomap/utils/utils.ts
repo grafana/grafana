@@ -1,11 +1,8 @@
+import { SelectableValue } from '@grafana/data';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data/src';
+import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
+import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
-import {
-  getColorDimension,
-  getScalarDimension,
-  getScaledDimension,
-  getTextDimension,
-} from '../../../../features/dimensions';
 import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
 
 export function getStyleDimension(
@@ -40,4 +37,34 @@ export function getStyleDimension(
   }
 
   return dims;
+}
+
+let publicGeoJSONFiles: Array<SelectableValue<string>> | undefined = undefined;
+
+export function getPublicGeoJSONFiles(): Array<SelectableValue<string>> {
+  if (!publicGeoJSONFiles) {
+    publicGeoJSONFiles = [];
+    initGeojsonFiles(); // async
+  }
+  return publicGeoJSONFiles;
+}
+
+// This will find all geojson files in the maps and gazetteer folders
+async function initGeojsonFiles() {
+  const ds = await getGrafanaDatasource();
+  for (let folder of ['maps', 'gazetteer']) {
+    ds.listFiles(folder).subscribe({
+      next: (frame) => {
+        frame.forEach((item) => {
+          if (item.name.endsWith('.geojson')) {
+            const value = `public/${folder}/${item.name}`;
+            publicGeoJSONFiles!.push({
+              value,
+              label: value,
+            });
+          }
+        });
+      },
+    });
+  }
 }
