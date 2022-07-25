@@ -317,8 +317,8 @@ loggers = file
 log_dashboard_content = false
 # Log all GET requests and always include request body for generic POST/PUT/PATCH requests.
 verbose = false
-# By default Grafana logs requests even if the status code indicates no changes to the system were done.
-# Disable this to only log requests with 2xx, 3xx, 401, 403, 500 responses.
+# By default Grafana logs requests even if the status code indicates that no changes to the system were made.
+# Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
 log_all_status_codes = true
 ```
 
