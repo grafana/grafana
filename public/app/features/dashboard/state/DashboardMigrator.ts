@@ -55,6 +55,7 @@ import { VariableHide } from '../../variables/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
+import { Condition } from 'app/features/expressions/components/Condition';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -76,7 +77,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 36;
+    this.dashboard.schemaVersion = 37;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -783,7 +784,7 @@ export class DashboardMigrator {
           panel.options.legend.displayMode = 'list';
           panel.options.legend.showLegend = false;
         } else if (panel.options?.legend) {
-          panel.options.legend.showLegend = true;
+          panel.options.legend = {...panel.options?.legend, showLegend: true};
         }
         return panel;
       });
