@@ -1,5 +1,4 @@
 import { keyframes, css, cx } from '@emotion/css';
-import { relative } from 'node:path/win32';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Popper } from 'react-popper';
 
@@ -8,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { Button, ButtonProps } from '../Button';
 import { Icon } from '../Icon/Icon';
-import Indicator from '../Indicator/Indicator';
+import { Indicator } from '../Indicator/Indicator';
 
 export interface Props extends ButtonProps {
   /** A function that returns text to be copied */

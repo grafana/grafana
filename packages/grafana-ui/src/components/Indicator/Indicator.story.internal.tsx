@@ -4,7 +4,7 @@ import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 
-import Indicator, { IndicatorProps } from './Indicator';
+import { Indicator, IndicatorProps } from './Indicator';
 import mdx from './Indicator.mdx';
 
 const story: Meta = {

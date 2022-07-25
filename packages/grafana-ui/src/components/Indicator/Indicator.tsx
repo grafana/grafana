@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { IconName } from 'src/types';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 
 export interface IndicatorProps {
@@ -12,7 +12,7 @@ export interface IndicatorProps {
   suffixIcon?: IconName;
 }
 
-export default function Indicator({ children, suffixIcon }: IndicatorProps) {
+export function Indicator({ children, suffixIcon }: IndicatorProps) {
   const styles = useStyles2(getStyles);
 
   return (
