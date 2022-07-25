@@ -4,111 +4,60 @@ import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
-import { getIconFromSeverity } from '@grafana/ui/src/components/Alert/Alert';
+import { Card, Checkbox, useTheme2 } from '@grafana/ui';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props {
-  title: string;
+  children?: ReactNode;
+  className?: string;
+  isSelected: boolean;
+  onClick: () => void;
   severity?: AlertVariant;
+  title: string;
   timestamp?: number;
   traceId?: string;
-  children?: ReactNode;
-  onRemove?: (event: React.MouseEvent) => void;
 }
 
 export const StoredNotificationItem = ({
-  title,
+  children,
+  className,
+  isSelected,
+  onClick,
   severity = 'error',
+  title,
   traceId,
   timestamp,
-  children,
-  onRemove,
 }: Props) => {
   const theme = useTheme2();
-  const styles = getStyles(theme, severity);
+  const styles = getStyles(theme);
   const showTraceId = config.featureToggles.tracing && traceId;
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.icon}>
-        <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
-      </div>
-      <div className={styles.title}>{title}</div>
-      <div className={styles.body}>{children}</div>
-      <span className={styles.trace}>{showTraceId && `Trace ID: ${traceId}`}</span>
-      <div className={styles.close}>
-        <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
-      </div>
-      {timestamp && <span className={styles.timestamp}>{formatDistanceToNow(timestamp, { addSuffix: true })}</span>}
-    </div>
+    <Card className={className} onClick={onClick}>
+      <Card.Heading>{title}</Card.Heading>
+      <Card.Description>{children}</Card.Description>
+      <Card.Figure>
+        <Checkbox onChange={onClick} tabIndex={-1} value={isSelected} />
+      </Card.Figure>
+      <Card.Tags className={styles.trace}>
+        {showTraceId && <span>{`Trace ID: ${traceId}`}</span>}
+        {timestamp && formatDistanceToNow(timestamp, { addSuffix: true })}
+      </Card.Tags>
+    </Card>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, severity: AlertVariant) => {
-  const color = theme.colors[severity];
-  const borderRadius = theme.shape.borderRadius();
-
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css({
-      display: 'grid',
-      gridTemplateColumns: 'auto 1fr auto',
-      gridTemplateRows: 'auto 1fr auto',
-      gridTemplateAreas: `
-        'icon title close'
-        'icon body body'
-        'icon trace timestamp'`,
-      gap: `0 ${theme.spacing(2)}`,
-      background: theme.colors.background.secondary,
-      borderRadius: borderRadius,
-    }),
-    icon: css({
-      gridArea: 'icon',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: theme.spacing(2, 3),
-      background: color.main,
-      color: color.contrastText,
-      borderRadius: `${borderRadius} 0 0 ${borderRadius}`,
-    }),
-    title: css({
-      gridArea: 'title',
-      alignSelf: 'center',
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
-    }),
-    body: css({
-      gridArea: 'body',
-      maxHeight: '50vh',
-      marginRight: theme.spacing(1),
-      overflowY: 'auto',
-      overflowWrap: 'break-word',
-      wordBreak: 'break-word',
-      color: theme.colors.text.secondary,
-    }),
     trace: css({
-      gridArea: 'trace',
-      justifySelf: 'start',
-      alignSelf: 'end',
-      paddingBottom: theme.spacing(1),
-      fontSize: theme.typography.pxToRem(10),
+      alignItems: 'flex-end',
+      alignSelf: 'flex-end',
       color: theme.colors.text.secondary,
-    }),
-    close: css({
-      gridArea: 'close',
       display: 'flex',
-      justifySelf: 'end',
-      padding: theme.spacing(1, 0.5),
-      background: 'none',
-    }),
-    timestamp: css({
-      gridArea: 'timestamp',
-      alignSelf: 'end',
-      padding: theme.spacing(1),
+      flexDirection: 'column',
       fontSize: theme.typography.pxToRem(10),
-      color: theme.colors.text.secondary,
+      justifySelf: 'flex-end',
     }),
   };
 };

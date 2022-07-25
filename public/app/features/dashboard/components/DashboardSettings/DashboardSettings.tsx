@@ -41,13 +41,21 @@ const onClose = () => locationService.partial({ editview: null });
 const MakeEditable = (props: { onMakeEditable: () => any }) => (
   <div>
     <div className="dashboard-settings__header">Dashboard not editable</div>
-    <Button onClick={props.onMakeEditable}>Make editable</Button>
+    <Button type="submit" onClick={props.onMakeEditable}>
+      Make editable
+    </Button>
   </div>
 );
 
 export function DashboardSettings({ dashboard, editview }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const { overlayProps } = useOverlay({}, ref);
+  const { overlayProps } = useOverlay(
+    {
+      isOpen: true,
+      onClose,
+    },
+    ref
+  );
   const { dialogProps } = useDialog(
     {
       'aria-label': 'Dashboard settings',
@@ -115,7 +123,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
     }
 
     if (dashboard.id && dashboard.meta.canAdmin) {
-      if (!config.featureToggles['accesscontrol']) {
+      if (!config.rbacEnabled) {
         pages.push({
           title: 'Permissions',
           id: 'permissions',
@@ -153,9 +161,15 @@ export function DashboardSettings({ dashboard, editview }: Props) {
   const styles = getStyles(config.theme2);
 
   return (
-    <FocusScope contain autoFocus restoreFocus>
+    <FocusScope contain autoFocus>
       <div className="dashboard-settings" ref={ref} {...overlayProps} {...dialogProps}>
-        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose} />
+        <PageToolbar
+          className={styles.toolbar}
+          title={dashboard.title}
+          section="Settings"
+          parent={folderTitle}
+          onGoBack={onClose}
+        />
         <CustomScrollbar>
           <div className={styles.scrollInner}>
             <div className={styles.settingsWrapper}>
@@ -191,6 +205,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   scrollInner: css`
     min-width: 100%;
     display: flex;
+  `,
+  toolbar: css`
+    width: 60vw;
+    min-width: min-content;
   `,
   settingsWrapper: css`
     margin: ${theme.spacing(0, 2, 2)};

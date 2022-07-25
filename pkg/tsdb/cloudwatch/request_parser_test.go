@@ -1,21 +1,21 @@
 package cloudwatch
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRequestParser(t *testing.T) {
+	average := "Average"
+	false := false
 	t.Run("Query migration ", func(t *testing.T) {
 		t.Run("legacy statistics field is migrated", func(t *testing.T) {
-			startTime := time.Now()
-			endTime := startTime.Add(2 * time.Hour)
 			oldQuery := &backend.DataQuery{
 				MaxDataPoints: 0,
 				QueryType:     "timeSeriesQuery",
@@ -33,37 +33,35 @@ func TestRequestParser(t *testing.T) {
 				"period": "600",
 				"hide": false
 			  }`)
-			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery}, false, startTime, endTime)
+			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery}, false)
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(migratedQueries))
 
 			migratedQuery := migratedQueries[0]
 			assert.Equal(t, "A", migratedQuery.RefID)
-			model, err := simplejson.NewJson(migratedQuery.JSON)
+			var model QueryJson
+			err = json.Unmarshal(migratedQuery.JSON, &model)
 			require.NoError(t, err)
-			assert.Equal(t, "Average", model.Get("statistic").MustString())
-			res, err := model.Get("statistic").Array()
-			assert.Error(t, err)
-			assert.Nil(t, res)
+			assert.Equal(t, "Average", *model.Statistic)
 		})
 	})
 
 	t.Run("New dimensions structure", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"refId":      "ref1",
-			"region":     "us-east-1",
-			"namespace":  "ec2",
-			"metricName": "CPUUtilization",
-			"id":         "",
-			"expression": "",
-			"dimensions": map[string]interface{}{
+		query := QueryJson{
+			RefId:      "ref1",
+			Region:     "us-east-1",
+			Namespace:  "ec2",
+			MetricName: "CPUUtilization",
+			Id:         "",
+			Expression: "",
+			Dimensions: map[string]interface{}{
 				"InstanceId":   []interface{}{"test"},
 				"InstanceType": []interface{}{"test2", "test3"},
 			},
-			"statistic": "Average",
-			"period":    "600",
-			"hide":      false,
-		})
+			Statistic: &average,
+			Period:    "600",
+			Hide:      &false,
+		}
 
 		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
@@ -83,21 +81,21 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Old dimensions structure (backwards compatibility)", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"refId":      "ref1",
-			"region":     "us-east-1",
-			"namespace":  "ec2",
-			"metricName": "CPUUtilization",
-			"id":         "",
-			"expression": "",
-			"dimensions": map[string]interface{}{
-				"InstanceId":   "test",
-				"InstanceType": "test2",
+		query := QueryJson{
+			RefId:      "ref1",
+			Region:     "us-east-1",
+			Namespace:  "ec2",
+			MetricName: "CPUUtilization",
+			Id:         "",
+			Expression: "",
+			Dimensions: map[string]interface{}{
+				"InstanceId":   []interface{}{"test"},
+				"InstanceType": []interface{}{"test2"},
 			},
-			"statistic": "Average",
-			"period":    "600",
-			"hide":      false,
-		})
+			Statistic: &average,
+			Period:    "600",
+			Hide:      &false,
+		}
 
 		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
@@ -117,21 +115,21 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Period defined in the editor by the user is being used when time range is short", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"refId":      "ref1",
-			"region":     "us-east-1",
-			"namespace":  "ec2",
-			"metricName": "CPUUtilization",
-			"id":         "",
-			"expression": "",
-			"dimensions": map[string]interface{}{
-				"InstanceId":   "test",
-				"InstanceType": "test2",
+		query := QueryJson{
+			RefId:      "ref1",
+			Region:     "us-east-1",
+			Namespace:  "ec2",
+			MetricName: "CPUUtilization",
+			Id:         "",
+			Expression: "",
+			Dimensions: map[string]interface{}{
+				"InstanceId":   []interface{}{"test"},
+				"InstanceType": []interface{}{"test2"},
 			},
-			"statistic": "Average",
-			"hide":      false,
-		})
-		query.Set("period", "900")
+			Statistic: &average,
+			Period:    "900",
+			Hide:      &false,
+		}
 
 		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
@@ -139,24 +137,24 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Period is parsed correctly if not defined by user", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"refId":      "ref1",
-			"region":     "us-east-1",
-			"namespace":  "ec2",
-			"metricName": "CPUUtilization",
-			"id":         "",
-			"expression": "",
-			"dimensions": map[string]interface{}{
-				"InstanceId":   "test",
-				"InstanceType": "test2",
+		query := QueryJson{
+			RefId:      "ref1",
+			Region:     "us-east-1",
+			Namespace:  "ec2",
+			MetricName: "CPUUtilization",
+			Id:         "",
+			Expression: "",
+			Dimensions: map[string]interface{}{
+				"InstanceId":   []interface{}{"test"},
+				"InstanceType": []interface{}{"test2"},
 			},
-			"statistic": "Average",
-			"hide":      false,
-			"period":    "auto",
-		})
+			Statistic: &average,
+			Hide:      &false,
+			Period:    "auto",
+		}
 
 		t.Run("Time range is 5 minutes", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now()
 			from := to.Local().Add(time.Minute * time.Duration(5))
 
@@ -166,7 +164,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 1 day", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now()
 			from := to.AddDate(0, 0, -1)
 
@@ -176,7 +174,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 2 days", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now()
 			from := to.AddDate(0, 0, -2)
 			res, err := parseRequestQuery(query, "ref1", from, to)
@@ -185,7 +183,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 7 days", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now()
 			from := to.AddDate(0, 0, -7)
 
@@ -195,7 +193,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 30 days", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now()
 			from := to.AddDate(0, 0, -30)
 
@@ -205,7 +203,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 90 days", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now()
 			from := to.AddDate(0, 0, -90)
 
@@ -215,7 +213,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 1 year", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now()
 			from := to.AddDate(-1, 0, 0)
 
@@ -225,7 +223,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 2 years", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now()
 			from := to.AddDate(-2, 0, 0)
 
@@ -235,7 +233,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 2 days, but 16 days ago", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now().AddDate(0, 0, -14)
 			from := to.AddDate(0, 0, -2)
 			res, err := parseRequestQuery(query, "ref1", from, to)
@@ -244,7 +242,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 2 days, but 90 days ago", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now().AddDate(0, 0, -88)
 			from := to.AddDate(0, 0, -2)
 			res, err := parseRequestQuery(query, "ref1", from, to)
@@ -253,7 +251,7 @@ func TestRequestParser(t *testing.T) {
 		})
 
 		t.Run("Time range is 2 days, but 456 days ago", func(t *testing.T) {
-			query.Set("period", "auto")
+			query.Period = "auto"
 			to := time.Now().AddDate(0, 0, -454)
 			from := to.AddDate(0, 0, -2)
 			res, err := parseRequestQuery(query, "ref1", from, to)
@@ -275,7 +273,7 @@ func TestRequestParser(t *testing.T) {
 
 			t.Run("and an expression is specified it should be metric search builder", func(t *testing.T) {
 				query := getBaseJsonQuery()
-				query.Set("expression", "SUM(a)")
+				query.Expression = "SUM(a)"
 				res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 				require.NoError(t, err)
 				assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
@@ -286,7 +284,7 @@ func TestRequestParser(t *testing.T) {
 
 		t.Run("and an expression is specified it should be metric search builder", func(t *testing.T) {
 			query := getBaseJsonQuery()
-			query.Set("expression", "SUM(a)")
+			query.Expression = "SUM(a)"
 			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 			require.NoError(t, err)
 			assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
@@ -305,23 +303,39 @@ func TestRequestParser(t *testing.T) {
 
 	t.Run("Valid id is generated if ID is not provided and refId is not a valid MetricData ID", func(t *testing.T) {
 		query := getBaseJsonQuery()
-		query.Set("refId", "$$")
+		query.RefId = "$$"
 		res, err := parseRequestQuery(query, "$$", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
 		assert.Equal(t, "$$", res.RefId)
 		assert.Regexp(t, validMetricDataID, res.Id)
 	})
+
+	t.Run("parseRequestQuery sets label when label is present in json query", func(t *testing.T) {
+		query := getBaseJsonQuery()
+		alias := "some alias"
+		query.Alias = &alias
+
+		label := "some label"
+		query.Label = &label
+
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+
+		assert.NoError(t, err)
+		assert.Equal(t, "some alias", res.Alias) // alias is unmodified
+		assert.Equal(t, "some label", res.Label)
+	})
 }
 
-func getBaseJsonQuery() *simplejson.Json {
-	return simplejson.NewFromAny(map[string]interface{}{
-		"refId":      "ref1",
-		"region":     "us-east-1",
-		"namespace":  "ec2",
-		"metricName": "CPUUtilization",
-		"statistic":  "Average",
-		"period":     "900",
-	})
+func getBaseJsonQuery() QueryJson {
+	average := "Average"
+	return QueryJson{
+		RefId:      "ref1",
+		Region:     "us-east-1",
+		Namespace:  "ec2",
+		MetricName: "CPUUtilization",
+		Statistic:  &average,
+		Period:     "900",
+	}
 }
 
 func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_creates_new_label(t *testing.T) {
@@ -342,37 +356,42 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			queryJson, err := simplejson.NewJson([]byte(fmt.Sprintf(`{
-						"region": "us-east-1",
-						"namespace": "ec2",
-						"metricName": "CPUUtilization",
-						"alias": "%s",
-						"dimensions": {
-						  "InstanceId": ["test"]
-						},
-						"statistic": "Average",
-						"period": "600",
-						"hide": false
-				  }`, tc.inputAlias)))
-			require.NoError(t, err)
+			average := "Average"
+			false := false
 
-			migrateAliasToDynamicLabel(queryJson)
+			queryToMigrate := QueryJson{
+				Region:     "us-east-1",
+				Namespace:  "ec2",
+				MetricName: "CPUUtilization",
+				Alias:      &tc.inputAlias,
+				Dimensions: map[string]interface{}{
+					"InstanceId": []interface{}{"test"},
+				},
+				Statistic: &average,
+				Period:    "600",
+				Hide:      &false,
+			}
 
-			assert.Equal(t, simplejson.NewFromAny(
-				map[string]interface{}{
-					"alias":      tc.inputAlias,
-					"dimensions": map[string]interface{}{"InstanceId": []interface{}{"test"}},
-					"hide":       false,
-					"label":      tc.expectedLabel,
-					"metricName": "CPUUtilization",
-					"namespace":  "ec2",
-					"period":     "600",
-					"region":     "us-east-1",
-					"statistic":  "Average"}), queryJson)
+			migrateAliasToDynamicLabel(&queryToMigrate)
+
+			expected := QueryJson{
+				Alias: &tc.inputAlias,
+				Dimensions: map[string]interface{}{
+					"InstanceId": []interface{}{"test"},
+				},
+				Hide:       &false,
+				Label:      &tc.expectedLabel,
+				MetricName: "CPUUtilization",
+				Namespace:  "ec2",
+				Period:     "600",
+				Region:     "us-east-1",
+				Statistic:  &average,
+			}
+
+			assert.Equal(t, expected, queryToMigrate)
 		})
 	}
 }
-
 func Test_Test_migrateLegacyQuery(t *testing.T) {
 	t.Run("migrates alias to label when label does not already exist and feature toggle enabled", func(t *testing.T) {
 		migratedQueries, err := migrateLegacyQuery(
@@ -392,7 +411,7 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 					"period": "600",
 					"hide": false
 				  }`)},
-			}, true, time.Now(), time.Now())
+			}, true)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(migratedQueries))
 
@@ -449,7 +468,7 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 					"hide": false
 				  }`),
 				},
-			}, true, time.Now(), time.Now())
+			}, true)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(migratedQueries))
 
@@ -520,7 +539,7 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 					"period": "600",
 					"hide": false
 				  }`, tc.labelJson))},
-					}, tc.dynamicLabelsFeatureToggleEnabled, time.Now(), time.Now())
+					}, tc.dynamicLabelsFeatureToggleEnabled)
 				require.NoError(t, err)
 				require.Equal(t, 1, len(migratedQueries))
 

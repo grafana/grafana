@@ -14,7 +14,7 @@ const JSON_DATE_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 const MAX_ANIMATED_TOGGLE_ITEMS = 10;
 
 const requestAnimationFrame =
-  window.requestAnimationFrame ||
+  (typeof window !== 'undefined' && window.requestAnimationFrame) ||
   ((cb: () => void) => {
     cb();
     return 0;

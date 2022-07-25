@@ -1,35 +1,9 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const fs = require('fs-extra');
 const path = require('path');
 const webpack = require('webpack');
 
+const CopyUniconsPlugin = require('./plugins/CopyUniconsPlugin');
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
-
-class CopyUniconsPlugin {
-  apply(compiler) {
-    compiler.hooks.afterEnvironment.tap('CopyUniconsPlugin', () => {
-      let destDir = path.resolve(__dirname, '../../public/img/icons/unicons');
-
-      if (!fs.pathExistsSync(destDir)) {
-        let srcDir = path.join(
-          path.dirname(require.resolve('iconscout-unicons-tarball/package.json')),
-          'unicons/svg/line'
-        );
-        fs.copySync(srcDir, destDir);
-      }
-
-      let solidDestDir = path.resolve(__dirname, '../../public/img/icons/solid');
-
-      if (!fs.pathExistsSync(solidDestDir)) {
-        let srcDir = path.join(
-          path.dirname(require.resolve('iconscout-unicons-tarball/package.json')),
-          'unicons/svg/solid'
-        );
-        fs.copySync(srcDir, solidDestDir);
-      }
-    });
-  }
-}
 
 module.exports = {
   target: 'web',
@@ -39,16 +13,14 @@ module.exports = {
   output: {
     clean: true,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: '[name].[fullhash].js',
+    filename: '[name].[contenthash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: 'public/build/',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
-      // storybook v6 bump caused the app to bundle multiple versions of react breaking hooks
-      // make sure to resolve only from the project: https://github.com/facebook/react/issues/13991#issuecomment-435587809
-      // some of data source pluginis use global Prism object to add the language definition
+      // some of data source plugins use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
       prismjs: require.resolve('prismjs'),
     },
@@ -134,13 +106,12 @@ module.exports = {
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         loader: 'file-loader',
-        options: { name: 'static/img/[name].[hash:8].[ext]' },
+        options: { name: 'static/img/[name].[contenthash:8].[ext]' },
       },
     ],
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
   optimization: {
-    moduleIds: 'named',
     runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all',

@@ -106,7 +106,6 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
             </InlineField>
             <InlineField label={'as'}>
               <Select
-                menuShouldPortal
                 options={allTypes}
                 value={c.destinationType}
                 placeholder={'Type'}

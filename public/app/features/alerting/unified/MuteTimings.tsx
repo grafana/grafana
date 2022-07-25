@@ -8,6 +8,7 @@ import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import MuteTimingForm from './components/amroutes/MuteTimingForm';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
+import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
@@ -15,7 +16,8 @@ import { initialAsyncRequestState } from './utils/redux';
 const MuteTimings = () => {
   const [queryParams] = useQueryParams();
   const dispatch = useDispatch();
-  const [alertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagersByPermission('notification');
+  const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -36,7 +38,18 @@ const MuteTimings = () => {
 
   const getMuteTimingByName = useCallback(
     (id: string): MuteTimeInterval | undefined => {
-      return config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
+      const timing = config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
+
+      if (timing) {
+        const provenance = (config?.muteTimeProvenances ?? {})[timing.name];
+
+        return {
+          ...timing,
+          provenance,
+        };
+      }
+
+      return timing;
     },
     [config]
   );
@@ -58,7 +71,9 @@ const MuteTimings = () => {
             {() => {
               if (queryParams['muteName']) {
                 const muteTiming = getMuteTimingByName(String(queryParams['muteName']));
-                return <MuteTimingForm muteTiming={muteTiming} showError={!muteTiming} />;
+                const provenance = muteTiming?.provenance;
+
+                return <MuteTimingForm muteTiming={muteTiming} showError={!muteTiming} provenance={provenance} />;
               }
               return <Redirect to="/alerting/routes" />;
             }}

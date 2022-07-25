@@ -1,15 +1,51 @@
-import { shallow } from 'enzyme';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { CreateTeam, Props } from './CreateTeam';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 
-describe('Render', () => {
+import { CreateTeam } from './CreateTeam';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+const mockPost = jest.fn(() => {
+  return Promise.resolve({});
+});
+
+setBackendSrv({
+  post: mockPost,
+} as any as BackendSrv);
+
+const setup = () => {
+  return render(<CreateTeam />);
+};
+
+describe('Create team', () => {
   it('should render component', () => {
-    const props: Props = {
-      navModel: {} as any,
-    };
-    const wrapper = shallow(<CreateTeam {...props} />);
+    setup();
+    expect(screen.getByText(/new team/i)).toBeInTheDocument();
+  });
 
-    expect(wrapper).toMatchSnapshot();
+  it('should send correct data to the server', async () => {
+    setup();
+    await userEvent.type(screen.getByRole('textbox', { name: /name/i }), 'Test team');
+    await userEvent.type(screen.getByLabelText(/email/i), 'team@test.com');
+    await userEvent.click(screen.getByRole('button', { name: /create/i }));
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith(expect.anything(), { name: 'Test team', email: 'team@test.com' });
+    });
+  });
+
+  it('should validate required fields', async () => {
+    setup();
+    await userEvent.type(screen.getByLabelText(/email/i), 'team@test.com');
+    await userEvent.click(screen.getByRole('button', { name: /create/i }));
+    await waitFor(() => {
+      expect(mockPost).not.toBeCalled();
+    });
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+    expect(screen.getByText(/team name is required/i)).toBeInTheDocument();
   });
 });

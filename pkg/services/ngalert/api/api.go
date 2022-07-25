@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -29,7 +29,7 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-type Scheduler interface {
+type ExternalAlertmanagerProvider interface {
 	AlertmanagersFor(orgID int64) []*url.URL
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 }
@@ -62,9 +62,10 @@ type AlertingStore interface {
 type API struct {
 	Cfg                  *setting.Cfg
 	DatasourceCache      datasources.CacheService
+	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
 	ExpressionService    *expr.Service
-	QuotaService         *quota.QuotaService
+	QuotaService         quota.Service
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
@@ -80,6 +81,9 @@ type API struct {
 	Policies             *provisioning.NotificationPolicyService
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
+	MuteTimings          *provisioning.MuteTimingService
+	AlertRules           *provisioning.AlertRuleService
+	AlertsRouter         *sender.AlertsRouter
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -90,19 +94,19 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	}
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
-	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
+	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		&AlertmanagerSrv{crypto: api.MultiOrgAlertmanager.Crypto, log: logger, ac: api.AccessControl, mam: api.MultiOrgAlertmanager},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
-	api.RegisterPrometheusApiEndpoints(NewForkedProm(
+	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
 		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
-	api.RegisterRulerApiEndpoints(NewForkedRuler(
+	api.RegisterRulerApiEndpoints(NewForkingRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
@@ -117,29 +121,29 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			ac:              api.AccessControl,
 		},
 	), m)
-	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
+	api.RegisterTestingApiEndpoints(NewTestingApi(
 		&TestingApiSrv{
-			AlertingProxy:     proxy,
-			ExpressionService: api.ExpressionService,
-			DatasourceCache:   api.DatasourceCache,
-			log:               logger,
-			accessControl:     api.AccessControl,
-			evaluator:         eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService),
+			AlertingProxy:   proxy,
+			DatasourceCache: api.DatasourceCache,
+			log:             logger,
+			accessControl:   api.AccessControl,
+			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService, api.ExpressionService),
 		}), m)
-	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
-		&AdminSrv{
-			store:     api.AdminConfigStore,
-			log:       logger,
-			scheduler: api.Schedule,
+	api.RegisterConfigurationApiEndpoints(NewConfiguration(
+		&ConfigSrv{
+			datasourceService:    api.DatasourceService,
+			store:                api.AdminConfigStore,
+			log:                  logger,
+			alertmanagerProvider: api.AlertsRouter,
 		},
 	), m)
 
-	if api.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
-		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
-			log:                 logger,
-			policies:            api.Policies,
-			contactPointService: api.ContactPointService,
-			templates:           api.Templates,
-		}), m)
-	}
+	api.RegisterProvisioningApiEndpoints(NewProvisioningApi(&ProvisioningSrv{
+		log:                 logger,
+		policies:            api.Policies,
+		contactPointService: api.ContactPointService,
+		templates:           api.Templates,
+		muteTimings:         api.MuteTimings,
+		alertRules:          api.AlertRules,
+	}), m)
 }

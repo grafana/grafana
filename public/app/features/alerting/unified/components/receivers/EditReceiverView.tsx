@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { InfoBox } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -18,9 +18,9 @@ export const EditReceiverView: FC<Props> = ({ config, receiverName, alertManager
   const receiver = config.alertmanager_config.receivers?.find(({ name }) => name === receiverName);
   if (!receiver) {
     return (
-      <InfoBox severity="error" title="Receiver not found">
-        Sorry, this receiver does not seem to exit.
-      </InfoBox>
+      <Alert severity="error" title="Receiver not found">
+        Sorry, this receiver does not seem to exist.
+      </Alert>
     );
   }
 

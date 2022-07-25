@@ -61,7 +61,6 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
     <>
       <div className={styles.container}>
         <Select
-          menuShouldPortal
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

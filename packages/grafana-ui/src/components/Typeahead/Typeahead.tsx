@@ -162,7 +162,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
 
     return (
       <Portal origin={origin} isOpen={isOpen} style={this.menuPosition}>
-        <ul className="typeahead">
+        <ul className="typeahead" data-testid="typeahead">
           <FixedSizeList
             ref={this.listRef}
             itemCount={allItems.length}

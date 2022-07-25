@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue, DataFrame, PanelData } from '@grafana/data';
-import { Button, Select, HorizontalGroup, VerticalGroup } from '@grafana/ui';
+import { SelectableValue, DataFrame, PanelData, Labels } from '@grafana/data';
+import { Select, HorizontalGroup, MultiSelect, EditorList, AccessoryButton } from '@grafana/ui';
 
 import { AzureMetricDimension, AzureMonitorOption, AzureMonitorQuery, AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../Field';
 
-import { appendDimensionFilter, removeDimensionFilter, setDimensionFilterValue } from './setQueryValue';
+import { setDimensionFilters } from './setQueryValue';
 
 interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
   dimensionOptions: AzureMonitorOption[];
@@ -28,23 +28,25 @@ const useDimensionLabels = (data: PanelData | undefined, query: AzureMonitorQuer
       const labels = fields
         .map((fields) => fields.labels)
         .flat()
-        .filter((item) => item!);
+        .filter((item): item is Labels => item !== null && item !== undefined);
       for (const label of labels) {
         // Labels only exist for series that have a dimension selected
-        if (label) {
-          for (const [dimension, value] of Object.entries(label)) {
-            if (labelsObj[dimension]) {
-              labelsObj[dimension].add(value);
-            } else {
-              labelsObj[dimension] = new Set([value]);
-            }
+        for (const [dimension, value] of Object.entries(label)) {
+          if (labelsObj[dimension]) {
+            labelsObj[dimension].add(value);
+          } else {
+            labelsObj[dimension] = new Set([value]);
           }
         }
       }
     }
     setDimensionLabels((prevLabels) => {
       const newLabels: DimensionLabels = {};
-      for (const label of Object.keys(labelsObj)) {
+      const currentLabels = Object.keys(labelsObj);
+      if (currentLabels.length === 0) {
+        return prevLabels;
+      }
+      for (const label of currentLabels) {
         if (prevLabels[label] && labelsObj[label].size < prevLabels[label].size) {
           newLabels[label] = prevLabels[label];
         } else {
@@ -83,24 +85,14 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
     return t;
   }, [dimensionFilters, dimensionOptions]);
 
-  const addFilter = () => {
-    onQueryChange(appendDimensionFilter(query));
-  };
-
-  const removeFilter = (index: number) => {
-    onQueryChange(removeDimensionFilter(query, index));
-  };
-
   const onFieldChange = <Key extends keyof AzureMetricDimension>(
-    filterIndex: number,
     fieldName: Key,
-    value: AzureMetricDimension[Key]
+    item: Partial<AzureMetricDimension>,
+    value: AzureMetricDimension[Key],
+    onChange: (item: Partial<AzureMetricDimension>) => void
   ) => {
-    onQueryChange(setDimensionFilterValue(query, filterIndex, fieldName, value));
-  };
-
-  const onFilterInputChange = (index: number, v: SelectableValue<string> | null) => {
-    onFieldChange(index, 'filter', v?.value ?? '');
+    item[fieldName] = value;
+    onChange(item);
   };
 
   const getValidDimensionOptions = (selectedDimension: string) => {
@@ -118,6 +110,17 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
     }));
   };
 
+  const getValidMultiSelectOptions = (selectedFilters: string[] | undefined, dimension: string) => {
+    const labelOptions = getValidFilterOptions(undefined, dimension);
+    if (selectedFilters) {
+      for (const filter of selectedFilters) {
+        if (!labelOptions.find((label) => label.value === filter)) {
+          labelOptions.push({ value: filter, label: filter });
+        }
+      }
+    }
+    return labelOptions;
+  };
   const getValidOperators = (selectedOperator: string) => {
     if (dimensionOperators.find((operator: SelectableValue) => operator.value === selectedOperator)) {
       return dimensionOperators;
@@ -125,51 +128,76 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
     return [...dimensionOperators, ...(selectedOperator ? [{ label: selectedOperator, value: selectedOperator }] : [])];
   };
 
+  const changedFunc = (changed: Array<Partial<AzureMetricDimension>>) => {
+    const properData: AzureMetricDimension[] = changed.map((x) => {
+      return {
+        dimension: x.dimension ?? '',
+        operator: x.operator ?? 'eq',
+        filters: x.filters ?? [],
+      };
+    });
+    onQueryChange(setDimensionFilters(query, properData));
+  };
+
+  const renderFilters = (
+    item: Partial<AzureMetricDimension>,
+    onChange: (item: Partial<AzureMetricDimension>) => void,
+    onDelete: () => void
+  ) => {
+    return (
+      <HorizontalGroup spacing="none">
+        <Select
+          menuShouldPortal
+          placeholder="Field"
+          value={item.dimension}
+          options={getValidDimensionOptions(item.dimension || '')}
+          onChange={(e) => onFieldChange('dimension', item, e.value ?? '', onChange)}
+        />
+        <Select
+          menuShouldPortal
+          placeholder="Operation"
+          value={item.operator}
+          options={getValidOperators(item.operator || 'eq')}
+          onChange={(e) => onFieldChange('operator', item, e.value ?? '', onChange)}
+          allowCustomValue
+        />
+        {item.operator === 'eq' || item.operator === 'ne' ? (
+          <MultiSelect
+            menuShouldPortal
+            placeholder="Select value(s)"
+            value={item.filters}
+            options={getValidMultiSelectOptions(item.filters, item.dimension ?? '')}
+            onChange={(e) =>
+              onFieldChange(
+                'filters',
+                item,
+                e.map((x) => x.value ?? ''),
+                onChange
+              )
+            }
+            aria-label={'dimension-labels-select'}
+            allowCustomValue
+          />
+        ) : (
+          // The API does not currently allow for multiple "starts with" clauses to be used.
+          <Select
+            menuShouldPortal
+            placeholder="Select value"
+            value={item.filters ? item.filters[0] : ''}
+            allowCustomValue
+            options={getValidFilterOptions(item.filters ? item.filters[0] : '', item.dimension ?? '')}
+            onChange={(e) => onFieldChange('filters', item, [e?.value ?? ''], onChange)}
+            isClearable
+          />
+        )}
+        <AccessoryButton aria-label="Remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
+      </HorizontalGroup>
+    );
+  };
+
   return (
-    <Field label="Dimension">
-      <VerticalGroup spacing="xs">
-        {dimensionFilters.map((filter, index) => (
-          <HorizontalGroup key={index} spacing="xs">
-            <Select
-              menuShouldPortal
-              placeholder="Field"
-              value={filter.dimension}
-              options={getValidDimensionOptions(filter.dimension)}
-              onChange={(v) => onFieldChange(index, 'dimension', v.value ?? '')}
-              width={38}
-            />
-            <Select
-              menuShouldPortal
-              placeholder="Operation"
-              value={filter.operator}
-              options={getValidOperators(filter.operator)}
-              onChange={(v) => onFieldChange(index, 'operator', v.value ?? '')}
-              allowCustomValue
-            />
-            <Select
-              menuShouldPortal
-              placeholder="Select value"
-              value={filter.filter ? filter.filter : ''}
-              allowCustomValue
-              options={getValidFilterOptions(filter.filter, filter.dimension)}
-              onChange={(v) => onFilterInputChange(index, v)}
-              isClearable
-            />
-
-            <Button
-              variant="secondary"
-              size="md"
-              icon="trash-alt"
-              aria-label="Remove"
-              onClick={() => removeFilter(index)}
-            ></Button>
-          </HorizontalGroup>
-        ))}
-
-        <Button variant="secondary" size="md" onClick={addFilter}>
-          Add new dimension
-        </Button>
-      </VerticalGroup>
+    <Field label="Dimensions">
+      <EditorList items={dimensionFilters} onChange={changedFunc} renderItem={renderFilters} />
     </Field>
   );
 };

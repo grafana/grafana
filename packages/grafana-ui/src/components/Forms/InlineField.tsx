@@ -18,6 +18,8 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   labelWidth?: number | 'auto';
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;
+  /** Make the field's child shrink with width of the row. Equivalent to setting `flex-shrink:1` on the field */
+  shrink?: boolean;
   /** Make field's background transparent */
   transparent?: boolean;
   /** Error message to display */
@@ -38,13 +40,14 @@ export const InlineField: FC<Props> = ({
   className,
   htmlFor,
   grow,
+  shrink,
   error,
   transparent,
   interactive,
   ...htmlProps
 }) => {
   const theme = useTheme2();
-  const styles = getStyles(theme, grow);
+  const styles = getStyles(theme, grow, shrink);
   const inputId = htmlFor ?? getChildId(children);
 
   const labelElement =
@@ -79,7 +82,7 @@ export const InlineField: FC<Props> = ({
 
 InlineField.displayName = 'InlineField';
 
-const getStyles = (theme: GrafanaTheme2, grow?: boolean) => {
+const getStyles = (theme: GrafanaTheme2, grow?: boolean, shrink?: boolean) => {
   return {
     container: css`
       display: flex;
@@ -87,11 +90,11 @@ const getStyles = (theme: GrafanaTheme2, grow?: boolean) => {
       align-items: flex-start;
       text-align: left;
       position: relative;
-      flex: ${grow ? 1 : 0} 0 auto;
+      flex: ${grow ? 1 : 0} ${shrink ? 1 : 0} auto;
       margin: 0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0;
     `,
     childContainer: css`
-      flex: ${grow ? 1 : 0} 0 auto;
+      flex: ${grow ? 1 : 0} ${shrink ? 1 : 0} auto;
     `,
     fieldValidationWrapper: css`
       margin-top: ${theme.spacing(0.5)};

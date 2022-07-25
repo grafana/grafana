@@ -41,6 +41,11 @@ export interface MetricTankMeta {
   info: MetricTankSeriesMeta[];
 }
 
+export interface GraphiteParserError {
+  message: string;
+  pos: number;
+}
+
 export type GraphiteQueryImportConfiguration = {
   loki: GraphiteToLokiQueryImportConfiguration;
 };

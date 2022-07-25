@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme, DataSourceApi, DataQuery } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
@@ -164,24 +164,29 @@ export function RichHistoryCard(props: Props) {
 
   useEffect(() => {
     const getQueryDsInstance = async () => {
-      const ds = await getDataSourceSrv().get(query.datasourceName);
+      const ds = await getDataSourceSrv().get(query.datasourceUid);
       setQueryDsInstance(ds);
     };
 
     getQueryDsInstance();
-  }, [query.datasourceName]);
+  }, [query.datasourceUid]);
 
   const theme = useTheme();
   const styles = getStyles(theme, isRemoved);
 
   const onRunQuery = async () => {
     const queriesToRun = query.queries;
-    if (query.datasourceName !== datasourceInstance?.name) {
-      await changeDatasource(exploreId, query.datasourceName, { importQueries: true });
+    const differentDataSource = query.datasourceUid !== datasourceInstance?.uid;
+    if (differentDataSource) {
+      await changeDatasource(exploreId, query.datasourceUid, { importQueries: true });
       setQueries(exploreId, queriesToRun);
     } else {
       setQueries(exploreId, queriesToRun);
     }
+    reportInteraction('grafana_explore_query_history_run', {
+      queryHistoryEnabled: config.queryHistoryEnabled,
+      differentDataSource,
+    });
   };
 
   const onCopyQuery = () => {
@@ -196,6 +201,14 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onDeleteQuery = () => {
+    const performDelete = (queryId: string) => {
+      deleteHistoryItem(queryId);
+      dispatch(notifyApp(createSuccessNotification('Query deleted')));
+      reportInteraction('grafana_explore_query_history_deleted', {
+        queryHistoryEnabled: config.queryHistoryEnabled,
+      });
+    };
+
     // For starred queries, we want confirmation. For non-starred, we don't.
     if (query.starred) {
       appEvents.publish(
@@ -204,20 +217,20 @@ export function RichHistoryCard(props: Props) {
           text: 'Are you sure you want to permanently delete your starred query?',
           yesText: 'Delete',
           icon: 'trash-alt',
-          onConfirm: () => {
-            deleteHistoryItem(query.id);
-            dispatch(notifyApp(createSuccessNotification('Query deleted')));
-          },
+          onConfirm: () => performDelete(query.id),
         })
       );
     } else {
-      deleteHistoryItem(query.id);
-      dispatch(notifyApp(createSuccessNotification('Query deleted')));
+      performDelete(query.id);
     }
   };
 
   const onStarrQuery = () => {
     starHistoryItem(query.id, !query.starred);
+    reportInteraction('grafana_explore_query_history_starred', {
+      queryHistoryEnabled: config.queryHistoryEnabled,
+      newValue: !query.starred,
+    });
   };
 
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
@@ -225,6 +238,9 @@ export function RichHistoryCard(props: Props) {
   const onUpdateComment = () => {
     commentHistoryItem(query.id, comment);
     setActiveUpdateComment(false);
+    reportInteraction('grafana_explore_query_history_commented', {
+      queryHistoryEnabled: config.queryHistoryEnabled,
+    });
   };
 
   const onCancelUpdateComment = () => {
@@ -313,7 +329,7 @@ export function RichHistoryCard(props: Props) {
         {!activeUpdateComment && (
           <div className={styles.runButton}>
             <Button variant="secondary" onClick={onRunQuery} disabled={isRemoved}>
-              {datasourceInstance?.name === query.datasourceName ? 'Run query' : 'Switch data source and run query'}
+              {datasourceInstance?.uid === query.datasourceUid ? 'Run query' : 'Switch data source and run query'}
             </Button>
           </div>
         )}

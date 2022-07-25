@@ -1,4 +1,3 @@
-import { afterEach, beforeEach } from '../../../../test/lib/common';
 import { appEvents } from '../../../core/core';
 import { VariablesChanged } from '../../variables/types';
 import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';

@@ -46,7 +46,10 @@ type Store interface {
 	GetResourcePermissions(ctx context.Context, orgID int64, query types.GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error)
 }
 
-func New(options Options, cfg *setting.Cfg, router routing.RouteRegister, ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore) (*Service, error) {
+func New(
+	options Options, cfg *setting.Cfg, router routing.RouteRegister, license models.Licensing,
+	ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore,
+) (*Service, error) {
 	var permissions []string
 	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -71,6 +74,7 @@ func New(options Options, cfg *setting.Cfg, router routing.RouteRegister, ac acc
 		cfg:         cfg,
 		store:       store,
 		options:     options,
+		license:     license,
 		permissions: permissions,
 		actions:     actions,
 		sqlStore:    sqlStore,
@@ -89,10 +93,11 @@ func New(options Options, cfg *setting.Cfg, router routing.RouteRegister, ac acc
 
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
-	cfg   *setting.Cfg
-	ac    accesscontrol.AccessControl
-	store Store
-	api   *api
+	cfg     *setting.Cfg
+	ac      accesscontrol.AccessControl
+	store   Store
+	api     *api
+	license models.Licensing
 
 	options     Options
 	permissions []string
@@ -270,7 +275,7 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 }
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
-	if !s.options.Assignments.Users {
+	if !(s.options.Assignments.Users || s.options.Assignments.ServiceAccounts) {
 		return ErrInvalidAssignment
 	}
 
@@ -306,7 +311,6 @@ func (s *Service) declareFixedRoles() error {
 	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
 			DisplayName: s.options.ReaderRoleName,
 			Group:       s.options.RoleGroup,
@@ -319,7 +323,6 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
 			DisplayName: s.options.WriterRoleName,
 			Group:       s.options.RoleGroup,

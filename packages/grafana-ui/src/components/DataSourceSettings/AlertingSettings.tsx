@@ -58,7 +58,6 @@ export function AlertingSettings<T extends AlertingConfig>({
           >
             <Select
               width={29}
-              menuShouldPortal
               options={alertmanagerOptions}
               onChange={(value) =>
                 onOptionsChange({ ...options, jsonData: { ...options.jsonData, alertmanagerUid: value?.value } })

@@ -4,15 +4,15 @@ import React, { FC, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
-import { AccessControlAction } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
+import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -38,19 +38,20 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
-  const canEditCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+  const { canEditRules } = useRulesAccess();
 
   useEffect(() => {
     setIsCollapsed(!expandAll);
   }, [expandAll]);
 
-  const hasRuler = useHasRuler();
+  const { hasRuler, rulerRulesLoaded } = useHasRuler();
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
-  const isDeleting = hasRuler(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
+  const isDeleting =
+    hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
   const deleteGroup = () => {
@@ -70,7 +71,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
-      const baseUrl = `/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
+      const baseUrl = `${config.appSubUrl}/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
       if (folder?.canSave) {
         actionIcons.push(
           <ActionIcon
@@ -96,7 +97,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
         );
       }
     }
-  } else if (canEditCloudRules && hasRuler(rulesSource)) {
+  } else if (canEditRules(rulesSource.name) && hasRuler(rulesSource)) {
     if (!isFederated) {
       actionIcons.push(
         <ActionIcon

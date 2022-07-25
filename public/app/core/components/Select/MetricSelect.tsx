@@ -24,7 +24,6 @@ export const MetricSelect: FC<Props> = (props) => {
 
   return (
     <Select
-      menuShouldPortal
       className={className}
       isMulti={false}
       isClearable={false}

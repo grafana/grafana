@@ -62,7 +62,6 @@ export function ValuePicker<T>({
       {isPicking && (
         <span style={{ minWidth: theme.spacing(minWidth), flexGrow: isFullWidth ? 1 : undefined }}>
           <Select
-            menuShouldPortal
             placeholder={label}
             options={options}
             aria-label={selectors.components.ValuePicker.select(label)}

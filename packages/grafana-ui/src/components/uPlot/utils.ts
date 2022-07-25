@@ -216,7 +216,10 @@ export function preparePlotData2(
 
     // apply transforms
     if (custom.transform === GraphTransform.Constant) {
-      vals = Array(vals.length).fill(vals[0]);
+      let firstValIdx = vals.findIndex((v) => v != null);
+      let firstVal = vals[firstValIdx];
+      vals = Array(vals.length).fill(undefined);
+      vals[firstValIdx] = firstVal;
     } else {
       vals = vals.slice();
 
@@ -283,7 +286,7 @@ export function preparePlotData2(
 
         if (v != null) {
           // v / accum will always be pos, so properly (re)sign by group stacking dir
-          stacked[i] = group.dir * (v / accum[i]);
+          stacked[i] = accum[i] === 0 ? 0 : group.dir * (v / accum[i]);
         }
       }
     }

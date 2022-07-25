@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// createQuery adds a query into query history
 func (s QueryHistoryService) createQuery(ctx context.Context, user *models.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error) {
 	queryHistory := QueryHistory{
 		OrgID:         user.OrgId,
@@ -43,6 +44,7 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *models.Signe
 	return dto, nil
 }
 
+// searchQueries searches for queries in query history based on provided parameters
 func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
 	var dtos []QueryHistoryDTO
 	var allQueries []interface{}
@@ -132,6 +134,7 @@ func (s QueryHistoryService) deleteQuery(ctx context.Context, user *models.Signe
 	return queryID, err
 }
 
+// patchQueryComment searches updates comment for query in query history
 func (s QueryHistoryService) patchQueryComment(ctx context.Context, user *models.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error) {
 	var queryHistory QueryHistory
 	var isStarred bool
@@ -176,6 +179,7 @@ func (s QueryHistoryService) patchQueryComment(ctx context.Context, user *models
 	return dto, nil
 }
 
+// starQuery adds query into query_history_star table together with user_id and org_id
 func (s QueryHistoryService) starQuery(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error) {
 	var queryHistory QueryHistory
 	var isStarred bool
@@ -225,6 +229,7 @@ func (s QueryHistoryService) starQuery(ctx context.Context, user *models.SignedI
 	return dto, nil
 }
 
+// unstarQuery deletes query with with user_id and org_id from query_history_star table
 func (s QueryHistoryService) unstarQuery(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error) {
 	var queryHistory QueryHistory
 	var isStarred bool
@@ -267,6 +272,7 @@ func (s QueryHistoryService) unstarQuery(ctx context.Context, user *models.Signe
 	return dto, nil
 }
 
+// migrateQueries adds multiple queries into query history
 func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error) {
 	queryHistories := make([]*QueryHistory, 0, len(cmd.Queries))
 	starredQueries := make([]*QueryHistoryStar, 0)
@@ -363,6 +369,7 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 	return int(rowsCount), nil
 }
 
+// enforceQueryHistoryRowLimit is run in scheduled cleanup and it removes queries and stars that exceeded limit
 func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, limit int, starredQueries bool) (int, error) {
 	var deletedRowsCount int64
 

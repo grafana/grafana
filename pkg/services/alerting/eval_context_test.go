@@ -6,16 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/validations"
-
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/services/validations"
 )
 
 func TestStateIsUpdatedWhenNeeded(t *testing.T) {
-	ctx := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil)
+	ctx := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil)
 
 	t.Run("ok -> alerting", func(t *testing.T) {
 		ctx.PrevAlertState = models.AlertStateOK
@@ -200,7 +199,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		evalContext := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil)
+		evalContext := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil)
 
 		tc.applyFn(evalContext)
 		newState := evalContext.GetNewState()
@@ -391,7 +390,8 @@ func TestEvaluateNotificationTemplateFields(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
-			evalContext := NewEvalContext(context.Background(), &Rule{Name: "Rule name: ${value1}", Message: "Rule message: ${value2}", Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil)
+			evalContext := NewEvalContext(context.Background(), &Rule{Name: "Rule name: ${value1}", Message: "Rule message: ${value2}",
+				Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil)
 			evalContext.EvalMatches = test.evalMatches
 			evalContext.AllMatches = test.allMatches
 

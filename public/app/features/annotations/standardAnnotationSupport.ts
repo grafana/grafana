@@ -9,6 +9,7 @@ import {
   AnnotationQuery,
   AnnotationSupport,
   DataFrame,
+  DataSourceApi,
   Field,
   FieldType,
   getFieldDisplayName,
@@ -26,6 +27,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
       return {
         ...rest,
         target: {
+          refId: 'annotation_query',
           query,
         },
         mappings: {},
@@ -35,14 +37,12 @@ export const standardAnnotationSupport: AnnotationSupport = {
   },
 
   /**
-   * Convert the stored JSON model and environment to a standard data source query object.
-   * This query will be executed in the data source and the results converted into events.
-   * Returning an undefined result will quietly skip query execution
+   * Default will just return target from the annotation.
    */
   prepareQuery: (anno: AnnotationQuery) => anno.target,
 
   /**
-   * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
+   * Provides default processing from dataFrame to annotation events.
    */
   processEvents: (anno: AnnotationQuery, data: DataFrame[]) => {
     return getAnnotationsFromData(data, anno.mappings);
@@ -50,7 +50,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
 };
 
 /**
- * Flatten all panel data into a single frame
+ * Flatten all frames into a single frame with mergeTransformer.
  */
 
 export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
@@ -225,4 +225,35 @@ export function getAnnotationsFromData(
       return events;
     })
   );
+}
+
+// These opt outs are here only for quicker and easier migration to react based annotations editors and because
+// annotation support API needs some work to support less "standard" editors like prometheus and here it is not
+// polluting public API.
+
+const legacyRunner = [
+  'prometheus',
+  'loki',
+  'elasticsearch',
+  'grafana-opensearch-datasource', // external
+  'grafana-splunk-datasource', // external
+];
+
+/**
+ * Opt out of using the default mapping functionality on frontend.
+ */
+export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
+  const { type } = datasource;
+  return !(
+    type === 'datasource' || //  ODD behavior for "-- Grafana --" datasource
+    legacyRunner.includes(type)
+  );
+}
+
+/**
+ * Use legacy runner. Used only as an escape hatch for easier transition to React based annotation editor.
+ */
+export function shouldUseLegacyRunner(datasource: DataSourceApi): boolean {
+  const { type } = datasource;
+  return legacyRunner.includes(type);
 }

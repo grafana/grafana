@@ -54,7 +54,9 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
       </div>
       {dashboard.meta.canSave && (
         <HorizontalGroup>
-          <Button onClick={onClick}>Save changes</Button>
+          <Button type="submit" onClick={onClick}>
+            Save changes
+          </Button>
         </HorizontalGroup>
       )}
     </div>

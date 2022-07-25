@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -103,13 +102,12 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
 }
 
-func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext, silenceID string) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
 		return errResp
 	}
 
-	silenceID := web.Params(c.Req)[":SilenceId"]
 	if err := am.DeleteSilence(silenceID); err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -181,13 +179,12 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, alerts)
 }
 
-func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext, silenceID string) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
 		return errResp
 	}
 
-	silenceID := web.Params(c.Req)[":SilenceId"]
 	gettableSilence, err := am.GetSilence(silenceID)
 	if err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
@@ -217,7 +214,15 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	err := srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
+	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgId)
+	// If a config is present and valid we proceed with the guard, otherwise we
+	// just bypass the guard which is okay as we are anyway in an invalid state.
+	if err == nil {
+		if err := srv.provenanceGuard(currentConfig, body); err != nil {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+	}
+	err = srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 	}

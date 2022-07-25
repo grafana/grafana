@@ -1,11 +1,15 @@
 import { descending, deviation } from 'd3';
-import { partition, groupBy } from 'lodash';
+import { groupBy, partition } from 'lodash';
 
 import {
   ArrayDataFrame,
   ArrayVector,
+  CoreApp,
   DataFrame,
+  DataFrameType,
   DataLink,
+  DataQueryRequest,
+  DataQueryResponse,
   DataTopic,
   Field,
   FieldType,
@@ -13,14 +17,10 @@ import {
   getDisplayProcessor,
   Labels,
   MutableField,
+  PreferredVisualisationType,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
-  DataQueryResponse,
-  DataQueryRequest,
-  PreferredVisualisationType,
-  CoreApp,
-  DataFrameType,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
@@ -38,8 +38,8 @@ import {
   TransformOptions,
 } from './types';
 
-const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
-const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
+// handles case-insensitive Inf, +Inf, -Inf (with optional "inity" suffix)
+const INFINITY_SAMPLE_REGEX = /^[+-]?inf(?:inity)?$/i;
 
 interface TimeAndValue {
   [TIME_SERIES_TIME_FIELD_NAME]: number;
@@ -293,15 +293,21 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
     const dataSourceSrv = getDataSourceSrv();
     const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
 
-    dataLinks.push({
-      title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
-      url: '',
-      internal: {
-        query: { query: '${__value.raw}', queryType: 'traceId' },
-        datasourceUid: options.datasourceUid,
-        datasourceName: dsSettings?.name ?? 'Data source not found',
-      },
-    });
+    // dsSettings is undefined because of the reasons below:
+    // - permissions issues (probably most likely)
+    // - deleted datasource
+    // - misconfiguration
+    if (dsSettings) {
+      dataLinks.push({
+        title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
+        url: '',
+        internal: {
+          query: { query: '${__value.raw}', queryType: 'traceId' },
+          datasourceUid: options.datasourceUid,
+          datasourceName: dsSettings?.name ?? 'Data source not found',
+        },
+      });
+    }
   }
 
   if (options.url) {
@@ -485,6 +491,7 @@ function getTimeField(data: PromValue[], isMs = false): MutableField {
     values: new ArrayVector<number>(data.map((val) => (isMs ? val[0] : val[0] * 1000))),
   };
 }
+
 type ValueFieldOptions = {
   data: PromValue[];
   valueName?: string;
@@ -558,7 +565,7 @@ function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
       ...frames[0],
       meta: {
         ...frames[0].meta,
-        type: DataFrameType.HeatmapBuckets,
+        type: DataFrameType.HeatmapRows,
       },
       fields: [timeField!, ...countFields],
     },
@@ -611,13 +618,10 @@ function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   return 0;
 }
 
-function parseSampleValue(value: string): number {
-  switch (value) {
-    case POSITIVE_INFINITY_SAMPLE_VALUE:
-      return Number.POSITIVE_INFINITY;
-    case NEGATIVE_INFINITY_SAMPLE_VALUE:
-      return Number.NEGATIVE_INFINITY;
-    default:
-      return parseFloat(value);
+/** @internal */
+export function parseSampleValue(value: string): number {
+  if (INFINITY_SAMPLE_REGEX.test(value)) {
+    return value[0] === '-' ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
   }
+  return parseFloat(value);
 }

@@ -16,6 +16,15 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 
+// swagger:route GET /annotations/{annotation_id} annotations getAnnotation
+//
+// Get Annotation by Id.
+//
+// Responses:
+// 200: getAnnotationResponse
+// 401: unauthorisedError
+// 500: internalServerError
+
 // swagger:route POST /annotations/mass-delete annotations massDeleteAnnotations
 //
 // Delete multiple annotations.
@@ -104,8 +113,15 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 
-// swagger:parameters updateAnnotation patchAnnotation deleteAnnotation
-type AnnotationIDParam struct {
+// swagger:parameters getAnnotation
+type GetAnnotationParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
+}
+
+// swagger:parameters deleteAnnotation
+type DeleteAnnotationParams struct {
 	// in:path
 	// required:true
 	AnnotationID string `json:"annotation_id"`
@@ -197,6 +213,9 @@ type CreateGraphiteAnnotationParams struct {
 
 // swagger:parameters updateAnnotation
 type UpdateAnnotationParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
 	// in:body
 	// required:true
 	Body dtos.UpdateAnnotationsCmd `json:"body"`
@@ -204,6 +223,9 @@ type UpdateAnnotationParams struct {
 
 // swagger:parameters patchAnnotation
 type PatchAnnotationParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
 	// in:body
 	// required:true
 	Body dtos.PatchAnnotationsCmd `json:"body"`
@@ -214,6 +236,13 @@ type GetAnnotationsResponse struct {
 	// The response message
 	// in: body
 	Body []*annotations.ItemDTO `json:"body"`
+}
+
+// swagger:response getAnnotationResponse
+type GetAnnotationResponse struct {
+	// The response message
+	// in: body
+	Body *annotations.ItemDTO `json:"body"`
 }
 
 // swagger:response createAnnotationResponse

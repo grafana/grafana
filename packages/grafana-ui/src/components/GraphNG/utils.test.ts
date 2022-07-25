@@ -5,6 +5,7 @@ import {
   DataFrame,
   DefaultTimeZone,
   EventBusSrv,
+  FieldColorModeId,
   FieldConfig,
   FieldMatcherID,
   fieldMatchers,
@@ -38,6 +39,9 @@ function mockDataFrame() {
 
   const f1Config: FieldConfig<GraphFieldConfig> = {
     displayName: 'Metric 1',
+    color: {
+      mode: FieldColorModeId.Fixed,
+    },
     decimals: 2,
     custom: {
       drawStyle: GraphDrawStyle.Line,
@@ -62,6 +66,9 @@ function mockDataFrame() {
 
   const f2Config: FieldConfig<GraphFieldConfig> = {
     displayName: 'Metric 2',
+    color: {
+      mode: FieldColorModeId.Fixed,
+    },
     decimals: 2,
     custom: {
       drawStyle: GraphDrawStyle.Bars,
@@ -87,6 +94,9 @@ function mockDataFrame() {
   const f3Config: FieldConfig<GraphFieldConfig> = {
     displayName: 'Metric 3',
     decimals: 2,
+    color: {
+      mode: FieldColorModeId.Fixed,
+    },
     custom: {
       drawStyle: GraphDrawStyle.Line,
       gradientMode: GraphGradientMode.Opacity,
@@ -110,6 +120,9 @@ function mockDataFrame() {
   const f4Config: FieldConfig<GraphFieldConfig> = {
     displayName: 'Metric 4',
     decimals: 2,
+    color: {
+      mode: FieldColorModeId.Fixed,
+    },
     custom: {
       drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
@@ -133,6 +146,9 @@ function mockDataFrame() {
   const f5Config: FieldConfig<GraphFieldConfig> = {
     displayName: 'Metric 4',
     decimals: 2,
+    color: {
+      mode: FieldColorModeId.Fixed,
+    },
     custom: {
       drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
@@ -188,7 +204,7 @@ function mockDataFrame() {
 }
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   DefaultTimeZone: 'utc',
 }));
 
@@ -198,7 +214,7 @@ describe('GraphNG utils', () => {
     const result = preparePlotConfigBuilder({
       frame: frame!,
       theme: createTheme(),
-      timeZone: DefaultTimeZone,
+      timeZones: [DefaultTimeZone],
       getTimeRange: getDefaultTimeRange,
       eventBus: new EventBusSrv(),
       sync: () => DashboardCursorSync.Tooltip,
@@ -312,6 +328,7 @@ describe('GraphNG utils', () => {
             "config": Object {},
             "name": "time",
             "state": Object {
+              "nullThresholdApplied": true,
               "origin": Object {
                 "fieldIndex": 0,
                 "frameIndex": 0,

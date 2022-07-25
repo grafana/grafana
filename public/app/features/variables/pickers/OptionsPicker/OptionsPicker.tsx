@@ -125,7 +125,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
       return (
         <VariableLink
-          id={variable.id}
+          id={`var-${variable.id}`}
           text={linkText}
           onClick={this.onShowOptions}
           loading={loading}
@@ -143,7 +143,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
       return (
         <ClickOutsideWrapper onClick={this.onHideOptions}>
           <VariableInput
-            id={id}
+            id={`var-${id}`}
             value={picker.queryValue}
             onChange={this.onFilterOrSearchOptions}
             onNavigate={this.onNavigate}

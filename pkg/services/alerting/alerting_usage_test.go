@@ -7,9 +7,11 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 func TestAlertingUsageStats(t *testing.T) {
@@ -39,8 +41,8 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	}
 
-	store.getDataSource = func(ctx context.Context, query *models.GetDataSourceQuery) error {
-		ds := map[int64]*models.DataSource{
+	store.getDataSource = func(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+		ds := map[int64]*datasources.DataSource{
 			1: {Type: "influxdb"},
 			2: {Type: "graphite"},
 			3: {Type: "prometheus"},
@@ -49,7 +51,7 @@ func TestAlertingUsageStats(t *testing.T) {
 
 		r, exist := ds[query.Id]
 		if !exist {
-			return models.ErrDataSourceNotFound
+			return datasources.ErrDataSourceNotFound
 		}
 
 		query.Result = r

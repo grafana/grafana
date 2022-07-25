@@ -16,7 +16,7 @@ type LayerDragDropListProps<T extends LayerElement> = {
   onSelect: (element: T) => any;
   onDelete: (element: T) => any;
   onDuplicate?: (element: T) => any;
-  isGroup?: (element: T) => boolean;
+  showActions: (element: T) => boolean;
   selection?: string[]; // list of unique ids (names)
   excludeBaseLayer?: boolean;
   onNameChange: (element: T, newName: string) => any;
@@ -30,7 +30,7 @@ export const LayerDragDropList = <T extends LayerElement>({
   onSelect,
   onDelete,
   onDuplicate,
-  isGroup,
+  showActions,
   selection,
   excludeBaseLayer,
   onNameChange,
@@ -74,7 +74,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                         />
                         <div className={style.textWrapper}>&nbsp; {getLayerInfo(element)}</div>
 
-                        {!isGroup!(element) && (
+                        {showActions(element) && (
                           <>
                             {onDuplicate ? (
                               <IconButton
@@ -82,7 +82,6 @@ export const LayerDragDropList = <T extends LayerElement>({
                                 title={'Duplicate'}
                                 className={style.actionIcon}
                                 onClick={() => onDuplicate(element)}
-                                surface="header"
                               />
                             ) : null}
 
@@ -91,17 +90,16 @@ export const LayerDragDropList = <T extends LayerElement>({
                               title={'remove'}
                               className={cx(style.actionIcon, style.dragIcon)}
                               onClick={() => onDelete(element)}
-                              surface="header"
                             />
-                            {layers.length > shouldRenderDragIconLengthThreshold && (
-                              <Icon
-                                title="Drag and drop to reorder"
-                                name="draggabledots"
-                                size="lg"
-                                className={style.dragIcon}
-                              />
-                            )}
                           </>
+                        )}
+                        {layers.length > shouldRenderDragIconLengthThreshold && (
+                          <Icon
+                            title="Drag and drop to reorder"
+                            name="draggabledots"
+                            size="lg"
+                            className={style.dragIcon}
+                          />
                         )}
                       </div>
                     )}

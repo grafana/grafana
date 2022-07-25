@@ -9,7 +9,7 @@ import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
-import { defaultView, GeomapPanelOptions } from './types';
+import { defaultView, GeomapPanelOptions, TooltipMode } from './types';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
@@ -121,5 +121,17 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         name: 'Show debug',
         description: 'Show map info',
         defaultValue: false,
+      })
+      .addRadio({
+        category,
+        path: 'tooltip.mode',
+        name: 'Tooltip',
+        defaultValue: TooltipMode.Details,
+        settings: {
+          options: [
+            { label: 'None', value: TooltipMode.None, description: 'Show contents on click, not hover' },
+            { label: 'Details', value: TooltipMode.Details, description: 'Show popup on hover' },
+          ],
+        },
       });
   });

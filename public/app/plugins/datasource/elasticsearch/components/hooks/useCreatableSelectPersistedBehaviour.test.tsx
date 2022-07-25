@@ -11,7 +11,6 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     const MyComp = (_: { force?: boolean }) => (
       <InlineField label="label">
         <Select
-          menuShouldPortal
           inputId="select"
           {...useCreatableSelectPersistedBehaviour({
             options: [{ label: 'Option 1', value: 'Option 1' }],
@@ -53,7 +52,6 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     const MyComp = () => (
       <InlineField label="label">
         <Select
-          menuShouldPortal
           inputId="select"
           {...useCreatableSelectPersistedBehaviour({
             options: [{ label: 'Option 1', value: 'Option 1' }],
@@ -94,7 +92,6 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     const MyComp = (_: { force?: boolean }) => (
       <InlineField label="label">
         <Select
-          menuShouldPortal
           inputId="select"
           {...useCreatableSelectPersistedBehaviour({
             options: [{ label: 'Option 1', value: 'Option 1' }],

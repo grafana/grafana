@@ -56,7 +56,6 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
               .Please choose which dashboard to view the panel in:
             </p>
             <AsyncSelect
-              menuShouldPortal
               isClearable
               isLoading={loading}
               defaultOptions={true}

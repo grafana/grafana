@@ -48,7 +48,7 @@ export default function TextList(props: TextListProps) {
   const { data } = props;
   const styles = useStyles2(getStyles);
   return (
-    <div className={cx(styles.TextList)} data-test-id="TextList">
+    <div className={cx(styles.TextList)} data-testid="TextList">
       <ul className={styles.List}>
         {data.map((row, i) => {
           return (

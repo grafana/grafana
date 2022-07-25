@@ -24,7 +24,6 @@ export const VariableQueryField: FC<VariableQueryFieldProps> = ({
   return (
     <InlineField label={label} labelWidth={20}>
       <Select
-        menuShouldPortal
         width={25}
         allowCustomValue={allowCustomValue}
         value={value}

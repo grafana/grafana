@@ -1,9 +1,9 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -61,18 +61,14 @@ func (r RoleType) Parents() []RoleType {
 	}
 }
 
-func (r *RoleType) UnmarshalJSON(data []byte) error {
-	var str string
-	err := json.Unmarshal(data, &str)
-	if err != nil {
-		return err
-	}
+func (r *RoleType) UnmarshalText(data []byte) error {
+	// make sure "viewer" and "Viewer" are both correct
+	str := strings.Title(string(data))
 
 	*r = RoleType(str)
-
 	if !r.IsValid() {
 		if (*r) != "" {
-			return fmt.Errorf("JSON validation error: invalid role value: %s", *r)
+			return fmt.Errorf("invalid role value: %s", *r)
 		}
 
 		*r = ROLE_VIEWER
@@ -106,6 +102,9 @@ type AddOrgUserCommand struct {
 
 	OrgId  int64 `json:"-"`
 	UserId int64 `json:"-"`
+
+	// internal use: avoid adding service accounts to orgs via user routes
+	AllowAddingServiceAccount bool `json:"-"`
 }
 
 type UpdateOrgUserCommand struct {
@@ -123,6 +122,8 @@ type GetOrgUsersQuery struct {
 	OrgId  int64
 	Query  string
 	Limit  int
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
 
 	User   *SignedInUser
 	Result []*OrgUserDTO

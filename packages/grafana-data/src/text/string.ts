@@ -34,7 +34,7 @@ export function stringToJsRegex(str: string): RegExp {
     return new RegExp(`^${str}$`);
   }
 
-  const match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
+  const match = str.match(new RegExp('^/(.*?)/(g?i?m?y?s?)$'));
 
   if (!match) {
     throw new Error(`'${str}' is not a valid regular expression.`);

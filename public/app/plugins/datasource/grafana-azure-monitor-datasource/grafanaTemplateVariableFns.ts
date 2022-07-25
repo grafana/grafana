@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 import { isGUIDish } from './components/ResourcePicker/utils';
 import DataSource from './datasource';
 import { AzureMonitorQuery, AzureQueryType } from './types';
@@ -253,6 +255,58 @@ const createLogAnalyticsTemplateVariableQuery = async (
   };
 };
 
+const migrateGrafanaTemplateVariableFn = (query: AzureMonitorQuery) => {
+  const { queryType, grafanaTemplateVariableFn } = query;
+  if (queryType !== AzureQueryType.GrafanaTemplateVariableFn || !grafanaTemplateVariableFn) {
+    return query;
+  }
+
+  const migratedQuery: AzureMonitorQuery = {
+    ...query,
+  };
+  if ('subscription' in grafanaTemplateVariableFn) {
+    migratedQuery.subscription = grafanaTemplateVariableFn.subscription;
+  }
+  if ('resourceGroup' in grafanaTemplateVariableFn) {
+    migratedQuery.resourceGroup = grafanaTemplateVariableFn.resourceGroup;
+  }
+  if ('metricDefinition' in grafanaTemplateVariableFn) {
+    migratedQuery.namespace = grafanaTemplateVariableFn.metricDefinition;
+  }
+  if ('metricNamespace' in grafanaTemplateVariableFn) {
+    migratedQuery.namespace = grafanaTemplateVariableFn.metricNamespace;
+  }
+  if ('resourceName' in grafanaTemplateVariableFn) {
+    migratedQuery.resource = grafanaTemplateVariableFn.resourceName;
+  }
+
+  switch (grafanaTemplateVariableFn.kind) {
+    case 'SubscriptionsQuery':
+      migratedQuery.queryType = AzureQueryType.SubscriptionsQuery;
+      break;
+    case 'ResourceGroupsQuery':
+      migratedQuery.queryType = AzureQueryType.ResourceGroupsQuery;
+      break;
+    case 'MetricDefinitionsQuery':
+      migratedQuery.queryType = AzureQueryType.NamespacesQuery;
+      break;
+    case 'ResourceNamesQuery':
+      migratedQuery.queryType = AzureQueryType.ResourceNamesQuery;
+      break;
+    case 'MetricNamespaceQuery':
+      migratedQuery.queryType = AzureQueryType.NamespacesQuery;
+      break;
+    case 'MetricNamesQuery':
+      migratedQuery.queryType = AzureQueryType.MetricNamesQuery;
+      break;
+    case 'WorkspacesQuery':
+      migratedQuery.queryType = AzureQueryType.WorkspacesQuery;
+      break;
+  }
+
+  return migratedQuery;
+};
+
 export const migrateStringQueriesToObjectQueries = async (
   rawQuery: string | AzureMonitorQuery,
   options: { datasource: DataSource }
@@ -265,4 +319,20 @@ export const migrateStringQueriesToObjectQueries = async (
   return isGrafanaTemplateVariableFnQuery(rawQuery)
     ? createGrafanaTemplateVariableQuery(rawQuery, options.datasource)
     : createLogAnalyticsTemplateVariableQuery(rawQuery, options.datasource);
+};
+
+export const migrateQuery = async (
+  rawQuery: string | AzureMonitorQuery,
+  options: { datasource: DataSource }
+): Promise<AzureMonitorQuery> => {
+  let query = await migrateStringQueriesToObjectQueries(rawQuery, options);
+
+  if (
+    !config.featureToggles.azLegacyTemplateVariables &&
+    query.queryType === AzureQueryType.GrafanaTemplateVariableFn
+  ) {
+    query = migrateGrafanaTemplateVariableFn(query);
+  }
+
+  return query;
 };

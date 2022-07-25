@@ -6,7 +6,7 @@ import { useAsyncFn } from 'react-use';
 import { UrlQueryValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Form, Field, Input, Button, Legend, Alert } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -85,7 +85,9 @@ export default function AdminEditOrgPage({ match }: Props) {
                   <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
                     <Input {...register('orgName', { required: true })} id="org-name-input" />
                   </Field>
-                  <Button disabled={!canWriteOrg}>Update</Button>
+                  <Button type="submit" disabled={!canWriteOrg}>
+                    Update
+                  </Button>
                 </>
               )}
             </Form>

@@ -12,7 +12,7 @@ var logger = log.New("accesscontrol.evaluator")
 
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
-	Evaluate(permissions map[string][]string) (bool, error)
+	Evaluate(permissions map[string][]string) bool
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
 	MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error)
 	// String returns a string representation of permission required by the evaluator
@@ -32,25 +32,25 @@ type permissionEvaluator struct {
 	Scopes []string
 }
 
-func (p permissionEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
+func (p permissionEvaluator) Evaluate(permissions map[string][]string) bool {
 	userScopes, ok := permissions[p.Action]
 	if !ok {
-		return false, nil
+		return false
 	}
 
 	if len(p.Scopes) == 0 {
-		return true, nil
+		return true
 	}
 
 	for _, target := range p.Scopes {
 		for _, scope := range userScopes {
 			if match(scope, target) {
-				return true, nil
+				return true
 			}
 		}
 	}
 
-	return false, nil
+	return false
 }
 
 func match(scope, target string) bool {
@@ -114,13 +114,13 @@ type allEvaluator struct {
 	allOf []Evaluator
 }
 
-func (a allEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
+func (a allEvaluator) Evaluate(permissions map[string][]string) bool {
 	for _, e := range a.allOf {
-		if ok, err := e.Evaluate(permissions); !ok || err != nil {
-			return false, err
+		if !e.Evaluate(permissions) {
+			return false
 		}
 	}
-	return true, nil
+	return true
 }
 
 func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
@@ -164,17 +164,13 @@ type anyEvaluator struct {
 	anyOf []Evaluator
 }
 
-func (a anyEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
+func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
 	for _, e := range a.anyOf {
-		ok, err := e.Evaluate(permissions)
-		if err != nil {
-			return false, err
-		}
-		if ok {
-			return true, nil
+		if e.Evaluate(permissions) {
+			return true
 		}
 	}
-	return false, nil
+	return false
 }
 
 func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {

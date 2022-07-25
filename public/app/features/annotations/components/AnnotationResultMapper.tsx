@@ -147,7 +147,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
         </td>
         {/* <td>
           <Select
-            menuShouldPortal
+
             value={valueOptions.find(v => v.value === mapping.source) || valueOptions[0]}
             options={valueOptions}
             onChange={(v: SelectableValue<AnnotationEventFieldSource>) => {
@@ -157,7 +157,6 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
         </td> */}
         <td>
           <Select
-            menuShouldPortal
             value={currentValue}
             options={picker}
             placeholder={row.placeholder || row.key}

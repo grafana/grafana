@@ -7,6 +7,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
+import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
 import { getFiltersFromUrlParams } from '../../utils/misc';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 
@@ -24,7 +25,8 @@ export const AlertGroupFilter = ({ groups }: Props) => {
   const { groupBy = [], queryString, alertState } = getFiltersFromUrlParams(queryParams);
   const matcherFilterKey = `matcher-${filterKey}`;
 
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagersByPermission('instance');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const styles = useStyles2(getStyles);
 
   const clearFilters = () => {
@@ -40,7 +42,11 @@ export const AlertGroupFilter = ({ groups }: Props) => {
 
   return (
     <div className={styles.wrapper}>
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <AlertManagerPicker
+        current={alertManagerSourceName}
+        onChange={setAlertManagerSourceName}
+        dataSources={alertManagers}
+      />
       <div className={styles.filterSection}>
         <MatcherFilter
           className={styles.filterInput}

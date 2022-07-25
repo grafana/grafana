@@ -75,7 +75,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
       </VerticalGroup>
 
       {allowConfiguration && (
-        <Button size={'xs'} variant={'link'} onClick={() => setShowConfig((showConfig) => !showConfig)}>
+        <Button size={'xs'} fill="text" onClick={() => setShowConfig((showConfig) => !showConfig)}>
           {showConfig ? 'Hide config' : 'Show config'}
         </Button>
       )}

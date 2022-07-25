@@ -48,10 +48,10 @@ describe('Live Stream Tests', () => {
         const view = new DataFrameView(val[0]);
         const last = { ...view.get(view.length - 1) };
         expect(last).toEqual({
-          ts: '2019-08-28T20:50:40.118Z',
+          Time: '2019-08-28T20:50:40.118Z',
           tsNs: '1567025440118944705',
           id: '25d81461-a66f-53ff-98d5-e39515af4735_A',
-          line: 'Kittens',
+          Line: 'Kittens',
           labels: { filename: '/var/log/sntpc.log' },
         });
       },
@@ -148,8 +148,8 @@ describe('Live Stream Tests', () => {
       const firstLog = { ...view.get(0) };
       const secondLog = { ...view.get(1) };
 
-      expect(firstLog.line).toBe('Kittens');
-      expect(secondLog.line).toBe('Doggos');
+      expect(firstLog.Line).toBe('Kittens');
+      expect(secondLog.Line).toBe('Doggos');
       expect(retries).toBe(2);
     });
   });

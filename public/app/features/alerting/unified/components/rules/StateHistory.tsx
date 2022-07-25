@@ -5,7 +5,7 @@ import React, { FC } from 'react';
 import { AlertState, dateTimeFormat, GrafanaTheme } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
-import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useManagedAlertStateHistory } from '../../hooks/useManagedAlertStateHistory';
 import { AlertLabel } from '../AlertLabel';
@@ -15,7 +15,7 @@ import { AlertStateTag } from './AlertStateTag';
 
 type StateHistoryRowItem = {
   id: string;
-  state: PromAlertingRuleState | GrafanaAlertState | AlertState;
+  state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState;
   text?: string;
   data?: StateHistoryItemData;
   timestamp?: number;

@@ -14,10 +14,11 @@ import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, th
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
+import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
@@ -42,6 +43,10 @@ export interface BackendSrvDependencies {
   appEvents: typeof appEvents;
   contextSrv: ContextSrv;
   logout: () => void;
+}
+
+export interface FolderRequestOptions {
+  withAccessControl?: boolean;
 }
 
 export class BackendSrv implements BackendService {
@@ -394,19 +399,19 @@ export class BackendSrv implements BackendService {
     return await this.request({ method: 'GET', url, params, requestId });
   }
 
-  async delete(url: string, data?: any) {
+  async delete<T = any>(url: string, data?: any): Promise<T> {
     return await this.request({ method: 'DELETE', url, data });
   }
 
-  async post(url: string, data?: any) {
+  async post<T = any>(url: string, data?: any): Promise<T> {
     return await this.request({ method: 'POST', url, data });
   }
 
-  async patch(url: string, data: any) {
+  async patch<T = any>(url: string, data: any): Promise<T> {
     return await this.request({ method: 'PATCH', url, data });
   }
 
-  async put(url: string, data: any) {
+  async put<T = any>(url: string, data: any): Promise<T> {
     return await this.request({ method: 'PUT', url, data });
   }
 
@@ -421,16 +426,29 @@ export class BackendSrv implements BackendService {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
+  /** @deprecated */
   search(query: any): Promise<DashboardSearchHit[]> {
     return this.get('/api/search', query);
   }
 
-  getDashboardByUid(uid: string) {
+  getDashboardByUid(uid: string): Promise<DashboardDTO> {
+    if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
+      return getGrafanaStorage().getDashboard(uid);
+    }
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
-  getFolderByUid(uid: string) {
-    return this.get<FolderDTO>(`/api/folders/${uid}`);
+  getPublicDashboardByUid(uid: string) {
+    return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
+  }
+
+  getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
+    const queryParams = new URLSearchParams();
+    if (options.withAccessControl) {
+      queryParams.set('accesscontrol', 'true');
+    }
+
+    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`);
   }
 }
 

@@ -28,7 +28,8 @@ export class ImpressionSrv {
     store.set(impressionsKey, JSON.stringify(impressions));
   }
 
-  getDashboardOpened() {
+  /** Returns an array of internal (numeric) dashboard IDs */
+  getDashboardOpened(): number[] {
     let impressions = store.get(this.impressionKey()) || '[]';
 
     impressions = JSON.parse(impressions);

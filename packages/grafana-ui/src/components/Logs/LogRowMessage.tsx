@@ -120,12 +120,12 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-
-    const highlightClassName = cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
 
     return (
-      <td className={style.logsRowMessage}>
+      // When context is open, the position has to be NOT relative.
+      // Setting the postion as inline-style to overwrite the more sepecific style definition from `style.logsRowMessage`.
+      <td style={contextIsOpen ? { position: 'unset' } : undefined} className={style.logsRowMessage}>
         <div
           className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
         >
@@ -145,7 +145,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, highlightClassName)}
+            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
           </span>
           {showContextToggle?.(row) && (
             <span

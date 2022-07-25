@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -66,7 +67,7 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	}
 
 	hostEnv = append(hostEnv, i.awsEnvVars()...)
-	hostEnv = append(hostEnv, i.azureEnvVars()...)
+	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
 	return getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
 }
 
@@ -77,24 +78,6 @@ func (i *Initializer) awsEnvVars() []string {
 	}
 	if len(i.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(i.cfg.AWSAllowedAuthProviders, ","))
-	}
-
-	return variables
-}
-
-func (i *Initializer) azureEnvVars() []string {
-	var variables []string
-
-	if i.cfg.Azure != nil {
-		if i.cfg.Azure.Cloud != "" {
-			variables = append(variables, "AZURE_CLOUD="+i.cfg.Azure.Cloud)
-		}
-		if i.cfg.Azure.ManagedIdentityClientId != "" {
-			variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+i.cfg.Azure.ManagedIdentityClientId)
-		}
-		if i.cfg.Azure.ManagedIdentityEnabled {
-			variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
-		}
 	}
 
 	return variables

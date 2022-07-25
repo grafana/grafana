@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorSwitch, Select } from '@grafana/ui';
 
 import { STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
@@ -82,7 +81,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             options={namespaceOptions}
             allowCustomValue
             onChange={({ value }) => value && onNamespaceChange(setNamespace(query, value))}
-            menuShouldPortal
           />
         </EditorField>
 
@@ -106,7 +104,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
               options={dimensionKeys}
               allowCustomValue
               onChange={(item) => item && onQueryChange(setSchemaLabels(query, item))}
-              menuShouldPortal
             />
           </EditorField>
         )}
@@ -120,7 +117,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             options={metricOptions}
             allowCustomValue
             onChange={({ value }) => value && onQueryChange(setMetricName(query, value))}
-            menuShouldPortal
           />
         </EditorField>
 
@@ -130,7 +126,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             value={aggregation ? toOption(aggregation) : null}
             options={appendTemplateVariables(datasource, AGGREGATIONS)}
             onChange={({ value }) => value && onQueryChange(setAggregation(query, value))}
-            menuShouldPortal
           />
         </EditorField>
       </EditorFieldGroup>

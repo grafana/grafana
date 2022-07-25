@@ -12,6 +12,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
+import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { MuteTimingFields } from '../../types/mute-timing-form';
@@ -21,12 +22,14 @@ import { createMuteTiming, defaultTimeInterval } from '../../utils/mute-timings'
 import { initialAsyncRequestState } from '../../utils/redux';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
 
 interface Props {
   muteTiming?: MuteTimeInterval;
   showError?: boolean;
+  provenance?: string;
 }
 
 const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
@@ -55,9 +58,10 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   }, [muteTiming]);
 };
 
-const MuteTimingForm = ({ muteTiming, showError }: Props) => {
+const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
   const dispatch = useDispatch();
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagersByPermission('notification');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const styles = useStyles2(getStyles);
 
   const defaultAmCortexConfig = { alertmanager_config: {}, template_files: {} };
@@ -101,12 +105,18 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
 
   return (
     <AlertingPageWrapper pageId="am-routes">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} disabled />
+      <AlertManagerPicker
+        current={alertManagerSourceName}
+        onChange={setAlertManagerSourceName}
+        disabled
+        dataSources={alertManagers}
+      />
+      {provenance && <ProvisioningAlert resource={ProvisionedResource.MuteTiming} />}
       {result && !loading && (
         <FormProvider {...formApi}>
           <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
             {showError && <Alert title="No matching mute timing found" />}
-            <FieldSet label={'Create mute timing'}>
+            <FieldSet label={'Create mute timing'} disabled={Boolean(provenance)}>
               <Field
                 required
                 label="Name"

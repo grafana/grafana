@@ -24,7 +24,7 @@ export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
-  previousAutoRefresh: any;
+  autoRefreshPaused = false;
   oldRefresh: string | null | undefined;
   timeModel?: TimeModel;
   timeAtLoad: any;
@@ -169,14 +169,9 @@ export class TimeSrv {
       }
     }
 
-    let paramsJSON: Record<string, string> = {};
-    params.forEach(function (value, key) {
-      paramsJSON[key] = value;
-    });
-
     // but if refresh explicitly set then use that
     this.refresh = getRefreshFromUrl({
-      params: paramsJSON,
+      urlRefresh: params.get('refresh'),
       currentRefresh: this.refresh,
       refreshIntervals: Array.isArray(this.timeModel?.timepicker?.refresh_intervals)
         ? this.timeModel?.timepicker?.refresh_intervals
@@ -203,7 +198,7 @@ export class TimeSrv {
       if (from !== urlRange.from || to !== urlRange.to) {
         // issue update
         this.initTimeFromUrl();
-        this.setTime(this.time, true);
+        this.setTime(this.time, false);
       }
     } else if (this.timeHasChangedSinceLoad()) {
       this.setTime(this.timeAtLoad, true);
@@ -237,7 +232,7 @@ export class TimeSrv {
 
     this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(intervalMs);
-      this.refreshTimeModel();
+      !this.autoRefreshPaused && this.refreshTimeModel();
     }, intervalMs);
 
     const refresh = this.contextSrv.getValidInterval(interval);
@@ -255,7 +250,7 @@ export class TimeSrv {
     this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(afterMs);
       if (this.contextSrv.isGrafanaVisible()) {
-        this.refreshTimeModel();
+        !this.autoRefreshPaused && this.refreshTimeModel();
       } else {
         this.autoRefreshBlocked = true;
       }
@@ -269,13 +264,13 @@ export class TimeSrv {
   // store timeModel refresh value and pause auto-refresh in some places
   // i.e panel edit
   pauseAutoRefresh() {
-    this.previousAutoRefresh = this.timeModel?.refresh;
-    this.setAutoRefresh('');
+    this.autoRefreshPaused = true;
   }
 
   // resume auto-refresh based on old dashboard refresh property
   resumeAutoRefresh() {
-    this.setAutoRefresh(this.previousAutoRefresh);
+    this.autoRefreshPaused = false;
+    this.refreshTimeModel();
   }
 
   setTime(time: RawTimeRange, updateUrl = true) {

@@ -25,12 +25,14 @@ import {
   ScopedVars,
   TimeRange,
   toUtc,
+  QueryFixAction,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { queryLogsVolume } from 'app/core/logs_model';
+import { queryLogsVolume } from 'app/core/logsModel';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import {
   BucketAggregation,
   isBucketAggregationWithField,
@@ -48,7 +50,7 @@ import LanguageProvider from './language_provider';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
-import { coerceESVersion, getScriptValue } from './utils';
+import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -88,6 +90,7 @@ export class ElasticDatasource
   dataLinks: DataLinkConfig[];
   languageProvider: LanguageProvider;
   includeFrozen: boolean;
+  isProxyAccess: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -99,6 +102,7 @@ export class ElasticDatasource
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
     this.index = instanceSettings.database ?? '';
+    this.isProxyAccess = instanceSettings.access === 'proxy';
     const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
 
     this.timeField = settingsData.timeField;
@@ -115,6 +119,9 @@ export class ElasticDatasource
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
     this.includeFrozen = settingsData.includeFrozen ?? false;
+    this.annotations = {
+      QueryEditor: ElasticsearchAnnotationsQueryEditor,
+    };
 
     if (this.logMessageField === '') {
       this.logMessageField = undefined;
@@ -132,6 +139,20 @@ export class ElasticDatasource
     data?: undefined,
     headers?: BackendSrvRequest['headers']
   ): Observable<any> {
+    if (!this.isProxyAccess) {
+      const error = new Error(
+        'Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.'
+      );
+      return throwError(() => error);
+    }
+
+    if (!isSupportedVersion(this.esVersion)) {
+      const error = new Error(
+        'Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed.'
+      );
+      return throwError(() => error);
+    }
+
     const options: BackendSrvRequest = {
       url: this.url + '/' + url,
       method,
@@ -931,6 +952,31 @@ export class ElasticDatasource
     }
 
     return false;
+  }
+
+  modifyQuery(query: ElasticsearchQuery, action: QueryFixAction): ElasticsearchQuery {
+    if (!action.options) {
+      return query;
+    }
+
+    let expression = query.query ?? '';
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        if (expression.length > 0) {
+          expression += ' AND ';
+        }
+        expression += `${action.options.key}:"${action.options.value}"`;
+        break;
+      }
+      case 'ADD_FILTER_OUT': {
+        if (expression.length > 0) {
+          expression += ' AND ';
+        }
+        expression += `-${action.options.key}:"${action.options.value}"`;
+        break;
+      }
+    }
+    return { ...query, query: expression };
   }
 }
 

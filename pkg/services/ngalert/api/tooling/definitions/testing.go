@@ -26,7 +26,7 @@ import (
 //     Responses:
 //       200: TestRuleResponse
 
-// swagger:route Post /api/v1/rule/test/{DatasourceID} testing RouteTestRuleConfig
+// swagger:route Post /api/v1/rule/test/{DatasourceUID} testing RouteTestRuleConfig
 //
 // Test a rule against external data source ruler
 //
@@ -69,7 +69,7 @@ type TestRulePayload struct {
 	// Example: (node_filesystem_avail_bytes{fstype!="",job="integrations/node_exporter"} node_filesystem_size_bytes{fstype!="",job="integrations/node_exporter"} * 100 < 5 and node_filesystem_readonly{fstype!="",job="integrations/node_exporter"} == 0)
 	Expr string `json:"expr,omitempty"`
 	// GrafanaManagedCondition for grafana alerts
-	GrafanaManagedCondition *models.EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
+	GrafanaManagedCondition *EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
 }
 
 // swagger:parameters RouteEvalQueries

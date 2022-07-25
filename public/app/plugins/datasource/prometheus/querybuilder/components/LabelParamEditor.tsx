@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { DataSourceApi, SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../../datasource';
 import { promQueryModeller } from '../PromQueryModeller';
 import { getOperationParamId } from '../shared/operationUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
@@ -25,7 +24,6 @@ export function LabelParamEditor({
   return (
     <Select
       inputId={getOperationParamId(operationIndex, index)}
-      menuShouldPortal
       autoFocus={value === '' ? true : undefined}
       openMenuOnFocus
       onOpenMenu={async () => {
@@ -50,8 +48,8 @@ async function loadGroupByLabels(
 ): Promise<Array<SelectableValue<any>>> {
   let labels: QueryBuilderLabelFilter[] = query.labels;
 
-  // This function is used by both Prometheus and Loki and this the only difference
-  if (datasource instanceof PrometheusDatasource) {
+  // This function is used by both Prometheus and Loki and this the only difference.
+  if (datasource.type === 'prometheus') {
     labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
   }
 

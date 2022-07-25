@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, stylesFactory } from '@grafana/ui';
+import { Button, HorizontalGroup, stylesFactory, Tooltip } from '@grafana/ui';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import {
   dataSource as expressionDatasource,
@@ -20,10 +20,10 @@ import {
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
+import { getDefaultOrFirstCompatibleDataSource } from '../../utils/datasource';
 
 import { QueryRows } from './QueryRows';
 
@@ -35,6 +35,7 @@ interface Props {
 interface State {
   panelDataByRefId: Record<string, PanelData>;
 }
+
 export class QueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
   private queries: AlertQuery[];
@@ -77,20 +78,20 @@ export class QueryEditor extends PureComponent<Props, State> {
 
   onNewAlertingQuery = () => {
     const { queries } = this;
-    const defaultDataSource = getDatasourceSrv().getInstanceSettings('default');
+    const datasource = getDefaultOrFirstCompatibleDataSource();
 
-    if (!defaultDataSource) {
+    if (!datasource) {
       return;
     }
 
     this.onChangeQueries(
       addQuery(queries, {
-        datasourceUid: defaultDataSource.uid,
+        datasourceUid: datasource.uid,
         model: {
           refId: '',
           datasource: {
-            type: defaultDataSource.type,
-            uid: defaultDataSource.uid,
+            type: datasource.type,
+            uid: datasource.uid,
           },
         },
       })
@@ -100,12 +101,16 @@ export class QueryEditor extends PureComponent<Props, State> {
   onNewExpressionQuery = () => {
     const { queries } = this;
 
+    const lastQuery = queries.at(-1);
+    const defaultParams = lastQuery ? [lastQuery.refId] : [];
+
     this.onChangeQueries(
       addQuery(queries, {
         datasourceUid: ExpressionDatasourceUID,
         model: expressionDatasource.newQuery({
           type: ExpressionQueryType.classic,
-          conditions: [defaultCondition],
+          conditions: [{ ...defaultCondition, query: { params: defaultParams } }],
+          expression: lastQuery?.refId,
         }),
       })
     );
@@ -139,6 +144,8 @@ export class QueryEditor extends PureComponent<Props, State> {
     const { panelDataByRefId } = this.state;
     const styles = getStyles(config.theme2);
 
+    const noCompatibleDataSources = getDefaultOrFirstCompatibleDataSource() === undefined;
+
     return (
       <div className={styles.container}>
         <QueryRows
@@ -149,15 +156,18 @@ export class QueryEditor extends PureComponent<Props, State> {
           onRunQueries={this.onRunQueries}
         />
         <HorizontalGroup spacing="sm" align="flex-start">
-          <Button
-            type="button"
-            icon="plus"
-            onClick={this.onNewAlertingQuery}
-            variant="secondary"
-            aria-label={selectors.components.QueryTab.addQuery}
-          >
-            Add query
-          </Button>
+          <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
+            <Button
+              type="button"
+              icon="plus"
+              onClick={this.onNewAlertingQuery}
+              variant="secondary"
+              aria-label={selectors.components.QueryTab.addQuery}
+              disabled={noCompatibleDataSources}
+            >
+              Add query
+            </Button>
+          </Tooltip>
           {config.expressionsEnabled && (
             <Button type="button" icon="plus" onClick={this.onNewExpressionQuery} variant="secondary">
               Add expression

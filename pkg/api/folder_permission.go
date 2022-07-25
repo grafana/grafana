@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -24,15 +25,15 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return apierrors.ToFolderErrorResponse(models.ErrFolderAccessDenied)
+		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
 	}
 
-	acl, err := g.GetAcl()
+	acl, err := g.GetACL()
 	if err != nil {
 		return response.Error(500, "Failed to get folder permissions", err)
 	}
 
-	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
+	filteredACLs := make([]*models.DashboardACLInfoDTO, 0, len(acl))
 	for _, perm := range acl {
 		if perm.UserId > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
 			continue
@@ -51,14 +52,14 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 
-		filteredAcls = append(filteredAcls, perm)
+		filteredACLs = append(filteredACLs, perm)
 	}
 
-	return response.JSON(http.StatusOK, filteredAcls)
+	return response.JSON(http.StatusOK, filteredACLs)
 }
 
 func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Response {
-	apiCmd := dtos.UpdateDashboardAclCommand{}
+	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -78,12 +79,12 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 	}
 
 	if !canAdmin {
-		return apierrors.ToFolderErrorResponse(models.ErrFolderAccessDenied)
+		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
 	}
 
-	var items []*models.DashboardAcl
+	var items []*models.DashboardACL
 	for _, item := range apiCmd.Items {
-		items = append(items, &models.DashboardAcl{
+		items = append(items, &models.DashboardACL{
 			OrgID:       c.OrgId,
 			DashboardID: folder.Id,
 			UserID:      item.UserID,
@@ -115,7 +116,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 	}
 
 	if !hs.AccessControl.IsDisabled() {
-		old, err := g.GetAcl()
+		old, err := g.GetACL()
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
@@ -125,15 +126,15 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return response.Success("Dashboard permissions updated")
 	}
 
-	if err := hs.dashboardService.UpdateDashboardACL(c.Req.Context(), folder.Id, items); err != nil {
-		if errors.Is(err, models.ErrDashboardAclInfoMissing) {
-			err = models.ErrFolderAclInfoMissing
+	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), folder.Id, items); err != nil {
+		if errors.Is(err, models.ErrDashboardACLInfoMissing) {
+			err = models.ErrFolderACLInfoMissing
 		}
 		if errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			err = models.ErrFolderPermissionFolderEmpty
 		}
 
-		if errors.Is(err, models.ErrFolderAclInfoMissing) || errors.Is(err, models.ErrFolderPermissionFolderEmpty) {
+		if errors.Is(err, models.ErrFolderACLInfoMissing) || errors.Is(err, models.ErrFolderPermissionFolderEmpty) {
 			return response.Error(409, err.Error(), err)
 		}
 

@@ -9,7 +9,7 @@ import {
   mockResourcesByResourceGroup,
   mockSearchResults,
 } from '../../__mocks__/resourcePickerRows';
-import ResourcePickerData from '../../resourcePicker/resourcePickerData';
+import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
 import { ResourceRowType } from './types';
 
@@ -37,6 +37,8 @@ function createMockResourcePickerData() {
   return mockResourcePicker;
 }
 
+const queryType: ResourcePickerQueryType = 'logs';
+
 const defaultProps = {
   templateVariables: [],
   resourceURI: noResourceURI,
@@ -49,6 +51,7 @@ const defaultProps = {
     ResourceRowType.Resource,
     ResourceRowType.Variable,
   ],
+  queryType,
 };
 
 describe('AzureMonitor ResourcePicker', () => {

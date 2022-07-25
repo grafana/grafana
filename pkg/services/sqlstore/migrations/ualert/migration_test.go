@@ -9,11 +9,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -118,7 +121,6 @@ func TestAddDashAlertMigration(t *testing.T) {
 
 // TestDashAlertMigration tests the execution of the main DashAlertMigration.
 func TestDashAlertMigration(t *testing.T) {
-	t.Skip("Test is flaky")
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
 
@@ -156,7 +158,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert1")}, // These Matchers are temporary and will be replaced below with generated rule_uid.
 								{Matchers: createAlertNameMatchers("alert2"), Routes: []*ualert.Route{
@@ -177,7 +180,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(2): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "notifier6",
+							Receiver:   "notifier6",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Matchers: createAlertNameMatchers("alert4"), Routes: []*ualert.Route{
 									{Receiver: "notifier4", Matchers: createAlertNameMatchers("alert4"), Continue: true},
@@ -209,7 +213,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -229,7 +234,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "notifier1",
+							Receiver:   "notifier1",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -249,7 +255,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -272,7 +279,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -297,7 +305,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -322,7 +331,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert1")},
 								{Matchers: createAlertNameMatchers("alert2"), Routes: []*ualert.Route{
@@ -350,7 +360,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -372,7 +383,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -395,7 +407,8 @@ func TestDashAlertMigration(t *testing.T) {
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
 						Route: &ualert.Route{
-							Receiver: "autogen-contact-point-default",
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
 								{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert1")},
 							},
@@ -444,7 +457,12 @@ func TestDashAlertMigration(t *testing.T) {
 
 				// Order of nested routes is not guaranteed.
 				cOpt = []cmp.Option{
-					cmpopts.SortSlices(func(a, b *ualert.Route) bool { return a.Receiver < b.Receiver }),
+					cmpopts.SortSlices(func(a, b *ualert.Route) bool {
+						if a.Receiver != b.Receiver {
+							return a.Receiver < b.Receiver
+						}
+						return a.Matchers[0].Value < b.Matchers[0].Value
+					}),
 					cmpopts.IgnoreUnexported(ualert.Route{}, labels.Matcher{}),
 				}
 				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...) {
@@ -481,7 +499,6 @@ var (
 )
 
 // createAlertNotification creates a legacy alert notification channel for inserting into the test database.
-//nolint
 func createAlertNotification(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool) *models.AlertNotification {
 	t.Helper()
 	settingsJson := simplejson.New()
@@ -508,7 +525,6 @@ func createAlertNotification(t *testing.T, orgId int64, uid string, channelType 
 }
 
 // createAlert creates a legacy alert rule for inserting into the test database.
-//nolint
 func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, name string, notifierUids []string) *models.Alert {
 	t.Helper()
 
@@ -554,9 +570,9 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string) *models.Da
 }
 
 // createDatasource creates a ddatasource for inserting into the test database.
-func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.DataSource {
+func createDatasource(t *testing.T, id int64, orgId int64, uid string) *datasources.DataSource {
 	t.Helper()
-	return &models.DataSource{
+	return &datasources.DataSource{
 		Id:      id,
 		OrgId:   orgId,
 		Uid:     uid,
@@ -566,9 +582,22 @@ func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.D
 	}
 }
 
+func createOrg(t *testing.T, id int64) *models.Org {
+	t.Helper()
+	return &models.Org{
+		Id:      id,
+		Version: 1,
+		Name:    fmt.Sprintf("org_%d", id),
+		Created: time.Now(),
+		Updated: time.Now(),
+	}
+}
+
 // teardown cleans the input tables between test cases.
 func teardown(t *testing.T, x *xorm.Engine) {
-	_, err := x.Exec("DELETE from alert")
+	_, err := x.Exec("DELETE from org")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from alert")
 	require.NoError(t, err)
 	_, err = x.Exec("DELETE from alert_notification")
 	require.NoError(t, err)
@@ -582,6 +611,11 @@ func teardown(t *testing.T, x *xorm.Engine) {
 func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
 
+	orgs := []models.Org{
+		*createOrg(t, 1),
+		*createOrg(t, 2),
+	}
+
 	// Setup dashboards.
 	dashboards := []models.Dashboard{
 		*createDashboard(t, 1, 1, "dash1-1"),
@@ -593,12 +627,16 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 	require.NoError(t, errDashboards)
 
 	// Setup data_sources.
-	dataSources := []models.DataSource{
+	dataSources := []datasources.DataSource{
 		*createDatasource(t, 1, 1, "ds1-1"),
 		*createDatasource(t, 2, 1, "ds2-1"),
 		*createDatasource(t, 3, 2, "ds3-2"),
 		*createDatasource(t, 4, 2, "ds4-2"),
 	}
+
+	_, errOrgs := x.Insert(orgs)
+	require.NoError(t, errOrgs)
+
 	_, errDataSourcess := x.Insert(dataSources)
 	require.NoError(t, errDataSourcess)
 
@@ -665,7 +703,6 @@ func boolPointer(b bool) *bool {
 }
 
 // createAlertNameMatchers creates a temporary alert_name Matchers that will be replaced during runtime with the generated rule_uid.
-//nolint
 func createAlertNameMatchers(alertName string) ualert.Matchers {
 	matcher, _ := labels.NewMatcher(labels.MatchEqual, "alert_name", alertName)
 	return ualert.Matchers(labels.Matchers{matcher})

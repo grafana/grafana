@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -232,6 +231,15 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body := asGettableUserConfig(t, response)
 			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
+		t.Run("templates from GET config have no provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.Nil(t, body.TemplateFileProvenances)
+		})
 	})
 
 	t.Run("when objects are provisioned", func(t *testing.T) {
@@ -264,6 +272,18 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body = asGettableUserConfig(t, response)
 
 			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+		})
+		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+			setTemplateProvenance(t, 1, "a", sut.mam.ProvStore)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.NotNil(t, body.TemplateFileProvenances)
+			require.Len(t, body.TemplateFileProvenances, 1)
+			require.Equal(t, ngmodels.ProvenanceAPI, body.TemplateFileProvenances["a"])
 		})
 	})
 }
@@ -348,7 +368,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			name:    "new silence, role-based access control is enabled, authorized",
 			silence: silenceGen(withEmptyID),
 			accessControl: func() accesscontrol.AccessControl {
-				return acMock.New().WithPermissions([]*accesscontrol.Permission{
+				return acMock.New().WithPermissions([]accesscontrol.Permission{
 					{Action: accesscontrol.ActionAlertingInstanceCreate},
 				})
 			},
@@ -393,7 +413,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			name:    "update silence, role-based access control is enabled, authorized",
 			silence: silenceGen(),
 			accessControl: func() accesscontrol.AccessControl {
-				return acMock.New().WithPermissions([]*accesscontrol.Permission{
+				return acMock.New().WithPermissions([]accesscontrol.Permission{
 					{Action: accesscontrol.ActionAlertingInstanceUpdate},
 				})
 			},
@@ -510,9 +530,6 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
-		IsFeatureToggleEnabled: func(key string) bool {
-			return key == featuremgmt.FlagAlertProvisioning
-		},
 	}
 
 	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
@@ -522,7 +539,29 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	return mam
 }
 
-var validConfig = setting.GetAlertmanagerDefaultConfiguration()
+var validConfig = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
 
 var brokenConfig = `
 	"alertmanager_config": {
@@ -602,6 +641,13 @@ func setRouteProvenance(t *testing.T, orgID int64, ps provisioning.ProvisioningS
 func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisioning.ProvisioningStore) {
 	t.Helper()
 	err := ps.SetProvenance(context.Background(), &apimodels.EmbeddedContactPoint{UID: UID}, orgID, ngmodels.ProvenanceAPI)
+	require.NoError(t, err)
+}
+
+// setTemplateProvenance marks a template as provisioned.
+func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
+	t.Helper()
+	err := ps.SetProvenance(context.Background(), &apimodels.MessageTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
