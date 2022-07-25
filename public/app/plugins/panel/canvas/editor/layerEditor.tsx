@@ -9,6 +9,7 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { InstanceState } from '../CanvasPanel';
 
 import { PlacementEditor } from './PlacementEditor';
+import { TreeNavigationEditor } from './TreeNavigationEditor';
 import { optionBuilder } from './options';
 
 export interface LayerEditorProps {
@@ -66,6 +67,14 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
       if (currentLayer && !currentLayer.isRoot()) {
         // TODO: the non-root nav option
       }
+
+      builder.addCustomEditor({
+        id: 'content',
+        path: 'root',
+        name: 'Tree View',
+        editor: TreeNavigationEditor,
+        settings: { scene, layer: scene.currentLayer, selected },
+      });
 
       const ctx = { ...context, options };
       optionBuilder.addBackground(builder as any, ctx);
