@@ -1,11 +1,12 @@
 import { DataFrame, GrafanaTheme2 } from '@grafana/data/src';
-import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
+
 import {
   getColorDimension,
   getScalarDimension,
   getScaledDimension,
   getTextDimension,
 } from '../../../../features/dimensions';
+import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
 
 export function getStyleDimension(
   frame: DataFrame | undefined,

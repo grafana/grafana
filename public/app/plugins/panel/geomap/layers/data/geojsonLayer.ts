@@ -4,56 +4,42 @@ import {
   PanelData,
   GrafanaTheme2,
   PluginState,
-  SelectableValue,
   EventBus,
 } from '@grafana/data';
-import OlMap from 'ol/Map';
+import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
 import { unByKey } from 'ol/Observable';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { ComparisonOperation, FeatureRuleConfig, FeatureStyleConfig } from '../../types';
-import { Fill, Stroke, Style } from 'ol/style';
+import { Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
 import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { polyStyle } from '../../style/markers';
-import { StyleEditor } from './StyleEditor';
+import { StyleEditor } from '../../editor/StyleEditor';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
-import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { findField } from '../../../../../features/dimensions';
-import { getStyleDimension } from '../../utils/utils';
+import { getPublicGeoJSONFiles } from '../../utils/mapResources';
 
-enum ConfigMode {
-  Json = 'json',
-  Data = 'data',
-}
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
 
-  // The default style (applied if no rules match)
-  style: StyleConfig;
-
-  mode: ConfigMode;
-
   // Pick style based on a rule
   rules: FeatureStyleConfig[];
-  idField?: string;
-  dataStyle: StyleConfig;
+
+  // The default style (applied if no rules match)
+  style: StyleConfig;
 }
 
 const defaultOptions: GeoJSONMapperConfig = {
   src: 'public/maps/countries.geojson',
   rules: [],
   style: defaultStyleConfig,
-  mode: ConfigMode.Json,
-  dataStyle: {},
 };
 
 interface StyleCheckerState {
@@ -72,8 +58,6 @@ export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
   },
 };
 
-let publicGeoJSONFiles: Array<SelectableValue<string>> | undefined = undefined;
-
 export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   id: 'geojson',
   name: 'GeoJSON',
@@ -83,11 +67,9 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
   /**
    * Function that configures transformation and returns a transformer
-   * @param map
    * @param options
-   * @param theme
    */
-  create: async (map: OlMap, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     const source = new VectorSource({
@@ -124,22 +106,9 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       });
     }
 
-    const style = await getStyleConfigState(config.style);
-    const idToIdx = new Map<string, number>();
-
     const vectorLayer = new VectorLayer({
       source,
       style: (feature: FeatureLike) => {
-        const idx = idToIdx.get(feature.getId() as string);
-        const dims = style.dims;
-
-        if (idx && dims) {
-          return new Style({
-            fill: new Fill({ color: dims.color?.get(idx) }),
-            stroke: new Stroke({ color: style.base.color, width: style.base.lineWidth ?? 1 }),
-          });
-        }
-
         const isPoint = feature.getGeometry()?.getType() === 'Point';
 
         for (const check of styles) {
@@ -180,23 +149,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     return {
       init: () => vectorLayer,
-      update: (data: PanelData) => {
-        if (config.mode === ConfigMode.Json) {
-          return;
-        }
-
-        const frame = data.series[0];
-        if (frame) {
-          const field = findField(frame, config.idField);
-          if (field) {
-            field.values.toArray().forEach((v, i) => idToIdx.set(v, i));
-          }
-
-          style.dims = getStyleDimension(frame, style, theme, config.dataStyle);
-        }
-
-        vectorLayer.changed();
-      },
       registerOptionsUI: (builder) => {
         // get properties for first feature to use as ui options
         const layerInfo = features.pipe(
@@ -204,16 +156,12 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           rxjsmap((v) => getLayerPropertyInfo(v))
         );
 
-        if (!publicGeoJSONFiles) {
-          initGeojsonFiles();
-        }
-
         builder
           .addSelect({
             path: 'config.src',
             name: 'GeoJSON URL',
             settings: {
-              options: publicGeoJSONFiles ?? [],
+              options: getPublicGeoJSONFiles() ?? [],
               allowCustomValue: true,
             },
             defaultValue: defaultOptions.src,
@@ -230,34 +178,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             },
             defaultValue: defaultOptions.style,
           })
-          .addRadio({
-            path: 'config.mode',
-            name: 'Mode',
-            description: '',
-            defaultValue: defaultOptions.mode,
-            settings: {
-              options: [
-                { label: 'Data', value: ConfigMode.Data },
-                { label: 'GeoJSON', value: ConfigMode.Json },
-              ],
-            },
-          })
-          .addFieldNamePicker({
-            path: 'config.idField',
-            name: 'ID Field',
-            showIf: (cfg) => !(cfg.config.mode === ConfigMode.Json)
-          })
-          .addCustomEditor({
-            id: 'config.dataStyle',
-            path: 'config.dataStyle',
-            name: 'Data style',
-            editor: StyleEditor,
-            settings: {
-              displayRotation: false,
-            },
-            defaultValue: defaultOptions.dataStyle,
-            showIf: (cfg) => !(cfg.config.mode === ConfigMode.Json)
-          })
           .addCustomEditor({
             id: 'config.rules',
             path: 'config.rules',
@@ -269,7 +189,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
               layerInfo,
             },
             defaultValue: [],
-            showIf: (cfg) => cfg.config.mode === ConfigMode.Json
           });
       },
     };
@@ -277,27 +196,3 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   defaultOptions,
 };
 
-// This will find all geojson files in the maps and gazetteer folders
-async function initGeojsonFiles() {
-  if (publicGeoJSONFiles) {
-    return;
-  }
-  publicGeoJSONFiles = [];
-
-  const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
-  for (let folder of ['maps', 'gazetteer']) {
-    ds.listFiles(folder).subscribe({
-      next: (frame) => {
-        frame.forEach((item) => {
-          if (item.name.endsWith('.geojson')) {
-            const value = `public/${folder}/${item.name}`;
-            publicGeoJSONFiles!.push({
-              value,
-              label: value,
-            });
-          }
-        });
-      },
-    });
-  }
-}
