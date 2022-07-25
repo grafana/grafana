@@ -1,16 +1,19 @@
 import { css, cx } from '@emotion/css';
+import { capitalize } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Alert,
+  Badge,
   Button,
   Card,
   ConfirmModal,
   Field,
   HorizontalGroup,
   Icon,
+  LinkButton,
   RadioButtonGroup,
   Tooltip,
   useStyles2,
@@ -143,7 +146,7 @@ export const ExternalAlertmanagers = () => {
       </div>
       <div className={styles.externalDs}>
         {externalDsAlertManagers.map((am) => (
-          <Card key={am.dataSource.uid} href={makeDataSourceLink(am.dataSource)}>
+          <Card key={am.dataSource.uid}>
             <Card.Heading>{am.dataSource.name}</Card.Heading>
             <Card.Figure>
               <img
@@ -155,9 +158,24 @@ export const ExternalAlertmanagers = () => {
               />
             </Card.Figure>
             <Card.Tags>
-              <Icon name="heart" size="xl" style={{ color: getStatusColor(am.status) }} title={am.status} />
+              <Badge
+                text={capitalize(am.status)}
+                color={am.status === 'dropped' ? 'red' : am.status === 'active' ? 'green' : 'orange'}
+              />
             </Card.Tags>
             <Card.Meta>{am.url}</Card.Meta>
+            <Card.Actions>
+              <LinkButton href={makeDataSourceLink(am.dataSource)} size="sm" variant="secondary">
+                Go to datasouce
+              </LinkButton>
+            </Card.Actions>
+            <Card.SecondaryActions>
+              {true && (
+                <Tooltip content="State might be inconclusive">
+                  <Badge text="Warning" color="orange" />
+                </Tooltip>
+              )}
+            </Card.SecondaryActions>
           </Card>
         ))}
       </div>
@@ -287,6 +305,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   amChoice: css`
     margin-bottom: ${theme.spacing(4)};
+  `,
+  externalStatus: css`
+    align-self: flex-start;
+    justify-self: flex-end;
   `,
   externalDs: css`
     display: grid;
