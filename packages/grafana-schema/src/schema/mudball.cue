@@ -174,6 +174,11 @@ OptionsWithLegend: {
 } @cuetsy(kind="interface")
 
 // TODO docs
+OptionsWithTimezones: {
+	timezones?: [...string]
+} @cuetsy(kind="interface")
+
+// TODO docs
 OptionsWithTextFormatting: {
 	text?: VizTextDisplayOptions
 } @cuetsy(kind="interface")
