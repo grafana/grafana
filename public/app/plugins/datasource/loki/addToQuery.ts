@@ -1,3 +1,5 @@
+import { sortBy } from 'lodash';
+
 import { parser } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
@@ -77,6 +79,18 @@ export function addNoPipelineErrorToQuery(query: string): string {
 }
 
 /**
+ * Adds label format to existing query. Useful for query modification for hints.
+ * It uses LogQL parser to find log query and add label format at the end.
+ *
+ * @param query
+ * @param labelFormat
+ */
+export function addLabelFormatToQuery(query: string, labelFormat: { originalLabel: string; renameTo: string }): string {
+  const logQueryPositions = getLogQueryPositions(query);
+  return addLabelFormat(query, logQueryPositions, labelFormat);
+}
+
+/**
  * Parse the string and get all Selector positions in the query together with parsed representation of the
  * selector.
  * @param query
@@ -142,6 +156,50 @@ function getLineFiltersPositions(query: string): Position[] {
     enter: (type, from, to, get): false | void => {
       if (type.name === 'LineFilters') {
         positions.push({ from, to });
+        return false;
+      }
+    },
+  });
+  return positions;
+}
+
+/**
+ * Parse the string and get all Log query positions in the query.
+ * @param query
+ */
+function getLogQueryPositions(query: string): Position[] {
+  const tree = parser.parse(query);
+  const positions: Position[] = [];
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'LogExpr') {
+        positions.push({ from, to });
+        return false;
+      }
+
+      // This is a case in metrics query
+      if (type.name === 'LogRangeExpr') {
+        // Unfortunately, LogRangeExpr includes both log and non-log (e.g. Duration/Range/...) parts of query.
+        // We get position of all log-parts within LogRangeExpr: Selector, PipelineExpr and UnwrapExpr.
+        const logPartsPositions: Position[] = [];
+        const selector = get().getChild('Selector');
+        if (selector) {
+          logPartsPositions.push({ from: selector.from, to: selector.to });
+        }
+
+        const pipeline = get().getChild('PipelineExpr');
+        if (pipeline) {
+          logPartsPositions.push({ from: pipeline.from, to: pipeline.to });
+        }
+
+        const unwrap = get().getChild('UnwrapExpr');
+        if (unwrap) {
+          logPartsPositions.push({ from: unwrap.from, to: unwrap.to });
+        }
+
+        // We sort them and then pick "from" from first position and "to" from last position.
+        const sorted = sortBy(logPartsPositions, (position) => position.to);
+        positions.push({ from: sorted[0].from, to: sorted[sorted.length - 1].to });
         return false;
       }
     },
@@ -239,6 +297,35 @@ function addParser(query: string, queryPartPositions: Position[], parser: string
 
     // Add parser
     newQuery += start + ` | ${parser}` + end;
+    prev = match.to;
+  }
+  return newQuery;
+}
+
+/**
+ * Add filter as label filter after the parsers
+ * @param query
+ * @param logQueryPositions
+ * @param labelFormat
+ */
+function addLabelFormat(
+  query: string,
+  logQueryPositions: Position[],
+  labelFormat: { originalLabel: string; renameTo: string }
+): string {
+  let newQuery = '';
+  let prev = 0;
+
+  for (let i = 0; i < logQueryPositions.length; i++) {
+    // This is basically just doing splice on a string for each matched vector selector.
+    const match = logQueryPositions[i];
+    const isLast = i === logQueryPositions.length - 1;
+
+    const start = query.substring(prev, match.to);
+    const end = isLast ? query.substring(match.to) : '';
+
+    const labelFilter = ` | label_format ${labelFormat.renameTo}=${labelFormat.originalLabel}`;
+    newQuery += start + labelFilter + end;
     prev = match.to;
   }
   return newQuery;
