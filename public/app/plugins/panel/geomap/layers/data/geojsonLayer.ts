@@ -1,7 +1,6 @@
 import {
   MapLayerRegistryItem,
   MapLayerOptions,
-  PanelData,
   GrafanaTheme2,
   PluginState,
   EventBus,
