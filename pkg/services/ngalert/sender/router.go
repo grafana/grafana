@@ -221,17 +221,15 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 }
 
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
-	amURL := ds.Url
-	// if basic auth is enabled we need to build the url with basic auth baked in
-	if !ds.BasicAuth {
-		return amURL, nil
-	}
-
 	// We re-use the same parsing logic as the datasource to make sure it matches whatever output the user received
 	// when doing the healthcheck.
-	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, amURL)
+	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, ds.Url)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
+	}
+	// if basic auth is enabled we need to build the url with basic auth baked in
+	if !ds.BasicAuth {
+		return parsed.String(), nil
 	}
 
 	password := d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "basicAuthPassword", "")
