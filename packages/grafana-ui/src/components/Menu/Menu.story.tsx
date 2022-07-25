@@ -37,7 +37,7 @@ export const Examples: Story = (args) => {
           <Menu.Item label="Filter" />
           <Menu.Item label="Active" active />
           <Menu.Item label="I am a link" url="http://google.com" target="_blank" />
-          <Menu.Item label="Delete" destructive />
+          <Menu.Item label="With destructive prop set" destructive />
         </Menu>
       </StoryExample>
       <StoryExample name="With icons and a divider">
@@ -46,7 +46,7 @@ export const Examples: Story = (args) => {
           <Menu.Item label="Filter" icon="filter" />
           <Menu.Item label="History" icon="history" />
           <Menu.Divider />
-          <Menu.Item label="Delete" icon="trash-alt" destructive />
+          <Menu.Item label="With destructive prop set" icon="trash-alt" destructive />
         </Menu>
       </StoryExample>
       <StoryExample name="With header & groups">
