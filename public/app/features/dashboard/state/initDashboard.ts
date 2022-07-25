@@ -1,5 +1,5 @@
-import { DataQuery, locationUtil, setWeekStart } from '@grafana/data';
-import { config, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
+import { DataQuery, DataSourceApi, locationUtil, setWeekStart } from '@grafana/data';
+import { config, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -103,27 +103,40 @@ async function fetchDashboard(
   }
 }
 
-const logQueryOnDashboardPanels = (panels: PanelModel[], dashboardId: string, collapsed?: boolean): void => {
+const queriesOnInitDashboard = (panels: PanelModel[], dashboardId: string, orgId?: number, userId?: number): void => {
+  let queries: { [key: string]: DataQuery[] } = getQueriesFromDashboardPerDS(panels, {});
+
+  Object.keys(queries).forEach((key) => {
+    getDataSourceSrv()
+      .get(key)
+      .then((value) => {
+        if (value.queriesOnInitDashboard) {
+          value.queriesOnInitDashboard(queries[key], dashboardId, orgId, userId);
+        }
+      });
+  });
+};
+
+const getQueriesFromDashboardPerDS = (
+  panels: PanelModel[],
+  queries: { [key: string]: DataQuery[] } = {}
+): { [key: string]: DataQuery[] } => {
   panels.forEach((panel) => {
-    // panel is collapsed or parent is
-    collapsed = !!panel.collapsed || !!collapsed;
     if (panel.panels) {
-      logQueryOnDashboardPanels(panel.panels, dashboardId, collapsed);
+      getQueriesFromDashboardPerDS(panel.panels, queries);
     } else {
       panel.targets.forEach((target) => {
-        reportInteraction('grafana_dashboard_loaded', {
-          dashboard_id: dashboardId,
-          panel_id: panel.id,
-          panel_type: panel.type,
-          hidden: !!target.hide,
-          collapsed: collapsed,
-          datasource: target.datasource?.type,
-          grafana_version: config.buildInfo.version,
-          query_type: target.queryType,
-        });
+        if (target.datasource?.uid) {
+          if (queries[target.datasource.uid]) {
+            queries[target.datasource.uid].push(target);
+          } else {
+            queries[target.datasource.uid] = [target];
+          }
+        }
       });
     }
   });
+  return queries;
 };
 
 /**
@@ -234,10 +247,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // yay we are done
-    const dashboardId = dashDTO.dashboard.uid;
-    if (dashboardId) {
-      logQueryOnDashboardPanels(dashboard.panels, dashboardId);
-    }
+    queriesOnInitDashboard(dashboard.panels, dashboard.uid, storeState.user.orgId, storeState.user.user?.id);
     dispatch(dashboardInitCompleted(dashboard));
   };
 }

@@ -351,6 +351,12 @@ abstract class DataSourceApi<
    * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
+
+  /*
+   * Optionally, use this method to report information about queries
+   * @alpha -- experimental
+   */
+  queriesOnInitDashboard?(queries: TQuery[], dashboardId?: string, orgId?: number, userId?: number): void;
 }
 
 export interface MetadataInspectorProps<
