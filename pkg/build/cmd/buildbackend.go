@@ -51,7 +51,7 @@ func BuildBackend(ctx *cli.Context) error {
 	defer p.Close()
 
 	if err := compilers.Install(); err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	g, _ := errutil.GroupWithContext(ctx.Context)

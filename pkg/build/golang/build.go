@@ -110,7 +110,8 @@ func (opts BuildOpts) Args() []string {
 func RunBuild(ctx context.Context, opts BuildOpts) error {
 	env := opts.Env()
 	args := append([]string{"build"}, opts.Args()...)
-
+	// Ignore gosec G304 as this function is only used in the build process.
+	//nolint:gosec
 	cmd := exec.CommandContext(ctx, "go", args...)
 	cmd.Env = env
 

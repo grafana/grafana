@@ -15,7 +15,7 @@ func main() {
 			Name:      "build-backend",
 			Usage:     "Build one or more variants of back-end binaries",
 			ArgsUsage: "[version]",
-			Action:    BuildBackend,
+			Action:    ArgCountWrapper(1, BuildBackend),
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&variantsFlag,

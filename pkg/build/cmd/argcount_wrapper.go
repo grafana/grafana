@@ -2,9 +2,9 @@ package main
 
 import "github.com/urfave/cli/v2"
 
-func ArgCountWrapper(count int, action cli.ActionFunc) cli.ActionFunc {
+func ArgCountWrapper(max int, action cli.ActionFunc) cli.ActionFunc {
 	return func(ctx *cli.Context) error {
-		if ctx.NArg() > count {
+		if ctx.NArg() > max {
 			if err := cli.ShowSubcommandHelp(ctx); err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
