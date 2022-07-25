@@ -50,6 +50,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       eventData.dashboardName = dashboard.title;
       eventData.dashboardUid = dashboard.uid;
       eventData.folderName = dashboard.meta.folderTitle;
+      eventData.isPublic = !!dashboard.meta.publicDashboardAccessToken;
     }
 
     if (data.series && data.series.length > 0) {
