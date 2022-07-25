@@ -102,7 +102,7 @@ You can specify the following permissions to dashboards and folders.
 - **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder. Editors _cannot_ change folder or dashboard permissions.
 - **View**: Can only view dashboards and folders.
 
-> Important: When a user creates a dashboard or a folder, he becomes **Admin** of it, independently of his role.
+> Important: When a user creates a dashboard or a folder, he is set as **Admin** of it.
 
 For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions]({{< relref "../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}).
 
