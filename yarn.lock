@@ -4802,7 +4802,7 @@ __metadata:
     marked: 4.0.16
     moment: 2.29.4
     moment-timezone: 0.5.34
-    ol: 6.14.1
+    ol: 6.15.1
     papaparse: 5.3.2
     react: 17.0.2
     react-dom: 17.0.2
@@ -5203,7 +5203,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.4
     monaco-editor: ^0.31.1
-    ol: 6.14.1
+    ol: 6.15.1
     postcss: 8.4.14
     postcss-loader: 7.0.0
     prismjs: 1.28.0
@@ -6988,9 +6988,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mapbox/mapbox-gl-style-spec@npm:^13.20.1":
-  version: 13.22.0
-  resolution: "@mapbox/mapbox-gl-style-spec@npm:13.22.0"
+"@mapbox/mapbox-gl-style-spec@npm:^13.23.1":
+  version: 13.25.0
+  resolution: "@mapbox/mapbox-gl-style-spec@npm:13.25.0"
   dependencies:
     "@mapbox/jsonlint-lines-primitives": ~2.0.2
     "@mapbox/point-geometry": ^0.1.0
@@ -7001,11 +7001,11 @@ __metadata:
     rw: ^1.3.3
     sort-object: ^0.3.2
   bin:
-    gl-style-composite: bin/gl-style-composite
-    gl-style-format: bin/gl-style-format
-    gl-style-migrate: bin/gl-style-migrate
-    gl-style-validate: bin/gl-style-validate
-  checksum: cbaf4e18398a39ff987d628ef2527924ed2e6a712ab144364e8e4aaf7878231130ea8f2c26ebfd3606fc24b18cae91cb9b34bf987855787fc7ae38ea8ba0744c
+    gl-style-composite: bin/gl-style-composite.js
+    gl-style-format: bin/gl-style-format.js
+    gl-style-migrate: bin/gl-style-migrate.js
+    gl-style-validate: bin/gl-style-validate.js
+  checksum: a1639069bba39e82755c67ff7218075154459614f0d6f13b7ef478bbcbea4b81e47f23ce5e2ec76ca1f083f3f1e9acd93e8110d1a7bbc3cd443f1a250c971c92
   languageName: node
   linkType: hard
 
@@ -20657,7 +20657,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"geotiff@npm:^2.0.2":
+"geotiff@npm:2.0.4":
   version: 2.0.4
   resolution: "geotiff@npm:2.0.4"
   dependencies:
@@ -21386,7 +21386,7 @@ __metadata:
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
-    ol: 6.14.1
+    ol: 6.15.1
     ol-ext: ^3.2.25
     papaparse: 5.3.2
     pluralize: ^8.0.0
@@ -27892,26 +27892,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^7.1.1":
-  version: 7.1.1
-  resolution: "ol-mapbox-style@npm:7.1.1"
+"ol-mapbox-style@npm:^8.0.5":
+  version: 8.2.0
+  resolution: "ol-mapbox-style@npm:8.2.0"
   dependencies:
-    "@mapbox/mapbox-gl-style-spec": ^13.20.1
+    "@mapbox/mapbox-gl-style-spec": ^13.23.1
     mapbox-to-css-font: ^2.4.1
-    webfont-matcher: ^1.1.0
-  checksum: 3f5f9c528163a0f74a582c0cbec58b833cc76b212d334a497a085e0b562164a05054ab2a5a78cde92e9ea560433bbae9511344e894d5440700515af07365426c
+  checksum: a1bb0a8789e86cba4f1577c22b22add94bc8504a38df2625f1ee40b6bdacb515bfd574ecb738e72af54e2ca9a58764ca25386f931bb76f8b978280a5623b97b6
   languageName: node
   linkType: hard
 
-"ol@npm:6.14.1":
-  version: 6.14.1
-  resolution: "ol@npm:6.14.1"
+"ol@npm:6.15.1":
+  version: 6.15.1
+  resolution: "ol@npm:6.15.1"
   dependencies:
-    geotiff: ^2.0.2
-    ol-mapbox-style: ^7.1.1
+    geotiff: 2.0.4
+    ol-mapbox-style: ^8.0.5
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: 118ae5b40fb3f98efb7c2cbf230edc3788567fac872f80e09b9dbcc3845c0179de95c2ef771be2307e6f8b4162e9dbc68818757c874d7d4fdd855e56dd43ea12
+  checksum: 61199a0cfd11830919861f92cc7dcd50f94077972cd5777691834186991cfc0f59da69a5c35281047c64a8e0b857a228cc37e663b5579c93b5fb08d2eb0f4b4d
   languageName: node
   linkType: hard
 
@@ -36848,13 +36847,6 @@ __metadata:
   version: 1.2.0
   resolution: "web-worker@npm:1.2.0"
   checksum: 1bb28348ddcf9b2e7c62c5fd02e49a84098795856cd905456de957271bba288e9618941cf69d8960f0a7ae81f5dfb74b427c0634be47ec69e3e955c4ec5213be
-  languageName: node
-  linkType: hard
-
-"webfont-matcher@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "webfont-matcher@npm:1.1.0"
-  checksum: 788b7155157bd33607fd46927b27007a1815a1226db286350961f7f684e7a91d8f1c36ce4032897fe203c4964355111814d5826f0139266d9b4715e91bb06665
   languageName: node
   linkType: hard
 
