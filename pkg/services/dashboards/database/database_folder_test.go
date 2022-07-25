@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-var testFeatureToggles = featuremgmt.NewTestFeatureToggles(featuremgmt.FlagPanelTitleSearch)
+var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 
 func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	if testing.Short() {

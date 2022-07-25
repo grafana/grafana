@@ -94,21 +94,3 @@ type FeatureFlag struct {
 	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 }
-
-// TestFeatureToggles implement FeatureToggles for tests.
-type TestFeatureToggles struct {
-	flags map[string]bool
-}
-
-// NewTestFeatureToggles creates TestFeatureToggles.
-func NewTestFeatureToggles(flagsToEnable ...string) *TestFeatureToggles {
-	flags := map[string]bool{}
-	for _, f := range flagsToEnable {
-		flags[f] = true
-	}
-	return &TestFeatureToggles{flags: flags}
-}
-
-func (f *TestFeatureToggles) IsEnabled(feature string) bool {
-	return f.flags[feature]
-}
