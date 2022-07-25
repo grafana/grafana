@@ -1,23 +1,22 @@
-import { css, cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import Tree from 'rc-tree';
 import React, { Key, useEffect, useMemo, useState } from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
-import { Button, HorizontalGroup, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { Button, HorizontalGroup, useTheme2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
-import { EditLayerName } from '../../../../core/components/Layers/EditLayerName';
 import { CanvasElementOptions, canvasElementRegistry } from '../../../../features/canvas';
 import { notFoundItem } from '../../../../features/canvas/elements/notFound';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
 import { getTreeData, onNodeDrop, TreeElement } from '../tree';
-import { DragNode, DropNode, LayerActionID } from '../types';
+import { DragNode, DropNode } from '../types';
 import { doSelect } from '../utils';
 
+import { TreeNodeTitle } from './TreeNodeTitle';
 import { TreeViewEditorProps } from './treeViewEditor';
 
 let allowSelection = true;
@@ -26,12 +25,9 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
-  const [editElementId, setEditElementId] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const theme = useTheme2();
   const globalCSS = getGlobalStyles(theme);
-  const styles = useStyles2(getStyles);
 
   const selectedBgColor = theme.v1.colors.formInputBorderActive;
   const { settings } = item;
@@ -42,7 +38,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
   useEffect(() => {
     setTreeData(getTreeData(item?.settings?.scene.root, selection, selectedBgColor));
-    allowSelection = true;
+    setAllowSelection(true);
   }, [item?.settings?.scene.root, selectedBgColor, selection]);
 
   if (!settings) {
@@ -53,14 +49,6 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   if (!layer) {
     return <div>Missing layer?</div>;
   }
-
-  const getScene = () => {
-    const { settings } = item;
-    if (!settings?.layer) {
-      return;
-    }
-    return settings.layer.scene;
-  };
 
   const onSelect = (selectedKeys: Key[], info: { node: { dataRef: ElementState } }) => {
     if (allowSelection && item.settings?.scene) {
@@ -104,30 +92,8 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     });
   };
 
-  const onDelete = (element: ElementState) => {
-    const elLayer = element.parent ?? layer;
-    elLayer.doAction(LayerActionID.Delete, element);
-    allowSelection = false;
-  };
-
-  const onDuplicate = (element: ElementState) => {
-    const elLayer = element.parent ?? layer;
-    elLayer.doAction(LayerActionID.Duplicate, element);
-    allowSelection = false;
-  };
-
-  const onNameChange = (element: ElementState, name: string) => {
-    element.onChange({ ...element.options, name });
-  };
-
-  const verifyLayerNameUniqueness = (nameToVerify: string) => {
-    const scene = getScene();
-
-    return Boolean(scene?.canRename(nameToVerify));
-  };
-
-  const getLayerInfo = (element: ElementState) => {
-    return element.options.type;
+  const setAllowSelection = (allow = true) => {
+    allowSelection = allow;
   };
 
   const onAddItem = (sel: SelectableValue<string>) => {
@@ -146,49 +112,8 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     layer.scene.clearCurrentSelection();
   };
 
-  const onEdit = (element: ElementState) => {
-    setEditElementId(element.UID);
-    setIsEditing(!isEditing);
-  };
-
   const onTitleRender = (nodeData: TreeElement) => {
-    const element = nodeData.dataRef;
-    const name = nodeData.dataRef.getName();
-    const UID = nodeData.dataRef.UID;
-
-    return (
-      <>
-        <EditLayerName
-          name={name}
-          UID={UID}
-          editElementId={editElementId}
-          isEditing={isEditing}
-          onChange={(v: string) => onNameChange(element, v)}
-          setEditElementId={setEditElementId}
-          verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined}
-        />
-
-        <div className={styles.textWrapper}>&nbsp; {getLayerInfo(element)}</div>
-
-        <IconButton name="pen" className={styles.actionIcon} size="sm" onClick={() => onEdit(element)} />
-        {!nodeData.children && (
-          <>
-            <IconButton
-              name="copy"
-              title={'Duplicate'}
-              className={styles.actionIcon}
-              onClick={() => onDuplicate(element)}
-            />
-            <IconButton
-              name="trash-alt"
-              title={'remove'}
-              className={cx(styles.actionIcon, styles.dragIcon)}
-              onClick={() => onDelete(element)}
-            />
-          </>
-        )}
-      </>
-    );
+    return <TreeNodeTitle nodeData={nodeData} setAllowSelection={setAllowSelection} settings={settings} />;
   };
 
   return (
@@ -225,39 +150,3 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     </>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  actionIcon: css`
-    color: ${theme.colors.text.secondary};
-    &:hover {
-      color: ${theme.colors.text.primary};
-    }
-  `,
-  dragIcon: css`
-    cursor: drag;
-  `,
-  textWrapper: css`
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-    overflow: hidden;
-    margin-right: ${theme.v1.spacing.sm};
-  `,
-  wrapper: css`
-    label: Wrapper;
-    display: flex;
-    align-items: center;
-    margin-left: ${theme.v1.spacing.xs};
-  `,
-  layerName: css`
-    font-weight: ${theme.v1.typography.weight.semibold};
-    color: ${theme.v1.colors.textBlue};
-    cursor: pointer;
-    overflow: hidden;
-    margin-left: ${theme.v1.spacing.xs};
-  `,
-  layerNameInput: css`
-    max-width: 300px;
-    margin: -4px 0;
-  `,
-});

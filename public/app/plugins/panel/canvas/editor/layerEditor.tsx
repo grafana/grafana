@@ -8,7 +8,6 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 
 import { InstanceState } from '../CanvasPanel';
 
-import { LayerElementListEditor } from './LayerElementListEditor';
 import { PlacementEditor } from './PlacementEditor';
 import { optionBuilder } from './options';
 
@@ -67,14 +66,6 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
       if (currentLayer && !currentLayer.isRoot()) {
         // TODO: the non-root nav option
       }
-
-      builder.addCustomEditor({
-        id: 'content',
-        path: 'root',
-        name: 'Elements',
-        editor: LayerElementListEditor,
-        settings: { scene, layer: scene.currentLayer, selected },
-      });
 
       const ctx = { ...context, options };
       optionBuilder.addBackground(builder as any, ctx);
