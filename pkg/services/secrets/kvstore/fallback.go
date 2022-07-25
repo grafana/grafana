@@ -7,25 +7,26 @@ import (
 )
 
 type KVStoreWithFallback struct {
-	log      log.Logger
-	store    SecretsKVStore
-	fallback SecretsKVStore
+	log         log.Logger
+	store       SecretsKVStore
+	fallback    SecretsKVStore
+	useFallback bool
 }
 
 func NewKVStoreWithFallback(store SecretsKVStore, fallback SecretsKVStore) *KVStoreWithFallback {
 	return &KVStoreWithFallback{
-		log:      log.New("secrets.kvstore"),
-		store:    store,
-		fallback: fallback,
+		log:         log.New("secrets.kvstore"),
+		store:       store,
+		fallback:    fallback,
+		useFallback: true,
 	}
 }
 
 func (kv *KVStoreWithFallback) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	value, exists, err := kv.store.Get(ctx, orgId, namespace, typ)
-	if err != nil || !exists {
-		value, exists, err := kv.fallback.Get(ctx, orgId, namespace, typ)
+	if kv.useFallback && (err != nil || !exists) {
 		kv.log.Debug("failed to get secret with plugin, using fallback", "orgId", orgId, "type", typ, "namespace", namespace, "error", err)
-		return value, exists, err
+		return kv.fallback.Get(ctx, orgId, namespace, typ)
 	}
 	return value, exists, err
 }
@@ -40,7 +41,7 @@ func (kv *KVStoreWithFallback) Del(ctx context.Context, orgId int64, namespace s
 
 func (kv *KVStoreWithFallback) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
 	keys, err := kv.store.Keys(ctx, orgId, namespace, typ)
-	if err != nil {
+	if kv.useFallback && err != nil {
 		kv.log.Debug("failed to get secret keys with plugin, using fallback", "orgId", orgId, "type", typ, "namespace", namespace, "error", err)
 		return kv.fallback.Keys(ctx, orgId, namespace, typ)
 	}
