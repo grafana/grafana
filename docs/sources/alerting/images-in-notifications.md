@@ -71,7 +71,7 @@ Images in notifications are supported in the following notifiers and additional 
 | Opsgenie                | No                      | Yes                     |
 | Pagerduty               | No                      | Yes                     |
 | Prometheus Alertmanager | No                      | No                      |
-| Pushover                | No                      | No                      |
+| Pushover                | Yes                     | No                      |
 | Sensu Go                | No                      | No                      |
 | Slack                   | No                      | Yes                     |
 | Telegram                | No                      | No                      |
