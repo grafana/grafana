@@ -6,10 +6,9 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -117,7 +116,7 @@ func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (CrawlerAuth, er
 			dto, err := o.serviceAccountsStore.UpdateServiceAccount(ctx, orgId, id, &serviceaccounts.UpdateServiceAccountForm{
 				Name: &serviceAccountNameOrg,
 				Role: &orgRole,
-			});
+			})
 
 			if err != nil {
 				o.log.Error("Failed to update service account's role", "err", err, "accountName", serviceAccountNameOrg)
