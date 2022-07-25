@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import React, { ComponentType } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
-import { AutoSizeInput, Checkbox, Select } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { AutoSizeInput, Button, Checkbox, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from '../shared/types';
 
@@ -63,6 +64,7 @@ function SelectInputParamEditor({
   operationIndex,
   onChange,
 }: QueryBuilderOperationParamEditorProps) {
+  const styles = useStyles2(getStyles);
   let selectOptions = paramDef.options as Array<SelectableValue<any>>;
 
   if (!selectOptions[0]?.label) {
@@ -74,14 +76,53 @@ function SelectInputParamEditor({
 
   let valueOption = selectOptions.find((x) => x.value === value) ?? toOption(value as string);
 
+  // If we have optional options param and don't have value, we want to render button with which we add optional options.
+  // This makes it easier to understand what needs to be selected and what is optional.
+  if (!value && paramDef.optional) {
+    return (
+      <div className={styles.optionalParam}>
+        <Button
+          size="sm"
+          variant="secondary"
+          title={`Add ${paramDef.name}`}
+          icon="plus"
+          onClick={() => onChange(index, selectOptions[0].value)}
+        >
+          {paramDef.name}
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <Select
-      id={getOperationParamId(operationIndex, index)}
-      value={valueOption}
-      options={selectOptions}
-      placeholder={paramDef.placeholder}
-      allowCustomValue={true}
-      onChange={(value) => onChange(index, value.value!)}
-    />
+    <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
+      <Select
+        id={getOperationParamId(operationIndex, index)}
+        value={valueOption}
+        options={selectOptions}
+        placeholder={paramDef.placeholder}
+        allowCustomValue={true}
+        onChange={(value) => onChange(index, value.value!)}
+      />
+      {paramDef.optional && (
+        <Button
+          data-testid={`operations.${index}.remove-param`}
+          size="sm"
+          fill="text"
+          icon="times"
+          variant="secondary"
+          title={`Remove ${paramDef.name}`}
+          onClick={() => onChange(index, '')}
+        />
+      )}
+    </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    optionalParam: css({
+      marginTop: theme.spacing(1),
+    }),
+  };
+};

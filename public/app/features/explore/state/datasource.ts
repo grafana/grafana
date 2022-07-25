@@ -41,7 +41,7 @@ export function changeDatasource(
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const orgId = getState().user.orgId;
-    const { history, instance } = await loadAndInitDatasource(orgId, datasourceUid);
+    const { history, instance } = await loadAndInitDatasource(orgId, { uid: datasourceUid });
     const currentDataSourceInstance = getState().explore[exploreId]!.datasourceInstance;
 
     dispatch(

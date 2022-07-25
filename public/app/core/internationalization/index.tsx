@@ -78,3 +78,15 @@ export function I18nProvider({ children }: I18nProviderProps) {
     </LinguiI18nProvider>
   );
 }
+
+// This is only really used for ModalManager, as that creates a new react root we need to make sure is localisable.
+export function provideI18n<P>(WrappedWithI18N: React.ComponentType<P>) {
+  const I18nProviderWrapper = (props: P) => {
+    return (
+      <I18nProvider>
+        <WrappedWithI18N {...props} />
+      </I18nProvider>
+    );
+  };
+  return I18nProviderWrapper;
+}
