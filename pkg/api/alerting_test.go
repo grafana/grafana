@@ -26,7 +26,7 @@ var (
 )
 
 type setUpConf struct {
-	aclMockResp []*models.DashboardAclInfoDTO
+	aclMockResp []*models.DashboardACLInfoDTO
 }
 
 type mockSearchService struct{ ExpectedResult models.HitList }
@@ -43,7 +43,7 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
 	store.ExpectedAlert = singleAlert
 
-	aclMockResp := []*models.DashboardAclInfoDTO{}
+	aclMockResp := []*models.DashboardACLInfoDTO{}
 	for _, c := range confs {
 		if c.aclMockResp != nil {
 			aclMockResp = c.aclMockResp
@@ -51,8 +51,8 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	}
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 		q.Result = aclMockResp
 	}).Return(nil)
 	guardian.InitLegacyGuardian(store, dashSvc)
@@ -84,7 +84,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 		postAlertScenario(t, hs, "When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause",
 			models.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
 				setUp(setUpConf{
-					aclMockResp: []*models.DashboardAclInfoDTO{
+					aclMockResp: []*models.DashboardACLInfoDTO{
 						{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 						{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 					},

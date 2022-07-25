@@ -4,9 +4,8 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
-// Components
-import { appChromeService } from '../AppChrome/AppChromeService';
 import { Footer } from '../Footer/Footer';
 import { PageLayoutType, PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
@@ -21,6 +20,7 @@ export const Page: PageType = ({
   navId,
   navModel: oldNavProp,
   pageNav,
+  subTitle,
   children,
   className,
   layout = PageLayoutType.Default,
@@ -30,6 +30,7 @@ export const Page: PageType = ({
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
+  const { chrome } = useGrafana();
 
   usePageTitle(navModel, pageNav);
 
@@ -37,12 +38,12 @@ export const Page: PageType = ({
 
   useEffect(() => {
     if (navModel) {
-      appChromeService.update({
+      chrome.update({
         sectionNav: navModel.node,
         ...(pageNav && { pageNav }),
       });
     }
-  }, [navModel, pageNav]);
+  }, [navModel, pageNav, chrome]);
 
   return (
     <div className={cx(styles.wrapper, className)}>
@@ -52,7 +53,7 @@ export const Page: PageType = ({
           <div className={styles.pageContent}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
-                {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
+                {pageHeaderNav && <PageHeader navItem={pageHeaderNav} subTitle={subTitle} />}
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
                 {children}
               </div>
@@ -75,6 +76,7 @@ export const Page: PageType = ({
 
 Page.Header = PageHeader;
 Page.Contents = PageContents;
+Page.OldNavOnly = () => null;
 
 const getStyles = (theme: GrafanaTheme2) => {
   const shadow = theme.isDark

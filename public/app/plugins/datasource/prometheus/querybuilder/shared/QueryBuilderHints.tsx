@@ -45,10 +45,12 @@ export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
               <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
                 <Button
                   onClick={() => {
-                    const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
-                    const newQuery = datasource.modifyQuery(query, hint!.fix!.action);
-                    const newVisualQuery = buildVisualQueryFromString(newQuery.expr);
-                    return onChange(newVisualQuery.query);
+                    if (hint?.fix?.action) {
+                      const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
+                      const newQuery = datasource.modifyQuery(query, hint.fix.action);
+                      const newVisualQuery = buildVisualQueryFromString(newQuery.expr);
+                      return onChange(newVisualQuery.query);
+                    }
                   }}
                   fill="outline"
                   size="sm"

@@ -261,6 +261,8 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 	}
 
 	replaceDatasourceVariables(dash, datasourceVariablesLookup)
+	fillDefaultDatasources(dash, lookup)
+	filterOutSpecialDatasources(dash)
 
 	targets := newTargetInfo(lookup)
 	for _, panel := range dash.Panels {
@@ -269,6 +271,45 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 	dash.Datasource = targets.GetDatasourceInfo()
 
 	return dash, iter.Error
+}
+
+func panelRequiresDatasource(panel PanelInfo) bool {
+	return panel.Type != "row"
+}
+
+func fillDefaultDatasources(dash *DashboardInfo, lookup DatasourceLookup) {
+	for i, panel := range dash.Panels {
+		if len(panel.Datasource) != 0 || !panelRequiresDatasource(panel) {
+			continue
+		}
+
+		defaultDs := lookup.ByRef(nil)
+		if defaultDs != nil {
+			dash.Panels[i].Datasource = []DataSourceRef{*defaultDs}
+		}
+	}
+}
+
+func filterOutSpecialDatasources(dash *DashboardInfo) {
+	for i, panel := range dash.Panels {
+		var dsRefs []DataSourceRef
+
+		// partition into actual datasource references and variables
+		for _, ds := range panel.Datasource {
+			switch ds.UID {
+			case "-- Mixed --":
+				// The actual datasources used as targets will remain
+				continue
+			case "-- Dashboard --":
+				// The `Dashboard` datasource refers to the results of the query used in another panel
+				continue
+			default:
+				dsRefs = append(dsRefs, ds)
+			}
+		}
+
+		dash.Panels[i].Datasource = dsRefs
+	}
 }
 
 func replaceDatasourceVariables(dash *DashboardInfo, datasourceVariablesLookup *datasourceVariableLookup) {

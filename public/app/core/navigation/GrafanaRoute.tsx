@@ -1,78 +1,76 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 
-import { appChromeService } from '../components/AppChrome/AppChromeService';
+import { useGrafana } from '../context/GrafanaContext';
 import { keybindingSrv } from '../services/keybindingSrv';
 
-import { GrafanaRouteComponentProps } from './types';
+import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
-export class GrafanaRoute extends React.Component<Props> {
-  componentDidMount() {
-    appChromeService.routeMounted(this.props.route);
+export function GrafanaRoute(props: Props) {
+  const { chrome } = useGrafana();
 
-    this.updateBodyClassNames();
-    this.cleanupDOM();
+  useEffect(() => {
+    chrome.routeMounted(props.route);
+
+    updateBodyClassNames(props.route);
+    cleanupDOM();
     // unbinds all and re-bind global keybindins
     keybindingSrv.reset();
     keybindingSrv.initGlobals();
     reportPageview();
-    navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
-  }
+    navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
 
-  componentDidUpdate(prevProps: Props) {
-    this.cleanupDOM();
+    return () => {
+      navigationLogger('GrafanaRoute', false, 'Unmounted', props.route);
+      updateBodyClassNames(props.route, true);
+    };
+  }, [chrome, props.route, props.match]);
+
+  useEffect(() => {
+    cleanupDOM();
     reportPageview();
-    navigationLogger('GrafanaRoute', false, 'Updated', this.props, prevProps);
-  }
+    navigationLogger('GrafanaRoute', false, 'Updated', props);
+  });
 
-  componentWillUnmount() {
-    this.updateBodyClassNames(true);
-    navigationLogger('GrafanaRoute', false, 'Unmounted', this.props.route);
-  }
+  navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
-  getPageClasses() {
-    return this.props.route.pageClass ? this.props.route.pageClass.split(' ') : [];
-  }
+  return <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />;
+}
 
-  updateBodyClassNames(clear = false) {
-    for (const cls of this.getPageClasses()) {
-      if (clear) {
-        document.body.classList.remove(cls);
-      } else {
-        document.body.classList.add(cls);
-      }
+function getPageClasses(route: RouteDescriptor) {
+  return route.pageClass ? route.pageClass.split(' ') : [];
+}
+
+function updateBodyClassNames(route: RouteDescriptor, clear = false) {
+  for (const cls of getPageClasses(route)) {
+    if (clear) {
+      document.body.classList.remove(cls);
+    } else {
+      document.body.classList.add(cls);
     }
   }
+}
 
-  cleanupDOM() {
-    document.body.classList.remove('sidemenu-open--xs');
+function cleanupDOM() {
+  document.body.classList.remove('sidemenu-open--xs');
 
-    // cleanup tooltips
-    const tooltipById = document.getElementById('tooltip');
-    tooltipById?.parentElement?.removeChild(tooltipById);
+  // cleanup tooltips
+  const tooltipById = document.getElementById('tooltip');
+  tooltipById?.parentElement?.removeChild(tooltipById);
 
-    const tooltipsByClass = document.querySelectorAll('.tooltip');
-    for (let i = 0; i < tooltipsByClass.length; i++) {
-      const tooltip = tooltipsByClass[i];
-      tooltip.parentElement?.removeChild(tooltip);
-    }
-
-    // cleanup tether-drop
-    for (const drop of Drop.drops) {
-      drop.destroy();
-    }
+  const tooltipsByClass = document.querySelectorAll('.tooltip');
+  for (let i = 0; i < tooltipsByClass.length; i++) {
+    const tooltip = tooltipsByClass[i];
+    tooltip.parentElement?.removeChild(tooltip);
   }
 
-  render() {
-    const { props } = this;
-    navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
-
-    const RouteComponent = props.route.component;
-    return <RouteComponent {...props} queryParams={locationSearchToObject(props.location.search)} />;
+  // cleanup tether-drop
+  for (const drop of Drop.drops) {
+    drop.destroy();
   }
 }

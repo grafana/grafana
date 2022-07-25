@@ -148,7 +148,7 @@ type GetAlertsResponse struct {
 type GetAlertResponse struct {
 	// The response message
 	// in: body
-	Body []*models.Alert `json:"body"`
+	Body *models.Alert `json:"body"`
 }
 
 // swagger:response pauseAlertResponse

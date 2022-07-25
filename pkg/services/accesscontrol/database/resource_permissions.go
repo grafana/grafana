@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type flatResourcePermission struct {
@@ -39,18 +40,18 @@ func (p *flatResourcePermission) IsInherited(scope string) bool {
 }
 
 func (s *AccessControlStore) SetUserResourcePermission(
-	ctx context.Context, orgID int64, user accesscontrol.User,
+	ctx context.Context, orgID int64, usr accesscontrol.User,
 	cmd types.SetResourcePermissionCommand,
 	hook types.UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	if user.ID == 0 {
-		return nil, models.ErrUserNotFound
+	if usr.ID == 0 {
+		return nil, user.ErrUserNotFound
 	}
 
 	var err error
 	var permission *accesscontrol.ResourcePermission
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setUserResourcePermission(sess, orgID, user, cmd, hook)
+		permission, err = s.setUserResourcePermission(sess, orgID, usr, cmd, hook)
 		return err
 	})
 

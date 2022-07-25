@@ -237,18 +237,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       });
 
       const dsId = this.serviceMap.datasourceUid;
+      const tempoDsUid = this.uid;
       if (config.featureToggles.tempoApmTable) {
         subQueries.push(
-          serviceMapQuery(options, dsId, this.name).pipe(
+          serviceMapQuery(options, dsId, tempoDsUid).pipe(
             concatMap((result) =>
               rateQuery(options, result, dsId).pipe(
-                concatMap((result) => errorAndDurationQuery(options, result, dsId, this.name))
+                concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
               )
             )
           )
         );
       } else {
-        subQueries.push(serviceMapQuery(options, dsId, this.name));
+        subQueries.push(serviceMapQuery(options, dsId, tempoDsUid));
       }
     }
 
@@ -296,6 +297,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return {
       ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', scopedVars),
+      serviceName: this.templateSrv.replace(query.serviceName ?? '', scopedVars),
+      spanName: this.templateSrv.replace(query.spanName ?? '', scopedVars),
       search: this.templateSrv.replace(query.search ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
@@ -456,29 +459,19 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       }
 
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
-      nodes.fields[0].config = {
-        links: [
-          makePromLink(
-            'Request rate',
-            `sum by (client, server)(rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
-            datasourceUid,
-            false
-          ),
-          makePromLink(
-            'Request histogram',
-            `histogram_quantile(0.9, sum(rate(${histogramMetric}{server="\${__data.fields.id}"}[$__rate_interval])) by (le, client, server))`,
-            datasourceUid,
-            false
-          ),
-          makePromLink(
-            'Failed request rate',
-            `sum by (client, server)(rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
-            datasourceUid,
-            false
-          ),
-          makeTempoLink('View traces', `\${__data.fields[0]}`, '', tempoDatasourceUid),
-        ],
-      };
+      nodes.fields[0].config = getFieldConfig(
+        datasourceUid,
+        tempoDatasourceUid,
+        '__data.fields.id',
+        '__data.fields[0]'
+      );
+      edges.fields[0].config = getFieldConfig(
+        datasourceUid,
+        tempoDatasourceUid,
+        '__data.fields.target',
+        '__data.fields.target',
+        '__data.fields.source'
+      );
 
       return {
         data: [nodes, edges],
@@ -583,8 +576,41 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
         instant: instant,
       } as PromQuery,
       datasourceUid,
-      datasourceName: 'Prometheus',
+      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
+  };
+}
+
+export function getFieldConfig(
+  datasourceUid: string,
+  tempoDatasourceUid: string,
+  targetField: string,
+  tempoField: string,
+  sourceField?: string
+) {
+  sourceField = sourceField ? `client="\${${sourceField}}",` : '';
+  return {
+    links: [
+      makePromLink(
+        'Request rate',
+        `sum by (client, server)(rate(${totalsMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
+        datasourceUid,
+        false
+      ),
+      makePromLink(
+        'Request histogram',
+        `histogram_quantile(0.9, sum(rate(${histogramMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval])) by (le, client, server))`,
+        datasourceUid,
+        false
+      ),
+      makePromLink(
+        'Failed request rate',
+        `sum by (client, server)(rate(${failedMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
+        datasourceUid,
+        false
+      ),
+      makeTempoLink('View traces', `\${${tempoField}}`, '', tempoDatasourceUid),
+    ],
   };
 }
 
@@ -602,8 +628,8 @@ export function makeTempoLink(title: string, serviceName: string, spanName: stri
     title,
     internal: {
       query,
-      datasourceUid: datasourceUid,
-      datasourceName: 'Tempo',
+      datasourceUid,
+      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
   };
 }

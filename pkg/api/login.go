@@ -180,7 +180,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad login data", err)
 	}
 	authModule := ""
-	var user *user.User
+	var usr *user.User
 	var resp *response.NormalResponse
 
 	defer func() {
@@ -190,7 +190,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		}
 		hs.HooksService.RunLoginHook(&models.LoginInfo{
 			AuthModule:    authModule,
-			User:          user,
+			User:          usr,
 			LoginUsername: cmd.User,
 			HTTPStatus:    resp.Status(),
 			Error:         err,
@@ -215,7 +215,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)
 		if errors.Is(err, login.ErrInvalidCredentials) || errors.Is(err, login.ErrTooManyLoginAttempts) || errors.Is(err,
-			models.ErrUserNotFound) {
+			user.ErrUserNotFound) {
 			return resp
 		}
 
@@ -230,9 +230,9 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	user = authQuery.User
+	usr = authQuery.User
 
-	err = hs.loginUserWithUser(user, c)
+	err = hs.loginUserWithUser(usr, c)
 	if err != nil {
 		var createTokenErr *models.CreateTokenErr
 		if errors.As(err, &createTokenErr) {

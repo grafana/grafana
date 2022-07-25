@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -54,7 +55,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 	}
 
 	err := loginUsingGrafanaDB(ctx, query, a.store)
-	if err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
+	if err == nil || (!errors.Is(err, user.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
 		!errors.Is(err, ErrUserDisabled)) {
 		query.AuthModule = "grafana"
 		return err

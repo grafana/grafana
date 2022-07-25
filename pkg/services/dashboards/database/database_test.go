@@ -723,11 +723,11 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore *DashboardStore, 
 	return dash
 }
 
-func updateDashboardAcl(t *testing.T, dashboardStore *DashboardStore, dashboardID int64,
-	items ...models.DashboardAcl) error {
+func updateDashboardACL(t *testing.T, dashboardStore *DashboardStore, dashboardID int64,
+	items ...models.DashboardACL) error {
 	t.Helper()
 
-	var itemPtrs []*models.DashboardAcl
+	var itemPtrs []*models.DashboardACL
 	for _, it := range items {
 		item := it
 		item.Created = time.Now()

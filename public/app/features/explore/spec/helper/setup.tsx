@@ -4,9 +4,11 @@ import { fromPairs } from 'lodash';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourceApi, DataSourceInstanceSettings, DataSourceRef, QueryEditorProps, ScopedVars } from '@grafana/data';
 import { locationService, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
@@ -92,9 +94,11 @@ export function setupExplore(options?: SetupOptions): {
 
   const { unmount, container } = render(
     <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Route path="/explore" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
-      </Router>
+      <GrafanaContext.Provider value={getGrafanaContextMock()}>
+        <Router history={locationService.getHistory()}>
+          <Route path="/explore" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+        </Router>
+      </GrafanaContext.Provider>
     </Provider>
   );
 

@@ -138,7 +138,7 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 		Uid:           folder.Uid,
 		Title:         folder.Title,
 		Url:           folder.Url,
-		HasAcl:        folder.HasAcl,
+		HasACL:        folder.HasACL,
 		CanSave:       canSave,
 		CanEdit:       canEdit,
 		CanAdmin:      canAdmin,
