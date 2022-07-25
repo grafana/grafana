@@ -143,6 +143,7 @@ func setupTestMigratorServiceWithDeletionError(
 		remoteCheck,
 		kvstore,
 	)
+	// TODO refactor Migrator to allow us to override the entire sqlstore with a mock instead
 	migratorService.overrideGetAllFunc(getAllFuncOverride)
 	return migratorService
 }

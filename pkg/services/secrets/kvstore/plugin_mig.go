@@ -100,6 +100,8 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 }
 
 // This is here to support testing and should normally not be called
+// An edge case we are unit testing requires the GetAll function to return a value, but the Del function to return an error.
+// This is not possible with the code as written, so this override function is a workaround. Should be refactored.
 func (s *PluginSecretMigrationService) overrideGetAllFunc(getAllFunc func(ctx context.Context) ([]Item, error)) {
 	s.getAllFunc = getAllFunc
 }
