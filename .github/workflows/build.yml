@@ -1,0 +1,41 @@
+name: build
+jobs:
+  generate_version_number:
+    name: Generate version number
+    runs-on: ubuntu-latest
+    outputs:
+      image_version: ${{ steps.generate_version_number_step.outputs.image_version }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Generate version number
+      id: generate_version_number_step
+      run: tag_number=$(git describe --abbrev=0 --tags)
+           short_hash=$(git rev-parse --short ${{ github.sha }})
+           image_version="$(tag_number)-$(short_hash)-ni"
+           echo ::set-output name=image_version::$(echo $image_version)
+           # image_version will look like "8.3.6-8a2963c-ni"
+
+  build_docker_image:
+    name: Build Docker Image
+    needs: [generate_version_number]
+    uses: docker/build-push-action@v2
+    with:
+      context: .
+      push: true
+      tags: |
+        niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:latest
+        niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ jobs.generate_version_number.steps.generate_version_number_step.outputs.image_version }}
+
+  sign_docker_image:
+    name: Sign Docker image
+    uses: ni/workflows/.github/workflows/sign-container.yml@main
+    needs: [build_docker_image]
+    with:
+      image_tag: niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ jobs.generate_version_number.steps.generate_version_number_step.outputs.image_version }}
+      signature_store_bucket: s3://signing-web-demo-bucket-1neyh347t53dt
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_VERIFY_DEV  }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_VERIFY_DEV }}
+      GPG_PRIVATE_KEY: ${{ secrets.NI_PGP_RELEASE_SECRING }}
+      REGISTRY_USERNAME: ${{ secrets.NIARTIFACTS_USER }}
+      REGISTRY_PASSWORD: ${{ secrets.NIARTIFACTS_TOKEN }}
