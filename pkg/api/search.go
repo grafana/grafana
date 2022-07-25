@@ -39,7 +39,7 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		}
 	}
 
-	dbUIDs := c.QueryStrings("dashboardUID")
+	dbUIDs := c.QueryStrings("dashboardUIDs")
 
 	folderIDs := make([]int64, 0)
 	for _, id := range c.QueryStrings("folderIds") {
