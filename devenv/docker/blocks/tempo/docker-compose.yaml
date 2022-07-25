@@ -1,3 +1,17 @@
+x-logging: &default-logging
+  driver: loki
+  options:
+    loki-url: 'http://localhost:3100/api/prom/push'
+    labels: namespace
+    loki-relabel-config: |
+      - action: replace
+        source_labels: ["namespace","compose_service"]
+        separator: "/"
+        target_label: job
+      - action: replace
+        source_labels: ["container_name"]
+        target_label: instance
+
 version: "3"
 services:
 
@@ -12,6 +26,9 @@ services:
       JAEGER_TAGS: job=tns/db
       JAEGER_SAMPLER_TYPE: const
       JAEGER_SAMPLER_PARAM: 1
+    labels:
+      namespace: tns
+    logging: *default-logging
 
   app:
     image: grafana/tns-app:9c1ab38
@@ -27,6 +44,9 @@ services:
       JAEGER_TAGS: job=tns/app
       JAEGER_SAMPLER_TYPE: const
       JAEGER_SAMPLER_PARAM: 1
+    labels:
+      namespace: tns
+    logging: *default-logging
 
   loadgen:
     image: grafana/tns-loadgen:9c1ab38
@@ -42,6 +62,9 @@ services:
       JAEGER_TAGS: job=tns/loadgen
       JAEGER_SAMPLER_TYPE: const
       JAEGER_SAMPLER_PARAM: 1
+    labels:
+      namespace: tns
+    logging: *default-logging
 
   tempo:
     image: grafana/tempo:main-aa19e23-arm64
@@ -63,5 +86,24 @@ services:
       - --enable-feature=exemplar-storage
     volumes:
       - ./docker/blocks/tempo/prometheus.yaml:/etc/prometheus.yaml
+    links:
+      - app
+      - db
+      - loadgen
     ports:
       - "9090:9090"
+    labels:
+      namespace: monitoring
+    logging: *default-logging
+
+  loki:
+    image: grafana/loki:2.3.0
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+      - -table-manager.retention-period=1d
+      - -table-manager.retention-deletes-enabled=true
+    ports:
+      - "3100:3100"
+    labels:
+      namespace: monitoring
+    logging: *default-logging
