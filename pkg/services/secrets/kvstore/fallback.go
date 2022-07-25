@@ -31,21 +31,11 @@ func (kv *KVStoreWithFallback) Get(ctx context.Context, orgId int64, namespace s
 }
 
 func (kv *KVStoreWithFallback) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
-	err := kv.store.Set(ctx, orgId, namespace, typ, value)
-	if err != nil {
-		kv.log.Debug("failed to set secret with plugin, using fallback", "orgId", orgId, "type", typ, "namespace", namespace, "error", err)
-		return kv.fallback.Set(ctx, orgId, namespace, typ, value)
-	}
-	return nil
+	return kv.store.Set(ctx, orgId, namespace, typ, value)
 }
 
 func (kv *KVStoreWithFallback) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
-	err := kv.store.Del(ctx, orgId, namespace, typ)
-	if err != nil {
-		kv.log.Debug("failed to delete secret with plugin, using fallback", "orgId", orgId, "type", typ, "namespace", namespace, "error", err)
-		return kv.fallback.Del(ctx, orgId, namespace, typ)
-	}
-	return nil
+	return kv.store.Del(ctx, orgId, namespace, typ)
 }
 
 func (kv *KVStoreWithFallback) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
@@ -58,10 +48,5 @@ func (kv *KVStoreWithFallback) Keys(ctx context.Context, orgId int64, namespace 
 }
 
 func (kv *KVStoreWithFallback) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
-	err := kv.store.Rename(ctx, orgId, namespace, typ, newNamespace)
-	if err != nil {
-		kv.log.Debug("failed to rename secret with plugin, using fallback", "orgId", orgId, "type", typ, "namespace", namespace, "newNamespace", newNamespace, "error", err)
-		return kv.fallback.Rename(ctx, orgId, namespace, typ, newNamespace)
-	}
-	return nil
+	return kv.store.Rename(ctx, orgId, namespace, typ, newNamespace)
 }
