@@ -4679,7 +4679,7 @@ __metadata:
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 8.0.0
-    "@testing-library/user-event": 14.2.0
+    "@testing-library/user-event": 14.3.0
     "@types/d3-interpolate": ^1.4.0
     "@types/history": 4.7.11
     "@types/jest": 28.1.1
@@ -4831,7 +4831,7 @@ __metadata:
     "@sentry/browser": 6.19.7
     "@testing-library/dom": 8.13.0
     "@testing-library/react": 12.1.4
-    "@testing-library/user-event": 14.2.0
+    "@testing-library/user-event": 14.3.0
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
     "@types/jest": 28.1.1
@@ -5049,7 +5049,7 @@ __metadata:
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 8.0.0
-    "@testing-library/user-event": 14.2.0
+    "@testing-library/user-event": 14.3.0
     "@types/classnames": 2.3.0
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
@@ -5265,7 +5265,7 @@ __metadata:
     "@grafana/ui": 9.1.0-pre
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
-    "@testing-library/user-event": 14.2.0
+    "@testing-library/user-event": 14.3.0
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
@@ -10066,12 +10066,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:14.2.0":
-  version: 14.2.0
-  resolution: "@testing-library/user-event@npm:14.2.0"
+"@testing-library/user-event@npm:14.3.0":
+  version: 14.3.0
+  resolution: "@testing-library/user-event@npm:14.3.0"
   peerDependencies:
     "@testing-library/dom": ">=7.21.4"
-  checksum: b34f19bbfe938d03778831b9c083d451c53f983f6f6c0db05a572b71ba5323c4125097bb4b8c97595bc9b946610d2c2f65cf1e113f047eed7a3078f28a1027e2
+  checksum: cbd5954460496519cb2ff3fa506ca598d7e4c2e3d2f2e129b21909758f5ec87573aad7d6c79aebffd4bd0ea843315b3064a2a76e545f196bd4c82489cb3afc1d
   languageName: node
   linkType: hard
 
@@ -21006,7 +21006,7 @@ __metadata:
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 8.0.0
-    "@testing-library/user-event": 14.2.0
+    "@testing-library/user-event": 14.3.0
     "@types/angular": 1.8.4
     "@types/angular-route": 1.7.2
     "@types/classnames": 2.3.0
