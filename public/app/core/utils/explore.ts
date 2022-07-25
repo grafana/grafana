@@ -284,6 +284,8 @@ export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: D
 
 /**
  * Ensure at least one target exists and that targets have the necessary keys
+ *
+ * This will return an empty array if there are no datasources, as Explore is not usable in that state
  */
 export async function ensureQueries(
   queries?: DataQuery[],
@@ -307,8 +309,28 @@ export async function ensureQueries(
     }
     return allQueries;
   }
-  const emptyQuery = await generateEmptyQuery(queries ?? [], undefined, newQueryDataSourceOverride);
-  return [{ ...emptyQuery }];
+
+  let emptyQueryDS = undefined;
+
+  // if a datasourse override is provided, get and return a query with that
+  if (newQueryDataSourceOverride) {
+    emptyQueryDS = newQueryDataSourceOverride;
+  } else {
+    // otherwise, get the default datasource
+    const defaultDatasource = await getDataSourceSrv().get();
+    if (defaultDatasource) {
+      emptyQueryDS = defaultDatasource.getRef();
+    }
+  }
+
+  if (emptyQueryDS) {
+    const emptyQuery = await generateEmptyQuery(queries ?? [], undefined, emptyQueryDS);
+    return [{ ...emptyQuery }];
+  } else {
+    // if there are no datasources, return an empty array because we will not allow use of explore
+    // this will occur on init of explore with no datasources defined
+    return [];
+  }
 }
 
 /**
