@@ -582,21 +582,18 @@ describe('Tempo apm table', () => {
     ];
     const objToAlign = {
       'HTTP GET - root': {
-        name: 'HTTP GET - root',
-        value: 0.2724936652307618,
+        value: 0.1234,
       },
       'HTTP GET': {
-        name: 'HTTP GET',
-        value: 0.2724936652307618,
+        value: 0.6789,
       },
       'HTTP POST - post': {
-        name: 'HTTP POST - post',
-        value: 0.03697421858453128,
+        value: 0.4321,
       },
     };
 
     let value = getRateAlignedValues(resp, objToAlign as any);
-    expect(value.toString()).toBe('0,0.2724936652307618,0.2724936652307618,0,0.03697421858453128');
+    expect(value.toString()).toBe('0,0.6789,0.1234,0,0.4321');
   });
 
   it('should make apm request correctly', () => {
