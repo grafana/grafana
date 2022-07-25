@@ -437,27 +437,29 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
 
 /** Calculates standard deviation and variance */
 function calculateStdDev(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  // Only support number fields
+  if (!(field.type === FieldType.number || field.type === FieldType.time)) {
+    return { variance: 0, stdDev: 0 };
+  }
+
   let squareSum = 0;
   let runningMean = 0;
   let runningNonNullCount = 0;
-  let variance = 0;
-  const isNumberField = field.type === FieldType.number || FieldType.time;
   const data = field.values;
   for (let i = 0; i < data.length; i++) {
-    let currentValue = data.get(i);
+    const currentValue = data.get(i);
     if (currentValue != null) {
-      if (isNumberField) {
-        runningNonNullCount++;
-        let _oldMean = runningMean;
-        runningMean += (currentValue - _oldMean) / runningNonNullCount;
-        squareSum += (currentValue - _oldMean) * (currentValue - runningMean);
-      }
+      runningNonNullCount++;
+      let _oldMean = runningMean;
+      runningMean += (currentValue - _oldMean) / runningNonNullCount;
+      squareSum += (currentValue - _oldMean) * (currentValue - runningMean);
     }
   }
   if (runningNonNullCount > 0) {
-    variance = squareSum / runningNonNullCount;
+    const variance = squareSum / runningNonNullCount;
+    return { variance, stdDev: Math.sqrt(variance) };
   }
-  return { variance, stdDev: Math.sqrt(variance) };
+  return { variance: 0, stdDev: 0 };
 }
 
 function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
