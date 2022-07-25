@@ -2,18 +2,6 @@ load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', '
 
 grabpl_version = 'v2.9.54'
 build_image = 'grafana/build-container:1.5.8'
-=======
-grabpl_version = 'v2.9.52'
-build_image = 'grafana/build-container:1.5.7'
->>>>>>> 47678cd087... CI; Update Dockerfile for `grafana/grafana-ci-deploy` container (#52516)
-=======
-grabpl_version = 'v2.9.54'
-build_image = 'grafana/build-container:1.5.8'
->>>>>>> 78f26a079c... Chore: Upgrade to Go version 1.17.12 (#52523)
-=======
-grabpl_version = 'v2.9.54'
-build_image = 'grafana/build-container:1.5.8'
->>>>>>> d9ab2338954e1721a0cb626968eb09d49d124239
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'

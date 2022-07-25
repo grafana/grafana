@@ -434,13 +434,6 @@ steps:
   image: grafana/docker-puppeteer:1.0.0
   name: test-a11y-frontend
 - commands:
-  - ls dist/*.tar.gz*
-  - cp dist/*.tar.gz* packaging/docker/
-  depends_on:
-  - package
-  image: grafana/build-container:1.5.8
-  name: copy-packages-for-docker
-- commands:
   - ./bin/grabpl build-docker --edition oss -archs amd64
   depends_on:
   - copy-packages-for-docker
@@ -1191,13 +1184,6 @@ steps:
   when:
     repo:
     - grafana/grafana
-- commands:
-  - ls dist/*.tar.gz*
-  - cp dist/*.tar.gz* packaging/docker/
-  depends_on:
-  - package
-  image: grafana/build-container:1.5.8
-  name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition oss
   depends_on:
@@ -4878,4 +4864,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
+hmac: 2d5af91789aad1299f5e8525b4c8fdeca5e7154ab2cd509547133ae9ff7295a6
+
 ...
