@@ -293,6 +293,27 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: (op) => `Return log lines that does not match regex \`${op.params[0]}\`.`,
     },
     {
+      id: LokiOperationId.LineFilterIpMatches,
+      name: 'IP line filter expression',
+      params: [
+        { name: 'Operator', type: 'string', options: ['|=', '!='] },
+        {
+          name: 'Pattern',
+          type: 'string',
+          placeholder: '<pattern>',
+          minWidth: 16,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: ['|=', ''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: (op, def, innerExpr) => `${innerExpr} ${op.params[0]} ip(\`${op.params[1]}\`)`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines using IP matching of \`${op.params[1]}\``,
+    },
+    {
       id: LokiOperationId.LabelFilter,
       name: 'Label filter expression',
       params: [
@@ -307,6 +328,23 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: labelFilterRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () => `Label expression filter allows filtering using original and extracted labels.`,
+    },
+    {
+      id: LokiOperationId.LabelFilterIpMatches,
+      name: 'IP label filter expression',
+      params: [
+        { name: 'Label', type: 'string' },
+        { name: 'Operator', type: 'string', options: ['=', '!='] },
+        { name: 'Value', type: 'string' },
+      ],
+      defaultParams: ['', '=', ''],
+      alternativesKey: 'label filter',
+      category: LokiVisualQueryOperationCategory.LabelFilters,
+      orderRank: LokiOperationOrder.LabelFilters,
+      renderer: (model, def, innerExpr) =>
+        `${innerExpr} | ${model.params[0]} ${model.params[1]} ip(\`${model.params[2]}\`)`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines using IP matching of \`${op.params[2]}\` for \`${op.params[0]}\` label`,
     },
     {
       id: LokiOperationId.LabelFilterNoErrors,
@@ -443,7 +481,7 @@ function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOper
     return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
   }
 
-  return `${innerExpr} | ${model.params[0]}${model.params[1]}\`${model.params[2]}\``;
+  return `${innerExpr} | ${model.params[0]} ${model.params[1]} \`${model.params[2]}\``;
 }
 
 function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
