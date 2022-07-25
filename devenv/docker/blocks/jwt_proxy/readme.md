@@ -50,6 +50,8 @@ allow_embedding = true
 
 - Navigate to [http://localhost:4200](http://localhost:4200) and press restricted area
 
+Note: You may need to grant the JWT user in grafana access to the datasources and the dashboard
+
 ## Backing up keycloak DB
 
 In case you want to make changes to the devenv setup, you can dump keycloack's DB:
