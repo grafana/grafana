@@ -68,7 +68,9 @@ services:
 
   tempo:
     image: grafana/tempo:main-aa19e23-arm64
-    command: [ "-config.file=/etc/tempo.yaml", "-search.enabled=true" ]
+    command: 
+      - --config.file=/etc/tempo.yaml
+      - --search.enabled=true
     volumes:
       - ./docker/blocks/tempo/tempo.yaml:/etc/tempo.yaml
       - ./docker/blocks/tempo/tempo-data:/tmp/tempo
