@@ -25,16 +25,15 @@ func ProvideService(
 	kvstore kvstore.KVStore,
 	features featuremgmt.FeatureToggles,
 ) (SecretsKVStore, error) {
-	var store SecretsKVStore
 	logger := log.New("secrets.kvstore")
-	store = &secretsKVStoreSQL{
+	defaultStore := NewCachedKVStore(&secretsKVStoreSQL{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		log:            logger,
 		decryptionCache: decryptionCache{
 			cache: make(map[int64]cachedDecrypted),
 		},
-	}
+	}, 5*time.Second, 5*time.Minute)
 	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
 		// Attempt to start the plugin
 		secretsPlugin, err := remoteCheck.StartAndReturnPlugin(context.Background())
@@ -51,19 +50,20 @@ func ProvideService(
 			}
 			logger.Error("error starting secrets plugin, falling back to SQL implementation")
 		} else {
-			store = &secretsKVStorePlugin{
+			pluginStore := NewCachedKVStore(&secretsKVStorePlugin{
 				secretsPlugin:                  secretsPlugin,
 				secretsService:                 secretsService,
 				log:                            logger,
 				kvstore:                        namespacedKVStore,
 				backwardsCompatibilityDisabled: features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility),
-			}
+			}, 5*time.Second, 5*time.Minute)
+			return NewKVStoreWithFallback(pluginStore, defaultStore), nil
 		}
 	} else {
 		logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
 	}
 
-	return NewCachedKVStore(store, 5*time.Second, 5*time.Minute), nil
+	return defaultStore, nil
 }
 
 // SecretsKVStore is an interface for k/v store.
