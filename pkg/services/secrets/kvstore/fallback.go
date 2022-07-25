@@ -21,13 +21,13 @@ func NewKVStoreWithFallback(store SecretsKVStore, fallback SecretsKVStore) *KVSt
 }
 
 func (kv *KVStoreWithFallback) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
-	value, ok, err := kv.store.Get(ctx, orgId, namespace, typ)
-	if err != nil || !ok {
-		value, ok, err := kv.fallback.Get(ctx, orgId, namespace, typ)
+	value, exists, err := kv.store.Get(ctx, orgId, namespace, typ)
+	if err != nil || !exists {
+		value, exists, err := kv.fallback.Get(ctx, orgId, namespace, typ)
 		kv.log.Debug("failed to get secret with plugin, using fallback", "orgId", orgId, "type", typ, "namespace", namespace, "error", err)
-		return value, ok, err
+		return value, exists, err
 	}
-	return value, ok, err
+	return value, exists, err
 }
 
 func (kv *KVStoreWithFallback) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
