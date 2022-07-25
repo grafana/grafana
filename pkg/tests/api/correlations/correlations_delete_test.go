@@ -184,8 +184,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
 			user: adminUser,
 		})
-		_, err = ioutil.ReadAll(res.Body)
-		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})
 
@@ -217,8 +216,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
 			user: adminUser,
 		})
-		_, err = ioutil.ReadAll(res.Body)
-		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})
 }
