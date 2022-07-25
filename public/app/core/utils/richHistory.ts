@@ -214,15 +214,13 @@ export function createDateStringFromTs(ts: number) {
   });
 }
 
-export function getQueryDisplayText(query: DataQuery, isMixed = false): string {
+export function getQueryDisplayText(query: DataQuery): string {
   /* If datasource doesn't have getQueryDisplayText, create query display text by
    * stringifying query that was stripped of key, refId and datasource for nicer
    * formatting and improved readability
    */
   const strippedQuery = omit(query, ['key', 'refId', 'datasource']);
-  const strippedQueryJSON = JSON.stringify(strippedQuery);
-  const prefix = isMixed ? query.datasource?.type : undefined;
-  return `${prefix ? prefix + ': ' : ''}${strippedQueryJSON}`;
+  return JSON.stringify(strippedQuery);
 }
 
 export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder) {
@@ -243,7 +241,7 @@ export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi
     return queryDsInstance.getQueryDisplayText(query);
   }
 
-  return getQueryDisplayText(query, queryDsInstance?.meta.mixed);
+  return getQueryDisplayText(query);
 }
 
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
