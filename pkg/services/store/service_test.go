@@ -10,12 +10,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 var (
+	cfg = &setting.Cfg{
+		Storage: setting.StorageSettings{
+			AllowUnsanitizedSvgUpload: true,
+		},
+	}
 	dummyUser           = &models.SignedInUser{OrgId: 1}
 	allowAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
 		return map[string]filestorage.PathFilter{
@@ -53,7 +59,7 @@ func TestListFiles(t *testing.T) {
 
 	store := newStandardStorageService(sqlstore.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, allowAllAuthService)
+	}, allowAllAuthService, cfg)
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
@@ -73,7 +79,7 @@ func TestListFilesWithoutPermissions(t *testing.T) {
 
 	store := newStandardStorageService(sqlstore.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, denyAllAuthService)
+	}, denyAllAuthService, cfg)
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 	rowLen, err := frame.RowLen()
@@ -98,7 +104,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	}
 	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, authService)
+	}, authService, cfg)
 
 	return store, mockStorage, storageName
 }
