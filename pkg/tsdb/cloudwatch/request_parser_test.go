@@ -293,6 +293,34 @@ func TestRequestParser(t *testing.T) {
 		})
 	})
 
+	t.Run("hide and returnData", func(t *testing.T) {
+		t.Run("default", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.QueryType = "timeSeriesQuery"
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			require.NoError(t, err)
+			require.True(t, res.ReturnData)
+		})
+		t.Run("hide is true", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.QueryType = "timeSeriesQuery"
+			true := true
+			query.Hide = &true
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			require.NoError(t, err)
+			require.False(t, res.ReturnData)
+		})
+		t.Run("hide is false", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.QueryType = "timeSeriesQuery"
+			false := false
+			query.Hide = &false
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			require.NoError(t, err)
+			require.True(t, res.ReturnData)
+		})
+	})
+
 	t.Run("ID is the string `query` appended with refId if refId is a valid MetricData ID", func(t *testing.T) {
 		query := getBaseJsonQuery()
 		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))

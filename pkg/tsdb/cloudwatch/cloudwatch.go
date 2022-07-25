@@ -356,10 +356,8 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		return e.executeLogAlertQuery(ctx, req)
 	}
 
-	queryType := model.QueryType
-
 	var result *backend.QueryDataResponse
-	switch queryType {
+	switch model.QueryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(req.PluginContext, model, q)
 	case "logAction":
