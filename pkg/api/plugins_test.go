@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -92,6 +93,55 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			if tc.expectedHTTPStatus == 200 {
 				require.Empty(t, pm.plugins)
 			}
+		})
+	}
+}
+
+func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
+	canInstall := []ac.Permission{{Action: plugins.ActionInstall}}
+	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
+
+	type testCase struct {
+		expectedCode                     int
+		permissions                      []ac.Permission
+		pluginAdminEnabled               bool
+		pluginAdminExternalManageEnabled bool
+	}
+	tcs := []testCase{
+		{expectedCode: http.StatusNotFound, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
+		{expectedCode: http.StatusNotFound, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true},
+		{expectedCode: http.StatusNotFound, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false},
+		{expectedCode: http.StatusForbidden, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
+		{expectedCode: http.StatusOK, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
+	}
+
+	testName := func(action string, tc testCase) string {
+		return fmt.Sprintf("%s request returns %d when adminEnabled: %t, externalEnabled: %t, permissions: %q",
+			action, tc.expectedCode, tc.pluginAdminEnabled, tc.pluginAdminExternalManageEnabled, tc.permissions)
+	}
+
+	pm := &fakePluginManager{
+		plugins: make(map[string]fakePlugin),
+	}
+
+	for _, tc := range tcs {
+		sc := setupHTTPServerWithCfg(t, true, true, &setting.Cfg{PluginAdminEnabled: tc.pluginAdminEnabled, PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
+		setInitCtxSignedInViewer(sc.initCtx)
+		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgId)
+		sc.hs.pluginManager = pm
+		sc.hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
+		sc.hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
+
+		t.Run(testName("Install", tc), func(t *testing.T) {
+			input := strings.NewReader("{ \"version\": \"1.0.2\" }")
+			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/install", input, t)
+			assert.Equal(t, tc.expectedCode, response.Code)
+		})
+
+		t.Run(testName("Uninstall", tc), func(t *testing.T) {
+			input := strings.NewReader("{ }")
+			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/uninstall", input, t)
+			assert.Equal(t, tc.expectedCode, response.Code)
 		})
 	}
 }

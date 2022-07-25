@@ -45,7 +45,7 @@ func (g *guardian) CanListAll() bool {
 	//  * anyone that can create a data source
 	//  * anyone that can install a plugin
 	hasAccess, err := g.acc.Evaluate(g.ctx, g.user, ac.EvalAny(
-		ac.EvalPermission(plugins.ActionIntall),
+		ac.EvalPermission(plugins.ActionInstall),
 		ac.EvalPermission(datasources.ActionCreate),
 	))
 	if err != nil {
@@ -73,7 +73,7 @@ func (g *guardian) CanList(pluginID string) bool {
 	// Should be able to list this installed plugin:
 	//  * anyone that can toggle this plugin
 	hasAccess, err := g.acc.Evaluate(g.ctx, g.user, ac.EvalAny(
-		ac.EvalPermission(plugins.ActionIntall),
+		ac.EvalPermission(plugins.ActionInstall),
 		ac.EvalPermission(datasources.ActionCreate),
 		ac.EvalPermission(plugins.ActionSettingsWrite, plugins.ScopeProvider.GetResourceScope(pluginID)),
 	))

@@ -3,11 +3,12 @@ package plugins
 import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
 	// Plugins actions
-	ActionIntall        = "plugins:install"
+	ActionInstall       = "plugins:install"
 	ActionSettingsWrite = "plugins.settings:write"
 
 	// App Plugins actions
@@ -21,10 +22,10 @@ var (
 	ConfigurationAccessEvaluator = ac.EvalPermission(ActionSettingsWrite)
 
 	// Protects access to the Server Admin > Plugins page
-	AdminAccessEvaluator = ac.EvalPermission(ActionIntall)
+	AdminAccessEvaluator = ac.EvalPermission(ActionInstall)
 )
 
-func DeclareRBACRoles(acService ac.AccessControl) error {
+func DeclareRBACRoles(acService ac.AccessControl, cfg *setting.Cfg) error {
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -56,10 +57,16 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 			Description: "Install, uninstall plugins",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
-				{Action: ActionIntall},
+				{Action: ActionInstall},
 			},
 		},
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
+
+	// Remove possibility to install plugins if `plugin_admin_enable` is false
+	if !cfg.PluginAdminEnabled {
+		PluginsMaintainer.Grants = []string{}
+	}
+
 	return acService.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsMaintainer)
 }
