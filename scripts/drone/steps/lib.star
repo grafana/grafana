@@ -250,7 +250,7 @@ def benchmark_ldap_step():
 
 
 def build_storybook_step(edition, ver_mode):
-    if edition in ('enterprise', 'enterprise2') and ver_mode == 'release':
+    if edition in ('enterprise', 'enterprise2'):
         return None
 
     return {

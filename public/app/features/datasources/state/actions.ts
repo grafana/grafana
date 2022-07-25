@@ -16,6 +16,7 @@ import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
 
 import * as api from '../api';
+import { DATASOURCES_ROUTES } from '../constants';
 import { nameExits, findNewName } from '../utils';
 
 import { buildCategories } from './buildCategories';
@@ -174,7 +175,7 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
   };
 }
 
-export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
+export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURCES_ROUTES.Edit): ThunkResult<void> {
   return async (dispatch, getStore) => {
     await dispatch(loadDataSources());
 
@@ -196,7 +197,7 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
     await getDatasourceSrv().reload();
     await contextSrv.fetchUserPermissions();
 
-    locationService.push(`/datasources/edit/${result.datasource.uid}`);
+    locationService.push(editLink.replace(/:uid/gi, result.datasource.uid));
   };
 }
 

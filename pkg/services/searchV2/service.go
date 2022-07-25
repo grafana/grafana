@@ -175,5 +175,13 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	return doSearchQuery(ctx, s.logger, index, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
+	response := doSearchQuery(ctx, s.logger, index, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
+
+	if q.WithAllowedActions {
+		if err := s.addAllowedActionsField(ctx, orgID, signedInUser, response); err != nil {
+			s.logger.Error("error when adding the allowedActions field", "err", err)
+		}
+	}
+
+	return response
 }

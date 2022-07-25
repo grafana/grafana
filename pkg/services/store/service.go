@@ -194,7 +194,9 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		}
 	})
 
-	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService)
+	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, storageServiceConfig{
+		allowUnsanitizedSvgUpload: false,
+	})
 }
 
 func createSystemBrandingPathFilter() filestorage.PathFilter {
@@ -205,7 +207,7 @@ func createSystemBrandingPathFilter() filestorage.PathFilter {
 		nil)
 }
 
-func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime, authService storageAuthService) *standardStorageService {
+func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime, authService storageAuthService, cfg storageServiceConfig) *standardStorageService {
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
 
@@ -218,9 +220,7 @@ func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRunt
 		sql:         sql,
 		tree:        res,
 		authService: authService,
-		cfg: storageServiceConfig{
-			allowUnsanitizedSvgUpload: false,
-		},
+		cfg:         cfg,
 	}
 }
 
@@ -252,7 +252,6 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 
 type UploadRequest struct {
 	Contents           []byte
-	MimeType           string // TODO: remove MimeType from the struct once we can infer it from file contents
 	Path               string
 	CacheControl       string
 	ContentDisposition string
@@ -279,17 +278,17 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 
 	validationResult := s.validateUploadRequest(ctx, user, req, storagePath)
 	if !validationResult.ok {
-		grafanaStorageLogger.Warn("file upload validation failed", "filetype", req.MimeType, "path", req.Path, "reason", validationResult.reason)
+		grafanaStorageLogger.Warn("file upload validation failed", "path", req.Path, "reason", validationResult.reason)
 		return ErrValidationFailed
 	}
 
 	upsertCommand, err := s.sanitizeUploadRequest(ctx, user, req, storagePath)
 	if err != nil {
-		grafanaStorageLogger.Error("failed while sanitizing the upload request", "filetype", req.MimeType, "path", req.Path, "error", err)
+		grafanaStorageLogger.Error("failed while sanitizing the upload request", "path", req.Path, "error", err)
 		return ErrUploadInternalError
 	}
 
-	grafanaStorageLogger.Info("uploading a file", "filetype", req.MimeType, "path", req.Path)
+	grafanaStorageLogger.Info("uploading a file", "path", req.Path)
 
 	if !req.OverwriteExistingFile {
 		file, err := root.Store().Get(ctx, storagePath)
