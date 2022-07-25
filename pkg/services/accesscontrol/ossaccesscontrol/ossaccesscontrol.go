@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -129,7 +130,12 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 		}
 	}
 
-	return permissions, nil
+	// we need to sort permissions in order to check if we can remove permission in favor of wildcards
+	sort.Slice(permissions, func(i, j int) bool {
+		return permissions[i].Scope < permissions[j].Scope
+	})
+
+	return accesscontrol.ReducePermissions(permissions), nil
 }
 
 func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user *models.SignedInUser) []accesscontrol.Permission {
