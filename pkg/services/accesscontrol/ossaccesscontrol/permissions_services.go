@@ -280,10 +280,9 @@ func ProvideServiceAccountPermissions(
 			return err
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:           true,
-			Teams:           true,
-			BuiltInRoles:    false,
-			ServiceAccounts: false,
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: false,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  {serviceaccounts.ActionRead},
