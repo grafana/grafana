@@ -222,7 +222,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     // commit changes based on the diff of new url vs old url
 
     if (update.datasource) {
-      const initialQueries = ensureQueries(queries);
+      const initialQueries = await ensureQueries(queries);
       await dispatch(
         initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, panelsState)
       );
@@ -304,7 +304,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       range,
       queries,
       initialized: true,
-      queryKeys: getQueryKeys(queries, datasourceInstance),
+      queryKeys: getQueryKeys(queries),
       datasourceInstance,
       history,
       datasourceMissing: !datasourceInstance,
