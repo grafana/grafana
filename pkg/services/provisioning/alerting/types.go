@@ -13,7 +13,7 @@ type AlertingFile struct {
 	Groups              []AlertRuleGroup
 	DeleteRules         []RuleDelete
 	ContactPoints       []ContactPoint
-	DeleteContactPoints []DeleteContactPointV1
+	DeleteContactPoints []DeleteContactPoint
 }
 
 type AlertingFileV1 struct {
@@ -38,7 +38,9 @@ func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
 }
 
 func (fileV1 *AlertingFileV1) mapContactPoint(alertingFile *AlertingFile) error {
-	alertingFile.DeleteContactPoints = fileV1.DeleteContactPoints
+	for _, dcp := range fileV1.DeleteContactPoints {
+		alertingFile.DeleteContactPoints = append(alertingFile.DeleteContactPoints, dcp.MapToModel())
+	}
 	for _, contactPointV1 := range fileV1.ContactPoints {
 		contactPoint, err := contactPointV1.MapToModel()
 		if err != nil {

@@ -12,7 +12,8 @@ type ProvisionerConfig struct {
 	Path                 string
 	DashboardService     dashboards.DashboardService
 	DashboardProvService dashboards.DashboardProvisioningService
-	RuleService          *provisioning.AlertRuleService
+	RuleService          provisioning.AlertRuleService
+	ContactPointService  provisioning.ContactPointService
 }
 
 func Provision(ctx context.Context, cfg ProvisionerConfig) error {
@@ -28,12 +29,16 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 		logger,
 		cfg.DashboardService,
 		cfg.DashboardProvService,
-		*cfg.RuleService)
+		cfg.RuleService)
 	err = ruleProvisioner.Provision(ctx, files)
 	if err != nil {
 		return err
 	}
-	// TODO: provision contact points
+	cpProvisioner := NewContactPointProvisoner(logger, cfg.ContactPointService)
+	cpProvisioner.Provision(ctx, files)
+	// TODO: provision notificiation policy in between so that when applying it
+	//       new objects already exists and old ones are still there
+	cpProvisioner.Unprovision(ctx, files)
 	logger.Info("finished to provision alerting")
 	return nil
 }

@@ -1,7 +1,7 @@
 package alerting
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"strings"
 
@@ -12,7 +12,24 @@ import (
 )
 
 type DeleteContactPointV1 struct {
-	UID values.StringValue `json:"uid" yaml:"uid"`
+	OrgID values.Int64Value  `json:"orgId" yaml:"orgId"`
+	UID   values.StringValue `json:"uid" yaml:"uid"`
+}
+
+func (v1 *DeleteContactPointV1) MapToModel() DeleteContactPoint {
+	orgID := v1.OrgID.Value()
+	if orgID < 1 {
+		orgID = 1
+	}
+	return DeleteContactPoint{
+		OrgID: orgID,
+		UID:   v1.UID.Value(),
+	}
+}
+
+type DeleteContactPoint struct {
+	OrgID int64  `json:"orgId" yaml:"orgId"`
+	UID   string `json:"uid" yaml:"uid"`
 }
 
 type ContactPointV1 struct {
@@ -43,8 +60,8 @@ func (cpV1 *ContactPointV1) MapToModel() (ContactPoint, error) {
 }
 
 type ContactPoint struct {
-	OrgID         int64
-	ContactPoints []definitions.EmbeddedContactPoint
+	OrgID         int64                              `json:"orgId" yaml:"orgId"`
+	ContactPoints []definitions.EmbeddedContactPoint `json:"configs" yaml:"configs"`
 }
 
 type ReceiverV1 struct {
@@ -57,30 +74,31 @@ type ReceiverV1 struct {
 func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPoint, error) {
 	uid := strings.TrimSpace(config.UID.Value())
 	if uid == "" {
-		return definitions.EmbeddedContactPoint{}, fmt.Errorf("")
+		return definitions.EmbeddedContactPoint{}, fmt.Errorf("no uid is set")
 	}
 	cpType := strings.TrimSpace(config.Type.Value())
 	if cpType == "" {
-		return definitions.EmbeddedContactPoint{}, fmt.Errorf("")
+		return definitions.EmbeddedContactPoint{}, fmt.Errorf("no type is set")
 	}
 	if len(config.Settings.Value()) == 0 {
-		return definitions.EmbeddedContactPoint{}, fmt.Errorf("")
+		return definitions.EmbeddedContactPoint{}, fmt.Errorf("no settings are set")
 	}
-	var settings simplejson.Json
-	settingsRaw, err := json.Marshal(config.Settings)
-	if err != nil {
-		return definitions.EmbeddedContactPoint{}, err
-	}
-	err = json.Unmarshal(settingsRaw, &settings)
-	if err != nil {
-		return definitions.EmbeddedContactPoint{}, err
-	}
-	return definitions.EmbeddedContactPoint{
+	settings := simplejson.NewFromAny(config.Settings.Raw)
+	cp := definitions.EmbeddedContactPoint{
 		UID:                   uid,
 		Name:                  name,
 		Type:                  cpType,
 		DisableResolveMessage: config.DisableResolveMessage.Value(),
 		Provenance:            string(models.ProvenanceFile),
-		Settings:              &settings,
-	}, nil
+		Settings:              settings,
+	}
+	// As the values are not encrypted when coming from disk files,
+	// we can simply return the fallback for validation.
+	err := cp.Valid(func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	})
+	if err != nil {
+		return definitions.EmbeddedContactPoint{}, err
+	}
+	return cp, nil
 }

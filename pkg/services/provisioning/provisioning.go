@@ -272,7 +272,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                 alertingPath,
-		RuleService:          ruleService,
+		RuleService:          *ruleService,
 		DashboardService:     ps.dashboardService,
 		DashboardProvService: ps.dashboardProvisioningService,
 	}
