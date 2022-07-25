@@ -38,7 +38,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
   useEffect(() => {
     setTreeData(getTreeData(item?.settings?.scene.root, selection, selectedBgColor));
-    setAllowSelection(true);
+    setAllowSelection();
   }, [item?.settings?.scene.root, selectedBgColor, selection]);
 
   if (!settings) {
