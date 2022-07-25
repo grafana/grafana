@@ -353,7 +353,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
-	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, featuremgmt.WithFeatures())
 
 	var acmock *accesscontrolmock.Mock
 	var ac accesscontrol.AccessControl
