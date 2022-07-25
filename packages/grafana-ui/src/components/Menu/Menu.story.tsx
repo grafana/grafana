@@ -1,4 +1,4 @@
-import { Story, ComponentMeta } from '@storybook/react';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { GraphContextMenuHeader } from '..';
@@ -28,7 +28,7 @@ const meta: ComponentMeta<typeof Menu> = {
   },
 };
 
-export const Examples: Story = (args) => {
+export function Examples() {
   return (
     <VerticalGroup>
       <StoryExample name="Plain">
@@ -99,6 +99,6 @@ export const Examples: Story = (args) => {
       </StoryExample>
     </VerticalGroup>
   );
-};
+}
 
 export default meta;
