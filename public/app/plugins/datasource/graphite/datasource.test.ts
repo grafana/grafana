@@ -617,7 +617,7 @@ describe('graphiteDatasource', () => {
         requestOptions = options;
         return of(
           createFetchResponse({
-            results: ['apps.backend.backend_01', 'apps.backend.backend_03', 'apps.country.IE', 'apps.country.SE'],
+            results: ['apps.backend.backend_01', 'apps.backend.backend_02', 'apps.country.IE', 'apps.country.SE'],
           })
         );
       });
@@ -631,7 +631,7 @@ describe('graphiteDatasource', () => {
       const data = await ctx.ds.metricFindQuery(fq);
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/expand');
       expect(data[0].text).toBe('apps.backend.backend_01');
-      expect(data[1].text).toBe('apps.backend.backend_03');
+      expect(data[1].text).toBe('apps.backend.backend_02');
       expect(data[2].text).toBe('apps.country.IE');
       expect(data[3].text).toBe('apps.country.SE');
     });
