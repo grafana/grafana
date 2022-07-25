@@ -159,7 +159,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'Variance',
     description: 'Variance (based on population) of all values in a field',
     standard: false,
-    reduce: calculateVariance,
+    reduce: calculateStdDev,
   },
   {
     id: ReducerID.stdDev,
@@ -435,11 +435,12 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
   return { lastNotNull: null };
 }
 
-function calculateVariance(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+/** Calculates standard deviation and variance */
+function calculateStdDev(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   let squareSum = 0;
   let runningMean = 0;
   let runningNonNullCount = 0;
-  let variance = null;
+  let variance = 0;
   const isNumberField = field.type === FieldType.number || FieldType.time;
   const data = field.values;
   for (let i = 0; i < data.length; i++) {
@@ -456,13 +457,7 @@ function calculateVariance(field: Field, ignoreNulls: boolean, nullAsZero: boole
   if (runningNonNullCount > 0) {
     variance = squareSum / runningNonNullCount;
   }
-  return { variance: variance };
-}
-
-function calculateStdDev(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  let variance = calculateVariance(field, ignoreNulls, nullAsZero).variance;
-  let stdDev = Math.sqrt(variance);
-  return { stdDev: stdDev };
+  return { variance, stdDev: Math.sqrt(variance) };
 }
 
 function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
