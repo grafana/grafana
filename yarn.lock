@@ -4795,7 +4795,7 @@ __metadata:
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     d3-interpolate: 1.4.0
-    date-fns: 2.28.0
+    date-fns: 2.29.1
     eventemitter3: 4.0.7
     history: 4.10.1
     lodash: 4.17.21
@@ -5191,7 +5191,7 @@ __metadata:
     css-minimizer-webpack-plugin: 4.0.0
     csstype: 3.1.0
     d3: 5.15.0
-    date-fns: 2.28.0
+    date-fns: 2.29.1
     enzyme: 3.11.0
     expose-loader: 4.0.0
     hoist-non-react-statics: 3.3.2
@@ -17628,10 +17628,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:2.28.0":
-  version: 2.28.0
-  resolution: "date-fns@npm:2.28.0"
-  checksum: a0516b2e4f99b8bffc6cc5193349f185f195398385bdcaf07f17c2c4a24473c99d933eb0018be4142a86a6d46cb0b06be6440ad874f15e795acbedd6fd727a1f
+"date-fns@npm:2.29.1":
+  version: 2.29.1
+  resolution: "date-fns@npm:2.29.1"
+  checksum: 9d07f77dffc1eb8c213391bde39f2963ffe7c0019d9edde14487882d627224f3a39b963e6e99d0cc58afff220a6a1a7e8864d2789958f4eaa77714de94d4d076
   languageName: node
   linkType: hard
 
@@ -21244,7 +21244,7 @@ __metadata:
     d3-force: ^2.1.1
     d3-scale-chromatic: 1.5.0
     dangerously-set-html-content: 1.0.9
-    date-fns: 2.28.0
+    date-fns: 2.29.1
     debounce-promise: 3.1.2
     emotion: 11.0.0
     enzyme: 3.11.0

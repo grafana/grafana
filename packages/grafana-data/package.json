@@ -25,7 +25,7 @@
     "@grafana/schema": "9.1.0-pre",
     "@types/d3-interpolate": "^1.4.0",
     "d3-interpolate": "1.4.0",
-    "date-fns": "2.28.0",
+    "date-fns": "2.29.1",
     "eventemitter3": "4.0.7",
     "lodash": "4.17.21",
     "marked": "4.0.16",
