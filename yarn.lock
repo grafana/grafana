@@ -11245,12 +11245,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ol-ext@npm:@siedlerchr/types-ol-ext@2.0.0":
-  version: 2.0.0
-  resolution: "@siedlerchr/types-ol-ext@npm:2.0.0"
+"@types/ol-ext@npm:@siedlerchr/types-ol-ext@2.1.2":
+  version: 2.1.2
+  resolution: "@siedlerchr/types-ol-ext@npm:2.1.2"
   dependencies:
     jspdf: ^2.5.1
-  checksum: f97642cbd3fbc6501d17bc8118931eb00c12cb8b92a89d055508fd24e62e0c37263da18144cada421d8dc342d74e8198179905184b32b8c260bf30e4f5d7e4cb
+  checksum: dba755c6e20aacc8ccb35ba6b4430e251b874b0e50953e5ff37173b8ee3e86ad5143106df179aea5e5e84d5a841ea96b64d3a4448e745df6d0bc6d2db17b87fe
   languageName: node
   linkType: hard
 
@@ -21032,7 +21032,7 @@ __metadata:
     "@types/logfmt": ^1.2.1
     "@types/mousetrap": 1.6.9
     "@types/node": 16.11.36
-    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@2.0.0"
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@2.1.2"
     "@types/papaparse": 5.3.2
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
