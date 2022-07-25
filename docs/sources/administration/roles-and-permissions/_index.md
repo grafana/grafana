@@ -98,8 +98,8 @@ When you want to extend a viewer's ability to edit and save dashboard changes or
 
 You can specify the following permissions to dashboards and folders.
 
-- **Admin**: Can create, edit, or delete a dashboard or folder. Administrators can also change dashboard and folder permissions.
-- **Edit**: Can create, edit, or delete a dashboard. Can edit and delete the folder. Editors _cannot_ change folder or dashboard permissions.
+- **Admin**: Can create, edit, or delete a dashboard. Can edit or delete a folder. Administrators can also change dashboard and folder permissions.
+- **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder. Editors _cannot_ change folder or dashboard permissions.
 - **View**: Can only view dashboards and folders.
 
 > Important: When a user creates a dashboard or a folder, he becomes **Admin** of it, independently of his role.
