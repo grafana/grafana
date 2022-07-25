@@ -40,8 +40,12 @@ func CreateDatabaseEntityId(internalId interface{}, orgId int64, entityType Enti
 	default:
 		internalIdAsString = fmt.Sprintf("%#v", internalId)
 	}
-
-	return fmt.Sprintf("database/%d/%s/%s", orgId, entityType, internalIdAsString)
+	return ParsedEntityID{
+		OrgID:   orgId,
+		Storage: "database",
+		Kind:    entityType,
+		UID:     internalIdAsString,
+	}.String()
 }
 
 type EntityEvent struct {
@@ -58,38 +62,53 @@ type SaveEventCmd struct {
 
 type EventHandler func(ctx context.Context, e *EntityEvent) error
 
+type ParsedEntityID struct {
+	OrgID   int64
+	Storage string
+	Kind    EntityType
+	UID     string
+}
+
+func (id ParsedEntityID) String() string {
+	return fmt.Sprintf("%s/%d/%s/%s", id.Storage, id.OrgID, id.Kind, id.UID)
+}
+
+func ParseEntityID(entityID string) (ParsedEntityID, error) {
+	parts := strings.SplitN(entityID, "/", 4)
+	if len(parts) != 4 {
+		return ParsedEntityID{}, fmt.Errorf("invalid number of segments: %s", entityID)
+	}
+	storage := parts[0]
+	orgIDStr := parts[1]
+	orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
+	if err != nil {
+		return ParsedEntityID{}, fmt.Errorf("can't extract org ID: %s", entityID)
+	}
+	return ParsedEntityID{
+		OrgID:   orgID,
+		Storage: storage,
+		Kind:    EntityType(parts[2]),
+		UID:     parts[3],
+	}, nil
+}
+
 type ResourceEvent struct {
 	ID        int64
-	OrgID     int64
 	EventType EntityEventType
-	Storage   string
-	Kind      EntityType
-	UID       string
+	ParsedEntityID
 }
 
 func GetResourceEvents(events []*EntityEvent) ([]ResourceEvent, error) {
 	m := make([]ResourceEvent, 0, len(events))
 	for _, e := range events {
-		// database/org/entityType/path*
-		parts := strings.SplitN(e.EntityId, "/", 4)
-		if len(parts) != 4 {
-			return nil, fmt.Errorf("invalid number of segments: %s", e.EntityId)
-		}
-		storage := parts[0]
-		orgIDStr := parts[1]
-		orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
+		parsedEntityID, err := ParseEntityID(e.EntityId)
 		if err != nil {
-			return nil, fmt.Errorf("can't extract org ID: %s", e.EntityId)
+			return nil, err
 		}
-		kind := EntityType(parts[2])
-		uid := parts[3]
 		re := ResourceEvent{
-			ID:        e.Id,
-			OrgID:     orgID,
-			EventType: e.EventType,
-			Storage:   storage,
-			Kind:      kind,
-			UID:       uid,
+			ID:             e.Id,
+			EventType:      e.EventType,
+			ParsedEntityID: parsedEntityID,
 		}
 		m = append(m, re)
 	}

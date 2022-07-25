@@ -61,6 +61,16 @@ dashboard
 
 * `eventId` - the last event ID applied to the index in the backup. Since we make backups periodically we may need to apply some missing updates from `entity_event` table to catch up the state.
 
+So possible flow may be like this:
+
+1. event no.123
+2. full reindex
+3. backup - last event id 123
+4. event no.124
+5. event no.125
+6. event no.126
+7. node restart - restore backup and retrieve all events after 123
+
 As we don't have org id separation in `entity_event` table we manage indexes for all organizations in one goroutine. By different types of indexes are a separate consumers of `entity_event` table - so different types of indexes do not depend on each other at all.
 
 We can do backups after full-reindexing with the event id seen before re-indexing started.
