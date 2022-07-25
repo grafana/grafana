@@ -34,7 +34,7 @@ RUN apk add --no-cache openssl --repository=http://dl-cdn.alpinelinux.org/alpine
 # Oracle Support for x86_64 only
 RUN if [ `arch` = "x86_64" ]; then \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk \
-        -O /tmp/glibc-2.35-r0.apk && \
+        -O /tmp/glibc-2.34-r0.apk && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-bin-2.34-r0.apk \
         -O /tmp/glibc-bin-2.35-r0.apk && \
       apk add --no-cache --allow-untrusted /tmp/glibc-2.34-r0.apk /tmp/glibc-bin-2.34-r0.apk && \
