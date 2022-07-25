@@ -12,7 +12,7 @@ describe('Join by labels', () => {
             name: 'Value',
             type: FieldType.number,
             values: [10, 200],
-            labels: { what: 'Price', cluster: 'A', job: 'J1' },
+            labels: { what: 'Temp', cluster: 'A', job: 'J1' },
           },
         ],
       }),
@@ -23,7 +23,7 @@ describe('Join by labels', () => {
             name: 'Value',
             type: FieldType.number,
             values: [10, 200],
-            labels: { what: 'Price', cluster: 'B', job: 'J1' },
+            labels: { what: 'Temp', cluster: 'B', job: 'J1' },
           },
         ],
       }),
@@ -34,7 +34,7 @@ describe('Join by labels', () => {
             name: 'Value',
             type: FieldType.number,
             values: [22, 77],
-            labels: { what: 'Cost', cluster: 'B', job: 'J1' },
+            labels: { what: 'Speed', cluster: 'B', job: 'J1' },
           },
         ],
       }),
@@ -51,8 +51,8 @@ describe('Join by labels', () => {
         "columns": Array [
           "cluster",
           "job",
-          "Price",
-          "Cost",
+          "Temp",
+          "Speed",
         ],
         "rows": Array [
           Array [
