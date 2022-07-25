@@ -1,3 +1,5 @@
+on: workflow_dispatch
+
 name: build
 jobs:
   generate_version_number:
