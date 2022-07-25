@@ -33,7 +33,7 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDatasource';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
 import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
 
@@ -215,17 +215,11 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(
-  exploreId: ExploreId,
-  index: number,
-  datasource: DataSourceApi | undefined | null
-): ThunkResult<void> {
-  return (dispatch, getState) => {
+export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
+  return async (dispatch, getState) => {
     const queries = getState().explore[exploreId]!.queries;
-    const query = {
-      ...datasource?.getDefaultQuery?.(CoreApp.Explore),
-      ...generateEmptyQuery(queries, index),
-    };
+    const emptyQuery = await generateEmptyQuery(queries, index);
+    const query = { ...emptyQuery };
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };
@@ -290,10 +284,10 @@ export const importQueries = (
       importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);
     } else {
       // Default is blank queries
-      importedQueries = ensureQueries();
+      importedQueries = await ensureQueries();
     }
 
-    const nextQueries = ensureQueries(importedQueries);
+    const nextQueries = await ensureQueries(importedQueries);
 
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
   };
@@ -644,7 +638,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
+      queryKeys: getQueryKeys(nextQueries),
     };
   }
 
@@ -690,7 +684,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
+      queryKeys: getQueryKeys(nextQueries),
     };
   }
 
@@ -699,7 +693,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: queries.slice(),
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      queryKeys: getQueryKeys(queries),
     };
   }
 
@@ -708,7 +702,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      queryKeys: getQueryKeys(queries),
     };
   }
 
@@ -765,7 +759,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      queryKeys: getQueryKeys(queries),
     };
   }
 
