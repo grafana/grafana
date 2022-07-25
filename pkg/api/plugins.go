@@ -39,11 +39,10 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	isOrgOrGrafanaAdmin := c.HasRole(models.ROLE_ADMIN) || c.IsGrafanaAdmin
-	canListNonCorePlugins := isOrgOrGrafanaAdmin ||
-		hasAccess(ac.ReqOrgOrGrafanaAdmin, ac.EvalAny(
-			ac.EvalPermission(datasources.ActionCreate),
-			ac.EvalPermission(plugins.ActionInstall),
-		))
+	canListNonCorePlugins := isOrgOrGrafanaAdmin || hasAccess(ac.ReqOrgOrGrafanaAdmin, ac.EvalAny(
+		ac.EvalPermission(datasources.ActionCreate),
+		ac.EvalPermission(plugins.ActionInstall),
+	))
 
 	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgId)
 	if err != nil {
