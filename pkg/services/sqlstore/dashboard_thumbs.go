@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -22,6 +23,11 @@ func (ss *SQLStore) GetThumbnail(ctx context.Context, query *models.GetDashboard
 	return query.Result, err
 }
 
+func marshalDatasourceUids(dsUids []string) (string, error) {
+	b, err := json.Marshal(dsUids)
+	return string(b), err
+}
+
 func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
@@ -30,11 +36,17 @@ func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboard
 			return err
 		}
 
+		dsUids, err := marshalDatasourceUids(cmd.DatasourceUids)
+		if err != nil {
+			return err
+		}
+
 		if existing != nil {
 			existing.Image = cmd.Image
 			existing.MimeType = cmd.MimeType
 			existing.Updated = time.Now()
 			existing.DashboardVersion = cmd.DashboardVersion
+			existing.DsUids = dsUids
 			existing.State = models.ThumbnailStateDefault
 			_, err = sess.ID(existing.Id).Update(existing)
 			cmd.Result = existing
@@ -53,6 +65,7 @@ func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboard
 		thumb.Theme = cmd.Theme
 		thumb.Kind = cmd.Kind
 		thumb.Image = cmd.Image
+		thumb.DsUids = dsUids
 		thumb.MimeType = cmd.MimeType
 		thumb.DashboardId = dash.Id
 		thumb.DashboardVersion = cmd.DashboardVersion
@@ -145,6 +158,7 @@ func findThumbnailByMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*
 		"dashboard_thumbnail.dashboard_version",
 		"dashboard_thumbnail.state",
 		"dashboard_thumbnail.kind",
+		"dashboard_thumbnail.ds_uids",
 		"dashboard_thumbnail.mime_type",
 		"dashboard_thumbnail.theme",
 		"dashboard_thumbnail.updated")

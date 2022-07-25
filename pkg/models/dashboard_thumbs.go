@@ -86,6 +86,7 @@ type DashboardThumbnail struct {
 	Image            []byte         `json:"image"`
 	MimeType         string         `json:"mimeType"`
 	Updated          time.Time      `json:"updated"`
+	DsUids           string         `json:"-"`
 }
 
 //
@@ -133,6 +134,7 @@ type SaveDashboardThumbnailCommand struct {
 	DashboardVersion int
 	Image            []byte
 	MimeType         string
+	DatasourceUids   []string
 
 	Result *DashboardThumbnail
 }
