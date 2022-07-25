@@ -123,8 +123,6 @@ See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanatio
 
 
 **Required JSON Body Fields**
-  - `time`: epoch datetime in milliseconds.
-  - `timeEnd`: epoch datetime in milliseconds - must be greater than `time`.
   - `text`: description of the annotation.
   
 **Example Request**:
