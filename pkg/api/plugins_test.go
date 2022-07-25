@@ -125,12 +125,12 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		sc := setupHTTPServerWithCfg(t, true, true, &setting.Cfg{PluginAdminEnabled: tc.pluginAdminEnabled, PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
+		sc := setupHTTPServerWithCfg(t, true, true, &setting.Cfg{
+			PluginAdminEnabled:               tc.pluginAdminEnabled,
+			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
 		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgId)
 		sc.hs.pluginManager = pm
-		sc.hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
-		sc.hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			input := strings.NewReader("{ \"version\": \"1.0.2\" }")
