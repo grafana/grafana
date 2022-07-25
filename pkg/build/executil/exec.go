@@ -8,6 +8,8 @@ import (
 )
 
 func RunAt(ctx context.Context, dir, cmd string, args ...string) error {
+	// Ignore gosec G204 as this function is only used in the build process.
+	//nolint:gosec
 	c := exec.CommandContext(ctx, cmd, args...)
 	c.Dir = dir
 
@@ -25,6 +27,8 @@ func Run(ctx context.Context, cmd string, args ...string) error {
 }
 
 func OutputAt(ctx context.Context, dir, cmd string, args ...string) (string, error) {
+	// Ignore gosec G204 as this function is only used in the build process.
+	//nolint:gosec
 	c := exec.CommandContext(ctx, cmd, args...)
 	c.Dir = dir
 

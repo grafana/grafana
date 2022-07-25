@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 )
 
@@ -43,11 +44,18 @@ type VersionMap map[string]Version
 
 // GetMetadata attempts to read the JSON file located at 'path' and decode it as a Metadata{} type.
 func GetMetadata(path string) (*Metadata, error) {
+	// Ignore gosec G304 as this function is only used in the build process.
+	//nolint:gosec
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("error closing file at '%s': %s", path, err.Error())
+		}
+	}()
+
 	return DecodeMetadata(file)
 }
 

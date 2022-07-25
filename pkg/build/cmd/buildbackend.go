@@ -59,7 +59,7 @@ func BuildBackend(ctx *cli.Context) error {
 		variant := variant
 
 		opts := grafana.BuildVariantOpts{
-			Variant:    config.Variant(variant),
+			Variant:    variant,
 			Edition:    edition,
 			Version:    version,
 			GrafanaDir: grafanaDir,
@@ -70,7 +70,7 @@ func BuildBackend(ctx *cli.Context) error {
 		}))
 	}
 	if err := g.Wait(); err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	log.Println("Successfully built back-end binaries!")

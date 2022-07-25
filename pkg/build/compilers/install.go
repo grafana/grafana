@@ -37,7 +37,8 @@ func Install() error {
 		if _, err := os.Stat(path); err != nil {
 			return fmt.Errorf("stat error: %w", err)
 		}
-
+		// Ignore gosec G204 as this function is only used in the build process.
+		//nolint:gosec
 		cmd := exec.Command("tar", "xfJ", fname)
 		cmd.Dir = tmp
 		if output, err := cmd.CombinedOutput(); err != nil {

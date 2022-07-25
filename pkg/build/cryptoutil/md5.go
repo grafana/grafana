@@ -5,15 +5,22 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 )
 
 func MD5File(fpath string) error {
+	// Ignore gosec G304 as this function is only used in the build process.
+	//nolint:gosec
 	fd, err := os.Open(fpath)
 	if err != nil {
 		return err
 	}
-	defer fd.Close()
+	defer func() {
+		if err := fd.Close(); err != nil {
+			log.Printf("error closing file at '%s': %s", fpath, err.Error())
+		}
+	}()
 
 	h := md5.New() // nolint:gosec
 	if _, err = io.Copy(h, fd); err != nil {

@@ -75,7 +75,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: yarn-install
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -145,7 +145,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -251,7 +251,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -515,7 +515,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -667,7 +667,7 @@ steps:
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -763,7 +763,7 @@ steps:
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -811,7 +811,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: yarn-install
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -873,7 +873,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -974,7 +974,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1399,7 +1399,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1589,7 +1589,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: gen-version
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1707,7 +1707,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: yarn-install
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -2011,7 +2011,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: yarn-install
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -2307,7 +2307,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: init-enterprise
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -2661,7 +2661,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: init-enterprise
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -3618,7 +3618,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: yarn-install
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -3893,7 +3893,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: yarn-install
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -4163,7 +4163,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: init-enterprise
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -4507,7 +4507,7 @@ steps:
   image: grafana/build-container:1.5.8
   name: init-enterprise
 - commands:
-  - 'go build -o ./bin/build -ldflags ''-extldflags -static'' ./pkg/build/cmd '
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -4986,6 +4986,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 79f0ff4d5e2a0278bc637ba3452f326988df20ecffb321de0023d92d26c3a26a
+hmac: 0d7088bc54c9bb99ea5440614521e789efc7a537de605465cad16072e9e0925e
 
 ...

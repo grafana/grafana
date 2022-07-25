@@ -3,7 +3,7 @@ def compile_build_cmd():
         'name': 'compile-build-cmd',
         'image': 'golang:1.17',
         'commands': [
-            "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd ",
+            "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd",
         ],
         'environment': {
             'CGO_ENABLED': 0,
