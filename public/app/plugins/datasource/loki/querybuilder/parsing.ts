@@ -323,16 +323,21 @@ function handleUnwrapExpr(
   }
 
   if (unwrapChild) {
-    if (unwrapChild?.nextSibling?.type.name === 'ConvOp') {
+    if (unwrapChild.nextSibling?.type.name === 'ConvOp') {
+      const convOp = unwrapChild.nextSibling;
+      const identifier = convOp.nextSibling;
       return {
-        error: 'Unwrap with conversion operator not supported in query builder',
+        operation: {
+          id: 'unwrap',
+          params: [getString(expr, identifier), getString(expr, convOp)],
+        },
       };
     }
 
     return {
       operation: {
         id: 'unwrap',
-        params: [getString(expr, unwrapChild?.nextSibling)],
+        params: [getString(expr, unwrapChild?.nextSibling), ''],
       },
     };
   }
