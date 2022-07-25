@@ -23,7 +23,6 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
   const { pathname } = useLocation();
 
   const [tabs, defaultTab] = useMemo(() => {
-    // TODO double check if that's ok
     const canConfigurePlugins =
       plugin && contextSrv.hasAccessInMetadata(AccessControlAction.PluginsSettingsWrite, plugin, isOrgAdmin());
     const tabs: PluginDetailsTab[] = [...defaultTabs];
