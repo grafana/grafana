@@ -48,7 +48,6 @@ export function getPanelMenu(
   };
 
   const onToggleLegend = (event: React.MouseEvent<any>) => {
-    console.log(panel.options.legend)
     event.preventDefault();
     toggleLegend(panel);
   };

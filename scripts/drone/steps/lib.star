@@ -1,8 +1,5 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 grabpl_version = 'v2.9.54'
 build_image = 'grafana/build-container:1.5.8'
 =======
