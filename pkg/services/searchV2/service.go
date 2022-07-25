@@ -46,8 +46,13 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 		dashboardIndexExtender: &NoopExtender{},
 		dashboardReIndexCh:     make(chan struct{}, 1),
 	}
+	config := newConfig(cfg)
 	s.dashboardIndexManager = newOrgIndexManager(
-		"dashboard",
+		orgManagerConfig{
+			Name:                  "dashboard",
+			ReIndexInterval:       config.DashboardReIndexInterval,
+			EventsPollingInterval: config.DashboardEventsPollingInterval,
+		},
 		s.getDashboardIndexFactory,
 		entityEventStore,
 	)

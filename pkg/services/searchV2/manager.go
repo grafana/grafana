@@ -26,7 +26,7 @@ type eventStore interface {
 
 type orgIndexManager struct {
 	mu           sync.RWMutex
-	name         string
+	config       orgManagerConfig
 	indexFactory IndexFactory
 	eventStore   eventStore
 	logger       log.Logger
@@ -35,13 +35,19 @@ type orgIndexManager struct {
 	perOrgIndex  map[int64]Index
 }
 
-func newOrgIndexManager(name string, indexFactory IndexFactory, eventStore eventStore) *orgIndexManager {
+type orgManagerConfig struct {
+	Name                  string
+	ReIndexInterval       time.Duration
+	EventsPollingInterval time.Duration
+}
+
+func newOrgIndexManager(config orgManagerConfig, indexFactory IndexFactory, eventStore eventStore) *orgIndexManager {
 	return &orgIndexManager{
-		name:         name,
+		config:       config,
 		indexFactory: indexFactory,
 		eventStore:   eventStore,
 		perOrgIndex:  map[int64]Index{},
-		logger:       log.New("index_manager_" + name),
+		logger:       log.New("index_manager_" + config.Name),
 		buildSignals: make(chan buildSignal),
 		syncCh:       make(chan chan struct{}),
 	}
@@ -67,11 +73,11 @@ func (m *orgIndexManager) sync(ctx context.Context) error {
 }
 
 func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignalCh chan struct{}) error {
-	reIndexInterval := 5 * time.Minute
+	reIndexInterval := m.config.ReIndexInterval
 	fullReIndexTimer := time.NewTimer(reIndexInterval)
 	defer fullReIndexTimer.Stop()
 
-	eventsPollingInterval := 5 * time.Second
+	eventsPollingInterval := m.config.EventsPollingInterval
 	eventsPollingTimer := time.NewTimer(eventsPollingInterval)
 	defer eventsPollingTimer.Stop()
 
@@ -107,7 +113,7 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 			eventsPollingTimer.Reset(eventsPollingInterval)
 		case <-reIndexSignalCh:
 			// External systems may trigger re-indexing, at this moment provisioning does this.
-			m.logger.Info("Full re-indexing due to external signal", "name", m.name)
+			m.logger.Info("Full re-indexing due to external signal", "name", m.config.Name)
 			fullReIndexTimer.Reset(0)
 		case signal := <-m.buildSignals:
 			// When search read request meets new not-indexed org we build index for it.
@@ -147,12 +153,12 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 				defer func() { <-asyncReIndexSemaphore }()
 
 				started := time.Now()
-				m.logger.Info("Start re-indexing", "name", m.name)
+				m.logger.Info("Start re-indexing", "name", m.config.Name)
 				err := m.reIndexExisting(ctx)
 				if err != nil {
-					m.logger.Error("Full re-indexing finished with error", "fullReIndexElapsed", time.Since(started), "error", err, "name", m.name)
+					m.logger.Error("Full re-indexing finished with error", "fullReIndexElapsed", time.Since(started), "error", err, "name", m.config.Name)
 				} else {
-					m.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started), "name", m.name)
+					m.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started), "name", m.config.Name)
 				}
 				reIndexDoneCh <- lastIndexedEventID
 			}()
@@ -161,7 +167,7 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 			// was actual at the re-indexing start – so that we could re-apply all the
 			// events happened during async index build process and make sure it's consistent.
 			if lastEventID != lastIndexedEventID {
-				m.logger.Info("Re-apply event ID to last indexed", "currentEventID", lastEventID, "lastIndexedEventID", lastIndexedEventID, "name", m.name)
+				m.logger.Info("Re-apply event ID to last indexed", "currentEventID", lastEventID, "lastIndexedEventID", lastIndexedEventID, "name", m.config.Name)
 				lastEventID = lastIndexedEventID
 				// Apply events immediately.
 				eventsPollingTimer.Reset(0)
@@ -175,14 +181,14 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 
 func (m *orgIndexManager) buildInitialIndexes(ctx context.Context, orgIDs []int64) error {
 	started := time.Now()
-	m.logger.Info("Start building in-memory indexes", "name", m.name)
+	m.logger.Info("Start building in-memory indexes", "name", m.config.Name)
 	for _, orgID := range orgIDs {
 		err := m.buildInitialIndex(ctx, orgID)
 		if err != nil {
-			return fmt.Errorf("can't build initial index %s for org %d: %w", m.name, orgID, err)
+			return fmt.Errorf("can't build initial index %s for org %d: %w", m.config.Name, orgID, err)
 		}
 	}
-	m.logger.Info("Finish building in-memory indexes", "elapsed", time.Since(started), "name", m.name)
+	m.logger.Info("Finish building in-memory indexes", "elapsed", time.Since(started), "name", m.config.Name)
 	return nil
 }
 
@@ -191,12 +197,12 @@ func (m *orgIndexManager) buildInitialIndex(ctx context.Context, orgID int64) er
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	m.logger.Info("Start building org index", "orgId", orgID, "name", m.name)
+	m.logger.Info("Start building org index", "orgId", orgID, "name", m.config.Name)
 	index, err := m.indexFactory(ctx, orgID, nil)
 	if err != nil {
-		return fmt.Errorf("error building index %s for org %d: %w", m.name, orgID, err)
+		return fmt.Errorf("error building index %s for org %d: %w", m.config.Name, orgID, err)
 	}
-	m.logger.Info("Finish building org index", "elapsed", time.Since(started), "name", m.name, "orgId", orgID)
+	m.logger.Info("Finish building org index", "elapsed", time.Since(started), "name", m.config.Name, "orgId", orgID)
 
 	m.mu.Lock()
 	m.perOrgIndex[orgID] = index
@@ -223,7 +229,7 @@ func (m *orgIndexManager) reIndexExisting(ctx context.Context) error {
 		m.mu.Unlock()
 		err := i.ReIndex(ctx)
 		if err != nil {
-			return fmt.Errorf("error re-indexing %s for org %d: %w", m.name, orgID, err)
+			return fmt.Errorf("error re-indexing %s for org %d: %w", m.config.Name, orgID, err)
 		}
 	}
 	return nil
@@ -232,7 +238,7 @@ func (m *orgIndexManager) reIndexExisting(ctx context.Context) error {
 func (m *orgIndexManager) applyIndexUpdates(ctx context.Context, lastEventID int64) int64 {
 	events, err := m.eventStore.GetAllEventsAfter(context.Background(), lastEventID)
 	if err != nil {
-		m.logger.Error("can't load events", "error", err, "name", m.name)
+		m.logger.Error("can't load events", "error", err, "name", m.config.Name)
 		return lastEventID
 	}
 	if len(events) == 0 {
@@ -242,7 +248,7 @@ func (m *orgIndexManager) applyIndexUpdates(ctx context.Context, lastEventID int
 
 	resourceEvents, err := store.GetResourceEvents(events)
 	if err != nil {
-		m.logger.Error("can't apply events, malformed entity ID", "error", err, "name", m.name)
+		m.logger.Error("can't apply events, malformed entity ID", "error", err, "name", m.config.Name)
 		return lastEventID
 	}
 
@@ -257,12 +263,12 @@ func (m *orgIndexManager) applyIndexUpdates(ctx context.Context, lastEventID int
 		m.mu.Unlock()
 		err = i.ApplyEvent(ctx, resourceEvent)
 		if err != nil {
-			m.logger.Error("can't apply events", "error", err, "name", m.name)
+			m.logger.Error("can't apply events", "error", err, "name", m.config.Name)
 			return lastEventID
 		}
 		lastEventID = resourceEvent.ID
 	}
-	m.logger.Info("Index updates applied", "name", m.name, "indexEventsAppliedElapsed", time.Since(started), "numEvents", len(events))
+	m.logger.Info("Index updates applied", "name", m.config.Name, "indexEventsAppliedElapsed", time.Since(started), "numEvents", len(events))
 	return lastEventID
 }
 
