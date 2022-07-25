@@ -17,7 +17,7 @@ import { DragNode, DropNode } from '../types';
 import { doSelect } from '../utils';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
-import { TreeViewEditorProps } from './treeViewEditor';
+import { TreeViewEditorProps } from './elementEditor';
 
 let allowSelection = true;
 

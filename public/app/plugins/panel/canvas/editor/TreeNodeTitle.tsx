@@ -9,7 +9,7 @@ import { LayerName } from '../../../../core/components/Layers/LayerName';
 import { TreeElement } from '../tree';
 import { LayerActionID } from '../types';
 
-import { TreeViewEditorProps } from './treeViewEditor';
+import { TreeViewEditorProps } from './elementEditor';
 
 interface Props {
   settings: TreeViewEditorProps;
