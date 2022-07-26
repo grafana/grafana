@@ -8,13 +8,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/build/compilers"
 	"github.com/grafana/grafana/pkg/build/config"
-	"github.com/grafana/grafana/pkg/build/golang"
+	"github.com/grafana/grafana/pkg/build/golangutils"
 )
 
 // BuildArgs represent the build parameters that define the "go build" behavior of a single variant.
 // These arguments are applied as environment variables and arguments to the "go build" command.
 type BuildArgs struct {
-	golang.BuildOpts
+	golangutils.BuildOpts
 	DebArch config.Architecture
 	RPMArch config.Architecture
 }
@@ -63,7 +63,7 @@ var ldFlagsStatic = []string{"-linkmode=external", "-extldflags=-static"}
 
 var variantArgs = map[config.Variant]BuildArgs{
 	config.VariantArmV6: {
-		BuildOpts: golang.BuildOpts{
+		BuildOpts: golangutils.BuildOpts{
 			GoOS:       config.OSLinux,
 			CGoEnabled: true,
 			GoArch:     config.ArchARM,
@@ -73,7 +73,7 @@ var variantArgs = map[config.Variant]BuildArgs{
 		DebArch: config.ArchARMHF,
 	},
 	config.VariantArmV7: {
-		BuildOpts: golang.BuildOpts{
+		BuildOpts: golangutils.BuildOpts{
 			GoOS:       config.OSLinux,
 			CGoEnabled: true,
 			GoArch:     config.ArchARM,
@@ -84,7 +84,7 @@ var variantArgs = map[config.Variant]BuildArgs{
 		RPMArch: config.ArchARMHF,
 	},
 	config.VariantArmV7Musl: {
-		BuildOpts: golang.BuildOpts{
+		BuildOpts: golangutils.BuildOpts{
 			GoOS:       config.OSLinux,
 			CGoEnabled: true,
 			GoArch:     config.ArchARM,
@@ -95,7 +95,7 @@ var variantArgs = map[config.Variant]BuildArgs{
 		},
 	},
 	config.VariantArm64: {
-		BuildOpts: golang.BuildOpts{
+		BuildOpts: golangutils.BuildOpts{
 			GoOS:       config.OSLinux,
 			CGoEnabled: true,
 			GoArch:     config.ArchARM64,
@@ -105,7 +105,7 @@ var variantArgs = map[config.Variant]BuildArgs{
 		RPMArch: "aarch64",
 	},
 	config.VariantArm64Musl: {
-		BuildOpts: golang.BuildOpts{
+		BuildOpts: golangutils.BuildOpts{
 			GoOS:       config.OSLinux,
 			GoArch:     config.ArchARM64,
 			CGoEnabled: true,
@@ -115,7 +115,7 @@ var variantArgs = map[config.Variant]BuildArgs{
 		},
 	},
 	config.VariantDarwinAmd64: {
-		BuildOpts: golang.BuildOpts{
+		BuildOpts: golangutils.BuildOpts{
 			GoOS:       config.OSDarwin,
 			CGoEnabled: true,
 			GoArch:     config.ArchAMD64,
@@ -123,7 +123,7 @@ var variantArgs = map[config.Variant]BuildArgs{
 		},
 	},
 	config.VariantWindowsAmd64: {
-		BuildOpts: golang.BuildOpts{
+		BuildOpts: golangutils.BuildOpts{
 			GoOS:       config.OSWindows,
 			GoArch:     config.ArchAMD64,
 			CC:         compilers.Win64,
@@ -132,7 +132,7 @@ var variantArgs = map[config.Variant]BuildArgs{
 		},
 	},
 	config.VariantLinuxAmd64: {
-		BuildOpts: golang.BuildOpts{
+		BuildOpts: golangutils.BuildOpts{
 			GoOS:   config.OSLinux,
 			GoArch: config.ArchAMD64,
 			CC:     compilers.LinuxX64,
@@ -141,7 +141,7 @@ var variantArgs = map[config.Variant]BuildArgs{
 		RPMArch: config.ArchAMD64,
 	},
 	config.VariantLinuxAmd64Musl: {
-		BuildOpts: golang.BuildOpts{
+		BuildOpts: golangutils.BuildOpts{
 			GoOS:    config.OSLinux,
 			GoArch:  config.ArchAMD64,
 			CC:      compilers.LinuxX64Musl,

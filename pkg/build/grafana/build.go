@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/cryptoutil"
-	"github.com/grafana/grafana/pkg/build/golang"
+	"github.com/grafana/grafana/pkg/build/golangutils"
 )
 
 var binaries = []string{"grafana-server", "grafana-cli"}
@@ -57,7 +57,7 @@ func BinaryFolder(edition config.Edition, args BuildArgs) string {
 	return format
 }
 
-func GrafanaDescriptor(opts golang.BuildOpts) string {
+func GrafanaDescriptor(opts golangutils.BuildOpts) string {
 	libcPart := ""
 	if opts.LibC != "" {
 		libcPart = fmt.Sprintf("/%s", opts.LibC)
@@ -109,7 +109,7 @@ func BuildGrafanaBinary(ctx context.Context, name, version string, args BuildArg
 
 	log.Printf("Running command 'go %s'", opts.Args())
 
-	if err := golang.RunBuild(ctx, opts); err != nil {
+	if err := golangutils.RunBuild(ctx, opts); err != nil {
 		return err
 	}
 
