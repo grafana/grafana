@@ -3,7 +3,7 @@ import { capitalize } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   Alert,
   Badge,
@@ -21,6 +21,7 @@ import {
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { loadDataSources } from 'app/features/datasources/state/actions';
+import { AlertmanagersChoice } from 'app/plugins/datasource/alertmanager/types';
 import { StoreState } from 'app/types/store';
 
 import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
@@ -33,10 +34,10 @@ import { makeDataSourceLink } from '../../utils/misc';
 
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 
-const alertmanagerChoices = [
-  { value: 'internal', label: 'Only Internal' },
-  { value: 'external', label: 'Only External' },
-  { value: 'all', label: 'Both internal and external' },
+const alertmanagerChoices: Array<SelectableValue<AlertmanagersChoice>> = [
+  { value: AlertmanagersChoice.Internal, label: 'Only Internal' },
+  { value: AlertmanagersChoice.External, label: 'Only External' },
+  { value: AlertmanagersChoice.All, label: 'Both internal and external' },
 ];
 
 export const ExternalAlertmanagers = () => {
@@ -73,7 +74,10 @@ export const ExternalAlertmanagers = () => {
           return am.url;
         });
       dispatch(
-        addExternalAlertmanagersAction({ alertmanagers: newList, alertmanagersChoice: alertmanagersChoice ?? 'all' })
+        addExternalAlertmanagersAction({
+          alertmanagers: newList,
+          alertmanagersChoice: alertmanagersChoice ?? AlertmanagersChoice.All,
+        })
       );
       setDeleteModalState({ open: false, index: 0 });
     },
@@ -107,14 +111,19 @@ export const ExternalAlertmanagers = () => {
     }));
   }, [setModalState]);
 
-  const onChangeAlertmanagerChoice = (alertmanagersChoice: string) => {
+  const onChangeAlertmanagerChoice = (alertmanagersChoice: AlertmanagersChoice) => {
     dispatch(
       addExternalAlertmanagersAction({ alertmanagers: externalAlertManagers.map((am) => am.url), alertmanagersChoice })
     );
   };
 
   const onChangeAlertmanagers = (alertmanagers: string[]) => {
-    dispatch(addExternalAlertmanagersAction({ alertmanagers, alertmanagersChoice: alertmanagersChoice ?? 'all' }));
+    dispatch(
+      addExternalAlertmanagersAction({
+        alertmanagers,
+        alertmanagersChoice: alertmanagersChoice ?? AlertmanagersChoice.All,
+      })
+    );
   };
 
   const getStatusColor = (status: string) => {
@@ -165,10 +174,18 @@ export const ExternalAlertmanagers = () => {
               />
             </Card.Figure>
             <Card.Tags>
-              <Badge
-                text={capitalize(am.status)}
-                color={am.status === 'dropped' ? 'red' : am.status === 'active' ? 'green' : 'orange'}
-              />
+              {alertmanagersChoice === AlertmanagersChoice.Internal ? (
+                <Badge
+                  text="Inactive"
+                  color="red"
+                  tooltip="Grafana is configured to send alerts to the built-in internal alermanager only. External Alertmanages will not receive any alerts"
+                />
+              ) : (
+                <Badge
+                  text={capitalize(am.status)}
+                  color={am.status === 'dropped' ? 'red' : am.status === 'active' ? 'green' : 'orange'}
+                />
+              )}
             </Card.Tags>
             <Card.Meta>{am.url}</Card.Meta>
             <Card.Actions>
