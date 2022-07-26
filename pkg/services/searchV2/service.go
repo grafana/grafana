@@ -28,12 +28,14 @@ type StandardSearchService struct {
 
 	logger log.Logger
 
-	dashboardIndexExtender DashboardIndexExtender
-	dashboardIndexManager  *orgIndexManager
-	dashboardReIndexCh     chan struct{}
+	dashboardIndexExtender     DashboardIndexExtender
+	dashboardIndexManager      *orgIndexManager
+	dashboardReIndexCh         chan bool
+	dashboardIndexingBatchSize int
 }
 
 func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
+	config := newConfig(cfg)
 	s := &StandardSearchService{
 		cfg: cfg,
 		sql: sql,
@@ -42,11 +44,11 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			sql: sql,
 			ac:  ac,
 		},
-		logger:                 log.New("searchV2"),
-		dashboardIndexExtender: &NoopExtender{},
-		dashboardReIndexCh:     make(chan struct{}, 1),
+		logger:                     log.New("searchV2"),
+		dashboardIndexExtender:     &NoopExtender{},
+		dashboardReIndexCh:         make(chan bool, 1),
+		dashboardIndexingBatchSize: config.DashboardIndexingBatchSize,
 	}
-	config := newConfig(cfg)
 	s.dashboardIndexManager = newOrgIndexManager(
 		orgManagerConfig{
 			Name:                  "dashboard",
@@ -60,7 +62,7 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 }
 
 func (s *StandardSearchService) getDashboardIndexFactory(ctx context.Context, orgID int64, writer *bluge.Writer) (Index, error) {
-	return createDashboardIndex(ctx, orgID, writer, newSQLDashboardLoader(s.sql), s.dashboardIndexExtender.GetDocumentExtender(), newFolderIDLookup(s.sql))
+	return createDashboardIndex(ctx, orgID, writer, newSQLDashboardLoader(s.sql), s.dashboardIndexExtender.GetDocumentExtender(), newFolderIDLookup(s.sql), s.dashboardIndexingBatchSize)
 }
 
 func (s *StandardSearchService) IsDisabled() bool {
@@ -84,11 +86,19 @@ func (s *StandardSearchService) Run(ctx context.Context) error {
 	return s.dashboardIndexManager.run(ctx, orgIDs, s.dashboardReIndexCh)
 }
 
-func (s *StandardSearchService) TriggerDashboardReIndex() {
-	select {
-	case s.dashboardReIndexCh <- struct{}{}:
-	default:
-		// channel is full => re-index will happen soon anyway.
+func (s *StandardSearchService) TriggerDashboardReIndex(force bool) {
+	if force {
+		go func() {
+			// we need to make sure index rebuilt, so can't drop true
+			// value here like we do below for the case with force == false
+			s.dashboardReIndexCh <- true
+		}()
+	} else {
+		select {
+		case s.dashboardReIndexCh <- false:
+		default:
+			// channel is full => re-index will happen soon anyway.
+		}
 	}
 }
 

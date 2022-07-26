@@ -72,12 +72,23 @@ func (m *orgIndexManager) sync(ctx context.Context) error {
 	}
 }
 
-func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignalCh chan struct{}) error {
+const (
+	defaultReIndexInterval       = 5 * time.Minute
+	defaultEventsPollingInterval = 5 * time.Second
+)
+
+func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignalCh chan bool) error {
 	reIndexInterval := m.config.ReIndexInterval
+	if reIndexInterval == 0 {
+		reIndexInterval = defaultReIndexInterval
+	}
 	fullReIndexTimer := time.NewTimer(reIndexInterval)
 	defer fullReIndexTimer.Stop()
 
 	eventsPollingInterval := m.config.EventsPollingInterval
+	if eventsPollingInterval == 0 {
+		eventsPollingInterval = defaultEventsPollingInterval
+	}
 	eventsPollingTimer := time.NewTimer(eventsPollingInterval)
 	defer eventsPollingTimer.Stop()
 
@@ -101,6 +112,8 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 	// Channel to handle signals about asynchronous full re-indexing completion.
 	reIndexDoneCh := make(chan int64, 1)
 
+	needForcedReindex := false
+
 	for {
 		select {
 		case doneCh := <-m.syncCh:
@@ -111,9 +124,10 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 			// Periodically apply updates collected in entity events table.
 			lastEventID = m.applyIndexUpdates(ctx, lastEventID)
 			eventsPollingTimer.Reset(eventsPollingInterval)
-		case <-reIndexSignalCh:
+		case force := <-reIndexSignalCh:
 			// External systems may trigger re-indexing, at this moment provisioning does this.
 			m.logger.Info("Full re-indexing due to external signal", "name", m.config.Name)
+			needForcedReindex = force
 			fullReIndexTimer.Reset(0)
 		case signal := <-m.buildSignals:
 			// When search read request meets new not-indexed org we build index for it.
@@ -144,7 +158,7 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 			// entity events non-atomically (outside of transaction) and do not cover all possible entity
 			// change places, so periodic re-indexing fixes possibly broken state.
 			lastIndexedEventID := lastEventID
-			go func() {
+			go func(needForcedReindex bool) {
 				// Do full re-index asynchronously to avoid blocking index synchronization
 				// on read for a long time.
 
@@ -154,14 +168,15 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 
 				started := time.Now()
 				m.logger.Info("Start re-indexing", "name", m.config.Name)
-				err := m.reIndexExisting(ctx)
+				err := m.reIndexExisting(ctx, needForcedReindex)
 				if err != nil {
 					m.logger.Error("Full re-indexing finished with error", "fullReIndexElapsed", time.Since(started), "error", err, "name", m.config.Name)
 				} else {
 					m.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started), "name", m.config.Name)
 				}
 				reIndexDoneCh <- lastIndexedEventID
-			}()
+			}(needForcedReindex)
+			needForcedReindex = false
 		case lastIndexedEventID := <-reIndexDoneCh:
 			// Asynchronous re-indexing is finished. Set lastEventID to the value which
 			// was actual at the re-indexing start – so that we could re-apply all the
@@ -197,12 +212,12 @@ func (m *orgIndexManager) buildInitialIndex(ctx context.Context, orgID int64) er
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	m.logger.Info("Start building org index", "orgId", orgID, "name", m.config.Name)
+	m.logger.Info("Start building initial org index", "orgId", orgID, "name", m.config.Name)
 	index, err := m.indexFactory(ctx, orgID, nil)
 	if err != nil {
-		return fmt.Errorf("error building index %s for org %d: %w", m.config.Name, orgID, err)
+		return fmt.Errorf("error building initial index %s for org %d: %w", m.config.Name, orgID, err)
 	}
-	m.logger.Info("Finish building org index", "elapsed", time.Since(started), "name", m.config.Name, "orgId", orgID)
+	m.logger.Info("Finish building initial org index", "elapsed", time.Since(started), "name", m.config.Name, "orgId", orgID)
 
 	m.mu.Lock()
 	m.perOrgIndex[orgID] = index
@@ -210,7 +225,7 @@ func (m *orgIndexManager) buildInitialIndex(ctx context.Context, orgID int64) er
 	return nil
 }
 
-func (m *orgIndexManager) reIndexExisting(ctx context.Context) error {
+func (m *orgIndexManager) reIndexExisting(ctx context.Context, force bool) error {
 	m.mu.RLock()
 	orgIDs := make([]int64, 0, len(m.perOrgIndex))
 	for orgID := range m.perOrgIndex {
@@ -227,7 +242,7 @@ func (m *orgIndexManager) reIndexExisting(ctx context.Context) error {
 			continue
 		}
 		m.mu.Unlock()
-		err := i.ReIndex(ctx)
+		err := i.ReIndex(ctx, force)
 		if err != nil {
 			return fmt.Errorf("error re-indexing %s for org %d: %w", m.config.Name, orgID, err)
 		}

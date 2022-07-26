@@ -166,7 +166,7 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 		return err
 	}
 	if ps.dashboardProvisioner.HasDashboardSources() {
-		ps.searchService.TriggerDashboardReIndex()
+		ps.searchService.TriggerDashboardReIndex(false)
 	}
 
 	for {

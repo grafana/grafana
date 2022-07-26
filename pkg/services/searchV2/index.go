@@ -16,7 +16,7 @@ type IndexFactory func(ctx context.Context, orgID int64, writer *bluge.Writer) (
 // Index is responsible for a search inside one organization.
 type Index interface {
 	Reader() (*bluge.Reader, func(), error)
-	ReIndex(ctx context.Context) error
+	ReIndex(ctx context.Context, force bool) error
 	ApplyEvent(ctx context.Context, event store.ResourceEvent) error
 	BackupTo(ctx context.Context, directory string) error
 }
