@@ -2,6 +2,7 @@ package apikeyimpl
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -164,7 +165,7 @@ func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *models.GetApiKey
 func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
 	var apikey models.ApiKey
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Where("key=?", hash).Get(&apikey)
+		has, err := sess.Table("api_key").Where(fmt.Sprintf("%s = ?", ss.db.GetDialect().Quote("key")), hash).Get(&apikey)
 		if err != nil {
 			return err
 		} else if !has {
