@@ -228,6 +228,7 @@ export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 export { ButtonSelect } from './Dropdown/ButtonSelect';
+export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 
 // Export this until we've figured out a good approach to inline form styles.

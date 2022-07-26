@@ -60,7 +60,7 @@ Alternatively, you can configure authentication and region selection explicitly 
 | `aws_access_key_id`     | IAM user’s Access Key ID                                                                                                                                    | AKIAIOSFODNN7EXAMPLE                         | _Read from runtime environment_ |
 | `aws_secret_access_key` | IAM user’s Secret Access Key                                                                                                                                | wJalrXUtnFEMI/K7MDENG/<br>bPxRfiCYEXAMPLEKEY | _Read from runtime environment_ |
 | `aws_region`            | AWS instance region                                                                                                                                         | us-east-1                                    | _Read from runtime environment_ |
-| `kms_key_id`            | AWS Key Management System access key, used for secret encryption                                                                                            | 82065da4-3e2b-4372<br>-87bf-664d1e488244     | _none_                          |
+| `kms_key_id`            | AWS Key Management System access key, used for secret encryption                                                                                            | 82065da4-3e2b-4372<br>-87bf-664d1example     | _none_                          |
 | `secret_name_prefix`    | String prepended to each AWS Secret Manager secret name. Use this to avoid secret name conflicts in large organizations running multiple Grafana instances. | metrics-team                                 | _none_                          |
 | `secret_description`    | Description applied to every secret in AWS Secrets Manager. Use only for bookkeeping purposes.                                                              | Metrics team datasource                      | _none_                          |
 
@@ -77,7 +77,7 @@ migrate_to_plugin = true
 aws_access_key_id = AKIAIOSFODNN7EXAMPLE
 aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 aws_region = us-east-1
-kms_key_id = 82065da4-3e2b-4372-87bf-664d1e488244
+kms_key_id = 82065da4-3e2b-4372-87bf-664d1example
 secret_name_prefix = my-org
 secret_description = My description
 ```
@@ -111,7 +111,7 @@ To stop storing secrets in the legacy table while the secrets plugin is enabled,
 
 ```ini
 [feature_toggles]
-enabled = disableSecretsCompatibility
+enable = disableSecretsCompatibility
 ```
 
 While secrets will not be read from this legacy table while the plugin is active, backward compatibility allows you to uninstall the secrets plugin without losing access to all of your secrets.
