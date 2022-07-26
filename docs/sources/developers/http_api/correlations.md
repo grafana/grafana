@@ -71,7 +71,7 @@ Status codes:
 
 ## Delete correlations
 
-`DELETE /api/datasources/uid/:uid/correlations/:correlationUid`
+`DELETE /api/datasources/uid/:uid/correlations/:correlationUID`
 
 Deletes a correlation.
 

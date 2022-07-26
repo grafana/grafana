@@ -20,7 +20,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
-		entities.Delete("/:correlationUid", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
+		entities.Delete("/:correlationUID", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
 	})
 }
 
@@ -49,10 +49,10 @@ func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, CreateCorrelationResponse{Result: correlation, Message: "Correlation created"})
 }
 
-// deleteHandler handles DELETE /datasources/uid/:uid/correlations/:correlationUid
+// deleteHandler handles DELETE /datasources/uid/:uid/correlations/:correlationUID
 func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Response {
 	cmd := DeleteCorrelationCommand{
-		UID:       web.Params(c.Req)[":correlationUid"],
+		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
 		OrgId:     c.OrgId,
 	}
