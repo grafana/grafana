@@ -6,7 +6,7 @@ interface Props {
 
 export const ConditionSegment: FC<Props> = ({ label }) => {
   return (
-    <div className="gf-form" data-wtf="condition-segment">
+    <div className="gf-form">
       <span className="gf-form-label query-keyword">{label}</span>
     </div>
   );
