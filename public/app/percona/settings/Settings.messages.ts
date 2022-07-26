@@ -24,7 +24,7 @@ export const Messages = {
     sttCheckIntervalUnit: 'hours',
     advisorsLink: `${HOW_TO_DOC_URL}#advisors`,
     advisorsTooltip: 'Enable Advisor Checks and get updated checks from Percona.',
-    dbaasLabel: 'DBaaS',
+    dbaasLabel: 'Database as a Service (DBaaS)',
     azureDiscoverLabel: 'Microsoft Azure monitoring',
     azureDiscoverTooltip: 'Option to enable/disable Microsoft Azure DB instanced  discovery and monitoring',
     azureDiscoverLink: `${HOW_TO_DOC_URL}#microsoft-azure-monitoring`,
