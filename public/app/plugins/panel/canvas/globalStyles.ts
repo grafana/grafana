@@ -102,6 +102,11 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           cursor: grab;
           flex-grow: 1;
         }
+
+        .rc-tree-node-selected {
+          opacity: 1;
+        }
+
         span {
           &.rc-tree-checkbox,
           &.rc-tree-iconEle {
