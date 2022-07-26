@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -30,9 +29,6 @@ import (
 	login = username + email
 
 	TODO:
-- make test verify that before deleting a user, we make sure that that reference is not present in any tables
-- make benefits/tradeoffs for the proposal 1, vs proposal 2 using user stories tied to the functional requirements (timebox this)
-- make sorting of users part of the display for conflicting users by their ids
 */
 
 func getSqlStore(context *cli.Context) (*sqlstore.SQLStore, error) {
@@ -63,12 +59,14 @@ func runListConflictUsers() func(context *cli.Context) error {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
+		logger.Infof("---------- Conflicts --------\n")
 		logger.Infof(conflicts.String())
+		logger.Infof("---------------------------\n")
 		return nil
 	}
 }
 
-func runCreateConflictUsersFile() func(context *cli.Context) error {
+func runGenerateConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		sqlStore, err := getSqlStore(context)
 		if err != nil {
@@ -89,9 +87,8 @@ func runCreateConflictUsersFile() func(context *cli.Context) error {
 		if _, err := tmpFile.Write([]byte(conflicts.ToStringFileRepresentation())); err != nil {
 			return err
 		}
-		logger.Infof("edit the file \n%s\n\n", tmpFile.Name())
-		logger.Infof("Press any key to continue... which user to merge into:\n")
-		_ = bufio.NewReader(os.Stdin)
+		logger.Infof("edit the file \nvim %s\n\n", tmpFile.Name())
+		logger.Infof("once edited the file, you can either validate or ingest the file\n\n")
 		return nil
 	}
 }
@@ -118,7 +115,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("not able to merge")
 		}
-		return nil
+		return fmt.Errorf("not implemented")
 	}
 }
 
@@ -141,6 +138,8 @@ func readFile() (string, error) {
 
 func showChanges() {
 	// TODO:
+	// use something like
+	// diff --git a/pkg/cmd/grafana-cli/commands/commands.go b/pkg/cmd/grafana-cli/commands/commands.go
 	logger.Info("show changes should be implemented\n")
 }
 
@@ -251,6 +250,7 @@ func GetUsersWithConflictingEmailsOrLogins(ctx context.Context, s *sqlstore.SQLS
 }
 
 // conflictingUserEntriesSQL orders conflicting users by their user_identification
+// sorts the users by their useridentification and ids
 func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 	userDialect := db.DB.GetDialect(s).Quote("user")
 	sqlQuery := `
@@ -279,6 +279,6 @@ func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 	LEFT JOIN user_auth on user_auth.user_id = u1.id
 	WHERE (conflict_email IS NOT NULL
 		OR conflict_login IS NOT NULL OR conflict_id IS NOT NULL)
-	ORDER BY user_identification`
+	ORDER BY user_identification, u1.id`
 	return sqlQuery
 }

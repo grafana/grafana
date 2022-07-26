@@ -902,6 +902,8 @@ func (ss *SQLStore) MergeUser(ctx context.Context, intoUserId int64, fromUserIds
 			}
 
 			// deletes the from user
+
+			// TODO: make test verify that before deleting a user, we make sure that that reference is not present in any tables
 			delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
 			if delErr != nil {
 				return delErr

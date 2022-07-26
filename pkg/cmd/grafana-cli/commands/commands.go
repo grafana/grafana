@@ -193,29 +193,35 @@ var adminCommands = []*cli.Command{
 		},
 	},
 	{
-		Name:  "conflict-users-manager",
-		Usage: "Runs different helpful conflict user commands",
+		Name:  "user-manager",
+		Usage: "Runs different helpful user commands",
 		Subcommands: []*cli.Command{
 			// TODO: reset password for user
 			{
-				Name:   "list-conflict-users",
-				Usage:  "returns a list of users with more than one entry in the database",
-				Action: runListConflictUsers(),
-			},
-			{
-				Name:   "create-conflict-users-file",
-				Usage:  "creates a conflict users file.. Safe to execute multiple times.",
-				Action: runCreateConflictUsersFile(),
-			},
-			{
-				Name:   "validate-conflict-users-file",
-				Usage:  "validates the conflict file",
-				Action: runValidateConflictUsersFile(),
-			},
-			{
-				Name:   "ingest-conflict-users-file",
-				Usage:  "ingests and executes the conflict file",
-				Action: runIngestConflictUsersFile(),
+				Name:  "conflicts",
+				Usage: "runs a conflict resolution to find users with multiple entries",
+				Subcommands: []*cli.Command{
+					{
+						Name:   "ls",
+						Usage:  "returns a list of users with more than one entry in the database",
+						Action: runListConflictUsers(),
+					},
+					{
+						Name:   "generate-file",
+						Usage:  "creates a conflict users file.. Safe to execute multiple times.",
+						Action: runGenerateConflictUsersFile(),
+					},
+					{
+						Name:   "validate-file",
+						Usage:  "validates the conflict file",
+						Action: runValidateConflictUsersFile(),
+					},
+					{
+						Name:   "ingest-file",
+						Usage:  "ingests and executes the conflict file",
+						Action: runIngestConflictUsersFile(),
+					},
+				},
 			},
 		},
 	},
