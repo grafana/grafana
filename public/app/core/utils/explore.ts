@@ -246,20 +246,29 @@ export async function generateEmptyQuery(
   index = 0,
   dataSourceOverride?: DataSourceRef
 ): Promise<DataQuery> {
-  let datasource;
+  let datasourceFull;
+  let datasourceRef;
+  let defaultQuery;
 
   // datasource override is if we have switched datasources with no carry-over - we want to create a new query with a datasource we define
   if (dataSourceOverride) {
-    datasource = dataSourceOverride;
+    datasourceRef = dataSourceOverride;
   } else if (queries.length > 0 && queries[queries.length - 1].datasource) {
     // otherwise use last queries' datasource
-    datasource = queries[queries.length - 1].datasource;
+    datasourceRef = queries[queries.length - 1].datasource;
   } else {
     // if neither exists, use the default datasource
-    const datasourceFull = await getDataSourceSrv().get();
-    datasource = datasourceFull.getRef();
+    datasourceFull = await getDataSourceSrv().get();
+    defaultQuery = datasourceFull.getDefaultQuery?.(CoreApp.Explore);
+    datasourceRef = datasourceFull.getRef();
   }
-  return { refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasource };
+
+  if (!datasourceFull) {
+    datasourceFull = await getDataSourceSrv().get(datasourceRef);
+    defaultQuery = datasourceFull.getDefaultQuery?.(CoreApp.Explore);
+  }
+
+  return { refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasourceRef, ...defaultQuery };
 }
 
 export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: DataQuery[], index = 0): DataQuery => {
