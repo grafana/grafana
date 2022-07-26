@@ -42,7 +42,11 @@ describe('DashboardSettings', () => {
       </Provider>
     );
 
-    expect(screen.getByText('Foo / Settings')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, el) => el?.tagName.toLowerCase() === 'h1' && /Foo\s*\/\s*Settings/.test(el?.textContent ?? '')
+      )
+    ).toBeInTheDocument();
 
     await userEvent.keyboard('{Escape}');
 
