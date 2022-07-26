@@ -17,9 +17,9 @@ import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneObjectState } from '../core/types';
+import { SceneObjectStatePlain } from '../core/types';
 
-export interface QueryRunnerState extends SceneObjectState {
+export interface QueryRunnerState extends SceneObjectStatePlain {
   data?: PanelData;
   queries: DataQueryExtended[];
 }

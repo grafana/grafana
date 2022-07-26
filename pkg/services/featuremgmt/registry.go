@@ -63,12 +63,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoServiceGraph",
-			Description:  "show service",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "tempoApmTable",
 			Description:  "Show APM table",
 			State:        FeatureStateAlpha,
@@ -149,12 +143,6 @@ var (
 		{
 			Name:            "export",
 			Description:     "Export grafana instance (to git, etc)",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:            "storageLocalUpload",
-			Description:     "allow uploads to local storage",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},

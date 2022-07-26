@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) {
+func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) bool {
 	var rows []struct {
 		Id     int
 		Secret []byte
@@ -20,7 +20,7 @@ func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secrets
 
 	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
-		return
+		return false
 	}
 
 	var anyFailure bool
@@ -62,9 +62,11 @@ func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secrets
 	} else {
 		logger.Info(fmt.Sprintf("Column %s from %s has been re-encrypted successfully", s.columnName, s.tableName))
 	}
+
+	return !anyFailure
 }
 
-func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) {
+func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) bool {
 	var rows []struct {
 		Id     int
 		Secret string
@@ -72,7 +74,7 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 
 	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
-		return
+		return false
 	}
 
 	var anyFailure bool
@@ -128,9 +130,11 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 	} else {
 		logger.Info(fmt.Sprintf("Column %s from %s has been re-encrypted successfully", s.columnName, s.tableName))
 	}
+
+	return !anyFailure
 }
 
-func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) {
+func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) bool {
 	var rows []struct {
 		Id             int
 		SecureJsonData map[string][]byte
@@ -138,7 +142,7 @@ func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 
 	if err := sqlStore.NewSession(ctx).Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
-		return
+		return false
 	}
 
 	var anyFailure bool
@@ -184,9 +188,11 @@ func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 	} else {
 		logger.Info(fmt.Sprintf("Secure json data secrets from %s have been re-encrypted successfully", s.tableName))
 	}
+
+	return !anyFailure
 }
 
-func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) {
+func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) bool {
 	var results []struct {
 		Id                        int
 		AlertmanagerConfiguration string
@@ -195,7 +201,7 @@ func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secre
 	selectSQL := "SELECT id, alertmanager_configuration FROM alert_configuration"
 	if err := sqlStore.NewSession(ctx).SQL(selectSQL).Find(&results); err != nil {
 		logger.Warn("Could not find any alert_configuration secret to re-encrypt")
-		return
+		return false
 	}
 
 	var anyFailure bool
@@ -261,4 +267,6 @@ func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secre
 	} else {
 		logger.Info("Alerting configuration secrets have been re-encrypted successfully")
 	}
+
+	return !anyFailure
 }
