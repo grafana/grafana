@@ -3699,7 +3699,7 @@
         }
       }
     },
-    "/datasources/uid/{uid}/correlations/{correlationUid}": {
+    "/datasources/uid/{uid}/correlations/{correlationUID}": {
       "delete": {
         "tags": ["correlations"],
         "summary": "Delete a correlation.",
@@ -3713,7 +3713,7 @@
           },
           {
             "type": "string",
-            "name": "correlationUid",
+            "name": "correlationUID",
             "in": "path",
             "required": true
           }
