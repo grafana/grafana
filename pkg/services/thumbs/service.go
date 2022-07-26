@@ -120,7 +120,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		settings:                   cfg.DashboardPreviews,
 		dsPermissionsService:       dsPermissionsService,
 		scheduleOptions: crawlerScheduleOptions{
-			tickerInterval:   5 * time.Second,
+			tickerInterval:   5 * time.Minute,
 			crawlInterval:    cfg.DashboardPreviews.SchedulerInterval,
 			maxCrawlDuration: cfg.DashboardPreviews.MaxCrawlDuration,
 			crawlerMode:      CrawlerModeThumbs,
