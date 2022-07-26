@@ -10,7 +10,7 @@ interface Props {
   filterKey: string | null;
   onChange: (item: SelectableValue<string | null>) => void;
   getTagKeysOptions?: any;
-  disabled: boolean;
+  disabled?: boolean;
 }
 
 const MIN_WIDTH = 90;

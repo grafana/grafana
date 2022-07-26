@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React, { FC, MouseEvent, useCallback } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, Tooltip, useStyles } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 interface Props {
   onClick: () => void;
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export const VariableLink: FC<Props> = ({ loading, disabled, onClick: propsOnClick, text, onCancel, id }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const onClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
       event.stopPropagation();
@@ -64,7 +64,7 @@ interface VariableLinkTextProps {
 }
 
 const VariableLinkText: FC<VariableLinkTextProps> = ({ text }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   return <span className={styles.textAndTags}>{text}</span>;
 };
 
@@ -90,28 +90,35 @@ const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     max-width: 500px;
     padding-right: 10px;
-    padding: 0 ${theme.spacing.sm};
-    background-color: ${theme.colors.formInputBg};
-    border: 1px solid ${theme.colors.formInputBorder};
-    border-radius: ${theme.border.radius.sm};
+    padding: 0 ${theme.spacing(1)};
+    background-color: ${theme.components.input.background};
+    border: 1px solid ${theme.components.input.borderColor};
+    border-radius: ${theme.shape.borderRadius(1)};
     display: flex;
     align-items: center;
     color: ${theme.colors.text};
-    height: ${theme.height.md}px;
+    height: ${theme.v1.height.md}px;
 
     .label-tag {
       margin: 0 5px;
+    }
+
+    background-color: ${theme.colors.action.disabledBackground};
+    color: ${theme.colors.action.disabledText};
+    border: 1px solid ${theme.colors.action.disabledBackground};
+    &:focus {
+      box-shadow: none;
     }
   `,
   textAndTags: css`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin-right: ${theme.spacing.xxs};
+    margin-right: ${theme.spacing(0.25)};
     user-select: none;
   `,
 });

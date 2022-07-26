@@ -7,7 +7,7 @@ import { VariableHide, VariableModel } from '../../../variables/types';
 
 interface Props {
   variables: VariableModel[];
-  readOnly: boolean;
+  readOnly?: boolean;
 }
 
 export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly }) => {

@@ -11,16 +11,9 @@ interface Props {
   onCompleted: (filter: AdHocVariableFilter) => void;
   appendBefore?: React.ReactNode;
   getTagKeysOptions?: any;
-  disabled: boolean;
 }
 
-export const AdHocFilterBuilder: FC<Props> = ({
-  datasource,
-  appendBefore,
-  onCompleted,
-  getTagKeysOptions,
-  disabled,
-}) => {
+export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onCompleted, getTagKeysOptions }) => {
   const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
 
@@ -57,7 +50,6 @@ export const AdHocFilterBuilder: FC<Props> = ({
   if (key === null) {
     return (
       <AdHocFilterKey
-        disabled={disabled}
         datasource={datasource}
         filterKey={key}
         onChange={onKeyChanged}
@@ -70,7 +62,6 @@ export const AdHocFilterBuilder: FC<Props> = ({
     <React.Fragment key="filter-builder">
       {appendBefore}
       <AdHocFilterRenderer
-        disabled={disabled}
         datasource={datasource}
         filter={{ key, value: '', operator, condition: '' }}
         placeHolder="select value"

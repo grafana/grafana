@@ -68,7 +68,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
       value={updatedValue}
       onChange={onChange}
       onBlur={onBlur}
-      readOnly={readOnly}
+      disabled={readOnly}
       onKeyDown={onKeyDown}
       placeholder="Enter variable value"
       id={`var-${variable.id}`}
