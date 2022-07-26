@@ -151,7 +151,7 @@ root_url =/your/license/root/url
 
 ```
 
-### Create Configmap for Grafana Enterprise Configuration
+### Create Configmap for Grafana Enterprise configuration
 
 Create a Kubernetes Configmap from your `grafana.ini` file with the following command:
 
