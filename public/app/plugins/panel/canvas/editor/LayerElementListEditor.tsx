@@ -198,6 +198,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     const onNameChange = (element: ElementState, name: string) => {
       element.onChange({ ...element.options, name });
+      this.onSelect(element);
     };
 
     const showActions = (element: ElementState) => {
