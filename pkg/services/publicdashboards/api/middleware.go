@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -18,8 +20,8 @@ func RequiresValidAccessToken(publicDashboardService publicdashboards.Service) f
 		accessToken, ok := web.Params(c.Req)[":accessToken"]
 
 		// Check access token is present on the request
-		if !ok || len(accessToken) < 1 {
-			c.JsonApiErr(401, "Unauthorized: access token not provided", nil)
+		if !ok || accessToken == "" {
+			c.JsonApiErr(http.StatusBadRequest, "Invalid access token", nil)
 			return
 		}
 
@@ -27,12 +29,12 @@ func RequiresValidAccessToken(publicDashboardService publicdashboards.Service) f
 		exists, err := publicDashboardService.PublicDashboardAccessTokenExists(c.Req.Context(), accessToken)
 
 		if err != nil {
-			c.JsonApiErr(500, "Error verifying access token", nil)
+			c.JsonApiErr(http.StatusInternalServerError, "Error validating access token", nil)
 			return
 		}
 
 		if !exists {
-			c.JsonApiErr(401, "Unauthorized", nil)
+			c.JsonApiErr(http.StatusBadRequest, "Invalid access token", nil)
 			return
 		}
 	}
