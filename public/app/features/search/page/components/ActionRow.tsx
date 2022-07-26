@@ -78,6 +78,7 @@ export const ActionRow: FC<Props> = ({
   return (
     <div className={styles.actionRow}>
       <HorizontalGroup spacing="md" width="auto">
+        <TagFilter isClearable={false} tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
         {layout !== SearchLayout.Folders && config.featureToggles.panelTitleSearch && (
           <Checkbox value={includePanels} onChange={() => setIncludePanels(!includePanels)} label="Include panels" />
         )}
@@ -91,7 +92,6 @@ export const ActionRow: FC<Props> = ({
             Datasource: {query.datasource}
           </Button>
         )}
-        <TagFilter isClearable={false} tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
       </HorizontalGroup>
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
