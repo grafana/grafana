@@ -40,7 +40,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgId}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 		if err != nil {
-			return response.Error(http.StatusBadRequest, "Invalide dashboard UID in the request", err)
+			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in the request", err)
 		}
 		query.DashboardId = dq.Id
 	}
