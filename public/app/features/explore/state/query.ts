@@ -218,8 +218,7 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
   return async (dispatch, getState) => {
     const queries = getState().explore[exploreId]!.queries;
-    const emptyQuery = await generateEmptyQuery(queries, index);
-    const query = { ...emptyQuery };
+    const query = await generateEmptyQuery(queries, index);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };

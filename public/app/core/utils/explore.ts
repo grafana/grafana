@@ -6,6 +6,7 @@ import {
   CoreApp,
   DataQuery,
   DataQueryRequest,
+  DataSourceApi,
   DataSourceRef,
   dateMath,
   DateTime,
@@ -246,9 +247,9 @@ export async function generateEmptyQuery(
   index = 0,
   dataSourceOverride?: DataSourceRef
 ): Promise<DataQuery> {
-  let datasourceFull;
-  let datasourceRef;
-  let defaultQuery;
+  let datasourceInstance: DataSourceApi | undefined;
+  let datasourceRef: DataSourceRef | null | undefined;
+  let defaultQuery: Partial<DataQuery> | undefined;
 
   // datasource override is if we have switched datasources with no carry-over - we want to create a new query with a datasource we define
   if (dataSourceOverride) {
@@ -258,14 +259,14 @@ export async function generateEmptyQuery(
     datasourceRef = queries[queries.length - 1].datasource;
   } else {
     // if neither exists, use the default datasource
-    datasourceFull = await getDataSourceSrv().get();
-    defaultQuery = datasourceFull.getDefaultQuery?.(CoreApp.Explore);
-    datasourceRef = datasourceFull.getRef();
+    datasourceInstance = await getDataSourceSrv().get();
+    defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
+    datasourceRef = datasourceInstance.getRef();
   }
 
-  if (!datasourceFull) {
-    datasourceFull = await getDataSourceSrv().get(datasourceRef);
-    defaultQuery = datasourceFull.getDefaultQuery?.(CoreApp.Explore);
+  if (!datasourceInstance) {
+    datasourceInstance = await getDataSourceSrv().get(datasourceRef);
+    defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
   }
 
   return { refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasourceRef, ...defaultQuery };
@@ -306,23 +307,13 @@ export async function ensureQueries(
     return allQueries;
   }
 
-  let emptyQueryDS = undefined;
+  try {
+    // if a datasourse override get its ref, otherwise get the default datasource
+    const emptyQueryRef = newQueryDataSourceOverride ?? (await getDataSourceSrv().get()).getRef();
 
-  // if a datasourse override is provided, get and return a query with that
-  if (newQueryDataSourceOverride) {
-    emptyQueryDS = newQueryDataSourceOverride;
-  } else {
-    // otherwise, get the default datasource
-    const defaultDatasource = await getDataSourceSrv().get();
-    if (defaultDatasource) {
-      emptyQueryDS = defaultDatasource.getRef();
-    }
-  }
-
-  if (emptyQueryDS) {
-    const emptyQuery = await generateEmptyQuery(queries ?? [], undefined, emptyQueryDS);
-    return [{ ...emptyQuery }];
-  } else {
+    const emptyQuery = await generateEmptyQuery(queries ?? [], undefined, emptyQueryRef);
+    return [emptyQuery];
+  } catch {
     // if there are no datasources, return an empty array because we will not allow use of explore
     // this will occur on init of explore with no datasources defined
     return [];
@@ -385,7 +376,7 @@ export function clearHistory(datasourceId: string) {
 
 export const getQueryKeys = (queries: DataQuery[]): string[] => {
   const queryKeys = queries.reduce<string[]>((newQueryKeys, query, index) => {
-    const primaryKey = query.datasource ? query.datasource.uid : query.key;
+    const primaryKey = query.datasource?.uid || query.key;
     return newQueryKeys.concat(`${primaryKey}-${index}`);
   }, []);
 

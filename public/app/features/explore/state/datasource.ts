@@ -45,12 +45,11 @@ export function changeDatasource(
     const { history, instance } = await loadAndInitDatasource(orgId, { uid: datasourceUid });
     const currentDataSourceInstance = getState().explore[exploreId]!.datasourceInstance;
 
-    if (instance.meta.mixed) {
-      reportInteraction('explore_change_ds_to_mixed');
-    } else if (currentDataSourceInstance?.meta.mixed) {
-      reportInteraction('explore_change_ds_from_mixed');
-    }
-
+    reportInteraction('explore_change_ds', {
+      from: (currentDataSourceInstance?.meta?.mixed ? 'mixed' : currentDataSourceInstance?.type) || 'unknown',
+      to: instance.meta.mixed ? 'mixed' : instance.type,
+      exploreId,
+    });
     dispatch(
       updateDatasourceInstanceAction({
         exploreId,
