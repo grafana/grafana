@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -53,6 +54,17 @@ type SQLStore struct {
 	skipEnsureDefaultOrgAndUser bool
 	migrations                  registry.DatabaseMigrator
 	tracer                      tracing.Tracer
+	metrics                     struct {
+		maxOpenConnections prometheus.Gauge
+		openConnections    prometheus.Gauge
+		inUse              prometheus.Gauge
+		idle               prometheus.Gauge
+		waitCount          prometheus.Counter
+		waitDuration       prometheus.Counter
+		maxIdleClosed      prometheus.Counter
+		maxIdleTimeClosed  prometheus.Counter
+		maxLifetimeClosed  prometheus.Counter
+	}
 }
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
@@ -73,6 +85,11 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 		return nil, err
 	}
 	s.tracer = tracer
+
+	s.initMetrics()
+
+	prometheus.MustRegister(s)
+
 	return s, nil
 }
 
@@ -423,6 +440,118 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
 	return nil
+}
+
+// initMetrics initializes the database connection metrics
+func (s *SQLStore) initMetrics() {
+	namespace := "grafana"
+	subsystem := "database"
+
+	s.metrics.maxOpenConnections = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "conn_max_open",
+		Help:      "Maximum number of open connections to the database",
+	})
+
+	s.metrics.openConnections = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "conn_open",
+		Help:      "The number of established connections both in use and idle",
+	})
+
+	s.metrics.inUse = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "conn_in_use",
+		Help:      "The number of connections currently in use",
+	})
+
+	s.metrics.idle = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "conn_idle",
+		Help:      "The number of idle connections",
+	})
+
+	s.metrics.waitCount = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "conn_wait_count_total",
+		Help:      "The total number of connections waited for",
+	})
+
+	s.metrics.waitDuration = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "conn_wait_duration_seconds",
+		Help:      "The total time blocked waiting for a new connection",
+	})
+
+	s.metrics.maxIdleClosed = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "conn_max_idle_closed_total",
+		Help:      "The total number of connections closed due to SetMaxIdleConns",
+	})
+
+	s.metrics.maxIdleTimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "conn_max_idle_closed_seconds",
+		Help:      "The total number of connections closed due to SetConnMaxIdleTime",
+	})
+
+	s.metrics.maxLifetimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "conn_max_lifetime_closed_total",
+		Help:      "The total number of connections closed due to SetConnMaxLifetime",
+	})
+}
+
+// collectDBStats instruments connections stats from the database.
+func (s *SQLStore) collectDBstats() {
+	dbstats := s.engine.DB().Stats()
+	s.metrics.maxOpenConnections.Set(float64(dbstats.MaxOpenConnections))
+	s.metrics.openConnections.Set(float64(dbstats.MaxOpenConnections))
+	s.metrics.inUse.Set(float64(dbstats.InUse))
+	s.metrics.idle.Set(float64(dbstats.Idle))
+
+	s.metrics.waitCount.Add(float64(dbstats.WaitCount))
+	s.metrics.waitDuration.Add(float64(dbstats.WaitDuration / time.Second))
+	s.metrics.maxIdleClosed.Add(float64(dbstats.MaxIdleClosed))
+	s.metrics.maxIdleTimeClosed.Add(float64(dbstats.MaxIdleTimeClosed))
+	s.metrics.maxLifetimeClosed.Add(float64(dbstats.MaxLifetimeClosed))
+}
+
+// Collect implements Prometheus.Collector.
+func (s *SQLStore) Collect(ch chan<- prometheus.Metric) {
+	s.collectDBstats()
+
+	s.metrics.maxOpenConnections.Collect(ch)
+	s.metrics.openConnections.Collect(ch)
+	s.metrics.inUse.Collect(ch)
+	s.metrics.idle.Collect(ch)
+	s.metrics.waitCount.Collect(ch)
+	s.metrics.waitDuration.Collect(ch)
+	s.metrics.maxIdleClosed.Collect(ch)
+	s.metrics.maxIdleTimeClosed.Collect(ch)
+	s.metrics.maxLifetimeClosed.Collect(ch)
+}
+
+// Describe implements Prometheus.Collector.
+func (s *SQLStore) Describe(ch chan<- *prometheus.Desc) {
+	s.metrics.maxOpenConnections.Describe(ch)
+	s.metrics.openConnections.Describe(ch)
+	s.metrics.inUse.Describe(ch)
+	s.metrics.idle.Describe(ch)
+	s.metrics.waitCount.Describe(ch)
+	s.metrics.waitDuration.Describe(ch)
+	s.metrics.maxIdleClosed.Describe(ch)
+	s.metrics.maxIdleTimeClosed.Describe(ch)
+	s.metrics.maxLifetimeClosed.Describe(ch)
 }
 
 // ITestDB is an interface of arguments for testing db
