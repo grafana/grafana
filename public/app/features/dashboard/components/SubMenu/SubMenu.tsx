@@ -52,7 +52,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
     return (
       <div className="submenu-controls">
         <form aria-label="Template variables" className={styles}>
-          <SubMenuItems variables={variables} />
+          <SubMenuItems variables={variables} readOnly={dashboard.meta.isSnapshot} />
         </form>
         <Annotations
           annotations={annotations}
