@@ -21,6 +21,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        width: 100%;
       }
 
       .rc-tree-treenode {
@@ -85,6 +86,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           vertical-align: top;
           cursor: grab;
           flex-grow: 1;
+          display: flex;
 
           border: 1px solid ${theme.v1.colors.formInputBorder};
           border-radius: ${theme.v1.border.radius.sm};
