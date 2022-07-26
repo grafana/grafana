@@ -40,14 +40,14 @@ jobs:
           push: true
           tags: |
             niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:latest
-            niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ jobs.generate_version_number.steps.generate_version_number_step.outputs.image_version }}
+            niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ needs.generate_version_number.outputs.image_version }}
 
   sign_docker_image:
     name: Sign Docker image
     uses: ni/workflows/.github/workflows/sign-container.yml@main
     needs: [build_docker_image]
     with:
-      image_tag: niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ jobs.generate_version_number.steps.generate_version_number_step.outputs.image_version }}
+      image_tag: niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ needs.generate_version_number.outputs.image_version }}
       signature_store_bucket: s3://signing-web-demo-bucket-1neyh347t53dt
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_VERIFY_DEV  }}
