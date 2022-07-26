@@ -23,8 +23,7 @@ import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { findField } from 'app/features/dimensions';
-import { getStyleDimension } from '../../utils/utils';
-import { getPublicGeoJSONFiles } from '../../utils/mapResources';
+import { getStyleDimension, getPublicGeoJSONFiles } from '../../utils/utils';
 
 export interface DynamicGeoJSONMapperConfig {
   // URL for a geojson file
