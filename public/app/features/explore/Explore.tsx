@@ -157,9 +157,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
   };
 
-  onClickAddQueryRowButton = async () => {
+  onClickAddQueryRowButton = () => {
     const { exploreId, queryKeys } = this.props;
-    await this.props.addQueryRow(exploreId, queryKeys.length);
+    this.props.addQueryRow(exploreId, queryKeys.length);
   };
 
   onMakeAbsoluteTime = () => {
