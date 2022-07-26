@@ -9,20 +9,23 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func newThumbnailRepo(store *sqlstore.SQLStore) thumbnailRepo {
+func newThumbnailRepo(store *sqlstore.SQLStore, search searchV2.SearchService) thumbnailRepo {
 	repo := &sqlThumbnailRepository{
-		store: store,
-		log:   log.New("thumbnails_repo"),
+		store:  store,
+		search: search,
+		log:    log.New("thumbnails_repo"),
 	}
 	return repo
 }
 
 type sqlThumbnailRepository struct {
-	store *sqlstore.SQLStore
-	log   log.Logger
+	store  *sqlstore.SQLStore
+	search searchV2.SearchService
+	log    log.Logger
 }
 
 func (r *sqlThumbnailRepository) saveFromFile(ctx context.Context, filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error) {
@@ -88,6 +91,7 @@ func (r *sqlThumbnailRepository) getThumbnail(ctx context.Context, meta models.D
 func (r *sqlThumbnailRepository) findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, kind models.ThumbnailKind) ([]*models.DashboardWithStaleThumbnail, error) {
 	return r.store.FindDashboardsWithStaleThumbnails(ctx, &models.FindDashboardsWithStaleThumbnailsCommand{
 		IncludeManuallyUploadedThumbnails: false,
+		IncludeThumbnailsWithEmptyDsUids:  !r.search.IsDisabled(),
 		Theme:                             theme,
 		Kind:                              kind,
 	})

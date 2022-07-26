@@ -124,6 +124,7 @@ type FindDashboardThumbnailCountCommand struct {
 
 type FindDashboardsWithStaleThumbnailsCommand struct {
 	IncludeManuallyUploadedThumbnails bool
+	IncludeThumbnailsWithEmptyDsUids  bool
 	Theme                             Theme
 	Kind                              ThumbnailKind
 	Result                            []*DashboardWithStaleThumbnail

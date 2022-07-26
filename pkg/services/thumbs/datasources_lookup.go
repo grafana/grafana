@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 )
 
@@ -14,9 +16,10 @@ type getDatasourceUidsForDashboard func(ctx context.Context, dashboardUid string
 type dsUidsLookup struct {
 	searchService searchV2.SearchService
 	crawlerAuth   CrawlerAuth
+	features      featuremgmt.FeatureToggles
 }
 
-func getDatasourceUIDs(resp *backend.DataResponse) ([]string, error) {
+func getDatasourceUIDs(resp *backend.DataResponse, uid string) ([]string, error) {
 	if resp == nil {
 		return nil, errors.New("nil response")
 	}
@@ -33,12 +36,12 @@ func getDatasourceUIDs(resp *backend.DataResponse) ([]string, error) {
 	field, idx := frame.FieldByName("ds_uid")
 
 	if field.Len() == 0 || idx == -1 {
-		return nil, errors.New("no ds_uid field")
+		return nil, fmt.Errorf("no ds_uid field for uid %s", uid)
 	}
 
-	rawValue, ok := field.At(0).(*json.RawMessage)
+	rawValue, ok := field.At(0).(json.RawMessage)
 	if !ok || rawValue == nil {
-		return nil, errors.New("invalid value in ds_uid field")
+		return nil, fmt.Errorf("invalid value for uid %s in ds_uid field: %s", uid, field.At(0))
 	}
 
 	jsonValue, err := rawValue.MarshalJSON()
@@ -56,6 +59,10 @@ func getDatasourceUIDs(resp *backend.DataResponse) ([]string, error) {
 }
 
 func (d *dsUidsLookup) getDatasourceUidsForDashboard(ctx context.Context, dashboardUid string, orgId int64) ([]string, error) {
+	if d.searchService.IsDisabled() {
+		return nil, nil
+	}
+
 	dashQueryResponse := d.searchService.DoDashboardQuery(ctx, &backend.User{
 		Login: d.crawlerAuth.GetLogin(orgId),
 		Role:  string(d.crawlerAuth.GetOrgRole()),
@@ -63,5 +70,5 @@ func (d *dsUidsLookup) getDatasourceUidsForDashboard(ctx context.Context, dashbo
 		UIDs: []string{dashboardUid},
 	})
 
-	return getDatasourceUIDs(dashQueryResponse)
+	return getDatasourceUIDs(dashQueryResponse, dashboardUid)
 }
