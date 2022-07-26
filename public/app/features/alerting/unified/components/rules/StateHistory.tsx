@@ -4,7 +4,7 @@ import React, { FC, FormEvent, useCallback, useState } from 'react';
 
 import { AlertState, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { StateHistoryItemData } from 'app/types/unified-alerting';
+import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useManagedAlertStateHistory } from '../../hooks/useManagedAlertStateHistory';
@@ -54,29 +54,8 @@ const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
     { id: 'timestamp', label: 'Time', size: 'max-content', renderCell: renderTimestampCell },
   ];
 
-  const items: StateHistoryRowItem[] = result.reduce((acc: StateHistoryRowItem[], item) => {
-    // let's grab the last matching set of `{<string>}` since the alert name could also contain { or }
-    const LABELS_REGEX = /{.*?}/g;
-    const stringifiedLabels = item.text.match(LABELS_REGEX)?.at(-1) ?? '';
-
-    acc.push({
-      id: String(item.id),
-      state: item.newState,
-      // let's omit the labels for each entry since it's just added noise to each state history item
-      text: item.text.replace(stringifiedLabels, ''),
-      data: item.data,
-      timestamp: item.updated,
-      stringifiedLabels,
-    });
-
-    return acc;
-  }, []);
-
-  // we have to group our state history items by their unique combination of tags since we want to display a DynamicTable for each alert instance
-  // (effectively unique combination of labels)
-  const groupedItems: StateHistoryMap = groupBy(items, (item) => item.stringifiedLabels);
-
-  const tables = Object.entries(groupedItems)
+  // group the state history list by unique set of labels
+  const tables = Object.entries(groupStateByLabels(result))
     // sort and filter each table
     .sort()
     .filter(([groupKey]) => matchKey(groupKey, textFilter))
@@ -118,18 +97,38 @@ const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
             </Label>
           }
         >
-          <Input
-            prefix={<Icon name={'search'} />}
-            onChange={handleTextFilter}
-            placeholder="Search"
-            data-testid="search-query-input"
-          />
+          <Input prefix={<Icon name={'search'} />} onChange={handleTextFilter} placeholder="Search" />
         </Field>
       </nav>
       {tables}
     </div>
   );
 };
+
+// group state history by labels
+export function groupStateByLabels(
+  history: Array<Pick<StateHistoryItem, 'id' | 'newState' | 'text' | 'data' | 'updated'>>
+): StateHistoryMap {
+  const items: StateHistoryRowItem[] = history.map((item) => {
+    // let's grab the last matching set of `{<string>}` since the alert name could also contain { or }
+    const LABELS_REGEX = /{.*?}/g;
+    const stringifiedLabels = item.text.match(LABELS_REGEX)?.at(-1) ?? '';
+
+    return {
+      id: String(item.id),
+      state: item.newState,
+      // let's omit the labels for each entry since it's just added noise to each state history item
+      text: item.text.replace(stringifiedLabels, ''),
+      data: item.data,
+      timestamp: item.updated,
+      stringifiedLabels,
+    };
+  });
+
+  // we have to group our state history items by their unique combination of tags since we want to display a DynamicTable for each alert instance
+  // (effectively unique combination of labels)
+  return groupBy(items, (item) => item.stringifiedLabels);
+}
 
 // match a string either by exact text match or with regular expression when in the form of "/<regex>/"
 export function matchKey(groupKey: string, textFilter: string) {
