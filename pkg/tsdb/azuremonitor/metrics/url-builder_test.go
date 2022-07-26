@@ -22,7 +22,7 @@ func TestURLBuilder(t *testing.T) {
 				ResourceURI:         "/subscriptions/sub/resource/uri",
 				DefaultSubscription: "default-sub",
 				ResourceGroup:       "rg",
-				MetricDefinition:    "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+				MetricNamespace:     "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
 				ResourceName:        "rn1/rn2/rn3",
 			}
 
@@ -35,7 +35,7 @@ func TestURLBuilder(t *testing.T) {
 				ub := &urlBuilder{
 					DefaultSubscription: "default-sub",
 					ResourceGroup:       "rg",
-					MetricDefinition:    "Microsoft.Compute/virtualMachines",
+					MetricNamespace:     "Microsoft.Compute/virtualMachines",
 					ResourceName:        "rn",
 				}
 
@@ -48,7 +48,7 @@ func TestURLBuilder(t *testing.T) {
 					DefaultSubscription: "default-sub",
 					Subscription:        "specified-sub",
 					ResourceGroup:       "rg",
-					MetricDefinition:    "Microsoft.Compute/virtualMachines",
+					MetricNamespace:     "Microsoft.Compute/virtualMachines",
 					ResourceName:        "rn",
 				}
 
@@ -60,7 +60,7 @@ func TestURLBuilder(t *testing.T) {
 				ub := &urlBuilder{
 					DefaultSubscription: "default-sub",
 					ResourceGroup:       "rg",
-					MetricDefinition:    "Microsoft.Storage/storageAccounts/blobServices",
+					MetricNamespace:     "Microsoft.Storage/storageAccounts/blobServices",
 					ResourceName:        "rn1/default",
 				}
 
@@ -72,7 +72,7 @@ func TestURLBuilder(t *testing.T) {
 				ub := &urlBuilder{
 					DefaultSubscription: "default-sub",
 					ResourceGroup:       "rg",
-					MetricDefinition:    "Microsoft.Storage/storageAccounts/fileServices",
+					MetricNamespace:     "Microsoft.Storage/storageAccounts/fileServices",
 					ResourceName:        "rn1/default",
 				}
 
@@ -84,7 +84,7 @@ func TestURLBuilder(t *testing.T) {
 				ub := &urlBuilder{
 					DefaultSubscription: "default-sub",
 					ResourceGroup:       "rg",
-					MetricDefinition:    "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+					MetricNamespace:     "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
 					ResourceName:        "rn1/rn2/rn3",
 				}
 
