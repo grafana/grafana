@@ -99,7 +99,7 @@ func TestMergeUser(t *testing.T) {
 			t.Logf("testing getting user")
 			query := &models.GetUserByIdQuery{Id: userWithUpperCase.ID}
 			err = sqlStore.GetUserById(context.Background(), query)
-			require.Error(t, user.ErrUserNotFound, err)
+			require.Error(t, models.ErrUserNotFound, err)
 
 			testUser := &models.SignedInUser{
 				OrgId: testOrgID,
