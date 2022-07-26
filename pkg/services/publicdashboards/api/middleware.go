@@ -25,7 +25,7 @@ func RequiresValidAccessToken(publicDashboardService publicdashboards.Service) f
 		}
 
 		// Check that the access token references an enabled public dashboard
-		exists, err := publicDashboardService.PublicDashboardAccessTokenExists(context.Background(), accessToken)
+		exists, err := publicDashboardService.PublicDashboardAccessTokenExists(c.Req.Context(), accessToken)
 
 		if err != nil {
 			c.JsonApiErr(500, "Error verifying access token", nil)
