@@ -169,8 +169,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
         query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
         statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-        against this we
-        <strong>Highly</strong> recommmend you create a specific MySQL user with restricted permissions. Checkout the{' '}
+        against this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted permissions.
+        Checkout the{' '}
         <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/mysql/">
           MySQL Data Source Docs
         </Link>

@@ -1,7 +1,6 @@
 import {
   MapLayerRegistryItem,
   MapLayerOptions,
-  PanelData,
   GrafanaTheme2,
   PluginState,
   EventBus,
@@ -23,7 +22,7 @@ import { StyleEditor } from '../../editor/StyleEditor';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
-import { getPublicGeoJSONFiles } from '../../utils/mapResources';
+import { getPublicGeoJSONFiles } from '../../utils/utils';
 
 export interface GeoJSONMapperConfig {
   // URL for a geojson file

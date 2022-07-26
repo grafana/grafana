@@ -13,7 +13,6 @@ import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
 import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 
-
 import { StyleConfigState } from '../style/types';
 import { MapLayerState } from '../types';
 
@@ -51,7 +50,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
     return <></>;
   }
 
-  const { color, opacity} = styleConfig?.base ?? {};
+  const { color, opacity } = styleConfig?.base ?? {};
   const symbol = styleConfig?.config.symbol?.fixed;
 
   if (color && symbol && !colorField) {
@@ -67,7 +66,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
           />
         </div>
       </div>
-    )
+    );
   }
 
   if (!colorField) {
@@ -90,12 +89,21 @@ export function MarkersLegend(props: MarkersLegendProps) {
     //   ]
     // })
 
-    const display = colorField.display ? (v: number) => formattedValueToString(colorField.display!(v)) : (v: number) => `${v}`;
+    const display = colorField.display
+      ? (v: number) => formattedValueToString(colorField.display!(v))
+      : (v: number) => `${v}`;
     return (
       <div className={style.infoWrap}>
         <div className={style.layerName}>{layerName}</div>
         <div className={cx(style.layerBody, style.colorScaleWrapper)}>
-          <ColorScale hoverValue={hoverValue} colorPalette={colors} min={colorRange.min as number} max={colorRange.max as number} display={display} useStopsPercentage={false}/>
+          <ColorScale
+            hoverValue={hoverValue}
+            colorPalette={colors}
+            min={colorRange.min as number}
+            max={colorRange.max as number}
+            display={display}
+            useStopsPercentage={false}
+          />
         </div>
       </div>
     );
