@@ -97,9 +97,9 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           add: jest.fn(),
           execute: jest.fn(),
           transports: [],
+          pause: jest.fn(),
+          unpause: jest.fn(),
         },
-        pause: jest.fn(),
-        resume: jest.fn(),
       };
     };
     jest.mocked(initializeAgent).mockImplementation(mockedAgent);
@@ -153,6 +153,8 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           add: jest.fn(),
           execute: jest.fn(),
           transports: [],
+          pause: jest.fn(),
+          unpause: jest.fn(),
         },
       };
     };
