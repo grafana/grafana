@@ -67,7 +67,7 @@ services:
     logging: *default-logging
 
   tempo:
-    image: grafana/tempo:main-aa19e23-arm64
+    image: grafana/tempo:latest
     command: 
       - --config.file=/etc/tempo.yaml
       - --search.enabled=true
