@@ -257,7 +257,7 @@ spec:
 1. Send manifest to Kubernetes API Server
    `kubectl apply -f grafana.yaml`
 
-2. Check that it worked by running the following:
+1. Check that it worked by running the following:
    `kubectl port-forward service/grafana 3000:3000`
 
 3. Navigate to `localhost:3000` in your browser. You should see the Grafana login page.
