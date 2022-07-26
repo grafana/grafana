@@ -371,28 +371,6 @@ func TestUserAuth(t *testing.T) {
 			require.Nil(t, user)
 		})
 
-		t.Run("should be able to run loginstats query in all dbs", func(t *testing.T) {
-			// we need to see that we can run queries for all db
-			// as it is only a concern for postgres/sqllite3
-			// where we have duplicate users
-
-			// Restore after destructive operation
-			sqlStore = sqlstore.InitTestDB(t)
-			for i := 0; i < 5; i++ {
-				cmd := user.CreateUserCommand{
-					Email: fmt.Sprint("user", i, "@test.com"),
-					Name:  fmt.Sprint("user", i),
-					Login: fmt.Sprint("loginuser", i),
-					OrgID: 1,
-				}
-				_, err := sqlStore.CreateUser(context.Background(), cmd)
-				require.Nil(t, err)
-			}
-
-			_, err := srv.authInfoStore.GetLoginStats(context.Background())
-			require.Nil(t, err)
-		})
-
 		t.Run("calculate metrics on duplicate userstats", func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore = sqlstore.InitTestDB(t)
@@ -426,14 +404,11 @@ func TestUserAuth(t *testing.T) {
 				}
 				_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
 				require.NoError(t, err)
-
-				// require stats to populate
+				// require metrics and statistics to be 2
 				m, err := srv.authInfoStore.CollectLoginStats(context.Background())
 				require.NoError(t, err)
 				require.Equal(t, 2, m["stats.users.duplicate_user_entries"])
 				require.Equal(t, 1, m["stats.users.has_duplicate_user_entries"])
-
-				require.Equal(t, 1, m["stats.users.mixed_cased_users"])
 			}
 		})
 	})
