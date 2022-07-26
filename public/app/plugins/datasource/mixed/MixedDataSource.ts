@@ -101,8 +101,8 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   getQueryDisplayText(query: DataQuery) {
     const strippedQuery = omit(query, ['key', 'refId', 'datasource']);
     const strippedQueryJSON = JSON.stringify(strippedQuery);
-    const prefix = query.datasource?.type ? query.datasource?.type : undefined;
-    return `${prefix ? prefix + ': ' : ''}${strippedQueryJSON}`;
+    const prefix = query.datasource?.type ? `${query.datasource?.type}: ` : '';
+    return `${prefix}${strippedQueryJSON}`;
   }
 
   private isQueryable(query: BatchedQueries): boolean {
