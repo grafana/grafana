@@ -12,21 +12,20 @@ export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
   children: React.ReactElement;
-  /** Defaults to click */
-  trigger?: Array<'click' | 'hover'>;
 }
 
-export const Dropdown = React.memo(({ children, overlay, placement, trigger = ['click'] }: Props) => {
+export const Dropdown = React.memo(({ children, overlay, placement }: Props) => {
   const [show, setShow] = useState(false);
+
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible } = usePopperTooltip({
     visible: show,
     placement: placement,
     onVisibleChange: setShow,
     interactive: true,
-    delayHide: 200,
-    delayShow: 150,
+    delayHide: 0,
+    delayShow: 0,
     offset: [0, 8],
-    trigger: trigger,
+    trigger: ['click'],
   });
 
   const animationDuration = 150;

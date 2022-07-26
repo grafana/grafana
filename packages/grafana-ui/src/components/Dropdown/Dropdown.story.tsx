@@ -3,7 +3,7 @@ import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Button, ButtonGroup } from '../Button';
+import { Button } from '../Button';
 import { VerticalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
@@ -47,16 +47,15 @@ export function Examples() {
           <Button variant="secondary" icon="bars" />
         </Dropdown>
       </StoryExample>
-      <StoryExample name="Trigger hover">
-        <ButtonGroup>
-          <Button>Submit</Button>
-          <Dropdown overlay={menu} placement="bottom-end" trigger={['hover']}>
-            <Button icon="ellipsis-v" />
-          </Dropdown>
-        </ButtonGroup>
-      </StoryExample>
     </VerticalGroup>
   );
 }
+
+Examples.parameters = {
+  controls: {
+    hideNoControlsWarning: true,
+    include: [],
+  },
+};
 
 export default meta;
