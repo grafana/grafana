@@ -10638,7 +10638,7 @@
         }
       }
     },
-    "CreateCorrelationResponse": {
+    "CreateCorrelationResponseBody": {
       "description": "CreateCorrelationResponse is the response struct for CreateCorrelationCommand",
       "type": "object",
       "properties": {
@@ -17709,6 +17709,12 @@
         }
       }
     },
+    "createCorrelationResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CreateCorrelationResponseBody"
+      }
+    },
     "createDashboardSnapshotResponse": {
       "description": "(empty)",
       "schema": {
@@ -17734,12 +17740,6 @@
             "type": "string"
           }
         }
-      }
-    },
-    "createCorrelationResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/CreateCorrelationResponse"
       }
     },
     "createOrUpdateDatasourceResponse": {
