@@ -157,6 +157,11 @@ func (ss *SQLStore) Quote(value string) string {
 	return ss.engine.Quote(value)
 }
 
+// GetDialect return the dialect
+func (ss *SQLStore) GetDialect() migrator.Dialect {
+	return ss.Dialect
+}
+
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
