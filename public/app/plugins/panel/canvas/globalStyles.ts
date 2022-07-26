@@ -25,22 +25,15 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
 
       .rc-tree-treenode {
         margin: 0;
-        padding: 5px;
+        padding: 1px;
         line-height: 24px;
         white-space: nowrap;
         list-style: none;
         outline: 0;
 
-        border-radius: ${theme.v1.border.radius.sm};
-        background: ${theme.v1.colors.bg2};
-        min-height: ${theme.v1.spacing.formInputHeight}px;
         display: flex;
         margin-bottom: 3px;
         cursor: pointer;
-        border: 1px solid ${theme.v1.colors.formInputBorder};
-        &:hover {
-          border: 1px solid ${theme.v1.colors.formInputBorderHover};
-        }
 
         .draggable {
           color: #333;
@@ -53,14 +46,6 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           // -webkit-user-drag: element;
         }
 
-        &:hover {
-          background-color: ${theme.colors.background.secondary};
-        }
-
-        &.dragging {
-          background: rgba(100, 100, 255, 0.1);
-        }
-
         &.drop-container {
           > .draggable::after {
             position: absolute;
@@ -68,7 +53,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             right: 0;
             bottom: 0;
             left: 0;
-            box-shadow: inset 0 0 0 2px red;
+            box-shadow: inset 0 0 0 2px blue;
             content: '';
           }
           & ~ .rc-tree-treenode {
@@ -76,7 +61,6 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           }
         }
         &.drop-target {
-          border: 1px solid ${theme.colors.border.strong};
           & ~ .rc-tree-treenode {
             border-left: none;
           }
@@ -101,10 +85,20 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           vertical-align: top;
           cursor: grab;
           flex-grow: 1;
-        }
 
-        .rc-tree-node-selected {
-          opacity: 1;
+          border: 1px solid ${theme.v1.colors.formInputBorder};
+          border-radius: ${theme.v1.border.radius.sm};
+          background: ${theme.v1.colors.bg2};
+          min-height: ${theme.v1.spacing.formInputHeight}px;
+
+          &:hover {
+            border: 1px solid ${theme.v1.colors.formInputBorderHover};
+          }
+
+          &.rc-tree-node-selected {
+            border: 1px solid ${theme.v1.colors.formInputBorderActive};
+            opacity: 1;
+          }
         }
 
         span {

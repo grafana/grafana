@@ -26,6 +26,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
 
   const theme = useTheme2();
   const globalCSS = getGlobalStyles(theme);
@@ -37,10 +38,16 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     [settings?.selected]
   );
 
+  const selectionByUID = useMemo(
+    () => (settings?.selected ? settings.selected.map((v) => v.UID) : []),
+    [settings?.selected]
+  );
+
   useEffect(() => {
     setTreeData(getTreeData(item?.settings?.scene.root, selection, selectedBgColor));
+    setSelectedKeys(selectionByUID);
     setAllowSelection();
-  }, [item?.settings?.scene.root, selectedBgColor, selection]);
+  }, [item?.settings?.scene.root, selectedBgColor, selection, selectionByUID]);
 
   if (!settings) {
     return <div>No settings</div>;
@@ -143,14 +150,18 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         treeData={treeData}
         titleRender={onTitleRender}
         switcherIcon={switcherIcon}
+        selectedKeys={selectedKeys}
+        multiple={true}
       />
 
       <HorizontalGroup>
-        <AddLayerButton
-          onChange={onAddItem}
-          options={canvasElementRegistry.selectOptions().options}
-          label={'Add item'}
-        />
+        <div style={{ marginLeft: '18px' }}>
+          <AddLayerButton
+            onChange={onAddItem}
+            options={canvasElementRegistry.selectOptions().options}
+            label={'Add item'}
+          />
+        </div>
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>
             Clear selection
