@@ -17,12 +17,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -390,4 +393,99 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 	}
 
 	return backend.NewQueryDataResponse(), nil
+}
+
+func Test_PluginsList_AccessControl(t *testing.T) {
+	pluginStore := fakePluginStore{plugins: map[string]plugins.PluginDTO{
+		"test-app": {
+			PluginDir:     "/grafana/plugins/test-app/dist",
+			Class:         "external",
+			DefaultNavURL: "/plugins/test-app/page/test",
+			Pinned:        false,
+			Signature:     "unsigned",
+			Module:        "plugins/test-app/module",
+			BaseURL:       "public/plugins/test-app",
+			JSONData: plugins.JSONData{
+				ID:   "test-app",
+				Type: "app",
+				Name: "test-app",
+				Info: plugins.Info{
+					Version: "1.0.0",
+				},
+			},
+		},
+		"mysql": {
+			PluginDir: "/grafana/public/app/plugins/datasource/mysql",
+			Class:     "core",
+			Pinned:    false,
+			Signature: "internal",
+			Module:    "app/plugins/datasource/mysql/module",
+			BaseURL:   "public/app/plugins/datasource/mysql",
+			JSONData: plugins.JSONData{
+				ID:   "mysql",
+				Type: "datasource",
+				Name: "MySQL",
+				Info: plugins.Info{
+					Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
+					Description: "Data source for MySQL databases",
+				},
+			},
+		},
+	}}
+	pluginSettings := fakePluginSettings{plugins: map[string]*pluginsettings.DTO{
+		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
+		"mysql":    {ID: 0, OrgID: 1, PluginID: "mysql", PluginVersion: "", Enabled: true}},
+	}
+
+	type testCase struct {
+		expectedCode    int
+		role            models.RoleType
+		isGrafanaAdmin  bool
+		expectedPlugins []string
+		filters         map[string]string
+	}
+	tcs := []testCase{
+		{expectedCode: http.StatusOK, role: models.ROLE_VIEWER, expectedPlugins: []string{"mysql"}},
+		{expectedCode: http.StatusOK, role: models.ROLE_VIEWER, isGrafanaAdmin: true, expectedPlugins: []string{"mysql", "test-app"}},
+		{expectedCode: http.StatusOK, role: models.ROLE_ADMIN, expectedPlugins: []string{"mysql", "test-app"}},
+	}
+
+	testName := func(tc testCase) string {
+		return fmt.Sprintf("List request returns %d when role: %s, isGrafanaAdmin: %t, filters: %v",
+			tc.expectedCode, tc.role, tc.isGrafanaAdmin, tc.filters)
+	}
+
+	testUser := func(role models.RoleType, isGrafanaAdmin bool) models.SignedInUser {
+		return models.SignedInUser{
+			UserId:         2,
+			OrgId:          2,
+			OrgName:        "TestOrg2",
+			OrgRole:        role,
+			Login:          "testUser",
+			Name:           "testUser",
+			Email:          "testUser@example.org",
+			OrgCount:       1,
+			IsGrafanaAdmin: isGrafanaAdmin,
+			IsAnonymous:    false,
+		}
+	}
+
+	for _, tc := range tcs {
+		sc := setupHTTPServer(t, true, true)
+		sc.hs.PluginSettings = &pluginSettings
+		sc.hs.pluginStore = pluginStore
+		sc.hs.pluginsUpdateChecker = updatechecker.ProvidePluginsService(sc.hs.Cfg, pluginStore)
+		setInitCtxSignedInUser(sc.initCtx, testUser(tc.role, tc.isGrafanaAdmin))
+
+		t.Run(testName(tc), func(t *testing.T) {
+			response := callAPI(sc.server, http.MethodGet, "/api/plugins/", nil, t)
+			require.Equal(t, tc.expectedCode, response.Code)
+
+			var res dtos.PluginList
+			err := json.NewDecoder(response.Body).Decode(&res)
+			require.NoError(t, err)
+
+			require.Len(t, res, len(tc.expectedPlugins))
+		})
+	}
 }
