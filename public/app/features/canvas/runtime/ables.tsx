@@ -4,6 +4,40 @@ import { HorizontalConstraint, VerticalConstraint } from '../types';
 
 import { Scene } from './scene';
 
+export const settingsViewable = {
+  name: 'settingsViewable',
+  props: {},
+  events: {},
+  render(moveable: MoveableManagerInterface<any, any>, React: Renderer) {
+    const rect = moveable.getRect();
+    return (
+      <div
+        key={'settings-viewable'}
+        className={'moveable-settings'}
+        style={{
+          position: 'absolute',
+          left: `${rect.width + 18}px`,
+          top: '0px',
+          color: 'white',
+          fontSize: '18px',
+          cursor: 'pointer',
+          userSelect: 'none',
+          willChange: 'transform',
+          transform: 'translate(-50%, 0px)',
+          zIndex: 100,
+        }}
+        onClick={() => {
+          console.log('settingsViewable');
+        }}
+      >
+        {``}
+        ⚙️
+        {``}
+      </div>
+    );
+  },
+};
+
 export const dimensionViewable = {
   name: 'dimensionViewable',
   props: {},
