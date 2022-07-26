@@ -443,67 +443,67 @@ func (ss *SQLStore) readConfig() error {
 }
 
 // initMetrics initializes the database connection metrics
-func (s *SQLStore) initMetrics() {
+func (ss *SQLStore) initMetrics() {
 	namespace := "grafana"
 	subsystem := "database"
 
-	s.metrics.maxOpenConnections = prometheus.NewGauge(prometheus.GaugeOpts{
+	ss.metrics.maxOpenConnections = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "conn_max_open",
 		Help:      "Maximum number of open connections to the database",
 	})
 
-	s.metrics.openConnections = prometheus.NewGauge(prometheus.GaugeOpts{
+	ss.metrics.openConnections = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "conn_open",
 		Help:      "The number of established connections both in use and idle",
 	})
 
-	s.metrics.inUse = prometheus.NewGauge(prometheus.GaugeOpts{
+	ss.metrics.inUse = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "conn_in_use",
 		Help:      "The number of connections currently in use",
 	})
 
-	s.metrics.idle = prometheus.NewGauge(prometheus.GaugeOpts{
+	ss.metrics.idle = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "conn_idle",
 		Help:      "The number of idle connections",
 	})
 
-	s.metrics.waitCount = prometheus.NewCounter(prometheus.CounterOpts{
+	ss.metrics.waitCount = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "conn_wait_count_total",
 		Help:      "The total number of connections waited for",
 	})
 
-	s.metrics.waitDuration = prometheus.NewCounter(prometheus.CounterOpts{
+	ss.metrics.waitDuration = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "conn_wait_duration_seconds",
 		Help:      "The total time blocked waiting for a new connection",
 	})
 
-	s.metrics.maxIdleClosed = prometheus.NewCounter(prometheus.CounterOpts{
+	ss.metrics.maxIdleClosed = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "conn_max_idle_closed_total",
 		Help:      "The total number of connections closed due to SetMaxIdleConns",
 	})
 
-	s.metrics.maxIdleTimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
+	ss.metrics.maxIdleTimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "conn_max_idle_closed_seconds",
 		Help:      "The total number of connections closed due to SetConnMaxIdleTime",
 	})
 
-	s.metrics.maxLifetimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
+	ss.metrics.maxLifetimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "conn_max_lifetime_closed_total",
@@ -512,46 +512,46 @@ func (s *SQLStore) initMetrics() {
 }
 
 // collectDBStats instruments connections stats from the database.
-func (s *SQLStore) collectDBstats() {
-	dbstats := s.engine.DB().Stats()
-	s.metrics.maxOpenConnections.Set(float64(dbstats.MaxOpenConnections))
-	s.metrics.openConnections.Set(float64(dbstats.MaxOpenConnections))
-	s.metrics.inUse.Set(float64(dbstats.InUse))
-	s.metrics.idle.Set(float64(dbstats.Idle))
+func (ss *SQLStore) collectDBstats() {
+	dbstats := ss.engine.DB().Stats()
+	ss.metrics.maxOpenConnections.Set(float64(dbstats.MaxOpenConnections))
+	ss.metrics.openConnections.Set(float64(dbstats.MaxOpenConnections))
+	ss.metrics.inUse.Set(float64(dbstats.InUse))
+	ss.metrics.idle.Set(float64(dbstats.Idle))
 
-	s.metrics.waitCount.Add(float64(dbstats.WaitCount))
-	s.metrics.waitDuration.Add(float64(dbstats.WaitDuration / time.Second))
-	s.metrics.maxIdleClosed.Add(float64(dbstats.MaxIdleClosed))
-	s.metrics.maxIdleTimeClosed.Add(float64(dbstats.MaxIdleTimeClosed))
-	s.metrics.maxLifetimeClosed.Add(float64(dbstats.MaxLifetimeClosed))
+	ss.metrics.waitCount.Add(float64(dbstats.WaitCount))
+	ss.metrics.waitDuration.Add(float64(dbstats.WaitDuration / time.Second))
+	ss.metrics.maxIdleClosed.Add(float64(dbstats.MaxIdleClosed))
+	ss.metrics.maxIdleTimeClosed.Add(float64(dbstats.MaxIdleTimeClosed))
+	ss.metrics.maxLifetimeClosed.Add(float64(dbstats.MaxLifetimeClosed))
 }
 
 // Collect implements Prometheus.Collector.
-func (s *SQLStore) Collect(ch chan<- prometheus.Metric) {
-	s.collectDBstats()
+func (ss *SQLStore) Collect(ch chan<- prometheus.Metric) {
+	ss.collectDBstats()
 
-	s.metrics.maxOpenConnections.Collect(ch)
-	s.metrics.openConnections.Collect(ch)
-	s.metrics.inUse.Collect(ch)
-	s.metrics.idle.Collect(ch)
-	s.metrics.waitCount.Collect(ch)
-	s.metrics.waitDuration.Collect(ch)
-	s.metrics.maxIdleClosed.Collect(ch)
-	s.metrics.maxIdleTimeClosed.Collect(ch)
-	s.metrics.maxLifetimeClosed.Collect(ch)
+	ss.metrics.maxOpenConnections.Collect(ch)
+	ss.metrics.openConnections.Collect(ch)
+	ss.metrics.inUse.Collect(ch)
+	ss.metrics.idle.Collect(ch)
+	ss.metrics.waitCount.Collect(ch)
+	ss.metrics.waitDuration.Collect(ch)
+	ss.metrics.maxIdleClosed.Collect(ch)
+	ss.metrics.maxIdleTimeClosed.Collect(ch)
+	ss.metrics.maxLifetimeClosed.Collect(ch)
 }
 
 // Describe implements Prometheus.Collector.
-func (s *SQLStore) Describe(ch chan<- *prometheus.Desc) {
-	s.metrics.maxOpenConnections.Describe(ch)
-	s.metrics.openConnections.Describe(ch)
-	s.metrics.inUse.Describe(ch)
-	s.metrics.idle.Describe(ch)
-	s.metrics.waitCount.Describe(ch)
-	s.metrics.waitDuration.Describe(ch)
-	s.metrics.maxIdleClosed.Describe(ch)
-	s.metrics.maxIdleTimeClosed.Describe(ch)
-	s.metrics.maxLifetimeClosed.Describe(ch)
+func (ss *SQLStore) Describe(ch chan<- *prometheus.Desc) {
+	ss.metrics.maxOpenConnections.Describe(ch)
+	ss.metrics.openConnections.Describe(ch)
+	ss.metrics.inUse.Describe(ch)
+	ss.metrics.idle.Describe(ch)
+	ss.metrics.waitCount.Describe(ch)
+	ss.metrics.waitDuration.Describe(ch)
+	ss.metrics.maxIdleClosed.Describe(ch)
+	ss.metrics.maxIdleTimeClosed.Describe(ch)
+	ss.metrics.maxLifetimeClosed.Describe(ch)
 }
 
 // ITestDB is an interface of arguments for testing db
