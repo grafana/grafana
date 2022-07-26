@@ -57,7 +57,7 @@ func Logger(cfg *setting.Cfg) web.Handler {
 				"time_ms", int64(timeTaken),
 				"duration", duration,
 				"size", rw.Size(),
-				"referer", sanitizeURL(ctx, req.Referer()),
+				"referer", SanitizeURL(ctx, req.Referer()),
 			}
 
 			traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
@@ -78,7 +78,7 @@ var sensitiveQueryStrings = [...]string{
 	"auth_token",
 }
 
-func sanitizeURL(ctx *models.ReqContext, s string) string {
+func SanitizeURL(ctx *models.ReqContext, s string) string {
 	if s == "" {
 		return s
 	}
