@@ -486,6 +486,9 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Len(t, res, len(tc.expectedPlugins))
+			for _, plugin := range res {
+				require.Contains(t, tc.expectedPlugins, plugin.Id)
+			}
 		})
 	}
 }
