@@ -13068,6 +13068,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "connectionUid": {
+          "type": "string"
+        },
         "created": {
           "type": "string",
           "format": "date-time"

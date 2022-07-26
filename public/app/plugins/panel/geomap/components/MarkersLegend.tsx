@@ -1,18 +1,20 @@
-import React, { useMemo } from 'react';
-import { useStyles2, VizLegendItem } from '@grafana/ui';
-import { DataFrame, formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import BaseLayer from 'ol/layer/Base';
+import React, { useMemo } from 'react';
+import SVG from 'react-inlinesvg';
+import { useObservable } from 'react-use';
+import { of } from 'rxjs';
+
+import { DataFrame, formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
+import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
+import { useStyles2, VizLegendItem } from '@grafana/ui';
+import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
 import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
-import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
-import SVG from 'react-inlinesvg';
-import { StyleConfigState } from '../../style/types';
-import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { useObservable } from 'react-use';
-import { of } from 'rxjs';
-import BaseLayer from 'ol/layer/Base';
-import { MapLayerState } from '../../types';
+
+import { StyleConfigState } from '../style/types';
+import { MapLayerState } from '../types';
 
 export interface MarkersLegendProps {
   size?: DimensionSupplier<number>;
@@ -48,7 +50,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
     return <></>;
   }
 
-  const { color, opacity} = styleConfig?.base ?? {};
+  const { color, opacity } = styleConfig?.base ?? {};
   const symbol = styleConfig?.config.symbol?.fixed;
 
   if (color && symbol && !colorField) {
@@ -64,7 +66,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
           />
         </div>
       </div>
-    )
+    );
   }
 
   if (!colorField) {
@@ -87,12 +89,21 @@ export function MarkersLegend(props: MarkersLegendProps) {
     //   ]
     // })
 
-    const display = colorField.display ? (v: number) => formattedValueToString(colorField.display!(v)) : (v: number) => `${v}`;
+    const display = colorField.display
+      ? (v: number) => formattedValueToString(colorField.display!(v))
+      : (v: number) => `${v}`;
     return (
       <div className={style.infoWrap}>
         <div className={style.layerName}>{layerName}</div>
         <div className={cx(style.layerBody, style.colorScaleWrapper)}>
-          <ColorScale hoverValue={hoverValue} colorPalette={colors} min={colorRange.min as number} max={colorRange.max as number} display={display} useStopsPercentage={false}/>
+          <ColorScale
+            hoverValue={hoverValue}
+            colorPalette={colors}
+            min={colorRange.min as number}
+            max={colorRange.max as number}
+            display={display}
+            useStopsPercentage={false}
+          />
         </div>
       </div>
     );

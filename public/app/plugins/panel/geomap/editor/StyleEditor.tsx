@@ -1,4 +1,8 @@
+import { capitalize } from 'lodash';
 import React, { FC } from 'react';
+import { useObservable } from 'react-use';
+import { Observable, of } from 'rxjs';
+
 import { StandardEditorProps } from '@grafana/data';
 import {
   ColorPicker,
@@ -9,10 +13,8 @@ import {
   InlineLabel,
   RadioButtonGroup,
 } from '@grafana/ui';
-import { Observable } from 'rxjs';
-import { useObservable } from 'react-use';
-import { capitalize } from 'lodash';
-
+import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
+import { SliderValueEditor } from 'app/core/components/OptionsUI/slider';
 import {
   ColorDimensionEditor,
   ResourceDimensionEditor,
@@ -29,11 +31,10 @@ import {
   defaultTextConfig,
   ScalarDimensionConfig,
 } from 'app/features/dimensions/types';
-import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
-import { styleUsesText } from '../../style/utils';
-import { LayerContentInfo } from '../../utils/getFeatures';
-import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
-import { SliderValueEditor } from 'app/core/components/OptionsUI/slider';
+
+import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../style/types';
+import { styleUsesText } from '../style/utils';
+import { LayerContentInfo } from '../utils/getFeatures';
 
 export interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;
@@ -93,11 +94,8 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline as TextBaseline } });
   };
 
-  let featuresHavePoints = false;
-  if (settings?.layerInfo) {
-    const propertyOptions = useObservable(settings?.layerInfo);
-    featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;
-  }
+  const propertyOptions = useObservable(settings?.layerInfo ?? of());
+  const featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;
   const hasTextLabel = styleUsesText(value);
 
   // Simple fixed value display

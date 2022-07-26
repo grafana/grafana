@@ -19,9 +19,6 @@ export function GrafanaRoute(props: Props) {
 
     updateBodyClassNames(props.route);
     cleanupDOM();
-    // unbinds all and re-bind global keybindins
-    keybindingSrv.reset();
-    keybindingSrv.initGlobals();
     reportPageview();
     navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
 
@@ -30,6 +27,12 @@ export function GrafanaRoute(props: Props) {
       updateBodyClassNames(props.route, true);
     };
   }, [chrome, props.route, props.match]);
+
+  useEffect(() => {
+    // unbinds all and re-bind global keybindins
+    keybindingSrv.reset();
+    keybindingSrv.initGlobals();
+  }, [chrome, props.route]);
 
   useEffect(() => {
     cleanupDOM();
