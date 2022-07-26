@@ -87,6 +87,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           metas: [],
           parseStacktrace: jest.fn(),
           app: jest.fn(),
+          paused: false,
         },
         metas: {
           add: jest.fn(),
@@ -100,6 +101,8 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           pause: jest.fn(),
           unpause: jest.fn(),
         },
+        pause: jest.fn(),
+        unpause: jest.fn(),
       };
     };
     jest.mocked(initializeAgent).mockImplementation(mockedAgent);
@@ -143,6 +146,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           metas: [],
           parseStacktrace: jest.fn(),
           app: jest.fn(),
+          paused: false,
         },
         metas: {
           add: jest.fn(),
@@ -156,6 +160,8 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           pause: jest.fn(),
           unpause: jest.fn(),
         },
+        pause: jest.fn(),
+        unpause: jest.fn(),
       };
     };
 
