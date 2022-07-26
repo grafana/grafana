@@ -31,6 +31,7 @@ type DashboardQuery struct {
 	From               int          `json:"from,omitempty"`       // for paging
 }
 
+//go:generate mockery --name SearchService --structname MockSearchService --inpackage --filename search_service_mock.go
 type SearchService interface {
 	registry.CanBeDisabled
 	registry.BackgroundService
