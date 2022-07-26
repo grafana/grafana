@@ -32,6 +32,7 @@ Panel: thema.#Lineage & {
 						mode?: TimelineMode
 						ui.OptionsWithLegend
 						ui.OptionsWithTooltip
+						ui.OptionsWithTimezones
 						showValue:    ui.VisibilityMode | *"auto"
 						rowHeight:    number | *0.9
 						colWidth?:    number

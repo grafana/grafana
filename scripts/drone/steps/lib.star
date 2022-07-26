@@ -250,7 +250,7 @@ def benchmark_ldap_step():
 
 
 def build_storybook_step(edition, ver_mode):
-    if edition in ('enterprise', 'enterprise2') and ver_mode == 'release':
+    if edition in ('enterprise', 'enterprise2'):
         return None
 
     return {
@@ -341,13 +341,6 @@ def e2e_tests_artifacts(edition):
 
 
 def upload_cdn_step(edition, ver_mode, trigger=None):
-    src_dir = ''
-    if ver_mode == "release":
-        bucket = "$${PRERELEASE_BUCKET}"
-        src_dir = " --src-dir artifacts/static-assets"
-    else:
-        bucket = "grafana-static-assets"
-
     deps = []
     if edition in 'enterprise2':
         deps.extend([
