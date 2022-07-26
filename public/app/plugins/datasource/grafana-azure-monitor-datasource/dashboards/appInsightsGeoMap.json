@@ -46,7 +46,7 @@
   "panels": [
     {
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 24,
         "x": 0,
         "y": 0
@@ -227,7 +227,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let regToCoords = dynamic({\r\n  \"East Asia\":\r\n    {\r\n      \"latitude\": 22.267,\r\n      \"longitude\": 114.188\r\n    },\r\n  \"Southeast Asia\":\r\n    {\r\n      \"latitude\": 1.283,\r\n      \"longitude\": 103.833\r\n    },\r\n  \"Central US\":\r\n    {\r\n      \"latitude\": 41.5908,\r\n      \"longitude\": -93.6208\r\n    },\r\n    \"East US\":\r\n    {\r\n      \"latitude\": 37.3719,\r\n      \"longitude\": -79.8164\r\n    },\r\n    \"East US 2\":\r\n    {\r\n      \"latitude\": 36.6681,\r\n      \"longitude\": -78.3889\r\n    },\r\n    \"West US\":\r\n    {\r\n      \"latitude\": 37.783,\r\n      \"longitude\": -122.417\r\n    },\r\n    \"North Central US\":\r\n    {\r\n      \"latitude\": 41.8819,\r\n      \"longitude\": -87.6278\r\n    },\r\n    \"South Central US\":\r\n    {\r\n      \"latitude\": 29.4167,\r\n      \"longitude\": -98.5\r\n    },\r\n    \"North Europe\":\r\n    {\r\n      \"latitude\": 53.3478,\r\n      \"longitude\": -6.2597\r\n    },\r\n    \"West Europe\":\r\n    {\r\n      \"latitude\": 52.3667,\r\n      \"longitude\": 4.9\r\n    },\r\n    \"Japan West\":\r\n    {\r\n      \"latitude\": 34.6939,\r\n      \"longitude\": 135.5022\r\n    },\r\n    \"Japan East\":\r\n    {\r\n      \"latitude\": 35.68,\r\n      \"longitude\": 139.77\r\n    },\r\n    \"Brazil South\":\r\n    {\r\n      \"latitude\": -23.55,\r\n      \"longitude\": -46.633\r\n    },\r\n    \"Australia East\" : \r\n    {\r\n    \"latitude\": -33.86, \r\n    \"longitude\": 151.2094\r\n    }, \r\n    \"Australia Southeast\":\r\n    {\r\n      \"latitude\": -37.8136,\r\n      \"longitude\": 144.9631\r\n    },\r\n    \"South India\":\r\n    {\r\n      \"latitude\": 12.9822,\r\n      \"longitude\": 80.1636\r\n    },\r\n    \"Central India\":\r\n    {\r\n      \"latitude\": 18.5822,\r\n      \"longitude\": 73.9197\r\n    },\r\n    \"West India\":\r\n    {\r\n      \"latitude\": 19.088,\r\n      \"longitude\": 72.868\r\n    },\r\n    \"Canada Central\":\r\n    {\r\n      \"latitude\": 43.653,\r\n      \"longitude\": -79.383\r\n    },\r\n    \"Canada East\":\r\n    {\r\n      \"latitude\": 46.817,\r\n      \"longitude\": -71.217\r\n    },\r\n    \"UK South\":\r\n    {\r\n      \"latitude\": 50.941,\r\n      \"longitude\": -0.799\r\n    },\r\n  \"UK West\": \r\n    {\r\n      \"latitude\": 53.427, \r\n      \"longitude\": -3.084\r\n    },\r\n  \"West Central US\": \r\n    {\r\n      \"latitude\": 40.890, \r\n      \"longitude\": -110.234\r\n    },\r\n    \"West US 2\": \r\n    {\r\n      \"latitude\": 47.233, \r\n      \"longitude\": -119.852\r\n    },\r\n    \"Korea Central\": \r\n    {\r\n      \"latitude\": 37.5665, \r\n      \"longitude\": 126.9780\r\n    },\r\n    \"Korea South\": \r\n    {\r\n      \"latitude\": 35.1796, \r\n      \"longitude\": 129.0756\r\n    },\r\n    \"France Central\": \r\n    {\r\n      \"latitude\": 46.3772, \r\n      \"longitude\": 2.3730\r\n    },\r\n    \"France South\": \r\n    {\r\n      \"latitude\": 43.8345, \r\n      \"longitude\": 2.1972\r\n   },\r\n   \"Australia Central\": \r\n    {\r\n      \"latitude\": -35.3075, \r\n      \"longitude\": 149.1244\r\n    },\r\n    \"Australia Central 2\": \r\n    {\r\n      \"latitude\": -35.3075, \r\n      \"longitude\": 149.1244\r\n    },\r\n    \"UAE Central\": \r\n    {\r\n      \"latitude\": 24.466667, \r\n      \"longitude\": 54.366669\r\n    },\r\n    \"UAE North\": \r\n    {\r\n      \"latitude\": 25.266666, \r\n      \"longitude\": 55.316666\r\n    },\r\n    \"South Africa North\": \r\n    {\r\n      \"latitude\": -25.731340, \r\n      \"longitude\": 28.218370\r\n    },\r\n    \"South Africa West\": \r\n    {\r\n      \"latitude\": -34.075691, \r\n      \"longitude\": 18.843266\r\n    }\r\n});\r\navailabilityResults\r\n| where timestamp >= $__timeFrom and timestamp < $__timeTo\r\n| where name in ($avTest) and true and location in ($reg)\r\n| extend latitude = tostring(regToCoords[location][\"latitude\"])\r\n| extend longitude = tostring(regToCoords[location][\"longitude\"])\r\n| extend percentage = toint(success) * 100\r\n| summarize avg(percentage) by name, location, latitude, longitude",
+            "query": "let regToCoords = dynamic({\r\n  \"East Asia\":\r\n    {\r\n      \"latitude\": 22.267,\r\n      \"longitude\": 114.188\r\n    },\r\n  \"Southeast Asia\":\r\n    {\r\n      \"latitude\": 1.283,\r\n      \"longitude\": 103.833\r\n    },\r\n  \"Central US\":\r\n    {\r\n      \"latitude\": 41.5908,\r\n      \"longitude\": -93.6208\r\n    },\r\n    \"East US\":\r\n    {\r\n      \"latitude\": 37.3719,\r\n      \"longitude\": -79.8164\r\n    },\r\n    \"East US 2\":\r\n    {\r\n      \"latitude\": 36.6681,\r\n      \"longitude\": -78.3889\r\n    },\r\n    \"West US\":\r\n    {\r\n      \"latitude\": 37.783,\r\n      \"longitude\": -122.417\r\n    },\r\n    \"North Central US\":\r\n    {\r\n      \"latitude\": 41.8819,\r\n      \"longitude\": -87.6278\r\n    },\r\n    \"South Central US\":\r\n    {\r\n      \"latitude\": 29.4167,\r\n      \"longitude\": -98.5\r\n    },\r\n    \"North Europe\":\r\n    {\r\n      \"latitude\": 53.3478,\r\n      \"longitude\": -6.2597\r\n    },\r\n    \"West Europe\":\r\n    {\r\n      \"latitude\": 52.3667,\r\n      \"longitude\": 4.9\r\n    },\r\n    \"Japan West\":\r\n    {\r\n      \"latitude\": 34.6939,\r\n      \"longitude\": 135.5022\r\n    },\r\n    \"Japan East\":\r\n    {\r\n      \"latitude\": 35.68,\r\n      \"longitude\": 139.77\r\n    },\r\n    \"Brazil South\":\r\n    {\r\n      \"latitude\": -23.55,\r\n      \"longitude\": -46.633\r\n    },\r\n    \"Australia East\" : \r\n    {\r\n    \"latitude\": -33.86, \r\n    \"longitude\": 151.2094\r\n    }, \r\n    \"Australia Southeast\":\r\n    {\r\n      \"latitude\": -37.8136,\r\n      \"longitude\": 144.9631\r\n    },\r\n    \"South India\":\r\n    {\r\n      \"latitude\": 12.9822,\r\n      \"longitude\": 80.1636\r\n    },\r\n    \"Central India\":\r\n    {\r\n      \"latitude\": 18.5822,\r\n      \"longitude\": 73.9197\r\n    },\r\n    \"West India\":\r\n    {\r\n      \"latitude\": 19.088,\r\n      \"longitude\": 72.868\r\n    },\r\n    \"Canada Central\":\r\n    {\r\n      \"latitude\": 43.653,\r\n      \"longitude\": -79.383\r\n    },\r\n    \"Canada East\":\r\n    {\r\n      \"latitude\": 46.817,\r\n      \"longitude\": -71.217\r\n    },\r\n    \"UK South\":\r\n    {\r\n      \"latitude\": 50.941,\r\n      \"longitude\": -0.799\r\n    },\r\n  \"UK West\": \r\n    {\r\n      \"latitude\": 53.427, \r\n      \"longitude\": -3.084\r\n    },\r\n  \"West Central US\": \r\n    {\r\n      \"latitude\": 40.890, \r\n      \"longitude\": -110.234\r\n    },\r\n    \"West US 2\": \r\n    {\r\n      \"latitude\": 47.233, \r\n      \"longitude\": -119.852\r\n    },\r\n    \"Korea Central\": \r\n    {\r\n      \"latitude\": 37.5665, \r\n      \"longitude\": 126.9780\r\n    },\r\n    \"Korea South\": \r\n    {\r\n      \"latitude\": 35.1796, \r\n      \"longitude\": 129.0756\r\n    },\r\n    \"France Central\": \r\n    {\r\n      \"latitude\": 46.3772, \r\n      \"longitude\": 2.3730\r\n    },\r\n    \"France South\": \r\n    {\r\n      \"latitude\": 43.8345, \r\n      \"longitude\": 2.1972\r\n   },\r\n   \"Australia Central\": \r\n    {\r\n      \"latitude\": -35.3075, \r\n      \"longitude\": 149.1244\r\n    },\r\n    \"Australia Central 2\": \r\n    {\r\n      \"latitude\": -35.3075, \r\n      \"longitude\": 149.1244\r\n    },\r\n    \"UAE Central\": \r\n    {\r\n      \"latitude\": 24.466667, \r\n      \"longitude\": 54.366669\r\n    },\r\n    \"UAE North\": \r\n    {\r\n      \"latitude\": 25.266666, \r\n      \"longitude\": 55.316666\r\n    },\r\n    \"South Africa North\": \r\n    {\r\n      \"latitude\": -25.731340, \r\n      \"longitude\": 28.218370\r\n    },\r\n    \"South Africa West\": \r\n    {\r\n      \"latitude\": -34.075691, \r\n      \"longitude\": 18.843266\r\n    }\r\n});\r\navailabilityResults\r\n| where timestamp >= $__timeFrom and timestamp < $__timeTo\r\n| where name in ($avTest) and location in ($reg)\r\n| extend latitude = tostring(regToCoords[location][\"latitude\"])\r\n| extend longitude = tostring(regToCoords[location][\"longitude\"])\r\n| extend percentage = toint(success) * 100\r\n| summarize avg(percentage) by name, location, latitude, longitude",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
           },
           "datasource": {
@@ -661,7 +661,7 @@
           "subscription": ""
         }
       ],
-      "title": "${metric} (Sum)",
+      "title": "Availability test results count (Sum)",
       "type": "geomap"
     },
     {
@@ -924,66 +924,6 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"
-      },
-      {
-        "current": {
-          "selected": false,
-          "text": "Availability test results count",
-          "value": "itemCount"
-        },
-        "hide": 2,
-        "includeAll": false,
-        "label": "Metric",
-        "multi": false,
-        "name": "metric",
-        "options": [
-          {
-            "selected": true,
-            "text": "Availability test results count",
-            "value": "itemCount"
-          },
-          {
-            "selected": false,
-            "text": "Test duration",
-            "value": "availabilityResult_duration"
-          }
-        ],
-        "query": "Availability test results count : itemCount, Test duration : availabilityResult_duration",
-        "queryValue": "",
-        "skipUrlSync": false,
-        "type": "custom"
-      },
-      {
-        "current": {
-          "selected": false,
-          "text": "Sum",
-          "value": "Sum"
-        },
-        "hide": 2,
-        "includeAll": false,
-        "label": "Aggregation",
-        "multi": false,
-        "name": "agg",
-        "options": [
-          {
-            "selected": true,
-            "text": "Sum",
-            "value": "Sum"
-          },
-          {
-            "selected": false,
-            "text": "Max",
-            "value": "Max"
-          },
-          {
-            "selected": false,
-            "text": "Min",
-            "value": "Min"
-          }
-        ],
-        "query": "Sum, Max, Min",
-        "skipUrlSync": false,
-        "type": "custom"
       }
     ]
   },
