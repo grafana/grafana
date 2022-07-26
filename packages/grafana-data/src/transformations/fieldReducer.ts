@@ -157,7 +157,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.variance,
     name: 'Variance',
-    description: 'Variance (based on population) of all values in a field',
+    description: 'Variance of all values in a field',
     standard: false,
     reduce: calculateStdDev,
   },
