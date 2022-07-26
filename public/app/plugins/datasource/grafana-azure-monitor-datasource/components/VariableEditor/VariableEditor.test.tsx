@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { select, openMenu } from 'react-select-event';
 
-import * as grafanaRuntime from '@grafana/runtime';
 import * as ui from '@grafana/ui';
 
 import createMockDatasource from '../../__mocks__/datasource';
@@ -41,16 +40,11 @@ const defaultProps = {
   }),
 };
 
-const originalConfigValue = grafanaRuntime.config.featureToggles.azTemplateVars;
-beforeEach(() => {
-  // reset config
-  grafanaRuntime.config.featureToggles.azTemplateVars = originalConfigValue;
-});
-
 describe('VariableEditor:', () => {
-  it('can select a query type', async () => {
+  it('can view a legacy Grafana query function', async () => {
     const onChange = jest.fn();
-    const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
+    const legacyQuery = { ...defaultProps.query, queryType: AzureQueryType.GrafanaTemplateVariableFn };
+    render(<VariableEditor {...defaultProps} onChange={onChange} query={legacyQuery} />);
     await waitFor(() => screen.getByLabelText('select query type'));
     expect(screen.getByLabelText('select query type')).toBeInTheDocument();
     screen.getByLabelText('select query type').click();
@@ -62,10 +56,6 @@ describe('VariableEditor:', () => {
         queryType: AzureQueryType.GrafanaTemplateVariableFn,
       })
     );
-    const newQuery = onChange.mock.calls.at(-1)[0];
-    rerender(<VariableEditor {...defaultProps} query={newQuery} />);
-    expect(screen.queryByText('Logs')).not.toBeInTheDocument();
-    expect(screen.queryByText('Grafana Query Function')).toBeInTheDocument();
   });
   describe('log queries:', () => {
     it('should render', async () => {
@@ -157,22 +147,6 @@ describe('VariableEditor:', () => {
       rerender(<VariableEditor {...defaultProps} query={newQuery} onChange={onChange} />);
       await waitFor(() => expect(screen.getByText(text)).toBeInTheDocument());
     };
-    beforeEach(() => {
-      grafanaRuntime.config.featureToggles.azTemplateVars = true;
-    });
-
-    it('should show the new query types if feature gate is enabled', async () => {
-      render(<VariableEditor {...defaultProps} />);
-      openMenu(screen.getByLabelText('select query type'));
-      await waitFor(() => expect(screen.getByText('Subscriptions')).toBeInTheDocument());
-    });
-
-    it('should not show the new query types if feature gate is disabled', async () => {
-      grafanaRuntime.config.featureToggles.azTemplateVars = false;
-      render(<VariableEditor {...defaultProps} />);
-      openMenu(screen.getByLabelText('select query type'));
-      await waitFor(() => expect(screen.queryByText('Subscriptions')).not.toBeInTheDocument());
-    });
 
     it('should run the query if requesting subscriptions', async () => {
       const onChange = jest.fn();

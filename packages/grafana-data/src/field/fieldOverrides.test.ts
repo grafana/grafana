@@ -606,6 +606,7 @@ describe('getLinksSupplier', () => {
       getTimeRangeForUrl: (() => {}) as any,
     });
 
+    const datasourceUid = '1234';
     const f0 = new MutableDataFrame({
       name: 'A',
       fields: [
@@ -619,7 +620,7 @@ describe('getLinksSupplier', () => {
                 url: '',
                 title: '',
                 internal: {
-                  datasourceUid: '0',
+                  datasourceUid: datasourceUid,
                   datasourceName: 'testDS',
                   query: '12345',
                 },
@@ -640,12 +641,12 @@ describe('getLinksSupplier', () => {
     );
 
     const links = supplier({ valueRowIndex: 0 });
-
+    const encodeURIParams = `{"datasource":"${datasourceUid}","queries":["12345"],"panelsState":{}}`;
     expect(links.length).toBe(1);
     expect(links[0]).toEqual(
       expect.objectContaining({
         title: 'testDS',
-        href: `/explore?left=${encodeURIComponent('{"datasource":"testDS","queries":["12345"],"panelsState":{}}')}`,
+        href: `/explore?left=${encodeURIComponent(encodeURIParams)}`,
         onClick: undefined,
       })
     );

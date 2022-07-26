@@ -17,6 +17,8 @@ type secretsKVStoreSQL struct {
 	sqlStore        sqlstore.Store
 	secretsService  secrets.Service
 	decryptionCache decryptionCache
+	// This is here to support testing and should normally not be set
+	GetAllFuncOverride func(ctx context.Context) ([]Item, error)
 }
 
 type decryptionCache struct {
@@ -227,6 +229,9 @@ func (kv *secretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace 
 // GetAll this returns all the secrets stored in the database. This is not part of the kvstore interface as we
 // only need it for migration from sql to plugin at this moment
 func (kv *secretsKVStoreSQL) GetAll(ctx context.Context) ([]Item, error) {
+	if kv.GetAllFuncOverride != nil {
+		return kv.GetAllFuncOverride(ctx)
+	}
 	var items []Item
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		return dbSession.Find(&items)

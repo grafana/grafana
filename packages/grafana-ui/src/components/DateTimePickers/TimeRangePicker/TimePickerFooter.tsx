@@ -78,7 +78,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
             <RadioButtonGroup
               value={editMode}
               options={[
-                { label: 'Time Zone', value: 'tz' },
+                { label: 'Time zone', value: 'tz' },
                 { label: 'Fiscal year', value: 'fy' },
               ]}
               onChange={setEditMode}
