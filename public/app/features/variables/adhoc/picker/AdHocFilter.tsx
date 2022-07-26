@@ -17,6 +17,7 @@ interface Props {
   // Passes options to the datasources getTagKeys(options?: any) method
   // which is called to fetch the available filter key options in AdHocFilterKey.tsx
   getTagKeysOptions?: any;
+  disabled: boolean;
 }
 
 /**
@@ -47,17 +48,20 @@ export class AdHocFilter extends PureComponent<Props> {
   };
 
   render() {
-    const { filters } = this.props;
+    const { filters, disabled } = this.props;
 
     return (
       <div className="gf-form-inline">
         {this.renderFilters(filters)}
-        <AdHocFilterBuilder
-          datasource={this.props.datasource!}
-          appendBefore={filters.length > 0 ? <ConditionSegment label="AND" /> : null}
-          onCompleted={this.appendFilterToVariable}
-          getTagKeysOptions={this.props.getTagKeysOptions}
-        />
+        {!disabled && (
+          <AdHocFilterBuilder
+            disabled={disabled}
+            datasource={this.props.datasource!}
+            appendBefore={filters.length > 0 ? <ConditionSegment label="AND" /> : null}
+            onCompleted={this.appendFilterToVariable}
+            getTagKeysOptions={this.props.getTagKeysOptions}
+          />
+        )}
       </div>
     );
   }

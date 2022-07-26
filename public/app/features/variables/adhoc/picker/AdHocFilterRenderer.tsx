@@ -15,6 +15,7 @@ interface Props {
   onValueChange: (item: SelectableValue<string>) => void;
   placeHolder?: string;
   getTagKeysOptions?: any;
+  disabled: boolean;
 }
 
 export const AdHocFilterRenderer: FC<Props> = ({
@@ -25,10 +26,12 @@ export const AdHocFilterRenderer: FC<Props> = ({
   onValueChange,
   placeHolder,
   getTagKeysOptions,
+  disabled,
 }) => {
   return (
     <>
       <AdHocFilterKey
+        disabled={disabled}
         datasource={datasource}
         filterKey={key}
         onChange={onKeyChange}
