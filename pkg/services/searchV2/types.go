@@ -32,6 +32,7 @@ type DashboardQuery struct {
 }
 
 type SearchService interface {
+	registry.CanBeDisabled
 	registry.BackgroundService
 	DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse
 	RegisterDashboardIndexExtender(ext DashboardIndexExtender)
