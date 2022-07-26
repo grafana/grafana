@@ -1,9 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
 import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { replaceCurrentFolderQuery } from './utils';
@@ -19,7 +19,7 @@ export class BlugeSearcher implements GrafanaSearcher {
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
-    const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+    const ds = await getGrafanaDatasource();
     const target = {
       refId: 'TagsQuery',
       queryType: GrafanaQueryType.Search,
@@ -74,7 +74,7 @@ const nextPageSizes = 100;
 
 async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   query = await replaceCurrentFolderQuery(query);
-  const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  const ds = await getGrafanaDatasource();
   const target = {
     refId: 'Search',
     queryType: GrafanaQueryType.Search,
