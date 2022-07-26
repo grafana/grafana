@@ -520,6 +520,7 @@ func TestMiddlewareContext(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			cfg.JWTAuthEnabled = true
 			cfg.JWTAuthURLLogin = true
+			cfg.JWTAuthHeaderName = "X-WEBAUTH-TOKEN"
 		})
 
 		middlewareScenario(t, "Should get an existing user from header", func(t *testing.T, sc *scenarioContext) {
