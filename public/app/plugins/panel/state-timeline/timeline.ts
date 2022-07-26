@@ -319,9 +319,10 @@ export function getConfig(opts: TimelineCoreOptions) {
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
+                  const txt = formatValue(sidx, dataY[ix]);
+                  const valueRect = u.ctx.measureText(txt);
 
-                  // Todo refine this to better know when to not render text (when values do not fit)
-                  if (!boxRect || (showValue === VisibilityMode.Auto && boxRect.w < 25)) {
+                  if (!boxRect || (showValue === VisibilityMode.Auto && boxRect.w < valueRect.width)) {
                     continue;
                   }
 
@@ -331,7 +332,6 @@ export function getConfig(opts: TimelineCoreOptions) {
 
                   // center-aligned
                   let x = round(boxRect.x + xOff + boxRect.w / 2);
-                  const txt = formatValue(sidx, dataY[ix]);
 
                   if (mode === TimelineMode.Changes) {
                     if (alignValue === 'left') {
