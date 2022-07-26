@@ -1,7 +1,7 @@
 import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, RawTimeRange, ExploreId } from '@grafana/data';
 import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
@@ -14,7 +14,6 @@ import {
 import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { AccessControlAction } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';

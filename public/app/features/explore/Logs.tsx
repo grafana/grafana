@@ -22,6 +22,7 @@ import {
   LoadingState,
   SplitOpen,
   DataQueryResponse,
+  ExploreId,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -37,7 +38,6 @@ import {
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
-import { ExploreId } from 'app/types/explore';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';

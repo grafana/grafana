@@ -3,9 +3,8 @@ import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Node, Plugin } from 'slate';
 
-import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
+import { AbsoluteTimeRange, ExploreId, QueryEditorProps } from '@grafana/data';
 import { BracesPlugin, LegacyForms, QueryField, SlatePrism, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
-import { ExploreId } from 'app/types';
 // Utils & Services
 // dom also includes Element polyfills
 

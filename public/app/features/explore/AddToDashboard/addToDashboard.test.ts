@@ -88,7 +88,7 @@ describe('addPanelToDashboard', () => {
         [
           'If no query is active, even when there is a response from a previous execution',
           [{ refId: 'A', hide: true }],
-          { ...createEmptyQueryResponse(), logsFrames: [new MutableDataFrame({ refId: 'A', fields: [] })] },
+          { ...createEmptyQueryResponse() },
         ],
       ];
 

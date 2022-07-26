@@ -3,10 +3,9 @@ import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceT
 import React, { RefObject, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { DataFrame, SplitOpen } from '@grafana/data';
+import { ExploreId, DataFrame, SplitOpen } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { TraceView } from './TraceView';
 import { useSearch } from './useSearch';

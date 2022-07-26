@@ -1,11 +1,10 @@
 // Libraries
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { DataSourceApi, HistoryItem } from '@grafana/data';
+import { DataSourceApi, HistoryItem, ExploreId } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';

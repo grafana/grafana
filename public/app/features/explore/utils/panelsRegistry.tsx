@@ -1,21 +1,13 @@
-import React, { RefObject } from 'react';
+import React from 'react';
 
-import {
-  AbsoluteTimeRange,
-  DataFrame,
-  DataSourceApi,
-  GrafanaTheme2,
-  LoadingState,
-  SplitOpen,
-  TimeRange,
-  TimeZone,
-} from '@grafana/data';
+import { ExplorePanelProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse } from '@grafana/ui';
 // // TODO: probably needs to be exported from ui directly
 import { FilterItem, FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
+import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-import { ExploreGraphStyle, ExploreId } from '../../../types';
 import { ExploreGraph } from '../ExploreGraph';
 import { ExploreGraphLabel } from '../ExploreGraphLabel';
 import LogsContainer from '../LogsContainer';
@@ -23,8 +15,9 @@ import { NodeGraphContainer } from '../NodeGraphContainer';
 import TableContainer from '../TableContainer';
 import { TraceViewContainer } from '../TraceView/TraceViewContainer';
 
-export function getPanelForVisType(visType: string): React.ComponentType<Props> | undefined {
+export async function getPanelForVisType(visType: string): Promise<React.ComponentType<ExplorePanelProps>> {
   // TODO this is not much dynamic at the moment but it's a start of creating a common interface
+
   switch (visType) {
     case 'graph': {
       return GraphPanel;
@@ -45,40 +38,22 @@ export function getPanelForVisType(visType: string): React.ComponentType<Props> 
       return TraceViewPanel;
     }
     default: {
-      // Probably ok but maybe it makes sense to throw or show some info message
+      const panels = getAllPanelPluginMeta();
+      for (const panel of panels) {
+        const panelPlugin = await importPanelPlugin(panel.id);
+        if (panelPlugin.explorePanel && panelPlugin.visType?.includes(visType)) {
+          return panelPlugin.explorePanel;
+        }
+      }
+
+      // Probably ok fallback but maybe it makes sense to throw or show some info message that we did not find anything
+      // better.
       return TablePanel;
     }
   }
 }
 
-interface Props {
-  onChangeGraphStyle: (style: ExploreGraphStyle) => void;
-  data: DataFrame[];
-  absoluteRange: AbsoluteTimeRange;
-  range: TimeRange;
-  timeZone: TimeZone;
-  splitOpen: SplitOpen;
-  annotations?: DataFrame[];
-  loadingState: LoadingState;
-  loading?: boolean;
-  theme: GrafanaTheme2;
-  graphStyle: ExploreGraphStyle;
-  onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
-  width: number;
-  onCellFilterAdded: (filter: FilterItem) => void;
-  exploreId: ExploreId;
-  syncedTimes: boolean;
-  onClickFilterLabel: (key: string, value: string) => void;
-  onClickFilterOutLabel: (key: string, value: string) => void;
-  onStartScanning: () => void;
-  onStopScanning: () => void;
-  datasourceInstance?: DataSourceApi | null;
-  withTraceView?: boolean;
-  scrollElement?: Element;
-  topOfViewRef: RefObject<HTMLDivElement>;
-}
-
-function GraphPanel(props: Props) {
+function GraphPanel(props: ExplorePanelProps) {
   const {
     data,
     absoluteRange,
@@ -113,7 +88,7 @@ function GraphPanel(props: Props) {
   );
 }
 
-function TablePanel(props: Props) {
+function TablePanel(props: ExplorePanelProps) {
   const { timeZone, width, splitOpen, loading, onClickFilterLabel, onClickFilterOutLabel, data, range } = props;
   function onCellFilterAdded(filter: FilterItem) {
     const { value, key, operator } = filter;
@@ -139,7 +114,7 @@ function TablePanel(props: Props) {
   );
 }
 
-function LogsPanel(props: Props) {
+function LogsPanel(props: ExplorePanelProps) {
   const {
     exploreId,
     syncedTimes,
@@ -166,7 +141,7 @@ function LogsPanel(props: Props) {
   );
 }
 
-function NodeGraphPanel(props: Props) {
+function NodeGraphPanel(props: ExplorePanelProps) {
   const { exploreId, withTraceView, datasourceInstance, data } = props;
   const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
 
@@ -180,7 +155,7 @@ function NodeGraphPanel(props: Props) {
   );
 }
 
-function TraceViewPanel(props: Props) {
+function TraceViewPanel(props: ExplorePanelProps) {
   const { splitOpen, exploreId, data, scrollElement, topOfViewRef } = props;
 
   return (

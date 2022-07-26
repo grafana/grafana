@@ -1,10 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, ExploreId } from '@grafana/data';
 import { SortOrder } from 'app/core/utils/richHistory';
-
-import { ExploreId } from '../../../types/explore';
 
 import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
 

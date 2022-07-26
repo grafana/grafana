@@ -1,11 +1,10 @@
 import React from 'react';
 import { of } from 'rxjs';
 
-import { serializeStateToUrlParam } from '@grafana/data';
+import { serializeStateToUrlParam, ExploreId } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { ExploreId } from '../../../types';
 
 import {
   assertDataSourceFilterVisibility,

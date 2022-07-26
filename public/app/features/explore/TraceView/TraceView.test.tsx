@@ -5,9 +5,8 @@ import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { DataFrame, MutableDataFrame, ExploreId } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -16,11 +15,6 @@ import { transformDataFrames } from './utils/transform';
 
 function getTraceView(frames: DataFrame[]) {
   const store = configureStore();
-  const mockPanelData = {
-    state: LoadingState.Done,
-    series: [],
-    timeRange: getDefaultTimeRange(),
-  };
   const topOfViewRef = createRef<HTMLDivElement>();
 
   const traceView = (
@@ -32,7 +26,6 @@ function getTraceView(frames: DataFrame[]) {
         traceProp={transformDataFrames(frames[0])!}
         search=""
         focusedSpanIdForSearch=""
-        queryResponse={mockPanelData}
         datasource={undefined}
         topOfViewRef={topOfViewRef}
         topOfViewRefType={TopOfViewRefType.Explore}

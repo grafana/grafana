@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { ExploreId } from '@grafana/data';
 import { ToolbarButton } from '@grafana/ui';
-import { ExploreId } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
 

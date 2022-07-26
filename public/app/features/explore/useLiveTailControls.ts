@@ -1,9 +1,8 @@
 import React, { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { ExploreId } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
-
-import { ExploreId } from '../../types';
 
 import { setPausedStateAction, runQueries } from './state/query';
 import { changeRefreshInterval } from './state/time';

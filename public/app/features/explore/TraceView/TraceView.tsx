@@ -14,6 +14,7 @@ import {
   LinkModel,
   mapInternalLinkToExplore,
   SplitOpen,
+  ExploreId,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -30,7 +31,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { TempoQuery } from 'app/plugins/datasource/tempo/datasource';
 import { StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
 

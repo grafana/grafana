@@ -3,9 +3,8 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 
-import { DataSourceApi, LoadingState, CoreApp, createTheme } from '@grafana/data';
+import { DataSourceApi, LoadingState, CoreApp, createTheme, ExploreId, getDefaultTimeRange } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreId } from 'app/types/explore';
 
 import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
@@ -66,7 +65,6 @@ const dummyProps: Props = {
   syncedTimes: false,
   updateTimeRange: jest.fn(),
   makeAbsoluteTime: jest.fn(),
-  graphResult: [],
   absoluteRange: {
     from: 0,
     to: 0,
@@ -75,14 +73,11 @@ const dummyProps: Props = {
   queryResponse: makeEmptyQueryResponse(LoadingState.NotStarted),
   addQueryRow: jest.fn(),
   theme: createTheme(),
-  showMetrics: true,
-  showLogs: true,
-  showTable: true,
-  showTrace: true,
-  showNodeGraph: true,
   splitOpen: (() => {}) as any,
   changeGraphStyle: () => {},
   graphStyle: 'lines',
+  frames: {},
+  range: getDefaultTimeRange(),
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {

@@ -15,13 +15,9 @@ import {
   EventBusExtended,
   DataQueryResponse,
   ExplorePanelsState,
+  ExploreGraphStyle,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
-
-export enum ExploreId {
-  left = 'left',
-  right = 'right',
-}
 
 export type ExploreQueryParams = {
   left: string;
@@ -66,9 +62,6 @@ export interface ExploreState {
    */
   richHistoryMigrationFailed: boolean;
 }
-
-export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 export interface ExploreItemState {
   /**

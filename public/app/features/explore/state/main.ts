@@ -1,11 +1,11 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap, ExploreId } from '@grafana/data';
 import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
-import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
+import { ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';

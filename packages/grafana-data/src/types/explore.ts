@@ -27,3 +27,11 @@ export interface ExploreTracePanelState {
 export type SplitOpen = <T extends DataQuery = any>(
   options?: { datasourceUid: string; query: T; range?: TimeRange; panelsState?: ExplorePanelsState } | undefined
 ) => void;
+
+export enum ExploreId {
+  left = 'left',
+  right = 'right',
+}
+
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];

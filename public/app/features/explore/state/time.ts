@@ -7,13 +7,13 @@ import {
   RawTimeRange,
   sortLogsResult,
   TimeRange,
+  ExploreId,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { ExploreItemState, ThunkResult } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { TimeModel } from '../../dashboard/state/TimeModel';

@@ -2,8 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 import { Observable } from 'rxjs';
 
-import { TimeRange, LoadingState, InternalTimeZones } from '@grafana/data';
-import { ExploreId } from 'app/types';
+import { TimeRange, LoadingState, InternalTimeZones, ExploreId } from '@grafana/data';
 
 import { ExploreQueryInspector } from './ExploreQueryInspector';
 
@@ -40,14 +39,8 @@ const setup = (propOverrides = {}) => {
       state: LoadingState.Done,
       series: [],
       timeRange: {} as TimeRange,
-      graphFrames: [],
-      logsFrames: [],
-      tableFrames: [],
-      traceFrames: [],
-      nodeGraphFrames: [],
-      graphResult: null,
       logsResult: null,
-      tableResult: null,
+      frames: {},
     },
     runQueries: jest.fn(),
     ...propOverrides,

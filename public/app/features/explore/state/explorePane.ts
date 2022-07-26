@@ -11,6 +11,8 @@ import {
   DataSourceApi,
   ExplorePanelsState,
   PreferredVisualisationType,
+  ExploreGraphStyle,
+  ExploreId,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
@@ -24,7 +26,7 @@ import {
 } from 'app/core/utils/explore';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { ThunkResult } from 'app/types';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';

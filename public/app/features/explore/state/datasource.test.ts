@@ -1,5 +1,5 @@
-import { DataQuery, DataSourceApi } from '@grafana/data';
-import { ExploreId, ExploreItemState } from 'app/types';
+import { DataQuery, DataSourceApi, ExploreId } from '@grafana/data';
+import { ExploreItemState } from 'app/types';
 
 import { updateDatasourceInstanceAction, datasourceReducer } from './datasource';
 import { createEmptyQueryResponse } from './utils';
@@ -33,9 +33,7 @@ describe('Datasource reducer', () => {
       datasourceInstance,
       queries,
       queryKeys,
-      graphResult: null,
       logsResult: null,
-      tableResult: null,
       loading: false,
       queryResponse: {
         // When creating an empty query response we also create a timeRange object with the current time.

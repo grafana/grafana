@@ -1,12 +1,12 @@
 import { render, screen, fireEvent, getByText } from '@testing-library/react';
 import React from 'react';
 
-import { DataSourceApi, DataQuery } from '@grafana/data';
+import { DataSourceApi, DataQuery, ExploreId } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { ExploreId, RichHistoryQuery } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { RichHistoryCard, Props } from './RichHistoryCard';
 

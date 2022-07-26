@@ -9,10 +9,11 @@ import {
   LoadingState,
   LogRowModel,
   RawTimeRange,
+  ExploreId,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 

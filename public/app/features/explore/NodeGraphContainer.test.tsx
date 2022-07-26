@@ -1,9 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
-
-import { ExploreId } from '../../types';
+import { getDefaultTimeRange, MutableDataFrame, ExploreId } from '@grafana/data';
 
 import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
 

@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 
-import { ExploreId } from '../../../../types';
+import { ExploreId } from '@grafana/data';
 
 import { withinExplore } from './setup';
 

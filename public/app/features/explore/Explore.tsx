@@ -5,7 +5,15 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { compose } from 'redux';
 import { Unsubscribable } from 'rxjs';
 
-import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  DataQuery,
+  GrafanaTheme2,
+  LoadingState,
+  RawTimeRange,
+  ExploreGraphStyle,
+  ExploreId,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
@@ -13,7 +21,7 @@ import appEvents from 'app/core/app_events';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { StoreState } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 
@@ -21,6 +29,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
+import { Panel } from './Panel';
 import { QueryRows } from './QueryRows';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
@@ -29,7 +38,6 @@ import { changeSize, changeGraphStyle } from './state/explorePane';
 import { splitOpen } from './state/main';
 import { addQueryRow, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { makeAbsoluteTime, updateTimeRange } from './state/time';
-import { getPanelForVisType } from './utils/panelsRegistry';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -222,6 +230,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   renderPanels(width: number) {
     const { queryResponse, frames } = this.props;
+
     const showNoData =
       queryResponse.state === LoadingState.Done && Object.values(frames).every((frame) => frame.length === 0);
 
@@ -235,39 +244,37 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
 
     for (const key of Object.keys(frames)) {
-      const Panel = getPanelForVisType(key);
-      if (Panel) {
-        panels.push(
-          <ErrorBoundaryAlert key={key}>
-            <Panel
-              onChangeGraphStyle={this.onChangeGraphStyle}
-              data={frames[key]}
-              absoluteRange={this.props.absoluteRange}
-              range={this.props.range}
-              timeZone={this.props.timeZone}
-              splitOpen={this.props.splitOpen}
-              annotations={this.props.queryResponse.annotations}
-              loadingState={this.props.queryResponse.state}
-              loading={this.props.loading}
-              theme={this.props.theme}
-              graphStyle={this.props.graphStyle}
-              onUpdateTimeRange={this.onUpdateTimeRange}
-              width={width}
-              onCellFilterAdded={this.onCellFilterAdded}
-              exploreId={this.props.exploreId}
-              syncedTimes={this.props.syncedTimes}
-              onClickFilterLabel={this.onClickFilterLabel}
-              onClickFilterOutLabel={this.onClickFilterOutLabel}
-              onStartScanning={this.onStartScanning}
-              onStopScanning={this.onStopScanning}
-              datasourceInstance={this.props.datasourceInstance}
-              withTraceView={Boolean(frames['trace']?.length)}
-              scrollElement={this.scrollElement}
-              topOfViewRef={this.topOfViewRef}
-            />
-          </ErrorBoundaryAlert>
-        );
-      }
+      panels.push(
+        <ErrorBoundaryAlert key={key}>
+          <Panel
+            onChangeGraphStyle={this.onChangeGraphStyle}
+            data={frames[key]}
+            absoluteRange={this.props.absoluteRange}
+            range={this.props.range}
+            timeZone={this.props.timeZone}
+            splitOpen={this.props.splitOpen}
+            annotations={this.props.queryResponse.annotations}
+            loadingState={this.props.queryResponse.state}
+            loading={this.props.loading}
+            theme={this.props.theme}
+            graphStyle={this.props.graphStyle}
+            onUpdateTimeRange={this.onUpdateTimeRange}
+            width={width}
+            onCellFilterAdded={this.onCellFilterAdded}
+            exploreId={this.props.exploreId}
+            syncedTimes={this.props.syncedTimes}
+            onClickFilterLabel={this.onClickFilterLabel}
+            onClickFilterOutLabel={this.onClickFilterOutLabel}
+            onStartScanning={this.onStartScanning}
+            onStopScanning={this.onStopScanning}
+            datasourceInstance={this.props.datasourceInstance}
+            withTraceView={Boolean(frames['trace']?.length)}
+            scrollElement={this.scrollElement}
+            topOfViewRef={this.topOfViewRef}
+            visType={key}
+          />
+        </ErrorBoundaryAlert>
+      );
     }
     return panels;
   }

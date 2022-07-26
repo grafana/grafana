@@ -2,11 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { ExploreId } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 // Components, enums
 import { ExploreDrawer } from '../ExploreDrawer';

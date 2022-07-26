@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { CoreApp, TimeZone } from '@grafana/data';
+import { CoreApp, TimeZone, ExploreId } from '@grafana/data';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -9,7 +9,7 @@ import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
-import { StoreState, ExploreItemState, ExploreId } from 'app/types';
+import { StoreState, ExploreItemState } from 'app/types';
 
 import { runQueries } from './state/query';
 

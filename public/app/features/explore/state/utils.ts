@@ -9,9 +9,10 @@ import {
   HistoryItem,
   LoadingState,
   PanelData,
+  ExploreGraphStyle,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';

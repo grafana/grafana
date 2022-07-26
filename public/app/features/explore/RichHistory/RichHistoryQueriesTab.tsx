@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme, SelectableValue, ExploreId } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
@@ -12,7 +12,7 @@ import {
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { ExploreId, RichHistoryQuery } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';

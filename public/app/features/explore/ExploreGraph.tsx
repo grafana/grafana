@@ -18,6 +18,7 @@ import {
   LoadingState,
   SplitOpen,
   TimeZone,
+  ExploreGraphStyle,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
@@ -33,7 +34,6 @@ import appEvents from 'app/core/app_events';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
 
-import { ExploreGraphStyle } from '../../types';
 import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
 import { applyGraphStyle } from './exploreGraphStyleUtils';

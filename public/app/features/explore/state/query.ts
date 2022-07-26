@@ -19,6 +19,7 @@ import {
   PanelEvents,
   QueryFixAction,
   toLegacyResponseData,
+  ExploreId,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
@@ -34,7 +35,7 @@ import {
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
-import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
+import { ExploreState, QueryOptions } from 'app/types/explore';
 
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';

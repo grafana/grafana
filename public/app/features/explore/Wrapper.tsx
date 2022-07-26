@@ -2,11 +2,12 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { ExploreId } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreQueryParams } from 'app/types/explore';
+import { ExploreQueryParams } from 'app/types/explore';
 
 import { Branding } from '../../core/components/Branding/Branding';
 import { getNavModel } from '../../core/selectors/navModel';

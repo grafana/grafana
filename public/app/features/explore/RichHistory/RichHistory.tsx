@@ -1,10 +1,10 @@
 import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, ExploreId } from '@grafana/data';
 import { Themeable, withTheme, TabbedContainer, TabConfig } from '@grafana/ui';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 

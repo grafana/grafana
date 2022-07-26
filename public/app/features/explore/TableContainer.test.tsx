@@ -1,10 +1,9 @@
 import { screen, render, within } from '@testing-library/react';
 import React from 'react';
 
-import { DataFrame, toDataFrame, FieldType, InternalTimeZones } from '@grafana/data';
-import { ExploreId } from 'app/types/explore';
+import { DataFrame, toDataFrame, FieldType, InternalTimeZones, ExploreId } from '@grafana/data';
 
-import { TableContainer } from './TableContainer';
+import TableContainer from './TableContainer';
 
 function getTable(): HTMLElement {
   return screen.getAllByRole('table')[0];
@@ -52,7 +51,7 @@ const defaultProps = {
   loading: false,
   width: 800,
   onCellFilterAdded: jest.fn(),
-  tableResult: dataFrame,
+  data: dataFrame,
   splitOpen: (() => {}) as any,
   range: {} as any,
   timeZone: InternalTimeZones.utc,
@@ -78,7 +77,7 @@ describe('TableContainer', () => {
       fields: [],
       length: 0,
     } as DataFrame;
-    render(<TableContainer {...defaultProps} tableResult={emptyFrames} />);
+    render(<TableContainer {...defaultProps} data={emptyFrames} />);
     expect(screen.getByText('0 series returned')).toBeInTheDocument();
   });
 

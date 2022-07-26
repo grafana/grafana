@@ -36,12 +36,16 @@ export const groupFramesByVisType = (data: PanelData): ExplorePanelData => {
       frames[visType].push(frame);
     } else {
       if (isTimeSeries(frame)) {
+        frames['graph'] = frames['graph'] || [];
         frames['graph'].push(frame);
+        frames['table'] = frames['table'] || [];
         frames['table'].push(frame);
       } else if (isNodeGraphFrame(frame)) {
+        frames['nodeGraph'] = frames['nodeGraph'] || [];
         frames['nodeGraph'].push(frame);
       } else {
         // We fallback to table if we do not have any better meta info about the dataframe.
+        frames['table'] = frames['table'] || [];
         frames['table'].push(frame);
       }
     }

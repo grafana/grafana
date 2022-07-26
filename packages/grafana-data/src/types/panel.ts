@@ -1,7 +1,9 @@
 import { defaultsDeep } from 'lodash';
+import { RefObject } from 'react';
 
 import { EventBus } from '../events';
 import { StandardEditorProps } from '../field';
+import { GrafanaTheme2 } from '../themes';
 import { Registry } from '../utils';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
@@ -10,7 +12,8 @@ import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
 import { LoadingState } from './data';
 import { DataFrame, FieldType } from './dataFrame';
-import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
+import { DataQueryError, DataQueryRequest, DataQueryTimings, DataSourceApi } from './datasource';
+import { ExploreGraphStyle, ExploreId, SplitOpen } from './explore';
 import { FieldConfigSource } from './fieldOverrides';
 import { OptionEditorConfig } from './options';
 import { PluginMeta } from './plugin';
@@ -112,6 +115,35 @@ export interface PanelProps<T = any> {
 
   /** Time range change handler */
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
+}
+
+export interface ExplorePanelProps {
+  graphStyle: ExploreGraphStyle;
+  onChangeGraphStyle: (style: ExploreGraphStyle) => void;
+  data: DataFrame[];
+  absoluteRange: AbsoluteTimeRange;
+  range: TimeRange;
+  timeZone: TimeZone;
+  splitOpen: SplitOpen;
+  annotations?: DataFrame[];
+  loadingState: LoadingState;
+  loading?: boolean;
+  theme: GrafanaTheme2;
+  onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
+  width: number;
+  // TODO cannot import FilterItem from grafana/ui
+  // onCellFilterAdded: (filter: FilterItem) => void;
+  onCellFilterAdded: (filter: any) => void;
+  exploreId: ExploreId;
+  syncedTimes: boolean;
+  onClickFilterLabel: (key: string, value: string) => void;
+  onClickFilterOutLabel: (key: string, value: string) => void;
+  onStartScanning: () => void;
+  onStopScanning: () => void;
+  datasourceInstance?: DataSourceApi | null;
+  withTraceView?: boolean;
+  scrollElement?: Element;
+  topOfViewRef: RefObject<HTMLDivElement>;
 }
 
 export interface PanelEditorProps<T = any> {

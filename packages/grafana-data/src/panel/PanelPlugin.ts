@@ -13,6 +13,7 @@ import {
   FieldConfigProperty,
   PanelPluginDataSupport,
   VisualizationSuggestionsSupplier,
+  ExplorePanelProps,
 } from '../types';
 import { deprecationWarning } from '../utils';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
@@ -110,6 +111,10 @@ export class PanelPlugin<
   private suggestionsSupplier?: VisualizationSuggestionsSupplier;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
+  // TODO: this creates type error in configureStore.ts not sure why
+  // explorePanel?: ComponentType<ExplorePanelProps> | null;
+  explorePanel?: any;
+  visType?: string[];
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -378,5 +383,11 @@ export class PanelPlugin<
 
   hasPluginId(pluginId: string) {
     return this.meta.id === pluginId;
+  }
+
+  setExplorePanel(panel: ComponentType<ExplorePanelProps>, visType: string[]) {
+    this.explorePanel = panel;
+    this.visType = visType;
+    return this;
   }
 }

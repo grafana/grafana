@@ -1,6 +1,6 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { DataQuery, HistoryItem } from '@grafana/data';
+import { DataQuery, HistoryItem, ExploreId } from '@grafana/data';
 import { config, logError } from '@grafana/runtime';
 import { RICH_HISTORY_SETTING_KEYS } from 'app/core/history/richHistoryLocalStorageUtils';
 import store from 'app/core/store';
@@ -16,7 +16,7 @@ import {
   updateRichHistorySettings,
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
-import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery, ThunkResult } from 'app/types';
+import { ExploreItemState, ExploreState, RichHistoryQuery, ThunkResult } from 'app/types';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';

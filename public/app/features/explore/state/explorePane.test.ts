@@ -1,8 +1,8 @@
 import { of } from 'rxjs';
 
-import { serializeStateToUrlParam } from '@grafana/data';
+import { serializeStateToUrlParam, ExploreId } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { ExploreId, StoreState, ThunkDispatch } from 'app/types';
+import { StoreState, ThunkDispatch } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 

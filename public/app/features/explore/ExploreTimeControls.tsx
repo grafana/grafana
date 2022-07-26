@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 
-import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
+import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone, dateMath, ExploreId } from '@grafana/data';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
-import { ExploreId } from 'app/types';
 
 import { TimeSyncButton } from './TimeSyncButton';
 

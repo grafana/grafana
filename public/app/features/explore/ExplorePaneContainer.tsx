@@ -3,7 +3,7 @@ import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
+import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2, ExploreId } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
@@ -16,7 +16,6 @@ import {
   parseUrlState,
 } from 'app/core/utils/explore';
 import { StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 

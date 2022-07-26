@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme, DataSourceApi, DataQuery } from '@grafana/data';
+import { GrafanaTheme, DataSourceApi, DataQuery, ExploreId } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
@@ -13,7 +13,7 @@ import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHi
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { ShowConfirmModalEvent } from '../../../types/events';
 import { changeDatasource } from '../state/datasource';

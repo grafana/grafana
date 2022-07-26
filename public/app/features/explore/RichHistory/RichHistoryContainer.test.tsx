@@ -1,9 +1,8 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
+import { ExploreId } from '@grafana/data';
 import { SortOrder } from 'app/core/utils/richHistory';
-
-import { ExploreId } from '../../../types/explore';
 
 import { Tabs } from './RichHistory';
 import { RichHistoryContainer, Props } from './RichHistoryContainer';

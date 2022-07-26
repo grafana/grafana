@@ -1,9 +1,7 @@
 import produce from 'immer';
 
-import { FieldConfigSource } from '@grafana/data';
+import { FieldConfigSource, ExploreGraphStyle } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig, StackingMode } from '@grafana/schema';
-
-import { ExploreGraphStyle } from '../../types';
 
 export type FieldConfig = FieldConfigSource<GraphFieldConfig>;
 

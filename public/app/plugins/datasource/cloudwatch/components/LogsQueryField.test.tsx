@@ -3,7 +3,8 @@ import _, { DebouncedFunc } from 'lodash'; // eslint-disable-line lodash/import-
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
-import { ExploreId } from '../../../../types';
+import { ExploreId } from '@grafana/data';
+
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 
 import { CloudWatchLogsQueryField } from './LogsQueryField';

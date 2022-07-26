@@ -1,9 +1,8 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { ExploreId } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-
-import { ExploreId } from '../../../../types';
 
 import { withinExplore } from './setup';
 
