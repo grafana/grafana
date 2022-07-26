@@ -65,6 +65,7 @@ type DeleteCorrelationResponse struct {
 //
 // Responses:
 // 200: updateCorrelationResponse
+// 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
