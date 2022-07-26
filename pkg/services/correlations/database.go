@@ -56,7 +56,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 }
 
 func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
-	return s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		query := &datasources.GetDataSourceQuery{
 			OrgId: cmd.OrgId,
 			Uid:   cmd.SourceUID,
