@@ -484,7 +484,6 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			var res dtos.PluginList
 			err := json.NewDecoder(response.Body).Decode(&res)
 			require.NoError(t, err)
-
 			require.Len(t, res, len(tc.expectedPlugins))
 			for _, plugin := range res {
 				require.Contains(t, tc.expectedPlugins, plugin.Id)
