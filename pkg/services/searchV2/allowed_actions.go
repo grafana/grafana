@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -232,9 +233,9 @@ func getEntityReferences(resp *backend.DataResponse) ([]entityReferences, error)
 			return nil, errors.New("invalid value in dash_uid field")
 		}
 
-		rawDsUids, ok := dsUidField.At(i).(*json.RawMessage)
+		rawDsUids, ok := dsUidField.At(i).(json.RawMessage)
 		if !ok {
-			return nil, errors.New("invalid value in ds_uid field")
+			return nil, fmt.Errorf("invalid value for uid %s in ds_uid field: %s", uidField, dsUidField.At(i))
 		}
 
 		var uids []string
