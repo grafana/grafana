@@ -58,7 +58,7 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 		}
 
 		queryType := model.QueryType
-		if queryType != "timeSeriesQuery" && queryType != "" {
+		if queryType != timeSeriesQuery && queryType != "" {
 			continue
 		}
 

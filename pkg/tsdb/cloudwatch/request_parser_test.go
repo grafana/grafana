@@ -11,6 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestQueryJSON(t *testing.T) {
+	jsonString := []byte(`{
+		"type": "timeSeriesQuery"
+	}`)
+	var res QueryJson
+	err := json.Unmarshal(jsonString, &res)
+	require.NoError(t, err)
+	assert.Equal(t, "timeSeriesQuery", res.QueryType)
+}
+
 func TestRequestParser(t *testing.T) {
 	average := "Average"
 	false := false
