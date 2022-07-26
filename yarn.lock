@@ -4247,6 +4247,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@daybrush/utils@npm:^1.7.1":
+  version: 1.7.1
+  resolution: "@daybrush/utils@npm:1.7.1"
+  checksum: 70c1d6a335c5152b17ff2325a11228e96ea1f0d818b5d2bc01a37b27736f11f39bd432ff3e3e31ab26ccb4033718e74b36d2791d5d32ccc6bf3c58aeb3913c83
+  languageName: node
+  linkType: hard
+
 "@discoveryjs/json-ext@npm:^0.5.0":
   version: 0.5.5
   resolution: "@discoveryjs/json-ext@npm:0.5.5"
@@ -20672,16 +20679,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "gesto@npm:1.7.0"
-  dependencies:
-    "@daybrush/utils": ^1.0.0
-    "@scena/event-emitter": ^1.0.2
-  checksum: f2a66bcf0f0e2d72572ea0360ed11a86772449298207a6bb35ae7535b81af142729fbff749a93b1eba89b644b582ee0fde98880aed7b195f5d9cd0aeeb243e7a
-  languageName: node
-  linkType: hard
-
 "gesto@npm:^1.9.0":
   version: 1.9.0
   resolution: "gesto@npm:1.9.0"
@@ -21443,7 +21440,7 @@ __metadata:
     rxjs: 7.5.5
     sass: 1.54.0
     sass-loader: 13.0.0
-    selecto: 1.16.2
+    selecto: 1.17.0
     semver: 7.3.7
     sinon: 14.0.0
     slate: 0.47.8
@@ -25218,14 +25215,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"keycon@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "keycon@npm:1.1.2"
+"keycon@npm:^1.2.0":
+  version: 1.2.2
+  resolution: "keycon@npm:1.2.2"
   dependencies:
-    "@daybrush/utils": ^1.0.0
+    "@daybrush/utils": ^1.7.1
     "@scena/event-emitter": ^1.0.2
     keycode: ^2.2.0
-  checksum: 7be74aaf8360824b4aa7bf7a401fa4bc586522ead95ea04d24857ce3320c56d6e3d9a6bb691c5a575f1381124bcbc6b1e5f22a46241d2e2af324ab7b06305d2f
+  checksum: 81cd5a5e70640212165ba743b4451628b3c30b1773b7f26eb9d2fb5ba5c6529d2c8fecc2499bbf01fa899206356e14960dd42db6b983e5a6c27669718b23c8a8
   languageName: node
   linkType: hard
 
@@ -28050,6 +28047,15 @@ __metadata:
   dependencies:
     "@daybrush/utils": ^1.3.1
   checksum: 37d82ea4ea914f7e27c33cf12e93a99e07103bca4180cbfb835328d3fe33a6f31e9500c644f2638a07f478bebc7a261db6d97187c58d967d4736b60cd31230f0
+  languageName: node
+  linkType: hard
+
+"overlap-area@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "overlap-area@npm:1.1.0"
+  dependencies:
+    "@daybrush/utils": ^1.7.1
+  checksum: 718e48a54e11e02ec461f2ad3bc05f396e249a609325ee94ae3bffa568816cf16b3053f512ad549a27e4d644f4194c3e47e4c9c4af02826ae063df67026cbf58
   languageName: node
   linkType: hard
 
@@ -33238,21 +33244,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"selecto@npm:1.16.2":
-  version: 1.16.2
-  resolution: "selecto@npm:1.16.2"
+"selecto@npm:1.17.0":
+  version: 1.17.0
+  resolution: "selecto@npm:1.17.0"
   dependencies:
-    "@daybrush/utils": ^1.4.0
+    "@daybrush/utils": ^1.7.1
     "@egjs/children-differ": ^1.0.1
     "@scena/dragscroll": ^1.1.1
     "@scena/event-emitter": ^1.0.5
     css-styled: ^1.0.0
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.7.0
-    keycon: ^1.1.2
-    overlap-area: ^1.0.0
-  checksum: a8389449641cc7cb00a3aad18f6c42fae82e2457c8c2c7b0552a92d93bf3bc04e8fbcc244f44233e85b660ef326607f65c776ed6b3ccc8926d2cdb5b0edf145b
+    gesto: ^1.9.0
+    keycon: ^1.2.0
+    overlap-area: ^1.1.0
+  checksum: ad288ee4be3bc2610925010a5a215370e0664f2075d7157ef2c020d08ac7244e9d6818fccb67998dbd655be8c5b9f2912cac329b8a9961787c9e86873adba47d
   languageName: node
   linkType: hard
 
