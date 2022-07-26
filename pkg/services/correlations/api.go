@@ -85,7 +85,7 @@ func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	cmd.UID = web.Params(c.Req)[":correlationUid"]
+	cmd.UID = web.Params(c.Req)[":correlationUID"]
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
 	cmd.OrgId = c.OrgId
 

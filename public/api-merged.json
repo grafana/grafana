@@ -4336,7 +4336,7 @@
           },
           {
             "type": "string",
-            "name": "correlationUid",
+            "name": "correlationUID",
             "in": "path",
             "required": true
           },

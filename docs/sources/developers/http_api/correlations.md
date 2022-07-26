@@ -104,7 +104,7 @@ Status codes:
 
 ## Update correlations
 
-`POST /api/datasources/uid/:uid/correlations/:correlationUis`
+`PATCH /api/datasources/uid/:uid/correlations/:correlationUID`
 
 Updates a correlation.
 

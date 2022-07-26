@@ -59,7 +59,7 @@ type DeleteCorrelationResponse struct {
 	Body correlations.DeleteCorrelationResponse `json:"body"`
 }
 
-// swagger:route PATCH /datasources/uid/{uid}/correlations/{correlationUid} correlations updateCorrelation
+// swagger:route PATCH /datasources/uid/{uid}/correlations/{correlationUID} correlations updateCorrelation
 //
 // Updates a correlation.
 //
@@ -78,7 +78,7 @@ type UpdateCorrelationParams struct {
 	DatasourceUID string `json:"uid"`
 	// in:path
 	// required:true
-	CorrelationUID string `json:"correlationUid"`
+	CorrelationUID string `json:"correlationUID"`
 	// in: body
 	Body correlations.UpdateCorrelationCommand `json:"body"`
 }
