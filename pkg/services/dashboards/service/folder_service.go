@@ -176,12 +176,20 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 
 	var permissionErr error
 	if !accesscontrol.IsDisabled(f.cfg) {
-		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, folder.Uid, []accesscontrol.SetResourcePermissionCommand{
-			{UserID: userID, Permission: models.PERMISSION_ADMIN.String()},
+		var permissions []accesscontrol.SetResourcePermissionCommand
+		if user.IsRealUser() && !user.IsAnonymous {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+				UserID: userID, Permission: models.PERMISSION_ADMIN.String(),
+			})
+		}
+
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
 		}...)
-	} else if f.cfg.EditorsCanAdmin {
+
+		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, folder.Uid, permissions...)
+	} else if f.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
 		permissionErr = f.MakeUserAdmin(ctx, orgID, userID, folder.Id, true)
 	}
 

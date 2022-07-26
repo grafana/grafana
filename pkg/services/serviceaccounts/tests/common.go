@@ -174,7 +174,7 @@ func (s *ServiceAccountsStoreMock) MigrateApiKey(ctx context.Context, orgID int6
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, keyId int64) error {
+func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
 	s.Calls.RevertApiKey = append(s.Calls.RevertApiKey, []interface{}{ctx})
 	return nil
 }

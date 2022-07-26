@@ -251,7 +251,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		err := sqlStore.DeleteDataSource(context.Background(),
-			&datasources.DeleteDataSourceCommand{ID: ds.Id, UID: "nisse-uid", Name: "nisse", OrgID: int64(123123)})
+			&datasources.DeleteDataSourceCommand{ID: ds.Id, UID: ds.Uid, Name: ds.Name, OrgID: ds.OrgId})
 		require.NoError(t, err)
 
 		require.Eventually(t, func() bool {
@@ -259,9 +259,27 @@ func TestIntegrationDataAccess(t *testing.T) {
 		}, time.Second, time.Millisecond)
 
 		require.Equal(t, ds.Id, deleted.ID)
-		require.Equal(t, int64(123123), deleted.OrgID)
-		require.Equal(t, "nisse", deleted.Name)
-		require.Equal(t, "nisse-uid", deleted.UID)
+		require.Equal(t, ds.OrgId, deleted.OrgID)
+		require.Equal(t, ds.Name, deleted.Name)
+		require.Equal(t, ds.Uid, deleted.UID)
+	})
+
+	t.Run("does not fire an event when the datasource is not deleted", func(t *testing.T) {
+		sqlStore := InitTestDB(t)
+
+		var called bool
+		sqlStore.bus.AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {
+			called = true
+			return nil
+		})
+
+		err := sqlStore.DeleteDataSource(context.Background(),
+			&datasources.DeleteDataSourceCommand{ID: 1, UID: "non-existing", Name: "non-existing", OrgID: int64(10)})
+		require.NoError(t, err)
+
+		require.Never(t, func() bool {
+			return called
+		}, time.Second, time.Millisecond)
 	})
 
 	t.Run("DeleteDataSourceByName", func(t *testing.T) {
