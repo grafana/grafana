@@ -250,7 +250,7 @@ def benchmark_ldap_step():
 
 
 def build_storybook_step(edition, ver_mode):
-    if edition in ('enterprise', 'enterprise2') and ver_mode == 'release':
+    if edition in ('enterprise', 'enterprise2'):
         return None
 
     return {
@@ -975,14 +975,6 @@ def upload_packages_step(edition, ver_mode, trigger=None):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2'):
         return None
 
-    if ver_mode == 'release':
-        cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
-    elif edition == 'enterprise2':
-        cmd = './bin/grabpl upload-packages --edition {}'.format(
-            edition)
-    else:
-        cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
-
     deps = []
     if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
         deps.extend([
@@ -999,7 +991,7 @@ def upload_packages_step(edition, ver_mode, trigger=None):
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': [cmd, ],
+        'commands': ['./bin/grabpl upload-packages --edition {}'.format(edition),],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step.update(trigger)
@@ -1171,6 +1163,38 @@ def verify_gen_cue_step(edition):
             '# The following command will fail if running code generators produces any diff in output.',
             'CODEGEN_VERIFY=1 make gen-cue',
         ],
+    }
+
+def trigger_test_release():
+    return {
+        'name': 'trigger-test-release',
+        'image': build_image,
+        'environment': {
+            'GITHUB_TOKEN': from_secret('github_token'),
+            'DOWNSTREAM_REPO': from_secret('downstream'),
+            'TEST_TAG': 'v0.0.0-test',
+        },
+        'commands': [
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
+            'cd grafana-enterprise',
+            'git fetch origin "refs/tags/*:refs/tags/*"',
+            'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
+            'cd -',
+            'git fetch origin "refs/tags/*:refs/tags/*"',
+            'git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git',
+            'git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet',
+        ],
+        'failure': 'ignore',
+        'when': {
+            'paths': {
+                'include': [
+                    '.drone.yml',
+                ]
+            },
+            'repo': [
+                'grafana/grafana',
+            ]
+        }
     }
 
 def artifacts_page_step():

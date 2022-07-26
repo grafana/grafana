@@ -15,6 +15,7 @@ import { IconButton } from '../IconButton/IconButton';
 export interface Props {
   pageIcon?: IconName;
   title?: string;
+  section?: string;
   parent?: string;
   onGoBack?: () => void;
   titleHref?: string;
@@ -30,6 +31,7 @@ export interface Props {
 export const PageToolbar: FC<Props> = React.memo(
   ({
     title,
+    section,
     parent,
     pageIcon,
     onGoBack,
@@ -59,63 +61,77 @@ export const PageToolbar: FC<Props> = React.memo(
       className
     );
 
+    const leftItemChildren = leftItems?.map((child, index) => (
+      <div className={styles.leftActionItem} key={index}>
+        {child}
+      </div>
+    ));
+
+    const titleEl = (
+      <>
+        <span className={styles.noLinkTitle}>{title}</span>
+        {section && <span className={styles.pre}> / {section}</span>}
+      </>
+    );
+
     return (
       <nav className={mainStyle} aria-label={ariaLabel}>
-        {pageIcon && !onGoBack && (
-          <div className={styles.pageIcon}>
-            <Icon name={pageIcon} size="lg" aria-hidden />
-          </div>
-        )}
-        {onGoBack && (
-          <div className={styles.pageIcon}>
-            <IconButton
-              name="arrow-left"
-              tooltip="Go back (Esc)"
-              tooltipPlacement="bottom"
-              size="xxl"
-              aria-label={selectors.components.BackButton.backArrow}
-              onClick={onGoBack}
-            />
-          </div>
-        )}
-        <nav aria-label="Search links" className={styles.navElement}>
-          {parent && parentHref && (
-            <>
-              <Link
-                aria-label={`Search dashboard in the ${parent} folder`}
-                className={cx(styles.titleText, styles.parentLink, styles.titleLink)}
-                href={parentHref}
-              >
-                {parent} <span className={styles.parentIcon}></span>
-              </Link>
-              {titleHref && (
-                <span className={cx(styles.titleText, styles.titleDivider, styles.parentLink)} aria-hidden>
-                  /
-                </span>
-              )}
-            </>
+        <div className={styles.leftWrapper}>
+          {pageIcon && !onGoBack && (
+            <div className={styles.pageIcon}>
+              <Icon name={pageIcon} size="lg" aria-hidden />
+            </div>
           )}
-
-          {title && titleHref && (
-            <h1 className={styles.h1Styles}>
-              <Link
-                aria-label="Search dashboard by name"
-                className={cx(styles.titleText, styles.titleLink)}
-                href={titleHref}
-              >
-                {title}
-              </Link>
-            </h1>
+          {onGoBack && (
+            <div className={styles.pageIcon}>
+              <IconButton
+                name="arrow-left"
+                tooltip="Go back (Esc)"
+                tooltipPlacement="bottom"
+                size="xxl"
+                aria-label={selectors.components.BackButton.backArrow}
+                onClick={onGoBack}
+              />
+            </div>
           )}
-          {title && !titleHref && <h1 className={styles.titleText}>{title}</h1>}
-        </nav>
-        {leftItems?.map((child, index) => (
-          <div className={styles.leftActionItem} key={index}>
-            {child}
-          </div>
-        ))}
+          <nav aria-label="Search links" className={styles.navElement}>
+            {parent && parentHref && (
+              <>
+                <Link
+                  aria-label={`Search dashboard in the ${parent} folder`}
+                  className={cx(styles.titleText, styles.parentLink, styles.titleLink)}
+                  href={parentHref}
+                >
+                  {parent} <span className={styles.parentIcon}></span>
+                </Link>
+                {titleHref && (
+                  <span className={cx(styles.titleText, styles.titleDivider, styles.parentLink)} aria-hidden>
+                    /
+                  </span>
+                )}
+              </>
+            )}
 
-        <div className={styles.spacer} />
+            {title && (
+              <div className={styles.titleWrapper}>
+                <h1 className={styles.h1Styles}>
+                  {titleHref ? (
+                    <Link
+                      aria-label="Search dashboard by name"
+                      className={cx(styles.titleText, styles.titleLink)}
+                      href={titleHref}
+                    >
+                      {titleEl}
+                    </Link>
+                  ) : (
+                    <div className={styles.titleText}>{titleEl}</div>
+                  )}
+                </h1>
+                {leftItemChildren}
+              </div>
+            )}
+          </nav>
+        </div>
         {React.Children.toArray(children)
           .filter(Boolean)
           .map((child, index) => {
@@ -136,21 +152,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   const { spacing, typography } = theme;
 
   const focusStyle = getFocusStyles(theme);
-  const titleStyles = css`
-    font-size: ${typography.size.lg};
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    margin: 0;
-    max-width: 240px;
-    border-radius: 2px;
-
-    @media ${styleMixins.mediaUp(theme.v1.breakpoints.xl)} {
-      max-width: unset;
-    }
-  `;
 
   return {
+    pre: css`
+      white-space: pre;
+    `,
     toolbar: css`
       align-items: center;
       background: ${theme.colors.background.canvas};
@@ -159,7 +165,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: flex-end;
       padding: ${theme.spacing(1.5, 2)};
     `,
-    spacer: css`
+    leftWrapper: css`
+      display: flex;
+      flex-wrap: nowrap;
       flex-grow: 1;
     `,
     pageIcon: css`
@@ -170,24 +178,38 @@ const getStyles = (theme: GrafanaTheme2) => {
         align-items: center;
       }
     `,
+    noLinkTitle: css`
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    `,
     titleWrapper: css`
       display: flex;
-      align-items: center;
-      min-width: 0;
-      overflow: hidden;
+      flex-grow: 1;
+      margin: 0;
     `,
     navElement: css`
       display: flex;
+      flex-grow: 1;
+      align-items: center;
+      max-width: calc(100vw - 78px);
     `,
     h1Styles: css`
       margin: 0;
       line-height: inherit;
-      display: flex;
+      width: 300px;
+      max-width: min-content;
+      flex-grow: 1;
     `,
     parentIcon: css`
       margin-left: ${theme.spacing(0.5)};
     `,
-    titleText: titleStyles,
+    titleText: css`
+      display: flex;
+      font-size: ${typography.size.lg};
+      margin: 0;
+      border-radius: 2px;
+    `,
     titleLink: css`
       &:focus-visible {
         ${focusStyle}

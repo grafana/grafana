@@ -8,4 +8,11 @@ import { dayNightLayer } from './dayNightLayer';
 /**
  * Registry for layer handlers
  */
-export const dataLayers = [markersLayer, heatmapLayer, lastPointTracker, geojsonLayer, dayNightLayer, routeLayer];
+export const dataLayers = [
+    markersLayer, 
+    heatmapLayer, 
+    lastPointTracker, 
+    geojsonLayer, 
+    dayNightLayer, 
+    routeLayer,
+];

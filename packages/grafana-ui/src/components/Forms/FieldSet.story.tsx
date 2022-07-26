@@ -1,3 +1,4 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { Input, Form, FieldSet, Field } from '@grafana/ui';
@@ -7,7 +8,7 @@ import { Button } from '../Button';
 
 import mdx from './FieldSet.mdx';
 
-export default {
+const meta: ComponentMeta<typeof FieldSet> = {
   title: 'Forms/FieldSet',
   component: FieldSet,
   decorators: [withCenteredStory],
@@ -46,3 +47,5 @@ export const basic = () => {
     </Form>
   );
 };
+
+export default meta;

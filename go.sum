@@ -1336,6 +1336,8 @@ github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5J
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/grafana/grafana-aws-sdk v0.10.7 h1:kXOuWCI+fV561/9sOU0DnzlFwqblfW36XptJLv78l8s=
 github.com/grafana/grafana-aws-sdk v0.10.7/go.mod h1:5Iw3xY7iXJfNaYHrRHMXa/kaB2lWoyntg71PPLGvSs8=
+github.com/grafana/grafana-aws-sdk v0.10.8 h1:6MGlWlQD4E0aI+Vp4Cfgzsj9V3U7kSQ1wCye9D1NMoU=
+github.com/grafana/grafana-aws-sdk v0.10.8/go.mod h1:5Iw3xY7iXJfNaYHrRHMXa/kaB2lWoyntg71PPLGvSs8=
 github.com/grafana/grafana-azure-sdk-go v1.2.0 h1:f/7BjCHGIU0JYOsLIt4oJztDy0fOPBRHB5R0Xe9++ew=
 github.com/grafana/grafana-azure-sdk-go v1.2.0/go.mod h1:rgrnK9m6CgKlgx4rH3FFP/6dTdyRO6LYC2mVZov35yo=
 github.com/grafana/grafana-azure-sdk-go v1.3.0 h1:zboQpq/ljBjqHo/6UQNZAUwqGTtnEGRYSEnqIQvLuAo=
