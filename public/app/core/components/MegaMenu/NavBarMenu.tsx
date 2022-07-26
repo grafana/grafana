@@ -26,7 +26,7 @@ export interface Props {
 export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, searchBarHidden);
-  const animationSpeed = theme.transitions.duration.shortest + 300;
+  const animationSpeed = theme.transitions.duration.shortest;
   const animStyles = getAnimStyles(theme, animationSpeed);
   const { chrome } = useGrafana();
   const state = chrome.useState();
