@@ -56,10 +56,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     pointer-events: auto;
   `,
   TL: css`
-    left: 0.5em;
+    direction: rtl;
+    right: 8px;
     pointer-events: auto;
     position: absolute;
-    top: 65px;
-    transform: translate(-50%, 0%);
+    top: 15px;
   `,
 }));

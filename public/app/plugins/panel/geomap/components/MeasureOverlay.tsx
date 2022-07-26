@@ -55,9 +55,9 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
     <div className={`${measureStyle.infoWrap} ol-unselectable ol-control`} style={{ backgroundColor: '#22252b' }}>
       <IconButton
         name="ruler-combined"
-        style={{ backgroundColor: 'rgba(204, 204, 220, 0.16)', display: 'inline-block', marginRight: '5px' }}
+        style={{ backgroundColor: 'rgba(204, 204, 220, 0.16)', display: 'inline-block', marginRight: '2px' }}
         tooltip={`${menuActive ? 'hide' : 'show'} measure tools`}
-        tooltipPlacement="right"
+        tooltipPlacement="top"
         onClick={() => {
           toggleMenu();
         }}
@@ -65,10 +65,10 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
       {menuActive ? (
         <>
           <IconButton
-            name="angle-left"
-            style={{ float: 'right' }}
+            name="angle-right"
+            style={{ float: 'left' }}
             tooltip="hide measure tools"
-            tooltipPlacement="right"
+            tooltipPlacement="left"
             onClick={() => {
               toggleMenu();
             }}
@@ -76,8 +76,8 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
           <RadioButtonGroup
             value={typeSelect}
             options={[
-              { label: 'length', value: 'LineString' },
               { label: 'area', value: 'Polygon' },
+              { label: 'length', value: 'LineString' },
             ]}
             size="sm"
             onChange={(e) => {
