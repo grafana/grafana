@@ -84,12 +84,21 @@ func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Respo
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
 	cmd.UID = web.Params(c.Req)[":correlationUid"]
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
 	cmd.OrgId = c.OrgId
 
 	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
+		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
+			return response.Error(http.StatusBadRequest, "At least one of label, description is required", err)
+		}
+
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Data source not found", err)
+		}
+
 		if errors.Is(err, ErrCorrelationNotFound) {
 			return response.Error(http.StatusNotFound, "Correlation not found", err)
 		}
