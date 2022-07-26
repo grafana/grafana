@@ -71,7 +71,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
       builder.addCustomEditor({
         id: 'content',
         path: 'root',
-        name: 'Tree View',
+        name: 'Elements',
         editor: TreeNavigationEditor,
         settings: { scene, layer: scene.currentLayer, selected },
       });

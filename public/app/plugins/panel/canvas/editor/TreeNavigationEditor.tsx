@@ -4,6 +4,7 @@ import React, { Key, useEffect, useMemo, useState } from 'react';
 import SVG from 'react-inlinesvg';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup, useTheme2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
@@ -116,6 +117,15 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     return <TreeNodeTitle nodeData={nodeData} setAllowSelection={setAllowSelection} settings={settings} />;
   };
 
+  // TODO: This functionality is currently kinda broken / no way to decouple / delete created frames at this time
+  const onFrameSelection = () => {
+    if (layer.scene) {
+      layer.scene.frameSelection();
+    } else {
+      console.warn('no scene!');
+    }
+  };
+
   return (
     <>
       <Global styles={globalCSS} />
@@ -144,6 +154,11 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>
             Clear selection
+          </Button>
+        )}
+        {selection.length > 1 && config.featureToggles.canvasPanelNesting && (
+          <Button size="sm" variant="secondary" onClick={onFrameSelection}>
+            Frame selection
           </Button>
         )}
       </HorizontalGroup>

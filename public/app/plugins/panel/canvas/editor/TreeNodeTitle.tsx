@@ -70,7 +70,7 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
       <div className={styles.textWrapper}>&nbsp; {getLayerInfo(element)}</div>
 
       {!nodeData.children && (
-        <>
+        <div className={styles.actionButtonsWrapper}>
           <IconButton
             name="copy"
             title={'Duplicate'}
@@ -83,13 +83,17 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
             className={styles.actionIcon}
             onClick={() => onDelete(element)}
           />
-        </>
+        </div>
       )}
     </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  actionButtonsWrapper: css`
+    display: flex;
+    align-items: flex-end;
+  `,
   actionIcon: css`
     color: ${theme.colors.text.secondary};
     cursor: pointer;
@@ -104,21 +108,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: hidden;
     margin-right: ${theme.v1.spacing.sm};
   `,
-  wrapper: css`
-    label: Wrapper;
-    display: flex;
-    align-items: center;
-    margin-left: ${theme.v1.spacing.xs};
-  `,
   layerName: css`
     font-weight: ${theme.v1.typography.weight.semibold};
     color: ${theme.v1.colors.textBlue};
     cursor: pointer;
     overflow: hidden;
     margin-left: ${theme.v1.spacing.xs};
-  `,
-  layerNameInput: css`
-    max-width: 300px;
-    margin: -4px 0;
   `,
 });
