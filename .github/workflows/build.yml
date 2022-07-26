@@ -24,13 +24,23 @@ jobs:
   build_docker_image:
     name: Build Docker Image
     needs: [generate_version_number]
-    uses: docker/build-push-action@v2
-    with:
-      context: .
-      push: true
-      tags: |
-        niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:latest
-        niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ jobs.generate_version_number.steps.generate_version_number_step.outputs.image_version }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to Artifactory
+        uses: docker/login-action@v1
+        with:
+          registry: niartifacts.jfrog.io
+          username: ${{ secrets.NIARTIFACTS_USER }}
+          password: ${{ secrets.NIARTIFACTS_TOKEN }}
+      - name: Docker build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: |
+            niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:latest
+            niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ jobs.generate_version_number.steps.generate_version_number_step.outputs.image_version }}
 
   sign_docker_image:
     name: Sign Docker image
