@@ -39,12 +39,13 @@ func (cr *rulesConfigReader) readConfig(ctx context.Context, path string) ([]*Al
 		}
 		alertFileV1, err := cr.parseConfig(path, file)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failure to parse file %s: %w", file.Name(), err)
 		}
 		if alertFileV1 != nil {
+			alertFileV1.Filename = file.Name()
 			alertFile, err := alertFileV1.MapToModel()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failure to map file %s: %w", alertFileV1.Filename, err)
 			}
 			alertFiles = append(alertFiles, &alertFile)
 		}

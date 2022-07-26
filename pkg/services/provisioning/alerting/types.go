@@ -1,6 +1,8 @@
 package alerting
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -18,6 +20,7 @@ type AlertingFile struct {
 
 type AlertingFileV1 struct {
 	configVersion
+	Filename            string
 	Groups              []AlertRuleGroupV1     `json:"groups" yaml:"groups"`
 	DeleteRules         []RuleDeleteV1         `json:"deleteRules" yaml:"deleteRules"`
 	ContactPoints       []ContactPointV1       `json:"contactPoints" yaml:"contactPoints"`
@@ -28,11 +31,11 @@ func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
 	alertingFile := AlertingFile{}
 	err := fileV1.mapRules(&alertingFile)
 	if err != nil {
-		return AlertingFile{}, err
+		return AlertingFile{}, fmt.Errorf("failure parsing rules: %w", err)
 	}
 	err = fileV1.mapContactPoint(&alertingFile)
 	if err != nil {
-		return AlertingFile{}, err
+		return AlertingFile{}, fmt.Errorf("failure parsing contact points: %w", err)
 	}
 	return alertingFile, nil
 }

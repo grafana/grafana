@@ -52,7 +52,7 @@ func (cpV1 *ContactPointV1) MapToModel() (ContactPoint, error) {
 	for _, receiverV1 := range cpV1.Receivers {
 		embeddedCP, err := receiverV1.mapToModel(name)
 		if err != nil {
-			return ContactPoint{}, err
+			return ContactPoint{}, fmt.Errorf("%s: %w", name, err)
 		}
 		contactPoint.ContactPoints = append(contactPoint.ContactPoints, embeddedCP)
 	}
