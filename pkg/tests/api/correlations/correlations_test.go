@@ -125,7 +125,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", "nonexistent-ds-uid"),
 			body: fmt.Sprintf(`{
-					"targetUid": "%s"
+					"targetUID": "%s"
 				}`, writableDs),
 			user: adminUser,
 		})
@@ -148,7 +148,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
 			body: `{
-					"targetUid": "nonexistent-uid-uid"
+					"targetUID": "nonexistent-uid-uid"
 				}`,
 			user: adminUser,
 		})
@@ -171,7 +171,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", readOnlyDS),
 			body: fmt.Sprintf(`{
-					"targetUid": "%s"
+					"targetUID": "%s"
 				}`, readOnlyDS),
 			user: adminUser,
 		})
@@ -194,7 +194,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
 			body: fmt.Sprintf(`{
-					"targetUid": "%s"
+					"targetUID": "%s"
 				}`, readOnlyDS),
 			user: adminUser,
 		})
@@ -222,7 +222,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
 			body: fmt.Sprintf(`{
-					"targetUid": "%s",
+					"targetUID": "%s",
 					"description": "%s",
 					"label": "%s"
 				}`, writableDs, description, label),
