@@ -683,7 +683,8 @@ Default is `false`.
 
 Set to `true` to automatically add new users to the main organization
 (id 1). When set to `false`, new users automatically cause a new
-organization to be created for that new user. Default is `true`.
+organization to be created for that new user. The organization will be
+created even if the `allow_org_create` setting is set to `false`. Default is `true`.
 
 ### auto_assign_org_id
 
