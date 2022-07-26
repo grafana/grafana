@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/gobwas/glob"
 
 	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
@@ -322,7 +321,7 @@ func validateManifest(m pluginManifest, block *clearsign.Block) error {
 	if len(m.Plugin) == 0 {
 		return invalidFieldErr{field: "plugin"}
 	}
-	if len(m.Version) == 0 || !isValidSemVer(m.Version) {
+	if len(m.Version) == 0 {
 		return invalidFieldErr{field: "version"}
 	}
 	if len(m.KeyID) == 0 {
@@ -334,7 +333,7 @@ func validateManifest(m pluginManifest, block *clearsign.Block) error {
 	if len(m.Files) == 0 {
 		return invalidFieldErr{field: "files"}
 	}
-	if len(m.ManifestVersion) == 0 || !isValidSemVer(m.ManifestVersion) {
+	if len(m.ManifestVersion) == 0 {
 		return invalidFieldErr{field: "manifestVersion"}
 	}
 	if len(m.SignedByOrg) == 0 {
@@ -360,15 +359,4 @@ func validateManifest(m pluginManifest, block *clearsign.Block) error {
 	}
 
 	return nil
-}
-
-func isValidSemVer(version string) bool {
-	if version == "" {
-		return false
-	}
-	if _, err := semver.StrictNewVersion(version); err == nil {
-		return true
-	}
-
-	return false
 }

@@ -500,18 +500,8 @@ func Test_validateManifest(t *testing.T) {
 			expectedErr: "valid manifest field version is required",
 		},
 		{
-			name:        "Invalid version field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.Version = "2" }),
-			expectedErr: "valid manifest field version is required",
-		},
-		{
 			name:        "Empty manifestVersion field",
 			manifest:    createManifest(t, func(m *pluginManifest) { m.ManifestVersion = "" }),
-			expectedErr: "valid manifest field manifestVersion is required",
-		},
-		{
-			name:        "Invalid manifestVersion field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.Version = "1.0" }),
 			expectedErr: "valid manifest field manifestVersion is required",
 		},
 	}
