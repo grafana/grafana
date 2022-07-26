@@ -7,7 +7,6 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 )
 
@@ -244,7 +243,6 @@ func ReadDashboard(stream io.Reader, lookup dslookup.DatasourceLookup) (*Dashboa
 						}
 
 						if templateVariable.variableType == "datasource" {
-							log.New("dash").Info("Adding new template variable", "var", templateVariable)
 							datasourceVariablesLookup.add(templateVariable)
 						}
 					}
