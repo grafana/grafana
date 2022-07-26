@@ -16,18 +16,18 @@ trigger property.
 ### Usage
 
 ```tsx
-import { Dropdown, Menu, MenuItem, Button } from '@grafana/ui';
+import { Dropdown, Menu, Button } from '@grafana/ui';
 
 const menu = (
   <Menu>
-    <MenuItem label="Google" />
-    <MenuItem label="Filter" />
+    <Menu.Item label="Google" />
+    <Menu.Item label="Filter" />
   </Menu>
 );
 
 return (
   <Dropdown overlay={menu}>
-    <Button icon="hamburger" />
+    <Button icon="bars" />
   </Dropdown>
 );
 ```
