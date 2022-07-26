@@ -275,7 +275,7 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 }
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
-	if !(s.options.Assignments.Users || s.options.Assignments.ServiceAccounts) {
+	if !s.options.Assignments.Users {
 		return ErrInvalidAssignment
 	}
 
