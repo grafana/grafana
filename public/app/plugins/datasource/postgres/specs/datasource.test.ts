@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import {
@@ -10,19 +10,20 @@ import {
 } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { SQLQuery } from 'app/features/plugins/sql/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { PostgresDatasource } from '../datasource';
-import { PostgresOptions, PostgresQuery } from '../types';
+import { PostgresOptions } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
 jest.mock('@grafana/runtime/src/services', () => ({
-  ...(jest.requireActual('@grafana/runtime/src/services') as unknown as object),
+  ...jest.requireActual('@grafana/runtime/src/services'),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
@@ -33,9 +34,10 @@ jest.mock('@grafana/runtime/src/services', () => ({
 
 describe('PostgreSQLDatasource', () => {
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
-  const setupTestContext = (data: any) => {
+  const setupTestContext = (data: any, mock?: Observable<FetchResponse<unknown>>) => {
     jest.clearAllMocks();
-    fetchMock.mockImplementation(() => of(createFetchResponse(data)));
+    const defaultMock = () => mock ?? of(createFetchResponse(data));
+    fetchMock.mockImplementation(defaultMock);
     const instanceSettings = {
       jsonData: {
         defaultProject: 'testproject',
@@ -72,6 +74,44 @@ describe('PostgreSQLDatasource', () => {
       expectObservable(result).toBe(expectedMarble, expectedValues);
     });
   };
+
+  describe('when performing testDatasource call', () => {
+    it('should return the error from the server', async () => {
+      setupTestContext(
+        undefined,
+        throwError(() => ({
+          status: 400,
+          statusText: 'Bad Request',
+          data: {
+            results: {
+              meta: {
+                error: 'db query error: pq: password authentication failed for user "postgres"',
+                frames: [
+                  {
+                    schema: {
+                      refId: 'meta',
+                      meta: {
+                        executedQueryString: 'SELECT 1',
+                      },
+                      fields: [],
+                    },
+                    data: {
+                      values: [],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        }))
+      );
+
+      const ds = new PostgresDatasource({ name: '', id: 0, jsonData: {} } as any);
+      const result = await ds.testDatasource();
+      expect(result.status).toEqual('error');
+      expect(result.message).toEqual('db query error: pq: password authentication failed for user "postgres"');
+    });
+  });
 
   describe('When performing a time series query', () => {
     it('should transform response correctly', () => {
@@ -265,7 +305,7 @@ describe('PostgreSQLDatasource', () => {
             hide: true,
           },
         ],
-      } as unknown as DataQueryRequest<PostgresQuery>;
+      } as unknown as DataQueryRequest<SQLQuery>;
 
       const { ds } = setupTestContext({});
 
@@ -273,56 +313,6 @@ describe('PostgreSQLDatasource', () => {
         expect(received[0]).toEqual({ data: [] });
         expect(fetchMock).not.toHaveBeenCalled();
       });
-    });
-  });
-
-  describe('When performing annotationQuery', () => {
-    let results: any;
-    const annotationName = 'MyAnno';
-    const options = {
-      annotation: {
-        name: annotationName,
-        rawQuery: 'select time, title, text, tags from table;',
-      },
-      range: {
-        from: dateTime(1432288354),
-        to: dateTime(1432288401),
-      },
-    };
-    const response = {
-      results: {
-        MyAnno: {
-          frames: [
-            dataFrameToJSON(
-              new MutableDataFrame({
-                fields: [
-                  { name: 'time', values: [1432288355, 1432288390, 1432288400] },
-                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
-                  { name: 'tags', values: ['TagA,TagB', ' TagB , TagC', null] },
-                ],
-              })
-            ),
-          ],
-        },
-      },
-    };
-
-    beforeEach(async () => {
-      const { ds } = setupTestContext(response);
-      results = await ds.annotationQuery(options);
-    });
-
-    it('should return annotation list', async () => {
-      expect(results.length).toBe(3);
-
-      expect(results[0].text).toBe('some text');
-      expect(results[0].tags[0]).toBe('TagA');
-      expect(results[0].tags[1]).toBe('TagB');
-
-      expect(results[1].tags[0]).toBe('TagB');
-      expect(results[1].tags[1]).toBe('TagC');
-
-      expect(results[2].tags.length).toBe(0);
     });
   });
 
@@ -604,8 +594,9 @@ describe('PostgreSQLDatasource', () => {
       hostname IN($host)
     GROUP BY time, metric
     ORDER BY time`;
-      const query = {
+      const query: SQLQuery = {
         rawSql,
+        refId: 'A',
         rawQuery: true,
       };
       const { templateSrv, ds } = setupTestContext({});
@@ -630,8 +621,9 @@ describe('PostgreSQLDatasource', () => {
       measurement = 'logins.count'
     GROUP BY time, metric
     ORDER BY time`;
-      const query = {
+      const query: SQLQuery = {
         rawSql,
+        refId: 'A',
         rawQuery: true,
       };
       const { templateSrv, ds } = setupTestContext({});
