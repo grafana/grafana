@@ -3,7 +3,7 @@ import { get as lodashGet } from 'lodash';
 import React, { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
-import { GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { useStyles2 } from '@grafana/ui';
@@ -16,16 +16,19 @@ import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { getTreeViewEditor } from './editor/treeViewEditor';
+import { of } from 'rxjs';
 
 export const InlineEditBody = () => {
   const activePanel = useObservable(activePanelSubject);
   const instanceState = activePanel?.panel.context?.instanceState;
+  const panelData = useObservable(activePanel?.panel?.data ?? of());
 
   const styles = useStyles2(getStyles);
 
   const pane = useMemo(() => {
+    const p = activePanel?.panel;
     const state: InstanceState = instanceState;
-    if (!state) {
+    if (!state || !p) {
       return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
     }
 
@@ -37,6 +40,7 @@ export const InlineEditBody = () => {
       if (selection?.length === 1) {
         const element = selection[0];
         if (!(element instanceof FrameState)) {
+          console.log("HERE", element);
           builder.addNestedOptions(
             getElementEditor({
               category: [`Selected element (${element.options.name})`],
@@ -48,8 +52,12 @@ export const InlineEditBody = () => {
       }
     };
 
-    return getOptionsPaneCategoryDescriptor({}, supplier);
-  }, [instanceState]);
+    return getOptionsPaneCategoryDescriptor({ 
+        options: p.props.options, 
+        onChange: p.props.onOptionsChange,
+        data: p.props.data.series,
+     }, supplier);
+  }, [instanceState, panelData]);
 
   return (
     <div>
@@ -68,13 +76,19 @@ export const InlineEditBody = () => {
   );
 };
 
+interface EditorProps<T> {
+  onChange: (v:T) => void;
+  options: T;
+  data?: DataFrame[];
+}
+
 // 🤮🤮🤮🤮 this oddly does not actually do anything, but structure is required.  I'll try to clean it up...
 function getOptionsPaneCategoryDescriptor<T = any>(
-  props: any,
+  props: EditorProps<T>,
   supplier: PanelOptionsSupplier<T>
 ): OptionsPaneCategoryDescriptor {
   const context: StandardEditorContext<unknown, unknown> = {
-    data: props.input,
+    data: props.data ?? [],
     options: props.options,
   };
 

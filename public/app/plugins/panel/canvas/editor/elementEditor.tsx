@@ -63,6 +63,7 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         },
       });
 
+
       // force clean layer configuration
       const layer = canvasElementRegistry.getIfExists(options?.type ?? DEFAULT_CANVAS_ELEMENT_CONFIG.type)!;
       let currentOptions = options;
@@ -74,6 +75,9 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         };
       }
       const ctx = { ...context, options: currentOptions };
+
+
+      console.log( "ELEMENT EDITOR!!!", { opts, layer, currentOptions});
 
       if (layer?.registerOptionsUI) {
         layer.registerOptionsUI(builder, ctx);

@@ -31,7 +31,9 @@ const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
   { label: 'Scale', value: VerticalConstraint.Scale },
 ];
 
-export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, PanelOptions>> = ({ item }) => {
+type Props = StandardEditorProps<any, CanvasEditorOptions, PanelOptions>;
+
+export function PlacementEditor({ item }: Props) {
   const settings = item.settings;
 
   // Will force a rerender whenever the subject changes
