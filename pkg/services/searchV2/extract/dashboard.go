@@ -51,12 +51,15 @@ func (d *datasourceVariableLookup) getDsRefsByTemplateVariableValue(value string
 	case "No data sources found":
 		return []dslookup.DataSourceRef{}
 	default:
-		return []dslookup.DataSourceRef{
-			{
-				UID:  value,
-				Type: datasourceType,
-			},
+		// some variables use `ds.name` rather `ds.uid`
+		if ref := d.dsLookup.ByRef(&dslookup.DataSourceRef{
+			UID: value,
+		}); ref != nil {
+			return []dslookup.DataSourceRef{*ref}
 		}
+
+		// discard variable
+		return []dslookup.DataSourceRef{}
 	}
 }
 

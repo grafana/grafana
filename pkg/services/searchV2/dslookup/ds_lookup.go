@@ -3,7 +3,6 @@ package dslookup
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -87,30 +86,23 @@ func (d *DsLookup) ByRef(ref *DataSourceRef) *DataSourceRef {
 		return d.defaultDS
 	}
 
-	logger := log.New("ds_lookup")
-	logger.Info("Looking up", "ref", ref)
 	key := ""
 	if ref.UID != "" {
 		ds, ok := d.byUID[ref.UID]
 		if ok {
-			logger.Info("Looking up", "ref.uid", ref.UID, "ref", ref, "by", "uid", "val", ds)
 			return ds
 		}
 		key = ref.UID
 	}
 	if key == "" {
-		logger.Info("Looking up", "ref.uid", ref.UID, "ref", ref, "by", "default", "val", d.defaultDS)
 		return d.defaultDS
 	}
 	ds, ok := d.byUID[key]
 	if ok {
-		logger.Info("Looking up", "ref.uid", ref.UID, "ref", ref, "by", "uid2", "val", ds)
 		return ds
 	}
 
-	sourceRef := d.byName[key]
-	logger.Info("Looking up", "ref.uid", ref.UID, "ref", ref, "by", "name", "val", sourceRef)
-	return sourceRef
+	return d.byName[key]
 }
 
 func (d *DsLookup) ByType(dsType string) []DataSourceRef {

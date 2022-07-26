@@ -24,7 +24,7 @@ func dsLookup() dslookup.DatasourceLookup {
 		{
 			UID:       "PD8C576611E62080A",
 			Type:      "testdata",
-			Name:      "testdata-name",
+			Name:      "gdev-testdata",
 			IsDefault: false,
 		},
 		{
@@ -36,13 +36,13 @@ func dsLookup() dslookup.DatasourceLookup {
 		{
 			UID:       "sqlite-1",
 			Type:      "sqlite-datasource",
-			Name:      "sqlite-datasource-name",
+			Name:      "SQLite Grafana",
 			IsDefault: false,
 		},
 		{
 			UID:       "sqlite-2",
 			Type:      "sqlite-datasource",
-			Name:      "sqlite-datasource-name",
+			Name:      "SQLite Grafana2",
 			IsDefault: false,
 		},
 		{
