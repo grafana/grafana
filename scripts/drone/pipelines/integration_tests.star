@@ -6,6 +6,7 @@ load(
     'wire_install_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
+    'compile_build_cmd',
 )
 
 load(
@@ -18,11 +19,6 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
-)
-
-load(
-    'scripts/drone/steps/build.star',
-    'compile_build_cmd',
 )
 
 def integration_tests(trigger, ver_mode, edition):

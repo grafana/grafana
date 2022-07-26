@@ -11,10 +11,6 @@ load(
     'test_backend_step',
     'test_backend_integration_step',
     'verify_gen_cue_step',
-)
-
-load(
-    'scripts/drone/steps/build.star',
     'compile_build_cmd',
 )
 

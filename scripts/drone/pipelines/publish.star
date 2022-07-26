@@ -3,17 +3,13 @@ load(
     'identify_runner_step',
     'gen_version_step',
     'download_grabpl_step',
-    'store_packages_step'
+    'store_packages_step',
+    'compile_build_cmd',
 )
 
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
-)
-
-load(
-    'scripts/drone/steps/build.star',
-    'compile_build_cmd',
 )
 
 def publish(trigger, ver_mode, edition):

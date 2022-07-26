@@ -12,6 +12,7 @@ load(
     'build_frontend_docs_step',
     'build_frontend_package_step',
     'build_docs_website_step',
+    'compile_build_cmd',
 )
 
 load(
@@ -23,11 +24,6 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
-)
-
-load(
-    'scripts/drone/steps/build.star',
-    'compile_build_cmd',
 )
 
 

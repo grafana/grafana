@@ -42,7 +42,8 @@ load(
     'verify_gen_cue_step',
     'publish_images_step',
     'trigger_oss',
-    'artifacts_page_step'
+    'artifacts_page_step',
+    'compile_build_cmd',
 )
 
 load(
@@ -61,11 +62,6 @@ load(
 )
 
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
-
-load(
-    'scripts/drone/steps/build.star',
-    'compile_build_cmd',
-)
 
 def store_npm_packages_step():
     return {
