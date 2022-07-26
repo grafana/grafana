@@ -98,6 +98,8 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           execute: jest.fn(),
           transports: [],
         },
+        pause: jest.fn(),
+        resume: jest.fn(),
       };
     };
     jest.mocked(initializeAgent).mockImplementation(mockedAgent);
