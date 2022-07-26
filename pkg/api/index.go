@@ -41,7 +41,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	}
 
 	children = append(children, &dtos.NavLink{
-		Text: "Notification history", Id: "profile/notifications", Url: hs.Cfg.AppSubURL + "profile/notifications", Icon: "bell",
+		Text: "Notification history", Id: "profile/notifications", Url: hs.Cfg.AppSubURL + "/profile/notifications", Icon: "bell",
 	})
 
 	if setting.AddChangePasswordLink() {
