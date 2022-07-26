@@ -35,10 +35,16 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 		return err
 	}
 	cpProvisioner := NewContactPointProvisoner(logger, cfg.ContactPointService)
-	cpProvisioner.Provision(ctx, files)
+	err = cpProvisioner.Provision(ctx, files)
+	if err != nil {
+		return err
+	}
 	// TODO: provision notificiation policy in between so that when applying it
 	//       new objects already exists and old ones are still there
-	cpProvisioner.Unprovision(ctx, files)
+	err = cpProvisioner.Unprovision(ctx, files)
+	if err != nil {
+		return err
+	}
 	logger.Info("finished to provision alerting")
 	return nil
 }

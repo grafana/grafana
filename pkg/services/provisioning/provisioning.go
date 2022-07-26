@@ -270,11 +270,14 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ps.log)
+	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
+		st, ps.SQLStore, ps.log)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                 alertingPath,
 		RuleService:          *ruleService,
 		DashboardService:     ps.dashboardService,
 		DashboardProvService: ps.dashboardProvisioningService,
+		ContactPointService:  *contactPointService,
 	}
 	return ps.provisionAlerting(ctx, cfg)
 }
