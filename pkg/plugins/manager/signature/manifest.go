@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gobwas/glob"
 	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
 	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp"
@@ -144,32 +145,14 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		}, nil
 	}
 
-	// Validate that private is running within defined root URLs
-	if manifest.SignatureType == plugins.PrivateSignature || len(manifest.RootURLs) > 0 {
-		appURL, err := url.Parse(setting.AppUrl)
-		if err != nil {
+	// Validate that plugin is running within defined root URLs
+	if len(manifest.RootURLs) > 0 {
+		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl, manifest.SignatureType); err != nil {
+			mlog.Warn("Could not verify if root URLs match", "plugin", plugin.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err
-		}
-
-		foundMatch := false
-		for _, u := range manifest.RootURLs {
-			rootURL, err := url.Parse(u)
-			if err != nil {
-				mlog.Warn("Could not parse plugin root URL", "plugin", plugin.ID, "rootUrl", rootURL)
-				return plugins.Signature{}, err
-			}
-
-			if rootURL.Scheme == appURL.Scheme &&
-				rootURL.Host == appURL.Host &&
-				path.Clean(rootURL.RequestURI()) == path.Clean(appURL.RequestURI()) {
-				foundMatch = true
-				break
-			}
-		}
-
-		if !foundMatch {
+		} else if !match {
 			mlog.Warn("Could not find root URL that matches running application URL", "plugin", plugin.ID,
-				"appUrl", appURL, "rootUrls", manifest.RootURLs)
+				"appUrl", setting.AppUrl, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
 				Status: plugins.SignatureInvalid,
 			}, nil
@@ -298,4 +281,36 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 	})
 
 	return files, err
+}
+
+func urlMatch(specs []string, target string, signatureType plugins.SignatureType) (bool, error) {
+	targetURL, err := url.Parse(target)
+	if err != nil {
+		return false, err
+	}
+
+	for _, spec := range specs {
+		specURL, err := url.Parse(spec)
+		if err != nil {
+			return false, err
+		}
+
+		if specURL.Scheme == targetURL.Scheme && specURL.Host == targetURL.Host &&
+			path.Clean(specURL.RequestURI()) == path.Clean(targetURL.RequestURI()) {
+			return true, nil
+		}
+
+		if signatureType != plugins.PrivateGlobSignature {
+			continue
+		}
+
+		sp, err := glob.Compile(spec, '/', '.')
+		if err != nil {
+			return false, err
+		}
+		if match := sp.Match(target); match {
+			return true, nil
+		}
+	}
+	return false, nil
 }

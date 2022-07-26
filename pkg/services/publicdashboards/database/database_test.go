@@ -24,6 +24,29 @@ var DefaultTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
 // Default time to pass in with seconds rounded
 var DefaultTime = time.Now().UTC().Round(time.Second)
 
+func TestIntegrationGetDashboard(t *testing.T) {
+	var sqlStore *sqlstore.SQLStore
+	var dashboardStore *dashboardsDB.DashboardStore
+	var publicdashboardStore *PublicDashboardStoreImpl
+	var savedDashboard *models.Dashboard
+
+	setup := func() {
+		sqlStore = sqlstore.InitTestDB(t)
+		dashboardStore = dashboardsDB.ProvideDashboardStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore)
+		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	}
+
+	t.Run("GetDashboard can get original dashboard by uid", func(t *testing.T) {
+		setup()
+
+		dashboard, err := publicdashboardStore.GetDashboard(context.Background(), savedDashboard.Uid)
+
+		require.NoError(t, err)
+		require.Equal(t, savedDashboard.Uid, dashboard.Uid)
+	})
+}
+
 // GetPublicDashboard
 func TestIntegrationGetPublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore

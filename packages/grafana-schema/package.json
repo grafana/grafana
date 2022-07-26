@@ -28,10 +28,10 @@
     "@rollup/plugin-node-resolve": "13.3.0",
     "@swc/helpers": "0.4.0",
     "rimraf": "3.0.2",
-    "rollup": "2.75.6",
+    "rollup": "2.77.1",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.6.4"
+    "typescript": "4.7.4"
   },
   "dependencies": {
     "tslib": "2.4.0"
