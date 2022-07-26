@@ -163,7 +163,13 @@ export function DashboardSettings({ dashboard, editview }: Props) {
   return (
     <FocusScope contain autoFocus>
       <div className="dashboard-settings" ref={ref} {...overlayProps} {...dialogProps}>
-        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose} />
+        <PageToolbar
+          className={styles.toolbar}
+          title={dashboard.title}
+          section="Settings"
+          parent={folderTitle}
+          onGoBack={onClose}
+        />
         <CustomScrollbar>
           <div className={styles.scrollInner}>
             <div className={styles.settingsWrapper}>
@@ -199,6 +205,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   scrollInner: css`
     min-width: 100%;
     display: flex;
+  `,
+  toolbar: css`
+    width: 60vw;
+    min-width: min-content;
   `,
   settingsWrapper: css`
     margin: ${theme.spacing(0, 2, 2)};

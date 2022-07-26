@@ -289,8 +289,7 @@ func ProvideServiceAccountPermissions(
 			ServiceAccounts: false,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  {serviceaccounts.ActionRead},
-			"Edit":  {serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionDelete},
+			"Edit":  {serviceaccounts.ActionRead, serviceaccounts.ActionWrite},
 			"Admin": {serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionDelete, serviceaccounts.ActionPermissionsRead, serviceaccounts.ActionPermissionsWrite},
 		},
 		ReaderRoleName: "Service account permission reader",
