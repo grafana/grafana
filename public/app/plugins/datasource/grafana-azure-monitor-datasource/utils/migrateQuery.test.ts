@@ -292,5 +292,20 @@ describe('AzureMonitor: migrateQuery', () => {
         })
       );
     });
+
+    it('correctly migrates a metric definition', () => {
+      const result = migrateQuery(
+        { ...azureMonitorQueryV8, azureMonitor: { metricDefinition: 'ms.ns/mn' } },
+        templateSrv
+      );
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            metricNamespace: 'ms.ns/mn',
+            metricDefinition: undefined,
+          }),
+        })
+      );
+    });
   });
 });

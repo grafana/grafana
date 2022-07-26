@@ -81,6 +81,7 @@ function migrateToDefaultNamespace(query: AzureMonitorQuery): AzureMonitorQuery 
       azureMonitor: {
         ...query.azureMonitor,
         metricNamespace: query.azureMonitor.metricDefinition,
+        metricDefinition: undefined,
       },
     };
   }
