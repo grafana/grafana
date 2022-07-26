@@ -101,7 +101,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
     color: ${theme.colors.text};
-    height: ${theme.v1.height.md}px;
+    height: ${theme.spacing(theme.components.height.md)};
 
     .label-tag {
       margin: 0 5px;
