@@ -16,6 +16,9 @@ module.exports = {
     filename: '[name].[contenthash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: 'public/build/',
+    // hashing with certain linux distros and nodejs > 16 causes build errors. See:
+    // https://github.com/webpack/webpack/issues/14532#issuecomment-947525539
+    hashFunction: 'xxhash64',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
