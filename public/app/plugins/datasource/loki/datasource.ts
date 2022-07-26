@@ -44,7 +44,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
-import { addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
+import { addLabelFormatToQuery, addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import LanguageProvider from './language_provider';
@@ -358,7 +358,7 @@ export class LokiDatasource
       expr: query.expr,
       queryType: LokiQueryType.Range,
       refId: 'log-samples',
-      maxLines: 50,
+      maxLines: 10,
     };
 
     // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
@@ -415,6 +415,15 @@ export class LokiDatasource
       }
       case 'ADD_NO_PIPELINE_ERROR': {
         expression = addNoPipelineErrorToQuery(expression);
+        break;
+      }
+      case 'ADD_LEVEL_LABEL_FORMAT': {
+        if (action.options?.originalLabel && action.options?.renameTo) {
+          expression = addLabelFormatToQuery(expression, {
+            renameTo: action.options.renameTo,
+            originalLabel: action.options.originalLabel,
+          });
+        }
         break;
       }
       default:

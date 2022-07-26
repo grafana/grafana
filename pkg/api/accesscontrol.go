@@ -230,12 +230,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: ac.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
-			Description: "Create teams and read organisation users and service accounts (required to manage the created teams).",
+			Description: "Create teams and read organisation users (required to manage the created teams).",
 			Group:       "Teams",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionTeamsCreate},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
-				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
 			},
 		},
 		Grants: teamCreatorGrants,

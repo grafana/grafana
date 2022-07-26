@@ -222,21 +222,20 @@ type ScopeParams struct {
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
 // can perform against specific resource.
 type ResourcePermission struct {
-	ID                   int64
-	RoleName             string
-	Actions              []string
-	Scope                string
-	UserId               int64
-	UserLogin            string
-	UserEmail            string
-	UserIsServiceAccount bool
-	TeamId               int64
-	TeamEmail            string
-	Team                 string
-	BuiltInRole          string
-	IsManaged            bool
-	Created              time.Time
-	Updated              time.Time
+	ID          int64
+	RoleName    string
+	Actions     []string
+	Scope       string
+	UserId      int64
+	UserLogin   string
+	UserEmail   string
+	TeamId      int64
+	TeamEmail   string
+	Team        string
+	BuiltInRole string
+	IsManaged   bool
+	Created     time.Time
+	Updated     time.Time
 }
 
 func (p *ResourcePermission) Contains(targetActions []string) bool {
