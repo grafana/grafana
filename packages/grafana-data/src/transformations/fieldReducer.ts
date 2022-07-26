@@ -456,7 +456,7 @@ function calculateVariance(field: Field, ignoreNulls: boolean, nullAsZero: boole
   if (runningNonNullCount > 0) {
     variance = squareSum / runningNonNullCount;
   }
-  return { variance: variance };
+  return { variance: variance, stdDev: Math.sqrt(variance) };
 }
 
 function calculateStdDev(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
