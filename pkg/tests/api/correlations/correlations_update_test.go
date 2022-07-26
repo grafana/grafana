@@ -186,6 +186,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 
 		require.Equal(t, "At least one of label, description is required", response.Message)
 		require.Equal(t, correlations.ErrUpdateCorrelationEmptyParams.Error(), response.Error)
+		require.NoError(t, res.Body.Close())
 
 		// empty body
 		res = ctx.Patch(PatchParams{
@@ -203,6 +204,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 
 		require.Equal(t, "At least one of label, description is required", response.Message)
 		require.Equal(t, correlations.ErrUpdateCorrelationEmptyParams.Error(), response.Error)
+		require.NoError(t, res.Body.Close())
 
 		// all set to null
 		res = ctx.Patch(PatchParams{
@@ -223,6 +225,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 
 		require.Equal(t, "At least one of label, description is required", response.Message)
 		require.Equal(t, correlations.ErrUpdateCorrelationEmptyParams.Error(), response.Error)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("updating a correlation pointing to a read-only data source should work", func(t *testing.T) {
