@@ -7083,7 +7083,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "30"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "30"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "31"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "32"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "33"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "34"]
     ],
     "public/app/plugins/datasource/graphite/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7137,9 +7141,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "48"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "49"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "50"],
-      [0, 0, 0, "Do not use any type assertions.", "51"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "51"],
       [0, 0, 0, "Do not use any type assertions.", "52"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "53"],
+      [0, 0, 0, "Do not use any type assertions.", "53"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "54"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "55"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "56"],
@@ -7150,7 +7154,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "61"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "62"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "63"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "64"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "64"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "65"]
     ],
     "public/app/plugins/datasource/graphite/datasource_integration.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

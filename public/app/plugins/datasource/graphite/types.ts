@@ -4,6 +4,12 @@ import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import { GraphiteDatasource } from './datasource';
 
+export enum GraphiteQueryType {
+  Default = 'Default',
+  Value = 'Value',
+  MetricName = 'Metric Name',
+}
+
 export interface GraphiteQuery extends DataQuery {
   target?: string;
 }
