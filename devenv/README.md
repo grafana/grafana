@@ -46,6 +46,8 @@ After the docker-compose file is generated, run the container with:
 
 To determine what ports are opened by default for each of the database services, navigate to [datasources.env](devenv/datasources.yaml), this will also provide login information to allow direct database access if needed. Note that some services do not have a web UI.
 
+To get Grafana running using these data sources, follow the instructions in the [developer guide](../contribute/developer-guide.md)
+
 ### Notes per block
 
 #### Grafana

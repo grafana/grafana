@@ -290,3 +290,7 @@ If that happens to you, chances are you've already set a lower limit and your sh
 - Read our [style guides](/contribute/style-guides).
 - Learn how to [Create a pull request](/contribute/create-pull-request.md).
 - Read about the [architecture](architecture).
+
+### Troubleshooting
+
+If you get stuck after building the front-end with a message like `94% sealing after seal`, you could have the wrong node version installed, check the [.nvmrc](../.nvmrc) for the currently supported node version.
