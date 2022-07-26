@@ -47,7 +47,7 @@ func (cpV1 *ContactPointV1) MapToModel() (ContactPoint, error) {
 	contactPoint.OrgID = orgID
 	name := strings.TrimSpace(cpV1.Name.Value())
 	if name == "" {
-		return ContactPoint{}, fmt.Errorf("")
+		return ContactPoint{}, fmt.Errorf("no name is set")
 	}
 	for _, receiverV1 := range cpV1.Receivers {
 		embeddedCP, err := receiverV1.mapToModel(name)
