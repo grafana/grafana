@@ -70,6 +70,7 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.Ap
 		return sess.Find(&result)
 	})
 	if err != nil {
+		_ = err
 		// TODO: return error
 	}
 	return result
