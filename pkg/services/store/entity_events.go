@@ -111,18 +111,6 @@ func (e *entityEventService) GetAllEventsAfter(ctx context.Context, id int64) ([
 	return evs, err
 }
 
-func (e *entityEventService) saveEvent(ctx context.Context, cmd SaveEventCmd) error {
-	entityEvent := &EntityEvent{
-		EventType: cmd.EventType,
-		EntityId:  cmd.EntityId,
-		Created:   time.Now().Unix(),
-	}
-	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Insert(entityEvent)
-		return err
-	})
-}
-
 func (e *entityEventService) deleteEventsOlderThan(ctx context.Context, duration time.Duration) error {
 	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		maxCreated := time.Now().Add(-duration)

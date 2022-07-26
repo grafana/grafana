@@ -10,6 +10,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func saveEvent(ctx context.Context, sql *sqlstore.SQLStore, cmd SaveEventCmd) error {
+	entityEvent := &EntityEvent{
+		EventType: cmd.EventType,
+		EntityId:  cmd.EntityId,
+		Created:   time.Now().Unix(),
+	}
+	return sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(entityEvent)
+		return err
+	})
+}
+
 func TestIntegrationEntityEventsService(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -25,7 +37,7 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 
 	t.Run("Should insert an entity event", func(t *testing.T) {
 		service := setup()
-		err := service.saveEvent(ctx, SaveEventCmd{
+		err := saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
@@ -43,17 +55,17 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 		service := setup()
 		lastEventEntityId := "database/dash/1"
 
-		err := service.saveEvent(ctx, SaveEventCmd{
+		err := saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.saveEvent(ctx, SaveEventCmd{
+		err = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.saveEvent(ctx, SaveEventCmd{
+		err = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  lastEventEntityId,
 			EventType: EntityEventTypeCreate,
 		})
@@ -68,7 +80,7 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 		service := setup()
 		lastEventEntityId := "database/dash/1"
 
-		err := service.saveEvent(ctx, SaveEventCmd{
+		err := saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
@@ -77,12 +89,12 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 		require.NoError(t, err)
 		firstEvId := firstEv.Id
 
-		err = service.saveEvent(ctx, SaveEventCmd{
+		err = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.saveEvent(ctx, SaveEventCmd{
+		err = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  lastEventEntityId,
 			EventType: EntityEventTypeCreate,
 		})
@@ -97,15 +109,15 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 
 	t.Run("Should delete old events", func(t *testing.T) {
 		service := setup()
-		_ = service.saveEvent(ctx, SaveEventCmd{
+		_ = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
-		_ = service.saveEvent(ctx, SaveEventCmd{
+		_ = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
-		_ = service.saveEvent(ctx, SaveEventCmd{
+		_ = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
