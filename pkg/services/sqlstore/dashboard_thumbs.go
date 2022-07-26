@@ -29,7 +29,10 @@ func marshalDatasourceUids(dsUids []string) (string, error) {
 	}
 
 	b, err := json.Marshal(dsUids)
-	return string(b), err
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
