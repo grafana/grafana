@@ -3,7 +3,7 @@ import { getValuesFromQueryParams } from 'app/percona/shared/helpers/getValuesFr
 import { ExtendedColumn, FilterFieldTypes } from '..';
 import { ALL_LABEL, ALL_VALUE, SEARCH_INPUT_FIELD_NAME, SEARCH_SELECT_FIELD_NAME } from './Filter.constants';
 
-export const getQueryParams = (columns: ExtendedColumn[], queryParams: UrlQueryMap) => {
+export const getQueryParams = (columns: Array<ExtendedColumn<any>>, queryParams: UrlQueryMap) => {
   const customTransform = (params: UrlQueryValue): string | undefined => {
     if (params !== undefined && params !== null) {
       return params.toString();
@@ -17,7 +17,7 @@ export const getQueryParams = (columns: ExtendedColumn[], queryParams: UrlQueryM
   return params ?? {};
 };
 
-export const buildObjForQueryParams = (columns: ExtendedColumn[], values: Record<string, any>) => {
+export const buildObjForQueryParams = (columns: Array<ExtendedColumn<any>>, values: Record<string, any>) => {
   let obj: Record<string, any> = {
     [SEARCH_INPUT_FIELD_NAME]: values[SEARCH_INPUT_FIELD_NAME],
     [SEARCH_SELECT_FIELD_NAME]: values[SEARCH_SELECT_FIELD_NAME]?.value ?? values[SEARCH_SELECT_FIELD_NAME],
@@ -44,7 +44,7 @@ export const buildObjForQueryParams = (columns: ExtendedColumn[], values: Record
   return obj;
 };
 
-export const buildSearchOptions = (columns: ExtendedColumn[]) => {
+export const buildSearchOptions = (columns: Array<ExtendedColumn<any>>) => {
   const searchOptions = columns
     .filter((value) => value.type === FilterFieldTypes.TEXT)
     .map((column) => ({
@@ -55,7 +55,7 @@ export const buildSearchOptions = (columns: ExtendedColumn[]) => {
   return searchOptions;
 };
 
-export const buildEmptyValues = (columns: ExtendedColumn[]) => {
+export const buildEmptyValues = (columns: Array<ExtendedColumn<any>>) => {
   let obj = {
     [SEARCH_INPUT_FIELD_NAME]: undefined,
     [SEARCH_SELECT_FIELD_NAME]: ALL_VALUE,
@@ -69,7 +69,7 @@ export const buildEmptyValues = (columns: ExtendedColumn[]) => {
 };
 
 export const isValueInTextColumn = (
-  columns: ExtendedColumn[],
+  columns: Array<ExtendedColumn<any>>,
   filterValue: any,
   queryParamsObj: { [key: keyof UrlQueryMap]: string }
 ) => {
@@ -97,7 +97,7 @@ export const isTextIncluded = (needle: string, haystack: string): boolean =>
   haystack.toLowerCase().includes(needle.toLowerCase());
 
 export const isInOptions = (
-  columns: ExtendedColumn[],
+  columns: Array<ExtendedColumn<any>>,
   filterValue: any,
   queryParamsObj: { [key: keyof UrlQueryMap]: string },
   filterFieldType: FilterFieldTypes
@@ -123,7 +123,7 @@ export const isInOptions = (
   return result.every((value) => value);
 };
 
-export const isOtherThanTextType = (columns: ExtendedColumn[]) => {
+export const isOtherThanTextType = (columns: Array<ExtendedColumn<any>>) => {
   return columns.find((column) => {
     return column.type !== undefined && column.type !== FilterFieldTypes.TEXT;
   })

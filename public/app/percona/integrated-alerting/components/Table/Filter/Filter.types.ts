@@ -4,4 +4,5 @@ export interface FilterProps {
   columns: Array<ExtendedColumn<any>>;
   rawData: Object[];
   setFilteredData: (data: Object[]) => void;
+  hasBackendFiltering: boolean;
 }

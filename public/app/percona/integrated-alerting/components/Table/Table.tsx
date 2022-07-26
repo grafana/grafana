@@ -33,6 +33,7 @@ export const Table: FC<TableProps> = ({
   getColumnProps = defaultPropGetter,
   getCellProps = defaultPropGetter,
   showFilter = false,
+  hasBackendFiltering = false,
 }) => {
   const [filterData, setFilteredData] = useState<Object[]>([]);
   const data = useMemo(() => (showFilter ? filterData : rawData), [showFilter, filterData, rawData]);
@@ -93,7 +94,14 @@ export const Table: FC<TableProps> = ({
   return (
     <>
       <Overlay dataTestId="table-loading" isPending={pendingRequest}>
-        {showFilter && <Filter columns={columns} rawData={rawData} setFilteredData={setFilteredData} />}
+        {showFilter && (
+          <Filter
+            columns={columns}
+            rawData={rawData}
+            setFilteredData={setFilteredData}
+            hasBackendFiltering={hasBackendFiltering}
+          />
+        )}
         <div className={style.tableWrap} data-testid="table-outer-wrapper">
           <div className={style.table} data-testid="table-inner-wrapper">
             <TableContent loading={pendingRequest} hasData={hasData} emptyMessage={emptyMessage}>
