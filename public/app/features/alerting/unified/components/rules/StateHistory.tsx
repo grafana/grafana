@@ -132,7 +132,7 @@ const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
 };
 
 // match a string either by exact text match or with regular expression when in the form of "/<regex>/"
-function matchKey(groupKey: string, textFilter: string) {
+export function matchKey(groupKey: string, textFilter: string) {
   // if the text filter is empty we show all matches
   if (textFilter === '') {
     return true;
