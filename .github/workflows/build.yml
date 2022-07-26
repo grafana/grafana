@@ -13,6 +13,8 @@ jobs:
       image_version: ${{ steps.generate_version_number_step.outputs.image_version }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Generate version number
         id: generate_version_number_step
         run: |
