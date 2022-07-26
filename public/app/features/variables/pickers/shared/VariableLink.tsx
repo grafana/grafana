@@ -10,13 +10,14 @@ interface Props {
   text: string;
   loading: boolean;
   onCancel: () => void;
+  disabled: boolean; // todo: optional?
   /**
    *  htmlFor, needed for the label
    */
   id: string;
 }
 
-export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, onCancel, id }) => {
+export const VariableLink: FC<Props> = ({ loading, disabled, onClick: propsOnClick, text, onCancel, id }) => {
   const styles = useStyles(getStyles);
   const onClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -50,6 +51,7 @@ export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, 
       aria-controls={`options-${id}`}
       id={id}
       title={text}
+      disabled={disabled}
     >
       <VariableLinkText text={text} />
       <Icon aria-hidden name="angle-down" size="sm" />
