@@ -60,6 +60,8 @@ type thumbService struct {
 	dashboardService           dashboards.DashboardService
 	dsUidsLookup               getDatasourceUidsForDashboard
 	dsPermissionsService       permissions.DatasourcePermissionsService
+	licensing                  models.Licensing
+	searchService              searchV2.SearchService
 }
 
 type crawlerScheduleOptions struct {
@@ -76,13 +78,13 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	lockService *serverlock.ServerLockService, renderService rendering.Service,
 	gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService,
 	dashboardService dashboards.DashboardService, searchService searchV2.SearchService,
-	dsPermissionsService permissions.DatasourcePermissionsService) Service {
+	dsPermissionsService permissions.DatasourcePermissionsService, licensing models.Licensing) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
 	logger := log.New("previews_service")
 
-	thumbnailRepo := newThumbnailRepo(store)
+	thumbnailRepo := newThumbnailRepo(store, searchService)
 
 	canRunCrawler := true
 
@@ -99,10 +101,11 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	dsUidsLookup := &dsUidsLookup{
 		searchService: searchService,
 		crawlerAuth:   crawlerAuth,
+		features:      features,
 	}
 
 	t := &thumbService{
-
+		licensing:                  licensing,
 		renderingService:           renderService,
 		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo, cfg, cfg.DashboardPreviews, dsUidsLookup.getDatasourceUidsForDashboard),
 		thumbnailRepo:              thumbnailRepo,
@@ -110,13 +113,14 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		features:                   features,
 		lockService:                lockService,
 		crawlLockServiceActionName: "dashboard-crawler",
+		searchService:              searchService,
 		log:                        logger,
 		canRunCrawler:              canRunCrawler,
 		dsUidsLookup:               dsUidsLookup.getDatasourceUidsForDashboard,
 		settings:                   cfg.DashboardPreviews,
 		dsPermissionsService:       dsPermissionsService,
 		scheduleOptions: crawlerScheduleOptions{
-			tickerInterval:   5 * time.Minute,
+			tickerInterval:   5 * time.Second,
 			crawlInterval:    cfg.DashboardPreviews.SchedulerInterval,
 			maxCrawlDuration: cfg.DashboardPreviews.MaxCrawlDuration,
 			crawlerMode:      CrawlerModeThumbs,
@@ -246,35 +250,8 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return
 	}
 
-	if res.DsUids == "" {
-		hs.log.Debug("Stale dashboard preview", "dashboardUid", req.UID, "err", err)
-		c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+	if !hs.hasAccessToPreview(c, res, req) {
 		return
-	}
-
-	var dsUids []string
-	err = json.Unmarshal([]byte(res.DsUids), &dsUids)
-
-	if err != nil {
-		hs.log.Error("Error when retrieving datasource uids", "dashboardUid", req.UID, "err", err)
-		c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
-		return
-	}
-
-	accessibleDatasources, err := hs.dsPermissionsService.FilterDatasourceUidsBasedOnQueryPermissions(c.Req.Context(), c.SignedInUser, dsUids)
-	if err != nil && !errors.Is(err, permissions.ErrNotImplemented) {
-		hs.log.Error("Error when filtering datasource uids uids", "dashboardUid", req.UID, "err", err)
-		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
-		return
-	}
-
-	if !errors.Is(err, permissions.ErrNotImplemented) {
-		canQueryAllDatasources := len(accessibleDatasources) == len(dsUids)
-		if !canQueryAllDatasources {
-			hs.log.Debug("Denied access to dashboard preview", "dashboardUid", req.UID, "err", err, "dashboardDatasources", dsUids, "accessibleDatasources", accessibleDatasources)
-			c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
-			return
-		}
 	}
 
 	currentEtag := fmt.Sprintf("%d", res.Updated.Unix())
@@ -290,6 +267,50 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	if _, err := c.Resp.Write(res.Image); err != nil {
 		hs.log.Error("Error writing to response", "dashboardUid", req.UID, "err", err)
 	}
+}
+
+func (hs *thumbService) hasAccessToPreview(c *models.ReqContext, res *models.DashboardThumbnail, req *previewRequest) bool {
+	if !hs.licensing.FeatureEnabled("accesscontrol.enforcement") {
+		return true
+	}
+
+	if hs.searchService.IsDisabled() {
+		c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return false
+	}
+
+	if res.DsUids == "" {
+		hs.log.Debug("dashboard preview is stale; no datasource uids", "dashboardUid", req.UID)
+		c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return false
+	}
+
+	var dsUids []string
+	err := json.Unmarshal([]byte(res.DsUids), &dsUids)
+
+	if err != nil {
+		hs.log.Error("Error when retrieving datasource uids", "dashboardUid", req.UID, "err", err)
+		c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return false
+	}
+
+	accessibleDatasources, err := hs.dsPermissionsService.FilterDatasourceUidsBasedOnQueryPermissions(c.Req.Context(), c.SignedInUser, dsUids)
+	if err != nil && !errors.Is(err, permissions.ErrNotImplemented) {
+		hs.log.Error("Error when filtering datasource uids", "dashboardUid", req.UID, "err", err)
+		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return false
+	}
+
+	if !errors.Is(err, permissions.ErrNotImplemented) {
+		canQueryAllDatasources := len(accessibleDatasources) == len(dsUids)
+		if !canQueryAllDatasources {
+			hs.log.Info("Denied access to dashboard preview", "dashboardUid", req.UID, "err", err, "dashboardDatasources", dsUids, "accessibleDatasources", accessibleDatasources)
+			c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+			return false
+		}
+	}
+
+	return true
 }
 
 func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig {
