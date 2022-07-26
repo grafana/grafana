@@ -15,7 +15,6 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
-import { getTreeViewEditor } from './editor/treeViewEditor';
 
 export const InlineEditBody = () => {
   const activePanel = useObservable(activePanelSubject);
@@ -30,7 +29,6 @@ export const InlineEditBody = () => {
     }
 
     const supplier = (builder: PanelOptionsEditorBuilder<any>, context: StandardEditorContext<any>) => {
-      builder.addNestedOptions(getTreeViewEditor(state));
       builder.addNestedOptions(getLayerEditor(instanceState));
 
       const selection = state.selected;
