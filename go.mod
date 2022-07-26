@@ -245,7 +245,7 @@ require (
 	github.com/getkin/kin-openapi v0.94.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
-	github.com/grafana/thema v0.0.0-20220523183731-72aebd14e751
+	github.com/grafana/thema v0.0.0-20220726124731-b8017e278cc1
 	go.etcd.io/etcd/api/v3 v3.5.4
 	go.opentelemetry.io/contrib/propagators/jaeger v1.6.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.6.3
