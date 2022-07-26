@@ -52,7 +52,7 @@ copy-files:
 
 fix:
 	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableAlert/apimodels.PostableAlerts/' $(GENERATED_GO_MATCHERS)
-	sed $(SED_INPLACE) -e 's/apimodels\.\[\]UpdateDashboardAclCommand/apimodels.Permissions/' $(GENERATED_GO_MATCHERS)
+	sed $(SED_INPLACE) -e 's/apimodels\.\[\]UpdateDashboardACLCommand/apimodels.Permissions/' $(GENERATED_GO_MATCHERS)
 	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
 	goimports -w -v $(GENERATED_GO_MATCHERS)
 
@@ -65,4 +65,6 @@ serve: post.json
 serve-stable: api.json
 	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
 
-all: post.json validate api.json validate-stable swagger-codegen-api fix copy-files clean
+gen: swagger-codegen-api fix copy-files clean
+
+all: post.json api.json gen

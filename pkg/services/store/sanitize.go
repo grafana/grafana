@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"mime"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -41,10 +42,17 @@ func (s *standardStorageService) sanitizeUploadRequest(ctx context.Context, user
 		return nil, err
 	}
 
+	// we have already validated that the file contents match the extension in `./validate.go`
+	mimeType := mime.TypeByExtension(filepath.Ext(req.Path))
+	if mimeType == "" {
+		grafanaStorageLogger.Info("failed to find mime type", "path", req.Path)
+		mimeType = "application/octet-stream"
+	}
+
 	return &filestorage.UpsertFileCommand{
 		Path:               storagePath,
 		Contents:           contents,
-		MimeType:           req.MimeType,
+		MimeType:           mimeType,
 		CacheControl:       req.CacheControl,
 		ContentDisposition: req.ContentDisposition,
 		Properties:         req.Properties,

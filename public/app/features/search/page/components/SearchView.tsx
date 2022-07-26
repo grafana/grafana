@@ -65,6 +65,7 @@ export const SearchView = ({
       location: folderDTO?.uid, // This will scope all results to the prefix
       sort: query.sort?.value,
       explain: query.explain,
+      withAllowedActions: query.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
     };
 
     // Only dashboards have additional properties

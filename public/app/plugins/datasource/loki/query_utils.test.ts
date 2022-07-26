@@ -2,6 +2,7 @@ import {
   getHighlighterExpressionsFromQuery,
   getNormalizedLokiQuery,
   isLogsQuery,
+  isQueryWithLabelFormat,
   isQueryWithParser,
   isValidQuery,
 } from './query_utils';
@@ -10,6 +11,36 @@ import { LokiQuery, LokiQueryType } from './types';
 describe('getHighlighterExpressionsFromQuery', () => {
   it('returns no expressions for empty query', () => {
     expect(getHighlighterExpressionsFromQuery('')).toEqual([]);
+  });
+
+  it('returns no expression for query with empty filter ', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= ``')).toEqual([]);
+  });
+
+  it('returns no expression for query with empty filter and parser', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= `` | json count="counter" | __error__=``')).toEqual([]);
+  });
+
+  it('returns no expression for query with empty filter and chained filter', () => {
+    expect(
+      getHighlighterExpressionsFromQuery('{foo="bar"} |= `` |= `highlight` | json count="counter" | __error__=``')
+    ).toEqual(['highlight']);
+  });
+
+  it('returns no expression for query with empty filter, chained and regex filter', () => {
+    expect(
+      getHighlighterExpressionsFromQuery(
+        '{foo="bar"} |= `` |= `highlight` |~ `high.ight` | json count="counter" | __error__=``'
+      )
+    ).toEqual(['highlight', 'high.ight']);
+  });
+
+  it('returns no expression for query with empty filter, chained and regex quotes filter', () => {
+    expect(
+      getHighlighterExpressionsFromQuery(
+        '{foo="bar"} |= `` |= `highlight` |~ "highlight\\\\d" | json count="counter" | __error__=``'
+      )
+    ).toEqual(['highlight', 'highlight\\d']);
   });
 
   it('returns an expression for query with filter using quotes', () => {
@@ -137,17 +168,41 @@ describe('isLogsQuery', () => {
 
 describe('isQueryWithParser', () => {
   it('returns false if query without parser', () => {
-    expect(isQueryWithParser('rate({job="grafana" |= "error" }[5m])')).toBe(false);
+    expect(isQueryWithParser('rate({job="grafana" |= "error" }[5m])')).toEqual({
+      parserCount: 0,
+      queryWithParser: false,
+    });
   });
   it('returns true if log query with parser', () => {
-    expect(isQueryWithParser('{job="grafana"} | json')).toBe(true);
+    expect(isQueryWithParser('{job="grafana"} | json')).toEqual({ parserCount: 1, queryWithParser: true });
   });
 
   it('returns true if metric query with parser', () => {
-    expect(isQueryWithParser('rate({job="grafana"} | json [5m])')).toBe(true);
+    expect(isQueryWithParser('rate({job="grafana"} | json [5m])')).toEqual({ parserCount: 1, queryWithParser: true });
   });
 
   it('returns true if query with json parser with expressions', () => {
-    expect(isQueryWithParser('rate({job="grafana"} | json foo="bar", bar="baz" [5m])')).toBe(true);
+    expect(isQueryWithParser('rate({job="grafana"} | json foo="bar", bar="baz" [5m])')).toEqual({
+      parserCount: 1,
+      queryWithParser: true,
+    });
+  });
+});
+
+describe('isQueryWithLabelFormat', () => {
+  it('returns true if log query with label format', () => {
+    expect(isQueryWithLabelFormat('{job="grafana"} | label_format level=lvl')).toBe(true);
+  });
+
+  it('returns true if metrics query with label format', () => {
+    expect(isQueryWithLabelFormat('rate({job="grafana"} | label_format level=lvl [5m])')).toBe(true);
+  });
+
+  it('returns false if log query without label format', () => {
+    expect(isQueryWithLabelFormat('{job="grafana"} | json')).toBe(false);
+  });
+
+  it('returns false if metrics query without label format', () => {
+    expect(isQueryWithLabelFormat('rate({job="grafana"} [5m])')).toBe(false);
   });
 });

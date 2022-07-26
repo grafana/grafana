@@ -57,7 +57,7 @@ export default class UrlBuilder {
       );
     }
 
-    return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}`;
+    return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?region=global&api-version=${apiVersion}`;
   }
 
   static buildAzureMonitorGetMetricNamesUrl(
@@ -82,9 +82,10 @@ export default class UrlBuilder {
       );
     }
 
-    return (
-      `${baseUrl}${resourceUri}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}` +
-      `&metricnamespace=${encodeURIComponent(metricNamespace)}`
-    );
+    let url = `${baseUrl}${resourceUri}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}`;
+    if (metricNamespace) {
+      url += `&metricnamespace=${encodeURIComponent(metricNamespace)}`;
+    }
+    return url;
   }
 }

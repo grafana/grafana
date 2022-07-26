@@ -43,90 +43,96 @@ func TestUserAuth(t *testing.T) {
 			// By Login
 			login := "loginuser0"
 
-			query := &models.GetUserByAuthInfoQuery{Login: login}
-			user, err := srv.LookupAndUpdate(context.Background(), query)
+			query := &models.GetUserByAuthInfoQuery{UserLookupParams: models.UserLookupParams{Login: &login}}
+			usr, err := srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, login)
+			require.Equal(t, usr.Login, login)
 
 			// By ID
-			id := user.ID
+			id := usr.ID
 
-			user, err = srv.LookupByOneOf(context.Background(), id, "", "")
+			usr, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
+				UserID: &id,
+			})
 
 			require.Nil(t, err)
-			require.Equal(t, user.ID, id)
+			require.Equal(t, usr.ID, id)
 
 			// By Email
 			email := "user1@test.com"
 
-			user, err = srv.LookupByOneOf(context.Background(), 0, email, "")
+			usr, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
+				Email: &email,
+			})
 
 			require.Nil(t, err)
-			require.Equal(t, user.Email, email)
+			require.Equal(t, usr.Email, email)
 
 			// Don't find nonexistent user
 			email = "nonexistent@test.com"
 
-			user, err = srv.LookupByOneOf(context.Background(), 0, email, "")
+			usr, err = srv.LookupByOneOf(context.Background(), &models.UserLookupParams{
+				Email: &email,
+			})
 
-			require.Equal(t, models.ErrUserNotFound, err)
-			require.Nil(t, user)
+			require.Equal(t, user.ErrUserNotFound, err)
+			require.Nil(t, usr)
 		})
 
 		t.Run("Can set & locate by AuthModule and AuthId", func(t *testing.T) {
 			// get nonexistent user_auth entry
 			query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			user, err := srv.LookupAndUpdate(context.Background(), query)
+			usr, err := srv.LookupAndUpdate(context.Background(), query)
 
-			require.Equal(t, models.ErrUserNotFound, err)
-			require.Nil(t, user)
+			require.Equal(t, user.ErrUserNotFound, err)
+			require.Nil(t, usr)
 
 			// create user_auth entry
 			login := "loginuser0"
 
-			query.Login = login
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			query.UserLookupParams.Login = &login
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, login)
+			require.Equal(t, usr.Login, login)
 
 			// get via user_auth
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, login)
+			require.Equal(t, usr.Login, login)
 
 			// get with non-matching id
-			id := user.ID
+			idPlusOne := usr.ID + 1
 
-			query.UserId = id + 1
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			query.UserLookupParams.UserID = &idPlusOne
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, "loginuser1")
+			require.Equal(t, usr.Login, "loginuser1")
 
 			// get via user_auth
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
-			require.Equal(t, user.Login, "loginuser1")
+			require.Equal(t, usr.Login, "loginuser1")
 
 			// remove user
 			err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", user.ID)
+				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", usr.ID)
 				return err
 			})
 			require.NoError(t, err)
 
 			// get via user_auth for deleted user
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			user, err = srv.LookupAndUpdate(context.Background(), query)
+			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
-			require.Equal(t, err, models.ErrUserNotFound)
-			require.Nil(t, user)
+			require.Equal(t, err, user.ErrUserNotFound)
+			require.Nil(t, usr)
 		})
 
 		t.Run("Can set & retrieve oauth token information", func(t *testing.T) {
@@ -143,7 +149,9 @@ func TestUserAuth(t *testing.T) {
 			login := "loginuser0"
 
 			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
-			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test", AuthId: "test"}
+			query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: models.UserLookupParams{
+				Login: &login,
+			}}
 			user, err := srv.LookupAndUpdate(context.Background(), query)
 
 			require.Nil(t, err)
@@ -192,7 +200,9 @@ func TestUserAuth(t *testing.T) {
 			// Calling srv.LookupAndUpdateQuery on an existing user will populate an entry in the user_auth table
 			// Make the first log-in during the past
 			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
+			query := &models.GetUserByAuthInfoQuery{AuthModule: "test1", AuthId: "test1", UserLookupParams: models.UserLookupParams{
+				Login: &login,
+			}}
 			user, err := srv.LookupAndUpdate(context.Background(), query)
 			database.GetTime = time.Now
 
@@ -202,7 +212,9 @@ func TestUserAuth(t *testing.T) {
 			// Add a second auth module for this user
 			// Have this module's last log-in be more recent
 			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
-			query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
+			query = &models.GetUserByAuthInfoQuery{AuthModule: "test2", AuthId: "test2", UserLookupParams: models.UserLookupParams{
+				Login: &login,
+			}}
 			user, err = srv.LookupAndUpdate(context.Background(), query)
 			database.GetTime = time.Now
 
@@ -257,7 +269,9 @@ func TestUserAuth(t *testing.T) {
 			// Calling srv.LookupAndUpdateQuery on an existing user will populate an entry in the user_auth table
 			// Make the first log-in during the past
 			database.GetTime = func() time.Time { return fixedTime.AddDate(0, 0, -2) }
-			queryOne := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
+			queryOne := &models.GetUserByAuthInfoQuery{AuthModule: "test1", AuthId: "test1", UserLookupParams: models.UserLookupParams{
+				Login: &login,
+			}}
 			user, err := srv.LookupAndUpdate(context.Background(), queryOne)
 			database.GetTime = time.Now
 
@@ -267,7 +281,9 @@ func TestUserAuth(t *testing.T) {
 			// Add a second auth module for this user
 			// Have this module's last log-in be more recent
 			database.GetTime = func() time.Time { return fixedTime.AddDate(0, 0, -1) }
-			queryTwo := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
+			queryTwo := &models.GetUserByAuthInfoQuery{AuthModule: "test2", AuthId: "test2", UserLookupParams: models.UserLookupParams{
+				Login: &login,
+			}}
 			user, err = srv.LookupAndUpdate(context.Background(), queryTwo)
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
@@ -333,21 +349,48 @@ func TestUserAuth(t *testing.T) {
 
 			// Expect to pass since there's a matching login user
 			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: genericOAuthModule, AuthId: ""}
+			query := &models.GetUserByAuthInfoQuery{AuthModule: genericOAuthModule, AuthId: "", UserLookupParams: models.UserLookupParams{
+				Login: &login,
+			}}
 			user, err := srv.LookupAndUpdate(context.Background(), query)
 			database.GetTime = time.Now
 
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
 
+			otherLoginUser := "aloginuser"
 			// Should throw a "user not found" error since there's no matching login user
 			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-			query = &models.GetUserByAuthInfoQuery{Login: "aloginuser", AuthModule: genericOAuthModule, AuthId: ""}
+			query = &models.GetUserByAuthInfoQuery{AuthModule: genericOAuthModule, AuthId: "", UserLookupParams: models.UserLookupParams{
+				Login: &otherLoginUser,
+			}}
 			user, err = srv.LookupAndUpdate(context.Background(), query)
 			database.GetTime = time.Now
 
 			require.NotNil(t, err)
 			require.Nil(t, user)
+		})
+
+		t.Run("should be able to run loginstats query in all dbs", func(t *testing.T) {
+			// we need to see that we can run queries for all db
+			// as it is only a concern for postgres/sqllite3
+			// where we have duplicate users
+
+			// Restore after destructive operation
+			sqlStore = sqlstore.InitTestDB(t)
+			for i := 0; i < 5; i++ {
+				cmd := user.CreateUserCommand{
+					Email: fmt.Sprint("user", i, "@test.com"),
+					Name:  fmt.Sprint("user", i),
+					Login: fmt.Sprint("loginuser", i),
+					OrgID: 1,
+				}
+				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				require.Nil(t, err)
+			}
+
+			_, err := srv.authInfoStore.GetLoginStats(context.Background())
+			require.Nil(t, err)
 		})
 
 		t.Run("calculate metrics on duplicate userstats", func(t *testing.T) {
@@ -383,11 +426,14 @@ func TestUserAuth(t *testing.T) {
 				}
 				_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
 				require.NoError(t, err)
-				// require metrics and statistics to be 2
+
+				// require stats to populate
 				m, err := srv.authInfoStore.CollectLoginStats(context.Background())
 				require.NoError(t, err)
 				require.Equal(t, 2, m["stats.users.duplicate_user_entries"])
 				require.Equal(t, 1, m["stats.users.has_duplicate_user_entries"])
+
+				require.Equal(t, 1, m["stats.users.mixed_cased_users"])
 			}
 		})
 	})
