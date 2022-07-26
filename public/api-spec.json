@@ -3656,6 +3656,49 @@
         }
       }
     },
+    "/datasources/uid/{uid}/correlations": {
+      "post": {
+        "tags": ["correlations"],
+        "summary": "Add correlation.",
+        "operationId": "createCorrelation",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateCorrelationCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createCorrelationResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}/health": {
       "get": {
         "tags": ["datasources"],
@@ -9494,6 +9537,37 @@
         }
       }
     },
+    "Correlation": {
+      "description": "Correlation is the model for correlations definitions",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Label identifying the correlation",
+          "type": "string",
+          "example": "My Label"
+        },
+        "sourceUid": {
+          "description": "UID of the data source the correlation originates from",
+          "type": "string",
+          "example": "d0oxYRg4z"
+        },
+        "targetUid": {
+          "description": "UID of the data source the correlation points to",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        },
+        "uid": {
+          "description": "Unique identifier of the correlation",
+          "type": "string",
+          "example": "50xhMlg9k"
+        }
+      }
+    },
     "CreateAlertNotificationCommand": {
       "type": "object",
       "properties": {
@@ -9526,6 +9600,40 @@
         },
         "uid": {
           "type": "string"
+        }
+      }
+    },
+    "CreateCorrelationCommand": {
+      "description": "CreateCorrelationCommand is the command for creating a correlation",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Optional description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Optional label identifying the correlation",
+          "type": "string",
+          "example": "My label"
+        },
+        "targetUid": {
+          "description": "Target data source UID to which the correlation is created",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        }
+      }
+    },
+    "CreateCorrelationResponse": {
+      "description": "CreateCorrelationResponse is the response struct for CreateCorrelationCommand",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation created"
+        },
+        "result": {
+          "$ref": "#/definitions/Correlation"
         }
       }
     },
@@ -11199,6 +11307,9 @@
         "connectionId": {
           "type": "integer",
           "format": "int64"
+        },
+        "connectionUid": {
+          "type": "string"
         },
         "created": {
           "type": "string",
@@ -13757,6 +13868,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "createCorrelationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CreateCorrelationResponse"
       }
     },
     "createOrUpdateDatasourceResponse": {

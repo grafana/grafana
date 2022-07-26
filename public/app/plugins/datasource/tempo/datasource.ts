@@ -715,10 +715,10 @@ function getApmTable(
     const errorRateValues = errorRate[0].fields[2]?.values.toArray() ?? [];
     let errorRateObj: any = {};
     errorRateNames.map((name: string, index: number) => {
-      errorRateObj[name] = { name: name, value: errorRateValues[index] };
+      errorRateObj[name] = { value: errorRateValues[index] };
     });
 
-    const values = getRateAlignedValues(rate, errorRateObj);
+    const values = getRateAlignedValues({ ...rate }, errorRateObj);
 
     df.fields.push({
       ...errorRate[0].fields[2],
@@ -759,13 +759,13 @@ function getApmTable(
     duration.map((d) => {
       const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
       const name = d.refId?.split(delimiter)[1].split('"}')[0];
-      durationObj[name] = { name: name, value: d.fields[1].values.toArray()[0] };
+      durationObj[name] = { value: d.fields[1].values.toArray()[0] };
     });
 
     df.fields.push({
       ...duration[0].fields[1],
       name: 'Duration (p90)',
-      values: getRateAlignedValues(rate, durationObj),
+      values: getRateAlignedValues({ ...rate }, durationObj),
       config: {
         links: [
           makePromLink(
@@ -825,26 +825,14 @@ export function getRateAlignedValues(
   rateResp: DataQueryResponseData[],
   objToAlign: { [x: string]: { value: string } }
 ) {
-  const rateNames = rateResp[0]?.fields[1]?.values.toArray().sort() ?? [];
-  let tempRateNames = rateNames;
+  const rateNames = rateResp[0]?.fields[1]?.values.toArray() ?? [];
   let values: string[] = [];
 
-  objToAlign = Object.keys(objToAlign)
-    .sort()
-    .reduce((obj: any, key) => {
-      obj[key] = objToAlign[key];
-      return obj;
-    }, {});
-
   for (let i = 0; i < rateNames.length; i++) {
-    if (tempRateNames[i]) {
-      if (tempRateNames[i] === Object.keys(objToAlign)[i]) {
-        values.push(objToAlign[Object.keys(objToAlign)[i]].value);
-      } else {
-        i--;
-        tempRateNames = tempRateNames.slice(1);
-        values.push('0');
-      }
+    if (Object.keys(objToAlign).includes(rateNames[i])) {
+      values.push(objToAlign[rateNames[i]].value);
+    } else {
+      values.push('0');
     }
   }
 
