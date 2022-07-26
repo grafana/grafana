@@ -43,6 +43,7 @@ import {
   rateMetric,
   durationMetric,
   errorRateMetric,
+  defaultTableFilter,
 } from './graphTransform';
 import {
   transformTrace,
@@ -487,7 +488,7 @@ function rateQuery(
   datasourceUid: string
 ) {
   const serviceMapRequest = makePromServiceMapRequest(request);
-  serviceMapRequest.targets = makeApmRequest([buildExpr(rateMetric, '', request)]);
+  serviceMapRequest.targets = makeApmRequest([buildExpr(rateMetric, defaultTableFilter, request)]);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     toArray(),
@@ -660,7 +661,7 @@ function getApmTable(
 ) {
   let df: any = { fields: [] };
   const rate = rateResponse.data[0]?.filter((x: { refId: string }) => {
-    return x.refId === buildExpr(rateMetric, '', request);
+    return x.refId === buildExpr(rateMetric, defaultTableFilter, request);
   });
   const errorRate = secondResponse.data.filter((x) => {
     return x.refId === errorRateBySpanName;
