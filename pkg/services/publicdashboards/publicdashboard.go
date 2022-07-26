@@ -19,7 +19,7 @@ type Service interface {
 	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
 	BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64) (dtos.MetricRequest, error)
 	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
-	PublicDashboardAccessTokenExists(ctx context.Context, accessToken string) (bool, error)
+	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)
 }
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
@@ -31,5 +31,5 @@ type Store interface {
 	SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) (*PublicDashboard, error)
 	UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
 	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
-	PublicDashboardAccessTokenExists(ctx context.Context, accessToken string) (bool, error)
+	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)
 }

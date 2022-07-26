@@ -196,7 +196,7 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 	return hasPublicDashboard, err
 }
 
-func (d *PublicDashboardStoreImpl) PublicDashboardAccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
+func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		sql := "SELECT COUNT(*) FROM dashboard_public WHERE access_token=? AND is_enabled=true"
