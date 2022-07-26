@@ -147,7 +147,14 @@ export const ExternalAlertmanagers = () => {
       <div className={styles.externalDs}>
         {externalDsAlertManagers.map((am) => (
           <Card key={am.dataSource.uid}>
-            <Card.Heading>{am.dataSource.name}</Card.Heading>
+            <Card.Heading className={styles.externalHeading}>
+              {am.dataSource.name}{' '}
+              {am.statusInconclusive && (
+                <Tooltip content="Multiple Alertmangers have the same URL configured. The state might be inconclusive">
+                  <Icon name="exclamation-triangle" size="md" className={styles.externalWarningIcon} />
+                </Tooltip>
+              )}
+            </Card.Heading>
             <Card.Figure>
               <img
                 src="public/app/plugins/datasource/alertmanager/img/logo.svg"
@@ -169,13 +176,6 @@ export const ExternalAlertmanagers = () => {
                 Go to datasouce
               </LinkButton>
             </Card.Actions>
-            <Card.SecondaryActions>
-              {true && (
-                <Tooltip content="State might be inconclusive">
-                  <Badge text="Warning" color="orange" />
-                </Tooltip>
-              )}
-            </Card.SecondaryActions>
           </Card>
         ))}
       </div>
@@ -309,6 +309,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   externalStatus: css`
     align-self: flex-start;
     justify-self: flex-end;
+  `,
+  externalHeading: css`
+    justify-content: flex-start;
+  `,
+  externalWarningIcon: css`
+    margin: ${theme.spacing(0, 1)};
+    fill: ${theme.colors.warning.main};
   `,
   externalDs: css`
     display: grid;
