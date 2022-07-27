@@ -139,6 +139,7 @@ type HTTPServer struct {
 	Listener                     net.Listener
 	EncryptionService            encryption.Internal
 	SecretsService               secrets.Service
+	secretsStore                 secretsKV.SecretsKVStore
 	remoteSecretsCheck           secretsKV.UseRemoteSecretsPluginCheck
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
@@ -200,7 +201,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer, exportService export.ExportService,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
-	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
+	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, secretsStore secretsKV.SecretsKVStore, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.HTTPStorageService,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
@@ -267,6 +268,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SocialService:                socialService,
 		EncryptionService:            encryptionService,
 		SecretsService:               secretsService,
+		secretsStore:                 secretsStore,
 		remoteSecretsCheck:           remoteSecretsCheck,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -47,4 +48,21 @@ func (hs *HTTPServer) AdminRollbackSecrets(c *models.ReqContext) response.Respon
 	}
 
 	return response.Respond(http.StatusOK, "Secrets rolled back successfully")
+}
+
+func (hs *HTTPServer) AdminDeleteAllSecretsManagerPluginSecrets(c *models.ReqContext) response.Response {
+	if !hs.remoteSecretsCheck.ShouldUseRemoteSecretsPlugin() {
+		return response.Respond(http.StatusConflict, "Secrets plugin must be installed and configured to run")
+	}
+	keys, err := hs.secretsStore.Keys(c.Req.Context(), -1, "", "")
+	if err != nil {
+		return response.Respond(http.StatusInternalServerError, "an error occurred while retrieving secrets")
+	}
+	for _, key := range keys {
+		err := hs.secretsStore.Del(c.Req.Context(), key.OrgId, key.Namespace, key.Type)
+		if err != nil {
+			return response.Respond(http.StatusInternalServerError, fmt.Sprintf("error deleting key with org=%v namespace=%v type=%v. error=%v", key.OrgId, key.Namespace, key.Type, err.Error()))
+		}
+	}
+	return response.Respond(http.StatusOK, "All Secrets Manager plugin secrets deleted")
 }
