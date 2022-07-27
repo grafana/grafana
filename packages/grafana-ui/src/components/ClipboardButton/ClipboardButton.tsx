@@ -1,6 +1,5 @@
-import { keyframes, css, cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { Popper } from 'react-popper';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -62,17 +61,9 @@ export function ClipboardButton({
   return (
     <>
       {showCopySuccess && (
-        <Popper placement="top" referenceElement={buttonRef.current ?? undefined}>
-          {({ ref, style, placement }) => {
-            return (
-              <div ref={ref} style={style} data-placement={placement}>
-                <div className={styles.appearAnimation}>
-                  <Indicator suffixIcon="check">Copied</Indicator>
-                </div>
-              </div>
-            );
-          }}
-        </Popper>
+        <Indicator placement="top" referenceElement={buttonRef.current}>
+          Copied
+        </Indicator>
       )}
 
       <Button
@@ -115,18 +106,6 @@ const copyText = async (text: string, buttonRef: React.MutableRefObject<HTMLButt
   }
 };
 
-const flyUpAnimation = keyframes({
-  from: {
-    opacity: 0,
-    transform: 'translate(0, 8px)',
-  },
-
-  to: {
-    opacity: 1,
-    transform: 'translate(0, 0px)',
-  },
-});
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     button: css({
@@ -144,10 +123,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       left: 0,
       visibility: 'visible', // re-visible the overlay
-    }),
-    appearAnimation: css({
-      paddingBottom: theme.spacing(1),
-      animation: `${flyUpAnimation} ease-out 100ms`,
     }),
   };
 };
