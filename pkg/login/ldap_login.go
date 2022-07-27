@@ -56,7 +56,7 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery, log
 	}
 
 	if query.Cfg.LDAPRoleAttributeStrict && len(externalUser.OrgRoles) == 0 {
-		ldapLogger.Error("Refusing log in", "err", ErrNoOrgRole)
+		ldapLogger.Error("Denying log in", "err", ErrNoOrgRole)
 		return false, ErrNoOrgRole
 	}
 
