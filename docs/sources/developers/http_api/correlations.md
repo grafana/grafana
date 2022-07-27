@@ -104,7 +104,7 @@ Status codes:
 
 ## Update correlations
 
-`PATCH /api/datasources/uid/:uid/correlations/:correlationUID`
+`PATCH /api/datasources/uid/:sourceUID/correlations/:correlationUID`
 
 Updates a correlation.
 
@@ -136,8 +136,8 @@ Content-Type: application/json
   "result": {
     "description": "Logs to Traces",
     "label": "My Label",
-    "sourceUid": "uyBf2637k",
-    "targetUid": "PDDA8E780A17E7EF1",
+    "sourceUID": "uyBf2637k",
+    "targetUID": "PDDA8E780A17E7EF1",
     "uid": "J6gn7d31L"
   }
 }
