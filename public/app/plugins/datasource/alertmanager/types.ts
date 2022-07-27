@@ -280,7 +280,7 @@ export interface ExternalAlertmanagersResponse {
   status: 'string';
 }
 
-export enum AlertmanagersChoice {
+export enum AlertmanagerChoice {
   Internal = 'internal',
   External = 'external',
   All = 'all',
@@ -288,7 +288,7 @@ export enum AlertmanagersChoice {
 
 export interface ExternalAlertmanagerConfig {
   alertmanagers: string[];
-  alertmanagersChoice: AlertmanagersChoice;
+  alertmanagersChoice: AlertmanagerChoice;
 }
 
 export enum AlertManagerImplementation {
