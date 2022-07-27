@@ -229,6 +229,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.borderRadius(1),
       marginBottom: theme.spacing(1),
       position: 'relative',
+      transition: 'all 0.5s ease-in 0s',
     }),
     cardHighlight: css({
       boxShadow: `0px 0px 4px 0px ${theme.colors.primary.border}`,
