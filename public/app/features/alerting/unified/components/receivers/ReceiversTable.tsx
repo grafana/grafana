@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ConfirmModal, Modal, useStyles2, Badge } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction, ContactPointsState, ReceiversState } from 'app/types';
+import { AccessControlAction, ContactPointsState, IntegrationTypesState, ReceiversState } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -77,18 +77,9 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
     </Authorize>
   );
 }
-interface ReceiverItem {
-  name: string;
-  types: string[]; //??
-  provisioned?: boolean;
-}
-
 interface ReceiverErrorProps {
   errorCount: number;
 }
-
-type RowTableColumnProps = DynamicTableColumnProps<ReceiverItem>;
-type RowItemTableProps = DynamicTableItemProps<ReceiverItem>;
 
 function ReceiverError({ errorCount }: ReceiverErrorProps) {
   return (
@@ -112,11 +103,6 @@ function ReceiverHealth({ errorsByReceiver }: ReceiverHealthProps) {
   );
 }
 
-interface Props {
-  config: AlertManagerCortexConfig;
-  alertManagerName: string;
-}
-
 const useContactPointsState = (alertManagerName: string) => {
   const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
   const { result: contactPointsState } = (alertManagerName && contactPointsStateRequest) || initialAsyncRequestState;
@@ -124,6 +110,80 @@ const useContactPointsState = (alertManagerName: string) => {
   const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
   return { contactPointsState, errorStateAvailable };
 };
+
+interface ReceiverItem {
+  name: string;
+  types: string[]; //??
+  provisioned?: boolean;
+}
+
+interface IntegrationItem {
+  lastError?: null | string;
+  lastNotify: string;
+  lastNotifyDuration: string;
+  type: string;
+}
+
+type RowTableColumnProps = DynamicTableColumnProps<ReceiverItem>;
+type RowItemTableProps = DynamicTableItemProps<ReceiverItem>;
+
+type RowIntegrationTableColumnProps = DynamicTableColumnProps<IntegrationItem>;
+type RowIntegrationItemTableProps = DynamicTableItemProps<IntegrationItem>;
+
+interface IntegrationsTableProps {
+  integrationTypesState: IntegrationTypesState;
+}
+
+function IntegrationsTable({ integrationTypesState }: IntegrationsTableProps) {
+  function getIntegrationColumns(): RowIntegrationTableColumnProps[] {
+    return [
+      {
+        id: 'health',
+        label: 'Health',
+        renderCell: ({ data: { lastError } }) => {
+          return <ReceiverHealth errorsByReceiver={lastError ? 1 : 0} />;
+        },
+        size: 1,
+      },
+      {
+        id: 'name',
+        label: 'Name',
+        renderCell: ({ data: { type }, id }) => <>{`${type}[${id}]`}</>,
+        size: 1,
+      },
+      {
+        id: 'lastNotify',
+        label: 'Last try to notify',
+        renderCell: ({ data: { lastNotify } }) => <>{lastNotify}</>,
+        size: 1,
+      },
+      {
+        id: 'lastNotifyDuration',
+        label: 'Last duration',
+        renderCell: ({ data: { lastNotifyDuration } }) => <>{lastNotifyDuration}</>,
+        size: 1,
+      },
+    ];
+  }
+  const integrationRows: RowIntegrationItemTableProps[] = Object.entries(integrationTypesState).flatMap((typeState) =>
+    typeState[1].map((integrationStatus, index) => ({
+      id: index,
+      data: {
+        type: typeState[0],
+        lastError: integrationStatus.lastError,
+        lastNotify: integrationStatus.lastNotify,
+        lastNotifyDuration: integrationStatus.lastNotifyDuration,
+      },
+    }))
+  );
+
+  return <DynamicTable items={integrationRows} cols={getIntegrationColumns()} />;
+}
+
+interface Props {
+  config: AlertManagerCortexConfig;
+  alertManagerName: string;
+}
 
 export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const dispatch = useDispatch();
@@ -196,10 +256,8 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
         isExpandable={errorStateAvailable}
         renderExpandedContent={
           errorStateAvailable
-            ? ({ data }) => (
-                <div>
-                  {data.name} - {data.types}
-                </div>
+            ? ({ data: { name } }) => (
+                <IntegrationsTable integrationTypesState={contactPointsState?.receivers[name].integrations ?? {}} />
               )
             : undefined
         }
