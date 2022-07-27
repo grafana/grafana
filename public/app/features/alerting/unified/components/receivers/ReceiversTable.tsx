@@ -3,8 +3,8 @@ import pluralize from 'pluralize';
 import React, { FC, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ConfirmModal, Modal, useStyles2, Badge } from '@grafana/ui';
+import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
+import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction, ContactPointsState, IntegrationTypesState, ReceiversState } from 'app/types';
@@ -134,6 +134,15 @@ interface IntegrationsTableProps {
   integrationTypesState: IntegrationTypesState;
 }
 
+function LastNotify({ lastNotify }: { lastNotify: string }) {
+  return (
+    <Stack alignItems="center">
+      <div>{dateTime(lastNotify).locale('en').fromNow(true)} ago</div>
+      <Icon name="exclamation-triangle" />
+      <div>{dateTimeFormat(lastNotify, { format: 'YYYY-MM-DD HH:mm:ss' })}</div>
+    </Stack>
+  );
+}
 function IntegrationsTable({ integrationTypesState }: IntegrationsTableProps) {
   function getIntegrationColumns(): RowIntegrationTableColumnProps[] {
     return [
@@ -154,7 +163,7 @@ function IntegrationsTable({ integrationTypesState }: IntegrationsTableProps) {
       {
         id: 'lastNotify',
         label: 'Last try to notify',
-        renderCell: ({ data: { lastNotify } }) => <>{lastNotify}</>,
+        renderCell: ({ data: { lastNotify } }) => <LastNotify lastNotify={lastNotify} />,
         size: 1,
       },
       {
