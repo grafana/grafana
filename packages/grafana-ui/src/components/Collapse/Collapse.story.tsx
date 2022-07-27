@@ -1,7 +1,8 @@
-import { ComponentMeta } from '@storybook/react';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/client-api';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { Collapse, ControlledCollapse } from './Collapse';
@@ -15,34 +16,47 @@ const meta: ComponentMeta<typeof Collapse> = {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: 'onToggle',
+    },
+  },
+  args: {
+    children: 'Panel data',
+    isOpen: false,
+    label: 'Collapse panel',
+    collapsible: true,
+  },
+  argTypes: {
+    onToggle: { action: 'toggled' },
   },
 };
 
-export const basic = () => {
+export const Basic: ComponentStory<typeof Collapse> = (args) => {
+  const [, updateArgs] = useArgs();
   return (
-    <UseState initialState={{ isOpen: false }}>
-      {(state, updateValue) => {
-        return (
-          <Collapse
-            collapsible
-            label="Collapse panel"
-            isOpen={state.isOpen}
-            onToggle={() => updateValue({ isOpen: !state.isOpen })}
-          >
-            <p>Panel data</p>
-          </Collapse>
-        );
+    <Collapse
+      {...args}
+      onToggle={() => {
+        action('onToggle')({ isOpen: !args.isOpen });
+        updateArgs({ isOpen: !args.isOpen });
       }}
-    </UseState>
+    >
+      <p>{args.children}</p>
+    </Collapse>
   );
 };
 
-export const controlled = () => {
+export const Controlled: ComponentStory<typeof ControlledCollapse> = (args) => {
   return (
-    <ControlledCollapse label="Collapse panel">
-      <p>Panel data</p>
+    <ControlledCollapse {...args}>
+      <p>{args.children}</p>
     </ControlledCollapse>
   );
+};
+Controlled.parameters = {
+  controls: {
+    exclude: 'isOpen',
+  },
 };
 
 export default meta;
