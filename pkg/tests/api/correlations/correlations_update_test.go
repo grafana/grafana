@@ -248,7 +248,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		responseBody, err := ioutil.ReadAll(res.Body)
 		require.NoError(t, err)
 
-		var response correlations.UpdateCorrelationResponse
+		var response correlations.UpdateCorrelationResponseBody
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
@@ -280,7 +280,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		responseBody, err := ioutil.ReadAll(res.Body)
 		require.NoError(t, err)
 
-		var response correlations.UpdateCorrelationResponse
+		var response correlations.UpdateCorrelationResponseBody
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
