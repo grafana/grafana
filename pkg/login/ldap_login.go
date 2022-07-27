@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var ErrNoOrgRole = errors.New("no organization role found in ldap group mappings")
+
 // getLDAPConfig gets LDAP config
 var getLDAPConfig = multildap.GetConfig
 
@@ -54,9 +56,8 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery, log
 	}
 
 	if query.Cfg.LDAPRoleAttributeStrict && len(externalUser.OrgRoles) == 0 {
-		err := fmt.Errorf("no org role found")
-		ldapLogger.Error("Refusing log in", "err", err)
-		return false, err
+		ldapLogger.Error("Refusing log in", "err", ErrNoOrgRole)
+		return false, ErrNoOrgRole
 	}
 
 	upsert := &models.UpsertUserCommand{
