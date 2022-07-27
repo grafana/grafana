@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
+import pluralize from 'pluralize';
 import React, { FC, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Modal, useStyles2, Badge } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { ContactPointsState } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -16,15 +18,49 @@ import { isReceiverUsed } from '../../utils/alertmanager';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { extractNotifierTypeCounts } from '../../utils/receivers';
+import { initialAsyncRequestState } from '../../utils/redux';
 import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
 
+interface ReceiverErrorProps {
+  errorCount: number;
+}
+function ReceiverError({ errorCount }: ReceiverErrorProps) {
+  return (
+    <Badge
+      color="orange"
+      icon="exclamation-triangle"
+      text={`${errorCount} ${pluralize('error', errorCount)}`}
+      tooltip={`${errorCount} ${pluralize('error', errorCount)} detected in this contact point`}
+    />
+  );
+}
+interface ReceiverHealthProps {
+  errorsByReceiver: number;
+}
+
+function ReceiverHealth({ errorsByReceiver }: ReceiverHealthProps) {
+  return errorsByReceiver > 0 ? (
+    <ReceiverError errorCount={errorsByReceiver} />
+  ) : (
+    <Badge color="green" text="OK" tooltip="No errors detected" />
+  );
+}
+
 interface Props {
   config: AlertManagerCortexConfig;
   alertManagerName: string;
 }
+
+const useContactPointsState = (alertManagerName: string) => {
+  const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
+  const { result: contactPointsState } = (alertManagerName && contactPointsStateRequest) || initialAsyncRequestState;
+  const receivers = contactPointsState?.receivers ?? {};
+  const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
+  return { contactPointsState, errorStateAvailable };
+};
 
 export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const dispatch = useDispatch();
@@ -33,6 +69,8 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
+
+  const { contactPointsState, errorStateAvailable } = useContactPointsState(alertManagerName);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
@@ -70,6 +108,9 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     [config, grafanaNotifiers.result]
   );
 
+  const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: string) =>
+    contactPointsState.receivers[receiverName]?.errorCount ?? 0;
+
   return (
     <ReceiversSection
       className={styles.section}
@@ -91,6 +132,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
           <tr>
             <th>Contact point name</th>
             <th>Type</th>
+            {errorStateAvailable && <th>Health</th>}
             <Authorize actions={[permissions.update, permissions.delete]}>
               <th>Actions</th>
             </Authorize>
@@ -108,6 +150,13 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
                 {receiver.name} {receiver.provisioned && <ProvisioningBadge />}
               </td>
               <td>{receiver.types.join(', ')}</td>
+              {errorStateAvailable && (
+                <td>
+                  <ReceiverHealth
+                    errorsByReceiver={contactPointsState ? errorsByReceiver(contactPointsState, receiver.name) : 0}
+                  />
+                </td>
+              )}
               <Authorize actions={[permissions.update, permissions.delete]}>
                 <td className={tableStyles.actionsCell}>
                   {!isVanillaAM && !receiver.provisioned && (
@@ -187,4 +236,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   section: css`
     margin-top: ${theme.spacing(4)};
   `,
+  warning: css`
+    color: ${theme.colors.warning.text};
+  `,
+  countMessage: css``,
 });
