@@ -45,7 +45,10 @@ export let getVersionLinks = (): FooterLink[] => {
     return links;
   }
 
-  links.push({ text: `v${buildInfo.version} (${buildInfo.commit})` });
+  links.push({
+    text: `v${buildInfo.version} (${buildInfo.commit})`,
+    url: `https://grafana.com/docs/grafana/latest/release-notes/release-notes-${buildInfo.version}/`
+  });
 
   if (buildInfo.hasUpdate) {
     links.push({
