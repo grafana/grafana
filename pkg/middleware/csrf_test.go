@@ -1,12 +1,17 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestMiddlewareCSRF(t *testing.T) {
@@ -98,6 +103,117 @@ func TestMiddlewareCSRF(t *testing.T) {
 	}
 }
 
+func TestCSRF_Check(t *testing.T) {
+	tests := []struct {
+		name           string
+		request        *http.Request
+		addtHeader     map[string]struct{}
+		trustedOrigins map[string]struct{}
+		safeEndpoints  map[string]struct{}
+		expectedOK     bool
+		expectedStatus int
+	}{
+		{
+			name:       "base case",
+			request:    postRequest(t, "", nil),
+			expectedOK: true,
+		},
+		{
+			name:           "base with null origin header",
+			request:        postRequest(t, "", map[string]string{"Origin": "null"}),
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:       "grafana.org",
+			request:    postRequest(t, "grafana.org", map[string]string{"Origin": "https://grafana.org"}),
+			expectedOK: true,
+		},
+		{
+			name:           "grafana.org with X-Forwarded-Host",
+			request:        postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.org"}),
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:       "grafana.org with X-Forwarded-Host and header trusted",
+			request:    postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.org"}),
+			addtHeader: map[string]struct{}{"X-Forwarded-Host": {}},
+			expectedOK: true,
+		},
+		{
+			name:           "grafana.org from grafana.com",
+			request:        postRequest(t, "grafana.org", map[string]string{"Origin": "https://grafana.com"}),
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "grafana.org from grafana.com explicit trust for grafana.com",
+			request:        postRequest(t, "grafana.org", map[string]string{"Origin": "https://grafana.com"}),
+			trustedOrigins: map[string]struct{}{"grafana.com": {}},
+			expectedOK:     true,
+		},
+		{
+			name:           "grafana.org from grafana.com with X-Forwarded-Host and header trusted",
+			request:        postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.com"}),
+			addtHeader:     map[string]struct{}{"X-Forwarded-Host": {}},
+			trustedOrigins: map[string]struct{}{"grafana.com": {}},
+			expectedOK:     true,
+		},
+		{
+			name:          "safe endpoint",
+			request:       postRequest(t, "example.org/foo/bar", map[string]string{"Origin": "null"}),
+			safeEndpoints: map[string]struct{}{"foo/bar": {}},
+			expectedOK:    true,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			c := csrf.CSRF{
+				Cfg:            setting.NewCfg(),
+				TrustedOrigins: tc.trustedOrigins,
+				Headers:        tc.addtHeader,
+				SafeEndpoints:  tc.safeEndpoints,
+			}
+			c.Cfg.LoginCookieName = "LoginCookie"
+
+			err := c.Check(tc.request)
+			if tc.expectedOK {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				var actual *csrf.ErrorWithStatus
+				require.True(t, errors.As(err, &actual))
+				assert.EqualValues(t, tc.expectedStatus, actual.HTTPStatus)
+			}
+		})
+	}
+}
+
+func postRequest(t testing.TB, hostname string, headers map[string]string) *http.Request {
+	t.Helper()
+	urlParts := strings.SplitN(hostname, "/", 2)
+
+	path := "/"
+	if len(urlParts) == 2 {
+		path = urlParts[1]
+	}
+	r, err := http.NewRequest(http.MethodPost, path, nil)
+	require.NoError(t, err)
+
+	r.Host = urlParts[0]
+
+	r.AddCookie(&http.Cookie{
+		Name:  "LoginCookie",
+		Value: "this should not be important",
+	})
+
+	for k, v := range headers {
+		r.Header.Set(k, v)
+	}
+	return r
+}
+
 func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httptest.ResponseRecorder {
 	req, err := http.NewRequest(method, "/", nil)
 	if err != nil {
@@ -118,7 +234,10 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httpte
 	})
 
 	rr := httptest.NewRecorder()
-	handler := CSRF(cookieName, log.New())(testHandler)
+	cfg := setting.NewCfg()
+	cfg.LoginCookieName = cookieName
+	service := csrf.ProvideCSRFFilter(cfg)
+	handler := service.Middleware()(testHandler)
 	handler.ServeHTTP(rr, req)
 	return rr
 }

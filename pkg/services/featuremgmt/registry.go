@@ -78,12 +78,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "tempoServiceGraph",
-			Description:  "show service",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "lokiBackendMode",
 			Description:  "Loki datasource works as backend datasource",
 			State:        FeatureStateAlpha,

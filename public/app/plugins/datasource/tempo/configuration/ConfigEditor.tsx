@@ -33,11 +33,9 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
         </div>
       ) : null}
 
-      {config.featureToggles.tempoServiceGraph && (
-        <div className="gf-form-group">
-          <ServiceGraphSettings options={options} onOptionsChange={onOptionsChange} />
-        </div>
-      )}
+      <div className="gf-form-group">
+        <ServiceGraphSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
 
       {config.featureToggles.tempoSearch && (
         <div className="gf-form-group">

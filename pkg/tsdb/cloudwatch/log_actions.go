@@ -35,8 +35,8 @@ type LogQueryJson struct {
 	SubType            string
 	Limit              *int64
 	Time               int64
-	StartTime          int64
-	EndTime            int64
+	StartTime          *int64
+	EndTime            *int64
 	LogGroupName       string
 	LogGroupNames      []string
 	LogGroupNamePrefix string
@@ -169,8 +169,13 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 	queryRequest.SetLogStreamName(parameters.LogStreamName)
 
-	queryRequest.SetStartTime(parameters.StartTime)
-	queryRequest.SetEndTime(parameters.EndTime)
+	if parameters.StartTime != nil && *parameters.StartTime != 0 {
+		queryRequest.SetStartTime(*parameters.StartTime)
+	}
+
+	if parameters.EndTime != nil && *parameters.EndTime != 0 {
+		queryRequest.SetEndTime(*parameters.EndTime)
+	}
 
 	logEvents, err := logsClient.GetLogEventsWithContext(ctx, queryRequest)
 	if err != nil {

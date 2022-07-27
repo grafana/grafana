@@ -92,6 +92,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddManagedFolderAlertActionsMigration(mg)
 	accesscontrol.AddActionNameMigrator(mg)
 	addPlaylistUIDMigration(mg)
+
+	accesscontrol.AddManagedFolderAlertActionsRepeatMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
