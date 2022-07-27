@@ -6,12 +6,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -52,6 +54,9 @@ type CreateFolderCmd struct {
 type StorageService interface {
 	registry.BackgroundService
 
+	// Register the HTTP
+	RegisterHTTPRoutes(routing.RouteRegister)
+
 	// List folder contents
 	List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error)
 
@@ -77,13 +82,19 @@ type storageServiceConfig struct {
 }
 
 type standardStorageService struct {
-	sql         *sqlstore.SQLStore
-	tree        *nestedTree
-	cfg         storageServiceConfig
-	authService storageAuthService
+	sql          *sqlstore.SQLStore
+	tree         *nestedTree
+	cfg          storageServiceConfig
+	authService  storageAuthService
+	quotaService quota.Service
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
+func ProvideService(
+	sql *sqlstore.SQLStore,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	quotaService quota.Service,
+) StorageService {
 	settings, err := LoadStorageConfig(cfg)
 	if err != nil {
 		grafanaStorageLogger.Warn("error loading storage config", "error", err)
@@ -216,7 +227,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		}
 	})
 
-	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
+	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg, quotaService)
 }
 
 func createSystemBrandingPathFilter() filestorage.PathFilter {
@@ -227,7 +238,14 @@ func createSystemBrandingPathFilter() filestorage.PathFilter {
 		nil)
 }
 
-func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime, authService storageAuthService, cfg *setting.Cfg) *standardStorageService {
+func newStandardStorageService(
+	sql *sqlstore.SQLStore,
+	globalRoots []storageRuntime,
+	initializeOrgStorages func(orgId int64) []storageRuntime,
+	authService storageAuthService,
+	cfg *setting.Cfg,
+	quotaService quota.Service,
+) *standardStorageService {
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
 
