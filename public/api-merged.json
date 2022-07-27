@@ -2019,6 +2019,12 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "description": "Find annotations that are scoped to a specific dashboard",
+            "name": "dashboardUID",
+            "in": "query"
+          },
+          {
             "type": "integer",
             "format": "int64",
             "description": "Find annotations that are scoped to a specific panel",
