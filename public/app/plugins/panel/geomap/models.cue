@@ -33,12 +33,29 @@ Panel: thema.#Lineage & {
 						maxZoom?: float64
 						shared?: bool
 					} @cuetsy(kind="interface")
+					ControlsOptions: {
+						// Zoom (upper left)
+						showZoom?: bool
+						// let the mouse wheel zoom
+						mouseWheelZoom?: bool
+						// Lower right
+						showAttribution?: bool
+						// Scale options
+						showScale?: bool
+						scaleUnits?: "FEET" | "METERS"
+						// Show debug
+						showDebug?: bool
+					} @cuetsy(kind="interface")
+					TooltipMode: *"none" | "details" @cuetsy(kind="enum")
+					TooltipOptions: {
+						mode: TooltipMode 
+					} @cuetsy(kind="interface")
 					PanelOptions: {
 						view: MapViewConfig
-						controls: {...}
+						controls: ControlsOptions
 						basemap: {...}
 						layers: [...{...}]
-						tooltip: {...}
+						tooltip: TooltipOptions
 					} @cuetsy(kind="interface")
 				},
 			]

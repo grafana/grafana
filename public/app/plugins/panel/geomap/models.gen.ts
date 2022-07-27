@@ -18,11 +18,35 @@ export interface MapViewConfig {
   zoom?: number;
 }
 
+export interface ControlsOptions {
+  mouseWheelZoom?: boolean;
+  scaleUnits?: ('FEET' | 'METERS');
+  showAttribution?: boolean;
+  showDebug?: boolean;
+  showScale?: boolean;
+  showZoom?: boolean;
+}
+
+export enum TooltipMode {
+  Details = 'details',
+  None = 'none',
+}
+
+export const defaultTooltipMode: TooltipMode = TooltipMode.None;
+
+export interface TooltipOptions {
+  mode: TooltipMode;
+}
+
+export const defaultTooltipOptions: Partial<TooltipOptions> = {
+  mode: TooltipMode.None,
+};
+
 export interface PanelOptions {
   basemap: {};
-  controls: {};
+  controls: ControlsOptions;
   layers: {}[];
-  tooltip: {};
+  tooltip: TooltipOptions;
   view: MapViewConfig;
 }
 

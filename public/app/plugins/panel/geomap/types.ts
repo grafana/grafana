@@ -1,43 +1,14 @@
 import { FeatureLike } from 'ol/Feature';
 import BaseLayer from 'ol/layer/Base';
-import Units from 'ol/proj/Units';
 import { Subject } from 'rxjs';
 
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
 import { HideableFieldConfig } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
 
-import { MapViewConfig } from './models.gen';
-
+import { MapViewConfig, ControlsOptions, TooltipOptions } from './models.gen';
 import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
-
-export interface ControlsOptions {
-  // Zoom (upper left)
-  showZoom?: boolean;
-
-  // let the mouse wheel zoom
-  mouseWheelZoom?: boolean;
-
-  // Lower right
-  showAttribution?: boolean;
-
-  // Scale options
-  showScale?: boolean;
-  scaleUnits?: Units;
-
-  // Show debug
-  showDebug?: boolean;
-}
-
-export enum TooltipMode {
-  None = 'none',
-  Details = 'details',
-}
-
-export interface TooltipOptions {
-  mode: TooltipMode;
-}
 
 export const defaultView: MapViewConfig = {
   id: MapCenterID.Zero,
