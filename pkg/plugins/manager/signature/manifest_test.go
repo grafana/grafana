@@ -456,53 +456,48 @@ func Test_validateManifest(t *testing.T) {
 	}{
 		{
 			name:        "Empty plugin field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.Plugin = "" }),
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.Plugin = "" }),
 			expectedErr: "valid manifest field plugin is required",
 		},
 		{
 			name:        "Empty keyId field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.KeyID = "" }),
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.KeyID = "" }),
 			expectedErr: "valid manifest field keyId is required",
 		},
 		{
 			name:        "Empty signedByOrg field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.SignedByOrg = "" }),
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.SignedByOrg = "" }),
 			expectedErr: "valid manifest field signedByOrg is required",
 		},
 		{
 			name:        "Empty signedByOrgName field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.SignedByOrgName = "" }),
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.SignedByOrgName = "" }),
 			expectedErr: "valid manifest field SignedByOrgName is required",
 		},
 		{
 			name:        "Empty signatureType field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.SignatureType = "" }),
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.SignatureType = "" }),
 			expectedErr: "valid manifest field signatureType is required",
 		},
 		{
 			name:        "Invalid signatureType field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.SignatureType = "invalidSignatureType" }),
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.SignatureType = "invalidSignatureType" }),
 			expectedErr: "valid manifest field signatureType is required",
 		},
 		{
 			name:        "Empty files field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.Files = map[string]string{} }),
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.Files = map[string]string{} }),
 			expectedErr: "valid manifest field files is required",
 		},
 		{
 			name:        "Empty time field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.Time = 0 }),
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.Time = 0 }),
 			expectedErr: "valid manifest field time is required",
 		},
 		{
 			name:        "Empty version field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.Version = "" }),
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.Version = "" }),
 			expectedErr: "valid manifest field version is required",
-		},
-		{
-			name:        "Empty manifestVersion field",
-			manifest:    createManifest(t, func(m *pluginManifest) { m.ManifestVersion = "" }),
-			expectedErr: "valid manifest field manifestVersion is required",
 		},
 	}
 	for _, tc := range tcs {
@@ -513,7 +508,7 @@ func Test_validateManifest(t *testing.T) {
 	}
 }
 
-func createManifest(t *testing.T, cbs ...func(*pluginManifest)) *pluginManifest {
+func createV2Manifest(t *testing.T, cbs ...func(*pluginManifest)) *pluginManifest {
 	t.Helper()
 
 	m := &pluginManifest{

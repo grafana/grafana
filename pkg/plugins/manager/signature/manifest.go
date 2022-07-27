@@ -334,9 +334,6 @@ func validateManifest(m pluginManifest, block *clearsign.Block) error {
 		return invalidFieldErr{field: "files"}
 	}
 	if m.isV2() {
-		if len(m.ManifestVersion) == 0 {
-			return invalidFieldErr{field: "manifestVersion"}
-		}
 		if len(m.SignedByOrg) == 0 {
 			return invalidFieldErr{field: "signedByOrg"}
 		}
