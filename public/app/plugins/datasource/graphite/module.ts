@@ -10,4 +10,4 @@ export const plugin = new DataSourcePlugin(GraphiteDatasource)
   .setQueryEditor(GraphiteQueryEditor)
   .setConfigEditor(ConfigEditor)
   .setVariableQueryEditor(GraphiteVariableEditor)
-  .setMetadataInspector(MetricTankMetaInspector)
+  .setMetadataInspector(MetricTankMetaInspector);
