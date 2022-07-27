@@ -266,7 +266,6 @@ export class Scene {
 
   private updateSelection = (selection: SelectionParams) => {
     this.moveable!.target = selection.targets;
-
     if (this.skipNextSelectionBroadcast) {
       this.skipNextSelectionBroadcast = false;
       return;
@@ -431,12 +430,12 @@ export class Scene {
       // @TODO Figure out click-drag functionality without phantom mouseup issue
       // https://github.com/daybrush/moveable/issues/481
 
-      // if (event.isDragStart) {
-      //   event.inputEvent.preventDefault();
-      //   setTimeout(() => {
-      //     this.moveable!.dragStart(event.inputEvent);
-      //   });
-      // }
+      if (event.isDragStart) {
+        event.inputEvent.preventDefault();
+        setTimeout(() => {
+          this.moveable!.dragStart(event.inputEvent);
+        });
+      }
     });
   };
 
