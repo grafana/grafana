@@ -24,7 +24,17 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	})
 }
 
-// createHandler handles POST /datasources/uid/:uid/correlations
+// swagger:route POST /datasources/uid/{sourceUID}/correlations correlations createCorrelation
+//
+// Add correlation.
+//
+// Responses:
+// 200: createCorrelationResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Response {
 	cmd := CreateCorrelationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -46,10 +56,35 @@ func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
 	}
 
-	return response.JSON(http.StatusOK, CreateCorrelationResponse{Result: correlation, Message: "Correlation created"})
+	return response.JSON(http.StatusOK, CreateCorrelationResponseBody{Result: correlation, Message: "Correlation created"})
 }
 
-// deleteHandler handles DELETE /datasources/uid/:uid/correlations/:correlationUID
+// swagger:parameters createCorrelation
+type CreateCorrelationParams struct {
+	// in:body
+	// required:true
+	Body CreateCorrelationCommand `json:"body"`
+	// in:path
+	// required:true
+	SourceUID string `json:"sourceUID"`
+}
+
+//swagger:response createCorrelationResponse
+type CreateCorrelationResponse struct {
+	// in: body
+	Body CreateCorrelationResponseBody `json:"body"`
+}
+
+// swagger:route DELETE /datasources/uid/{uid}/correlations/{correlationUID} correlations deleteCorrelation
+//
+// Delete a correlation.
+//
+// Responses:
+// 200: deleteCorrelationResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Response {
 	cmd := DeleteCorrelationCommand{
 		UID:       web.Params(c.Req)[":correlationUID"],
@@ -74,5 +109,21 @@ func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Failed to delete correlation", err)
 	}
 
-	return response.JSON(http.StatusOK, DeleteCorrelationResponse{Message: "Correlation deleted"})
+	return response.JSON(http.StatusOK, DeleteCorrelationResponseBody{Message: "Correlation deleted"})
+}
+
+// swagger:parameters deleteCorrelation
+type DeleteCorrelationParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+	// in:path
+	// required:true
+	CorrelationUID string `json:"correlationUID"`
+}
+
+//swagger:response deleteCorrelationResponse
+type DeleteCorrelationResponse struct {
+	// in: body
+	Body DeleteCorrelationResponseBody `json:"body"`
 }
