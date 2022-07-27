@@ -1,20 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { capitalize } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   Alert,
-  Badge,
   Button,
-  CallToActionCard,
-  Card,
   ConfirmModal,
   Field,
   HorizontalGroup,
   Icon,
-  LinkButton,
   RadioButtonGroup,
   Tooltip,
   useStyles2,
@@ -25,19 +20,15 @@ import { loadDataSources } from 'app/features/datasources/state/actions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { StoreState } from 'app/types/store';
 
-import {
-  ExternalDataSourceAM,
-  useExternalAmSelector,
-  useExternalDataSourceAlertmanagers,
-} from '../../hooks/useExternalAmSelector';
+import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
 import {
   addExternalAlertmanagersAction,
   fetchExternalAlertmanagersAction,
   fetchExternalAlertmanagersConfigAction,
 } from '../../state/actions';
-import { makeDataSourceLink } from '../../utils/misc';
 
 import { AddAlertManagerModal } from './AddAlertManagerModal';
+import { ExternalAlertmanagerDataSources } from './ExternalAlertmanagerDataSources';
 
 const alertmanagerChoices: Array<SelectableValue<AlertmanagerChoice>> = [
   { value: AlertmanagerChoice.Internal, label: 'Only Internal' },
@@ -272,99 +263,7 @@ export const ExternalAlertmanagers = () => {
   );
 };
 
-interface ExternalAlertManagerDataSourcesProps {
-  alertmanagers: ExternalDataSourceAM[];
-  inactive: boolean;
-}
-
-function ExternalAlertmanagerDataSources({ alertmanagers, inactive }: ExternalAlertManagerDataSourcesProps) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <>
-      <h5>Alertmanagers data sources</h5>
-      <div className={styles.muted}>
-        Alertmanager data sources support a configuration setting that allows you to choose to send Grafana-managed
-        alerts to that Alertmanager. <br />
-        Below, you can see the list of all Alertmanager data sources that have this setting enabled.
-      </div>
-      {alertmanagers.length === 0 && (
-        <CallToActionCard
-          message={
-            <div>
-              There are no Alertmanager data sources configured to receive Grafana-managed alerts <br />
-              You can change this by selecting Receive Grafana Alerts in a data source configuration
-            </div>
-          }
-          callToActionElement={<LinkButton href="/datasources">Go to data sources</LinkButton>}
-          className={styles.externalDsCTA}
-        />
-      )}
-      {alertmanagers.length > 0 && (
-        <div className={styles.externalDs}>
-          {alertmanagers.map((am) => (
-            <ExternalAMdataSourceCard key={am.dataSource.uid} alertmanager={am} inactive={inactive} />
-          ))}
-        </div>
-      )}
-    </>
-  );
-}
-
-interface ExternalAMdataSourceCardProps {
-  alertmanager: ExternalDataSourceAM;
-  inactive: boolean;
-}
-
-function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMdataSourceCardProps) {
-  const styles = useStyles2(getStyles);
-
-  const { dataSource, status, statusInconclusive, url } = alertmanager;
-
-  return (
-    <Card>
-      <Card.Heading className={styles.externalHeading}>
-        {dataSource.name}{' '}
-        {statusInconclusive && (
-          <Tooltip content="Multiple Alertmangers have the same URL configured. The state might be inconclusive">
-            <Icon name="exclamation-triangle" size="md" className={styles.externalWarningIcon} />
-          </Tooltip>
-        )}
-      </Card.Heading>
-      <Card.Figure>
-        <img
-          src="public/app/plugins/datasource/alertmanager/img/logo.svg"
-          alt=""
-          height="40px"
-          width="40px"
-          style={{ objectFit: 'contain' }}
-        />
-      </Card.Figure>
-      <Card.Tags>
-        {inactive ? (
-          <Badge
-            text="Inactive"
-            color="red"
-            tooltip="Grafana is configured to send alerts to the built-in internal alermanager only. External Alertmanages will not receive any alerts"
-          />
-        ) : (
-          <Badge
-            text={capitalize(status)}
-            color={status === 'dropped' ? 'red' : status === 'active' ? 'green' : 'orange'}
-          />
-        )}
-      </Card.Tags>
-      <Card.Meta>{url}</Card.Meta>
-      <Card.Actions>
-        <LinkButton href={makeDataSourceLink(dataSource)} size="sm" variant="secondary">
-          Go to datasouce
-        </LinkButton>
-      </Card.Actions>
-    </Card>
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   url: css`
     margin-right: ${theme.spacing(1)};
   `,
@@ -381,31 +280,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   amChoice: css`
     margin-bottom: ${theme.spacing(4)};
-  `,
-  externalStatus: css`
-    align-self: flex-start;
-    justify-self: flex-end;
-  `,
-  externalHeading: css`
-    justify-content: flex-start;
-  `,
-  externalWarningIcon: css`
-    margin: ${theme.spacing(0, 1)};
-    fill: ${theme.colors.warning.main};
-  `,
-  externalDs: css`
-    display: grid;
-    gap: ${theme.spacing(1)};
-    padding: ${theme.spacing(2, 0)};
-  `,
-  externalDsCTA: css`
-    margin: ${theme.spacing(2, 0)};
-  `,
-  externalDsAddRow: css`
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(2)};
-    align-items: center;
-    padding-bottom: ${theme.spacing(3)};
   `,
 });
