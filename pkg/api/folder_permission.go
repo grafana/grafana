@@ -15,6 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// swagger:route GET /folders/{folder_uid}/permissions folder_permissions getFolderPermissionList
+//
+// Gets all existing permissions for the folder with the given `uid`.
+//
+// Responses:
+// 200: getFolderPermissionListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Response {
 	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"])
 
@@ -58,6 +68,16 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 	return response.JSON(http.StatusOK, filteredACLs)
 }
 
+// swagger:route POST /folders/{folder_uid}/permissions folder_permissions updateFolderPermissions
+//
+// Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Response {
 	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
@@ -146,4 +166,27 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		"id":      folder.Id,
 		"title":   folder.Title,
 	})
+}
+
+// swagger:parameters getFolderPermissionList
+type GetFolderPermissionListParams struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+}
+
+// swagger:parameters updateFolderPermissions
+type UpdateFolderPermissionsParams struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardACLCommand
+}
+
+// swagger:response getFolderPermissionListResponse
+type GetFolderPermissionsResponse struct {
+	// in: body
+	Body []*models.DashboardACLInfoDTO `json:"body"`
 }

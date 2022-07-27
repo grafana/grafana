@@ -2,7 +2,7 @@ import { Observable, throwError, timer } from 'rxjs';
 import { finalize, map, retryWhen, mergeMap } from 'rxjs/operators';
 import { webSocket } from 'rxjs/webSocket';
 
-import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
+import { DataFrame, FieldType, KeyValue, CircularDataFrame } from '@grafana/data';
 
 import { appendResponseToBufferedData } from './live_streams_result_transformer';
 import { LokiTailResponse } from './types';
@@ -32,11 +32,9 @@ export class LiveStreams {
     }
 
     const data = new CircularDataFrame({ capacity: target.size });
-    data.addField({ name: 'labels', type: FieldType.other }); // The labels for each line
     data.addField({ name: 'Time', type: FieldType.time, config: {} });
-    data.addField({ name: 'Line', type: FieldType.string }).labels = parseLabels(target.query);
+    data.addField({ name: 'Line', type: FieldType.string });
     data.addField({ name: 'id', type: FieldType.string });
-    data.addField({ name: 'tsNs', type: FieldType.time, config: {} });
     data.meta = { ...data.meta, preferredVisualisationType: 'logs' };
     data.refId = target.refId;
 
