@@ -39,7 +39,8 @@ describe('Wrapper', () => {
 
   it('shows warning if there are no data sources', async () => {
     setupExplore({ datasources: [] });
-    await waitFor(() => screen.getByText(/Explore requires at least one data source/i));
+    // Will throw if isn't found
+    screen.getByText(/Explore requires at least one data source/i);
   });
 
   it('inits url and renders editor but does not call query on empty url', async () => {
@@ -51,7 +52,7 @@ describe('Wrapper', () => {
       orgId: '1',
       left: serializeStateToUrlParam({
         datasource: 'loki',
-        queries: [{ refId: 'A', datasource: { type: 'logs', uid: 'loki' } }],
+        queries: [{ refId: 'A' }],
         range: { from: 'now-1h', to: 'now' },
       }),
     });
@@ -143,7 +144,7 @@ describe('Wrapper', () => {
       orgId: '1',
       left: serializeStateToUrlParam({
         datasource: 'elastic',
-        queries: [{ refId: 'A', datasource: { type: 'logs', uid: 'elastic' } }],
+        queries: [{ refId: 'A' }],
         range: { from: 'now-1h', to: 'now' },
       }),
     });

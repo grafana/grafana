@@ -3,7 +3,7 @@ import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
+import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
@@ -64,17 +64,16 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
     };
   }
 
-  async componentDidMount() {
+  componentDidMount() {
     const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState } = this.props;
     const width = this.el?.offsetWidth ?? 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
-      const queries = await ensureQueries(initialQueries); // this will return an empty array if there are no datasources
       this.props.initializeExplore(
         exploreId,
         initialDatasource,
-        queries,
+        initialQueries,
         initialRange,
         width,
         this.exploreEvents,
@@ -117,6 +116,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   }
 }
 
+const ensureQueriesMemoized = memoizeOne(ensureQueries);
 const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
 function mapStateToProps(state: StoreState, props: OwnProps) {
@@ -126,6 +126,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
 
   const { datasource, queries, range: urlRange, panelsState } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
+  const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
   const initialRange = urlRange
     ? getTimeRangeFromUrlMemoized(urlRange, timeZone, fiscalYearStartMonth)
     : getTimeRange(timeZone, DEFAULT_RANGE, fiscalYearStartMonth);
@@ -133,7 +134,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   return {
     initialized: state.explore[props.exploreId]?.initialized,
     initialDatasource,
-    initialQueries: queries,
+    initialQueries,
     initialRange,
     panelsState,
   };

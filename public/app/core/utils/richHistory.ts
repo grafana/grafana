@@ -264,7 +264,7 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
  */
 export function createDatasourcesList() {
   return getDataSourceSrv()
-    .getList({ mixed: true })
+    .getList()
     .map((dsSettings) => {
       return {
         name: dsSettings.name,
