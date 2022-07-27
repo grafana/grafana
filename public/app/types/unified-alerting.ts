@@ -158,7 +158,7 @@ interface EvalMatch {
 }
 
 export interface StateHistoryItemData {
-  noData: boolean;
+  noData?: boolean;
   evalMatches?: EvalMatch[];
 }
 

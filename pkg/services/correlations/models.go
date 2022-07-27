@@ -19,10 +19,10 @@ type Correlation struct {
 	UID string `json:"uid" xorm:"pk 'uid'"`
 	// UID of the data source the correlation originates from
 	// example:d0oxYRg4z
-	SourceUID string `json:"sourceUid" xorm:"pk 'source_uid'"`
+	SourceUID string `json:"sourceUID" xorm:"pk 'source_uid'"`
 	// UID of the data source the correlation points to
 	// example:PE1C5CBDA0504A6A3
-	TargetUID string `json:"targetUid" xorm:"target_uid"`
+	TargetUID string `json:"targetUID" xorm:"target_uid"`
 	// Label identifying the correlation
 	// example: My Label
 	Label string `json:"label" xorm:"label"`
@@ -48,7 +48,7 @@ type CreateCorrelationCommand struct {
 	SkipReadOnlyCheck bool   `json:"-"`
 	// Target data source UID to which the correlation is created
 	// example:PE1C5CBDA0504A6A3
-	TargetUID string `json:"targetUid" binding:"Required"`
+	TargetUID string `json:"targetUID" binding:"Required"`
 	// Optional label identifying the correlation
 	// example: My label
 	Label string `json:"label"`
