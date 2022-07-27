@@ -35,7 +35,7 @@ import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConf
 import { getScaleGradientFn } from '../uPlot/config/gradientFills';
 import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
 
-const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+const defaultFormatter = (v: any, decimals = 1) => (v == null ? '-' : v.toFixed(decimals));
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
@@ -268,7 +268,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
             placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v) => formattedValueToString(fmt(v)),
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
             show: customConfig.hideFrom?.viz === false,

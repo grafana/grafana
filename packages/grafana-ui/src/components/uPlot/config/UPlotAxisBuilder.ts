@@ -21,7 +21,7 @@ export interface AxisProps {
   ticks?: Axis.Ticks;
   filter?: Axis.Filter;
   space?: Axis.Space;
-  formatValue?: (v: any) => string;
+  formatValue?: (v: any, decimals?: number) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: Axis.Values;
@@ -33,6 +33,18 @@ export interface AxisProps {
 
 export const UPLOT_AXIS_FONT_SIZE = 12;
 const labelPad = 8;
+
+// https://stackoverflow.com/a/48764436
+// rounds half away from zero
+export function roundDec(val: number, dec = 0) {
+  let p = 10 ** dec;
+  let n = val * p * (1 + Number.EPSILON);
+  return Math.round(n) / p;
+}
+
+function guessDec(num: number) {
+  return (('' + num).split('.')[1] || '').length;
+}
 
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
   merge(props: AxisProps) {
@@ -176,7 +188,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map(formatValue!);
+      config.values = (u: uPlot, vals: any[]) => {
+        let decimals = guessDec(roundDec(vals[1] - vals[0], 6));
+        return vals.map((v) => formatValue!(v, decimals));
+      };
     }
 
     // store timezone

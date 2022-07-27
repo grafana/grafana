@@ -1,6 +1,6 @@
 import { FormattedValue } from '../valueFormats';
 
-export type DisplayProcessor = (value: any) => DisplayValue;
+export type DisplayProcessor = (value: any, decimals?: number | null) => DisplayValue;
 
 export interface DisplayValue extends FormattedValue {
   /**

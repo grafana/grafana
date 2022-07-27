@@ -1,7 +1,11 @@
 const { abs, round, pow } = Math;
 
-export function roundDec(val: number, dec: number) {
-  return round(val * (dec = 10 ** dec)) / dec;
+// https://stackoverflow.com/a/48764436
+// rounds half away from zero
+export function roundDec(val: number, dec = 0) {
+  let p = 10 ** dec;
+  let n = val * p * (1 + Number.EPSILON);
+  return round(n) / p;
 }
 
 export const fixedDec = new Map();
