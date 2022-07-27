@@ -255,8 +255,8 @@ require (
 
 require (
 	cloud.google.com/go v0.100.2 // indirect
-	github.com/blugelabs/bluge_segment_api v0.2.0 // indirect
 	github.com/armon/go-metrics v0.3.10 // indirect
+	github.com/blugelabs/bluge_segment_api v0.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
