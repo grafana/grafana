@@ -26,7 +26,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		UserId:       c.QueryInt64("userId"),
 		AlertId:      c.QueryInt64("alertId"),
 		DashboardId:  c.QueryInt64("dashboardId"),
-		DashboardUid: c.Query("dashboardUid"),
+		DashboardUid: c.Query("dashboardUID"),
 		PanelId:      c.QueryInt64("panelId"),
 		Limit:        c.QueryInt64("limit"),
 		Tags:         c.QueryStrings("tags"),

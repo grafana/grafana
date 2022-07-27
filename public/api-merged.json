@@ -2021,7 +2021,7 @@
           {
             "type": "string",
             "description": "Find annotations that are scoped to a specific dashboard",
-            "name": "dashboardUid",
+            "name": "dashboardUID",
             "in": "query"
           },
           {
