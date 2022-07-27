@@ -34,7 +34,7 @@ type Correlation struct {
 
 // CreateCorrelationResponse is the response struct for CreateCorrelationCommand
 // swagger:model
-type CreateCorrelationResponse struct {
+type CreateCorrelationResponseBody struct {
 	Result Correlation `json:"result"`
 	// example: Correlation created
 	Message string `json:"message"`
@@ -59,7 +59,7 @@ type CreateCorrelationCommand struct {
 }
 
 // swagger:model
-type DeleteCorrelationResponse struct {
+type DeleteCorrelationResponseBody struct {
 	// example: Correlation deleted
 	Message string `json:"message"`
 }
@@ -73,7 +73,7 @@ type DeleteCorrelationCommand struct {
 }
 
 // swagger:model
-type UpdateCorrelationResponse struct {
+type UpdateCorrelationResponseBody struct {
 	Result Correlation `json:"result"`
 	// example: Correlation updated
 	Message string `json:"message"`
