@@ -20,7 +20,7 @@ export const getStyles = ({ v1: { breakpoints, spacing, typography, border, colo
     advancedCol: css`
       align-items: center;
       display: flex;
-      width: 210px;
+      width: 230px;
     `,
     advancedChildCol: css`
       width: 150px;
@@ -58,7 +58,7 @@ export const getStyles = ({ v1: { breakpoints, spacing, typography, border, colo
       }
     `,
     publicAddressInput: css`
-      min-width: 150px;
+      min-width: 213px;
       ${mq} {
         width: 100px;
       }
