@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
@@ -138,4 +138,4 @@ export function PlacementEditor({ item }: Props) {
       </Field>
     </div>
   );
-};
+}

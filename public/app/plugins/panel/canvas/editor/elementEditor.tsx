@@ -6,6 +6,8 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
+import { FrameState } from '../../../../features/canvas/runtime/frame';
+
 import { PlacementEditor } from './PlacementEditor';
 import { optionBuilder } from './options';
 
@@ -13,6 +15,12 @@ export interface CanvasEditorOptions {
   element: ElementState;
   scene: Scene;
   category?: string[];
+}
+
+export interface TreeViewEditorProps {
+  scene: Scene;
+  layer: FrameState;
+  selected: ElementState[];
 }
 
 export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<CanvasElementOptions> {
@@ -63,7 +71,6 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         },
       });
 
-
       // force clean layer configuration
       const layer = canvasElementRegistry.getIfExists(options?.type ?? DEFAULT_CANVAS_ELEMENT_CONFIG.type)!;
       let currentOptions = options;
@@ -76,8 +83,7 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       }
       const ctx = { ...context, options: currentOptions };
 
-
-      console.log( "ELEMENT EDITOR!!!", { opts, layer, currentOptions});
+      console.log('ELEMENT EDITOR!!!', { opts, layer, currentOptions });
 
       if (layer?.registerOptionsUI) {
         layer.registerOptionsUI(builder, ctx);

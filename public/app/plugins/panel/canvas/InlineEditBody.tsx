@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { get as lodashGet } from 'lodash';
 import React, { useMemo } from 'react';
 import { useObservable } from 'react-use';
+import { of } from 'rxjs';
 
 import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
@@ -15,8 +16,6 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
-import { getTreeViewEditor } from './editor/treeViewEditor';
-import { of } from 'rxjs';
 
 export const InlineEditBody = () => {
   const activePanel = useObservable(activePanelSubject);
@@ -33,14 +32,13 @@ export const InlineEditBody = () => {
     }
 
     const supplier = (builder: PanelOptionsEditorBuilder<any>, context: StandardEditorContext<any>) => {
-      builder.addNestedOptions(getTreeViewEditor(state));
       builder.addNestedOptions(getLayerEditor(instanceState));
 
       const selection = state.selected;
       if (selection?.length === 1) {
         const element = selection[0];
         if (!(element instanceof FrameState)) {
-          console.log("HERE", element);
+          console.log('HERE', element);
           builder.addNestedOptions(
             getElementEditor({
               category: [`Selected element (${element.options.name})`],
@@ -52,12 +50,15 @@ export const InlineEditBody = () => {
       }
     };
 
-    return getOptionsPaneCategoryDescriptor({ 
-        options: p.props.options, 
+    return getOptionsPaneCategoryDescriptor(
+      {
+        options: p.props.options,
         onChange: p.props.onOptionsChange,
-        data: p.props.data.series,
-     }, supplier);
-  }, [instanceState, panelData]);
+        data: panelData?.series,
+      },
+      supplier
+    );
+  }, [instanceState, panelData, activePanel]);
 
   return (
     <div>
@@ -77,7 +78,7 @@ export const InlineEditBody = () => {
 };
 
 interface EditorProps<T> {
-  onChange: (v:T) => void;
+  onChange: (v: T) => void;
   options: T;
   data?: DataFrame[];
 }
