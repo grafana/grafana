@@ -15,7 +15,7 @@ import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 
-export const InlineEditBody = () => {
+export function InlineEditBody() {
   const activePanel = useObservable(activePanelSubject);
   const instanceState = activePanel?.panel.context?.instanceState;
   const panelData = useObservable(activePanel?.panel?.data ?? of());
@@ -57,7 +57,7 @@ export const InlineEditBody = () => {
   }, [instanceState, panelData, activePanel]);
 
   return renderOptionsPaneCategoryDescriptor(pane);
-};
+}
 
 // Recursivly render options
 function renderOptionsPaneCategoryDescriptor(pane: OptionsPaneCategoryDescriptor) {

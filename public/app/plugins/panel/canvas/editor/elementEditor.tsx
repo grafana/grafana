@@ -83,8 +83,6 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       }
       const ctx = { ...context, options: currentOptions };
 
-      console.log('ELEMENT EDITOR!!!', { opts, layer, currentOptions });
-
       if (layer?.registerOptionsUI) {
         layer.registerOptionsUI(builder, ctx);
       }

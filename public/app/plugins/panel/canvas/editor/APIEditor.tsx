@@ -39,8 +39,9 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
   }
 };
 
-export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (props) => {
-  const { value, context, onChange } = props;
+type Props = StandardEditorProps<APIEditorConfig, any, any>;
+
+export function APIEditor({ value, context, onChange }: Props) {
   const labelWidth = 9;
 
   const onEndpointChange = useCallback(
@@ -117,4 +118,4 @@ export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (pr
   ) : (
     <>Must enable disableSanitizeHtml feature flag to access</>
   );
-};
+}
