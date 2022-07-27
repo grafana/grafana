@@ -34,7 +34,7 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 	if cfg == nil {
 		cfg = &StorageGitConfig{}
 	}
-	scfg.Type = rootStorageTypeDisk
+	scfg.Type = rootStorageTypeGit
 	scfg.GCS = nil
 	scfg.Git = nil
 	scfg.SQL = nil

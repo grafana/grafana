@@ -19,6 +19,7 @@ interface RootFolder {
   description: string;
   readOnly: boolean;
   builtIn: boolean;
+  ready: boolean;
 }
 
 export function RootView({ root, onPathChange }: Props) {
@@ -96,6 +97,11 @@ function getTags(v: RootFolder) {
   }
   if (v.readOnly) {
     tags.push('Read only');
+  }
+
+  // Error
+  if (!v.ready) {
+    tags.push('Not ready');
   }
   return tags;
 }

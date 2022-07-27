@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -77,12 +78,15 @@ func (t *nestedTree) GetFile(ctx context.Context, orgId int64, path string) (*fi
 	if path == "" {
 		return nil, nil // not found
 	}
-
 	root, path := t.getRoot(orgId, path)
 	if root == nil {
 		return nil, nil // not found (or not ready)
 	}
-	return root.Store().Get(ctx, path)
+	store := root.Store()
+	if store == nil {
+		return nil, fmt.Errorf("store not ready")
+	}
+	return store.Get(ctx, path)
 }
 
 func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter) (*StorageListFrame, error) {
@@ -100,6 +104,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		descr := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		types := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		readOnly := data.NewFieldFromFieldType(data.FieldTypeBool, count)
+		ready := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		builtIn := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		title.Name = titleListFrameField
@@ -109,6 +114,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		types.Name = storageTypeListFrameField
 		readOnly.Name = readOnlyListFrameField
 		builtIn.Name = builtInListFrameField
+		ready.Name = readyListFrameField
 		for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
 			meta := f.Meta()
 			names.Set(idx, meta.Config.Prefix)
@@ -117,6 +123,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 			mtype.Set(idx, "directory")
 			types.Set(idx, meta.Config.Type)
 			readOnly.Set(idx, meta.ReadOnly)
+			ready.Set(idx, meta.Ready)
 			builtIn.Set(idx, meta.Builtin)
 			idx++
 		}
@@ -129,12 +136,13 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 				mtype.Set(idx, "directory")
 				types.Set(idx, meta.Config.Type)
 				readOnly.Set(idx, meta.ReadOnly)
+				ready.Set(idx, meta.Ready)
 				builtIn.Set(idx, meta.Builtin)
 				idx++
 			}
 		}
 
-		frame := data.NewFrame("", names, title, descr, mtype, types, readOnly, builtIn)
+		frame := data.NewFrame("", names, title, descr, mtype, types, readOnly, builtIn, ready)
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})
@@ -146,7 +154,12 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		return nil, nil // not found (or not ready)
 	}
 
-	listResponse, err := root.Store().List(ctx, path, nil, &filestorage.ListOptions{
+	store := root.Store()
+	if store == nil {
+		return nil, fmt.Errorf("store not ready")
+	}
+
+	listResponse, err := store.List(ctx, path, nil, &filestorage.ListOptions{
 		Recursive:   false,
 		WithFolders: true,
 		WithFiles:   true,

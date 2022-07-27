@@ -77,14 +77,10 @@ type StorageService interface {
 	sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error)
 }
 
-type storageServiceConfig struct {
-	allowUnsanitizedSvgUpload bool
-}
-
 type standardStorageService struct {
 	sql          *sqlstore.SQLStore
 	tree         *nestedTree
-	cfg          storageServiceConfig
+	cfg          *GlobalStorageConfig
 	authService  storageAuthService
 	quotaService quota.Service
 }
@@ -98,6 +94,9 @@ func ProvideService(
 	settings, err := LoadStorageConfig(cfg)
 	if err != nil {
 		grafanaStorageLogger.Warn("error loading storage config", "error", err)
+	}
+	if cfg.Storage.AllowUnsanitizedSvgUpload {
+		settings.AllowUnsanitizedSvgUpload = true
 	}
 
 	// always exists
@@ -227,7 +226,10 @@ func ProvideService(
 		}
 	})
 
-	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg, quotaService)
+	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
+	s.quotaService = quotaService
+	s.cfg = settings
+	return s
 }
 
 func createSystemBrandingPathFilter() filestorage.PathFilter {
@@ -244,7 +246,6 @@ func newStandardStorageService(
 	initializeOrgStorages func(orgId int64) []storageRuntime,
 	authService storageAuthService,
 	cfg *setting.Cfg,
-	quotaService quota.Service,
 ) *standardStorageService {
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
@@ -258,9 +259,6 @@ func newStandardStorageService(
 		sql:         sql,
 		tree:        res,
 		authService: authService,
-		cfg: storageServiceConfig{
-			allowUnsanitizedSvgUpload: cfg.Storage.AllowUnsanitizedSvgUpload,
-		},
 	}
 }
 

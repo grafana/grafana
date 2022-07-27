@@ -14,15 +14,19 @@ import (
 type GlobalStorageConfig struct {
 	filepath string // Local file path
 
+	// Defined in grafana.ini
+	AllowUnsanitizedSvgUpload bool `json:"allowUnsanitizedSvgUpload"`
+
 	// Add dev environment
 	AddDevEnv bool `json:"addDevEnv"`
 
 	// Paths under 'root' (NOTE: this is applied to all orgs)
-	Roots []RootStorageConfig `json:"roots,omitempty"`
+	Roots []RootStorageConfig `json:"roots"`
 }
 
 func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
-	fpath := filepath.Join(cfg.HomePath, "conf", "storage.json")
+	changed := false
+	fpath := filepath.Join(cfg.DataPath, "storage.json")
 	g := &GlobalStorageConfig{}
 	if _, err := os.Stat(fpath); err == nil {
 		body, err := ioutil.ReadFile(fpath)
@@ -33,14 +37,43 @@ func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
 		if err != nil {
 			return g, err
 		}
+	} else {
+		g.AddDevEnv = true
+		changed = true
 	}
+
+	if g.Roots == nil {
+		g.Roots = append(g.Roots, RootStorageConfig{
+			Type:     "git",
+			Prefix:   "it",
+			Name:     "Your git repository",
+			Disabled: true,
+			Git: &StorageGitConfig{
+				Remote:             "github.com/ryantxu/test-repo-export-0002",
+				Branch:             "main",
+				Root:               "org_1/root", // the dashboard files
+				RequirePullRequest: true,
+				AccessToken:        "?????",
+			},
+		})
+		changed = true
+	}
+
 	g.filepath = fpath
+
+	// Save a template version in config
+	if changed && setting.Env != setting.Prod {
+		return g, g.save()
+	}
 	return g, nil
 }
 
 func (c *GlobalStorageConfig) save() error {
-
-	return nil
+	out, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(c.filepath, out, 0600)
 }
 
 type RootStorageConfig struct {
@@ -48,6 +81,7 @@ type RootStorageConfig struct {
 	Prefix      string `json:"prefix"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Disabled    bool   `json:"disabled,omitempty"`
 
 	// Depending on type, these will be configured
 	Disk *StorageLocalDiskConfig `json:"disk,omitempty"`

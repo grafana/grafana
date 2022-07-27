@@ -103,6 +103,7 @@ const (
 	storageTypeListFrameField = "storageType"
 	readOnlyListFrameField    = "readOnly"
 	builtInListFrameField     = "builtIn"
+	readyListFrameField       = "ready"
 	sizeListFrameField        = "size"
 )
 
