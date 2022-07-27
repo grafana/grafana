@@ -186,8 +186,6 @@ func reportDiff(data *backend.QueryDataResponse, err error, streamData *backend.
 		if jsonErr != nil {
 			plog.Debug("PrometheusStreamingJSONParserTest error marshaling streaming data", "jsonErr", jsonErr)
 		}
-		//fmt.Println(string(dataJson))
-		//fmt.Println(string(streamingJson))
 		differ := gojsondiff.New()
 		d, diffErr := differ.Compare(dataJson, streamingJson)
 		if diffErr != nil {
