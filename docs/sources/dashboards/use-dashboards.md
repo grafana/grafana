@@ -39,7 +39,7 @@ The dashboard header has the following sections.
 
 - **Dashboard title** (2): This also opens the dashboard search when clicked.
 - **Add panel** (3): Use this option to add a new panel or row to the current dashboard.
-- **Star dashboard** (4): Use this option to star (or unstar) the current dashboard. Starred dashboards show up on your own home dashboard by default. It is a convenient way to mark Dashboards that you're interested in.
+- **Star dashboard** (4): Use this option to star (or unstar) the current dashboard. Starred dashboards show up on your own home dashboard and in the navigation bar by default. It is a convenient way to mark Dashboards that you're interested in.
 - **Share dashboard** (5): Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
 - **Save dashboard** (6): Use this option to save the current dashboard using its current name.
 - **Settings** (7): Use this option to open dashboard settings. Here you change dashboard name, folder, tags as well as manage variables and annotation queries.
