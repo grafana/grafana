@@ -1,6 +1,6 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
-import { CoreApp, LoadingState } from '@grafana/data';
+import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/ui';
@@ -13,10 +13,10 @@ import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { changeEditorMode, getQueryWithDefaults, useRawQuery } from '../state';
+import { changeEditorMode, getQueryWithDefaults, useExplain, useRawQuery } from '../state';
+import { LokiQueryPattern } from '../types';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
-import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
 import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
 
@@ -24,11 +24,16 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
+  const [explain, setExplain] = useExplain();
+  const [rawQuery, setRawQuery] = useRawQuery();
 
   const query = getQueryWithDefaults(props.query);
-  const [rawQuery, setRawQuery] = useRawQuery();
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
+
+  const onExplainChange = (event: SyntheticEvent<HTMLInputElement>) => {
+    setExplain(event.currentTarget.checked);
+  };
 
   const onEditorModeChange = useCallback(
     (newEditorMode: QueryEditorMode) => {
@@ -85,7 +90,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           placeholder="Query patterns"
           aria-label={selectors.components.QueryBuilder.queryPatterns}
           allowCustomValue
-          onChange={({ value }) => {
+          onChange={({ value }: SelectableValue<LokiQueryPattern>) => {
             const result = buildVisualQueryFromString(query.expr || '');
             result.query.operations = value?.operations!;
             onChange({
@@ -95,6 +100,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           }}
           options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
         />
+        <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />
         {editorMode === QueryEditorMode.Builder && (
           <>
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
@@ -117,7 +123,9 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <LokiQueryCodeEditor {...props} onChange={onChangeInternal} />}
+        {editorMode === QueryEditorMode.Code && (
+          <LokiQueryCodeEditor {...props} onChange={onChangeInternal} showExplain={explain} />
+        )}
         {editorMode === QueryEditorMode.Builder && (
           <LokiQueryBuilderContainer
             datasource={props.datasource}
@@ -125,12 +133,10 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
             showRawQuery={rawQuery}
+            showExplain={explain}
           />
         )}
-        {editorMode === QueryEditorMode.Explain && <LokiQueryBuilderExplained query={query.expr} />}
-        {editorMode !== QueryEditorMode.Explain && (
-          <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} app={app} />
-        )}
+        <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} app={app} />
       </EditorRows>
     </>
   );

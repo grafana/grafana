@@ -80,3 +80,28 @@ export function useRawQuery(): [boolean, (val: boolean) => void] {
 
   return [rawQuery, setter];
 }
+
+const queryEditorExplainLocalStorageKey = 'LokiQueryEditorExplainDefault';
+
+function getExplainVisibility(): boolean {
+  const val = store.get(queryEditorExplainLocalStorageKey);
+  return val === undefined ? true : Boolean(parseInt(val, 10));
+}
+
+function setExplainVisibility(value: boolean) {
+  store.set(queryEditorExplainLocalStorageKey, value ? '1' : '0');
+}
+
+/**
+ * Use and store value of explain switch in local storage.
+ * Needs to be a hook with local state to trigger rerenders.
+ */
+export function useExplain(): [boolean, (val: boolean) => void] {
+  const [explain, setExplain] = useState(getExplainVisibility());
+  const setter = useCallback((value: boolean) => {
+    setExplainVisibility(value);
+    setExplain(value);
+  }, []);
+
+  return [explain, setter];
+}
