@@ -15,6 +15,7 @@
 package grafanaschema
 
 import "github.com/grafana/thema"
+
 import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 
 Panel: thema.#Lineage & {
@@ -24,16 +25,25 @@ Panel: thema.#Lineage & {
 			schemas: [
 				// v0.0
 				{
+					// TODO docs
 					MapViewConfig: {
 						// placename > lookup
 						id: string
+						// TODO docs
 						lat?: float64
+						// TODO docs
 						lon?: float64
+						// TODO docs
 						zoom?: float64
+						// TODO docs
 						minZoom?: float64
+						// TODO docs
 						maxZoom?: float64
+						// TODO docs
 						shared?: bool
 					} @cuetsy(kind="interface")
+
+					// TODO docs
 					ControlsOptions: {
 						// Zoom (upper left)
 						showZoom?: bool
@@ -43,21 +53,31 @@ Panel: thema.#Lineage & {
 						showAttribution?: bool
 						// Scale options
 						showScale?: bool
+						// TODO docs
 						scaleUnits?: "FEET" | "METERS"
 						// Show debug
 						showDebug?: bool
 					} @cuetsy(kind="interface")
+
+					// TODO docs
 					TooltipMode: *"none" | "details" @cuetsy(kind="enum")
+					// TODO docs
 					TooltipOptions: {
-						mode: TooltipMode 
+						// TODO docs
+						mode: TooltipMode
 					} @cuetsy(kind="interface")
 
-
+					// TODO docs
 					PanelOptions: {
+						// TODO docs
 						view: MapViewConfig
+						// TODO docs
 						controls: ControlsOptions
+						// TODO docs
 						basemap: ui.MapLayerOptions
+						// TODO docs
 						layers: [...ui.MapLayerOptions]
+						// TODO docs
 						tooltip: TooltipOptions
 					} @cuetsy(kind="interface")
 				},
