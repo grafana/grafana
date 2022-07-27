@@ -20,7 +20,7 @@ import { RegistryItemWithOptions } from '../utils/Registry';
  *
  * @alpha
  */
-export interface MapLayerOptions<TConfig = any> extends Omit<MapLayerOptionsSchema, 'config' | 'filterData'> {
+export interface MapLayerOptions<TConfig = {}> extends MapLayerOptionsSchema {
   // Custom options depending on the type
   config?: TConfig;
   filterData?: MatcherConfig;
