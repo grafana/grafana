@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { ReplaySubject, Subject, Subscription } from 'rxjs';
+import { ReplaySubject, Subscription } from 'rxjs';
 
-import { PanelData, PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { CanvasFrameOptions } from 'app/features/canvas';
@@ -127,7 +127,6 @@ export class CanvasPanel extends Component<Props, State> {
 
     this.setState({ refresh: this.state.refresh + 1 });
     activePanelSubject.next({ panel: this });
-    // console.log('send changes', root);
   };
 
   shouldComponentUpdate(nextProps: Props, nextState: State) {

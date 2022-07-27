@@ -56,7 +56,7 @@ export function InlineEditBody() {
   return pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p));
 }
 
-// Recursivly render options
+// Recursively render options
 function renderOptionsPaneCategoryDescriptor(pane: OptionsPaneCategoryDescriptor) {
   return (
     <OptionsPaneCategory {...pane.props}>
