@@ -62,7 +62,7 @@ func (r *sqlThumbnailRepository) saveFromBytes(ctx context.Context, content []by
 		Image:                  content,
 		MimeType:               mimeType,
 		DashboardVersion:       dashboardVersion,
-		DatasourceUids:         dsUids,
+		DatasourceUIDs:         dsUids,
 	}
 
 	_, err := r.store.SaveThumbnail(ctx, cmd)
@@ -91,7 +91,7 @@ func (r *sqlThumbnailRepository) getThumbnail(ctx context.Context, meta models.D
 func (r *sqlThumbnailRepository) findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, kind models.ThumbnailKind) ([]*models.DashboardWithStaleThumbnail, error) {
 	return r.store.FindDashboardsWithStaleThumbnails(ctx, &models.FindDashboardsWithStaleThumbnailsCommand{
 		IncludeManuallyUploadedThumbnails: false,
-		IncludeThumbnailsWithEmptyDsUids:  !r.search.IsDisabled(),
+		IncludeThumbnailsWithEmptyDsUIDs:  !r.search.IsDisabled(),
 		Theme:                             theme,
 		Kind:                              kind,
 	})

@@ -43,7 +43,7 @@ func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboard
 			return err
 		}
 
-		dsUids, err := marshalDatasourceUids(cmd.DatasourceUids)
+		dsUids, err := marshalDatasourceUids(cmd.DatasourceUIDs)
 		if err != nil {
 			return err
 		}
@@ -53,7 +53,7 @@ func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboard
 			existing.MimeType = cmd.MimeType
 			existing.Updated = time.Now()
 			existing.DashboardVersion = cmd.DashboardVersion
-			existing.DsUids = dsUids
+			existing.DsUIDs = dsUids
 			existing.State = models.ThumbnailStateDefault
 			_, err = sess.ID(existing.Id).Update(existing)
 			cmd.Result = existing
@@ -72,7 +72,7 @@ func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboard
 		thumb.Theme = cmd.Theme
 		thumb.Kind = cmd.Kind
 		thumb.Image = cmd.Image
-		thumb.DsUids = dsUids
+		thumb.DsUIDs = dsUids
 		thumb.MimeType = cmd.MimeType
 		thumb.DashboardId = dash.Id
 		thumb.DashboardVersion = cmd.DashboardVersion
@@ -127,7 +127,7 @@ func (ss *SQLStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *
 			"OR dashboard_thumbnail.id IS NULL"
 		args := []interface{}{models.ThumbnailStateStale}
 
-		if cmd.IncludeThumbnailsWithEmptyDsUids {
+		if cmd.IncludeThumbnailsWithEmptyDsUIDs {
 			query += " OR dashboard_thumbnail.ds_uids = ?"
 			args = append(args, "")
 		}

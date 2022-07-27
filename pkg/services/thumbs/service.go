@@ -279,14 +279,14 @@ func (hs *thumbService) hasAccessToPreview(c *models.ReqContext, res *models.Das
 		return false
 	}
 
-	if res.DsUids == "" {
+	if res.DsUIDs == "" {
 		hs.log.Debug("dashboard preview is stale; no datasource uids", "dashboardUid", req.UID)
 		c.JSON(404, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
 		return false
 	}
 
 	var dsUids []string
-	err := json.Unmarshal([]byte(res.DsUids), &dsUids)
+	err := json.Unmarshal([]byte(res.DsUIDs), &dsUids)
 
 	if err != nil {
 		hs.log.Error("Error when retrieving datasource uids", "dashboardUid", req.UID, "err", err)

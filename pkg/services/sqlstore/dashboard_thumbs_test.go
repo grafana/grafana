@@ -77,7 +77,7 @@ func TestIntegrationSqlStorage(t *testing.T) {
 
 		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:                             kind,
-			IncludeThumbnailsWithEmptyDsUids: true,
+			IncludeThumbnailsWithEmptyDsUIDs: true,
 			Theme:                            theme,
 		}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
