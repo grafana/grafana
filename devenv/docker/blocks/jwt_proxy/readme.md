@@ -58,7 +58,7 @@ In case you want to make changes to the devenv setup, you can dump keycloack's D
 
 ```bash
 cd devenv;
-docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > docker/blocks/oauth/cloak.sql
+docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > docker/blocks/jwt_proxy/cloak.sql
 ```
 
 ## Connecting to keycloack:
