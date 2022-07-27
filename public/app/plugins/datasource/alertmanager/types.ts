@@ -277,7 +277,6 @@ export interface AlertmanagerUrl {
 
 export interface ExternalAlertmanagersResponse {
   data: ExternalAlertmanagers;
-  status: 'string';
 }
 
 export enum AlertmanagerChoice {
