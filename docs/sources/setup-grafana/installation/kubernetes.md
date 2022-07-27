@@ -19,7 +19,7 @@ If you are interested in Grafana Enterprise (not Grafana OS), jump to the [Deplo
 ### Create a Grafana Kubernetes manifest
 
 1. Create a file called `grafana.yaml`.  
-2. Copy and paste the contents below and save the file.
+1. Copy and paste the following contents and save the file.
 
 ```yaml
 ---
