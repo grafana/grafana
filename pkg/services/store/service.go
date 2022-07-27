@@ -221,8 +221,14 @@ func ProvideService(
 				ActionFilesWrite:  allowAllPathFilter,
 				ActionFilesDelete: allowAllPathFilter,
 			}
+
+		// Default ADMIN role is read only
 		default:
-			return nil
+			return map[string]filestorage.PathFilter{
+				ActionFilesRead:   allowAllPathFilter,
+				ActionFilesWrite:  denyAllPathFilter,
+				ActionFilesDelete: denyAllPathFilter,
+			}
 		}
 	})
 
@@ -262,17 +268,17 @@ func newStandardStorageService(
 	}
 }
 
+func (s *standardStorageService) Run(ctx context.Context) error {
+	grafanaStorageLogger.Info("storage starting")
+	return nil
+}
+
 func getOrgId(user *models.SignedInUser) int64 {
 	if user == nil {
 		return ac.GlobalOrgID
 	}
 
 	return user.OrgId
-}
-
-func (s *standardStorageService) Run(ctx context.Context) error {
-	grafanaStorageLogger.Info("storage starting")
-	return nil
 }
 
 func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error) {

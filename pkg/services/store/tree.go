@@ -102,29 +102,17 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		title := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		descr := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		types := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		readOnly := data.NewFieldFromFieldType(data.FieldTypeBool, count)
-		ready := data.NewFieldFromFieldType(data.FieldTypeBool, count)
-		builtIn := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		title.Name = titleListFrameField
 		names.Name = nameListFrameField
 		descr.Name = descriptionListFrameField
 		mtype.Name = mediaTypeListFrameField
-		types.Name = storageTypeListFrameField
-		readOnly.Name = readOnlyListFrameField
-		builtIn.Name = builtInListFrameField
-		ready.Name = readyListFrameField
 		for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
 			meta := f.Meta()
 			names.Set(idx, meta.Config.Prefix)
 			title.Set(idx, meta.Config.Name)
 			descr.Set(idx, meta.Config.Description)
 			mtype.Set(idx, "directory")
-			types.Set(idx, meta.Config.Type)
-			readOnly.Set(idx, meta.ReadOnly)
-			ready.Set(idx, meta.Ready)
-			builtIn.Set(idx, meta.Builtin)
 			idx++
 		}
 		if orgId != ac.GlobalOrgID {
@@ -134,15 +122,11 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 				title.Set(idx, meta.Config.Name)
 				descr.Set(idx, meta.Config.Description)
 				mtype.Set(idx, "directory")
-				types.Set(idx, meta.Config.Type)
-				readOnly.Set(idx, meta.ReadOnly)
-				ready.Set(idx, meta.Ready)
-				builtIn.Set(idx, meta.Builtin)
 				idx++
 			}
 		}
 
-		frame := data.NewFrame("", names, title, descr, mtype, types, readOnly, builtIn, ready)
+		frame := data.NewFrame("", names, title, descr, mtype)
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})

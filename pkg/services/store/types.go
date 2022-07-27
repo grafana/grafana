@@ -100,10 +100,6 @@ const (
 	nameListFrameField        = "name"
 	descriptionListFrameField = "description"
 	mediaTypeListFrameField   = "mediaType"
-	storageTypeListFrameField = "storageType"
-	readOnlyListFrameField    = "readOnly"
-	builtInListFrameField     = "builtIn"
-	readyListFrameField       = "ready"
 	sizeListFrameField        = "size"
 )
 
