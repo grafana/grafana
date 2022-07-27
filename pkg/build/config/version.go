@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -9,9 +10,9 @@ import (
 )
 
 type Metadata struct {
-	GrafanaVersion string `json:"version,omitempty"`
-	ReleaseMode    string `json:"releaseMode,omitempty"`
-	GrabplVersion  string `json:"grabplVersion,omitempty"`
+	GrafanaVersion string      `json:"version,omitempty"`
+	ReleaseMode    VersionMode `json:"releaseMode,omitempty"`
+	GrabplVersion  string      `json:"grabplVersion,omitempty"`
 }
 
 type PluginSignature struct {
@@ -40,10 +41,17 @@ type Version struct {
 // Versions is a map of versions. Each key of the Versions map is an event that uses the the config as the value for that key.
 // For example, the 'pull_request' key will have data in it that might cause Grafana to be built differently in a pull request,
 // than the way it will be built in 'main'
-type VersionMap map[string]Version
+type VersionMap map[VersionMode]Version
 
 // GetMetadata attempts to read the JSON file located at 'path' and decode it as a Metadata{} type.
+// If the provided path deos not exist, then an error is not returned. Instead, an empty metadata is returned with no error.
 func GetMetadata(path string) (*Metadata, error) {
+	if _, err := os.Stat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return &Metadata{}, nil
+		}
+		return nil, err
+	}
 	// Ignore gosec G304 as this function is only used in the build process.
 	//nolint:gosec
 	file, err := os.Open(path)
@@ -70,7 +78,7 @@ func DecodeMetadata(r io.Reader) (*Metadata, error) {
 }
 
 // GetVersions reads the embedded config.json and decodes it.
-func GetVersion(mode string) (*Version, error) {
+func GetVersion(mode VersionMode) (*Version, error) {
 	if v, ok := Versions[mode]; ok {
 		return &v, nil
 	}

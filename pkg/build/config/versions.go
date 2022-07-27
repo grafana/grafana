@@ -1,7 +1,7 @@
 package config
 
-var Versions = map[string]Version{
-	"pull_request": {
+var Versions = VersionMap{
+	PullRequestMode: {
 		Variants: []Variant{
 			VariantLinuxAmd64,
 			VariantLinuxAmd64Musl,
@@ -9,8 +9,8 @@ var Versions = map[string]Version{
 			VariantWindowsAmd64,
 		},
 		PluginSignature: PluginSignature{
-			Sign:      true,
-			AdminSign: true,
+			Sign:      false,
+			AdminSign: false,
 		},
 		Docker: Docker{
 			ShouldSave: false,
@@ -19,7 +19,7 @@ var Versions = map[string]Version{
 			},
 		},
 	},
-	"main": {
+	MainMode: {
 		Variants: []Variant{
 			VariantArmV6,
 			VariantArmV7,
@@ -43,8 +43,10 @@ var Versions = map[string]Version{
 				ArchARM, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
 			},
 		},
+		PackagesBucket:  "grafana-downloads",
+		CDNAssetsBucket: "grafana-static-assets",
 	},
-	"branch": {
+	ReleaseBranchMode: {
 		Variants: []Variant{
 			VariantArmV6,
 			VariantArmV7,
@@ -54,7 +56,7 @@ var Versions = map[string]Version{
 			VariantDarwinAmd64,
 			VariantWindowsAmd64,
 			VariantLinuxAmd64,
-			VariantLinuxAmd64,
+			VariantLinuxAmd64Musl,
 		},
 		PluginSignature: PluginSignature{
 			Sign:      true,
@@ -72,7 +74,7 @@ var Versions = map[string]Version{
 		PackagesBucketEnterprise2: "grafana-downloads-enterprise2",
 		CDNAssetsBucket:           "grafana-static-assets",
 	},
-	"release": {
+	ReleaseMode: {
 		Variants: []Variant{
 			VariantArmV6,
 			VariantArmV7,
@@ -82,7 +84,7 @@ var Versions = map[string]Version{
 			VariantDarwinAmd64,
 			VariantWindowsAmd64,
 			VariantLinuxAmd64,
-			VariantLinuxAmd64,
+			VariantLinuxAmd64Musl,
 		},
 		PluginSignature: PluginSignature{
 			Sign:      true,
@@ -102,7 +104,7 @@ var Versions = map[string]Version{
 		StorybookBucket: "grafana-prerelease",
 		StorybookSrcDir: "artifacts/storybook",
 	},
-	"beta": {
+	BetaReleaseMode: {
 		Variants: []Variant{
 			VariantArmV6,
 			VariantArmV7,
@@ -112,7 +114,7 @@ var Versions = map[string]Version{
 			VariantDarwinAmd64,
 			VariantWindowsAmd64,
 			VariantLinuxAmd64,
-			VariantLinuxAmd64,
+			VariantLinuxAmd64Musl,
 		},
 		PluginSignature: PluginSignature{
 			Sign:      true,
@@ -132,7 +134,7 @@ var Versions = map[string]Version{
 		StorybookBucket: "grafana-prerelease",
 		StorybookSrcDir: "artifacts/storybook",
 	},
-	"test": {
+	TestReleaseMode: {
 		Variants: []Variant{
 			VariantArmV6,
 			VariantArmV7,
@@ -142,7 +144,7 @@ var Versions = map[string]Version{
 			VariantDarwinAmd64,
 			VariantWindowsAmd64,
 			VariantLinuxAmd64,
-			VariantLinuxAmd64,
+			VariantLinuxAmd64Musl,
 		},
 		PluginSignature: PluginSignature{
 			Sign:      true,
