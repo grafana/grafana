@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { HorizontalGroup, LinkButton, Menu, Dropdown, Button, ButtonGroup, Icon } from '@grafana/ui';
+import { Menu, Dropdown, Button, Icon } from '@grafana/ui';
 
 export interface Props {
   folderId?: number;
