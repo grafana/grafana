@@ -147,6 +147,7 @@ export interface IntegrationStatus {
   lastNotify: string;
   lastNotifyDuration: string;
   name: string;
+  sendResolve?: boolean;
 }
 
 export interface IntegrationTypesState {

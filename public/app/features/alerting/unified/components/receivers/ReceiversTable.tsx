@@ -114,6 +114,7 @@ const useContactPointsState = (alertManagerName: string) => {
 interface ReceiverItem {
   name: string;
   types: string[]; //??
+  types: string[];
   provisioned?: boolean;
 }
 
@@ -122,6 +123,7 @@ interface IntegrationItem {
   lastNotify: string;
   lastNotifyDuration: string;
   type: string;
+  sendResolve?: boolean;
 }
 
 type RowTableColumnProps = DynamicTableColumnProps<ReceiverItem>;
@@ -152,7 +154,7 @@ function IntegrationsTable({ integrationTypesState }: IntegrationsTableProps) {
         renderCell: ({ data: { lastError } }) => {
           return <ReceiverHealth errorsByReceiver={lastError ? 1 : 0} />;
         },
-        size: 1,
+        size: 0.5,
       },
       {
         id: 'name',
@@ -164,12 +166,18 @@ function IntegrationsTable({ integrationTypesState }: IntegrationsTableProps) {
         id: 'lastNotify',
         label: 'Last try to notify',
         renderCell: ({ data: { lastNotify } }) => <LastNotify lastNotify={lastNotify} />,
-        size: 1,
+        size: 3,
       },
       {
         id: 'lastNotifyDuration',
         label: 'Last duration',
         renderCell: ({ data: { lastNotifyDuration } }) => <>{lastNotifyDuration}</>,
+        size: 1,
+      },
+      {
+        id: 'sendResolve',
+        label: 'Send resolve',
+        renderCell: ({ data: { sendResolve } }) => <>{String(Boolean(sendResolve))}</>,
         size: 1,
       },
     ];
