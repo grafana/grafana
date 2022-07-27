@@ -58,7 +58,6 @@ export interface DataRequestEventPayload extends DataRequestInfo {
   eventName: MetaAnalyticsEventName.DataRequest;
   totalQueries?: number;
   cachedQueries?: number;
-  isPublic?: boolean;
 }
 
 /**
