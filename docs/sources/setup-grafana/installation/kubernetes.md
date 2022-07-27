@@ -161,7 +161,7 @@ kubectl create configmap ge-config --from-file=/path/to/your/grafana.ini
 
 ### Create Grafana Enterprise Kubernetes manifest
 
-Create a `grafana.yaml` file, then paste the content below. 
+Create a `grafana.yaml` file, and copy-and-paste the following content into it.
 This YAML is identical to the one for Grafana OS install except for the additional references to the Configmap which has your Grafana configuration file and the secret that has your license.
 
 ```yaml
