@@ -15,6 +15,31 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// swagger:route GET /dashboards/uid/{uid}/permissions dashboard_permissions getDashboardPermissionsListByUID
+//
+// Gets all existing permissions for the given dashboard.
+//
+// Responses:
+// 200: getDashboardPermissionsListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /dashboards/id/{DashboardID}/permissions dashboard_permissions getDashboardPermissionsListByID
+//
+// Gets all existing permissions for the given dashboard.
+//
+// Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsListByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: getDashboardPermissionsListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
 	var dashID int64
 	var err error
@@ -67,6 +92,37 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 	return response.JSON(http.StatusOK, filteredACLs)
 }
 
+// swagger:route POST /dashboards/uid/{uid}/permissions dashboard_permissions updateDashboardPermissionsByUID
+//
+// Updates permissions for a dashboard.
+//
+// This operation will remove existing permissions if they’re not included in the request.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route POST /dashboards/id/{DashboardID}/permissions dashboard_permissions updateDashboardPermissionsByID
+//
+// Updates permissions for a dashboard.
+//
+// Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead
+//
+// This operation will remove existing permissions if they’re not included in the request.
+//
+// Deprecated: true
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
 	var dashID int64
 	var err error
@@ -227,4 +283,43 @@ func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardACLCommand) error {
 		}
 	}
 	return nil
+}
+
+// swagger:parameters getDashboardPermissionsListByUID
+type GetDashboardPermissionsListByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters getDashboardPermissionsListByID
+type GetDashboardPermissionsListByIDParams struct {
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters updateDashboardPermissionsByID
+type UpdateDashboardPermissionsByIDParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardACLCommand
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters updateDashboardPermissionsByUID
+type UpdateDashboardPermissionsByUIDParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardACLCommand
+	// in:path
+	// required:true
+	// description: The dashboard UID
+	UID string `json:"uid"`
+}
+
+// swagger:response getDashboardPermissionsListResponse
+type GetDashboardPermissionsResponse struct {
+	// in: body
+	Body []*models.DashboardACLInfoDTO `json:"body"`
 }
