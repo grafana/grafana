@@ -333,20 +333,20 @@ func validateManifest(m pluginManifest, block *clearsign.Block) error {
 	if len(m.Files) == 0 {
 		return invalidFieldErr{field: "files"}
 	}
-	if len(m.ManifestVersion) == 0 {
-		return invalidFieldErr{field: "manifestVersion"}
+	if m.isV2() {
+		if len(m.ManifestVersion) == 0 {
+			return invalidFieldErr{field: "manifestVersion"}
+		}
+		if len(m.SignedByOrg) == 0 {
+			return invalidFieldErr{field: "signedByOrg"}
+		}
+		if len(m.SignedByOrgName) == 0 {
+			return invalidFieldErr{field: "signedByOrgName"}
+		}
+		if !m.SignatureType.IsValid() {
+			return fmt.Errorf("%s is not a valid signature type", m.SignatureType)
+		}
 	}
-	if len(m.SignedByOrg) == 0 {
-		return invalidFieldErr{field: "signedByOrg"}
-	}
-	if len(m.SignedByOrgName) == 0 {
-		return invalidFieldErr{field: "signedByOrgName"}
-	}
-
-	if !m.SignatureType.IsValid() {
-		return fmt.Errorf("%s is not a valid signature type", m.SignatureType)
-	}
-
 	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to parse public key", err)
