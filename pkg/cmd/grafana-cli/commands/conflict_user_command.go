@@ -186,7 +186,7 @@ func (c *ConflictingUsers) ToStringFileRepresentation() string {
 		- id: 2, email: HEJ@TEST.COM, login: HEJ@TEST.COM
 		- id: 3, email: hej@TEST.com, login: hej@TEST.com
 	*/
-	userIdentifiersSeen := make(map[string]bool, 0)
+	userIdentifiersSeen := make(map[string]bool)
 	str := ""
 	for _, user := range *c {
 		// print
