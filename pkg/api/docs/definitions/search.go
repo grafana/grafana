@@ -42,6 +42,10 @@ type SearchParams struct {
 	// in:query
 	// required: false
 	DashboardIds []int64 `json:"dashboardIds"`
+	// List of dashboard uid’s to search for
+	// in:query
+	// required: false
+	DashboardUIDs []string `json:"dashboardUIDs"`
 	// List of folder id’s to search in for dashboards
 	// in:query
 	// required: false

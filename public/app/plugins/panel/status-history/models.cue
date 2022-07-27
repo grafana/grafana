@@ -28,6 +28,7 @@ Panel: thema.#Lineage & {
 					PanelOptions: {
 						ui.OptionsWithLegend
 						ui.OptionsWithTooltip
+						ui.OptionsWithTimezones
 						showValue:  ui.VisibilityMode
 						rowHeight:  number
 						colWidth?:  number

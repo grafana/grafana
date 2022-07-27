@@ -401,11 +401,11 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alerts := make([]*ngmodels.SchedulableAlertRule, 0)
-		q := sess.Table("alert_rule")
-		if len(query.ExcludeOrgIDs) > 0 {
-			excludeOrgs := make([]interface{}, 0, len(query.ExcludeOrgIDs))
-			for _, orgID := range query.ExcludeOrgIDs {
+		alerts := make([]*ngmodels.AlertRule, 0)
+		q := sess.Table(ngmodels.AlertRule{})
+		if len(st.Cfg.DisabledOrgs) > 0 {
+			excludeOrgs := make([]interface{}, 0, len(st.Cfg.DisabledOrgs))
+			for orgID := range st.Cfg.DisabledOrgs {
 				excludeOrgs = append(excludeOrgs, orgID)
 			}
 			q = q.NotIn("org_id", excludeOrgs...)
@@ -449,7 +449,7 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
-	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.BaseInterval.Seconds())); err != nil {
+	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.Cfg.BaseInterval.Seconds())); err != nil {
 		return err
 	}
 

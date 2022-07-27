@@ -52,9 +52,9 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.12.0
 	github.com/grafana/cuetsy v0.0.3
-	github.com/grafana/grafana-aws-sdk v0.10.7
-	github.com/grafana/grafana-azure-sdk-go v1.2.0
-	github.com/grafana/grafana-plugin-sdk-go v0.138.0
+	github.com/grafana/grafana-aws-sdk v0.10.8
+	github.com/grafana/grafana-azure-sdk-go v1.3.0
+	github.com/grafana/grafana-plugin-sdk-go v0.139.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3
@@ -245,7 +245,7 @@ require (
 	github.com/getkin/kin-openapi v0.94.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
-	github.com/grafana/thema v0.0.0-20220523183731-72aebd14e751
+	github.com/grafana/thema v0.0.0-20220726124731-b8017e278cc1
 	go.etcd.io/etcd/api/v3 v3.5.4
 	go.opentelemetry.io/contrib/propagators/jaeger v1.6.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.6.3

@@ -1,4 +1,4 @@
-import { addLabelToQuery, addParserToQuery } from './addToQuery';
+import { addLabelFormatToQuery, addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {
@@ -115,14 +115,14 @@ describe('addLabelToQuery()', () => {
     it('should add label filter after parser', () => {
       expect(addLabelToQuery('{foo="bar"} | logfmt', 'bar', '=', 'baz')).toBe('{foo="bar"} | logfmt | bar=`baz`');
     });
-    it('should add label filter after multiple parsers', () => {
+    it('should add label filter after last parser when multiple parsers', () => {
       expect(addLabelToQuery('{foo="bar"} | logfmt | json', 'bar', '=', 'baz')).toBe(
-        '{foo="bar"} | logfmt | bar=`baz` | json | bar=`baz`'
+        '{foo="bar"} | logfmt | json | bar=`baz`'
       );
     });
-    it('should add label filter after parser when multiple label filters', () => {
+    it('should add label filter after last label filter when multiple label filters', () => {
       expect(addLabelToQuery('{foo="bar"} | logfmt | x="y"', 'bar', '=', 'baz')).toBe(
-        '{foo="bar"} | logfmt | bar=`baz` | x="y"'
+        '{foo="bar"} | logfmt | x="y" | bar=`baz`'
       );
     });
     it('should add label filter in metric query', () => {
@@ -138,7 +138,7 @@ describe('addLabelToQuery()', () => {
           '=',
           'baz'
         )
-      ).toBe('sum by(host) (rate({foo="bar"} | logfmt | bar=`baz` | x="y" | line_format "{{.status}}" [5m]))');
+      ).toBe('sum by(host) (rate({foo="bar"} | logfmt | x="y" | bar=`baz` | line_format "{{.status}}" [5m]))');
     });
     it('should not add adhoc filter to line_format expressions', () => {
       expect(addLabelToQuery('{foo="bar"} | logfmt | line_format "{{.status}}"', 'bar', '=', 'baz')).toBe(
@@ -175,5 +175,61 @@ describe('addParserToQuery', () => {
     it('should add parser after log stream selector in metric query', () => {
       expect(addParserToQuery('rate({job="grafana"} [5m])', 'logfmt')).toBe('rate({job="grafana"} | logfmt [5m])');
     });
+  });
+});
+
+describe('addNoPipelineErrorToQuery', () => {
+  it('should add error filtering after logfmt parser', () => {
+    expect(addNoPipelineErrorToQuery('{job="grafana"} | logfmt')).toBe('{job="grafana"} | logfmt | __error__=``');
+  });
+
+  it('should add error filtering after json parser with expressions', () => {
+    expect(addNoPipelineErrorToQuery('{job="grafana"} | json foo="bar", bar="baz"')).toBe(
+      '{job="grafana"} | json foo="bar", bar="baz" | __error__=``'
+    );
+  });
+
+  it('should not add error filtering if no parser', () => {
+    expect(addNoPipelineErrorToQuery('{job="grafana"} |="no parser"')).toBe('{job="grafana"} |="no parser"');
+  });
+});
+
+describe('addLabelFormatToQuery', () => {
+  it('should add label format at the end of log query when parser', () => {
+    expect(addLabelFormatToQuery('{job="grafana"} | logfmt', { originalLabel: 'lvl', renameTo: 'level' })).toBe(
+      '{job="grafana"} | logfmt | label_format level=lvl'
+    );
+  });
+
+  it('should add label format at the end of log query when no parser', () => {
+    expect(addLabelFormatToQuery('{job="grafana"}', { originalLabel: 'lvl', renameTo: 'level' })).toBe(
+      '{job="grafana"} | label_format level=lvl'
+    );
+  });
+
+  it('should add label format at the end of log query when more label parser', () => {
+    expect(
+      addLabelFormatToQuery('{job="grafana"} | logfmt | label_format a=b', { originalLabel: 'lvl', renameTo: 'level' })
+    ).toBe('{job="grafana"} | logfmt | label_format a=b | label_format level=lvl');
+  });
+
+  it('should add label format at the end of log query part of metrics query', () => {
+    expect(
+      addLabelFormatToQuery('rate({job="grafana"} | logfmt | label_format a=b [5m])', {
+        originalLabel: 'lvl',
+        renameTo: 'level',
+      })
+    ).toBe('rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m])');
+  });
+
+  it('should add label format at the end of multiple log query part of metrics query', () => {
+    expect(
+      addLabelFormatToQuery(
+        'rate({job="grafana"} | logfmt | label_format a=b [5m]) + rate({job="grafana"} | logfmt | label_format a=b [5m])',
+        { originalLabel: 'lvl', renameTo: 'level' }
+      )
+    ).toBe(
+      'rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m]) + rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m])'
+    );
   });
 });

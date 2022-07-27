@@ -1,11 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Alert, Button, Checkbox, ClipboardButton, Field, FieldSet, Input, LinkButton, Switch } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  ClipboardButton,
+  Field,
+  FieldSet,
+  Input,
+  Label,
+  LinkButton,
+  Switch,
+} from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { appEvents } from 'app/core/core';
 import { dispatch } from 'app/store/store';
 
 import {
@@ -66,10 +75,6 @@ export const SharePublicDashboard = (props: Props) => {
     }
 
     savePublicDashboardConfig(props.dashboard.uid, publicDashboard, setPublicDashboardConfig).catch();
-  };
-
-  const onShareUrlCopy = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
   };
 
   const onAcknowledge = useCallback(
@@ -160,18 +165,19 @@ export const SharePublicDashboard = (props: Props) => {
           <div>
             <h4 className="share-modal-info-text">Public Dashboard Configuration</h4>
             <FieldSet>
-              Time Range
-              <br />
+              <Label description="The public dashboard uses the default time settings of the dashboard">
+                Time Range
+              </Label>
               <div style={{ padding: '5px' }}>
                 <Input
-                  value={props.dashboard.time.from}
+                  value={props.dashboard.getDefaultTime().from}
                   disabled={true}
                   addonBefore={
                     <span style={{ width: '50px', display: 'flex', alignItems: 'center', padding: '5px' }}>From:</span>
                   }
                 />
                 <Input
-                  value={props.dashboard.time.to}
+                  value={props.dashboard.getDefaultTime().to}
                   disabled={true}
                   addonBefore={
                     <span style={{ width: '50px', display: 'flex', alignItems: 'center', padding: '5px' }}>To:</span>
@@ -207,7 +213,6 @@ export const SharePublicDashboard = (props: Props) => {
                         getText={() => {
                           return generatePublicDashboardUrl(publicDashboard);
                         }}
-                        onClipboardCopy={onShareUrlCopy}
                       >
                         Copy
                       </ClipboardButton>

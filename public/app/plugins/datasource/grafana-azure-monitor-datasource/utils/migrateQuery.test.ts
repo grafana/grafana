@@ -1,6 +1,8 @@
+import React from 'react';
+
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureMetricDimension, AzureMonitorErrorish, AzureMonitorQuery, AzureQueryType } from '../types';
 
 import migrateQuery from './migrateQuery';
 
@@ -17,6 +19,8 @@ jest.mock('@grafana/runtime', () => {
 
 let templateSrv = getTemplateSrv();
 
+let setErrorMock = jest.fn();
+
 const azureMonitorQueryV7 = {
   appInsights: { dimension: [], metricName: 'select', timeGrain: 'auto' },
   azureLogAnalytics: {
@@ -29,7 +33,6 @@ const azureMonitorQueryV7 = {
     aggregation: 'Average',
     allowedTimeGrainsMs: [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
     dimensionFilters: [{ dimension: 'dependency/success', filter: '', operator: 'eq' }],
-    metricDefinition: 'microsoft.insights/components',
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
     resourceGroup: 'cloud-datasources',
@@ -50,7 +53,6 @@ const azureMonitorQueryV8 = {
   azureMonitor: {
     aggregation: 'Average',
     dimensionFilters: [],
-    metricDefinition: 'microsoft.insights/components',
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
     resourceGroup: 'cloud-datasources',
@@ -78,7 +80,6 @@ const modernMetricsQuery: AzureMonitorQuery = {
     alias: '{{ dimensionvalue }}',
     allowedTimeGrainsMs: [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
     dimensionFilters: [{ dimension: 'dependency/success', filters: ['*'], operator: 'eq' }],
-    metricDefinition: 'microsoft.insights/components',
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
     resourceGroup: 'cloud-datasources',
@@ -97,7 +98,7 @@ const modernMetricsQuery: AzureMonitorQuery = {
 
 describe('AzureMonitor: migrateQuery', () => {
   it('modern queries should not change', () => {
-    const result = migrateQuery(modernMetricsQuery, templateSrv);
+    const result = migrateQuery(modernMetricsQuery, templateSrv, setErrorMock);
 
     // MUST use .toBe because we want to assert that the identity of unmigrated queries remains the same
     expect(modernMetricsQuery).toBe(result);
@@ -105,7 +106,7 @@ describe('AzureMonitor: migrateQuery', () => {
 
   describe('migrating from a v7 query to the latest query version', () => {
     it('should build a resource uri', () => {
-      const result = migrateQuery(azureMonitorQueryV7, templateSrv);
+      const result = migrateQuery(azureMonitorQueryV7, templateSrv, setErrorMock);
       expect(result).toMatchObject(
         expect.objectContaining({
           azureMonitor: expect.objectContaining({
@@ -119,7 +120,7 @@ describe('AzureMonitor: migrateQuery', () => {
 
   describe('migrating from a v8 query to the latest query version', () => {
     it('should build a resource uri', () => {
-      const result = migrateQuery(azureMonitorQueryV8, templateSrv);
+      const result = migrateQuery(azureMonitorQueryV8, templateSrv, setErrorMock);
       expect(result).toMatchObject(
         expect.objectContaining({
           azureMonitor: expect.objectContaining({
@@ -130,18 +131,66 @@ describe('AzureMonitor: migrateQuery', () => {
       );
     });
 
-    it('should not build a resource uri with an unsupported template variable', () => {
-      replaceMock = jest.fn().mockImplementation((s: string) => s.replace('$ns', 'Microsoft.Storage/storageAccounts'));
+    it('should not build a resource uri with an unsupported namespace template variable', () => {
+      replaceMock = jest
+        .fn()
+        .mockImplementation((s: string) => s.replace('$ns', 'Microsoft.Storage/storageAccounts/tableServices'));
+      setErrorMock = jest
+        .fn()
+        .mockImplementation((errorSource: string, error: AzureMonitorErrorish) => 'Template Var error');
+      const errorElement = React.createElement(
+        'div',
+        null,
+        `Failed to create resource URI. Validate the metric definition template variable against supported cases `,
+        React.createElement(
+          'a',
+          {
+            href: 'https://grafana.com/docs/grafana/latest/datasources/azuremonitor/template-variables/',
+          },
+          'here.'
+        )
+      );
       templateSrv = getTemplateSrv();
       const query = {
         ...azureMonitorQueryV8,
         azureMonitor: {
-          ...azureMonitorQueryV8,
-          metricDefinition: '$ns',
+          ...azureMonitorQueryV8.azureMonitor,
+          metricNamespace: '$ns',
         },
       };
-      const result = migrateQuery(query, templateSrv);
+      const result = migrateQuery(query, templateSrv, setErrorMock);
       expect(result.azureMonitor?.resourceUri).toBeUndefined();
+      expect(setErrorMock).toHaveBeenCalledWith('Resource URI migration', errorElement);
+    });
+
+    it('should not build a resource uri with unsupported resource name template variable', () => {
+      replaceMock = jest.fn().mockImplementation((s: string) => s.replace('$resource', 'resource/default'));
+      setErrorMock = jest
+        .fn()
+        .mockImplementation((errorSource: string, error: AzureMonitorErrorish) => 'Template Var error');
+      const errorElement = React.createElement(
+        'div',
+        null,
+        `Failed to create resource URI. Validate the resource name template variable against supported cases `,
+        React.createElement(
+          'a',
+          {
+            href: 'https://grafana.com/docs/grafana/latest/datasources/azuremonitor/template-variables/',
+          },
+          'here.'
+        )
+      );
+      templateSrv = getTemplateSrv();
+      const query = {
+        ...azureMonitorQueryV8,
+        azureMonitor: {
+          ...azureMonitorQueryV8.azureMonitor,
+          resourceName: '$resource',
+        },
+      };
+      const result = migrateQuery(query, templateSrv, setErrorMock);
+      expect(result.azureMonitor?.resourceUri).toBeUndefined();
+      expect(setErrorMock).toHaveBeenCalledWith('Resource URI migration', errorElement);
     });
   });
 
@@ -150,7 +199,11 @@ describe('AzureMonitor: migrateQuery', () => {
       const dimensionFilters: AzureMetricDimension[] = [
         { dimension: 'TestDimension', operator: 'eq', filters: ['testFilter'] },
       ];
-      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } }, templateSrv);
+      const result = migrateQuery(
+        { ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } },
+        templateSrv,
+        setErrorMock
+      );
       expect(result).toMatchObject(
         expect.objectContaining({
           azureMonitor: expect.objectContaining({
@@ -161,7 +214,11 @@ describe('AzureMonitor: migrateQuery', () => {
     });
     it('correctly updates old filter containing wildcard', () => {
       const dimensionFilters: AzureMetricDimension[] = [{ dimension: 'TestDimension', operator: 'eq', filter: '*' }];
-      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } }, templateSrv);
+      const result = migrateQuery(
+        { ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } },
+        templateSrv,
+        setErrorMock
+      );
       expect(result).toMatchObject(
         expect.objectContaining({
           azureMonitor: expect.objectContaining({
@@ -174,7 +231,11 @@ describe('AzureMonitor: migrateQuery', () => {
     });
     it('correctly updates old filter containing value', () => {
       const dimensionFilters: AzureMetricDimension[] = [{ dimension: 'TestDimension', operator: 'eq', filter: 'test' }];
-      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } }, templateSrv);
+      const result = migrateQuery(
+        { ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } },
+        templateSrv,
+        setErrorMock
+      );
       expect(result).toMatchObject(
         expect.objectContaining({
           azureMonitor: expect.objectContaining({
@@ -189,7 +250,11 @@ describe('AzureMonitor: migrateQuery', () => {
       const dimensionFilters: AzureMetricDimension[] = [
         { dimension: 'TestDimension', operator: 'eq', filter: '*', filters: ['testFilter'] },
       ];
-      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } }, templateSrv);
+      const result = migrateQuery(
+        { ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } },
+        templateSrv,
+        setErrorMock
+      );
       expect(result).toMatchObject(
         expect.objectContaining({
           azureMonitor: expect.objectContaining({
@@ -208,7 +273,11 @@ describe('AzureMonitor: migrateQuery', () => {
       const dimensionFilters: AzureMetricDimension[] = [
         { dimension: 'TestDimension', operator: 'eq', filter: 'testFilter', filters: ['testFilter'] },
       ];
-      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } }, templateSrv);
+      const result = migrateQuery(
+        { ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } },
+        templateSrv,
+        setErrorMock
+      );
       expect(result).toMatchObject(
         expect.objectContaining({
           azureMonitor: expect.objectContaining({
@@ -219,6 +288,21 @@ describe('AzureMonitor: migrateQuery', () => {
                 filters: ['testFilter'],
               },
             ],
+          }),
+        })
+      );
+    });
+
+    it('correctly migrates a metric definition', () => {
+      const result = migrateQuery(
+        { ...azureMonitorQueryV8, azureMonitor: { metricDefinition: 'ms.ns/mn' } },
+        templateSrv
+      );
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            metricNamespace: 'ms.ns/mn',
+            metricDefinition: undefined,
           }),
         })
       );

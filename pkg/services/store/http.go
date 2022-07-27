@@ -11,11 +11,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
-
-var errFileTooBig = response.Error(400, "Please limit file uploaded under 1MB", errors.New("file is too big"))
 
 // HTTPStorageService passes raw HTTP requests to a well typed storage service
 type HTTPStorageService interface {
@@ -28,18 +27,20 @@ type HTTPStorageService interface {
 }
 
 type httpStorage struct {
-	store StorageService
+	store        StorageService
+	quotaService quota.Service
 }
 
-func ProvideHTTPService(store StorageService) HTTPStorageService {
+func ProvideHTTPService(store StorageService, quotaService quota.Service) HTTPStorageService {
 	return &httpStorage{
-		store: store,
+		store:        store,
+		quotaService: quotaService,
 	}
 }
 
 func UploadErrorToStatusCode(err error) int {
 	switch {
-	case errors.Is(err, ErrUploadFeatureDisabled):
+	case errors.Is(err, ErrStorageNotFound):
 		return 404
 
 	case errors.Is(err, ErrUnsupportedStorage):
@@ -51,84 +52,109 @@ func UploadErrorToStatusCode(err error) int {
 	case errors.Is(err, ErrFileAlreadyExists):
 		return 400
 
+	case errors.Is(err, ErrAccessDenied):
+		return 403
+
 	default:
 		return 500
 	}
 }
 
 func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
-	// 32 MB is the default used by FormFile()
-	if err := c.Req.ParseMultipartForm(32 << 20); err != nil {
-		return response.Error(400, "error in parsing form", err)
+	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
+	quotaReached, err := s.quotaService.CheckQuotaReached(c.Req.Context(), "file", nil)
+	if err != nil {
+		return response.Error(500, "Internal server error", err)
 	}
+
+	if quotaReached {
+		return response.Error(400, "File quota reached", errors.New("file quota reached"))
+	}
+
+	type rspInfo struct {
+		Message string `json:"message,omitempty"`
+		Path    string `json:"path,omitempty"`
+		Count   int    `json:"count,omitempty"`
+		Bytes   int    `json:"bytes,omitempty"`
+		Error   bool   `json:"err,omitempty"`
+	}
+	rsp := &rspInfo{Message: "uploaded"}
+
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
-		msg := fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
-		return response.Error(400, msg, err)
+		rsp.Message = fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
+		rsp.Error = true
+		return response.JSON(400, rsp)
+	}
+	message := getMultipartFormValue(c.Req, "message")
+	overwriteExistingFile := getMultipartFormValue(c.Req, "overwriteExistingFile") != "false" // must explicitly overwrite
+	folder := getMultipartFormValue(c.Req, "folder")
+
+	for k, fileHeaders := range c.Req.MultipartForm.File {
+		path := getMultipartFormValue(c.Req, k+".path") // match the path with a file
+		if len(fileHeaders) > 1 {
+			path = ""
+		}
+		if path == "" && folder == "" {
+			rsp.Message = "please specify the upload folder or full path"
+			rsp.Error = true
+			return response.JSON(400, rsp)
+		}
+
+		for _, fileHeader := range fileHeaders {
+			// restrict file size based on file size
+			// open each file to copy contents
+			file, err := fileHeader.Open()
+			if err != nil {
+				return response.Error(500, "Internal Server Error", err)
+			}
+			err = file.Close()
+			if err != nil {
+				return response.Error(500, "Internal Server Error", err)
+			}
+			data, err := ioutil.ReadAll(file)
+			if err != nil {
+				return response.Error(500, "Internal Server Error", err)
+			}
+
+			if path == "" {
+				path = folder + "/" + fileHeader.Filename
+			}
+
+			entityType := EntityTypeJSON
+			mimeType := http.DetectContentType(data)
+			if strings.HasPrefix(mimeType, "image") || strings.HasSuffix(path, ".svg") {
+				entityType = EntityTypeImage
+			}
+
+			err = s.store.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
+				Contents:              data,
+				EntityType:            entityType,
+				Path:                  path,
+				OverwriteExistingFile: overwriteExistingFile,
+				Properties: map[string]string{
+					"message": message, // the commit/changelog entry
+				},
+			})
+
+			if err != nil {
+				return response.Error(UploadErrorToStatusCode(err), err.Error(), err)
+			}
+			rsp.Count++
+			rsp.Bytes += len(data)
+			rsp.Path = path
+		}
 	}
 
-	files := c.Req.MultipartForm.File["file"]
-	if len(files) != 1 {
-		return response.JSON(400, map[string]interface{}{
-			"message": "please upload files one at a time",
-			"err":     true,
-		})
+	return response.JSON(200, rsp)
+}
+
+func getMultipartFormValue(req *http.Request, key string) string {
+	v, ok := req.MultipartForm.Value[key]
+	if !ok || len(v) != 1 {
+		return ""
 	}
-
-	folder, ok := c.Req.MultipartForm.Value["folder"]
-	if !ok || len(folder) != 1 {
-		return response.JSON(400, map[string]interface{}{
-			"message": "please specify the upload folder",
-			"err":     true,
-		})
-	}
-
-	fileHeader := files[0]
-	if fileHeader.Size > MAX_UPLOAD_SIZE {
-		return errFileTooBig
-	}
-
-	// restrict file size based on file size
-	// open each file to copy contents
-	file, err := fileHeader.Open()
-	if err != nil {
-		return response.Error(500, "Internal Server Error", err)
-	}
-	err = file.Close()
-	if err != nil {
-		return response.Error(500, "Internal Server Error", err)
-	}
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return response.Error(500, "Internal Server Error", err)
-	}
-
-	if (len(data)) > MAX_UPLOAD_SIZE {
-		return errFileTooBig
-	}
-
-	path := folder[0] + "/" + fileHeader.Filename
-
-	mimeType := http.DetectContentType(data)
-
-	err = s.store.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
-		Contents:              data,
-		MimeType:              mimeType,
-		EntityType:            EntityTypeImage,
-		Path:                  path,
-		OverwriteExistingFile: true,
-	})
-
-	if err != nil {
-		return response.Error(UploadErrorToStatusCode(err), err.Error(), err)
-	}
-
-	return response.JSON(200, map[string]interface{}{
-		"message": "Uploaded successfully",
-		"path":    path,
-		"file":    fileHeader.Filename,
-		"err":     true,
-	})
+	return v[0]
 }
 
 func (s *httpStorage) Read(c *models.ReqContext) response.Response {

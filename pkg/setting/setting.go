@@ -443,6 +443,8 @@ type Cfg struct {
 
 	DashboardPreviews DashboardPreviewsSettings
 
+	Storage StorageSettings
+
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
@@ -1014,6 +1016,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readDataSourcesSettings()
 
 	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
+	cfg.Storage = readStorageSettings(iniFile)
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
@@ -1443,6 +1446,12 @@ func readAlertingSettings(iniFile *ini.File) error {
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
 	return nil
+}
+
+// IsLegacyAlertingEnabled returns whether the legacy alerting is enabled or not.
+// It's safe to be used only after readAlertingSettings() and ReadUnifiedAlertingSettings() are executed.
+func IsLegacyAlertingEnabled() bool {
+	return AlertingEnabled != nil && *AlertingEnabled
 }
 
 func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {

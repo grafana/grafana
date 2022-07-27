@@ -128,10 +128,6 @@ describe('AzureMonitor: metrics dataHooks', () => {
         opt('Web App - Development', 'web-app-development'),
       ]);
 
-    datasource.getMetricDefinitions = jest
-      .fn()
-      .mockResolvedValue([opt('Virtual Machine', 'azure/vm'), opt('Database', 'azure/db')]);
-
     datasource.getResourceNames = jest
       .fn()
       .mockResolvedValue([opt('Web server', 'web-server'), opt('Job server', 'job-server')]);

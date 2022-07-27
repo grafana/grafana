@@ -4,7 +4,6 @@ import React from 'react';
 
 import config from 'app/core/config';
 
-import { getNavModel } from '../../core/selectors/navModel';
 import { backendSrv } from '../../core/services/backend_srv';
 
 import { Props, ChangePasswordPage } from './ChangePasswordPage';
@@ -22,23 +21,6 @@ const defaultProps: Props = {
     orgId: 0,
     authLabels: ['github'],
   },
-  navModel: getNavModel(
-    {
-      'profile-settings': {
-        icon: 'sliders-v-alt',
-        id: 'profile-settings',
-        parentItem: {
-          id: 'profile',
-          text: 'Test User',
-          img: '/avatar/46d229b033af06a191ff2267bca9ae56',
-          url: '/profile',
-        },
-        text: 'Preferences',
-        url: '/profile',
-      },
-    },
-    'profile-settings'
-  ),
   loadUser: jest.fn(),
   changePassword: jest.fn(),
 };

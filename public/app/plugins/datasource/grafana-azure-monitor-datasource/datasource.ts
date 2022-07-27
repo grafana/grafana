@@ -147,19 +147,29 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
   }
 
-  getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
-    return this.azureMonitorDatasource.getMetricDefinitions(
-      this.templateSrv.replace(subscriptionId),
-      this.templateSrv.replace(resourceGroup)
-    );
+  getMetricNamespaces(subscriptionId: string, resourceGroup?: string) {
+    let url = `/subscriptions/${subscriptionId}`;
+    if (resourceGroup) {
+      url += `/resourceGroups/${resourceGroup};`;
+    }
+    return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url });
   }
 
-  getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
+  getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string) {
     return this.azureMonitorDatasource.getResourceNames(
       this.templateSrv.replace(subscriptionId),
       this.templateSrv.replace(resourceGroup),
-      this.templateSrv.replace(metricDefinition)
+      this.templateSrv.replace(metricNamespace)
     );
+  }
+
+  getMetricNames(subscriptionId: string, resourceGroup: string, metricNamespace: string, resourceName: string) {
+    return this.azureMonitorDatasource.getMetricNames({
+      subscription: subscriptionId,
+      resourceGroup,
+      metricNamespace,
+      resourceName,
+    });
   }
 
   /*Azure Log Analytics */
@@ -189,6 +199,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   getVariables() {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
+
+  getVariablesRaw() {
+    return this.templateSrv.getVariables();
   }
 }
 

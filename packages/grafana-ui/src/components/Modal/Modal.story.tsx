@@ -11,7 +11,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Modal.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Overlays/Modal',
   component: Modal,
   decorators: [withCenteredStory],
@@ -47,7 +47,7 @@ export default {
       },
     },
   },
-} as Meta;
+};
 
 export const Basic: Story = ({ body, title, ...args }) => {
   return (
@@ -129,3 +129,5 @@ UsingContentClassName.args = {
   closeOnEscape: false,
   iconTooltip: 'icon tooltip',
 };
+
+export default meta;

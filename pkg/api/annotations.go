@@ -26,12 +26,23 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		UserId:       c.QueryInt64("userId"),
 		AlertId:      c.QueryInt64("alertId"),
 		DashboardId:  c.QueryInt64("dashboardId"),
+		DashboardUid: c.Query("dashboardUID"),
 		PanelId:      c.QueryInt64("panelId"),
 		Limit:        c.QueryInt64("limit"),
 		Tags:         c.QueryStrings("tags"),
 		Type:         c.Query("type"),
 		MatchAny:     c.QueryBool("matchAny"),
 		SignedInUser: c.SignedInUser,
+	}
+
+	// When dashboard UID present in the request, we ignore dashboard ID
+	if query.DashboardUid != "" {
+		dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgId}
+		err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in the request", err)
+		}
+		query.DashboardId = dq.Id
 	}
 
 	repo := annotations.GetRepository()

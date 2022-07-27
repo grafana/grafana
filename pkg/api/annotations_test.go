@@ -1003,9 +1003,9 @@ func setUpACL() {
 	store := mockstore.NewSQLStoreMock()
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
-		q.Result = []*models.DashboardAclInfoDTO{
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
+		q.Result = []*models.DashboardACLInfoDTO{
 			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 		}
