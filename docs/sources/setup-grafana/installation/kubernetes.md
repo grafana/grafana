@@ -120,7 +120,7 @@ spec:
 
 ## Deploy Grafana Enterprise on Kubernetes
 
-The process for deploying Grafana Enterprise is almost identical to the process above, except for some extra steps required to add in your license file. 
+The process for deploying Grafana Enterprise is almost identical to the preceding process, except for additional steps that are required for adding your license file.
 
 ### Obtain Grafana Enterprise license
 
