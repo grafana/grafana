@@ -1,11 +1,14 @@
 package signature
 
 import (
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -113,6 +116,57 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 	})
 }
 
+func TestCalculate(t *testing.T) {
+	t.Run("Validate root URL against App URL for non-private plugin if is specified in manifest", func(t *testing.T) {
+		tcs := []struct {
+			appURL            string
+			expectedSignature plugins.Signature
+		}{
+			{
+				appURL: "https://dev.grafana.com",
+				expectedSignature: plugins.Signature{
+					Status:     plugins.SignatureValid,
+					Type:       plugins.GrafanaSignature,
+					SigningOrg: "Grafana Labs",
+				},
+			},
+			{
+				appURL: "https://non.matching.url.com",
+				expectedSignature: plugins.Signature{
+					Status: plugins.SignatureInvalid,
+				},
+			},
+		}
+
+		parentDir, err := filepath.Abs("../")
+		if err != nil {
+			t.Errorf("could not construct absolute path of current dir")
+			return
+		}
+
+		for _, tc := range tcs {
+			origAppURL := setting.AppUrl
+			t.Cleanup(func() {
+				setting.AppUrl = origAppURL
+			})
+			setting.AppUrl = tc.appURL
+
+			sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
+				JSONData: plugins.JSONData{
+					ID: "test",
+					Info: plugins.Info{
+						Version: "1.0.0",
+					},
+				},
+				PluginDir: filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin"),
+				Class:     plugins.External,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedSignature, sig)
+		}
+	})
+}
+
 func fileList(manifest *pluginManifest) []string {
 	var keys []string
 	for k := range manifest.Files {
@@ -120,4 +174,88 @@ func fileList(manifest *pluginManifest) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func Test_validateManifest(t *testing.T) {
+	tcs := []struct {
+		name        string
+		manifest    *pluginManifest
+		expectedErr string
+	}{
+		{
+			name:        "Empty plugin field",
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.Plugin = "" }),
+			expectedErr: "valid manifest field plugin is required",
+		},
+		{
+			name:        "Empty keyId field",
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.KeyID = "" }),
+			expectedErr: "valid manifest field keyId is required",
+		},
+		{
+			name:        "Empty signedByOrg field",
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.SignedByOrg = "" }),
+			expectedErr: "valid manifest field signedByOrg is required",
+		},
+		{
+			name:        "Empty signedByOrgName field",
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.SignedByOrgName = "" }),
+			expectedErr: "valid manifest field SignedByOrgName is required",
+		},
+		{
+			name:        "Empty signatureType field",
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.SignatureType = "" }),
+			expectedErr: "valid manifest field signatureType is required",
+		},
+		{
+			name:        "Invalid signatureType field",
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.SignatureType = "invalidSignatureType" }),
+			expectedErr: "valid manifest field signatureType is required",
+		},
+		{
+			name:        "Empty files field",
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.Files = map[string]string{} }),
+			expectedErr: "valid manifest field files is required",
+		},
+		{
+			name:        "Empty time field",
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.Time = 0 }),
+			expectedErr: "valid manifest field time is required",
+		},
+		{
+			name:        "Empty version field",
+			manifest:    createV2Manifest(t, func(m *pluginManifest) { m.Version = "" }),
+			expectedErr: "valid manifest field version is required",
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateManifest(*tc.manifest, nil)
+			require.Errorf(t, err, tc.expectedErr)
+		})
+	}
+}
+
+func createV2Manifest(t *testing.T, cbs ...func(*pluginManifest)) *pluginManifest {
+	t.Helper()
+
+	m := &pluginManifest{
+		Plugin:  "grafana-test-app",
+		Version: "2.5.3",
+		KeyID:   "7e4d0c6a708866e7",
+		Time:    1586817677115,
+		Files: map[string]string{
+			"plugin.json": "55556b845e91935cc48fae3aa67baf0f22694c3f",
+		},
+		ManifestVersion: "2.0.0",
+		SignatureType:   plugins.GrafanaSignature,
+		SignedByOrg:     "grafana",
+		SignedByOrgName: "grafana",
+	}
+
+	for _, cb := range cbs {
+		cb(m)
+	}
+
+	return m
 }
