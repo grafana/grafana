@@ -576,7 +576,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 		desc         string
 		url          string
 		method       string
-		permissions  []accesscontrol.Permission
+		permissions  []*accesscontrol.Permission
 		input        string
 	}
 	tests := []accessControlTestCase2{
@@ -585,7 +585,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions can add a user as a viewer to his org",
 			url:          "/api/org/users",
 			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{
@@ -593,7 +593,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions cannot add a user as an editor to his org",
 			url:          "/api/org/users",
 			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_EDITOR) + `"}`,
 		},
 		{
@@ -601,7 +601,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions can add a user as a viewer to his org",
 			url:          "/api/orgs/1/users",
 			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{
@@ -609,7 +609,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions cannot add a user as an editor to his org",
 			url:          "/api/orgs/1/users",
 			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_EDITOR) + `"}`,
 		},
 		{
@@ -617,7 +617,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions can update a user's role to a viewer in his org",
 			url:          fmt.Sprintf("/api/org/users/%d", testEditorOrg1.UserId),
 			method:       http.MethodPatch,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{
@@ -625,7 +625,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions cannot update a user's role to a viewer in his org",
 			url:          fmt.Sprintf("/api/org/users/%d", testEditorOrg1.UserId),
 			method:       http.MethodPatch,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"role": "` + string(models.ROLE_EDITOR) + `"}`,
 		},
 		{
@@ -633,7 +633,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions can update a user's role to a viewer in his org",
 			url:          fmt.Sprintf("/api/orgs/1/users/%d", testEditorOrg1.UserId),
 			method:       http.MethodPatch,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{
@@ -641,7 +641,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions cannot update a user's role to a viewer in his org",
 			url:          fmt.Sprintf("/api/orgs/1/users/%d", testEditorOrg1.UserId),
 			method:       http.MethodPatch,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"role": "` + string(models.ROLE_EDITOR) + `"}`,
 		},
 		{
@@ -649,7 +649,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions can invite a user as a viewer in his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionUsersCreate}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionUsersCreate}},
 			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{
@@ -657,7 +657,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions cannot invite a user as an editor in his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionUsersCreate}},
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionUsersCreate}},
 			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "` + string(models.ROLE_EDITOR) + `"}`,
 		},
 	}
