@@ -17,7 +17,7 @@ const meta: ComponentMeta<typeof Collapse> = {
       page: mdx,
     },
     controls: {
-      exclude: 'onToggle',
+      exclude: ['className', 'onToggle'],
     },
   },
   args: {
