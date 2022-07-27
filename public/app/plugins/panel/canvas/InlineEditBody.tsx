@@ -1,4 +1,5 @@
 import { get as lodashGet } from 'lodash';
+import { PROPS_MAP } from 'moveable';
 import React, { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
@@ -7,6 +8,7 @@ import { DataFrame, PanelOptionsEditorBuilder, StandardEditorContext } from '@gr
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { FrameState } from 'app/features/canvas/runtime/frame';
+import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
@@ -56,16 +58,16 @@ export function InlineEditBody() {
     );
   }, [instanceState, panelData, activePanel]);
 
-  return renderOptionsPaneCategoryDescriptor(pane);
+  return pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p));
 }
 
 // Recursivly render options
 function renderOptionsPaneCategoryDescriptor(pane: OptionsPaneCategoryDescriptor) {
   return (
-    <div key={pane.props.id}>
+    <OptionsPaneCategory {...pane.props}>
       <div>{pane.items.map((v) => v.render())}</div>
-      <div>{pane.categories.map((c) => renderOptionsPaneCategoryDescriptor(c))}</div>
-    </div>
+      {pane.categories.map((c) => renderOptionsPaneCategoryDescriptor(c))}
+    </OptionsPaneCategory>
   );
 }
 
