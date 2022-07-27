@@ -23,6 +23,7 @@ export interface SearchQuery {
   hasPreview?: string; // theme
   limit?: number;
   from?: number;
+  starred?: boolean;
 }
 
 export interface DashboardQueryResult {

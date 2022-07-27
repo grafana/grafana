@@ -48,7 +48,15 @@ export const SearchView = ({
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
-  const { query, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery({});
+  const {
+    query,
+    onTagFilterChange,
+    onStarredFilterChange,
+    onTagAdd,
+    onDatasourceChange,
+    onSortChange,
+    onLayoutChange,
+  } = useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
@@ -66,6 +74,7 @@ export const SearchView = ({
       sort: query.sort?.value,
       explain: query.explain,
       withAllowedActions: query.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
+      starred: query.starred,
     };
 
     // Only dashboards have additional properties
@@ -255,7 +264,8 @@ export const SearchView = ({
             }
             onLayoutChange(v);
           }}
-          showStarredFilter={!hidePseudoFolders}
+          showStarredFilter={hidePseudoFolders}
+          onStarredFilterChange={!hidePseudoFolders ? undefined : onStarredFilterChange}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}

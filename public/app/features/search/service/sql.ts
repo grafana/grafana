@@ -20,6 +20,7 @@ interface APIQuery {
   dashboardUID?: string[];
   folderIds?: number[];
   sort?: string;
+  starred?: boolean;
 }
 
 // Internal object to hold folderId
@@ -45,6 +46,7 @@ export class SQLSearcher implements GrafanaSearcher {
       limit: query.limit ?? 1000, // default 1k max values
       tag: query.tags,
       sort: query.sort,
+      starred: query.starred,
     };
 
     query = await replaceCurrentFolderQuery(query);
