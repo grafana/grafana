@@ -1,5 +1,5 @@
 import { Meta, Story } from '@storybook/react';
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
@@ -9,7 +9,7 @@ import { InlineToast as InlineToastImpl, InlineToastProps } from './InlineToast'
 import mdx from './InlineToast.mdx';
 
 const story: Meta = {
-  title: 'Indicator',
+  title: 'InlineToast',
   component: InlineToastImpl,
   decorators: [withCenteredStory],
   parameters: {
@@ -17,27 +17,43 @@ const story: Meta = {
       page: mdx,
     },
   },
+  argTypes: {
+    // foo is the property we want to remove from the UI
+    referenceElement: {
+      table: {
+        disable: true,
+      },
+    },
+  },
 };
 
 export default story;
 
 export const InlineToast: Story<InlineToastProps> = (args) => {
-  const ref = useRef<null | HTMLInputElement>(null);
+  const [el, setEl] = useState<null | HTMLInputElement>(null);
 
   return (
     <div>
-      <InlineToastImpl {...args} referenceElement={ref.current}>
-        Copied
+      <InlineToastImpl {...args} referenceElement={el}>
+        Saved
       </InlineToastImpl>
-      <Input ref={ref} />
+      <Input ref={setEl} />
     </div>
   );
 };
+InlineToast.args = {
+  placement: 'right',
+  suffixIcon: 'check',
+};
 
-export const WithAButton: Story<InlineToastProps> = (args) => {
+export const WithAButton: Story<InlineToastProps> = () => {
   return (
     <ClipboardButton icon="copy" getText={() => 'hello world'}>
       Copy surprise
     </ClipboardButton>
   );
+};
+
+WithAButton.parameters = {
+  controls: { hideNoControlsWarning: true },
 };

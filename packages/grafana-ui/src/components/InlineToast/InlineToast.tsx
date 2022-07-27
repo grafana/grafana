@@ -73,8 +73,8 @@ const getPlacementStyles = (theme: GrafanaTheme2): Record<InlineToastProps['plac
 
   const placementTopAnimation = createAnimation(0, theme.spacing(gap));
   const placementBottomAnimation = createAnimation(0, theme.spacing(gap * -1));
-  const placementLeftAnimation = createAnimation(theme.spacing(gap * -1), 0);
-  const placementRightAnimation = createAnimation(theme.spacing(gap), 0);
+  const placementLeftAnimation = createAnimation(theme.spacing(gap), 0);
+  const placementRightAnimation = createAnimation(theme.spacing(gap * -1), 0);
 
   return {
     top: css({
