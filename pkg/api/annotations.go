@@ -52,7 +52,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		if err != nil {
 			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in the request", err)
 		}
-		query.DashboardId = dq.Id
+		query.DashboardId = dq.Result.Id
 	}
 
 	repo := annotations.GetRepository()
