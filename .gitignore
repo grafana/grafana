@@ -162,7 +162,7 @@ compilation-stats.json
 !pkg/coremodel/**/*_gen.go
 !pkg/framework/**/*_gen.go
 
-# Auto-generated localisation files
+# Auto-generated internationalization files
 public/locales/_build/
 public/locales/**/*.js
 

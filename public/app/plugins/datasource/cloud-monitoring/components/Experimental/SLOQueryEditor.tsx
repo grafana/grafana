@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow, Stack } from '@grafana/experimental';
+import { EditorRow, EditorFieldGroup, EditorField, Stack } from '@grafana/ui';
 
 import { ALIGNMENT_PERIODS } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';

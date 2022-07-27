@@ -470,7 +470,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	inFolder := dash.FolderId > 0
 	if !accesscontrol.IsDisabled(dr.cfg) {
 		var permissions []accesscontrol.SetResourcePermissionCommand
-		if !provisioned {
+		if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: dto.User.UserId, Permission: models.PERMISSION_ADMIN.String(),
 			})
@@ -492,7 +492,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		if err != nil {
 			return err
 		}
-	} else if dr.cfg.EditorsCanAdmin && !provisioned {
+	} else if dr.cfg.EditorsCanAdmin && !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
 		if err := dr.MakeUserAdmin(ctx, dto.OrgId, dto.User.UserId, dash.Id, !inFolder); err != nil {
 			return err
 		}

@@ -26,6 +26,7 @@ func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Servic
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
 	}
+	InitMetrics()
 	return store
 }
 
@@ -55,7 +56,7 @@ func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *m
 
 func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	if query.UserId == 0 && query.AuthId == "" {
-		return models.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
 
 	userAuth := &models.UserAuth{
@@ -76,7 +77,7 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthIn
 	}
 
 	if !has {
-		return models.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
 
 	secretAccessToken, err := s.decodeAndDecrypt(userAuth.OAuthAccessToken)

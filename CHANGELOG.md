@@ -1,3 +1,54 @@
+<!-- 9.0.5 START -->
+
+# 9.0.5 (2022-07-26)
+
+### Features and enhancements
+
+- **Access control:** Show dashboard settings to users who can edit dashboard. [#52535](https://github.com/grafana/grafana/pull/52535), [@grafanabot](https://github.com/grafanabot)
+- **Alerting:** Allow the webhook notifier to support a custom Authorization header. [#52515](https://github.com/grafana/grafana/pull/52515), [@gotjosh](https://github.com/gotjosh)
+- **Chore:** Upgrade to Go version 1.17.12. [#52523](https://github.com/grafana/grafana/pull/52523), [@sakjur](https://github.com/sakjur)
+- **Plugins:** Add signature wildcard globbing for dedicated private plugin type. [#52163](https://github.com/grafana/grafana/pull/52163), [@wbrowne](https://github.com/wbrowne)
+- **Prometheus:** Don't show errors from unsuccessful API checks like rules or exemplar checks. [#52193](https://github.com/grafana/grafana/pull/52193), [@darrenjaneczek](https://github.com/darrenjaneczek)
+
+### Bug fixes
+
+- **Access control:** Allow organisation admins to add existing users to org (#51668). [#52553](https://github.com/grafana/grafana/pull/52553), [@vtorosyan](https://github.com/vtorosyan)
+- **Alerting:** Fix alert panel instance-based rules filtering. [#52583](https://github.com/grafana/grafana/pull/52583), [@konrad147](https://github.com/konrad147)
+- **Apps:** Fixes navigation between different app plugin pages. [#52571](https://github.com/grafana/grafana/pull/52571), [@torkelo](https://github.com/torkelo)
+- **Cloudwatch:** Upgrade grafana-aws-sdk to fix auth issue with secret keys. [#52420](https://github.com/grafana/grafana/pull/52420), [@sarahzinger](https://github.com/sarahzinger)
+- **Grafana/toolkit:** Fix incorrect image and font generation for plugin builds. [#52661](https://github.com/grafana/grafana/pull/52661), [@academo](https://github.com/academo)
+- **Loki:** Fix `show context` not working in some occasions. [#52458](https://github.com/grafana/grafana/pull/52458), [@svennergr](https://github.com/svennergr)
+- **RBAC:** Fix permissions on dashboards and folders created by anonymous users. [#52615](https://github.com/grafana/grafana/pull/52615), [@gamab](https://github.com/gamab)
+
+<!-- 9.0.5 END -->
+<!-- 9.0.4 START -->
+
+# 9.0.4 (2022-07-20)
+
+### Features and enhancements
+
+- **Browse/Search:** Make browser back work properly when visiting Browse or search. [#52271](https://github.com/grafana/grafana/pull/52271), [@torkelo](https://github.com/torkelo)
+- **Logs:** Improve getLogRowContext API. [#52130](https://github.com/grafana/grafana/pull/52130), [@gabor](https://github.com/gabor)
+- **Loki:** Improve handling of empty responses. [#52397](https://github.com/grafana/grafana/pull/52397), [@gabor](https://github.com/gabor)
+- **Plugins:** Always validate root URL if specified in signature manfiest. [#52332](https://github.com/grafana/grafana/pull/52332), [@wbrowne](https://github.com/wbrowne)
+- **Preferences:** Get home dashboard from teams. [#52225](https://github.com/grafana/grafana/pull/52225), [@sakjur](https://github.com/sakjur)
+- **SQLStore:** Support Upserting multiple rows. [#52228](https://github.com/grafana/grafana/pull/52228), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Traces:** Add more template variables in Tempo & Zipkin. [#52306](https://github.com/grafana/grafana/pull/52306), [@joey-grafana](https://github.com/joey-grafana)
+- **Traces:** Remove serviceMap feature flag. [#52375](https://github.com/grafana/grafana/pull/52375), [@joey-grafana](https://github.com/joey-grafana)
+
+### Bug fixes
+
+- **Access Control:** Fix missing folder permissions. [#52410](https://github.com/grafana/grafana/pull/52410), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Access control:** Fix org user removal for OSS users. [#52473](https://github.com/grafana/grafana/pull/52473), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Alerting:** Fix Slack notification preview. [#50230](https://github.com/grafana/grafana/pull/50230), [@ekrucio](https://github.com/ekrucio)
+- **Alerting:** Fix Slack push notifications. [#52391](https://github.com/grafana/grafana/pull/52391), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Fixes slack push notifications. [#50267](https://github.com/grafana/grafana/pull/50267), [@jgillick](https://github.com/jgillick)
+- **Alerting:** Preserve new-lines from custom email templates in rendered email. [#52253](https://github.com/grafana/grafana/pull/52253), [@alexweav](https://github.com/alexweav)
+- **Insights:** Fix dashboard and data source insights pages. (Enterprise)
+- **Log:** Fix text logging for unsupported types. [#51306](https://github.com/grafana/grafana/pull/51306), [@papagian](https://github.com/papagian)
+- **Loki:** Fix incorrect TopK value type in query builder. [#52226](https://github.com/grafana/grafana/pull/52226), [@ivanahuckova](https://github.com/ivanahuckova)
+
+<!-- 9.0.4 END -->
 <!-- 9.0.3 START -->
 
 # 9.0.3 (2022-07-14)

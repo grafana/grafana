@@ -15,13 +15,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -45,7 +47,8 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 		Host:   "localhost",
 	}
 
-	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute)
+	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
+		&fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
@@ -53,8 +56,8 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
-	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagers))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagersCfgHash))
 
 	// Then, ensure we've discovered the Alertmanager.
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 1, 0)
@@ -74,10 +77,10 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 
 	// Now, let's remove the Alertmanager from the admin configuration.
 	mockedGetAdminConfigurations.Return(nil, nil)
-	// Again, make sure we sync and verify the senders.
+	// Again, make sure we sync and verify the externalAlertmanagers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 0, len(alertsRouter.senders))
-	require.Equal(t, 0, len(alertsRouter.sendersCfgHash))
+	require.Equal(t, 0, len(alertsRouter.externalAlertmanagers))
+	require.Equal(t, 0, len(alertsRouter.externalAlertmanagersCfgHash))
 
 	// Then, ensure we've dropped the Alertmanager.
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 0, 0)
@@ -102,7 +105,8 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		Host:   "localhost",
 	}
 
-	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute)
+	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
+		&fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey1.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
@@ -111,8 +115,8 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
-	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagers))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagersCfgHash))
 
 	// Then, ensure we've discovered the Alertmanager.
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey1.OrgID, 1, 0)
@@ -123,10 +127,10 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		{OrgID: ruleKey2.OrgID, Alertmanagers: []string{fakeAM.Server.URL}},
 	}, nil)
 
-	// If we sync again, new senders must have spawned.
+	// If we sync again, new externalAlertmanagers must have spawned.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 2, len(alertsRouter.senders))
-	require.Equal(t, 2, len(alertsRouter.sendersCfgHash))
+	require.Equal(t, 2, len(alertsRouter.externalAlertmanagers))
+	require.Equal(t, 2, len(alertsRouter.externalAlertmanagersCfgHash))
 
 	// Then, ensure we've discovered the Alertmanager for the new organization.
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey1.OrgID, 1, 0)
@@ -160,15 +164,15 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	}, nil)
 
 	// Before we sync, let's grab the existing hash of this particular org.
-	currentHash := alertsRouter.sendersCfgHash[ruleKey2.OrgID]
+	currentHash := alertsRouter.externalAlertmanagersCfgHash[ruleKey2.OrgID]
 
 	// Now, sync again.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
 
-	// The hash for org two should not be the same and we should still have two senders.
-	require.NotEqual(t, alertsRouter.sendersCfgHash[ruleKey2.OrgID], currentHash)
-	require.Equal(t, 2, len(alertsRouter.senders))
-	require.Equal(t, 2, len(alertsRouter.sendersCfgHash))
+	// The hash for org two should not be the same and we should still have two externalAlertmanagers.
+	require.NotEqual(t, alertsRouter.externalAlertmanagersCfgHash[ruleKey2.OrgID], currentHash)
+	require.Equal(t, 2, len(alertsRouter.externalAlertmanagers))
+	require.Equal(t, 2, len(alertsRouter.externalAlertmanagersCfgHash))
 
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey2.OrgID, 2, 0)
 
@@ -179,13 +183,13 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	}, nil)
 
 	// Before we sync, let's get the current config hash.
-	currentHash = alertsRouter.sendersCfgHash[ruleKey1.OrgID]
+	currentHash = alertsRouter.externalAlertmanagersCfgHash[ruleKey1.OrgID]
 
 	// Now, sync again.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
 
 	// The old configuration should still be running.
-	require.Equal(t, alertsRouter.sendersCfgHash[ruleKey1.OrgID], currentHash)
+	require.Equal(t, alertsRouter.externalAlertmanagersCfgHash[ruleKey1.OrgID], currentHash)
 	require.Equal(t, 1, len(alertsRouter.AlertmanagersFor(ruleKey1.OrgID)))
 
 	// If we fix it - it should be applied.
@@ -195,15 +199,15 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	}, nil)
 
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.NotEqual(t, alertsRouter.sendersCfgHash[ruleKey1.OrgID], currentHash)
+	require.NotEqual(t, alertsRouter.externalAlertmanagersCfgHash[ruleKey1.OrgID], currentHash)
 
 	// Finally, remove everything.
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{}, nil)
 
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
 
-	require.Equal(t, 0, len(alertsRouter.senders))
-	require.Equal(t, 0, len(alertsRouter.sendersCfgHash))
+	require.Equal(t, 0, len(alertsRouter.externalAlertmanagers))
+	require.Equal(t, 0, len(alertsRouter.externalAlertmanagersCfgHash))
 
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey1.OrgID, 0, 0)
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey2.OrgID, 0, 0)
@@ -228,7 +232,8 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		Host:   "localhost",
 	}
 
-	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute)
+	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
+		10*time.Minute, &fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
@@ -236,8 +241,8 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
-	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagers))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagersCfgHash))
 	require.Equal(t, models.AllAlertmanagers, alertsRouter.sendAlertsTo[ruleKey.OrgID])
 
 	// Then, ensure we've discovered the Alertmanager.
@@ -259,10 +264,10 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.ExternalAlertmanagers},
 	}, nil)
-	// Again, make sure we sync and verify the senders.
+	// Again, make sure we sync and verify the externalAlertmanagers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
-	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagers))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagersCfgHash))
 
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 1, 0)
 	require.Equal(t, models.ExternalAlertmanagers, alertsRouter.sendAlertsTo[ruleKey.OrgID])
@@ -272,11 +277,11 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.InternalAlertmanager},
 	}, nil)
 
-	// Again, make sure we sync and verify the senders.
-	// senders should be running even though alerts are being handled externally.
+	// Again, make sure we sync and verify the externalAlertmanagers.
+	// externalAlertmanagers should be running even though alerts are being handled externally.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
-	require.Equal(t, 1, len(alertsRouter.senders))
-	require.Equal(t, 1, len(alertsRouter.sendersCfgHash))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagers))
+	require.Equal(t, 1, len(alertsRouter.externalAlertmanagersCfgHash))
 
 	// Then, ensure the Alertmanager is still listed and the Alertmanagers choice has changed.
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 1, 0)
@@ -344,7 +349,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	kvStore := notifier.NewFakeKVStore(t)
 	registry := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(registry)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	moa, err := notifier.NewMultiOrgAlertmanager(cfg, &cfgStore, &orgStore, kvStore, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
@@ -359,4 +364,61 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 		return true
 	}, 10*time.Second, 100*time.Millisecond)
 	return moa
+}
+
+func TestBuildExternalURL(t *testing.T) {
+	sch := AlertsRouter{
+		secretService: fake_secrets.NewFakeSecretsService(),
+	}
+	tests := []struct {
+		name        string
+		ds          *datasources.DataSource
+		expectedURL string
+	}{
+		{
+			name: "datasource without auth",
+			ds: &datasources.DataSource{
+				Url: "https://localhost:9000",
+			},
+			expectedURL: "https://localhost:9000",
+		},
+		{
+			name: "datasource without auth and with path",
+			ds: &datasources.DataSource{
+				Url: "https://localhost:9000/path/to/am",
+			},
+			expectedURL: "https://localhost:9000/path/to/am",
+		},
+		{
+			name: "datasource with auth",
+			ds: &datasources.DataSource{
+				Url:           "https://localhost:9000",
+				BasicAuth:     true,
+				BasicAuthUser: "johndoe",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("123"),
+				},
+			},
+			expectedURL: "https://johndoe:123@localhost:9000",
+		},
+		{
+			name: "datasource with auth and path",
+			ds: &datasources.DataSource{
+				Url:           "https://localhost:9000/path/to/am",
+				BasicAuth:     true,
+				BasicAuthUser: "johndoe",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("123"),
+				},
+			},
+			expectedURL: "https://johndoe:123@localhost:9000/path/to/am",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			url, err := sch.buildExternalURL(test.ds)
+			require.NoError(t, err)
+			require.Equal(t, test.expectedURL, url)
+		})
+	}
 }

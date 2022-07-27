@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { EditorField, EditorRow, Select } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../../datasource';
 

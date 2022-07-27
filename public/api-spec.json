@@ -2019,6 +2019,12 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "description": "Find annotations that are scoped to a specific dashboard",
+            "name": "dashboardUID",
+            "in": "query"
+          },
+          {
             "type": "integer",
             "format": "int64",
             "description": "Find annotations that are scoped to a specific panel",
@@ -2618,7 +2624,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
             }
           },
           {
@@ -2976,7 +2982,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
             }
           },
           {
@@ -3534,6 +3540,49 @@
         "responses": {
           "202": {
             "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/uid/{sourceUID}/correlations": {
+      "post": {
+        "tags": ["correlations"],
+        "summary": "Add correlation.",
+        "operationId": "createCorrelation",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateCorrelationCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createCorrelationResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -4218,7 +4267,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "$ref": "#/responses/folderResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4368,7 +4417,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
+              "$ref": "#/definitions/UpdateDashboardACLCommand"
             }
           }
         ],
@@ -7015,6 +7064,15 @@
           {
             "type": "array",
             "items": {
+              "type": "string"
+            },
+            "description": "List of dashboard uid’s to search for",
+            "name": "dashboardUIDs",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
               "type": "integer",
               "format": "int64"
             },
@@ -7866,7 +7924,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/okResponse"
+            "$ref": "#/responses/getTeamMembersResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -9120,82 +9178,6 @@
         }
       }
     },
-    "Alert": {
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "DashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "EvalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "ExecutionError": {
-          "type": "string"
-        },
-        "For": {
-          "$ref": "#/definitions/Duration"
-        },
-        "Frequency": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Handler": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Message": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "NewStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PanelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "Severity": {
-          "type": "string"
-        },
-        "Silenced": {
-          "type": "boolean"
-        },
-        "State": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "StateChanges": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "AlertListItemDTO": {
       "type": "object",
       "properties": {
@@ -9570,6 +9552,37 @@
         }
       }
     },
+    "Correlation": {
+      "description": "Correlation is the model for correlations definitions",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Label identifying the correlation",
+          "type": "string",
+          "example": "My Label"
+        },
+        "sourceUID": {
+          "description": "UID of the data source the correlation originates from",
+          "type": "string",
+          "example": "d0oxYRg4z"
+        },
+        "targetUID": {
+          "description": "UID of the data source the correlation points to",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        },
+        "uid": {
+          "description": "Unique identifier of the correlation",
+          "type": "string",
+          "example": "50xhMlg9k"
+        }
+      }
+    },
     "CreateAlertNotificationCommand": {
       "type": "object",
       "properties": {
@@ -9602,6 +9615,40 @@
         },
         "uid": {
           "type": "string"
+        }
+      }
+    },
+    "CreateCorrelationCommand": {
+      "description": "CreateCorrelationCommand is the command for creating a correlation",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Optional description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Optional label identifying the correlation",
+          "type": "string",
+          "example": "My label"
+        },
+        "targetUID": {
+          "description": "Target data source UID to which the correlation is created",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        }
+      }
+    },
+    "CreateCorrelationResponse": {
+      "description": "CreateCorrelationResponse is the response struct for CreateCorrelationCommand",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation created"
+        },
+        "result": {
+          "$ref": "#/definitions/Correlation"
         }
       }
     },
@@ -9889,7 +9936,7 @@
         }
       }
     },
-    "DashboardAclInfoDTO": {
+    "DashboardACLInfoDTO": {
       "type": "object",
       "properties": {
         "created": {
@@ -9964,7 +10011,7 @@
         }
       }
     },
-    "DashboardAclUpdateItem": {
+    "DashboardACLUpdateItem": {
       "type": "object",
       "properties": {
         "permission": {
@@ -10077,6 +10124,9 @@
         },
         "publicDashboardAccessToken": {
           "type": "string"
+        },
+        "publicDashboardEnabled": {
+          "type": "boolean"
         },
         "slug": {
           "type": "string"
@@ -10547,6 +10597,10 @@
         }
       }
     },
+    "DataTopic": {
+      "type": "string",
+      "title": "DataTopic is used to identify which topic the frame should be assigned to."
+    },
     "DeleteTokenCommand": {
       "type": "object",
       "properties": {
@@ -10624,7 +10678,7 @@
           "$ref": "#/definitions/FieldConfig"
         },
         "labels": {
-          "$ref": "#/definitions/Labels"
+          "$ref": "#/definitions/FrameLabels"
         },
         "name": {
           "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
@@ -10835,6 +10889,13 @@
         }
       }
     },
+    "FrameLabels": {
+      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "FrameMeta": {
       "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
       "type": "object",
@@ -10847,6 +10908,9 @@
         "custom": {
           "description": "Custom datasource specific values.",
           "type": "object"
+        },
+        "dataTopic": {
+          "$ref": "#/definitions/DataTopic"
         },
         "executedQueryString": {
           "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
@@ -11175,11 +11239,80 @@
     "Json": {
       "type": "object"
     },
-    "Labels": {
-      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+    "LegacyAlert": {
       "type": "object",
-      "additionalProperties": {
-        "type": "string"
+      "properties": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "DashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "EvalData": {
+          "$ref": "#/definitions/Json"
+        },
+        "ExecutionError": {
+          "type": "string"
+        },
+        "For": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Frequency": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Handler": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Message": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "NewStateDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "OrgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PanelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "Severity": {
+          "type": "string"
+        },
+        "Silenced": {
+          "type": "boolean"
+        },
+        "State": {
+          "$ref": "#/definitions/AlertStateType"
+        },
+        "StateChanges": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
+        }
       }
     },
     "LibraryElementConnectionDTO": {
@@ -11189,6 +11322,9 @@
         "connectionId": {
           "type": "integer",
           "format": "int64"
+        },
+        "connectionUid": {
+          "type": "string"
         },
         "created": {
           "type": "string",
@@ -12270,7 +12406,7 @@
       }
     },
     "Responses": {
-      "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataRespones' frames based on these RefIDs.",
+      "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
       "type": "object",
       "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses.",
       "additionalProperties": {
@@ -13164,13 +13300,13 @@
         }
       }
     },
-    "UpdateDashboardAclCommand": {
+    "UpdateDashboardACLCommand": {
       "type": "object",
       "properties": {
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DashboardAclUpdateItem"
+            "$ref": "#/definitions/DashboardACLUpdateItem"
           }
         }
       }
@@ -13749,6 +13885,12 @@
         }
       }
     },
+    "createCorrelationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CreateCorrelationResponse"
+      }
+    },
     "createOrUpdateDatasourceResponse": {
       "description": "",
       "schema": {
@@ -14058,10 +14200,7 @@
     "getAlertResponse": {
       "description": "",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Alert"
-        }
+        "$ref": "#/definitions/LegacyAlert"
       }
     },
     "getAlertsResponse": {
@@ -14126,7 +14265,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/DashboardAclInfoDTO"
+          "$ref": "#/definitions/DashboardACLInfoDTO"
         }
       }
     },

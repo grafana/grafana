@@ -10,9 +10,9 @@ weight: 400
 
 # Team management
 
-A team is a group of users or service accounts within an organization that have common dashboard and data source permission needs. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user or a service account can belong to multiple teams.
+A team is a group of users within an organization that have common dashboard and data source permission needs. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
 
-A user or a service account can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team member's team roles, UI preferences, and home dashboard.
+A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team member's team roles, UI preferences, and home dashboard.
 
 For more information about teams, refer to [Teams and permissions]({{< relref "../roles-and-permissions/#teams-and-permissions" >}}).
 
@@ -39,7 +39,7 @@ A user can belong to multiple teams.
 
 ## Add a team member
 
-Add a team member to an existing team whenever you want to provide access to team dashboards and folders to another user or a service account.
+Add a team member to an existing team whenever you want to provide access to team dashboards and folders to another user.
 
 ### Before you begin
 
@@ -51,9 +51,8 @@ Add a team member to an existing team whenever you want to provide access to tea
 1. Sign in to Grafana as an organization administrator.
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
 1. Click the name of the team to which you want to add members, and click **Add member**.
-1. In the **Add team member** field, choose if you want to add a user or a service account.
-1. Locate and select a user or a service account.
-1. Choose if you want to add a user or a service account as a team Member or an Admin.
+1. Locate and select a user.
+1. Choose if you want to add the user as a team Member or an Admin.
 1. Click **Add to team**.
 
 ![Add team member](/static/img/docs/manage-users/add-team-member-7-3.png)
@@ -71,14 +70,14 @@ Complete this task when you want to add or modify team member permissions.
 1. Sign in to Grafana as an organization administrator or a team administrator.
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
 1. Click the name of the team for which you want to add or modify team member permissions.
-1. In the team member list, find and click the user or service account that you want to change. You can use the search field to filter the list if necessary.
+1. In the team member list, find and click the user that you want to change. You can use the search field to filter the list if necessary.
 1. Click the **Permission** list, and then click the new user permission level.
 
 ![Change team member permissions](/static/img/docs/manage-users/change-team-permissions-7-3.png)
 
 ## Remove a team member
 
-You can remove a team member when you no longer want to apply team permissions to the user or service account.
+You can remove a team member when you no longer want to apply team permissions to the user
 
 ### Before you begin
 
@@ -88,8 +87,8 @@ You can remove a team member when you no longer want to apply team permissions t
 
 1. Sign in to Grafana as an organization administrator or team administrator.
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
-1. Click a team from which you want to remove a user or a service account.
-1. Click the **X** next to the name of the user or service account.
+1. Click a team from which you want to remove a user.
+1. Click the **X** next to the name of the user.
 1. Click **Delete**.
 
 ## Delete a team
