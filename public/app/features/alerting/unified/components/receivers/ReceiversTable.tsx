@@ -4,8 +4,7 @@ import React, { FC, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, ConfirmModal, Modal, useStyles2, Icon } from '@grafana/ui';
+import { Button, ConfirmModal, Modal, useStyles2, Badge } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { ContactPointsState } from 'app/types';
@@ -29,14 +28,13 @@ interface ReceiverErrorProps {
   errorCount: number;
 }
 function ReceiverError({ errorCount }: ReceiverErrorProps) {
-  const styles = useStyles2(getStyles);
   return (
-    <div className={styles.warning}>
-      <Stack alignItems="center">
-        <Icon name="exclamation-triangle" />
-        <div className={styles.countMessage}>{`${errorCount} ${pluralize('error', errorCount)}`}</div>
-      </Stack>
-    </div>
+    <Badge
+      color="orange"
+      icon="exclamation-triangle"
+      text={`${errorCount} ${pluralize('error', errorCount)}`}
+      tooltip={`${errorCount} ${pluralize('error', errorCount)} detected in this contact point`}
+    />
   );
 }
 interface ReceiverHealthProps {
@@ -44,7 +42,11 @@ interface ReceiverHealthProps {
 }
 
 function ReceiverHealth({ errorsByReceiver }: ReceiverHealthProps) {
-  return errorsByReceiver > 0 ? <ReceiverError errorCount={errorsByReceiver} /> : <div>OK</div>;
+  return errorsByReceiver > 0 ? (
+    <ReceiverError errorCount={errorsByReceiver} />
+  ) : (
+    <Badge color="green" text="OK" tooltip="No errors detected" />
+  );
 }
 
 interface Props {
