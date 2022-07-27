@@ -10,14 +10,14 @@ import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { Portal } from '../Portal/Portal';
 
-export interface IndicatorProps {
+export interface InlineToastProps {
   children: React.ReactNode;
   suffixIcon?: IconName;
   referenceElement: HTMLElement | null;
   placement: BasePlacement;
 }
 
-export function Indicator({ referenceElement, children, suffixIcon, placement }: IndicatorProps) {
+export function InlineToast({ referenceElement, children, suffixIcon, placement }: InlineToastProps) {
   const [indicatorElement, setIndicatorElement] = useState<HTMLElement | null>(null);
   const popper = usePopper(referenceElement, indicatorElement, { placement });
   const styles = useStyles2(getStyles);
@@ -68,7 +68,7 @@ const createAnimation = (fromX: string | number, fromY: string | number) =>
     },
   });
 
-const getPlacementStyles = (theme: GrafanaTheme2): Record<IndicatorProps['placement'], string> => {
+const getPlacementStyles = (theme: GrafanaTheme2): Record<InlineToastProps['placement'], string> => {
   const gap = 1;
 
   const placementTopAnimation = createAnimation(0, theme.spacing(gap));

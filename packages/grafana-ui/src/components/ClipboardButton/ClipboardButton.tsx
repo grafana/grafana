@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { Button, ButtonProps } from '../Button';
 import { Icon } from '../Icon/Icon';
-import { Indicator } from '../Indicator/Indicator';
+import { InlineToast } from '../InlineToast/InlineToast';
 
 export interface Props extends ButtonProps {
   /** A function that returns text to be copied */
@@ -61,9 +61,9 @@ export function ClipboardButton({
   return (
     <>
       {showCopySuccess && (
-        <Indicator placement="top" referenceElement={buttonRef.current}>
+        <InlineToast placement="top" referenceElement={buttonRef.current}>
           Copied
-        </Indicator>
+        </InlineToast>
       )}
 
       <Button
