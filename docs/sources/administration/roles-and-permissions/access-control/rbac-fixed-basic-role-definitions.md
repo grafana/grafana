@@ -11,6 +11,8 @@ weight: 70
 
 # RBAC role definitions
 
+> **Note:** Fixed roles are available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+
 The following tables list permissions associated with basic and fixed roles.
 
 ## Basic role assignments

@@ -23,6 +23,8 @@ Your rollout strategy should help you answer the following questions:
 
 ## Review basic role and fixed role definitions
 
+> **Note:** Fixed roles are available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+
 As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
@@ -31,6 +33,8 @@ To learn more about basic roles and fixed roles, refer to the following document
 - [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}})
 
 ## User and team considerations
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
 
 RBAC is a flexible and powerful feature with many possible permissions assignment combinations available. Consider the follow guidelines when assigning permissions to users and teams.
 
@@ -54,6 +58,8 @@ For example:
 
 ## When to modify basic roles or create custom roles
 
+> **Note:** Custom roles are available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+
 Consider the following guidelines when you determine if you should modify basic roles or create custom roles.
 
 - **Modify basic roles** when Grafana's definitions of what viewers, editors, and admins can do does not match your definition of these roles. You can add or remove permissions from any basic role.
@@ -63,6 +69,8 @@ Consider the following guidelines when you determine if you should modify basic 
 - **Create custom roles** when fixed role definitions don't meet you permissions requirements. For example, the `fixed:dashboards:writer` role allows users to delete dashboards. If you want some users or teams to be able to create and update but not delete dashboards, you can create a custom role with a name like `custom:dashboards:creator` that lacks the `dashboards:delete` permission.
 
 ## How to assign RBAC roles
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
 
 Use any of the following methods to assign RBAC roles to users and teams.
 

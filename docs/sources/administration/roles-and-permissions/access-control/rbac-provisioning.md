@@ -10,6 +10,8 @@ weight: 60
 
 # Grafana RBAC provisioning
 
+> **Note:** Custom roles are available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+
 You can create, change or remove [Custom roles]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}) and create or remove [basic role assignments]({{< relref "./assign-rbac-roles/#assign-a-fixed-role-to-a-basic-role-using-provisioning" >}}), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
 
 Grafana performs provisioning during startup. After you make a change to the configuration file, you can reload it during runtime. You do not need to restart the Grafana server for your changes to take effect.
