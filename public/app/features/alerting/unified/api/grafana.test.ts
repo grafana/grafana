@@ -1,6 +1,24 @@
 import { ReceiversStateDTO } from 'app/types';
 
-import { contactPointsStateDtoToModel, getIntegrationType, isValidIntegrationType } from './grafana';
+import { contactPointsStateDtoToModel, getIntegrationType, parseIntegrationName } from './grafana';
+
+describe('parseIntegrationName method', () => {
+  it('should return the integration name and index string when it is a valid type name with [{number}] ', () => {
+    const { type, index } = parseIntegrationName('coolIntegration[1]');
+    expect(type).toBe('coolIntegration');
+    expect(index).toBe('[1]');
+  });
+  it('should return the integration name when it is a valid type name without [{number}] ', () => {
+    const { type, index } = parseIntegrationName('coolIntegration');
+    expect(type).toBe('coolIntegration');
+    expect(index).toBe(undefined);
+  });
+  it('should return name as it is and index as undefined when it is a invalid index format ', () => {
+    const { type, index } = parseIntegrationName('coolIntegration[345vadkfjgh');
+    expect(type).toBe('coolIntegration[345vadkfjgh');
+    expect(index).toBe(undefined);
+  });
+});
 
 describe('getIntegrationType method', () => {
   it('should return the integration name when it is a valid type name with [{number}] ', () => {
@@ -14,27 +32,9 @@ describe('getIntegrationType method', () => {
     const name = getIntegrationType('coolIntegration');
     expect(name).toBe('coolIntegration');
   });
-  it('should return undefined when it is a invalid type name ', () => {
+  it('should return name as it is when it is a invalid index format ', () => {
     const name = getIntegrationType('coolIntegration[345vadkfjgh');
-    expect(name).toBe(undefined);
-  });
-});
-describe('isValidIntegrationType method', () => {
-  it('should return true when it is a name followed with [{number}] ', () => {
-    const name = isValidIntegrationType('coolIntegration[1]');
-    expect(name).toBe(true);
-  });
-  it('should return true when it is a name without [{number}] ', () => {
-    const name = isValidIntegrationType('coolIntegration');
-    expect(name).toBe(true);
-  });
-  it('should return false when it is a name followed with [{wrong index}] ', () => {
-    const name = isValidIntegrationType('coolIntegration[1123sfsf]');
-    expect(name).toBe(false);
-  });
-  it('should return false when it is a name followed with [{index} ', () => {
-    const name = isValidIntegrationType('coolIntegration[11');
-    expect(name).toBe(false);
+    expect(name).toBe('coolIntegration[345vadkfjgh');
   });
 });
 

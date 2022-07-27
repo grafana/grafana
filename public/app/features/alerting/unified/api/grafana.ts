@@ -5,10 +5,21 @@ export function fetchNotifiers(): Promise<NotifierDTO[]> {
   return getBackendSrv().get(`/api/alert-notifiers`);
 }
 
-const hasArrayIndex = (name: string) => name.indexOf('[') !== -1;
+interface IntegrationNameObject {
+  type: string;
+  index?: string;
+}
+export const parseIntegrationName = (integrationName: string): IntegrationNameObject => {
+  const matches = integrationName.match(/^(\w+)(\[\d+\])?$/);
+  if (!matches) {
+    return { type: integrationName, index: undefined };
+  }
 
-export const isValidIntegrationType = (integrationName: string): boolean =>
-  hasArrayIndex(integrationName) ? /\w(\[((\d*))])$/.test(integrationName) : true;
+  return {
+    type: matches[1],
+    index: matches[2],
+  };
+};
 
 export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDTO[]): ContactPointsState => {
   // init object to return
@@ -43,11 +54,7 @@ export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDT
 };
 
 export const getIntegrationType = (integrationName: string): string | undefined =>
-  isValidIntegrationType(integrationName)
-    ? hasArrayIndex(integrationName)
-      ? integrationName.substring(0, integrationName.indexOf('['))
-      : integrationName
-    : undefined;
+  parseIntegrationName(integrationName)?.type;
 
 export function fetchContactPointsState(alertManagerSourceName: String): Promise<ContactPointsState> {
   return new Promise<ContactPointsState>((resolve) => {
