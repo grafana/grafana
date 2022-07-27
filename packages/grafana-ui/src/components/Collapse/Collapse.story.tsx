@@ -8,6 +8,8 @@ import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/st
 import { Collapse, ControlledCollapse } from './Collapse';
 import mdx from './Collapse.mdx';
 
+const EXCLUDED_PROPS = ['className', 'onToggle'];
+
 const meta: ComponentMeta<typeof Collapse> = {
   title: 'Layout/Collapse',
   component: Collapse,
@@ -17,7 +19,7 @@ const meta: ComponentMeta<typeof Collapse> = {
       page: mdx,
     },
     controls: {
-      exclude: ['className', 'onToggle'],
+      exclude: EXCLUDED_PROPS,
     },
   },
   args: {
@@ -55,7 +57,7 @@ export const Controlled: ComponentStory<typeof ControlledCollapse> = (args) => {
 };
 Controlled.parameters = {
   controls: {
-    exclude: 'isOpen',
+    exclude: [...EXCLUDED_PROPS, 'isOpen'],
   },
 };
 
