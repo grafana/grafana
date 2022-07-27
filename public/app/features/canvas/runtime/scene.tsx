@@ -59,6 +59,7 @@ export class Scene {
   div?: HTMLDivElement;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
+  shouldShowAdvancedTypes?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
 
@@ -66,8 +67,13 @@ export class Scene {
 
   inlineEditingCallback?: () => void;
 
-  constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
-    this.root = this.load(cfg, enableEditing);
+  constructor(
+    cfg: CanvasFrameOptions,
+    enableEditing: boolean,
+    showAdvancedTypes: boolean,
+    public onSave: (cfg: CanvasFrameOptions) => void
+  ) {
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes);
   }
 
   getNextElementName = (isFrame = false) => {
@@ -89,7 +95,7 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(cfg: CanvasFrameOptions, enableEditing: boolean) {
+  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean) {
     this.root = new RootElement(
       cfg ?? {
         type: 'frame',
@@ -100,6 +106,7 @@ export class Scene {
     );
 
     this.isEditingEnabled = enableEditing;
+    this.shouldShowAdvancedTypes = showAdvancedTypes;
 
     setTimeout(() => {
       if (this.div) {

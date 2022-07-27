@@ -9,7 +9,12 @@ import { Button, HorizontalGroup, useTheme2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
-import { CanvasElementOptions, canvasElementRegistry } from '../../../../features/canvas';
+import {
+  CanvasElementItem,
+  CanvasElementOptions,
+  canvasElementRegistry,
+  defaultElementItems,
+} from '../../../../features/canvas';
 import { notFoundItem } from '../../../../features/canvas/elements/notFound';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
@@ -133,6 +138,19 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     }
   };
 
+  const typeOptions = settings.scene.shouldShowAdvancedTypes
+    ? canvasElementRegistry.selectOptions().options
+    : canvasElementRegistry.selectOptions(undefined, (elementItem: CanvasElementItem<any, any>) => {
+        let result = false;
+        defaultElementItems.forEach((item) => {
+          if (item.id === elementItem.id) {
+            result = true;
+          }
+        });
+
+        return result;
+      }).options;
+
   return (
     <>
       <Global styles={globalCSS} />
@@ -156,11 +174,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
       <HorizontalGroup>
         <div style={{ marginLeft: '18px' }}>
-          <AddLayerButton
-            onChange={onAddItem}
-            options={canvasElementRegistry.selectOptions().options}
-            label={'Add item'}
-          />
+          <AddLayerButton onChange={onAddItem} options={typeOptions} label={'Add item'} />
         </div>
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>
