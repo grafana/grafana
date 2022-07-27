@@ -39,7 +39,6 @@ export class CanvasPanel extends Component<Props, State> {
   panelContext: PanelContext = {} as PanelContext;
 
   readonly scene: Scene;
-  readonly data = new Subject<PanelData>();
   private subs = new Subscription();
   needsReload = false;
   isEditing = locationService.getSearchObject().editPanel !== undefined;
@@ -78,7 +77,6 @@ export class CanvasPanel extends Component<Props, State> {
   componentDidMount() {
     activeCanvasPanel = this;
     activePanelSubject.next({ panel: this });
-    this.data.next(this.props.data);
 
     this.panelContext = this.context as PanelContext;
     if (this.panelContext.onInstanceStateChange) {
@@ -128,6 +126,7 @@ export class CanvasPanel extends Component<Props, State> {
     });
 
     this.setState({ refresh: this.state.refresh + 1 });
+    activePanelSubject.next({ panel: this });
     // console.log('send changes', root);
   };
 
@@ -142,7 +141,6 @@ export class CanvasPanel extends Component<Props, State> {
 
     if (data !== nextProps.data && !this.scene.ignoreDataUpdate) {
       this.scene.updateData(nextProps.data);
-      this.data.next(this.props.data);
       changed = true;
     }
 

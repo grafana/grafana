@@ -1,8 +1,6 @@
 import { get as lodashGet } from 'lodash';
-import { PROPS_MAP } from 'moveable';
 import React, { useMemo } from 'react';
 import { useObservable } from 'react-use';
-import { of } from 'rxjs';
 
 import { DataFrame, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
@@ -20,8 +18,6 @@ import { getLayerEditor } from './editor/layerEditor';
 export function InlineEditBody() {
   const activePanel = useObservable(activePanelSubject);
   const instanceState = activePanel?.panel.context?.instanceState;
-  const panelData = useObservable(activePanel?.panel?.data ?? of());
-
   const pane = useMemo(() => {
     const p = activePanel?.panel;
     const state: InstanceState = instanceState;
@@ -36,7 +32,6 @@ export function InlineEditBody() {
       if (selection?.length === 1) {
         const element = selection[0];
         if (!(element instanceof FrameState)) {
-          console.log('HERE', element);
           builder.addNestedOptions(
             getElementEditor({
               category: [`Selected element (${element.options.name})`],
@@ -52,11 +47,11 @@ export function InlineEditBody() {
       {
         options: p.props.options,
         onChange: p.props.onOptionsChange,
-        data: panelData?.series,
+        data: p.props.data?.series,
       },
       supplier
     );
-  }, [instanceState, panelData, activePanel]);
+  }, [instanceState, activePanel]);
 
   return pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p));
 }
@@ -77,7 +72,6 @@ interface EditorProps<T> {
   data?: DataFrame[];
 }
 
-// 🤮🤮🤮🤮 this oddly does not actually do anything, but structure is required.  I'll try to clean it up...
 function getOptionsPaneCategoryDescriptor<T = any>(
   props: EditorProps<T>,
   supplier: PanelOptionsSupplier<T>
