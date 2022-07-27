@@ -23,6 +23,9 @@ const (
 	testFileMissingUID                  = "./testdata/contact_points/missing-uid"
 	testFileWhitespaceUID               = "./testdata/contact_points/whitespace-uid"
 	testFileMultipleCps                 = "./testdata/contact_points/multiple-contact-points"
+	testFileCorrectProperties_np        = "./testdata/notificiation_policies/correct-properties"
+	testFileCorrectPropertiesWithOrg_np = "./testdata/notificiation_policies/correct-properties-with-org"
+	testFileMultipleNps                 = "./testdata/notificiation_policies/multiple-policies"
 )
 
 func TestConfigReader(t *testing.T) {
@@ -99,5 +102,21 @@ func TestConfigReader(t *testing.T) {
 		file, err := configReader.readConfig(ctx, testFileMultipleCps)
 		require.NoError(t, err)
 		require.Len(t, file[0].ContactPoints, 2)
+	})
+	t.Run("a notification policy file with correct properties and specific org should not error", func(t *testing.T) {
+		_, err := configReader.readConfig(ctx, testFileCorrectProperties_np)
+		require.NoError(t, err)
+	})
+	t.Run("a notification policy file with correct properties and specific org should not error", func(t *testing.T) {
+		file, err := configReader.readConfig(ctx, testFileCorrectPropertiesWithOrg_np)
+		require.NoError(t, err)
+		t.Run("when an organization is set it should not overwrite it with the default of 1", func(t *testing.T) {
+			require.Equal(t, int64(1337), file[0].Policies[0].OrgID)
+		})
+	})
+	t.Run("the config reader should be able to read a file with multiple notification policies", func(t *testing.T) {
+		file, err := configReader.readConfig(ctx, testFileMultipleNps)
+		require.NoError(t, err)
+		require.Len(t, file[0].Policies, 2)
 	})
 }

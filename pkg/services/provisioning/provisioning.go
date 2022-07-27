@@ -272,12 +272,15 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log)
 	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
 		st, ps.SQLStore, ps.log)
+	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,
+		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
 	cfg := prov_alerting.ProvisionerConfig{
-		Path:                 alertingPath,
-		RuleService:          *ruleService,
-		DashboardService:     ps.dashboardService,
-		DashboardProvService: ps.dashboardProvisioningService,
-		ContactPointService:  *contactPointService,
+		Path:                       alertingPath,
+		RuleService:                *ruleService,
+		DashboardService:           ps.dashboardService,
+		DashboardProvService:       ps.dashboardProvisioningService,
+		ContactPointService:        *contactPointService,
+		NotificiationPolicyService: *notificationPolicyService,
 	}
 	return ps.provisionAlerting(ctx, cfg)
 }
