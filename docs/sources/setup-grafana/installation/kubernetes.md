@@ -13,7 +13,7 @@ This page explains how to install and run Grafana on Kubernetes (K8S). It uses K
 
 ## Deploy Grafana OS on Kubernetes
 
-This section explains how to install Grafana open source using Kubernetes. 
+This section explains how to install Grafana using Kubernetes. 
 If you are interested in Grafana Enterprise (not Grafana OS), jump to the [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes) section.
 
 ### Create a Grafana Kubernetes manifest
