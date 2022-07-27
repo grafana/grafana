@@ -19,7 +19,7 @@ var (
 func ProvideService(
 	sqlStore sqlstore.Store,
 	userService user.Service,
-	quotaService *quota.QuotaService,
+	quotaService quota.Service,
 	authInfoService login.AuthInfoService,
 ) *Implementation {
 	s := &Implementation{
@@ -35,7 +35,7 @@ type Implementation struct {
 	SQLStore        sqlstore.Store
 	userService     user.Service
 	AuthInfoService login.AuthInfoService
-	QuotaService    *quota.QuotaService
+	QuotaService    quota.Service
 	TeamSync        login.TeamSyncFunc
 }
 
@@ -49,14 +49,12 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 	extUser := cmd.ExternalUser
 
 	usr, err := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
-		AuthModule: extUser.AuthModule,
-		AuthId:     extUser.AuthId,
-		UserId:     extUser.UserId,
-		Email:      extUser.Email,
-		Login:      extUser.Login,
+		AuthModule:       extUser.AuthModule,
+		AuthId:           extUser.AuthId,
+		UserLookupParams: cmd.UserLookupParams,
 	})
 	if err != nil {
-		if !errors.Is(err, models.ErrUserNotFound) {
+		if !errors.Is(err, user.ErrUserNotFound) {
 			return err
 		}
 		if !cmd.SignupAllowed {

@@ -240,7 +240,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.isFlux) {
       return {
         ...query,
-        query: this.templateSrv.replace(query.query ?? '', rest, 'regex'), // The raw query text
+        query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
       };
     }
 

@@ -7,14 +7,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-// GetDashboardAclInfoList returns a list of permissions for a dashboard. They can be fetched from three
+// GetDashboardACLInfoList returns a list of permissions for a dashboard. They can be fetched from three
 // different places.
 // 1) Permissions for the dashboard
 // 2) permissions for its parent folder
 // 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
-func (d *DashboardStore) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
 	outerErr := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		query.Result = make([]*models.DashboardAclInfoDTO, 0)
+		query.Result = make([]*models.DashboardACLInfoDTO, 0)
 		falseStr := d.dialect.BooleanStr(false)
 
 		if query.DashboardID == 0 {
@@ -146,5 +146,13 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 		query.Result = len(resp) > 0 && resp[0].Count > 0
 
 		return nil
+	})
+}
+
+func (d *DashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var rawSQL = "DELETE FROM dashboard_acl WHERE user_id = ?"
+		_, err := sess.Exec(rawSQL, userID)
+		return err
 	})
 }

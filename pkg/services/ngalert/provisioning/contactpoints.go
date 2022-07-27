@@ -34,17 +34,27 @@ func NewContactPointService(store AMConfigStore, encryptionService secrets.Servi
 	}
 }
 
-func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error) {
-	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
+type ContactPointQuery struct {
+	// Optionally filter by name.
+	Name  string
+	OrgID int64
+}
+
+func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery) ([]apimodels.EmbeddedContactPoint, error) {
+	revision, err := getLastConfiguration(ctx, q.OrgID, ecp.amStore)
 	if err != nil {
 		return nil, err
 	}
-	provenances, err := ecp.provenanceStore.GetProvenances(ctx, orgID, "contactPoint")
+	provenances, err := ecp.provenanceStore.GetProvenances(ctx, q.OrgID, "contactPoint")
 	if err != nil {
 		return nil, err
 	}
 	contactPoints := []apimodels.EmbeddedContactPoint{}
 	for _, contactPoint := range revision.cfg.GetGrafanaReceiverMap() {
+		if q.Name != "" && contactPoint.Name != q.Name {
+			continue
+		}
+
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   contactPoint.UID,
 			Type:                  contactPoint.Type,
@@ -66,6 +76,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 			}
 			embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
 		}
+
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
 	sort.SliceStable(contactPoints, func(i, j int) bool {

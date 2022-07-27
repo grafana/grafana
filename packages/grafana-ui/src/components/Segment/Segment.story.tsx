@@ -1,4 +1,5 @@
 import { action } from '@storybook/addon-actions';
+import { ComponentMeta } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { Segment, Icon, SegmentSection } from '@grafana/ui';
@@ -41,7 +42,7 @@ export const ArrayOptions = () => {
   );
 };
 
-export default {
+const meta: ComponentMeta<typeof Segment> = {
   title: 'Data Source/Segment/SegmentSync',
   component: Segment,
 };
@@ -147,3 +148,5 @@ export const HtmlAttributes = () => {
     </SegmentFrame>
   );
 };
+
+export default meta;

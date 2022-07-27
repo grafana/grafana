@@ -36,6 +36,18 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 	return response.JSON(200, uids)
 }
 
+// swagger:route POST /user/stars/dashboard/{dashboard_id} signed_in_user starDashboard
+//
+// Star a dashboard.
+//
+// Stars the given Dashboard for the actual user.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -54,6 +66,18 @@ func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 	return response.Success("Dashboard starred!")
 }
 
+// swagger:route DELETE /user/stars/dashboard/{dashboard_id} signed_in_user unstarDashboard
+//
+// Unstar a dashboard.
+//
+// Deletes the starring of the given Dashboard for the actual user.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -70,4 +94,18 @@ func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
 	}
 
 	return response.Success("Dashboard unstarred")
+}
+
+// swagger:parameters starDashboard
+type StarDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardID string `json:"dashboard_id"`
+}
+
+// swagger:parameters unstarDashboard
+type UnstarDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardID string `json:"dashboard_id"`
 }

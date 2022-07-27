@@ -5,20 +5,27 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
+  DataSourcePluginMeta,
   DataSourceRef,
-  PluginMeta,
 } from '@grafana/data';
 import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+
+import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
 
 export const PUBLIC_DATASOURCE = '-- Public --';
 
 export class PublicDashboardDataSource extends DataSourceApi<any> {
   constructor(datasource: DataSourceRef | string | DataSourceApi | null) {
+    let meta = {} as DataSourcePluginMeta;
+    if (PublicDashboardDataSource.isMixedDatasource(datasource)) {
+      meta.mixed = true;
+    }
+
     super({
       name: 'public-ds',
       id: 0,
       type: 'public-ds',
-      meta: {} as PluginMeta,
+      meta,
       uid: PublicDashboardDataSource.resolveUid(datasource),
       jsonData: {},
       access: 'proxy',
@@ -36,6 +43,14 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
     }
 
     return datasource?.uid ?? PUBLIC_DATASOURCE;
+  }
+
+  private static isMixedDatasource(datasource: DataSourceRef | string | DataSourceApi | null): boolean {
+    if (typeof datasource === 'string' || datasource === null) {
+      return false;
+    }
+
+    return datasource?.uid === MIXED_DATASOURCE_NAME;
   }
 
   /**

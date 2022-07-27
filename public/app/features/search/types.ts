@@ -51,7 +51,12 @@ export interface DashboardSectionItem {
   sortMetaName?: string;
 }
 
+/**
+ * @deprecated - It uses dashboard ID which is depreacted in favor of dashboard UID. Please, use DashboardSearchItem instead.
+ */
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
+
+export interface DashboardSearchItem extends Omit<DashboardSearchHit, 'id'> {}
 
 export interface SearchAction extends Action {
   payload?: any;
@@ -61,9 +66,7 @@ export interface DashboardQuery {
   query: string;
   tag: string[];
   starred: boolean;
-  skipRecent: boolean;
-  skipStarred: boolean;
-  folderIds: number[];
+  explain?: boolean; // adds debug info
   datasource?: string;
   sort: SelectableValue | null;
   // Save sorting data between layouts

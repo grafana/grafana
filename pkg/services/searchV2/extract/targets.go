@@ -31,17 +31,17 @@ func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
 	switch iter.WhatIsNext() {
 	case jsoniter.StringValue:
 		key := iter.ReadString()
-		ds := s.lookup(&DataSourceRef{UID: key})
+		ds := s.lookup.ByRef(&DataSourceRef{UID: key})
 		s.addRef(ds)
 
 	case jsoniter.NilValue:
-		s.addRef(s.lookup(nil))
+		s.addRef(s.lookup.ByRef(nil))
 		iter.Skip()
 
 	case jsoniter.ObjectValue:
 		ref := &DataSourceRef{}
 		iter.ReadVal(ref)
-		ds := s.lookup(ref)
+		ds := s.lookup.ByRef(ref)
 		s.addRef(ds)
 
 	default:

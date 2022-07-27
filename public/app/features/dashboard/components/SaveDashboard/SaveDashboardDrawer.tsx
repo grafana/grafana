@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { jsonDiff } from '../VersionHistory/utils';
@@ -68,6 +68,14 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   const renderBody = () => {
     if (showDiff) {
       return <SaveDashboardDiff diff={data.diff} oldValue={previous.value} newValue={data.clone} />;
+    }
+
+    if (state.loading) {
+      return (
+        <div>
+          <Spinner />
+        </div>
+      );
     }
 
     if (isNew || isCopy) {

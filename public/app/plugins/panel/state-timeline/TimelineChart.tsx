@@ -61,6 +61,9 @@ export class TimelineChart extends React.Component<TimelineProps> {
       allFrames: this.props.frames,
       ...this.props,
 
+      // Ensure timezones is passed as an array
+      timeZones: Array.isArray(this.props.timeZones) ? this.props.timeZones : [this.props.timeZones],
+
       // When there is only one row, use the full space
       rowHeight: alignedFrame.fields.length > 2 ? this.props.rowHeight : 1,
       getValueColor: this.getValueColor,

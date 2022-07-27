@@ -35,7 +35,7 @@ export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
   cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;
-  onCellFilterAdded: TableFilterActionCallback;
+  onCellFilterAdded?: TableFilterActionCallback;
   innerWidth: number;
 }
 

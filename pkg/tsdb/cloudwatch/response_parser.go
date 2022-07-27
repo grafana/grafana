@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -297,9 +296,9 @@ func createDataLinks(link string) []data.DataLink {
 func createMeta(query *cloudWatchQuery) *data.FrameMeta {
 	return &data.FrameMeta{
 		ExecutedQueryString: query.UsedExpression,
-		Custom: simplejson.NewFromAny(map[string]interface{}{
-			"period": query.Period,
-			"id":     query.Id,
-		}),
+		Custom: fmt.Sprintf(`{
+			"period": %d,
+			"id":     %s,
+		}`, query.Period, query.Id),
 	}
 }

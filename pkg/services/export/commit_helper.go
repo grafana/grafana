@@ -17,13 +17,18 @@ import (
 )
 
 type commitHelper struct {
-	ctx     context.Context
-	repo    *git.Repository
-	work    *git.Worktree
-	orgDir  string // includes the orgID
-	workDir string // same as the worktree root
-	orgID   int64
-	users   map[int64]*userInfo
+	ctx           context.Context
+	repo          *git.Repository
+	work          *git.Worktree
+	orgDir        string // includes the orgID
+	workDir       string // same as the worktree root
+	orgID         int64
+	users         map[int64]*userInfo
+	stopRequested bool
+	broadcast     func(path string)
+	exporter      string // key for the current exporter
+
+	counter int
 }
 
 type commitBody struct {
@@ -64,6 +69,26 @@ func (ch *commitHelper) initOrg(sql *sqlstore.SQLStore, orgID int64) error {
 }
 
 func (ch *commitHelper) add(opts commitOptions) error {
+	if ch.stopRequested {
+		return fmt.Errorf("stop requested")
+	}
+
+	if len(opts.body) < 1 {
+		return nil // nothing to commit
+	}
+
+	user, ok := ch.users[opts.userID]
+	if !ok {
+		user = &userInfo{
+			Name:  "admin",
+			Email: "admin@unknown.org",
+		}
+	}
+	sig := user.getAuthor()
+	if opts.when.Unix() > 100 {
+		sig.When = opts.when
+	}
+
 	for _, b := range opts.body {
 		if !strings.HasPrefix(b.fpath, ch.orgDir) {
 			return fmt.Errorf("invalid path, must be within the root folder")
@@ -87,6 +112,10 @@ func (ch *commitHelper) add(opts commitOptions) error {
 		if err != nil {
 			return err
 		}
+		err = os.Chtimes(b.fpath, sig.When, sig.When)
+		if err != nil {
+			return err
+		}
 
 		sub := b.fpath[len(ch.workDir)+1:]
 		_, err = ch.work.Add(sub)
@@ -98,24 +127,14 @@ func (ch *commitHelper) add(opts commitOptions) error {
 			fmt.Printf("STATUS: %+v\n", status)
 			return fmt.Errorf("unable to add file: %s (%d)", sub, len(b.body))
 		}
-	}
-
-	user, ok := ch.users[opts.userID]
-	if !ok {
-		user = &userInfo{
-			Name:  "admin",
-			Email: "admin@unknown.org",
-		}
-	}
-	sig := user.getAuthor()
-	if opts.when.Unix() > 10 {
-		sig.When = opts.when
+		ch.counter++
 	}
 
 	copts := &git.CommitOptions{
 		Author: &sig,
 	}
 
+	ch.broadcast(opts.body[0].fpath)
 	_, err := ch.work.Commit(opts.comment, copts)
 	return err
 }
@@ -140,6 +159,7 @@ func (u *userInfo) getAuthor() object.Signature {
 	return object.Signature{
 		Name:  firstRealStringX(u.Name, u.Login, u.Email, "?"),
 		Email: firstRealStringX(u.Email, u.Login, u.Name, "?"),
+		When:  time.Now(),
 	}
 }
 

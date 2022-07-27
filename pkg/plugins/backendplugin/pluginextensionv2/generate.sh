@@ -13,4 +13,4 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 cd "$DIR"
 
-protoc -I ./ rendererv2.proto --go_out=plugins=grpc:./
+protoc -I ./ *.proto --go_out=plugins=grpc:./

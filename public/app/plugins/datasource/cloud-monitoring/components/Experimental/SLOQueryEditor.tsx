@@ -1,9 +1,8 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow, Stack } from '@grafana/experimental';
+import { EditorRow, EditorFieldGroup, EditorField, Stack } from '@grafana/ui';
 
-import { Project } from '..';
 import { ALIGNMENT_PERIODS } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
@@ -11,6 +10,7 @@ import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
 import { AliasBy } from './AliasBy';
 import { AlignmentPeriodLabel } from './AlignmentPeriodLabel';
 import { PeriodSelect } from './PeriodSelect';
+import { Project } from './Project';
 import { SLO } from './SLO';
 import { Selector } from './Selector';
 import { Service } from './Service';

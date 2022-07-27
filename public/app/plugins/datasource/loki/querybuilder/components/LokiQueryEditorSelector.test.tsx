@@ -50,6 +50,7 @@ const datasource = new LokiDatasource(
 );
 
 datasource.languageProvider.fetchLabels = jest.fn().mockResolvedValue([]);
+datasource.getDataSamples = jest.fn().mockResolvedValue([]);
 
 const defaultProps = {
   datasource,
@@ -75,7 +76,7 @@ describe('LokiQueryEditorSelector', () => {
         }}
       />
     );
-    expectBuilder();
+    await expectBuilder();
   });
 
   it('shows code editor when code mode is set', async () => {
@@ -85,7 +86,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('shows builder when builder mode is set', async () => {
     renderWithMode(QueryEditorMode.Builder);
-    expectBuilder();
+    await expectBuilder();
   });
 
   it('shows explain when explain mode is set', async () => {
@@ -106,7 +107,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('Can enable raw query', async () => {
     renderWithMode(QueryEditorMode.Builder);
-    expect(screen.queryByLabelText('selector')).toBeInTheDocument();
+    expect(await screen.findByLabelText('selector')).toBeInTheDocument();
     screen.getByLabelText('Raw query').click();
     expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
   });
@@ -116,7 +117,9 @@ describe('LokiQueryEditorSelector', () => {
       editorMode: QueryEditorMode.Builder,
       expr: '{job="grafana"}',
     });
-    expect(screen.getByLabelText('selector').textContent).toBe('{job="grafana"}');
+    const selector = await screen.findByLabelText('selector');
+    expect(selector).toBeInTheDocument();
+    expect(selector.textContent).toBe('{job="grafana"}');
   });
 
   it('changes to code mode', async () => {
@@ -182,8 +185,8 @@ function expectCodeEditor() {
   expect(screen.getByText('Loading labels...')).toBeInTheDocument();
 }
 
-function expectBuilder() {
-  expect(screen.getByText('Labels')).toBeInTheDocument();
+async function expectBuilder() {
+  expect(await screen.findByText('Labels')).toBeInTheDocument();
 }
 
 function expectExplain() {

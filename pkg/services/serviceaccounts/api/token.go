@@ -20,14 +20,22 @@ const (
 	ServiceID         = "sa"
 )
 
+// swagger:model
 type TokenDTO struct {
-	Id                     int64      `json:"id"`
-	Name                   string     `json:"name"`
-	Created                *time.Time `json:"created"`
-	LastUsedAt             *time.Time `json:"lastUsedAt"`
-	Expiration             *time.Time `json:"expiration"`
-	SecondsUntilExpiration *float64   `json:"secondsUntilExpiration"`
-	HasExpired             bool       `json:"hasExpired"`
+	// example: 1
+	Id int64 `json:"id"`
+	// example: grafana
+	Name string `json:"name"`
+	// example: 2022-03-23T10:31:02Z
+	Created *time.Time `json:"created"`
+	// example: 2022-03-23T10:31:02Z
+	LastUsedAt *time.Time `json:"lastUsedAt"`
+	// example: 2022-03-23T10:31:02Z
+	Expiration *time.Time `json:"expiration"`
+	// example: 0
+	SecondsUntilExpiration *float64 `json:"secondsUntilExpiration"`
+	// example: false
+	HasExpired bool `json:"hasExpired"`
 }
 
 func hasExpired(expiration *int64) bool {
@@ -40,7 +48,21 @@ func hasExpired(expiration *int64) bool {
 
 const sevenDaysAhead = 7 * 24 * time.Hour
 
-// GET /api/serviceaccounts/:serviceAccountId/tokens
+// swagger:route GET /serviceaccounts/{serviceAccountId}/tokens service_accounts listTokens
+//
+// Get service account tokens
+//
+// Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+// action: `serviceaccounts:read` scope: `global:serviceaccounts:id:1` (single service account)
+//
+// Requires basic authentication and that the authenticated user is a Grafana Admin.
+//
+// Responses:
+// 200: listTokensResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -80,8 +102,21 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, result)
 }
 
+// swagger:route POST /serviceaccounts/{serviceAccountId}/tokens service_accounts createToken
+//
 // CreateNewToken adds a token to a service account
-// POST /api/serviceaccounts/:serviceAccountId/tokens
+//
+// Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+// action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
+//
+// Responses:
+// 200: createTokenResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 409: conflictError
+// 500: internalServerError
 func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -141,8 +176,22 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, result)
 }
 
+// swagger:route DELETE /serviceaccounts/{serviceAccountId}/tokens/{tokenId} service_accounts deleteToken
+//
 // DeleteToken deletes service account tokens
-// DELETE /api/serviceaccounts/:serviceAccountId/tokens/:tokenId
+//
+// Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+// action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
+//
+// Requires basic authentication and that the authenticated user is a Grafana Admin.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -176,4 +225,38 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 	}
 
 	return response.Success("Service account token deleted")
+}
+
+// swagger:parameters listTokens
+type ListTokensParams struct {
+	// in:path
+	ServiceAccountId int64 `json:"serviceAccountId"`
+}
+
+// swagger:parameters createToken
+type CreateTokenParams struct {
+	// in:path
+	ServiceAccountId int64 `json:"serviceAccountId"`
+	// in:body
+	Body serviceaccounts.AddServiceAccountTokenCommand
+}
+
+// swagger:parameters deleteToken
+type DeleteTokenParams struct {
+	// in:path
+	TokenId int64 `json:"tokenId"`
+	// in:path
+	ServiceAccountId int64 `json:"serviceAccountId"`
+}
+
+// swagger:response listTokensResponse
+type ListTokensResponse struct {
+	// in:body
+	Body *TokenDTO
+}
+
+// swagger:response createTokenResponse
+type CreateTokenResponse struct {
+	// in:body
+	Body *dtos.NewApiKeyResult
 }

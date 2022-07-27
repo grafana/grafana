@@ -102,14 +102,6 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       this.reinitPlot();
     } else if (!sameData(prevProps, this.props)) {
       plot?.setData(this.props.data as AlignedData);
-
-      // this is a uPlot cache-busting hack for bar charts in case x axis labels changed
-      // since the x scale's "range" doesnt change, the axis size doesnt get recomputed, which is where the tick labels are regenerated & cached
-      // the more expensive, more proper/thorough way to do this is to force all axes to recalc: plot?.redraw(false, true);
-      if (plot && typeof this.props.data[0]?.[0] === 'string') {
-        //@ts-ignore
-        plot.axes[0]._values = this.props.data[0];
-      }
     } else if (!sameTimeRange(prevProps, this.props)) {
       plot?.setScale('x', {
         min: this.props.timeRange.from.valueOf(),

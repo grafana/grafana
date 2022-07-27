@@ -1,4 +1,5 @@
 import { action } from '@storybook/addon-actions';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { UseState } from '../../../utils/storybook/UseState';
@@ -6,7 +7,7 @@ import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
 import { RelativeTimeRangePicker } from './RelativeTimeRangePicker';
 
-export default {
+const meta: ComponentMeta<typeof RelativeTimeRangePicker> = {
   title: 'Pickers and Editors/TimePickers/RelativeTimeRangePicker',
   component: RelativeTimeRangePicker,
   decorators: [withCenteredStory],
@@ -37,3 +38,5 @@ export const basic = () => {
     </UseState>
   );
 };
+
+export default meta;

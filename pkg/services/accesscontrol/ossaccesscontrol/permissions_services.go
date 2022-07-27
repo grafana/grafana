@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -58,10 +59,9 @@ func ProvideTeamPermissions(
 			return nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:           true,
-			Teams:           false,
-			BuiltInRoles:    false,
-			ServiceAccounts: true,
+			Users:        true,
+			Teams:        false,
+			BuiltInRoles: false,
 		},
 		PermissionsToActions: map[string][]string{
 			"Member": TeamMemberActions,
@@ -150,10 +150,9 @@ func ProvideDashboardPermissions(
 			return []string{}, nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:           true,
-			Teams:           true,
-			BuiltInRoles:    true,
-			ServiceAccounts: false,
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  DashboardViewActions,
@@ -208,10 +207,9 @@ func ProvideFolderPermissions(
 			return nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:           true,
-			Teams:           true,
-			BuiltInRoles:    true,
-			ServiceAccounts: false,
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  append(DashboardViewActions, FolderViewActions...),
@@ -259,4 +257,45 @@ func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID 
 
 func (e DatasourcePermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
 	return ""
+}
+
+type ServiceAccountPermissionsService struct {
+	*resourcepermissions.Service
+}
+
+func ProvideServiceAccountPermissions(
+	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
+	ac accesscontrol.AccessControl, store resourcepermissions.Store,
+	license models.Licensing, serviceAccountStore serviceaccounts.Store,
+) (*ServiceAccountPermissionsService, error) {
+	options := resourcepermissions.Options{
+		Resource:          "serviceaccounts",
+		ResourceAttribute: "id",
+		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			id, err := strconv.ParseInt(resourceID, 10, 64)
+			if err != nil {
+				return err
+			}
+			_, err = serviceAccountStore.RetrieveServiceAccount(ctx, orgID, id)
+			return err
+		},
+		Assignments: resourcepermissions.Assignments{
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: false,
+		},
+		PermissionsToActions: map[string][]string{
+			"Edit":  {serviceaccounts.ActionRead, serviceaccounts.ActionWrite},
+			"Admin": {serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionDelete, serviceaccounts.ActionPermissionsRead, serviceaccounts.ActionPermissionsWrite},
+		},
+		ReaderRoleName: "Service account permission reader",
+		WriterRoleName: "Service account permission writer",
+		RoleGroup:      "Service accounts",
+	}
+
+	srv, err := resourcepermissions.New(options, cfg, router, license, ac, store, sql)
+	if err != nil {
+		return nil, err
+	}
+	return &ServiceAccountPermissionsService{srv}, nil
 }

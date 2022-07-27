@@ -1,9 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
 import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { replaceCurrentFolderQuery } from './utils';
@@ -19,7 +19,7 @@ export class BlugeSearcher implements GrafanaSearcher {
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
-    const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+    const ds = await getGrafanaDatasource();
     const target = {
       refId: 'TagsQuery',
       queryType: GrafanaQueryType.Search,
@@ -74,7 +74,7 @@ const nextPageSizes = 100;
 
 async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   query = await replaceCurrentFolderQuery(query);
-  const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  const ds = await getGrafanaDatasource();
   const target = {
     refId: 'Search',
     queryType: GrafanaQueryType.Search,
@@ -121,15 +121,12 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     }
   }
 
-  const view = new DataFrameView<DashboardQueryResult>(first);
-  return {
-    totalRows: meta.count ?? first.length,
-    view,
-    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-      console.log('LOAD NEXT PAGE', { startIndex, stopIndex, length: view.dataFrame.length });
+  let loadMax = 0;
+  let pending: Promise<void> | undefined = undefined;
+  const getNextPage = async () => {
+    while (loadMax > view.dataFrame.length) {
       const from = view.dataFrame.length;
-      const limit = stopIndex - from;
-      if (limit < 0) {
+      if (from >= meta.count) {
         return;
       }
       const frame = (
@@ -141,7 +138,7 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
                 search: {
                   ...(target?.search ?? {}),
                   from,
-                  limit: Math.max(limit, nextPageSizes),
+                  limit: nextPageSizes,
                 },
                 refId: 'Page',
                 facet: undefined,
@@ -175,7 +172,20 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
           meta.locationInfo[key] = value;
         }
       }
-      return;
+    }
+    pending = undefined;
+  };
+
+  const view = new DataFrameView<DashboardQueryResult>(first);
+  return {
+    totalRows: meta.count ?? first.length,
+    view,
+    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      loadMax = Math.max(loadMax, stopIndex);
+      if (!pending) {
+        pending = getNextPage();
+      }
+      return pending;
     },
     isItemLoaded: (index: number): boolean => {
       return index < view.dataFrame.length;

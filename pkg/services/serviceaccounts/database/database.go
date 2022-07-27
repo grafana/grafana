@@ -23,7 +23,7 @@ type ServiceAccountsStoreImpl struct {
 	log      log.Logger
 }
 
-func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
+func ProvideServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
 		sqlStore: store,
 		kvStore:  kvStore,
@@ -32,30 +32,61 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) 
 }
 
 // CreateServiceAccount creates service account
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
-	generatedLogin := "sa-" + strings.ToLower(name)
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	generatedLogin := "sa-" + strings.ToLower(saForm.Name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
-	cmd := user.CreateUserCommand{
-		Login:            generatedLogin,
-		OrgID:            orgId,
-		Name:             name,
-		IsServiceAccount: true,
+	isDisabled := false
+	role := models.ROLE_VIEWER
+	if saForm.IsDisabled != nil {
+		isDisabled = *saForm.IsDisabled
 	}
+	if saForm.Role != nil {
+		role = *saForm.Role
+	}
+	var newSA *user.User
+	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) (err error) {
+		var errUser error
+		newSA, errUser = s.sqlStore.CreateUser(ctx, user.CreateUserCommand{
+			Login:            generatedLogin,
+			OrgID:            orgId,
+			Name:             saForm.Name,
+			IsDisabled:       isDisabled,
+			IsServiceAccount: true,
+			SkipOrgSetup:     true,
+		})
+		if errUser != nil {
+			return errUser
+		}
 
-	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
-	if err != nil {
-		if errors.Is(err, models.ErrUserAlreadyExists) {
+		errAddOrgUser := s.sqlStore.AddOrgUser(ctx, &models.AddOrgUserCommand{
+			Role:                      role,
+			OrgId:                     orgId,
+			UserId:                    newSA.ID,
+			AllowAddingServiceAccount: true,
+		})
+		if errAddOrgUser != nil {
+			return errAddOrgUser
+		}
+
+		return nil
+	})
+
+	if createErr != nil {
+		if errors.Is(createErr, user.ErrUserAlreadyExists) {
 			return nil, ErrServiceAccountAlreadyExists
 		}
-		return nil, fmt.Errorf("failed to create service account: %w", err)
+
+		return nil, fmt.Errorf("failed to create service account: %w", createErr)
 	}
 
 	return &serviceaccounts.ServiceAccountDTO{
-		Id:     newuser.ID,
-		Name:   newuser.Name,
-		Login:  newuser.Login,
-		OrgId:  newuser.OrgID,
-		Tokens: 0,
+		Id:         newSA.ID,
+		Name:       newSA.Name,
+		Login:      newSA.Login,
+		OrgId:      newSA.OrgID,
+		Tokens:     0,
+		Role:       string(role),
+		IsDisabled: isDisabled,
 	}, nil
 }
 
@@ -432,7 +463,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 }
 
 // RevertApiKey converts service account token to old API key
-func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64) error {
+func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
 	query := models.GetApiKeyByIdQuery{ApiKeyId: keyId}
 	if err := s.sqlStore.GetApiKeyById(ctx, &query); err != nil {
 		return err
@@ -441,6 +472,10 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 
 	if key.ServiceAccountId == nil {
 		return fmt.Errorf("API key is not service account token")
+	}
+
+	if *key.ServiceAccountId != saId {
+		return ErrServiceAccountAndTokenMismatch
 	}
 
 	tokens, err := s.ListTokens(ctx, key.OrgId, *key.ServiceAccountId)
