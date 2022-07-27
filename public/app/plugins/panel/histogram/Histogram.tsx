@@ -12,14 +12,7 @@ import {
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
 } from '@grafana/data/src/transformations/transformers/histogram';
-import {
-  VizLegendOptions,
-  LegendDisplayMode,
-  ScaleDistribution,
-  AxisPlacement,
-  ScaleDirection,
-  ScaleOrientation,
-} from '@grafana/schema';
+import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   Themeable2,
   UPlotConfigBuilder,
@@ -273,7 +266,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
-    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
+    if (!config || legend.showLegend === false) {
       return null;
     }
 
