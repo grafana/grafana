@@ -271,14 +271,16 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       const streams: Array<Observable<DataQueryResponse>> = [];
 
       for (const target of options.targets) {
-        streams.push(
-          new Observable((subscriber) => {
-            this.annotationEvents(options, target)
-              .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
-              .catch((ex) => subscriber.error(new Error(ex)))
-              .finally(() => subscriber.complete());
-          })
-        );
+        if (target.query) {
+          streams.push(
+            new Observable((subscriber) => {
+              this.annotationEvents(options, target)
+                .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+                .catch((ex) => subscriber.error(new Error(ex)))
+                .finally(() => subscriber.complete());
+            })
+          );
+        }
       }
 
       return merge(...streams);

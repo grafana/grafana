@@ -69,7 +69,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
           </div>
           <div className="gf-form ng-hide">
             <InlineFormLabel width={12}>Title</InlineFormLabel>
-            <Input value={titleColumn} />
+            <Input defaultValue={titleColumn} />
           </div>
         </div>
       </div>
