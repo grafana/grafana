@@ -203,7 +203,7 @@ export class GraphiteDatasource
           })
         );
       } else {
-        // handle the queries
+        // handle the queries here
         const graphOptions = {
           from: this.translateTime(options.range.from, false, options.timezone),
           until: this.translateTime(options.range.to, true, options.timezone),
