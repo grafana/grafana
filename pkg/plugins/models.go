@@ -40,9 +40,19 @@ const (
 type PluginSignatureType string
 
 const (
-	grafanaType PluginSignatureType = "grafana"
-	privateType PluginSignatureType = "private"
+	grafanaType    PluginSignatureType = "grafana"
+	commercialType PluginSignatureType = "commercial"
+	communityType  PluginSignatureType = "community"
+	privateType    PluginSignatureType = "private"
 )
+
+func (s PluginSignatureType) IsValid() bool {
+	switch s {
+	case grafanaType, commercialType, communityType, privateType:
+		return true
+	}
+	return false
+}
 
 type PluginNotFoundError struct {
 	PluginID string
