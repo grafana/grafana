@@ -844,6 +844,15 @@ func createDatasourceLookup(rows []*datasourceQueryResult) extract.DatasourceLoo
 		byType[row.Type] = append(byType[row.Type], *ref)
 	}
 
+	if defaultDS == nil {
+		// fallback replicated from /pkg/api/frontendsettings.go
+		// https://github.com/grafana/grafana/blob/7ef21662f9ad74b80d832b9f2aa9db2fb4192741/pkg/api/frontendsettings.go#L51-L56
+		defaultDS = &extract.DataSourceRef{
+			UID:  "grafana",
+			Type: "datasource",
+		}
+	}
+
 	return &dsLookup{
 		byName:    byName,
 		byUID:     byUID,

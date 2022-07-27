@@ -123,6 +123,7 @@ export interface ScaleDistributionConfig {
 }
 
 export interface AxisConfig {
+  axisCenteredZero?: boolean;
   axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
@@ -206,6 +207,14 @@ export interface OptionsWithTooltip {
 export interface OptionsWithLegend {
   legend: VizLegendOptions;
 }
+
+export interface OptionsWithTimezones {
+  timezones?: string[];
+}
+
+export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
+  timezones: [],
+};
 
 export interface OptionsWithTextFormatting {
   text?: VizTextDisplayOptions;

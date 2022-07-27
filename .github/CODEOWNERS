@@ -38,10 +38,10 @@ go.sum @grafana/backend-platform
 # Observability backend code
 /pkg/tsdb/prometheus @grafana/observability-metrics
 /pkg/tsdb/influxdb @grafana/observability-metrics
-/pkg/tsdb/elasticsearch @grafana/observability-logs-and-traces
+/pkg/tsdb/elasticsearch @grafana/observability-logs
 /pkg/tsdb/graphite @grafana/observability-metrics
 /pkg/tsdb/jaeger @grafana/observability-logs-and-traces
-/pkg/tsdb/loki @grafana/observability-logs-and-traces
+/pkg/tsdb/loki @grafana/observability-logs
 /pkg/tsdb/zipkin @grafana/observability-logs-and-traces
 /pkg/tsdb/tempo @grafana/observability-logs-and-traces
 
@@ -117,7 +117,7 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /public/app/plugins/panel/barchart @grafana/grafana-bi-squad
 /public/app/plugins/panel/heatmap @grafana/grafana-bi-squad
 /public/app/plugins/panel/histogram @grafana/grafana-bi-squad
-/public/app/plugins/panel/logs @grafana/observability-logs-and-traces
+/public/app/plugins/panel/logs @grafana/observability-logs
 /public/app/plugins/panel/nodeGraph @grafana/observability-logs-and-traces
 /public/app/plugins/panel/piechart @grafana/grafana-bi-squad
 /public/app/plugins/panel/state-timeline @grafana/grafana-bi-squad
@@ -151,12 +151,12 @@ lerna.json @grafana/frontend-ops
 
 # Core datasources
 /public/app/plugins/datasource/cloudwatch @grafana/aws-plugins
-/public/app/plugins/datasource/elasticsearch @grafana/observability-logs-and-traces
+/public/app/plugins/datasource/elasticsearch @grafana/observability-logs
 /public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/cloud-provider-plugins
 /public/app/plugins/datasource/graphite @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb @grafana/observability-metrics
 /public/app/plugins/datasource/jaeger @grafana/observability-logs-and-traces
-/public/app/plugins/datasource/loki @grafana/observability-logs-and-traces
+/public/app/plugins/datasource/loki @grafana/observability-logs
 /public/app/plugins/datasource/mssql @grafana/grafana-bi-squad
 /public/app/plugins/datasource/mysql @grafana/grafana-bi-squad
 /public/app/plugins/datasource/opentsdb @grafana/backend-platform

@@ -18,6 +18,10 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	}
 
 	jwtToken := ctx.Req.Header.Get(h.Cfg.JWTAuthHeaderName)
+	if jwtToken == "" && h.Cfg.JWTAuthURLLogin {
+		jwtToken = ctx.Req.URL.Query().Get("auth_token")
+	}
+
 	if jwtToken == "" {
 		return false
 	}

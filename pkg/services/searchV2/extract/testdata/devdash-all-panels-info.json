@@ -10,18 +10,36 @@
     "query1",
     "text"
   ],
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
   "panels": [
     {
       "id": 34,
       "title": "",
       "type": "text",
-      "pluginVersion": "8.1.0-pre"
+      "pluginVersion": "8.1.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 35,
       "title": "",
       "type": "text",
-      "pluginVersion": "8.1.0-pre"
+      "pluginVersion": "8.1.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 32,
@@ -31,87 +49,183 @@
     {
       "id": 41,
       "title": "State timeline",
-      "type": "state-timeline"
+      "type": "state-timeline",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 62,
       "title": "Size, color mapped to different fields + share view",
-      "type": "geomap"
+      "type": "geomap",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 4,
       "title": "Histogram",
-      "type": "histogram"
+      "type": "histogram",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 28,
       "title": "Logs",
-      "type": "logs"
+      "type": "logs",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 8,
       "title": "Dashboard list",
       "type": "dashlist",
-      "pluginVersion": "8.1.0-pre"
+      "pluginVersion": "8.1.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 6,
       "title": "Alert list",
-      "type": "alertlist"
+      "type": "alertlist",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 26,
       "title": "Heatmap",
-      "type": "heatmap"
+      "type": "heatmap",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 20,
       "title": "Bar gauge",
       "type": "bargauge",
-      "pluginVersion": "8.1.0-pre"
+      "pluginVersion": "8.1.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 24,
       "title": "Pie chart",
-      "type": "piechart"
+      "type": "piechart",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 18,
       "title": "Gauge",
       "type": "gauge",
-      "pluginVersion": "8.1.0-pre"
+      "pluginVersion": "8.1.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 22,
       "title": "Tabel",
       "type": "table",
-      "pluginVersion": "8.1.0-pre"
+      "pluginVersion": "8.1.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 10,
       "title": "Annotation list",
-      "type": "annolist"
+      "type": "annolist",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 16,
       "title": "Stat",
       "type": "stat",
-      "pluginVersion": "8.1.0-pre"
+      "pluginVersion": "8.1.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 2,
       "title": "Graph NG",
-      "type": "timeseries"
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 14,
       "title": "Bar chart",
-      "type": "barchart"
+      "type": "barchart",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     },
     {
       "id": 12,
       "title": "News panel",
-      "type": "news"
+      "type": "news",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
     }
   ],
   "schemaVersion": 33,
