@@ -11,7 +11,7 @@ export interface DashboardInfo {
   dashboardUid: string;
   dashboardName: string;
   folderName?: string;
-  isPublic?: boolean;
+  publicDashboardUid?: string;
 }
 
 /**
@@ -47,7 +47,6 @@ export enum MetaAnalyticsEventName {
  */
 export interface DashboardViewEventPayload extends DashboardInfo {
   eventName: MetaAnalyticsEventName.DashboardView;
-  isPublic: boolean;
 }
 
 /**

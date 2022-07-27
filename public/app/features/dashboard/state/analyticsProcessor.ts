@@ -9,7 +9,7 @@ export function emitDashboardViewEvent(dashboard: DashboardModel) {
     dashboardUid: dashboard.uid,
     folderName: dashboard.meta.folderTitle,
     eventName: MetaAnalyticsEventName.DashboardView,
-    isPublic: !!dashboard.meta.publicDashboardAccessToken,
+    publicDashboardUid: dashboard.meta.publicDashboardAccessToken,
   };
 
   reportMetaAnalytics(eventData);
