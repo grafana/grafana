@@ -1,37 +1,24 @@
 import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import {
-  CompletionItemKind,
-  DB,
-  LanguageCompletionProvider,
-  ResponseParser,
-  SQLQuery,
-} from 'app/features/plugins/sql/types';
+import { CompletionItemKind, DB, LanguageCompletionProvider, SQLQuery } from 'app/features/plugins/sql/types';
 
 import MySQLQueryModel from './MySqlQueryModel';
-import MySqlResponseParser from './MySqlResponseParser';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { fetchColumns, fetchTables, getFunctions, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
-  responseParser: MySqlResponseParser;
   completionProvider: LanguageCompletionProvider | undefined;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
-    this.responseParser = new MySqlResponseParser();
     this.completionProvider = undefined;
   }
 
   getQueryModel(target?: Partial<SQLQuery>, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MySQLQueryModel {
     return new MySQLQueryModel(target!, templateSrv, scopedVars);
-  }
-
-  getResponseParser(): ResponseParser {
-    return this.responseParser;
   }
 
   getSqlCompletionProvider(db: DB): LanguageCompletionProvider {

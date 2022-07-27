@@ -1,37 +1,24 @@
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { AGGREGATE_FNS } from 'app/features/plugins/sql/constants';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import {
-  DB,
-  LanguageCompletionProvider,
-  ResponseParser,
-  SQLQuery,
-  SQLSelectableValue,
-} from 'app/features/plugins/sql/types';
+import { DB, LanguageCompletionProvider, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { PostgresQueryModel } from './PostgresQueryModel';
-import PostgresResponseParser from './PostgresResponseParser';
 import { getSchema, getTimescaleDBVersion, getVersion, showDatabases, showTables } from './postgresMetaQuery';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
 import { PostgresOptions } from './types';
 
 export class PostgresDatasource extends SqlDatasource {
-  responseParser: PostgresResponseParser;
   completionProvider: LanguageCompletionProvider | undefined = undefined;
 
   constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>, templateSrv?: TemplateSrv) {
     super(instanceSettings, templateSrv);
-    this.responseParser = new PostgresResponseParser();
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): PostgresQueryModel {
     return new PostgresQueryModel(target, templateSrv, scopedVars);
-  }
-
-  getResponseParser(): ResponseParser {
-    return this.responseParser;
   }
 
   async getVersion(): Promise<string> {
