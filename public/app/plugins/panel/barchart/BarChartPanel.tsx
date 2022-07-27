@@ -236,7 +236,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       frame: alignedFrame,
       getTimeRange,
       theme,
-      timeZone,
+      timeZones: [timeZone],
       eventBus,
       orientation,
       barWidth,
@@ -266,7 +266,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       preparePlotFrame={(f) => f[0]} // already processed in by the panel above!
       renderLegend={renderLegend}
       legend={options.legend}
-      timeZone={timeZone}
+      timeZones={timeZone}
       timeRange={{ from: 1, to: 1 } as unknown as TimeRange} // HACK
       structureRev={structureRev}
       width={width}
