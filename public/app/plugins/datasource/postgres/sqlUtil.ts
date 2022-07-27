@@ -2,17 +2,17 @@ import { isEmpty } from 'lodash';
 
 import { RAQBFieldTypes, SQLExpression, SQLQuery } from 'app/features/plugins/sql/types';
 
-export function getRAQBType(type: string): RAQBFieldTypes {
+export function getFieldConfig(type: string): { raqbFieldType: RAQBFieldTypes; icon: string } {
   switch (type) {
     case 'boolean': {
-      return 'boolean';
+      return { raqbFieldType: 'boolean', icon: 'toggle-off' };
     }
     case 'bit':
     case 'bit varying':
     case 'character':
     case 'character varying':
     case 'text': {
-      return 'text';
+      return { raqbFieldType: 'text', icon: 'text' };
     }
     case 'smallint':
     case 'integer':
@@ -24,63 +24,24 @@ export function getRAQBType(type: string): RAQBFieldTypes {
     case 'serial':
     case 'bigserial':
     case 'smallserial': {
-      return 'number';
+      return { raqbFieldType: 'number', icon: 'calculator-alt' };
     }
     case 'date': {
-      return 'date';
+      return { raqbFieldType: 'date', icon: 'clock-nine' };
     }
     case 'time':
     case 'time with time zone':
     case 'time without time zone':
     case 'interval': {
-      return 'time';
+      return { raqbFieldType: 'time', icon: 'clock-nine' };
     }
     case 'timestamp':
     case 'timestamp with time zone':
     case 'timestamp without time zone': {
-      return 'datetime';
+      return { raqbFieldType: 'datetime', icon: 'clock-nine' };
     }
     default:
-      return 'text';
-  }
-}
-
-export function getIcon(type: string) {
-  switch (type) {
-    case 'boolean': {
-      return 'toggle-off';
-    }
-    case 'bit':
-    case 'bit varying':
-    case 'character':
-    case 'character varying':
-    case 'text': {
-      return 'text';
-    }
-    case 'smallint':
-    case 'integer':
-    case 'bigint':
-    case 'decimal':
-    case 'numeric':
-    case 'real':
-    case 'double precision':
-    case 'serial':
-    case 'bigserial':
-    case 'smallserial': {
-      return 'calculator-alt';
-    }
-    case 'date':
-    case 'time':
-    case 'time with time zone':
-    case 'time without time zone':
-    case 'interval':
-    case 'timestamp':
-    case 'timestamp with time zone':
-    case 'timestamp without time zone': {
-      return 'clock-nine';
-    }
-    default:
-      return 'text';
+      return { raqbFieldType: 'text', icon: 'text' };
   }
 }
 

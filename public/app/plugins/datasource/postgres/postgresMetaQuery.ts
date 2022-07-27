@@ -11,8 +11,8 @@ export function showDatabases() {
 }
 
 export function showTables() {
-  return `select table_name from information_schema.tables
-    where table_schema not in ('information_schema',
+  return `select quote_ident(table_name) as "table" from information_schema.tables
+    where quote_ident(table_schema) not in ('information_schema',
                              'pg_catalog',
                              '_timescaledb_cache',
                              '_timescaledb_catalog',
@@ -20,11 +20,26 @@ export function showTables() {
                              '_timescaledb_config',
                              'timescaledb_information',
                              'timescaledb_experimental')
-      and table_type = 'BASE TABLE'`;
+      and table_type = 'BASE TABLE' and ${buildSchemaConstraint()}`;
 }
 
 export function getSchema(table?: string) {
-  return `select column_name as "column", data_type as "type"
+  return `select quote_ident(column_name) as "column", data_type as "type"
     from information_schema.columns
-    where table_name = '${table}'`;
+    where quote_ident(table_name) = '${table}'`;
+}
+
+function buildSchemaConstraint() {
+  // quote_ident protects hyphenated schemes
+  return `
+          quote_ident(table_schema) IN (
+          SELECT
+            CASE WHEN trim(s[i]) = '"$user"' THEN user ELSE trim(s[i]) END
+          FROM
+            generate_series(
+              array_lower(string_to_array(current_setting('search_path'),','),1),
+              array_upper(string_to_array(current_setting('search_path'),','),1)
+            ) as i,
+            string_to_array(current_setting('search_path'),',') s
+          )`;
 }

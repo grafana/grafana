@@ -4,10 +4,12 @@ import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource
 import { DB, LanguageCompletionProvider, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { FUNCTIONS } from '../mysql/functions';
+
 import { PostgresQueryModel } from './PostgresQueryModel';
 import { getSchema, getTimescaleDBVersion, getVersion, showDatabases, showTables } from './postgresMetaQuery';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
-import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
+import { getFieldConfig, toRawSql } from './sqlUtil';
 import { PostgresOptions } from './types';
 
 export class PostgresDatasource extends SqlDatasource {
@@ -39,8 +41,8 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   async fetchTables(): Promise<string[]> {
-    const tables = await this.runSql<{ table_name: string[] }>(showTables(), { refId: 'tables' });
-    return tables.fields.table_name.values.toArray().flat();
+    const tables = await this.runSql<{ table: string[] }>(showTables(), { refId: 'tables' });
+    return tables.fields.table.values.toArray().flat();
   }
 
   getSqlCompletionProvider(db: DB): LanguageCompletionProvider {
@@ -52,7 +54,7 @@ export class PostgresDatasource extends SqlDatasource {
       getColumns: { current: (query: SQLQuery) => fetchColumns(db, query) },
       getTables: { current: () => fetchTables(db) },
       //TODO: Add aggregate functions
-      getFunctions: { current: () => AGGREGATE_FNS },
+      getFunctions: { current: () => [...AGGREGATE_FNS, ...FUNCTIONS] },
     };
     this.completionProvider = getSqlCompletionProvider(args);
     return this.completionProvider;
@@ -64,7 +66,7 @@ export class PostgresDatasource extends SqlDatasource {
     for (let i = 0; i < schema.length; i++) {
       const column = schema.fields.column.values.get(i);
       const type = schema.fields.type.values.get(i);
-      result.push({ label: column, value: column, type, icon: getIcon(type), raqbFieldType: getRAQBType(type) });
+      result.push({ label: column, value: column, type, ...getFieldConfig(type) });
     }
     return result;
   }
