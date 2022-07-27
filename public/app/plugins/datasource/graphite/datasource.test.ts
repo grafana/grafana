@@ -8,6 +8,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { fromString } from './configuration/parseLokiLabelMappings';
 import { GraphiteDatasource } from './datasource';
+import { GraphiteQuery, GraphiteQueryType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 jest.mock('@grafana/runtime', () => ({
@@ -113,7 +114,7 @@ describe('graphiteDatasource', () => {
     const query = {
       panelId: 3,
       dashboardId: 5,
-      range: { raw: { from: 'now-1h', to: 'now' } },
+      range: { from: dateTime('2022-04-01T00:00:00'), to: dateTime('2022-07-01T00:00:00') },
       targets: [{ target: 'prod1.count' }, { target: 'prod2.count' }],
       maxDataPoints: 500,
     };
@@ -157,8 +158,8 @@ describe('graphiteDatasource', () => {
       const params = requestOptions.data.split('&');
       expect(params).toContain('target=prod1.count');
       expect(params).toContain('target=prod2.count');
-      expect(params).toContain('from=-1h');
-      expect(params).toContain('until=now');
+      expect(params).toContain('from=1648789200');
+      expect(params).toContain('until=1656655200');
     });
 
     it('should exclude undefined params', () => {
@@ -533,6 +534,106 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/expand');
       expect(requestOptions.params.query).toBe('*.servers.*');
       expect(results).not.toBe(null);
+    });
+
+    it('should fetch from /metrics/find endpoint when queryType is default or query is string', async () => {
+      const stringQuery = 'query';
+      ctx.ds.metricFindQuery(stringQuery).then((data: any) => {
+        results = data;
+      });
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(results).not.toBe(null);
+
+      const objectQuery = {
+        queryType: GraphiteQueryType.Default,
+        target: 'query',
+        refId: 'A',
+        datasource: ctx.ds,
+      };
+      const data = await ctx.ds.metricFindQuery(objectQuery);
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(data).toBeTruthy();
+    });
+
+    it('should fetch from /render endpoint when queryType is value', async () => {
+      fetchMock.mockImplementation((options: any) => {
+        requestOptions = options;
+        return of(
+          createFetchResponse([
+            {
+              target: 'query',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+          ])
+        );
+      });
+
+      const fq: GraphiteQuery = {
+        queryType: GraphiteQueryType.Value,
+        target: 'query',
+        refId: 'A',
+        datasource: ctx.ds,
+      };
+      const data = await ctx.ds.metricFindQuery(fq);
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
+      expect(data).toBeTruthy();
+    });
+
+    it('should return values of a query when queryType is GraphiteQueryType.Value', async () => {
+      fetchMock.mockImplementation((options: any) => {
+        requestOptions = options;
+        return of(
+          createFetchResponse([
+            {
+              target: 'query',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+          ])
+        );
+      });
+
+      const fq: GraphiteQuery = {
+        queryType: GraphiteQueryType.Value,
+        target: 'query',
+        refId: 'A',
+        datasource: ctx.ds,
+      };
+      const data = await ctx.ds.metricFindQuery(fq);
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
+      expect(data[0].value).toBe(10);
+      expect(data[0].text).toBe('10');
+      expect(data[1].value).toBe(12);
+      expect(data[1].text).toBe('12');
+    });
+
+    it('should return metric names when queryType is GraphiteQueryType.MetricName', async () => {
+      fetchMock.mockImplementation((options: any) => {
+        requestOptions = options;
+        return of(
+          createFetchResponse({
+            results: ['apps.backend.backend_01', 'apps.backend.backend_02', 'apps.country.IE', 'apps.country.SE'],
+          })
+        );
+      });
+
+      const fq: GraphiteQuery = {
+        queryType: GraphiteQueryType.MetricName,
+        target: 'query',
+        refId: 'A',
+        datasource: ctx.ds,
+      };
+      const data = await ctx.ds.metricFindQuery(fq);
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/expand');
+      expect(data[0].text).toBe('apps.backend.backend_01');
+      expect(data[1].text).toBe('apps.backend.backend_02');
+      expect(data[2].text).toBe('apps.country.IE');
+      expect(data[3].text).toBe('apps.country.SE');
     });
   });
 

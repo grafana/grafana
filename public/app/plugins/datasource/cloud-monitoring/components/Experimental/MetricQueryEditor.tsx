@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRows } from '@grafana/experimental';
+import { EditorRows } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../../datasource';
 import { getAlignmentPickerData } from '../../functions';
@@ -16,11 +16,11 @@ import {
   SLOQuery,
   ValueTypes,
 } from '../../types';
-import { Project } from '../index';
 
 import { MQLQueryEditor } from './../MQLQueryEditor';
 import { AliasBy } from './AliasBy';
 import { GraphPeriod } from './GraphPeriod';
+import { Project } from './Project';
 import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
 
 export interface Props {

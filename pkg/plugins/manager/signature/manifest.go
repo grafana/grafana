@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gobwas/glob"
+
 	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
 	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp"
@@ -87,15 +89,8 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to parse public key", err)
-	}
-
-	if _, err := openpgp.CheckDetachedSignature(keyring,
-		bytes.NewBuffer(block.Bytes),
-		block.ArmoredSignature.Body); err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to check signature", err)
+	if err = validateManifest(manifest, block); err != nil {
+		return nil, err
 	}
 
 	return &manifest, nil
@@ -131,7 +126,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
-		mlog.Debug("Plugin signature invalid", "id", plugin.ID)
+		mlog.Debug("Plugin signature invalid", "id", plugin.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -144,32 +139,14 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		}, nil
 	}
 
-	// Validate that private is running within defined root URLs
-	if manifest.SignatureType == plugins.PrivateSignature {
-		appURL, err := url.Parse(setting.AppUrl)
-		if err != nil {
+	// Validate that plugin is running within defined root URLs
+	if len(manifest.RootURLs) > 0 {
+		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl, manifest.SignatureType); err != nil {
+			mlog.Warn("Could not verify if root URLs match", "plugin", plugin.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err
-		}
-
-		foundMatch := false
-		for _, u := range manifest.RootURLs {
-			rootURL, err := url.Parse(u)
-			if err != nil {
-				mlog.Warn("Could not parse plugin root URL", "plugin", plugin.ID, "rootUrl", rootURL)
-				return plugins.Signature{}, err
-			}
-
-			if rootURL.Scheme == appURL.Scheme &&
-				rootURL.Host == appURL.Host &&
-				path.Clean(rootURL.RequestURI()) == path.Clean(appURL.RequestURI()) {
-				foundMatch = true
-				break
-			}
-		}
-
-		if !foundMatch {
+		} else if !match {
 			mlog.Warn("Could not find root URL that matches running application URL", "plugin", plugin.ID,
-				"appUrl", appURL, "rootUrls", manifest.RootURLs)
+				"appUrl", setting.AppUrl, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
 				Status: plugins.SignatureInvalid,
 			}, nil
@@ -298,4 +275,85 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 	})
 
 	return files, err
+}
+
+func urlMatch(specs []string, target string, signatureType plugins.SignatureType) (bool, error) {
+	targetURL, err := url.Parse(target)
+	if err != nil {
+		return false, err
+	}
+
+	for _, spec := range specs {
+		specURL, err := url.Parse(spec)
+		if err != nil {
+			return false, err
+		}
+
+		if specURL.Scheme == targetURL.Scheme && specURL.Host == targetURL.Host &&
+			path.Clean(specURL.RequestURI()) == path.Clean(targetURL.RequestURI()) {
+			return true, nil
+		}
+
+		if signatureType != plugins.PrivateGlobSignature {
+			continue
+		}
+
+		sp, err := glob.Compile(spec, '/', '.')
+		if err != nil {
+			return false, err
+		}
+		if match := sp.Match(target); match {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+type invalidFieldErr struct {
+	field string
+}
+
+func (r invalidFieldErr) Error() string {
+	return fmt.Sprintf("valid manifest field %s is required", r.field)
+}
+
+func validateManifest(m pluginManifest, block *clearsign.Block) error {
+	if len(m.Plugin) == 0 {
+		return invalidFieldErr{field: "plugin"}
+	}
+	if len(m.Version) == 0 {
+		return invalidFieldErr{field: "version"}
+	}
+	if len(m.KeyID) == 0 {
+		return invalidFieldErr{field: "keyId"}
+	}
+	if m.Time == 0 {
+		return invalidFieldErr{field: "time"}
+	}
+	if len(m.Files) == 0 {
+		return invalidFieldErr{field: "files"}
+	}
+	if m.isV2() {
+		if len(m.SignedByOrg) == 0 {
+			return invalidFieldErr{field: "signedByOrg"}
+		}
+		if len(m.SignedByOrgName) == 0 {
+			return invalidFieldErr{field: "signedByOrgName"}
+		}
+		if !m.SignatureType.IsValid() {
+			return fmt.Errorf("%s is not a valid signature type", m.SignatureType)
+		}
+	}
+	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse public key", err)
+	}
+
+	if _, err = openpgp.CheckDetachedSignature(keyring,
+		bytes.NewBuffer(block.Bytes),
+		block.ArmoredSignature.Body); err != nil {
+		return fmt.Errorf("%v: %w", "failed to check signature", err)
+	}
+
+	return nil
 }

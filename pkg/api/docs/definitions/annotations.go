@@ -149,6 +149,10 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	DashboardID int64 `json:"dashboardId"`
+	// Find annotations that are scoped to a specific dashboard
+	// in:query
+	// required:false
+	DashboardUID string `json:"dashboardUID"`
 	// Find annotations that are scoped to a specific panel
 	// in:query
 	// required:false

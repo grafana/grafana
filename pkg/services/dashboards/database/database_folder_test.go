@@ -54,7 +54,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("and acl is set for dashboard folder", func(t *testing.T) {
 				var otherUser int64 = 999
-				err := updateDashboardAcl(t, dashboardStore, folder.Id, models.DashboardAcl{
+				err := updateDashboardACL(t, dashboardStore, folder.Id, models.DashboardACL{
 					DashboardID: folder.Id,
 					OrgID:       1,
 					UserID:      otherUser,
@@ -75,7 +75,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("when the user is given permission", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder.Id, models.DashboardACL{
 						DashboardID: folder.Id, OrgID: 1, UserID: currentUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -116,9 +116,9 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("and acl is set for dashboard child and folder has all permissions removed", func(t *testing.T) {
 				var otherUser int64 = 999
-				err := updateDashboardAcl(t, dashboardStore, folder.Id)
+				err := updateDashboardACL(t, dashboardStore, folder.Id)
 				require.NoError(t, err)
-				err = updateDashboardAcl(t, dashboardStore, childDash.Id, models.DashboardAcl{
+				err = updateDashboardACL(t, dashboardStore, childDash.Id, models.DashboardACL{
 					DashboardID: folder.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 				})
 				require.NoError(t, err)
@@ -134,7 +134,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("when the user is given permission to child", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, childDash.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, childDash.Id, models.DashboardACL{
 						DashboardID: childDash.Id, OrgID: 1, UserID: currentUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -211,7 +211,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("and acl is set for one dashboard folder", func(t *testing.T) {
 				const otherUser int64 = 999
-				err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+				err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 					DashboardID: folder1.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 				})
 				require.NoError(t, err)
@@ -252,7 +252,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("and a dashboard with an acl is moved to the folder without an acl", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, childDash1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, childDash1.Id, models.DashboardACL{
 						DashboardID: childDash1.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -322,10 +322,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should have admin permission in folders", func(t *testing.T) {
-					query := &models.HasAdminPermissionInFoldersQuery{
+					query := &models.HasAdminPermissionInDashboardsOrFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
-					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -348,7 +348,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("Should have write access to one dashboard folder if default role changed to view for one folder", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 						DashboardID: folder1.Id, OrgID: 1, UserID: editorUser.ID, Permission: models.PERMISSION_VIEW,
 					})
 					require.NoError(t, err)
@@ -370,10 +370,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
-					query := &models.HasAdminPermissionInFoldersQuery{
+					query := &models.HasAdminPermissionInDashboardsOrFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
-					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})
@@ -394,7 +394,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("Should be able to get one dashboard folder if default role changed to edit for one folder", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -418,16 +418,16 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
-					query := &models.HasAdminPermissionInFoldersQuery{
+					query := &models.HasAdminPermissionInDashboardsOrFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
-					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})
 
 				t.Run("and admin permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_ADMIN,
 					})
 					require.NoError(t, err)
@@ -443,7 +443,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("and edit permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)

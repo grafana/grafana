@@ -26,12 +26,23 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		UserId:       c.QueryInt64("userId"),
 		AlertId:      c.QueryInt64("alertId"),
 		DashboardId:  c.QueryInt64("dashboardId"),
+		DashboardUid: c.Query("dashboardUID"),
 		PanelId:      c.QueryInt64("panelId"),
 		Limit:        c.QueryInt64("limit"),
 		Tags:         c.QueryStrings("tags"),
 		Type:         c.Query("type"),
 		MatchAny:     c.QueryBool("matchAny"),
 		SignedInUser: c.SignedInUser,
+	}
+
+	// When dashboard UID present in the request, we ignore dashboard ID
+	if query.DashboardUid != "" {
+		dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgId}
+		err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in the request", err)
+		}
+		query.DashboardId = dq.Id
 	}
 
 	repo := annotations.GetRepository()
@@ -53,7 +64,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 				item.DashboardUID = val
 			} else {
 				query := models.GetDashboardQuery{Id: item.DashboardId, OrgId: c.OrgId}
-				err := hs.dashboardService.GetDashboard(c.Req.Context(), &query)
+				err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 				if err == nil && query.Result != nil {
 					item.DashboardUID = &query.Result.Uid
 					dashboardCache[item.DashboardId] = &query.Result.Uid
@@ -82,7 +93,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	// overwrite dashboardId when dashboardUID is not empty
 	if cmd.DashboardUID != "" {
 		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
-		err := hs.dashboardService.GetDashboard(c.Req.Context(), &query)
+		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = query.Result.Id
 		}
@@ -291,7 +302,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 
 	if cmd.DashboardUID != "" {
 		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
-		err := hs.dashboardService.GetDashboard(c.Req.Context(), &query)
+		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = query.Result.Id
 		}

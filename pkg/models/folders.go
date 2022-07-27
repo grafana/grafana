@@ -17,7 +17,7 @@ type Folder struct {
 
 	UpdatedBy int64
 	CreatedBy int64
-	HasAcl    bool
+	HasACL    bool
 }
 
 // NewFolder creates a new Folder
@@ -35,7 +35,7 @@ func DashboardToFolder(dash *Dashboard) *Folder {
 		Id:        dash.Id,
 		Uid:       dash.Uid,
 		Title:     dash.Title,
-		HasAcl:    dash.HasAcl,
+		HasACL:    dash.HasACL,
 		Url:       dash.GetUrl(),
 		Version:   dash.Version,
 		Created:   dash.Created,
@@ -95,7 +95,7 @@ type HasEditPermissionInFoldersQuery struct {
 	Result       bool
 }
 
-type HasAdminPermissionInFoldersQuery struct {
+type HasAdminPermissionInDashboardsOrFoldersQuery struct {
 	SignedInUser *SignedInUser
 	Result       bool
 }

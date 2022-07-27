@@ -5,10 +5,11 @@ import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/O
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
-import { FrameSelectionEditor } from '../layers/data/FrameSelectionEditor';
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry, getLayersOptions } from '../layers/registry';
 import { MapLayerState } from '../types';
+
+import { FrameSelectionEditor } from './FrameSelectionEditor';
 
 export interface LayerEditorOptions {
   state: MapLayerState;

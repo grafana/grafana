@@ -236,6 +236,7 @@ const legacyRunner = [
   'loki',
   'elasticsearch',
   'grafana-opensearch-datasource', // external
+  'grafana-splunk-datasource', // external
 ];
 
 /**

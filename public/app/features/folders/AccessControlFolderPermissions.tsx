@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Permissions } from 'app/core/components/AccessControl';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -17,7 +17,7 @@ function mapStateToProps(state: StoreState, props: RouteProps) {
   const uid = props.match.params.uid;
   return {
     uid: uid,
-    navModel: getNavModel(state.navIndex, `folder-permissions-${uid}`, getLoadingNav(1)),
+    pageNav: getNavModel(state.navIndex, `folder-permissions-${uid}`, getLoadingNav(1)),
   };
 }
 
@@ -28,7 +28,7 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 export type Props = ConnectedProps<typeof connector>;
 
-export const AccessControlFolderPermissions = ({ uid, getFolderByUid, navModel }: Props) => {
+export const AccessControlFolderPermissions = ({ uid, getFolderByUid, pageNav }: Props) => {
   useEffect(() => {
     getFolderByUid(uid);
   }, [getFolderByUid, uid]);
@@ -36,7 +36,7 @@ export const AccessControlFolderPermissions = ({ uid, getFolderByUid, navModel }
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsWrite);
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="dashboards/browse" pageNav={pageNav.main}>
       <Page.Contents>
         <Permissions resource="folders" resourceId={uid} canSetPermissions={canSetPermissions} />
       </Page.Contents>

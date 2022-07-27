@@ -52,6 +52,7 @@ export function setupMockedDataSource({
 
   datasource.getNamespaces = jest.fn().mockResolvedValue([]);
   datasource.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.defaultLogGroups = [];
   const fetchMock = jest.fn().mockReturnValue(of({ data }));
   setBackendSrv({ fetch: fetchMock } as any);
 

@@ -4,8 +4,7 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { useMountedState, usePrevious } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Cascader, CascaderOption, useStyles2 } from '@grafana/ui';
+import { Button, Cascader, CascaderOption, useStyles2, Stack } from '@grafana/ui';
 
 import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
 
@@ -92,7 +91,7 @@ export function OperationList<T extends QueryWithOperations>({
                 <div className={styles.operationList} ref={provided.innerRef} {...provided.droppableProps}>
                   {operations.map((op, index) => (
                     <OperationEditor
-                      key={op.id + index}
+                      key={op.id + JSON.stringify(op.params) + index}
                       queryModeller={queryModeller}
                       index={index}
                       operation={op}
