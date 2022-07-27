@@ -377,6 +377,7 @@ export enum VariableQueryType {
   EC2InstanceAttributes = 'ec2InstanceAttributes',
   ResourceArns = 'resourceARNs',
   Statistics = 'statistics',
+  LogGroups = 'logGroups',
 }
 
 export interface OldVariableQuery extends DataQuery {
@@ -405,6 +406,7 @@ export interface VariableQuery extends DataQuery {
   attributeName: string;
   resourceType: string;
   tags?: MultiFilters;
+  logGroupPrefix?: string;
 }
 
 export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
