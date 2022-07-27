@@ -7,6 +7,8 @@ import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
 import { HideableFieldConfig } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
 
+import { MapViewConfig } from './models.gen';
+
 import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
 
@@ -35,16 +37,6 @@ export enum TooltipMode {
 
 export interface TooltipOptions {
   mode: TooltipMode;
-}
-
-export interface MapViewConfig {
-  id: string; // placename > lookup
-  lat?: number;
-  lon?: number;
-  zoom?: number;
-  minZoom?: number;
-  maxZoom?: number;
-  shared?: boolean;
 }
 
 export const defaultView: MapViewConfig = {
