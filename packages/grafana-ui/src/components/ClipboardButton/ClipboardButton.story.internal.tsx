@@ -8,7 +8,7 @@ import { Input } from '../Input/Input';
 import { ClipboardButton as ClipboardButtonImpl, Props } from './ClipboardButton';
 import mdx from './ClipboardButton.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Buttons/ClipboardButton',
   component: ClipboardButtonImpl,
   decorators: [withCenteredStory],
@@ -20,7 +20,7 @@ export default {
       exclude: ['variant', 'icon', 'className', 'fullWidth', 'getText', 'onClipboardCopy', 'onClipboardError'],
     },
   },
-} as Meta;
+};
 
 interface StoryProps extends Partial<Props> {
   inputText: string;
@@ -57,3 +57,5 @@ export const AsInputFieldAddon: Story<StoryProps> = (args) => {
     </div>
   );
 };
+
+export default meta;
