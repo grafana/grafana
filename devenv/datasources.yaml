@@ -248,10 +248,10 @@ datasources:
     url: http://localhost:3100
     editable: false
     correlations:
-      - targetUid: gdev-jaeger
+      - targetUID: gdev-jaeger
         label: "Jaeger traces"
         description: "Related traces stored in Jaeger"
-      - targetUid: gdev-zipkin
+      - targetUID: gdev-zipkin
         label: "Zipkin traces"
         description: "Related traces stored in Zipkin"
     jsonData:

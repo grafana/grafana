@@ -4247,6 +4247,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@daybrush/utils@npm:^1.7.1":
+  version: 1.7.1
+  resolution: "@daybrush/utils@npm:1.7.1"
+  checksum: 70c1d6a335c5152b17ff2325a11228e96ea1f0d818b5d2bc01a37b27736f11f39bd432ff3e3e31ab26ccb4033718e74b36d2791d5d32ccc6bf3c58aeb3913c83
+  languageName: node
+  linkType: hard
+
 "@discoveryjs/json-ext@npm:^0.5.0":
   version: 0.5.5
   resolution: "@discoveryjs/json-ext@npm:0.5.5"
@@ -4876,7 +4883,7 @@ __metadata:
     tslib: 2.4.0
     typescript: 4.7.4
     uuid: 8.3.2
-    webpack: 5.73.0
+    webpack: 5.74.0
     yaml: ^2.0.0
   bin:
     grafana-e2e: bin/grafana-e2e.js
@@ -5252,7 +5259,7 @@ __metadata:
     typescript: 4.7.4
     uplot: 1.6.22
     uuid: 8.3.2
-    webpack: 5.73.0
+    webpack: 5.74.0
     webpack-filter-warnings-plugin: 1.2.1
   languageName: unknown
   linkType: soft
@@ -6845,29 +6852,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lingui/babel-plugin-extract-messages@npm:^3.13.3":
-  version: 3.13.3
-  resolution: "@lingui/babel-plugin-extract-messages@npm:3.13.3"
+"@lingui/babel-plugin-extract-messages@npm:^3.14.0":
+  version: 3.14.0
+  resolution: "@lingui/babel-plugin-extract-messages@npm:3.14.0"
   dependencies:
     "@babel/generator": ^7.11.6
     "@babel/runtime": ^7.11.2
-    "@lingui/conf": ^3.13.3
+    "@lingui/conf": ^3.14.0
     mkdirp: ^1.0.4
-  checksum: e18ab0fbfd678521a498c5657ecaab06fc8375e6b8145d919017ab6c3df547a628791362dd81c5453a07ed44e3843c408b12d996f5b8f57988a8ecfbcd038252
+  checksum: 8cccd03e011017070adf5f6ece61ecb44a306a40c3835ba0e5884055a9f1917e2fb751444b2c0e1b5f0b8f21a9515b24596a658cf9ff0b46950b76dad9ca1d41
   languageName: node
   linkType: hard
 
-"@lingui/cli@npm:3.13.3":
-  version: 3.13.3
-  resolution: "@lingui/cli@npm:3.13.3"
+"@lingui/cli@npm:3.14.0":
+  version: 3.14.0
+  resolution: "@lingui/cli@npm:3.14.0"
   dependencies:
     "@babel/generator": ^7.11.6
     "@babel/parser": ^7.11.5
     "@babel/plugin-syntax-jsx": ^7.10.4
     "@babel/runtime": ^7.11.2
     "@babel/types": ^7.11.5
-    "@lingui/babel-plugin-extract-messages": ^3.13.3
-    "@lingui/conf": ^3.13.3
+    "@lingui/babel-plugin-extract-messages": ^3.14.0
+    "@lingui/conf": ^3.14.0
     babel-plugin-macros: ^3.0.1
     bcp-47: ^1.0.7
     chalk: ^4.1.0
@@ -6898,7 +6905,7 @@ __metadata:
     typescript: 2 || 3 || 4
   bin:
     lingui: lingui.js
-  checksum: 8cac6f661c539be910a9c64ce0e02dfd6d235057aa2bbcd37e1509d327335285ac5f0c0219c08f771cf3b87a3bc097498b5e3b32e854c755bcf67ad79afdbc2c
+  checksum: 8798a546fbd254237a13c22a3733b304e56c50585b2002d936b67309995b127d3f6b5b9b2c7c9717b92f70b6979e354712777bd28ee30d752f6754e790f03cca
   languageName: node
   linkType: hard
 
@@ -6916,9 +6923,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lingui/conf@npm:^3.13.3":
-  version: 3.13.3
-  resolution: "@lingui/conf@npm:3.13.3"
+"@lingui/conf@npm:^3.14.0":
+  version: 3.14.0
+  resolution: "@lingui/conf@npm:3.14.0"
   dependencies:
     "@babel/runtime": ^7.11.2
     "@endemolshinegroup/cosmiconfig-typescript-loader": ^3.0.2
@@ -6926,18 +6933,18 @@ __metadata:
     cosmiconfig: ^7.0.0
     jest-validate: ^26.5.2
     lodash.get: ^4.4.2
-  checksum: b276b922dff55f9bb3c67fe9cd904267dd423dd46d6748ddd63d4ccc8571f33b0a58187d6e8978469c5ed2d343f72eacd9838a0009fa2e99913ab9b1a7229958
+  checksum: 30f94b64d12f2728fb058cce71ed8b1ff2e1cc18e3750483482b3fc60a403d85ddac8568786c20766eccfb8808590010616c37fe3a7e513a2be8802c4d5bc49a
   languageName: node
   linkType: hard
 
-"@lingui/core@npm:3.13.3, @lingui/core@npm:^3.13.3":
-  version: 3.13.3
-  resolution: "@lingui/core@npm:3.13.3"
+"@lingui/core@npm:3.14.0, @lingui/core@npm:^3.14.0":
+  version: 3.14.0
+  resolution: "@lingui/core@npm:3.14.0"
   dependencies:
     "@babel/runtime": ^7.11.2
     make-plural: ^6.2.2
     messageformat-parser: ^4.1.3
-  checksum: 608bb8c7f53302f4df21497e34318a7dc1e59fcaaa69432b4b62e4d46871036e895012d8e94f452395afeb247c45555977a7c98a1b5702f99bdfacbc7fc461bd
+  checksum: eeb020eed94dde45466a28d63c34815e4e7b986069abcb9d94bb1c59f24e5ce9b887b89842aa47d87a237b140260d207db34e8713ed6f7dfe3b6c45f56c2f5f3
   languageName: node
   linkType: hard
 
@@ -6954,30 +6961,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lingui/macro@npm:3.13.3":
-  version: 3.13.3
-  resolution: "@lingui/macro@npm:3.13.3"
+"@lingui/macro@npm:3.14.0":
+  version: 3.14.0
+  resolution: "@lingui/macro@npm:3.14.0"
   dependencies:
     "@babel/runtime": ^7.11.2
-    "@lingui/conf": ^3.13.3
+    "@lingui/conf": ^3.14.0
     ramda: ^0.27.1
   peerDependencies:
     "@lingui/core": ^3.13.0
     "@lingui/react": ^3.13.0
     babel-plugin-macros: 2 || 3
-  checksum: e8ea2e79e2d5b237bb2516be14dc4ad58655dfb49af4c7ae420d99cb22281cedc0a383d7996b3b3db00323acc5afe7db6839a37b38ffbd35b1c346d84264762b
+  checksum: 246f56a5458f2c730f05551ca47f14f45dc3fea01988f93eafafd5e2d19661f7b6894afad72df22f332e1d560efd4b492248d37c99f67f845d276aa0504f541e
   languageName: node
   linkType: hard
 
-"@lingui/react@npm:3.13.3":
-  version: 3.13.3
-  resolution: "@lingui/react@npm:3.13.3"
+"@lingui/react@npm:3.14.0":
+  version: 3.14.0
+  resolution: "@lingui/react@npm:3.14.0"
   dependencies:
     "@babel/runtime": ^7.11.2
-    "@lingui/core": ^3.13.3
+    "@lingui/core": ^3.14.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 7a83a88cabd5d5a0e77df0cf7ce3e64876145381df42e7d11c9464c79122eb0ef4cbdd7787a8fc52fdab875e15e58cf78ca0cc4c5eb8a194459372c27d470cd5
+  checksum: e384c851e50e86329566c9350badfb64187ce6315b1a7a3c5649cd142a660f80135a52df8eb2f0f3b3f3d96732af452d1894155a2d2bebf2cfecf7119e617e95
   languageName: node
   linkType: hard
 
@@ -18642,6 +18649,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"enhanced-resolve@npm:^5.10.0":
+  version: 5.10.0
+  resolution: "enhanced-resolve@npm:5.10.0"
+  dependencies:
+    graceful-fs: ^4.2.4
+    tapable: ^2.2.0
+  checksum: 0bb9830704db271610f900e8d79d70a740ea16f251263362b0c91af545576d09fe50103496606c1300a05e588372d6f9780a9bc2e30ce8ef9b827ec8f44687ff
+  languageName: node
+  linkType: hard
+
 "enhanced-resolve@npm:^5.9.2":
   version: 5.9.2
   resolution: "enhanced-resolve@npm:5.9.2"
@@ -18649,16 +18666,6 @@ __metadata:
     graceful-fs: ^4.2.4
     tapable: ^2.2.0
   checksum: 792b7a01abb4ee4433b658c71f92d5948675938e0c03cad1732abe843b87395f15cb880ace4f819f78ead94163278283afc79b8be63c0eddca8ab45f7d8c515d
-  languageName: node
-  linkType: hard
-
-"enhanced-resolve@npm:^5.9.3":
-  version: 5.9.3
-  resolution: "enhanced-resolve@npm:5.9.3"
-  dependencies:
-    graceful-fs: ^4.2.4
-    tapable: ^2.2.0
-  checksum: 64c2dbbdd608d1a4df93b6e60786c603a1faf3b2e66dfd051d62cf4cfaeeb5e800166183685587208d62e9f7afff3f78f3d5978e32cd80125ba0c83b59a79d78
   languageName: node
   linkType: hard
 
@@ -20672,16 +20679,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "gesto@npm:1.7.0"
-  dependencies:
-    "@daybrush/utils": ^1.0.0
-    "@scena/event-emitter": ^1.0.2
-  checksum: f2a66bcf0f0e2d72572ea0360ed11a86772449298207a6bb35ae7535b81af142729fbff749a93b1eba89b644b582ee0fde98880aed7b195f5d9cd0aeeb243e7a
-  languageName: node
-  linkType: hard
-
 "gesto@npm:^1.9.0":
   version: 1.9.0
   resolution: "gesto@npm:1.9.0"
@@ -21194,10 +21191,10 @@ __metadata:
     "@kusto/monaco-kusto": 5.1.3
     "@lezer/common": 0.15.12
     "@lezer/lr": 0.15.8
-    "@lingui/cli": 3.13.3
-    "@lingui/core": 3.13.3
-    "@lingui/macro": 3.13.3
-    "@lingui/react": 3.13.3
+    "@lingui/cli": 3.14.0
+    "@lingui/core": 3.14.0
+    "@lingui/macro": 3.14.0
+    "@lingui/react": 3.14.0
     "@microsoft/api-extractor": 7.28.1
     "@opentelemetry/api": 1.1.0
     "@opentelemetry/exporter-collector": 0.25.0
@@ -21441,9 +21438,9 @@ __metadata:
     rimraf: 3.0.2
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
     rxjs: 7.5.5
-    sass: 1.52.3
+    sass: 1.54.0
     sass-loader: 13.0.0
-    selecto: 1.16.2
+    selecto: 1.17.0
     semver: 7.3.7
     sinon: 14.0.0
     slate: 0.47.8
@@ -21461,7 +21458,7 @@ __metadata:
     tinycolor2: 1.4.2
     ts-jest: 28.0.3
     ts-loader: 9.3.1
-    ts-node: 10.8.1
+    ts-node: 10.9.1
     tslib: 2.4.0
     typescript: 4.7.4
     uplot: 1.6.22
@@ -21469,7 +21466,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 6.0.1
-    webpack: 5.73.0
+    webpack: 5.74.0
     webpack-bundle-analyzer: 4.5.0
     webpack-cli: 4.10.0
     webpack-dev-server: 4.9.0
@@ -25218,14 +25215,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"keycon@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "keycon@npm:1.1.2"
+"keycon@npm:^1.2.0":
+  version: 1.2.2
+  resolution: "keycon@npm:1.2.2"
   dependencies:
-    "@daybrush/utils": ^1.0.0
+    "@daybrush/utils": ^1.7.1
     "@scena/event-emitter": ^1.0.2
     keycode: ^2.2.0
-  checksum: 7be74aaf8360824b4aa7bf7a401fa4bc586522ead95ea04d24857ce3320c56d6e3d9a6bb691c5a575f1381124bcbc6b1e5f22a46241d2e2af324ab7b06305d2f
+  checksum: 81cd5a5e70640212165ba743b4451628b3c30b1773b7f26eb9d2fb5ba5c6529d2c8fecc2499bbf01fa899206356e14960dd42db6b983e5a6c27669718b23c8a8
   languageName: node
   linkType: hard
 
@@ -28050,6 +28047,15 @@ __metadata:
   dependencies:
     "@daybrush/utils": ^1.3.1
   checksum: 37d82ea4ea914f7e27c33cf12e93a99e07103bca4180cbfb835328d3fe33a6f31e9500c644f2638a07f478bebc7a261db6d97187c58d967d4736b60cd31230f0
+  languageName: node
+  linkType: hard
+
+"overlap-area@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "overlap-area@npm:1.1.0"
+  dependencies:
+    "@daybrush/utils": ^1.7.1
+  checksum: 718e48a54e11e02ec461f2ad3bc05f396e249a609325ee94ae3bffa568816cf16b3053f512ad549a27e4d644f4194c3e47e4c9c4af02826ae063df67026cbf58
   languageName: node
   linkType: hard
 
@@ -33102,16 +33108,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.52.3":
-  version: 1.52.3
-  resolution: "sass@npm:1.52.3"
+"sass@npm:1.54.0":
+  version: 1.54.0
+  resolution: "sass@npm:1.54.0"
   dependencies:
     chokidar: ">=3.0.0 <4.0.0"
     immutable: ^4.0.0
     source-map-js: ">=0.6.2 <2.0.0"
   bin:
     sass: sass.js
-  checksum: 175a073c0e7b67d1baff6d3969431228002ece681886cebc2a354c241134ff120fda5c12a0465989966dacfb1ca518d85507304f4d4cd03d4a91d71dbc77d978
+  checksum: 7d3acf124d771e8811fce876ad37f786faafa9edce64b20dcf32bf6aed5116802c863d3311fd79e7e7682fcccc4dc684960be1365cffa7dad045be7251c40d70
   languageName: node
   linkType: hard
 
@@ -33238,21 +33244,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"selecto@npm:1.16.2":
-  version: 1.16.2
-  resolution: "selecto@npm:1.16.2"
+"selecto@npm:1.17.0":
+  version: 1.17.0
+  resolution: "selecto@npm:1.17.0"
   dependencies:
-    "@daybrush/utils": ^1.4.0
+    "@daybrush/utils": ^1.7.1
     "@egjs/children-differ": ^1.0.1
     "@scena/dragscroll": ^1.1.1
     "@scena/event-emitter": ^1.0.5
     css-styled: ^1.0.0
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.7.0
-    keycon: ^1.1.2
-    overlap-area: ^1.0.0
-  checksum: a8389449641cc7cb00a3aad18f6c42fae82e2457c8c2c7b0552a92d93bf3bc04e8fbcc244f44233e85b660ef326607f65c776ed6b3ccc8926d2cdb5b0edf145b
+    gesto: ^1.9.0
+    keycon: ^1.2.0
+    overlap-area: ^1.1.0
+  checksum: ad288ee4be3bc2610925010a5a215370e0664f2075d7157ef2c020d08ac7244e9d6818fccb67998dbd655be8c5b9f2912cac329b8a9961787c9e86873adba47d
   languageName: node
   linkType: hard
 
@@ -35708,7 +35714,45 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:10.8.1, ts-node@npm:^10.2.1":
+"ts-node@npm:10.9.1":
+  version: 10.9.1
+  resolution: "ts-node@npm:10.9.1"
+  dependencies:
+    "@cspotcode/source-map-support": ^0.8.0
+    "@tsconfig/node10": ^1.0.7
+    "@tsconfig/node12": ^1.0.7
+    "@tsconfig/node14": ^1.0.0
+    "@tsconfig/node16": ^1.0.2
+    acorn: ^8.4.1
+    acorn-walk: ^8.1.1
+    arg: ^4.1.0
+    create-require: ^1.1.0
+    diff: ^4.0.1
+    make-error: ^1.1.1
+    v8-compile-cache-lib: ^3.0.1
+    yn: 3.1.1
+  peerDependencies:
+    "@swc/core": ">=1.2.50"
+    "@swc/wasm": ">=1.2.50"
+    "@types/node": "*"
+    typescript: ">=2.7"
+  peerDependenciesMeta:
+    "@swc/core":
+      optional: true
+    "@swc/wasm":
+      optional: true
+  bin:
+    ts-node: dist/bin.js
+    ts-node-cwd: dist/bin-cwd.js
+    ts-node-esm: dist/bin-esm.js
+    ts-node-script: dist/bin-script.js
+    ts-node-transpile-only: dist/bin-transpile.js
+    ts-script: dist/bin-script-deprecated.js
+  checksum: 090adff1302ab20bd3486e6b4799e90f97726ed39e02b39e566f8ab674fd5bd5f727f43615debbfc580d33c6d9d1c6b1b3ce7d8e3cca3e20530a145ffa232c35
+  languageName: node
+  linkType: hard
+
+"ts-node@npm:^10.2.1":
   version: 10.8.1
   resolution: "ts-node@npm:10.8.1"
   dependencies:
@@ -36811,6 +36855,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"watchpack@npm:^2.4.0":
+  version: 2.4.0
+  resolution: "watchpack@npm:2.4.0"
+  dependencies:
+    glob-to-regexp: ^0.4.1
+    graceful-fs: ^4.1.2
+  checksum: 23d4bc58634dbe13b86093e01c6a68d8096028b664ab7139d58f0c37d962d549a940e98f2f201cecdabd6f9c340338dc73ef8bf094a2249ef582f35183d1a131
+  languageName: node
+  linkType: hard
+
 "wbuf@npm:^1.1.0, wbuf@npm:^1.7.3":
   version: 1.7.3
   resolution: "wbuf@npm:1.7.3"
@@ -37143,20 +37197,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.73.0":
-  version: 5.73.0
-  resolution: "webpack@npm:5.73.0"
+"webpack@npm:5.74.0":
+  version: 5.74.0
+  resolution: "webpack@npm:5.74.0"
   dependencies:
     "@types/eslint-scope": ^3.7.3
     "@types/estree": ^0.0.51
     "@webassemblyjs/ast": 1.11.1
     "@webassemblyjs/wasm-edit": 1.11.1
     "@webassemblyjs/wasm-parser": 1.11.1
-    acorn: ^8.4.1
+    acorn: ^8.7.1
     acorn-import-assertions: ^1.7.6
     browserslist: ^4.14.5
     chrome-trace-event: ^1.0.2
-    enhanced-resolve: ^5.9.3
+    enhanced-resolve: ^5.10.0
     es-module-lexer: ^0.9.0
     eslint-scope: 5.1.1
     events: ^3.2.0
@@ -37169,14 +37223,14 @@ __metadata:
     schema-utils: ^3.1.0
     tapable: ^2.1.1
     terser-webpack-plugin: ^5.1.3
-    watchpack: ^2.3.1
+    watchpack: ^2.4.0
     webpack-sources: ^3.2.3
   peerDependenciesMeta:
     webpack-cli:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: aa434a241bad6176b68e1bf0feb1972da4dcbf27cb3d94ae24f6eb31acc37dceb9c4aae55e068edca75817bfe91f13cd20b023ac55d9b1b2f8b66a4037c9468f
+  checksum: 320c41369a75051b19e18c63f408b3dcc481852e992f83d311771c5ec0f05f2946385e8ebef62030cf3587f0a3d2f12779ffdb191569a966847289ba7313f946
   languageName: node
   linkType: hard
 
