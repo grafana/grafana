@@ -2,13 +2,19 @@ package searchV2
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/store"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/blugelabs/bluge"
 )
 
 // buildSignal is sent when search index is accessed in organization for which
@@ -39,9 +45,11 @@ type orgManagerConfig struct {
 	Name                  string
 	ReIndexInterval       time.Duration
 	EventsPollingInterval time.Duration
+	BackupBaseDir         string
 }
 
 func newOrgIndexManager(config orgManagerConfig, indexFactory IndexFactory, eventStore eventStore) *orgIndexManager {
+	config.BackupBaseDir = "data/gf_search"
 	return &orgIndexManager{
 		config:       config,
 		indexFactory: indexFactory,
@@ -93,17 +101,30 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 	defer eventsPollingTimer.Stop()
 
 	var lastEventID int64
-	lastEvent, err := m.eventStore.GetLastEvent(ctx)
-	if err != nil {
-		return err
-	}
-	if lastEvent != nil {
-		lastEventID = lastEvent.Id
-	}
+	var loadOK bool
+	var err error
 
-	err = m.buildInitialIndexes(ctx, orgIDs)
+	lastEventID, loadOK, err = m.loadFromBackup(ctx, orgIDs)
 	if err != nil {
+		println(1)
 		return err
+	}
+	if !loadOK {
+		lastEvent, err := m.eventStore.GetLastEvent(ctx)
+		if err != nil {
+			return err
+		}
+		if lastEvent != nil {
+			lastEventID = lastEvent.Id
+		}
+		err = m.buildInitialIndexes(ctx, orgIDs)
+		if err != nil {
+			return err
+		}
+		err = m.saveBackup(ctx, lastEventID, orgIDs)
+		if err != nil {
+			return err
+		}
 	}
 
 	// This semaphore channel allows limiting concurrent async re-indexing routines to 1.
@@ -150,6 +171,9 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 				asyncReIndexSemaphore <- struct{}{}
 				defer func() { <-asyncReIndexSemaphore }()
 				err = m.buildInitialIndex(ctx, signal.orgID)
+				// Need to maintain orgIDs actual for backup logic.
+				// TODO: check orgID is not in orgIDs.
+				orgIDs = append(orgIDs, signal.orgID)
 				signal.done <- err
 				reIndexDoneCh <- lastIndexedEventID
 			}()
@@ -178,6 +202,10 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 			}(needForcedReindex)
 			needForcedReindex = false
 		case lastIndexedEventID := <-reIndexDoneCh:
+			err = m.saveBackup(ctx, lastEventID, orgIDs)
+			if err != nil {
+				return err
+			}
 			// Asynchronous re-indexing is finished. Set lastEventID to the value which
 			// was actual at the re-indexing start – so that we could re-apply all the
 			// events happened during async index build process and make sure it's consistent.
@@ -319,4 +347,121 @@ func (m *orgIndexManager) getOrCreateOrgIndex(ctx context.Context, orgID int64) 
 		index, _ = m.getOrgIndex(orgID)
 	}
 	return index, nil
+}
+
+type metaContent struct {
+	EventID int64 `json:"eventId"`
+}
+
+func (m *orgIndexManager) loadFromBackup(ctx context.Context, orgIDs []int64) (int64, bool, error) {
+	backupBaseDir := m.config.BackupBaseDir
+	if _, err := os.Stat(backupBaseDir); os.IsNotExist(err) {
+		err := os.MkdirAll(backupBaseDir, 0700)
+		if err != nil {
+			return 0, false, fmt.Errorf("can't create backup dir %s: %w", backupBaseDir, err)
+		}
+		return 0, false, nil
+	}
+	metaFile := filepath.Join(backupBaseDir, "meta.json")
+	if _, err := os.Stat(metaFile); err != nil {
+		if os.IsNotExist(err) {
+			return 0, false, nil
+		}
+		return 0, false, fmt.Errorf("can't stat meta file %s: %w", metaFile, err)
+	}
+
+	content, err := os.ReadFile(metaFile)
+	if err != nil {
+		return 0, false, fmt.Errorf("can't read meta file %s: %w", metaFile, err)
+	}
+
+	var meta metaContent
+	err = json.Unmarshal(content, &meta)
+	if err != nil {
+		return 0, false, fmt.Errorf("can't unmarshal meta content: %w", err)
+	}
+
+	for _, orgID := range orgIDs {
+		orgBackupDir := filepath.Join(backupBaseDir, "org_"+strconv.FormatInt(orgID, 10))
+		m.logger.Info("Start loading initial org index from backup", "orgId", orgID, "name", m.config.Name)
+		started := time.Now()
+		config := bluge.InMemoryFromBackup(orgBackupDir)
+		dashboardWriter, err := bluge.OpenWriter(config)
+		if err != nil {
+			return 0, false, fmt.Errorf("can't open org writer %s: %w", orgBackupDir, err)
+		}
+		index, err := m.indexFactory(ctx, orgID, dashboardWriter)
+		if err != nil {
+			return 0, false, fmt.Errorf("error loading initial index %s for org %d from backup: %w", m.config.Name, orgID, err)
+		}
+		m.logger.Info("Finish loading initial org index from backup", "elapsed", time.Since(started), "name", m.config.Name, "orgId", orgID)
+
+		m.mu.Lock()
+		m.perOrgIndex[orgID] = index
+		m.mu.Unlock()
+	}
+	return meta.EventID, true, nil
+}
+
+func (m *orgIndexManager) saveBackup(_ context.Context, currentEventID int64, orgIDs []int64) error {
+	backupBaseDir := m.config.BackupBaseDir
+	if _, err := os.Stat(backupBaseDir); os.IsNotExist(err) {
+		return fmt.Errorf("dir does not exists: %s", backupBaseDir)
+	}
+
+	tmpDir, err := ioutil.TempDir("", "gf_"+m.config.Name+"_backup_tmp")
+	if err != nil {
+		return fmt.Errorf("can't create tmp dir for backup: %w", err)
+	}
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+
+	meta := metaContent{
+		EventID: currentEventID,
+	}
+	content, err := json.Marshal(meta)
+	if err != nil {
+		return err
+	}
+
+	metaFile := filepath.Join(tmpDir, "meta.json")
+	err = ioutil.WriteFile(metaFile, content, 0700)
+	if err != nil {
+		return fmt.Errorf("can't write tmp meta file: %w", err)
+	}
+
+	for _, orgID := range orgIDs {
+		orgBackupDir := filepath.Join(tmpDir, "org_"+strconv.FormatInt(orgID, 10))
+		err := os.MkdirAll(orgBackupDir, 0700)
+		if err != nil {
+			return fmt.Errorf("can't create tmp backup dir %s: %w", orgBackupDir, err)
+		}
+		m.logger.Info("Start backup of org index", "orgId", orgID, "name", m.config.Name)
+		started := time.Now()
+		index := m.perOrgIndex[orgID]
+		reader, cancel, err := index.Reader()
+		if err != nil {
+			return err
+		}
+		cancelCh := make(chan struct{})
+		err = reader.Backup(orgBackupDir, cancelCh)
+		if err != nil {
+			cancel()
+			return fmt.Errorf("can't write backup to %s: %w", orgBackupDir, err)
+		}
+		cancel()
+		m.logger.Info("Finish backup of org index", "orgId", orgID, "name", m.config.Name, "elapsed", time.Since(started))
+	}
+
+	// TODO: os.Rename returns error if destination dir exists, so we remove existing backup dir first.
+	// This means we can't move atomically. Is there a way?
+	err = os.RemoveAll(backupBaseDir)
+	if err != nil {
+		return fmt.Errorf("can't remove backup dir: %w", err)
+	}
+
+	err = os.Rename(tmpDir, backupBaseDir)
+	if err != nil {
+		return fmt.Errorf("can't rename tmp backup dir %s: %w", tmpDir, err)
+	}
+	return nil
 }
