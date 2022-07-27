@@ -33,6 +33,11 @@ func (params *urlBuilder) buildResourceURI() string {
 	provider := metricNamespaceArray[0]
 	metricNamespaceArray = metricNamespaceArray[1:]
 
+	if strings.HasPrefix(strings.ToLower(params.MetricNamespace), "microsoft.storage/storageaccounts/") &&
+		!strings.HasSuffix(params.ResourceName, "default") {
+		resourceNameArray = append(resourceNameArray, "default")
+	}
+
 	urlArray := []string{
 		"/subscriptions",
 		subscription,
