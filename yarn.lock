@@ -4724,26 +4724,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/agent-core@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@grafana/agent-core@npm:0.3.0"
+"@grafana/agent-core@npm:0.4.0, @grafana/agent-core@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@grafana/agent-core@npm:0.4.0"
   dependencies:
     "@opentelemetry/api": ^1.1.0
     "@opentelemetry/api-metrics": ^0.29.1
     "@opentelemetry/otlp-transformer": ^0.29.1
     uuid: ^8.3.2
-  checksum: 664ded4d6bbe466cf6629fc0fb2c751b488662a12c25b620872939472ae51a7360237f3d669ca900ce5157c8575f312a64328ef03311b075b3a3937bc896d9e8
+  checksum: a71669dd0ec00f8e97dcf9e525b77221b64989918ab6a86c606caa87297a559c8da1f886cfa4c7ac7ade483dfaec24cf9733c93962f271c79540828ba06271a3
   languageName: node
   linkType: hard
 
-"@grafana/agent-web@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@grafana/agent-web@npm:0.3.0"
+"@grafana/agent-web@npm:0.4.0, @grafana/agent-web@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@grafana/agent-web@npm:0.4.0"
   dependencies:
-    "@grafana/agent-core": ^0.3.0
+    "@grafana/agent-core": ^0.4.0
     ua-parser-js: ^1.0.2
     web-vitals: ^2.1.4
-  checksum: 5abbb1e17afbb8fd2944a7ffd14a10c701fdd11a6c80c986b4039a8abe36dc1647513493acc7898fd373a20c05b02ce3c8cc6c18ad5e3f47980cd4dd50373e6e
+  checksum: 149b23dd387a70dfbc0f555c25712295e0eadcafcd13eb97d88e584b36388ddc819f2c59435101f7747151576cc3f616739efc8ad77eb77b84bd0c02204f9113
   languageName: node
   linkType: hard
 
@@ -4928,7 +4928,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
-    "@grafana/agent-web": ^0.3.0
+    "@grafana/agent-web": ^0.4.0
     "@grafana/data": 9.1.0-pre
     "@grafana/e2e-selectors": 9.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -21171,8 +21171,8 @@ __metadata:
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.9.0
-    "@grafana/agent-core": ^0.3.0
-    "@grafana/agent-web": ^0.3.0
+    "@grafana/agent-core": 0.4.0
+    "@grafana/agent-web": 0.4.0
     "@grafana/api-documenter": 7.11.2
     "@grafana/aws-sdk": 0.0.37
     "@grafana/data": "workspace:*"
