@@ -77,27 +77,27 @@ func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrato
 
 	var dashboards []dashboard
 	if err := m.sess.SQL("SELECT id, is_folder, folder_id, org_id FROM dashboard").Find(&dashboards); err != nil {
-		return err
+		return fmt.Errorf("failed to list dashboards: %w", err)
 	}
 
-	var acl []models.DashboardAcl
+	var acl []models.DashboardACL
 	if err := m.sess.Find(&acl); err != nil {
-		return err
+		return fmt.Errorf("failed to list dashboard ACL: %w", err)
 	}
 
-	aclMap := make(map[int64][]models.DashboardAcl, len(acl))
+	aclMap := make(map[int64][]models.DashboardACL, len(acl))
 	for _, p := range acl {
 		aclMap[p.DashboardID] = append(aclMap[p.DashboardID], p)
 	}
 
-	if err := m.migratePermissions(dashboards, aclMap); err != nil {
-		return err
+	if err := m.migratePermissions(dashboards, aclMap, migrator); err != nil {
+		return fmt.Errorf("failed to migrate permissions: %w", err)
 	}
 
 	return nil
 }
 
-func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard, aclMap map[int64][]models.DashboardAcl) error {
+func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard, aclMap map[int64][]models.DashboardACL, migrator *migrator.Migrator) error {
 	permissionMap := map[int64]map[string][]*ac.Permission{}
 	for _, d := range dashboards {
 		if d.ID == -1 {
@@ -133,7 +133,7 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		for name := range roles {
 			role, err := m.findRole(orgID, name)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to find role %s: %w", name, err)
 			}
 			if role.ID == 0 {
 				rolesToCreate = append(rolesToCreate, &ac.Role{OrgID: orgID, Name: name})
@@ -143,9 +143,10 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		}
 	}
 
+	migrator.Logger.Debug(fmt.Sprintf("bulk-creating roles %v", rolesToCreate))
 	createdRoles, err := m.bulkCreateRoles(rolesToCreate)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to bulk-create roles: %w", err)
 	}
 
 	for i := range createdRoles {
@@ -153,17 +154,18 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 	}
 
 	if err := m.bulkAssignRoles(createdRoles); err != nil {
-		return err
+		return fmt.Errorf("failed to bulk-assign roles: %w", err)
 	}
 
-	return m.setPermissions(allRoles, permissionMap)
+	return m.setPermissions(allRoles, permissionMap, migrator)
 }
 
-func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permissionMap map[int64]map[string][]*ac.Permission) error {
+func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permissionMap map[int64]map[string][]*ac.Permission, migrator *migrator.Migrator) error {
 	now := time.Now()
 	for _, role := range allRoles {
+		migrator.Logger.Debug(fmt.Sprintf("setting permissions for role %s with ID %d in org %d", role.Name, role.ID, role.OrgID))
 		if _, err := m.sess.Exec("DELETE FROM permission WHERE role_id = ? AND (action LIKE ? OR action LIKE ?)", role.ID, "dashboards%", "folders%"); err != nil {
-			return err
+			return fmt.Errorf("failed to clear dashboard and folder permissions for role: %w", err)
 		}
 		var permissions []ac.Permission
 		mappedPermissions := permissionMap[role.OrgID][role.Name]
@@ -178,8 +180,9 @@ func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permis
 		}
 
 		err := batch(len(permissions), batchSize, func(start, end int) error {
+			migrator.Logger.Debug(fmt.Sprintf("inserting permissions %v", permissions[start:end]))
 			if _, err := m.sess.InsertMulti(permissions[start:end]); err != nil {
-				return err
+				return fmt.Errorf("failed to create permissions for role: %w", err)
 			}
 			return nil
 		})
@@ -210,7 +213,7 @@ func (m dashboardPermissionsMigrator) mapPermission(id int64, p models.Permissio
 	return permissions
 }
 
-func getRoleName(p models.DashboardAcl) string {
+func getRoleName(p models.DashboardACL) string {
 	if p.UserID != 0 {
 		return fmt.Sprintf("managed:users:%d:permissions", p.UserID)
 	}

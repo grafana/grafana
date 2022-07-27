@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -26,18 +27,20 @@ type HTTPStorageService interface {
 }
 
 type httpStorage struct {
-	store StorageService
+	store        StorageService
+	quotaService quota.Service
 }
 
-func ProvideHTTPService(store StorageService) HTTPStorageService {
+func ProvideHTTPService(store StorageService, quotaService quota.Service) HTTPStorageService {
 	return &httpStorage{
-		store: store,
+		store:        store,
+		quotaService: quotaService,
 	}
 }
 
 func UploadErrorToStatusCode(err error) int {
 	switch {
-	case errors.Is(err, ErrUploadFeatureDisabled):
+	case errors.Is(err, ErrStorageNotFound):
 		return 404
 
 	case errors.Is(err, ErrUnsupportedStorage):
@@ -49,12 +52,25 @@ func UploadErrorToStatusCode(err error) int {
 	case errors.Is(err, ErrFileAlreadyExists):
 		return 400
 
+	case errors.Is(err, ErrAccessDenied):
+		return 403
+
 	default:
 		return 500
 	}
 }
 
 func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
+	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
+	quotaReached, err := s.quotaService.CheckQuotaReached(c.Req.Context(), "file", nil)
+	if err != nil {
+		return response.Error(500, "Internal server error", err)
+	}
+
+	if quotaReached {
+		return response.Error(400, "File quota reached", errors.New("file quota reached"))
+	}
+
 	type rspInfo struct {
 		Message string `json:"message,omitempty"`
 		Path    string `json:"path,omitempty"`
@@ -107,13 +123,12 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 
 			entityType := EntityTypeJSON
 			mimeType := http.DetectContentType(data)
-			if strings.HasPrefix(mimeType, "image") {
+			if strings.HasPrefix(mimeType, "image") || strings.HasSuffix(path, ".svg") {
 				entityType = EntityTypeImage
 			}
 
 			err = s.store.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
 				Contents:              data,
-				MimeType:              mimeType,
 				EntityType:            entityType,
 				Path:                  path,
 				OverwriteExistingFile: overwriteExistingFile,

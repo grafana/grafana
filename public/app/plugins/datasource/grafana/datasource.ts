@@ -18,6 +18,7 @@ import {
 import {
   DataSourceWithBackend,
   getBackendSrv,
+  getDataSourceSrv,
   getGrafanaLiveSrv,
   getTemplateSrv,
   StreamingFrameOptions,
@@ -209,6 +210,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   testDatasource() {
     return Promise.resolve();
   }
+}
+
+/** Get the GrafanaDatasource instance */
+export async function getGrafanaDatasource() {
+  return (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
 }
 
 export interface FileElement {

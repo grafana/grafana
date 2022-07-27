@@ -3,8 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
 
 import {
   VisualQueryModeller,

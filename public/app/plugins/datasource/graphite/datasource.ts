@@ -3,15 +3,16 @@ import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwErro
 import { catchError, map } from 'rxjs/operators';
 
 import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  AbstractQuery,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
-  AbstractQuery,
-  AbstractLabelOperator,
-  AbstractLabelMatcher,
+  dateTime,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
@@ -26,6 +27,7 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/data
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 import { AnnotationEditor } from './components/AnnotationsEditor';
+import { convertToGraphiteQueryObject } from './components/helpers';
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
 import { prepareAnnotation } from './migrations';
@@ -37,6 +39,7 @@ import {
   GraphiteQuery,
   GraphiteQueryRequest,
   GraphiteQueryImportConfiguration,
+  GraphiteQueryType,
   GraphiteType,
   MetricTankRequestMeta,
 } from './types';
@@ -77,6 +80,7 @@ export class GraphiteDatasource
   funcDefs: FuncDefs | null = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
+  requestCounter = 100;
   private readonly metricMappings: GraphiteLokiMapping[];
 
   constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
@@ -481,8 +485,15 @@ export class GraphiteDatasource
     return date.unix();
   }
 
-  metricFindQuery(query: string, optionalOptions?: any): Promise<MetricFindValue[]> {
+  metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {
     const options: any = optionalOptions || {};
+
+    const queryObject = convertToGraphiteQueryObject(findQuery);
+    if (queryObject.queryType === GraphiteQueryType.Value) {
+      return this.requestMetricRender(queryObject, options);
+    }
+
+    let query = queryObject.target ?? '';
 
     // First attempt to check for tag-related functions (using empty wildcard for interpolation)
     let interpolatedQuery = this.templateSrv.replace(
@@ -523,11 +534,52 @@ export class GraphiteDatasource
       };
     }
 
-    if (useExpand) {
+    if (useExpand || queryObject.queryType === GraphiteQueryType.MetricName) {
       return this.requestMetricExpand(interpolatedQuery, options.requestId, range);
     } else {
       return this.requestMetricFind(interpolatedQuery, options.requestId, range);
     }
+  }
+
+  /**
+   * Search for metrics matching giving pattern using /metrics/render endpoint.
+   * It will return all possible values and parse them based on queryType.
+   * For example:
+   *
+   * queryType: GraphiteQueryType.Value
+   * query: groupByNode(movingAverage(apps.country.IE.counters.requests.count, 10), 2, 'sum')
+   * result: 239.4, 233.4, 230.8, 230.4, 233.9, 238, 239.8, 236.8, 235.8
+   */
+  private async requestMetricRender(queryObject: GraphiteQuery, options: any): Promise<MetricFindValue[]> {
+    const requestId: string = options.requestId ?? `Q${this.requestCounter++}`;
+    const range: TimeRange = options.range ?? {
+      from: dateTime().subtract(6, 'hour'),
+      to: dateTime(),
+      raw: {
+        from: 'now - 6h',
+        to: 'now',
+      },
+    };
+    const queryReq: DataQueryRequest<GraphiteQuery> = {
+      app: 'graphite-variable-editor',
+      interval: '1s',
+      intervalMs: 10000,
+      startTime: Date.now(),
+      targets: [{ ...queryObject }],
+      timezone: 'browser',
+      scopedVars: {},
+      requestId,
+      range,
+    };
+    const data = await lastValueFrom(this.query(queryReq));
+    const result: MetricFindValue[] = data.data[0].fields[1].values
+      .filter((f?: number) => !!f)
+      .map((v: number) => ({
+        text: v.toString(),
+        value: v,
+        expandable: false,
+      }));
+    return Promise.resolve(result);
   }
 
   /**

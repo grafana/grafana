@@ -1,5 +1,5 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 
-export function RecordedQueries(): ReactElement | null {
+export function RecordedQueries() {
   return <div>The recorded queries tab is under development.</div>;
 }

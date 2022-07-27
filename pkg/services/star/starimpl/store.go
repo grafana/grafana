@@ -9,10 +9,11 @@ import (
 )
 
 type store interface {
-	Get(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error)
-	Insert(ctx context.Context, cmd *star.StarDashboardCommand) error
-	Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) error
-	List(ctx context.Context, query *star.GetUserStarsQuery) (*star.GetUserStarsResult, error)
+	Get(context.Context, *star.IsStarredByUserQuery) (bool, error)
+	Insert(context.Context, *star.StarDashboardCommand) error
+	Delete(context.Context, *star.UnstarDashboardCommand) error
+	DeleteByUser(context.Context, int64) error
+	List(context.Context, *star.GetUserStarsQuery) (*star.GetUserStarsResult, error)
 }
 
 type sqlStore struct {
@@ -51,6 +52,14 @@ func (s *sqlStore) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand)
 	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
 		_, err := sess.Exec(rawSQL, cmd.UserID, cmd.DashboardID)
+		return err
+	})
+}
+
+func (s *sqlStore) DeleteByUser(ctx context.Context, userID int64) error {
+	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var rawSQL = "DELETE FROM star WHERE user_id = ?"
+		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})
 }
