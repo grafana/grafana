@@ -37,10 +37,6 @@ func (p *fakeHttpClientProvider) GetTransport(opts ...sdkhttpclient.Options) (ht
 	return http.DefaultTransport, nil
 }
 
-func (p *fakeHttpClientProvider) setResponse(res *http.Response) {
-	p.res = res
-}
-
 func (p *fakeHttpClientProvider) RoundTrip(req *http.Request) (*http.Response, error) {
 	return p.rt.RoundTrip(req)
 }
