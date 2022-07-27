@@ -29,6 +29,7 @@ export function UnwrapParamEditor({
     <Select
       inputId={getOperationParamId(operationIndex, index)}
       onOpenMenu={async () => {
+        // This check is always true, we do it to make typescript happy
         if (datasource instanceof LokiDatasource) {
           setState({ isLoading: true });
           const options = await loadUnwrapOptions(query, datasource);
