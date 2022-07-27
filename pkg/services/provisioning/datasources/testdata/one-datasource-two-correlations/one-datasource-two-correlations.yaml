@@ -7,9 +7,9 @@ datasources:
     access: proxy
     url: http://localhost:8080
     correlations:
-      - targetUid: graphite
+      - targetUID: graphite
         label: a label
         description: a description
-      - targetUid: graphite
+      - targetUID: graphite
         label: a second label
         description: a second description
