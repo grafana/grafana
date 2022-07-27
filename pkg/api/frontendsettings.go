@@ -98,6 +98,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":                    setting.AuthProxyEnabled,
 		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
+		"jwtHeaderName":                       hs.Cfg.JWTAuthHeaderName,
+		"jwtUrlLogin":                         hs.Cfg.JWTAuthURLLogin,
 		"alertingEnabled":                     setting.AlertingEnabled,
 		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,

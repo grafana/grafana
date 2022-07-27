@@ -316,6 +316,7 @@ type Cfg struct {
 	// JWT Auth
 	JWTAuthEnabled       bool
 	JWTAuthHeaderName    string
+	JWTAuthURLLogin      bool
 	JWTAuthEmailClaim    string
 	JWTAuthUsernameClaim string
 	JWTAuthExpectClaims  string
@@ -1305,6 +1306,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	authJWT := iniFile.Section("auth.jwt")
 	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
 	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
+	cfg.JWTAuthURLLogin = authJWT.Key("url_login").MustBool(false)
 	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
 	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
 	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")

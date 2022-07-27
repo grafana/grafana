@@ -12,6 +12,7 @@ import {
   duplicatePanel,
   removePanel,
   sharePanel,
+  toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
@@ -44,6 +45,11 @@ export function getPanelMenu(
   const onSharePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
+  };
+
+  const onToggleLegend = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    toggleLegend(panel);
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
@@ -129,10 +135,17 @@ export function getPanelMenu(
     menu.push({
       text: 'Explore',
       iconClassName: 'compass',
-      shortcut: 'x',
       onClick: onNavigateToExplore,
+      shortcut: 'x',
     });
   }
+
+  menu.push({
+    text: panel.options.legend?.showLegend ? 'Hide legend' : 'Show legend',
+    iconClassName: 'exchange-alt',
+    onClick: onToggleLegend,
+    shortcut: 'p l',
+  });
 
   const inspectMenu: PanelMenuItem[] = [];
 
