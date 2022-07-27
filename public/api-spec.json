@@ -7064,6 +7064,15 @@
           {
             "type": "array",
             "items": {
+              "type": "string"
+            },
+            "description": "List of dashboard uid’s to search for",
+            "name": "dashboardUIDs",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
               "type": "integer",
               "format": "int64"
             },
