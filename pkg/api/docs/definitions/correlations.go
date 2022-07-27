@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 )
 
-// swagger:route POST /datasources/uid/{uid}/correlations correlations createCorrelation
+// swagger:route POST /datasources/uid/{sourceUID}/correlations correlations createCorrelation
 //
 // Add correlation.
 //
@@ -23,7 +23,7 @@ type CreateCorrelationParams struct {
 	Body correlations.CreateCorrelationCommand `json:"body"`
 	// in:path
 	// required:true
-	SourceUID string `json:"uid"`
+	SourceUID string `json:"sourceUID"`
 }
 
 //swagger:response createCorrelationResponse

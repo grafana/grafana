@@ -19,9 +19,9 @@ This API can be used to define correlations between data sources.
 
 ## Create correlations
 
-`POST /api/datasources/uid/:sourceUid/correlations`
+`POST /api/datasources/uid/:sourceUID/correlations`
 
-Creates a correlation between two data sources - the source data source indicated by the path UID, and the target data source which is specified in the body.
+Creates a correlation between two data sources - the source data source identified by `sourceUID` in the path, and the target data source which is specified in the body.
 
 **Example request:**
 
@@ -31,7 +31,7 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
-	"targetUid": "PDDA8E780A17E7EF1",
+	"targetUID": "PDDA8E780A17E7EF1",
 	"label": "My Label",
 	"description": "Logs to Traces",
 }
@@ -39,7 +39,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON body schema:
 
-- **targetUid** – Target data source uid.
+- **targetUID** – Target data source uid.
 - **label** – A label for the correlation.
 - **description** – A description for the correlation.
 
@@ -53,8 +53,8 @@ Content-Type: application/json
   "result": {
     "description": "Logs to Traces",
     "label": "My Label",
-    "sourceUid": "uyBf2637k",
-    "targetUid": "PDDA8E780A17E7EF1",
+    "sourceUID": "uyBf2637k",
+    "targetUID": "PDDA8E780A17E7EF1",
     "uid": "50xhMlg9k"
   }
 }
