@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type DashAlertExtractor interface {
@@ -26,11 +27,11 @@ type DashAlertExtractorService struct {
 	log                          log.Logger
 }
 
-func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService, alertStore AlertStore) *DashAlertExtractorService {
+func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService, db db.DB) *DashAlertExtractorService {
 	return &DashAlertExtractorService{
 		datasourcePermissionsService: datasourcePermissionsService,
 		datasourceService:            datasourceService,
-		alertStore:                   alertStore,
+		alertStore:                   &sqlStore{db: db},
 		log:                          log.New("alerting.extractor"),
 	}
 }

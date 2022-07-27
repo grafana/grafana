@@ -91,7 +91,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},
 				},
-			}, &validations.OSSPluginRequestValidator{}, nil, nil)
+			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 			evalContext.IsTestRun = true
 
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)
@@ -139,7 +139,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},
 				},
-			}, &validations.OSSPluginRequestValidator{}, nil, nil)
+			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 			evalContext.IsTestRun = true
 
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)

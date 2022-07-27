@@ -84,7 +84,7 @@ func TestAlertRuleForParsing(t *testing.T) {
 }
 
 func TestAlertRuleModel(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := &sqlStore{db: sqlstore.InitTestDB(t)}
 	RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
 		return &FakeCondition{}, nil
 	})

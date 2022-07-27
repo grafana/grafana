@@ -17,7 +17,7 @@ import (
 func TestAlertingUsageStats(t *testing.T) {
 	store := &AlertStoreMock{}
 	ae := &AlertEngine{
-		sqlStore: store,
+		SQLStore: store,
 	}
 
 	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) error {

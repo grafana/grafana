@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -28,14 +30,19 @@ import (
 // AlertStore is a subset of SQLStore API to satisfy the needs of the alerting service.
 // A subset is needed to make it easier to mock during the tests.
 type AlertStore interface {
+	GetAlertById(context.Context, *models.GetAlertByIdQuery) error
 	GetAllAlertQueryHandler(context.Context, *models.GetAllAlertsQuery) error
-	GetDataSource(context.Context, *datasources.GetDataSourceQuery) error
+	GetAlertStatesForDashboard(context.Context, *models.GetAlertStatesForDashboardQuery) error
+	HandleAlertsQuery(context.Context, *models.GetAlertsQuery) error
+	//GetDataSource(context.Context, *datasources.GetDataSourceQuery) error
 	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
 	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
 	GetAlertNotificationUidWithId(context.Context, *models.GetAlertNotificationUidQuery) error
 	GetAlertNotificationsWithUidToSend(context.Context, *models.GetAlertNotificationsWithUidToSendQuery) error
 	GetOrCreateAlertNotificationState(context.Context, *models.GetOrCreateNotificationStateQuery) error
 	SetAlertState(context.Context, *models.SetAlertStateCommand) error
+	PauseAlert(context.Context, *models.PauseAlertCommand) error
+	PauseAllAlerts(context.Context, *models.PauseAllAlertCommand) error
 }
 
 // AlertEngine is the background process that
@@ -56,9 +63,10 @@ type AlertEngine struct {
 	resultHandler      resultHandler
 	usageStatsService  usagestats.Service
 	tracer             tracing.Tracer
-	sqlStore           AlertStore
+	SQLStore           AlertStore
 	dashAlertExtractor DashAlertExtractor
 	dashboardService   dashboards.DashboardService
+	datasourceService  datasources.DataSourceService
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
@@ -69,8 +77,14 @@ func (e *AlertEngine) IsDisabled() bool {
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
-	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore AlertStore, cfg *setting.Cfg,
-	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService) *AlertEngine {
+	notificationService *notifications.NotificationService, tracer tracing.Tracer, db db.DB, cfg *setting.Cfg,
+	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService) *AlertEngine {
+	storeLog := log.New("alerting.store")
+	store := &sqlStore{
+		cache: *cacheService,
+		db:    db,
+		log:   storeLog,
+	}
 	e := &AlertEngine{
 		Cfg:                cfg,
 		RenderService:      renderer,
@@ -78,16 +92,17 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 		DataService:        dataService,
 		usageStatsService:  usageStatsService,
 		tracer:             tracer,
-		sqlStore:           sqlStore,
+		SQLStore:           store,
 		dashAlertExtractor: dashAlertExtractor,
 		dashboardService:   dashboardService,
+		datasourceService:  dsService,
 	}
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
 	e.evalHandler = NewEvalHandler(e.DataService)
-	e.ruleReader = newRuleReader(sqlStore)
+	e.ruleReader = newRuleReader(store)
 	e.log = log.New("alerting.engine")
-	e.resultHandler = newResultHandler(e.RenderService, sqlStore, notificationService, encryptionService.GetDecryptedValue)
+	e.resultHandler = newResultHandler(e.RenderService, store, notificationService, encryptionService.GetDecryptedValue)
 
 	e.registerUsageMetrics()
 
@@ -203,7 +218,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
-	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.sqlStore, e.dashboardService)
+	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.SQLStore, e.dashboardService, e.datasourceService)
 	evalContext.Ctx = alertCtx
 
 	go func() {

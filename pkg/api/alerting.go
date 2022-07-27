@@ -28,7 +28,7 @@ func (hs *HTTPServer) ValidateOrgAlert(c *models.ReqContext) {
 	}
 	query := models.GetAlertByIdQuery{Id: id}
 
-	if err := hs.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
+	if err := hs.AlertEngine.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
 		c.JsonApiErr(404, "Alert not found", nil)
 		return
 	}
@@ -51,7 +51,7 @@ func (hs *HTTPServer) GetAlertStatesForDashboard(c *models.ReqContext) response.
 		DashboardId: c.QueryInt64("dashboardId"),
 	}
 
-	if err := hs.SQLStore.GetAlertStatesForDashboard(c.Req.Context(), &query); err != nil {
+	if err := hs.AlertEngine.SQLStore.GetAlertStatesForDashboard(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to fetch alert states", err)
 	}
 
@@ -125,7 +125,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 		query.State = states
 	}
 
-	if err := hs.SQLStore.HandleAlertsQuery(c.Req.Context(), &query); err != nil {
+	if err := hs.AlertEngine.SQLStore.HandleAlertsQuery(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "List alerts failed", err)
 	}
 
@@ -188,7 +188,7 @@ func (hs *HTTPServer) GetAlert(c *models.ReqContext) response.Response {
 	}
 	query := models.GetAlertByIdQuery{Id: id}
 
-	if err := hs.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
+	if err := hs.AlertEngine.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "List alerts failed", err)
 	}
 
@@ -527,7 +527,7 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 		result["alertId"] = alertID
 
 		query := models.GetAlertByIdQuery{Id: alertID}
-		if err := hs.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
+		if err := hs.AlertEngine.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
 			return response.Error(500, "Get Alert failed", err)
 		}
 
@@ -557,7 +557,7 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 			Paused:   dto.Paused,
 		}
 
-		if err := hs.SQLStore.PauseAlert(c.Req.Context(), &cmd); err != nil {
+		if err := hs.AlertEngine.SQLStore.PauseAlert(c.Req.Context(), &cmd); err != nil {
 			return response.Error(500, "", err)
 		}
 
@@ -591,7 +591,7 @@ func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *models
 			Paused: dto.Paused,
 		}
 
-		if err := hs.SQLStore.PauseAllAlerts(c.Req.Context(), &updateCmd); err != nil {
+		if err := hs.AlertEngine.SQLStore.PauseAllAlerts(c.Req.Context(), &updateCmd); err != nil {
 			return response.Error(500, "Failed to pause alerts", err)
 		}
 
