@@ -252,7 +252,7 @@ spec:
   sessionAffinity: None
   type: LoadBalancer
 ```
-> **Note:** Using LoadBalancer in the Service may expose your Grafana instance to the Internet depending on your cloud platform and network configuration. Instead, you can use ClusterIP to restrict access from within the cluster Grafana is deployed to.
+> **Caution:** If you use `LoadBalancer` in the Service and depending on your cloud platform and network configuration, doing so might expose your Grafana instance to the Internet. To eliminate this risk, use `ClusterIP` to restrict access from within the cluster Grafana is deployed to.
 
 1. Send manifest to Kubernetes API Server
    `kubectl apply -f grafana.yaml`
