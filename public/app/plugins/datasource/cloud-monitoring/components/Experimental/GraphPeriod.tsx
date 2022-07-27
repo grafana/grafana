@@ -1,8 +1,7 @@
 import React, { FunctionComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
-import { HorizontalGroup, Switch } from '@grafana/ui';
+import { EditorField, EditorRow, HorizontalGroup, Switch } from '@grafana/ui';
 
 import { GRAPH_PERIODS, SELECT_WIDTH } from '../../constants';
 import { PeriodSelect } from '../index';

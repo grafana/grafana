@@ -357,7 +357,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
+		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
 			Permission: models.PERMISSION_EDIT,
 		})
@@ -373,8 +373,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		require.Len(t, query1.Result, 1)
 
-		permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = getDashboardAclInfoList(ss, permQuery)
+		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		err = getDashboardACLInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
@@ -396,7 +396,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
+		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
 			Permission: models.PERMISSION_EDIT,
 		})
@@ -447,8 +447,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		require.Len(t, query2.Result, 1)
 
-		permQuery = &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = getDashboardAclInfoList(ss, permQuery)
+		permQuery = &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		err = getDashboardACLInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
@@ -662,7 +662,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// Cannot make themselves a non-admin
 		updatePermsError := ss.UpdateUserPermissions(usr.ID, false)
 
-		require.Equal(t, updatePermsError, models.ErrLastGrafanaAdmin)
+		require.Equal(t, updatePermsError, user.ErrLastGrafanaAdmin)
 
 		query := models.GetUserByIdQuery{Id: usr.ID}
 		getUserError := ss.GetUserById(context.Background(), &query)
@@ -689,7 +689,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			SkipOrgSetup: true,
 		}
 		_, err = ss.CreateUser(context.Background(), createUserCmd)
-		require.Equal(t, err, models.ErrUserAlreadyExists)
+		require.Equal(t, err, user.ErrUserAlreadyExists)
 
 		// When trying to create a new user with the same login, an error is returned
 		createUserCmd = user.CreateUserCommand{
@@ -699,7 +699,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			SkipOrgSetup: true,
 		}
 		_, err = ss.CreateUser(context.Background(), createUserCmd)
-		require.Equal(t, err, models.ErrUserAlreadyExists)
+		require.Equal(t, err, user.ErrUserAlreadyExists)
 	})
 }
 

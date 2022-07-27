@@ -70,6 +70,8 @@ type MetricRequest struct {
 	// required: false
 	Debug bool `json:"debug"`
 
+	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
+
 	HTTPRequest *http.Request `json:"-"`
 }
 

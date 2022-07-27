@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -100,7 +101,20 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, sqlstore sqlstore.Store)
 	return nil
 }
 
-// ReloadLDAPCfg reloads the LDAP configuration
+// swagger:route POST /admin/ldap/reload admin_ldap reloadLDAPCfg
+//
+// Reloads the LDAP configuration.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) ReloadLDAPCfg(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
@@ -113,7 +127,20 @@ func (hs *HTTPServer) ReloadLDAPCfg(c *models.ReqContext) response.Response {
 	return response.Success("LDAP config reloaded")
 }
 
-// GetLDAPStatus attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.
+// swagger:route GET /admin/ldap/status admin_ldap getLDAPStatus
+//
+// Attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.status:read`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
@@ -153,7 +180,20 @@ func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, serverDTOs)
 }
 
-// PostSyncUserWithLDAP enables a single Grafana user to be synchronized against LDAP
+// swagger:route POST /admin/ldap/sync/{user_id} admin_ldap postSyncUserWithLDAP
+//
+// Enables a single Grafana user to be synchronized against LDAP.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:sync`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
@@ -172,8 +212,8 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 	query := models.GetUserByIdQuery{Id: userId}
 
 	if err := hs.SQLStore.GetUserById(c.Req.Context(), &query); err != nil { // validate the userId exists
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to get user", err)
@@ -181,8 +221,8 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.ID, AuthModule: models.AuthModuleLDAP}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to get user", err)
@@ -220,6 +260,11 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		ReqContext:    c,
 		ExternalUser:  user,
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
+		UserLookupParams: models.UserLookupParams{
+			UserID: &query.Result.ID, // Upsert by ID only
+			Email:  nil,
+			Login:  nil,
+		},
 	}
 
 	err = hs.Login.UpsertUser(c.Req.Context(), upsertCmd)
@@ -230,7 +275,20 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 	return response.Success("User synced successfully")
 }
 
-// GetUserFromLDAP finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.
+// swagger:route GET /admin/ldap/{user_name} admin_ldap getUserFromLDAP
+//
+// Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:read`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
@@ -316,4 +374,18 @@ func splitName(name string) (string, string) {
 	default:
 		return names[0], names[1]
 	}
+}
+
+// swagger:parameters getUserFromLDAP
+type GetLDAPUserParams struct {
+	// in:path
+	// required:true
+	UserName string `json:"user_name"`
+}
+
+// swagger:parameters postSyncUserWithLDAP
+type SyncLDAPUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
 }

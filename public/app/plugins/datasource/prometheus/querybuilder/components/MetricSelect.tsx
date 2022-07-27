@@ -4,8 +4,7 @@ import React, { useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';
-import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { Select, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+import { Select, FormatOptionLabelMeta, useStyles2, EditorField, EditorFieldGroup } from '@grafana/ui';
 
 import { PromVisualQuery } from '../types';
 

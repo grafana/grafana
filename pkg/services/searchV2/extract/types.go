@@ -1,7 +1,10 @@
 package extract
 
-// empty everything will return the default
-type DatasourceLookup = func(ref *DataSourceRef) *DataSourceRef
+type DatasourceLookup interface {
+	// ByRef will return the default DS given empty reference (nil ref, or empty ref.uid and ref.type)
+	ByRef(ref *DataSourceRef) *DataSourceRef
+	ByType(dsType string) []DataSourceRef
+}
 
 type DataSourceRef struct {
 	UID  string `json:"uid,omitempty"`
@@ -22,6 +25,7 @@ type PanelInfo struct {
 }
 
 type DashboardInfo struct {
+	UID           string          `json:"uid,omitempty"`
 	ID            int64           `json:"id,omitempty"` // internal ID
 	Title         string          `json:"title"`
 	Description   string          `json:"description,omitempty"`

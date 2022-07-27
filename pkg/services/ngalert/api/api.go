@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -28,7 +29,7 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-type Scheduler interface {
+type ExternalAlertmanagerProvider interface {
 	AlertmanagersFor(orgID int64) []*url.URL
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 }
@@ -61,9 +62,10 @@ type AlertingStore interface {
 type API struct {
 	Cfg                  *setting.Cfg
 	DatasourceCache      datasources.CacheService
+	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
 	ExpressionService    *expr.Service
-	QuotaService         *quota.QuotaService
+	QuotaService         quota.Service
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
@@ -81,6 +83,7 @@ type API struct {
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
 	AlertRules           *provisioning.AlertRuleService
+	AlertsRouter         *sender.AlertsRouter
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -91,19 +94,19 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	}
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
-	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
+	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		&AlertmanagerSrv{crypto: api.MultiOrgAlertmanager.Crypto, log: logger, ac: api.AccessControl, mam: api.MultiOrgAlertmanager},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
-	api.RegisterPrometheusApiEndpoints(NewForkedProm(
+	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
 		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
-	api.RegisterRulerApiEndpoints(NewForkedRuler(
+	api.RegisterRulerApiEndpoints(NewForkingRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
@@ -118,7 +121,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			ac:              api.AccessControl,
 		},
 	), m)
-	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
+	api.RegisterTestingApiEndpoints(NewTestingApi(
 		&TestingApiSrv{
 			AlertingProxy:   proxy,
 			DatasourceCache: api.DatasourceCache,
@@ -126,15 +129,16 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			accessControl:   api.AccessControl,
 			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService, api.ExpressionService),
 		}), m)
-	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
-		&AdminSrv{
-			store:     api.AdminConfigStore,
-			log:       logger,
-			scheduler: api.Schedule,
+	api.RegisterConfigurationApiEndpoints(NewConfiguration(
+		&ConfigSrv{
+			datasourceService:    api.DatasourceService,
+			store:                api.AdminConfigStore,
+			log:                  logger,
+			alertmanagerProvider: api.AlertsRouter,
 		},
 	), m)
 
-	api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
+	api.RegisterProvisioningApiEndpoints(NewProvisioningApi(&ProvisioningSrv{
 		log:                 logger,
 		policies:            api.Policies,
 		contactPointService: api.ContactPointService,

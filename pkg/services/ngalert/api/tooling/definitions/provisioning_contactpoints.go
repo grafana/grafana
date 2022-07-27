@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 )
 
 // swagger:route GET /api/v1/provisioning/contact-points provisioning stable RouteGetContactpoints
@@ -51,6 +52,14 @@ type ContactPointUIDReference struct {
 	// UID is the contact point unique identifier
 	// in:path
 	UID string
+}
+
+// swagger:parameters RouteGetContactpoints
+type ContactPointParams struct {
+	// Filter by name
+	// in: query
+	// required: false
+	Name string `json:"name"`
 }
 
 // swagger:parameters RoutePostContactpoints RoutePutContactpoint
@@ -110,43 +119,17 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 }
 
 func (e *EmbeddedContactPoint) SecretKeys() ([]string, error) {
-	switch e.Type {
-	case "alertmanager":
-		return []string{"basicAuthPassword"}, nil
-	case "dingding":
-		return []string{}, nil
-	case "discord":
-		return []string{}, nil
-	case "email":
-		return []string{}, nil
-	case "googlechat":
-		return []string{}, nil
-	case "kafka":
-		return []string{}, nil
-	case "line":
-		return []string{"token"}, nil
-	case "opsgenie":
-		return []string{"apiKey"}, nil
-	case "pagerduty":
-		return []string{"integrationKey"}, nil
-	case "pushover":
-		return []string{"userKey", "apiToken"}, nil
-	case "sensugo":
-		return []string{"apiKey"}, nil
-	case "slack":
-		return []string{"url", "token"}, nil
-	case "teams":
-		return []string{}, nil
-	case "telegram":
-		return []string{"bottoken"}, nil
-	case "threema":
-		return []string{"api_secret"}, nil
-	case "victorops":
-		return []string{}, nil
-	case "webhook":
-		return []string{}, nil
-	case "wecom":
-		return []string{"url"}, nil
+	notifiers := channels_config.GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if n.Type == e.Type {
+			secureFields := []string{}
+			for _, field := range n.Options {
+				if field.Secure {
+					secureFields = append(secureFields, field.PropertyName)
+				}
+			}
+			return secureFields, nil
+		}
 	}
 	return nil, fmt.Errorf("no secrets configured for type '%s'", e.Type)
 }

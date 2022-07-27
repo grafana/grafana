@@ -18,6 +18,7 @@ export interface SearchQuery {
   id?: number[];
   facet?: FacetField[];
   explain?: boolean;
+  withAllowedActions?: boolean;
   accessInfo?: boolean;
   hasPreview?: string; // theme
   limit?: number;
@@ -33,6 +34,10 @@ export interface DashboardQueryResult {
   tags: string[];
   location: string; // url that can be split
   ds_uid: string[];
+
+  // debugging fields
+  score: number;
+  explain: {};
 }
 
 export interface LocationInfo {

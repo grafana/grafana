@@ -22,9 +22,9 @@ type scenarioContext struct {
 	g                  DashboardGuardian
 	givenUser          *models.SignedInUser
 	givenDashboardID   int64
-	givenPermissions   []*models.DashboardAclInfoDTO
+	givenPermissions   []*models.DashboardACLInfoDTO
 	givenTeams         []*models.TeamDTO
-	updatePermissions  []*models.DashboardAcl
+	updatePermissions  []*models.DashboardACL
 	expectedFlags      permissionFlags
 	callerFile         string
 	callerLine         int
@@ -76,7 +76,7 @@ func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenario
 }
 
 func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
-	permissions []*models.DashboardAclInfoDTO, fn scenarioFunc) {
+	permissions []*models.DashboardACLInfoDTO, fn scenarioFunc) {
 	sc.t.Run(desc, func(t *testing.T) {
 		store := mockstore.NewSQLStoreMock()
 		teams := []*models.TeamDTO{}
@@ -89,8 +89,8 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		store.ExpectedTeamsByUser = teams
 
 		dashSvc := dashboards.NewFakeDashboardService(t)
-		dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 			q.Result = permissions
 		}).Return(nil)
 
@@ -225,36 +225,36 @@ func (sc *scenarioContext) reportFailure(desc string, expected interface{}, actu
 	sc.t.Fatalf(buf.String())
 }
 
-func newCustomUserPermission(dashboardID int64, userID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, UserID: userID, Permission: permission}
+func newCustomUserPermission(dashboardID int64, userID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, UserID: userID, Permission: permission}
 }
 
-func newDefaultUserPermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
+func newDefaultUserPermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
 	return newCustomUserPermission(dashboardID, userID, permission)
 }
 
-func newCustomTeamPermission(dashboardID int64, teamID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, TeamID: teamID, Permission: permission}
+func newCustomTeamPermission(dashboardID int64, teamID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, TeamID: teamID, Permission: permission}
 }
 
-func newDefaultTeamPermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
+func newDefaultTeamPermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
 	return newCustomTeamPermission(dashboardID, teamID, permission)
 }
 
-func newAdminRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, Role: &adminRole, Permission: permission}
+func newAdminRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, Role: &adminRole, Permission: permission}
 }
 
-func newEditorRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, Role: &editorRole, Permission: permission}
+func newEditorRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, Role: &editorRole, Permission: permission}
 }
 
-func newViewerRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, Role: &viewerRole, Permission: permission}
+func newViewerRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardACL {
+	return &models.DashboardACL{OrgID: orgID, DashboardID: dashboardID, Role: &viewerRole, Permission: permission}
 }
 
-func toDto(acl *models.DashboardAcl) *models.DashboardAclInfoDTO {
-	return &models.DashboardAclInfoDTO{
+func toDto(acl *models.DashboardACL) *models.DashboardACLInfoDTO {
+	return &models.DashboardACLInfoDTO{
 		OrgId:          acl.OrgID,
 		DashboardId:    acl.DashboardID,
 		UserId:         acl.UserID,

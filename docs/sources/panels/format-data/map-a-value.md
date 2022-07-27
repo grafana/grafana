@@ -10,12 +10,6 @@ weight: 20
 
 Map a value when you want to format a single value.
 
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
-
-**To map a value**:
-
 1. Open a panel for which you want to map a value.
 1. In panel display options, locate the **Value mappings** section and click **Add value mappings**.
 1. Click **Add a new mapping** and then select **Value**.

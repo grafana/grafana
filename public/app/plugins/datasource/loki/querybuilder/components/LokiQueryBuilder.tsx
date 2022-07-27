@@ -1,15 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
-import { DataSourceApi, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
+import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue } from '@grafana/data';
+import { EditorRow } from '@grafana/ui';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
 import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
+import { QueryBuilderHints } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryBuilderHints';
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { LokiDatasource } from '../../datasource';
 import { escapeLabelValueInSelector } from '../../language_utils';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { NestedQueryList } from './NestedQueryList';
@@ -22,6 +24,8 @@ export interface Props {
 }
 
 export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery }) => {
+  const [sampleData, setSampleData] = useState<PanelData>();
+
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -74,6 +78,17 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     return undefined;
   }, [query]);
 
+  useEffect(() => {
+    const onGetSampleData = async () => {
+      const lokiQuery = { expr: lokiQueryModeller.renderQuery(query), refId: 'data-samples' };
+      const series = await datasource.getDataSamples(lokiQuery);
+      const sampleData = { series, state: LoadingState.Done, timeRange: getDefaultTimeRange() };
+      setSampleData(sampleData);
+    };
+
+    onGetSampleData().catch(console.error);
+  }, [datasource, query]);
+
   return (
     <>
       <EditorRow>
@@ -96,6 +111,14 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onChange={onChange}
           onRunQuery={onRunQuery}
           datasource={datasource as DataSourceApi}
+        />
+        <QueryBuilderHints<LokiVisualQuery>
+          datasource={datasource}
+          query={query}
+          onChange={onChange}
+          data={sampleData}
+          queryModeller={lokiQueryModeller}
+          buildVisualQueryFromString={buildVisualQueryFromString}
         />
       </OperationsEditorRow>
       {query.binaryQueries && query.binaryQueries.length > 0 && (
