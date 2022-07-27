@@ -4,7 +4,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DashboardDTO } from 'app/types';
 
-import { UploadReponse } from './types';
+import { UploadReponse, StorageInfo } from './types';
 
 // Likely should be built into the search interface!
 export interface GrafanaStorage {
@@ -13,6 +13,8 @@ export interface GrafanaStorage {
   upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadReponse>;
   createFolder: (path: string) => Promise<{ error?: string }>;
   delete: (path: { isFolder: boolean; path: string }) => Promise<{ error?: string }>;
+
+  getConfig: () => Promise<StorageInfo[]>;
 
   /**
    * Temporary shim that will return a DashboardDTO shape for files in storage
@@ -174,6 +176,10 @@ class SimpleStorage implements GrafanaStorage {
       slug: uid,
       status: 'success',
     };
+  }
+
+  async getConfig() {
+    return getBackendSrv().get<StorageInfo[]>('/api/storage/config');
   }
 }
 

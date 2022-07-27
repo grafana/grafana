@@ -161,7 +161,7 @@ require (
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/loads v0.20.2
 	github.com/go-openapi/runtime v0.19.29 // indirect
-	github.com/go-openapi/spec v0.20.4
+	github.com/go-openapi/spec v0.20.4 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/go-openapi/validate v0.20.2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect

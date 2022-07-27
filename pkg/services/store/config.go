@@ -26,7 +26,7 @@ type GlobalStorageConfig struct {
 
 func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
 	changed := false
-	fpath := filepath.Join(cfg.DataPath, "storage.json")
+	fpath := filepath.Join(cfg.DataPath, "storage", "storage.json")
 	g := &GlobalStorageConfig{}
 	if _, err := os.Stat(fpath); err == nil {
 		body, err := ioutil.ReadFile(fpath)
@@ -53,7 +53,7 @@ func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
 				Branch:             "main",
 				Root:               "org_1/root", // the dashboard files
 				RequirePullRequest: true,
-				AccessToken:        "?????",
+				AccessToken:        "${GRAFANA_STORAGE_GITHUB_ACCESS_TOKEN}",
 			},
 		})
 		changed = true

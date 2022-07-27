@@ -36,9 +36,9 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 	}
 	scfg.Type = rootStorageTypeGit
 	scfg.GCS = nil
-	scfg.Git = nil
 	scfg.SQL = nil
 	scfg.S3 = nil
+	scfg.Git = cfg
 
 	meta := RootStorageMeta{
 		Config: scfg,
@@ -60,11 +60,6 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
 			Text:     "Invalid local root folder",
-		})
-	} else if _, err := os.Stat(localWorkCache); os.IsNotExist(err) {
-		meta.Notice = append(meta.Notice, data.Notice{
-			Severity: data.NoticeSeverityError,
-			Text:     "Local root does not exist",
 		})
 	}
 
