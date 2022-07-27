@@ -1,5 +1,7 @@
 import produce from 'immer';
 
+import { AzureMetricResource } from '../../types';
+
 import { ResourceRow, ResourceRowGroup } from './types';
 
 // This regex matches URIs representing:
@@ -21,6 +23,11 @@ export function parseResourceURI(resourceURI: string) {
   }
 
   return { subscriptionID, resourceGroup, resource };
+}
+
+export function parseResourceDetails(resource: string | AzureMetricResource) {
+  // TBD: Call parseResourceUri if input is a string
+  return { subscription: '', resourceGroup: '', metricNamespace: '', resourceName: '' };
 }
 
 export function isGUIDish(input: string) {
