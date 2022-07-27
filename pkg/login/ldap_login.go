@@ -53,6 +53,12 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery, log
 		return true, err
 	}
 
+	if query.Cfg.LDAPRoleAttributeStrict && len(externalUser.OrgRoles) == 0 {
+		err := fmt.Errorf("no org role found")
+		ldapLogger.Error("Refusing log in", "err", err)
+		return false, err
+	}
+
 	upsert := &models.UpsertUserCommand{
 		ReqContext:    query.ReqContext,
 		ExternalUser:  externalUser,

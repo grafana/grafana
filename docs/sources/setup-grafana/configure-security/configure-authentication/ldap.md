@@ -39,6 +39,9 @@ config_file = /etc/grafana/ldap.toml
 # Allow sign up should almost always be true (default) to allow new Grafana users to be created (if LDAP authentication is ok). If set to
 # false only pre-existing Grafana users will be able to login (if LDAP authentication is ok).
 allow_sign_up = true
+
+# Role attribute strict denies user access if no group mapping is found
+role_attribute_strict = false
 ```
 
 ## Grafana LDAP Configuration

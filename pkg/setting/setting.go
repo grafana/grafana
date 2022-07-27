@@ -396,8 +396,9 @@ type Cfg struct {
 	FeedbackLinksEnabled                bool
 
 	// LDAP
-	LDAPEnabled     bool
-	LDAPAllowSignup bool
+	LDAPEnabled             bool
+	LDAPAllowSignup         bool
+	LDAPRoleAttributeStrict bool
 
 	Quota QuotaSettings
 
@@ -1089,6 +1090,7 @@ func (cfg *Cfg) readLDAPConfig() {
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	cfg.LDAPAllowSignup = LDAPAllowSignup
+	cfg.LDAPRoleAttributeStrict = ldapSec.Key("role_attribute_strict").MustBool(false)
 }
 
 func (cfg *Cfg) handleAWSConfig() {
