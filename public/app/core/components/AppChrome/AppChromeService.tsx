@@ -63,5 +63,3 @@ export class AppChromeService {
     return useObservable(this.state, this.state.getValue());
   }
 }
-
-export const appChromeService = new AppChromeService();

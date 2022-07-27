@@ -12,10 +12,7 @@ describe('setResource', () => {
     const q = createMockQuery();
     expect(q.azureMonitor?.metricNamespace).not.toEqual(undefined);
     expect(q.azureMonitor?.metricName).not.toEqual(undefined);
-    expect(q.azureMonitor?.metricDefinition).not.toEqual(undefined);
     expect(q.azureMonitor?.aggregation).not.toEqual(undefined);
-    expect(q.azureMonitor?.metricDefinition).not.toEqual(undefined);
-    expect(q.azureMonitor?.metricDefinition).not.toEqual(undefined);
     expect(q.azureMonitor?.timeGrain).not.toEqual('');
     expect(q.azureMonitor?.timeGrain).not.toEqual([]);
     const newQ = setResource(createMockQuery(), '/new-uri');
@@ -23,7 +20,6 @@ describe('setResource', () => {
       metricNamespace: undefined,
       metricName: undefined,
       aggregation: undefined,
-      metricDefinition: undefined,
       timeGrain: '',
       dimensionFilters: [],
     });

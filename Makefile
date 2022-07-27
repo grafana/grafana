@@ -47,7 +47,7 @@ $(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o public/api-spec.json \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
-	-i pkg/api/docs/tags.json
+	-i pkg/api/swagger_tags.json
 
 swagger-api-spec: gen-go --swagger-api-spec $(MERGED_SPEC_TARGET) validate-api-spec
 

@@ -24,18 +24,14 @@ describe('loki result transformer', () => {
       };
 
       const data = new CircularDataFrame({ capacity: 1 });
-      data.addField({ name: 'labels', type: FieldType.other });
       data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
       data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'id', type: FieldType.string });
-      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
 
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);
       expect(data.get(0)).toEqual({
         ts: '2020-02-12T15:05:14.265Z',
-        tsNs: '1581519914265798400',
         line: 't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
-        labels: { filename: '/var/log/grafana/grafana.log' },
         id: '07f0607c-04ee-51bd-8a0c-fc0f85d37489',
       });
     });
@@ -61,11 +57,9 @@ describe('loki result transformer', () => {
       };
 
       const data = new CircularDataFrame({ capacity: 6 });
-      data.addField({ name: 'labels', type: FieldType.other });
       data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
       data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'id', type: FieldType.string });
-      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
       data.refId = 'C';
 
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);

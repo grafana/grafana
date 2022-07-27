@@ -9,7 +9,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { VizLegendItem } from './types';
 
-export default {
+const meta: Meta = {
   title: 'Visualizations/VizLegend',
   component: VizLegend,
   decorators: [withCenteredStory],
@@ -32,7 +32,7 @@ export default {
       },
     },
   },
-} as Meta;
+};
 
 interface LegendStoryDemoProps {
   name: string;
@@ -166,3 +166,5 @@ function generateLegendItems(
     };
   });
 }
+
+export default meta;
