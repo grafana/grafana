@@ -557,7 +557,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 		}
 		var libraryElementConnections []libraryElementConnectionWithMeta
 		builder := sqlstore.SQLBuilder{}
-		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
+		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email, dashboard.uid AS connection_uid")
 		builder.Write(" FROM " + models.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.Dialect.Quote("user") + " AS u1 ON lec.created_by = u1.id")
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
@@ -571,11 +571,12 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 
 		for _, connection := range libraryElementConnections {
 			connections = append(connections, LibraryElementConnectionDTO{
-				ID:           connection.ID,
-				Kind:         connection.Kind,
-				ElementID:    connection.ElementID,
-				ConnectionID: connection.ConnectionID,
-				Created:      connection.Created,
+				ID:            connection.ID,
+				Kind:          connection.Kind,
+				ElementID:     connection.ElementID,
+				ConnectionID:  connection.ConnectionID,
+				ConnectionUID: connection.ConnectionUID,
+				Created:       connection.Created,
 				CreatedBy: LibraryElementDTOMetaUser{
 					ID:        connection.CreatedBy,
 					Name:      connection.CreatedByName,

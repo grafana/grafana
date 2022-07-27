@@ -1,5 +1,5 @@
 import { buildVisualQueryFromString } from './parsing';
-import { LokiVisualQuery } from './types';
+import { LokiOperationId, LokiVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
   it('creates no errors for empty query', () => {
@@ -77,15 +77,22 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('returns error for query with ip matching line filter', () => {
-    const context = buildVisualQueryFromString('{app="frontend"} |= ip("192.168.4.5/16")');
-    expect(context.errors).toEqual([
-      {
-        text: 'Matching ip addresses not supported in query builder: |= ip("192.168.4.5/16")',
-        from: 17,
-        to: 40,
-        parentType: 'LineFilters',
-      },
-    ]);
+    const context = buildVisualQueryFromString('{app="frontend"} |= ip("192.168.4.5/16") | logfmt');
+    expect(context).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: '__line_filter_ip_matches', params: ['|=', '192.168.4.5/16'] },
+          { id: 'logfmt', params: [] },
+        ],
+      })
+    );
   });
 
   it('parses query with matcher label filter', () => {
@@ -162,14 +169,21 @@ describe('buildVisualQueryFromString', () => {
 
   it('returns error for query with ip label filter', () => {
     const context = buildVisualQueryFromString('{app="frontend"} | logfmt | address=ip("192.168.4.5/16")');
-    expect(context.errors).toEqual([
-      {
-        text: 'IpLabelFilter not supported in query builder: address=ip("192.168.4.5/16")',
-        from: 28,
-        to: 56,
-        parentType: 'PipelineStage',
-      },
-    ]);
+    expect(context).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: LokiOperationId.LabelFilterIpMatches, params: ['address', '=', '192.168.4.5/16'] },
+        ],
+      })
+    );
   });
 
   it('parses query with with parser', () => {
