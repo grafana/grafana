@@ -7,7 +7,7 @@ import { PanelTypeCard } from './PanelTypeCard';
 interface Props {
   isCurrent: boolean;
   plugin: PanelPluginMeta;
-  onClick: MouseEventHandler<HTMLDivElement>;
+  onClick: MouseEventHandler<HTMLButtonElement>;
   disabled: boolean;
 }
 
