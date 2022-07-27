@@ -4,13 +4,15 @@ import { TestScheduler } from 'rxjs/testing';
 import {
   dataFrameToJSON,
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceInstanceSettings,
   dateTime,
+  LoadingState,
   MutableDataFrame,
 } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { SQLQuery } from 'app/features/plugins/sql/types';
+import { QueryFormat, SQLQuery } from 'app/features/plugins/sql/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
@@ -35,7 +37,7 @@ jest.mock('@grafana/runtime/src/services', () => ({
 
 describe('PostgreSQLDatasource', () => {
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
-  const setupTestContext = (data: any, mock?: Observable<FetchResponse<unknown>>) => {
+  const setupTestContext = (data: unknown, mock?: Observable<FetchResponse<unknown>>) => {
     jest.clearAllMocks();
     const defaultMock = () => mock ?? of(createFetchResponse(data));
     fetchMock.mockImplementation(defaultMock);
@@ -53,10 +55,10 @@ describe('PostgreSQLDatasource', () => {
 
   // https://rxjs-dev.firebaseapp.com/guide/testing/marble-testing
   const runMarbleTest = (args: {
-    options: any;
+    options: DataQueryRequest<SQLQuery>;
     values: { [marble: string]: FetchResponse };
     marble: string;
-    expectedValues: { [marble: string]: any };
+    expectedValues: { [marble: string]: DataQueryResponse };
     expectedMarble: string;
   }) => {
     const { expectedValues, expectedMarble, options, values, marble } = args;
@@ -107,7 +109,7 @@ describe('PostgreSQLDatasource', () => {
         }))
       );
 
-      const ds = new PostgresDatasource({ name: '', id: 0, jsonData: {} } as any);
+      const ds = new PostgresDatasource({ name: '', id: 0 } as DataSourceInstanceSettings<PostgresOptions>);
       const result = await ds.testDatasource();
       expect(result.status).toEqual('error');
       expect(result.message).toEqual('db query error: pq: password authentication failed for user "postgres"');
@@ -116,20 +118,31 @@ describe('PostgreSQLDatasource', () => {
 
   describe('When performing a time series query', () => {
     it('should transform response correctly', () => {
-      const options = {
+      const options: DataQueryRequest<SQLQuery> = {
         range: {
           from: dateTime(1432288354),
           to: dateTime(1432288401),
+          raw: {
+            from: 'now-24h',
+            to: 'now',
+          },
         },
         targets: [
           {
-            format: 'time_series',
+            format: QueryFormat.Timeseries,
             rawQuery: true,
             rawSql: 'select time, metric from grafana_metric',
             refId: 'A',
-            datasource: 'gdev-ds',
+            datasource: { type: 'gdev-ds', uid: 'gdev-ds' },
           },
         ],
+        requestId: 'test',
+        interval: '1m',
+        intervalMs: 60000,
+        scopedVars: {},
+        timezone: 'Etc/UTC',
+        app: 'Grafana',
+        startTime: 1432288354,
       };
       const response = {
         results: {
@@ -155,7 +168,7 @@ describe('PostgreSQLDatasource', () => {
       const values = { a: createFetchResponse(response) };
       const marble = '-a|';
       const expectedMarble = '-a|';
-      const expectedValues = {
+      const expectedValues: { a: DataQueryResponse } = {
         a: {
           data: [
             {
@@ -190,7 +203,7 @@ describe('PostgreSQLDatasource', () => {
               refId: 'A',
             },
           ],
-          state: 'Done',
+          state: LoadingState.Done,
         },
       };
 
@@ -200,20 +213,31 @@ describe('PostgreSQLDatasource', () => {
 
   describe('When performing a table query', () => {
     it('should transform response correctly', () => {
-      const options = {
+      const options: DataQueryRequest<SQLQuery> = {
         range: {
           from: dateTime(1432288354),
           to: dateTime(1432288401),
+          raw: {
+            from: 'now-24h',
+            to: 'now',
+          },
         },
         targets: [
           {
-            format: 'table',
+            format: QueryFormat.Table,
             rawQuery: true,
             rawSql: 'select time, metric, value from grafana_metric',
             refId: 'A',
-            datasource: 'gdev-ds',
+            datasource: { type: 'gdev-ds', uid: 'gdev-ds' },
           },
         ],
+        requestId: 'test',
+        interval: '1m',
+        intervalMs: 60000,
+        scopedVars: {},
+        timezone: 'Etc/UTC',
+        app: 'Grafana',
+        startTime: 1432288354,
       };
       const response = {
         results: {
@@ -240,7 +264,7 @@ describe('PostgreSQLDatasource', () => {
       const values = { a: createFetchResponse(response) };
       const marble = '-a|';
       const expectedMarble = '-a|';
-      const expectedValues = {
+      const expectedValues: { a: DataQueryResponse } = {
         a: {
           data: [
             {
@@ -281,7 +305,7 @@ describe('PostgreSQLDatasource', () => {
               refId: 'A',
             },
           ],
-          state: 'Done',
+          state: LoadingState.Done,
         },
       };
 
