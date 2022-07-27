@@ -11,7 +11,7 @@ datasources:
     with_credentials: true
     is_default: true
     correlations:
-      - targetUid: a target
+      - targetUID: a target
         label: a label
         description: a description
     json_data:
