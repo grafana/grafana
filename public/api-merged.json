@@ -4243,6 +4243,44 @@
         }
       }
     },
+    "/datasources/uid/{uid}/correlations/{correlationUID}": {
+      "delete": {
+        "tags": ["correlations"],
+        "summary": "Delete a correlation.",
+        "operationId": "deleteCorrelation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "correlationUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deleteCorrelationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}/health": {
       "get": {
         "tags": ["datasources"],
@@ -11634,6 +11672,15 @@
         }
       }
     },
+    "DeleteCorrelationResponseBody": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation deleted"
+        }
+      }
+    },
     "DeleteTokenCommand": {
       "type": "object",
       "properties": {
@@ -17897,6 +17944,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "deleteCorrelationResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DeleteCorrelationResponseBody"
       }
     },
     "deleteDashboardResponse": {

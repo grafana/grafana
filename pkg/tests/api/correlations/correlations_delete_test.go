@@ -14,12 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type errorResponseBody struct {
-	Message string `json:"message"`
-	Error   string `json:"error"`
-}
-
-func TestIntegrationCreateCorrelation(t *testing.T) {
+func TestIntegrationDeleteCorrelation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -61,11 +56,11 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 	}
 	ctx.createDs(createDsCommand)
 	writableDs := createDsCommand.Result.Uid
+	writableDsOrgId := createDsCommand.Result.OrgId
 
-	t.Run("Unauthenticated users shouldn't be able to create correlations", func(t *testing.T) {
-		res := ctx.Post(PostParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", "some-ds-uid"),
-			body: ``,
+	t.Run("Unauthenticated users shouldn't be able to delete correlations", func(t *testing.T) {
+		res := ctx.Delete(DeleteParams{
+			url: fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", "some-ds-uid", "some-correlation-uid"),
 		})
 		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
@@ -81,10 +76,9 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("non org admin shouldn't be able to create correlations", func(t *testing.T) {
-		res := ctx.Post(PostParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", "some-ds-uid"),
-			body: ``,
+	t.Run("non org admin shouldn't be able to delete correlations", func(t *testing.T) {
+		res := ctx.Delete(DeleteParams{
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", "some-ds-uid", "some-correlation-uid"),
 			user: editorUser,
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
@@ -101,34 +95,12 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("missing source data source in body should result in a 400", func(t *testing.T) {
-		res := ctx.Post(PostParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", "nonexistent-ds-uid"),
-			body: `{}`,
-			user: adminUser,
-		})
-		require.Equal(t, http.StatusBadRequest, res.StatusCode)
-
-		responseBody, err := ioutil.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		var response errorResponseBody
-		err = json.Unmarshal(responseBody, &response)
-		require.NoError(t, err)
-
-		require.Equal(t, "bad request data", response.Message)
-
-		require.NoError(t, res.Body.Close())
-	})
-
 	t.Run("inexistent source data source should result in a 404", func(t *testing.T) {
-		res := ctx.Post(PostParams{
-			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", "nonexistent-ds-uid"),
-			body: fmt.Sprintf(`{
-					"targetUID": "%s"
-				}`, writableDs),
+		res := ctx.Delete(DeleteParams{
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", "nonexistent-ds-uid", "some-correlation-uid"),
 			user: adminUser,
 		})
+
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
 		responseBody, err := ioutil.ReadAll(res.Body)
@@ -144,12 +116,9 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("inexistent target data source should result in a 404", func(t *testing.T) {
-		res := ctx.Post(PostParams{
-			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
-			body: `{
-					"targetUID": "nonexistent-uid-uid"
-				}`,
+	t.Run("inexistent correlation should result in a 404", func(t *testing.T) {
+		res := ctx.Delete(DeleteParams{
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", writableDs, "nonexistent-correlation-uid"),
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
@@ -161,18 +130,15 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "Data source not found", response.Message)
-		require.Equal(t, correlations.ErrTargetDataSourceDoesNotExists.Error(), response.Error)
+		require.Equal(t, "Correlation not found", response.Message)
+		require.Equal(t, correlations.ErrCorrelationNotFound.Error(), response.Error)
 
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("creating a correlation originating from a read-only data source should result in a 403", func(t *testing.T) {
-		res := ctx.Post(PostParams{
-			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", readOnlyDS),
-			body: fmt.Sprintf(`{
-					"targetUID": "%s"
-				}`, readOnlyDS),
+	t.Run("deleting a correlation originating from a read-only data source should result in a 403", func(t *testing.T) {
+		res := ctx.Delete(DeleteParams{
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", readOnlyDS, "nonexistent-correlation-uid"),
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
@@ -190,12 +156,15 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("creating a correlation pointing to a read-only data source should work", func(t *testing.T) {
-		res := ctx.Post(PostParams{
-			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
-			body: fmt.Sprintf(`{
-					"targetUID": "%s"
-				}`, readOnlyDS),
+	t.Run("deleting a correlation pointing to a read-only data source should work", func(t *testing.T) {
+		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
+			SourceUID: writableDs,
+			TargetUID: writableDs,
+			OrgId:     writableDsOrgId,
+		})
+
+		res := ctx.Delete(DeleteParams{
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -207,25 +176,27 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "Correlation created", response.Message)
-		require.Equal(t, writableDs, response.Result.SourceUID)
-		require.Equal(t, readOnlyDS, response.Result.TargetUID)
-		require.Equal(t, "", response.Result.Description)
-		require.Equal(t, "", response.Result.Label)
-
+		require.Equal(t, "Correlation deleted", response.Message)
 		require.NoError(t, res.Body.Close())
+
+		// trying to delete the same correlation a second time should result in a 404
+		res = ctx.Delete(DeleteParams{
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
+			user: adminUser,
+		})
+		require.NoError(t, res.Body.Close())
+		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})
 
-	t.Run("Should correctly create a correlation", func(t *testing.T) {
-		description := "a description"
-		label := "a label"
-		res := ctx.Post(PostParams{
-			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
-			body: fmt.Sprintf(`{
-					"targetUID": "%s",
-					"description": "%s",
-					"label": "%s"
-				}`, writableDs, description, label),
+	t.Run("should correctly delete a correlation", func(t *testing.T) {
+		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
+			SourceUID: writableDs,
+			TargetUID: readOnlyDS,
+			OrgId:     writableDsOrgId,
+		})
+
+		res := ctx.Delete(DeleteParams{
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
@@ -237,12 +208,15 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "Correlation created", response.Message)
-		require.Equal(t, writableDs, response.Result.SourceUID)
-		require.Equal(t, writableDs, response.Result.TargetUID)
-		require.Equal(t, description, response.Result.Description)
-		require.Equal(t, label, response.Result.Label)
-
+		require.Equal(t, "Correlation deleted", response.Message)
 		require.NoError(t, res.Body.Close())
+
+		// trying to delete the same correlation a second time should result in a 404
+		res = ctx.Delete(DeleteParams{
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
+			user: adminUser,
+		})
+		require.NoError(t, res.Body.Close())
+		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})
 }
