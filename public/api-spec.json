@@ -3559,6 +3559,49 @@
         }
       }
     },
+    "/datasources/uid/{sourceUID}/correlations": {
+      "post": {
+        "tags": ["correlations"],
+        "summary": "Add correlation.",
+        "operationId": "createCorrelation",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateCorrelationCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createCorrelationResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
@@ -3646,49 +3689,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/uid/{uid}/correlations": {
-      "post": {
-        "tags": ["correlations"],
-        "summary": "Add correlation.",
-        "operationId": "createCorrelation",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/CreateCorrelationCommand"
-            }
-          },
-          {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createCorrelationResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -9566,12 +9566,12 @@
           "type": "string",
           "example": "My Label"
         },
-        "sourceUid": {
+        "sourceUID": {
           "description": "UID of the data source the correlation originates from",
           "type": "string",
           "example": "d0oxYRg4z"
         },
-        "targetUid": {
+        "targetUID": {
           "description": "UID of the data source the correlation points to",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
@@ -9632,7 +9632,7 @@
           "type": "string",
           "example": "My label"
         },
-        "targetUid": {
+        "targetUID": {
           "description": "Target data source UID to which the correlation is created",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
