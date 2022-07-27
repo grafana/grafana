@@ -46,7 +46,11 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		}
 	}
 
-	dbUIDs := c.QueryStrings("dashboardUID")
+	dbUIDs := c.QueryStrings("dashboardUIDs")
+	if len(dbUIDs) == 0 {
+		// To keep it for now backward compatible for grafana 9
+		dbUIDs = c.QueryStrings("dashboardUID")
+	}
 
 	folderIDs := make([]int64, 0)
 	for _, id := range c.QueryStrings("folderIds") {
@@ -174,6 +178,10 @@ type SearchParams struct {
 	// in:query
 	// required: false
 	DashboardIds []int64 `json:"dashboardIds"`
+	// List of dashboard uid’s to search for
+	// in:query
+	// required: false
+	DashboardUIDs []string `json:"dashboardUIDs"`
 	// List of folder id’s to search in for dashboards
 	// in:query
 	// required: false
