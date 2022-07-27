@@ -1,27 +1,19 @@
-import { RadioButtonGroupField } from '@percona/platform-core';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FormApi } from 'final-form';
 import { debounce } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Field, Form, FormSpy } from 'react-final-form';
+import { Form, FormSpy } from 'react-final-form';
 
-import { IconButton, Input, useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { SelectField } from 'app/percona/shared/components/Form/SelectField';
 
 import { FilterFieldTypes } from '..';
 
-import {
-  ALL_LABEL,
-  ALL_VALUE,
-  DEBOUNCE_DELAY,
-  SEARCH_INPUT_FIELD_NAME,
-  SEARCH_SELECT_FIELD_NAME,
-} from './Filter.constants';
+import { DEBOUNCE_DELAY, SEARCH_INPUT_FIELD_NAME, SEARCH_SELECT_FIELD_NAME } from './Filter.constants';
 import { Messages } from './Filter.messages';
 import { getStyles } from './Filter.styles';
 import { FilterProps } from './Filter.types';
 import {
-  buildColumnOptions,
   buildEmptyValues,
   buildObjForQueryParams,
   buildSearchOptions,
@@ -30,8 +22,12 @@ import {
   isOtherThanTextType,
   isValueInTextColumn,
 } from './Filter.utils';
+import { RadioButtonField } from './components/fields/RadioButtonField';
+import { SearchTextField } from './components/fields/SearchTextField';
+import { SelectColumnField } from './components/fields/SelectColumnField';
+import { SelectDropdownField } from './components/fields/SelectDropdownField';
 
-export const Filter = ({ columns, rawData, setFilteredData }: FilterProps) => {
+export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering = false }: FilterProps) => {
   const [openCollapse, setOpenCollapse] = useState(false);
   const [openSearchFields, setOpenSearchFields] = useState(false);
   const styles = useStyles2(getStyles);
@@ -43,6 +39,9 @@ export const Filter = ({ columns, rawData, setFilteredData }: FilterProps) => {
     (values: Record<string, any>) => setQueryParams(buildObjForQueryParams(columns, values)),
     DEBOUNCE_DELAY
   );
+  const onSubmit = (values: Record<string, any>) => {
+    setQueryParams(buildObjForQueryParams(columns, values));
+  };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const initialValues = useMemo(() => getQueryParams(columns, queryParams), []);
@@ -74,7 +73,7 @@ export const Filter = ({ columns, rawData, setFilteredData }: FilterProps) => {
 
   useEffect(() => {
     const queryParamsObj = getQueryParams(columns, queryParams);
-    if (Object.keys(queryParams).length > 0) {
+    if (Object.keys(queryParams).length > 0 && !hasBackendFiltering) {
       const dataArray = rawData.filter(
         (filterValue) =>
           isValueInTextColumn(columns, filterValue, queryParamsObj) &&
@@ -97,7 +96,7 @@ export const Filter = ({ columns, rawData, setFilteredData }: FilterProps) => {
   return (
     <Form
       initialValues={initialValues}
-      onSubmit={() => {}}
+      onSubmit={onSubmit}
       render={({ handleSubmit, form }) => (
         <form
           onSubmit={handleSubmit}
@@ -120,28 +119,8 @@ export const Filter = ({ columns, rawData, setFilteredData }: FilterProps) => {
               />
               {openSearchFields && (
                 <div className={styles.searchFields}>
-                  <Field name={SEARCH_SELECT_FIELD_NAME}>
-                    {({ input }) => (
-                      <SelectField
-                        defaultValue={{ value: ALL_VALUE, label: ALL_LABEL }}
-                        className={styles.searchSelect}
-                        options={searchColumnsOptions ?? []}
-                        {...input}
-                        data-testid={SEARCH_SELECT_FIELD_NAME}
-                      />
-                    )}
-                  </Field>
-                  <Field name={SEARCH_INPUT_FIELD_NAME}>
-                    {({ input }) => (
-                      <Input
-                        type="text"
-                        placeholder={Messages.searchPlaceholder}
-                        {...input}
-                        data-testid={SEARCH_INPUT_FIELD_NAME}
-                        autoFocus={true}
-                      />
-                    )}
-                  </Field>
+                  <SelectColumnField searchColumnsOptions={searchColumnsOptions} />
+                  <SearchTextField />
                 </div>
               )}
               {showAdvanceFilter && (
@@ -160,48 +139,21 @@ export const Filter = ({ columns, rawData, setFilteredData }: FilterProps) => {
                 onClick={() => onClearAll(form)}
                 data-testid="clear-all-button"
               />
+              {hasBackendFiltering && (
+                <IconButton className={styles.icon} name="check" size="xl" type="submit" data-testid="submit-button" />
+              )}
             </div>
           </div>
           {showAdvanceFilter && openCollapse && (
             <div className={styles.advanceFilter}>
-              {columns.map((column) => {
-                const columnOptions = buildColumnOptions(column);
-                if (column.type === FilterFieldTypes.DROPDOWN) {
-                  return (
-                    <div>
-                      <Field name={`${column.accessor}`}>
-                        {({ input }) => (
-                          <SelectField
-                            options={columnOptions}
-                            defaultValue={{ value: ALL_VALUE, label: ALL_LABEL }}
-                            label={column.label ?? column.Header}
-                            {...input}
-                            data-testid="select-dropdown"
-                          />
-                        )}
-                      </Field>
-                    </div>
-                  );
-                }
-                if (column.type === FilterFieldTypes.RADIO_BUTTON) {
-                  return (
-                    <div>
-                      <RadioButtonGroupField
-                        options={columnOptions}
-                        defaultValue={ALL_VALUE}
-                        name={`${column.accessor}`}
-                        label={column.label ?? column.Header}
-                        fullWidth
-                        data-testid="radio-button"
-                      />
-                    </div>
-                  );
-                }
-                return <></>;
-              })}
+              {columns.map(
+                (column) =>
+                  (column.type === FilterFieldTypes.DROPDOWN && <SelectDropdownField column={column} />) ||
+                  (column.type === FilterFieldTypes.RADIO_BUTTON && <RadioButtonField column={column} />)
+              )}
             </div>
           )}
-          <FormSpy onChange={(state) => onFormChange(state.values)}></FormSpy>
+          {!hasBackendFiltering && <FormSpy onChange={(state) => onFormChange(state.values)}></FormSpy>}
         </form>
       )}
     />

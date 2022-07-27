@@ -23,17 +23,7 @@ import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
 import { CheckActions } from './CheckActions/CheckActions';
 import { FetchChecks } from './types';
 
-//TODO uncomment for 2.29.0
-// interface FormValues {
-//   categories: string[];
-//   name: string;
-//   status: string;
-//   interval: string;
-//   description: string;
-// }
-
 export const AllChecksTab: FC = () => {
-  // const [queryParams, setQueryParams] = useQueryParams();
   const [fetchChecksPending, setFetchChecksPending] = useState(false);
   const navModel = usePerconaNavModel('all-checks');
   const [generateToken] = useCancelToken();
@@ -42,18 +32,6 @@ export const AllChecksTab: FC = () => {
   const [selectedCheck, setSelectedCheck] = useState<CheckDetails>();
   const [checks, setChecks] = useState<CheckDetails[]>([]);
   const styles = useStyles2(getStyles);
-  // const categories = useMemo<string[]>(
-  //   () => getValuesFromQueryParams<[string[]]>(queryParams, [{ key: 'category' }])[0],
-  //   [queryParams]
-  // );
-
-  // const Filters = withFilterTypes<FormValues>({
-  //   categories,
-  //   name: '*',
-  //   status: 'all',
-  //   interval: 'all',
-  //   description: '*',
-  // });
 
   const handleRunChecksClick = async () => {
     setRunChecksPending(true);
@@ -119,8 +97,6 @@ export const AllChecksTab: FC = () => {
     [handleModalClose]
   );
 
-  // const applyFilters = ({ categories }: FormValues) => setQueryParams({ category: categories });
-
   const columns = useMemo(
     (): Array<ExtendedColumn<CheckDetails>> => [
       {
@@ -133,10 +109,6 @@ export const AllChecksTab: FC = () => {
         accessor: 'description',
         type: FilterFieldTypes.TEXT,
       },
-      // {
-      //   Header: Messages.table.columns.category,
-      //   accessor: 'category',
-      // },
       {
         Header: Messages.table.columns.status,
         accessor: 'disabled',
@@ -221,44 +193,6 @@ export const AllChecksTab: FC = () => {
           featureName={mainChecksMessages.advisors}
           featureSelector={featureSelector}
         >
-          {/* <Filters onApply={applyFilters}>
-            <ChipAreaInputField
-              tooltipText={Messages.tooltips.category}
-              name="categories"
-              label={Messages.table.columns.category}
-              initialChips={categories || []}
-              isEqual={sameTags}
-            />
-            <TextInputField
-              name="name"
-              label={Messages.table.columns.name}
-              disabled
-              tooltipText={Messages.tooltips.availableSoon}
-            />
-            <RadioButtonGroupField
-              tooltipText={Messages.tooltips.availableSoon}
-              fullWidth
-              options={STATUS_OPTIONS}
-              name="status"
-              disabled
-              label={Messages.table.columns.status}
-            />
-            <RadioButtonGroupField
-              tooltipText={Messages.tooltips.availableSoon}
-              fullWidth
-              options={INTERVAL_OPTIONS}
-              name="interval"
-              disabled
-              label={Messages.table.columns.interval}
-            />
-            <TextInputField
-              tooltipText={Messages.tooltips.availableSoon}
-              fieldClassName={styles.descriptionFilter}
-              name="description"
-              label={Messages.table.columns.description}
-              disabled
-            />
-          </Filters> */}
           <div className={styles.actionButtons} data-testid="db-check-panel-actions">
             <LoaderButton
               type="button"

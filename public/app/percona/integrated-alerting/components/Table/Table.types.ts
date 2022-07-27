@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Column,
   TableInstance,
@@ -60,6 +61,7 @@ export interface TableProps {
   getColumnProps?: (column: ColumnInstance) => ExtendedTableCellProps;
   getCellProps?: (cell: Cell<any, any>) => ExtendedTableCellProps;
   showFilter?: boolean;
+  hasBackendFiltering?: boolean;
 }
 
 export interface PaginatedTableState extends TableState {
