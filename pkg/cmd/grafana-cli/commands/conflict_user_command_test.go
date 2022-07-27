@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli/v2"
 )
 
 func TestUserManagerListConflictingUsers(t *testing.T) {
@@ -46,7 +47,7 @@ func TestUserManagerListConflictingUsers(t *testing.T) {
 			}
 			_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
 			require.NoError(t, err)
-			m, err := GetUsersWithConflictingEmailsOrLogins(context.Background(), sqlStore)
+			m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()})
 			require.NoError(t, err)
 			require.Equal(t, 1, len(m))
 		}
@@ -88,7 +89,7 @@ func TestMergeUser(t *testing.T) {
 			require.NoError(t, err)
 			// setup finished
 
-			_, err = GetUsersWithConflictingEmailsOrLogins(context.Background(), sqlStore)
+			_, err = GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()})
 			require.NoError(t, err)
 			// TODO: fix this test
 			mergeErr := mergeUser(context.Background(), userWithLowerCase.ID, nil, sqlStore)
@@ -99,7 +100,7 @@ func TestMergeUser(t *testing.T) {
 			t.Logf("testing getting user")
 			query := &models.GetUserByIdQuery{Id: userWithUpperCase.ID}
 			err = sqlStore.GetUserById(context.Background(), query)
-			require.Error(t, models.ErrUserNotFound, err)
+			require.Error(t, user.ErrUserNotFound, err)
 
 			testUser := &models.SignedInUser{
 				OrgId: testOrgID,

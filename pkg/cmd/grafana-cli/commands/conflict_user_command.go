@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -19,18 +20,6 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-/*
-	user-manager command merge-Conflicting-users
-	input -> users
-	output -> ids, foundConflictingEmails, foundConflictingLogins, lastActive (maybe)
-
-
-	// IDENTIFIER
-	login = username + email
-
-	TODO:
-*/
-
 func getSqlStore(context *cli.Context) (*sqlstore.SQLStore, error) {
 	cmd := &utils.ContextCommandLine{Context: context}
 	cfg, err := initCfg(cmd)
@@ -47,11 +36,7 @@ func getSqlStore(context *cli.Context) (*sqlstore.SQLStore, error) {
 
 func runListConflictUsers() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
-		sqlStore, err := getSqlStore(context)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to get to sql", err)
-		}
-		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context.Context, sqlStore)
+		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 		}
@@ -68,11 +53,7 @@ func runListConflictUsers() func(context *cli.Context) error {
 
 func runGenerateConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
-		sqlStore, err := getSqlStore(context)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to get to sql", err)
-		}
-		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context.Context, sqlStore)
+		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 		}
@@ -94,19 +75,38 @@ func runGenerateConflictUsersFile() func(context *cli.Context) error {
 }
 
 func runValidateConflictUsersFile() func(context *cli.Context) error {
-	return func(context *cli.Context) error { return fmt.Errorf("not implemented") }
+	return func(context *cli.Context) error {
+		cmd := &utils.ContextCommandLine{Context: context}
+		arg := cmd.Args().First()
+		if arg == "" {
+			return errors.New("please specify a absolute path to file to read from")
+		}
+		b, err := ioutil.ReadFile(arg)
+		if err != nil {
+			return fmt.Errorf("could not read file with error %e", err)
+		}
+
+		// validation
+		return validate(context, b)
+	}
 }
 
 func runIngestConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
-		_, err := readFile()
-		if err != nil {
-			return fmt.Errorf("could not read file with error %s", err)
+		cmd := &utils.ContextCommandLine{Context: context}
+		arg := cmd.Args().First()
+		if arg == "" {
+			return errors.New("please specify a absolute path to file to read from")
 		}
-		valid, err := validate()
-		if !valid {
+		b, err := ioutil.ReadFile(arg)
+		if err != nil {
+			return fmt.Errorf("could not read file with error %e", err)
+		}
+		validErr := validate(context, b)
+		if validErr != nil {
 			return fmt.Errorf("could not validate file with error %s", err)
 		}
+
 		showChanges()
 		if !confirm() {
 			return fmt.Errorf("user cancelled")
@@ -123,17 +123,79 @@ func mergeUsers() error {
 	return fmt.Errorf("not implemented")
 }
 
-func validate() (bool, error) {
-	// TODO:
-	logger.Info("validating file")
-	return false, nil
-}
+func validate(context *cli.Context, b []byte) error {
+	// hej+hej
+	// + id: 1, email: hej, login: hej, last_seen_at: 2012
+	conflicts, err := GetUsersWithConflictingEmailsOrLogins(context)
+	if err != nil {
+		return fmt.Errorf("%v: %w", "grafana error: sql error to get users with conflicts, abandoning validation", err)
+	}
+	conflictIDsInDB := map[string]bool{}
+	conflictEmailsInDB := map[string]bool{}
+	conflictIDToEmail := map[string]string{}
+	for _, uconflict := range conflicts {
+		conflictIDsInDB[uconflict.UserIdentifier] = true
+		conflictEmailsInDB[uconflict.Email] = true
+		// id -> lower(email) for verifying we have same id to email as previously
+		conflictIDToEmail[uconflict.Id] = strings.ToLower(uconflict.Email)
+	}
+	for _, row := range strings.Split(string(b), "\n") {
+		switch {
+		case strings.HasPrefix(row, "+"):
+			cuser := &ConflictingUser{}
+			cuser.Marshal(row)
+			fmt.Printf("cuser.Email %s\n", cuser.Email)
+			fmt.Printf("conflictEmailsInDB %v+\n", conflictEmailsInDB)
+			if !conflictEmailsInDB[cuser.Email] {
+				return fmt.Errorf("not valid email, email not in previous list")
+			}
+			if strings.ToLower(cuser.Email) != cuser.Email {
+				return fmt.Errorf("not valid email for user: %s, email needs to be lowercased", cuser.UserIdentifier)
+			}
+			if strings.ToLower(cuser.Login) != cuser.Login {
+				return fmt.Errorf("not valid login for user: %s, login needs to be lowercased", cuser.UserIdentifier)
+			}
+			// id -> lower(email) for verifying we have same id to email as previously
+			if conflictIDToEmail[cuser.Id] != cuser.Email {
+				return fmt.Errorf("not valid for user: %s, Id to email is not the same as previously", cuser.UserIdentifier)
+			}
+			// TODO:
+			// validateEmail()
+		case strings.HasPrefix(row, "-"):
+			// non-identifier row
+			// user
+			// TODO: validation here
+			// - should there be at least one positive and one negative?
+			// - should we validate the email?
+			// - should we validate the ability to merge for this specific entry?AA
+			continue
+		case row != "":
+			// identifier row
+			// found identifier row
+			fmt.Printf("row: \n%s\n\n", row)
+			// evaluate that the ids, actually exists since last time
+			// do they need to be the same here?
+			// * what if the user has changed the email and the identifer to match the new email?
 
-func readFile() (string, error) {
-	// TODO:
-	users := "users"
-	logger.Info("read file")
-	return users, nil
+			// example
+			// HEJ+hej
+			// + id: 1, email: HEJ, login: hej, last_seen_at: 2012
+			// new
+			// hej+hej
+			// + id: 1, email: hej, login: hej, last_seen_at: 2012
+			if !conflictIDsInDB[row] {
+				return fmt.Errorf("did not recognize id \n%s\n\n terminated validation", row)
+			}
+		default:
+			return fmt.Errorf("filerow not identified, not valid file")
+		}
+		if row == "" {
+			// end of file
+			break
+		}
+	}
+	logger.Info("file valid for ingestion")
+	return nil
 }
 
 func showChanges() {
@@ -174,7 +236,7 @@ func (c *ConflictingUsers) String() string {
 			str += fmt.Sprintf("%s\n", user.UserIdentifier)
 			userIdentifiersSeen[user.UserIdentifier] = true
 		}
-		str += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+		str += fmt.Sprintf("id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s\n", user.Id, user.Email, user.Login, user.LastSeenAt, user.AuthModule)
 	}
 	return str
 }
@@ -193,11 +255,11 @@ func (c *ConflictingUsers) ToStringFileRepresentation() string {
 		if !userIdentifiersSeen[user.UserIdentifier] {
 			str += fmt.Sprintf("%s\n", user.UserIdentifier)
 			userIdentifiersSeen[user.UserIdentifier] = true
-			str += fmt.Sprintf("+ id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+			str += fmt.Sprintf("+ id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s\n", user.Id, user.Email, user.Login, user.LastSeenAt, user.AuthModule)
 			continue
 		}
 		// mergable users
-		str += fmt.Sprintf("- id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+		str += fmt.Sprintf("- id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s\n", user.Id, user.Email, user.Login, user.LastSeenAt, user.AuthModule)
 	}
 	return str
 }
@@ -225,28 +287,48 @@ func mergeUser(ctx context.Context, mergeIntoUser int64, cUser ConflictingUsers,
 type ConflictingUser struct {
 	// IDENTIFIER
 	// userIdentifier = login+email
-	UserIdentifier     string `xorm:"user_identification"`
-	Id                 string `xorm:"id"`
-	Email              string `xorm:"email"`
-	Login              string `xorm:"login"`
-	LastSeenAt         string `xorm:"last_seen_at"`
+	UserIdentifier string `xorm:"user_identification"`
+	Id             string `xorm:"id"`
+	Email          string `xorm:"email"`
+	Login          string `xorm:"login"`
+	LastSeenAt     string `xorm:"last_seen_at"`
+	AuthModule     string `xorm:"auth_module"`
+	// currently not really used for anything
 	ConflictLoginEmail string `xorm:"conflict_login_email"`
 	ConflictId         bool   `xorm:"conflict_id"`
 }
 
 type ConflictingUsers []*ConflictingUser
 
-func GetUsersWithConflictingEmailsOrLogins(ctx context.Context, s *sqlstore.SQLStore) (ConflictingUsers, error) {
-	stats := make([]*ConflictingUser, 0)
-	outerErr := s.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+func (c *ConflictingUser) Marshal(filerow string) {
+	// +/- id: 1, email: hej,
+	trimmed := strings.TrimLeft(filerow, "+- ")
+	values := strings.Split(trimmed, ",")
+	fmt.Printf("raw %s\n", filerow)
+	fmt.Printf("trimmed %s\n", trimmed)
+	fmt.Printf("%v+\n\n", values)
+	c.Id = values[0]
+	c.Email = values[1]
+	c.Login = values[2]
+	c.LastSeenAt = values[3]
+	c.AuthModule = values[4]
+}
+
+func GetUsersWithConflictingEmailsOrLogins(ctx *cli.Context) (ConflictingUsers, error) {
+	users := make([]*ConflictingUser, 0)
+	s, err := getSqlStore(ctx)
+	if err != nil {
+		return users, fmt.Errorf("%v: %w", "failed to get to sql", err)
+	}
+	outerErr := s.WithDbSession(ctx.Context, func(dbSession *sqlstore.DBSession) error {
 		rawSQL := conflictingUserEntriesSQL(s)
-		err := dbSession.SQL(rawSQL).Find(&stats)
+		err := dbSession.SQL(rawSQL).Find(&users)
 		return err
 	})
 	if outerErr != nil {
-		return stats, outerErr
+		return users, outerErr
 	}
-	return stats, nil
+	return users, nil
 }
 
 // conflictingUserEntriesSQL orders conflicting users by their user_identification
