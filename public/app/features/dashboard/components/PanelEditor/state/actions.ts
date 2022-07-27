@@ -106,17 +106,19 @@ export function skipPanelUpdate(modifiedPanel: PanelModel, panelToUpdate: PanelM
   return false;
 }
 
-export function exitPanelEditor(): ThunkResult<void> {
+export function exitPanelEditor(forceRefresh = false): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
     const panel = getPanel();
+    const sourcePanel = getSourcePanel();
+    const libraryPanelChanged = panel.libraryPanel?.uid !== sourcePanel.libraryPanel?.uid;
 
     if (dashboard) {
       dashboard.exitPanelEditor();
     }
 
-    if (panel.hasChanged && !shouldDiscardChanges) {
+    if ((forceRefresh || panel.hasChanged || libraryPanelChanged) && !shouldDiscardChanges) {
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;

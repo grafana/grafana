@@ -1,6 +1,6 @@
 import * as H from 'history';
 import { each, find } from 'lodash';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Prompt } from 'react-router-dom';
 
@@ -67,6 +67,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, [dashboard, original]);
 
+  const forceRefresh = useRef(false);
   const onHistoryBlock = (location: H.Location) => {
     const panelInEdit = dashboard.panelInEdit;
     const search = new URLSearchParams(location.search);
@@ -78,10 +79,12 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
         panel: dashboard.panelInEdit as PanelModelWithLibraryPanel,
         folderId: dashboard.meta.folderId as number,
         onConfirm: () => {
+          forceRefresh.current = true;
           hideModal();
           moveToBlockedLocationAfterReactStateUpdate(location);
         },
         onDiscard: () => {
+          forceRefresh.current = false;
           dispatch(discardPanelChanges());
           moveToBlockedLocationAfterReactStateUpdate(location);
           hideModal();
@@ -95,7 +98,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
     if (originalPath === location.pathname || !original) {
       // This is here due to timing reasons we want the exit panel editor state changes to happen before router update
       if (panelInEdit && !search.has('editPanel')) {
-        dispatch(exitPanelEditor());
+        dispatch(exitPanelEditor(forceRefresh.current));
       }
 
       return true;
