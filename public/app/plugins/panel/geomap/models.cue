@@ -15,6 +15,7 @@
 package grafanaschema
 
 import "github.com/grafana/thema"
+import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 
 Panel: thema.#Lineage & {
 	name: "geomap"
@@ -50,11 +51,13 @@ Panel: thema.#Lineage & {
 					TooltipOptions: {
 						mode: TooltipMode 
 					} @cuetsy(kind="interface")
+
+
 					PanelOptions: {
 						view: MapViewConfig
 						controls: ControlsOptions
-						basemap: {...}
-						layers: [...{...}]
+						basemap: ui.MapLayerOptions
+						layers: [...ui.MapLayerOptions]
 						tooltip: TooltipOptions
 					} @cuetsy(kind="interface")
 				},

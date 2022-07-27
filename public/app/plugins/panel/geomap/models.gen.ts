@@ -4,6 +4,7 @@
 // To regenerate, run "make gen-cue" from the repository root.
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+import * as ui from '@grafana/schema';
 
 export const modelVersion = Object.freeze([0, 0]);
 
@@ -43,9 +44,9 @@ export const defaultTooltipOptions: Partial<TooltipOptions> = {
 };
 
 export interface PanelOptions {
-  basemap: {};
+  basemap: ui.MapLayerOptions;
   controls: ControlsOptions;
-  layers: {}[];
+  layers: ui.MapLayerOptions[];
   tooltip: TooltipOptions;
   view: MapViewConfig;
 }

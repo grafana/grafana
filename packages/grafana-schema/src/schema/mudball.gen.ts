@@ -324,3 +324,37 @@ export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }
+
+export enum FrameGeometrySourceMode {
+  Auto = 'auto',
+  Coords = 'coords',
+  Geohash = 'geohash',
+  Lookup = 'lookup',
+}
+
+export const defaultFrameGeometrySourceMode: FrameGeometrySourceMode = FrameGeometrySourceMode.Auto;
+
+export interface FrameGeometrySource {
+  gazetteer?: string;
+  geohash?: string;
+  h3?: string;
+  latitude?: string;
+  longitude?: string;
+  lookup?: string;
+  mode: FrameGeometrySourceMode;
+  wkt?: string;
+}
+
+export const defaultFrameGeometrySource: Partial<FrameGeometrySource> = {
+  mode: FrameGeometrySourceMode.Auto,
+};
+
+export interface MapLayerOptions {
+  config?: {};
+  filterData?: {};
+  location?: FrameGeometrySource;
+  name: string;
+  opacity?: number;
+  tooltip?: boolean;
+  type: string;
+}

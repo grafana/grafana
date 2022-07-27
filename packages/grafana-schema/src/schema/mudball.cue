@@ -262,3 +262,49 @@ VizTooltipOptions: {
 	mode: TooltipDisplayMode
 	sort: SortOrder
 } @cuetsy(kind="interface")
+
+// auto: Will scan fields and find best match
+// coords: lon field, lat field
+// lookup: keys > location
+FrameGeometrySourceMode: *"auto" | "geohash" | "coords" | "lookup" @cuetsy(kind="enum")
+
+// Defines how geometry is extracted from DataFrame results
+FrameGeometrySource: {
+  mode: FrameGeometrySourceMode
+
+  // Field mappings
+  geohash?: string
+  latitude?: string
+  longitude?: string
+  h3?: string
+  wkt?: string
+  lookup?: string
+
+  // Path to Gazetteer
+  gazetteer?: string
+} @cuetsy(kind="interface")
+
+// Needs <TConfig = any>
+MapLayerOptions: {
+  type: string
+
+  // configured unique display name
+  name: string 
+
+  // Custom options depending on the type
+  config?: {...} 
+
+  // Common method to define geometry fields
+  location?: FrameGeometrySource
+
+  // Defines which data query refId is associated with the layer
+  filterData?: {...} // MatcherConfig
+
+  // Common properties:
+  // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+  // Layer opacity (0-1)
+  opacity?: float64 & >= 0 & <= 1
+
+  // Check tooltip (defaults to true)
+  tooltip?: bool
+} @cuetsy(kind="interface")
