@@ -95,7 +95,7 @@ func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (CrawlerAuth, er
 			Role: &orgRole,
 		}
 
-		serviceAccount, err := o.serviceAccounts.CreateServiceAccount(context.Background(), orgId, &saForm)
+		serviceAccount, err := o.serviceAccounts.CreateServiceAccount(ctx, orgId, &saForm)
 		accountAlreadyExists := errors.Is(err, database.ErrServiceAccountAlreadyExists)
 
 		if !accountAlreadyExists && err != nil {
