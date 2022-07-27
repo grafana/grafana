@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
@@ -10,6 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+// HACK until https://github.com/grafana/grafana/issues/50983
+type key int
+
+const (
+	tempSignedInUserKey key = iota
 )
 
 func (s *StandardEntityStoreServer) RegisterEntityRoutes(route routing.RouteRegister) {
@@ -29,10 +37,11 @@ func (s *StandardEntityStoreServer) RegisterKindsRoutes(route routing.RouteRegis
 func (s *StandardEntityStoreServer) doGetEntity(c *models.ReqContext) {
 	params := web.Params(c.Req)
 	urlParams := c.Req.URL.Query()
+	ctx := context.WithValue(c.Req.Context(), tempSignedInUserKey, c.SignedInUser)
 
 	// Get the history
 	if isTrue(urlParams, "history") {
-		rsp, err := s.GetEntityHistory(c.Req.Context(), &entity.GetHistoryRequest{
+		rsp, err := s.GetEntityHistory(ctx, &entity.GetHistoryRequest{
 			Path:       params["*"],
 			MaxResults: 100,
 			PageToken:  urlParams.Get("pageToken"),
@@ -51,14 +60,14 @@ func (s *StandardEntityStoreServer) doGetEntity(c *models.ReqContext) {
 		Version:     urlParams.Get("version"), // URL parameter
 		WithPayload: true,
 	}
-	isRaw := isTrue(urlParams, "raw")
-	if !isRaw {
+	withMeta := isTrue(urlParams, "meta")
+	if withMeta {
 		req.WithStorageMeta = true
 		req.WithACL = true
 		req.WithPRs = true
 	}
 
-	rsp, err := s.GetEntity(c.Req.Context(), req)
+	rsp, err := s.GetEntity(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, map[string]string{"path": req.Path, "error": err.Error()})
 		return
@@ -67,8 +76,8 @@ func (s *StandardEntityStoreServer) doGetEntity(c *models.ReqContext) {
 	// Check for ETag updates
 	if rsp.Meta != nil && rsp.Meta.Etag != "" {
 		currentETag := rsp.Meta.Etag
-		if isRaw {
-			currentETag += "-raw"
+		if withMeta {
+			currentETag += "-meta"
 		}
 		c.Resp.Header().Set("ETag", currentETag)
 
@@ -79,7 +88,9 @@ func (s *StandardEntityStoreServer) doGetEntity(c *models.ReqContext) {
 		}
 	}
 
-	if isRaw {
+	if withMeta {
+		c.JSON(http.StatusOK, rsp)
+	} else {
 		ct := "application/json"
 		k := s.kinds.Get(rsp.Kind)
 		if k != nil {
@@ -95,16 +106,24 @@ func (s *StandardEntityStoreServer) doGetEntity(c *models.ReqContext) {
 			logger.Warn("Error writing to response", "err", err)
 		}
 		c.Resp.Flush()
-	} else {
-		c.JSON(http.StatusOK, rsp)
 	}
 }
 
 func (s *StandardEntityStoreServer) doDelteEntity(c *models.ReqContext) response.Response {
 	params := web.Params(c.Req)
 	path := params["*"]
+	urlParams := c.Req.URL.Query()
 
-	return response.JSON(200, "DELETE: "+path)
+	ctx := context.WithValue(c.Req.Context(), tempSignedInUserKey, c.SignedInUser)
+	rsp, err := s.DeleteEntity(ctx, &entity.DeleteEntityRequest{
+		Path:      path,
+		Version:   urlParams.Get("version"),
+		Recursive: isTrue(urlParams, "recursive"),
+	})
+	if err != nil {
+		return response.Err(err)
+	}
+	return response.JSON(200, rsp)
 }
 
 func (s *StandardEntityStoreServer) doEntityUpdate(c *models.ReqContext) response.Response {
@@ -123,7 +142,8 @@ func (s *StandardEntityStoreServer) doPR(c *models.ReqContext) response.Response
 }
 
 func (s *StandardEntityStoreServer) doListKinds(c *models.ReqContext) response.Response {
-	rsp, err := s.ListKinds(c.Req.Context(), &entity.ListKindsRequest{})
+	ctx := context.WithValue(c.Req.Context(), tempSignedInUserKey, c.SignedInUser)
+	rsp, err := s.ListKinds(ctx, &entity.ListKindsRequest{})
 	if err != nil {
 		return response.Error(400, "error", err)
 	}
