@@ -47,7 +47,7 @@ func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
 			Type:     "git",
 			Prefix:   "it",
 			Name:     "Your git repository",
-			Disabled: true,
+			Disabled: true, // will not clone until enabled explicitly
 			Git: &StorageGitConfig{
 				Remote:             "github.com/ryantxu/test-repo-export-0002",
 				Branch:             "main",
