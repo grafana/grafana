@@ -1,6 +1,7 @@
 import { ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
+import { createCustomVariable } from '../variables/state/__tests__/fixtures';
 import { variableRegex } from '../variables/utils';
 
 /**
@@ -17,12 +18,11 @@ export class TemplateSrvMock implements TemplateSrv {
 
   getVariables(): TypedVariableModel[] {
     return Object.keys(this.variables).map((key) => {
-      return {
-        type: 'custom',
+      return createCustomVariable({
         name: key,
         label: key,
-      };
-    }) as TypedVariableModel[];
+      });
+    });
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {

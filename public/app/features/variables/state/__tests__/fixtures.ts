@@ -1,6 +1,7 @@
 import {
   BaseVariableModel,
   ConstantVariableModel,
+  CustomVariableModel,
   LoadingState,
   QueryVariableModel,
   VariableHide,
@@ -62,6 +63,19 @@ export function createConstantVariable(input: Partial<ConstantVariableModel>): C
     current: createVariableOption('database'),
     options: [],
     hide: VariableHide.hideVariable,
+    ...input,
+  };
+}
+
+export function createCustomVariable(input: Partial<CustomVariableModel>): CustomVariableModel {
+  return {
+    ...createBaseVariableModel(),
+    type: 'custom',
+    multi: false,
+    includeAll: false,
+    current: createVariableOption('prom-prod', 'Prometheus (main)', true),
+    options: [],
+    query: '',
     ...input,
   };
 }
