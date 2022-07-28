@@ -56,6 +56,7 @@ export const SearchView = ({
     onDatasourceChange,
     onSortChange,
     onLayoutChange,
+    onClearStarred,
   } = useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
@@ -270,6 +271,9 @@ export const SearchView = ({
             if (v === SearchLayout.Folders) {
               if (query.query) {
                 onQueryTextChange(''); // parent will clear the sort
+              }
+              if (query.starred) {
+                onClearStarred();
               }
             }
             onLayoutChange(v);
