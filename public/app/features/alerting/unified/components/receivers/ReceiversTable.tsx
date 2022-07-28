@@ -234,6 +234,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     () =>
       config.alertmanager_config.receivers?.map((receiver: Receiver) => ({
         id: receiver.id,
+        id: receiver.name,
         data: {
           name: receiver.name,
           types: Object.entries(extractNotifierTypeCounts(receiver, grafanaNotifiers.result ?? [])).map(
