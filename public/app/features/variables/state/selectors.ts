@@ -1,18 +1,6 @@
 import memoizeOne from 'memoize-one';
 
-import {
-  AdHocVariableModel,
-  ConstantVariableModel,
-  CustomVariableModel,
-  DashboardVariableModel,
-  DataSourceVariableModel,
-  IntervalVariableModel,
-  OrgVariableModel,
-  QueryVariableModel,
-  TextBoxVariableModel,
-  UserVariableModel,
-  VariableType,
-} from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 
 import { getState } from '../../../store/store';
 import { StoreState } from '../../../types';
@@ -22,22 +10,31 @@ import { toStateKey } from '../utils';
 import { getInitialTemplatingState, TemplatingState } from './reducers';
 import { KeyedVariableIdentifier, VariablesState } from './types';
 
-export const getVariable = <T extends VariableModel = VariableModel>(
+export function getVariable(
+  identifier: KeyedVariableIdentifier,
+  state: StoreState,
+  throwWhenMissing: false
+): TypedVariableModel | undefined;
+export function getVariable(identifier: KeyedVariableIdentifier, state: StoreState): TypedVariableModel;
+export function getVariable(
   identifier: KeyedVariableIdentifier,
   state: StoreState = getState(),
   throwWhenMissing = true
-): T => {
+): TypedVariableModel | undefined {
   const { id, rootStateKey } = identifier;
   const variablesState = getVariablesState(rootStateKey, state);
-  if (!variablesState.variables[id]) {
+  var variable = variablesState.variables[id];
+
+  if (!variable) {
     if (throwWhenMissing) {
       throw new Error(`Couldn't find variable with id:${id}`);
     }
-    return undefined as unknown as T;
+
+    return undefined;
   }
 
-  return variablesState.variables[id] as T;
-};
+  return variable;
+}
 
 function getFilteredVariablesByKey(
   filter: (model: VariableModel) => boolean,
@@ -125,34 +122,4 @@ export function getVariableWithName(name: string, state: StoreState = getState()
 
 export function getInstanceState(state: VariablesState, id: string) {
   return state[id];
-}
-
-type VariableTypeMap = {
-  query: QueryVariableModel;
-  adhoc: AdHocVariableModel;
-  constant: ConstantVariableModel;
-  datasource: DataSourceVariableModel;
-  interval: IntervalVariableModel;
-  textbox: TextBoxVariableModel;
-  custom: CustomVariableModel;
-  system: DashboardVariableModel | OrgVariableModel | UserVariableModel;
-};
-
-export function getInstanceStateOfType<
-  IVariableState extends VariablesState,
-  IModel extends IVariableState[string],
-  IType extends IModel['type']
->(state: IVariableState, id: string, type: IType): IModel & { type: IType } {
-  const variableModel = state[id];
-
-  if (variableModel.type !== type) {
-    variableModel;
-    // ^?
-    throw new Error('Unexpected variable type');
-  }
-
-  variableModel;
-  // ^?
-
-  return variableModel;
 }

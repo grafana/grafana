@@ -27,7 +27,11 @@ export const updateDataSourceVariableOptions =
   async (dispatch, getState) => {
     const { rootStateKey } = identifier;
     const sources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
-    const variableInState = getVariable<DataSourceVariableModel>(identifier, getState());
+    const variableInState = getVariable(identifier, getState());
+    if (variableInState.type !== 'datasource') {
+      return;
+    }
+
     let regex;
 
     if (variableInState.regex) {

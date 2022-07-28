@@ -300,9 +300,7 @@ export function toVariablePayload<T extends any = undefined>(
   identifier: VariableIdentifier,
   data?: T
 ): VariablePayload<T>;
-// eslint-disable-next-line
 export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
-// eslint-disable-next-line
 export function toVariablePayload<T extends any = undefined>(
   obj: VariableIdentifier | VariableModel,
   data?: T

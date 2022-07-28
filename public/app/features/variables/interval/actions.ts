@@ -37,15 +37,17 @@ export const updateAutoValue =
     }
   ): ThunkResult<void> =>
   (dispatch, getState) => {
-    const variableInState = getVariable<IntervalVariableModel>(identifier, getState());
-    if (variableInState.auto) {
-      const res = dependencies.calculateInterval(
-        dependencies.getTimeSrv().timeRange(),
-        variableInState.auto_count,
-        variableInState.auto_min
-      );
-      dependencies.templateSrv.setGrafanaVariable('$__auto_interval_' + variableInState.name, res.interval);
-      // for backward compatibility, to be removed eventually
-      dependencies.templateSrv.setGrafanaVariable('$__auto_interval', res.interval);
+    const variableInState = getVariable(identifier, getState());
+    if (variableInState.type !== 'interval' || !variableInState.auto) {
+      return;
     }
+
+    const res = dependencies.calculateInterval(
+      dependencies.getTimeSrv().timeRange(),
+      variableInState.auto_count,
+      variableInState.auto_min
+    );
+    dependencies.templateSrv.setGrafanaVariable('$__auto_interval_' + variableInState.name, res.interval);
+    // for backward compatibility, to be removed eventually
+    dependencies.templateSrv.setGrafanaVariable('$__auto_interval', res.interval);
   };

@@ -11,6 +11,8 @@
     "@emotion/jsx-import": "error",
     "lodash/import-scope": [2, "member"],
     "jest/no-focused-tests": "error",
+    "no-redeclare": "off",
+    "@typescript-eslint/no-redeclare": ["error"],
     "import/order": [
       "error",
       {
