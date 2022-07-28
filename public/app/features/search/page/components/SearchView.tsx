@@ -5,6 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
@@ -112,13 +113,34 @@ export const SearchView = ({
       });
     },
     1000,
-    [folderDTO, query.layout, query.starred, query.sort?.value, query.query?.length, query.tag?.length]
+    []
   );
 
+  const onClickItem = () => {
+    reportInteraction('grafana_search_result_clicked', {
+      layout: query.layout,
+      starred: query.starred,
+      sortValue: query.sort?.value,
+      query: query.query,
+      tagCount: query.tag?.length,
+      includePanels: false,
+    });
+  };
+
   const results = useAsync(() => {
+    reportInteraction('grafana_search_query_submitted', {
+      layout: query.layout,
+      starred: query.starred,
+      sortValue: query.sort?.value,
+      query: query.query,
+      tagCount: query.tag?.length,
+      includePanels: false,
+    });
+
     if (searchQuery.starred) {
       return getGrafanaSearcher().starred(searchQuery);
     }
+
     return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
 
@@ -200,6 +222,7 @@ export const SearchView = ({
             renderStandaloneBody={true}
             tags={query.tag}
             key={listKey}
+            onClickItem={onClickItem}
           />
         );
       }
@@ -211,6 +234,7 @@ export const SearchView = ({
           tags={query.tag}
           onTagSelected={onTagAdd}
           hidePseudoFolders={hidePseudoFolders}
+          onClickItem={onClickItem}
         />
       );
     }
@@ -229,6 +253,7 @@ export const SearchView = ({
               onTagSelected: onTagAdd,
               keyboardEvents,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
+              onClickItem: onClickItem,
             };
 
             if (layout === SearchLayout.Grid) {
