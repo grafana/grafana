@@ -80,16 +80,6 @@ export function RootView({ root, onPathChange }: Props) {
             <Card.Tags className={styles.clickable}>
               <HorizontalGroup>
                 <TagList tags={getTags(s)} />
-                <Button
-                  variant="secondary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    alert('x');
-                  }}
-                >
-                  Pull
-                </Button>
               </HorizontalGroup>
             </Card.Tags>
             <Card.Figure className={styles.clickable}>
