@@ -1,9 +1,14 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const crypto = require('crypto');
 const path = require('path');
 const webpack = require('webpack');
 
 const CopyUniconsPlugin = require('./plugins/CopyUniconsPlugin');
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
+
+// monkey patch crypto due to https://github.com/webpack/webpack/issues/14532
+const crypto_orig_createHash = crypto.createHash;
+crypto.createHash = (algorithm) => crypto_orig_createHash(algorithm === 'md4' ? 'sha256' : algorithm);
 
 module.exports = {
   target: 'web',
