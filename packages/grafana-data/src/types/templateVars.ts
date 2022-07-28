@@ -57,6 +57,7 @@ export interface AdHocVariableModel extends BaseVariableModel {
   filters: AdHocVariableFilter[];
 }
 
+// TODO: I think at runtime everything in here can potentially be undefined?
 export interface VariableOption {
   selected: boolean;
   text: string | string[];

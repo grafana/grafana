@@ -19,7 +19,7 @@ export const constantVariableSlice = createSlice({
   reducers: {
     createConstantOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id);
-      if (instanceState.type !== 'custom') {
+      if (instanceState.type !== 'constant') {
         return;
       }
 
