@@ -20,7 +20,7 @@ var window, document, ARGS, $, jQuery, moment, kbn;
 var dashboard;
 
 // All url parameters are available via the ARGS object
-// eslint-disable-next-line no-redeclare
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 var ARGS;
 
 // Initialize a skeleton with nothing but a rows array and service object
