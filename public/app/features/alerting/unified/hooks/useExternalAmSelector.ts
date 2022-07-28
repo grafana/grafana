@@ -94,20 +94,24 @@ export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
     }
 
     const amUrl = getDataSourceUrlWithProtocol(dsSettings);
+    const amStatusUrl = `${amUrl}/api/v2/alerts`;
 
-    const matchingDroppedUrls = droppedAMUrls[amUrl];
-    const matchingActiveUrls = activeAMUrls[`${amUrl}/api/v2/alerts`];
+    const matchingDroppedUrls = droppedAMUrls[amStatusUrl] ?? 0;
+    const matchingActiveUrls = activeAMUrls[amStatusUrl] ?? 0;
 
     const isDropped = matchingDroppedUrls > 0;
     const isActive = matchingActiveUrls > 0;
 
-    const isStatusInconclusive = matchingDroppedUrls > 1 || matchingActiveUrls > 1;
+    // It may happen that there are multiple Alertmanagers of the same URL (e.g. only different credentials)
+    // Alertmanager response contains only URLs so in case of duplication we are not able
+    // to distinguish which is which, hence the status is inconclusive
+    const isStatusInconclusive = matchingDroppedUrls + matchingActiveUrls > 1;
 
     const status = isDropped ? 'dropped' : isActive ? 'active' : 'pending';
 
     return {
       dataSource: dsAm,
-      url: amUrl,
+      url: dsSettings.url,
       status,
       statusInconclusive: isStatusInconclusive,
     };
