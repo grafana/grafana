@@ -21,9 +21,9 @@ export const defaultElementItems = [
   buttonItem,
 ];
 
-export const advancedElementItems = [droneTopItem, droneFrontItem, droneSideItem, windTurbineItem];
+const advancedElementItems = [droneTopItem, droneFrontItem, droneSideItem, windTurbineItem];
 
 export const canvasElementRegistry = new Registry<CanvasElementItem>(() => [
   ...defaultElementItems,
   ...advancedElementItems,
-]); //defaultElementItems.concat(advancedElementItems)
+]);
