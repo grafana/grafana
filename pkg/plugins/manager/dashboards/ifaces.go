@@ -9,7 +9,6 @@ import (
 type FileStore interface {
 	// ListPluginDashboardFiles lists plugin dashboard files.
 	ListPluginDashboardFiles(ctx context.Context, args *ListPluginDashboardFilesArgs) (*ListPluginDashboardFilesResult, error)
-
 	// GetPluginDashboardFileContents gets the referenced plugin dashboard file content.
 	GetPluginDashboardFileContents(ctx context.Context, args *GetPluginDashboardFileContentsArgs) (*GetPluginDashboardFileContentsResult, error)
 }

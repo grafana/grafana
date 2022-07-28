@@ -230,7 +230,6 @@ type fakePluginStore struct {
 
 func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
 	p, exists := pr.plugins[pluginID]
-
 	return p, exists
 }
 
@@ -239,6 +238,5 @@ func (pr fakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugin
 	for _, v := range pr.plugins {
 		result = append(result, v)
 	}
-
 	return result
 }
