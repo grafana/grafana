@@ -15,6 +15,7 @@ import {
   getFieldDisplayName,
   getDisplayProcessor,
   FieldColorModeId,
+  DecimalCount,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -35,7 +36,7 @@ import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConf
 import { getScaleGradientFn } from '../uPlot/config/gradientFills';
 import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
 
-const defaultFormatter = (v: any, decimals = 1) => (v == null ? '-' : v.toFixed(decimals));
+const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,

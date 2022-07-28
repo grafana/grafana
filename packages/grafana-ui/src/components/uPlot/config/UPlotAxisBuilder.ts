@@ -2,6 +2,7 @@ import uPlot, { Axis } from 'uplot';
 
 import {
   dateTimeFormat,
+  DecimalCount,
   GrafanaTheme2,
   guessDec,
   isBooleanUnit,
@@ -29,7 +30,7 @@ export interface AxisProps {
   ticks?: Axis.Ticks;
   filter?: Axis.Filter;
   space?: Axis.Space;
-  formatValue?: (v: any, decimals?: number) => string;
+  formatValue?: (v: any, decimals?: DecimalCount) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: Axis.Values;

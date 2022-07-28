@@ -8,6 +8,7 @@ import {
   ApplyFieldOverrideOptions,
   DataFrame,
   DataLink,
+  DecimalCount,
   DisplayProcessor,
   DisplayValue,
   DynamicConfigValue,
@@ -222,7 +223,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
     caches.set(i, new Map());
   }
 
-  return (value: any, decimals?: number | null) => {
+  return (value: any, decimals?: DecimalCount) => {
     let cache = caches.get(decimals ?? -1)!;
 
     let v = cache.get(value);
