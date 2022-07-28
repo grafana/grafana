@@ -53,7 +53,7 @@ describe('Azure Monitor Datasource', () => {
         createMockQuery({ queryType: AzureQueryType.AzureResourceGraph, hide: false }),
       ];
 
-      ds.queriesOnInitDashboard(queries, 'dashboard123', 1, 2, 'v9.0.0');
+      ds.trackQueries(queries, 'dashboard123', 1, 2, 'v9.0.0');
 
       expect(reportInteraction).toBeCalledTimes(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_azuremonitor_dashboard_loaded', {
