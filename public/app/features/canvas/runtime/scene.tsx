@@ -319,7 +319,7 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
-      ables: [dimensionViewable, constraintViewable(this), settingsViewable],
+      ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
         dimensionViewable: allowChanges,
         constraintViewable: allowChanges,

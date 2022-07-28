@@ -4,11 +4,16 @@ import { HorizontalConstraint, VerticalConstraint } from '../types';
 
 import { Scene } from './scene';
 
-export const settingsViewable = {
+export const settingsViewable = (scene: Scene) => ({
   name: 'settingsViewable',
   props: {},
   events: {},
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
+    // If selection is more than 1 element don't display settings button
+    if (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1) {
+      return;
+    }
+
     const rect = moveable.getRect();
     return (
       <div
@@ -38,7 +43,7 @@ export const settingsViewable = {
       </div>
     );
   },
-};
+});
 
 export const dimensionViewable = {
   name: 'dimensionViewable',
