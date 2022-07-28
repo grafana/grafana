@@ -18,6 +18,7 @@ import {
   measureText,
   PlotLegend,
   Portal,
+  TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
   usePanelContext,
@@ -175,6 +176,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           rowIndex={datapointIdx}
           columnIndex={seriesIdx}
           sortOrder={options.tooltip.sort}
+          mode={options.tooltip.mode}
         />
       </>
     );
@@ -282,6 +284,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
             setHover,
             isToolTipOpen,
           });
+        }
+
+        if (options.tooltip.mode === TooltipDisplayMode.None) {
+          return null;
         }
 
         return (
