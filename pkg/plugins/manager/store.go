@@ -3,8 +3,6 @@ package manager
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-	"strings"
 
 	"github.com/Masterminds/semver"
 
@@ -139,7 +137,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		}
 	}
 
-	extractedArchive, err := m.pluginFs.Add(ctx, pluginArchive.File, pluginID, m.cfg.PluginsPath)
+	extractedArchive, err := m.pluginStorage.Add(ctx, pluginID, pluginArchive.File)
 	if err != nil {
 		return err
 	}
@@ -153,7 +151,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		depArchive, err := m.pluginFs.Add(ctx, d.File, dep.ID, m.cfg.PluginsPath)
+		depArchive, err := m.pluginStorage.Add(ctx, dep.ID, d.File)
 		if err != nil {
 			return err
 		}
@@ -180,17 +178,11 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
-	// extra security check to ensure we only remove plugins that are located in the configured plugins directory
-	path, err := filepath.Rel(m.cfg.PluginsPath, plugin.PluginDir)
-	if err != nil || strings.HasPrefix(path, ".."+string(filepath.Separator)) {
-		return plugins.ErrUninstallOutsideOfPluginDir
-	}
-
 	if err := m.unregisterAndStop(ctx, plugin); err != nil {
 		return err
 	}
 
-	return m.pluginFs.Remove(ctx, plugin.PluginDir)
+	return m.pluginStorage.Remove(ctx, plugin.ID)
 }
 
 func isSemVerExpr(version string) bool {

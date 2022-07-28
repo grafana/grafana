@@ -11,9 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/plugins/filestore"
 	"github.com/grafana/grafana/pkg/plugins/repository"
 	"github.com/grafana/grafana/pkg/plugins/repository/service"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
 func validateInput(c utils.CommandLine, pluginFolder string) error {
@@ -57,7 +57,6 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 // and then extracts the zip into the plugin's directory.
 func InstallPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
 	skipTLSVerify := c.Bool("insecure")
-
 	repo := service.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
 	compatOpts := repository.CompatabilityOpts{
@@ -81,9 +80,8 @@ func InstallPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 		}
 	}
 
-	pluginFs := filestore.New(services.Logger)
-	pluginsPath := c.PluginDirectory()
-	extractedArchive, err := pluginFs.Add(ctx, archive.File, pluginID, pluginsPath)
+	pluginFs := storage.NewFileSystem(services.Logger, c.PluginDirectory())
+	extractedArchive, err := pluginFs.Add(ctx, pluginID, archive.File)
 	if err != nil {
 		return err
 	}
@@ -95,7 +93,7 @@ func InstallPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		_, err = pluginFs.Add(ctx, d.File, dep.ID, pluginsPath)
+		_, err = pluginFs.Add(ctx, dep.ID, d.File)
 		if err != nil {
 			return err
 		}

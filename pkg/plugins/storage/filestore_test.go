@@ -1,4 +1,4 @@
-package filestore
+package storage
 
 import (
 	"archive/zip"
@@ -25,7 +25,7 @@ func TestAdd(t *testing.T) {
 
 	pluginID := "test-app"
 
-	i := &Service{log: &fakeLogger{}}
+	i := &FileSystem{log: &fakeLogger{}}
 	archive, err := i.Add(context.Background(), zipFile(t, "./testdata/plugin-with-symlinks.zip"), pluginID, testDir)
 	require.NotNil(t, archive)
 	require.NoError(t, err)
@@ -45,7 +45,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	i := &Service{log: &fakeLogger{}}
+	i := &FileSystem{log: &fakeLogger{}}
 
 	pluginDir := t.TempDir()
 	pluginJSON := filepath.Join(pluginDir, "plugin.json")
@@ -86,7 +86,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestExtractFiles(t *testing.T) {
-	i := &Service{log: &fakeLogger{}}
+	i := &FileSystem{log: &fakeLogger{}}
 	pluginsDir := setupFakePluginsDir(t)
 
 	t.Run("Should preserve file permissions for plugin backend binaries for linux and darwin", func(t *testing.T) {

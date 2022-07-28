@@ -10,11 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/filestore"
 	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,7 +32,7 @@ type PluginManager struct {
 	pluginRepo     repository.Service
 	pluginsMu      sync.RWMutex
 	pluginSources  []PluginSource
-	pluginFs       filestore.Manager
+	pluginStorage  storage.Manager
 	log            log.Logger
 }
 
@@ -47,7 +47,7 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader, pluginRepo, filestore.New(logger.NewLogger("plugin.fs")))
+	}, pluginLoader, pluginRepo, storage.NewFileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath))
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
@@ -55,14 +55,14 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 }
 
 func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service,
-	pluginRepo repository.Service, pluginFs filestore.Manager) *PluginManager {
+	pluginRepo repository.Service, pluginFs storage.Manager) *PluginManager {
 	return &PluginManager{
 		cfg:            cfg,
 		pluginLoader:   pluginLoader,
 		pluginSources:  pluginSources,
 		pluginRegistry: pluginRegistry,
 		pluginRepo:     pluginRepo,
-		pluginFs:       pluginFs,
+		pluginStorage:  pluginFs,
 		log:            log.New("plugin.manager"),
 	}
 }

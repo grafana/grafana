@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -412,7 +413,7 @@ func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
 		}
-		if errors.Is(err, plugins.ErrUninstallOutsideOfPluginDir) {
+		if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a plugin outside of the plugins directory", err)
 		}
 

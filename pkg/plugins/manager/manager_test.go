@@ -19,9 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
 const (
@@ -178,7 +178,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.cfg.PluginsPath = testDir
 			pm.pluginLoader = l
-			pm.pluginFs = fsm
+			pm.pluginStorage = fsm
 			pm.pluginRepo = repo
 		})
 
@@ -851,15 +851,15 @@ func (f *fakePluginRegistry) Remove(_ context.Context, id string) error {
 }
 
 type fakeFsManager struct {
-	filestore.Manager
+	storage.Manager
 
 	added   int
 	removed int
 }
 
-func (fsm *fakeFsManager) Add(_ context.Context, _ *zip.ReadCloser, _, _ string) (*filestore.ExtractedPluginArchive, error) {
+func (fsm *fakeFsManager) Add(_ context.Context, _ *zip.ReadCloser, _, _ string) (*storage.ExtractedPluginArchive, error) {
 	fsm.added++
-	return &filestore.ExtractedPluginArchive{}, nil
+	return &storage.ExtractedPluginArchive{}, nil
 }
 
 func (fsm *fakeFsManager) Remove(_ context.Context, _ string) error {
