@@ -18,6 +18,7 @@ import {
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
+import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
 import Explore from './Explore';
@@ -70,7 +71,13 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
-      const queries = await ensureQueries(initialQueries); // this will return an empty array if there are no datasources
+      let datasourceOverride = undefined;
+      // if this is starting with no queries and an initial datasource exists, look up the ref to use it (initial datasource can be a UID or name here)
+      if (initialQueries.length === 0 && initialDatasource) {
+        const datasource = await getDatasourceSrv().get(initialDatasource);
+        datasourceOverride = datasource.getRef();
+      }
+      const queries = await ensureQueries(initialQueries, datasourceOverride); // this will return an empty array if there are no datasources
       this.props.initializeExplore(
         exploreId,
         initialDatasource,
