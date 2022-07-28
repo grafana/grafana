@@ -50,7 +50,8 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 			return err
 		}
 		if !has {
-			kv.log.Error("secret value not found", "orgId", orgId, "type", typ, "namespace", namespace)
+			// this is not necessary an error, as some datasources may not have a secret but is still asked for
+			kv.log.Warn("secret value not found", "orgId", orgId, "type", typ, "namespace", namespace)
 			return nil
 		}
 		isFound = true
