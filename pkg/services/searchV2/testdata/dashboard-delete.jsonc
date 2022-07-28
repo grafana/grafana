@@ -8,12 +8,12 @@
 //  }
 //  Name: Query results
 //  Dimensions: 8 Fields by 0 Rows
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+
-//  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid             | Name: location |
-//  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                  | Labels:        |
-//  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []*json.RawMessage | Type: []string |
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid            | Name: location |
+//  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
+//  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -84,8 +84,7 @@
             "name": "ds_uid",
             "type": "other",
             "typeInfo": {
-              "frame": "json.RawMessage",
-              "nullable": true
+              "frame": "json.RawMessage"
             }
           },
           {
