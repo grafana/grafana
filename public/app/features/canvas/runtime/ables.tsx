@@ -8,7 +8,7 @@ export const settingsViewable = {
   name: 'settingsViewable',
   props: {},
   events: {},
-  render(moveable: MoveableManagerInterface<any, any>, React: Renderer) {
+  render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
     return (
       <div
@@ -44,7 +44,7 @@ export const dimensionViewable = {
   name: 'dimensionViewable',
   props: {},
   events: {},
-  render(moveable: MoveableManagerInterface<any, any>, React: Renderer) {
+  render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
     return (
       <div
@@ -76,9 +76,9 @@ export const constraintViewable = (scene: Scene) => ({
   name: 'constraintViewable',
   props: {},
   events: {},
-  render(moveable: MoveableManagerInterface<any, any>, React: Renderer) {
+  render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
-    const targetElement = scene.findElementByTarget(moveable.state.target);
+    const targetElement = scene.findElementByTarget(moveable.state.target!);
 
     // If selection is more than 1 element don't display constraint visualizations
     if (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1) {
