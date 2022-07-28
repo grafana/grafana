@@ -89,9 +89,12 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
   definition: string;
   sort: VariableSort;
   queryValue?: string;
-  query: any;
   regex: string;
   refresh: VariableRefresh;
+
+  // TODO: we need to type this to something a bit more specific, or to unknown.
+  // I think this usually is something like Record<string, unknown> & { refId: string }
+  query: any /* eslint-disable-line @typescript-eslint/no-explicit-any */;
 }
 
 export interface TextBoxVariableModel extends VariableWithOptions {
@@ -155,6 +158,6 @@ export interface BaseVariableModel extends VariableModel {
   skipUrlSync: boolean;
   index: number;
   state: LoadingState;
-  error: any | null;
+  error: unknown | null;
   description: string | null;
 }
