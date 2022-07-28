@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 )
 
 func logf(format string, a ...interface{}) {
@@ -22,43 +24,46 @@ type templateVariable struct {
 }
 
 type datasourceVariableLookup struct {
-	variableNameToRefs map[string][]DataSourceRef
-	dsLookup           DatasourceLookup
+	variableNameToRefs map[string][]dslookup.DataSourceRef
+	dsLookup           dslookup.DatasourceLookup
 }
 
-func (d *datasourceVariableLookup) getDsRefsByTemplateVariableValue(value string, datasourceType string) []DataSourceRef {
+func (d *datasourceVariableLookup) getDsRefsByTemplateVariableValue(value string, datasourceType string) []dslookup.DataSourceRef {
 	switch value {
 	case "default":
 		// can be the default DS, or a DS with UID="default"
-		candidateDs := d.dsLookup.ByRef(&DataSourceRef{UID: value})
+		candidateDs := d.dsLookup.ByRef(&dslookup.DataSourceRef{UID: value})
 		if candidateDs == nil {
 			// get the actual default DS
 			candidateDs = d.dsLookup.ByRef(nil)
 		}
 
 		if candidateDs != nil {
-			return []DataSourceRef{*candidateDs}
+			return []dslookup.DataSourceRef{*candidateDs}
 		}
-		return []DataSourceRef{}
+		return []dslookup.DataSourceRef{}
 	case "$__all":
 		// TODO: filter datasources by template variable's regex
 		return d.dsLookup.ByType(datasourceType)
 	case "":
-		return []DataSourceRef{}
+		return []dslookup.DataSourceRef{}
 	case "No data sources found":
-		return []DataSourceRef{}
+		return []dslookup.DataSourceRef{}
 	default:
-		return []DataSourceRef{
-			{
-				UID:  value,
-				Type: datasourceType,
-			},
+		// some variables use `ds.name` rather `ds.uid`
+		if ref := d.dsLookup.ByRef(&dslookup.DataSourceRef{
+			UID: value,
+		}); ref != nil {
+			return []dslookup.DataSourceRef{*ref}
 		}
+
+		// discard variable
+		return []dslookup.DataSourceRef{}
 	}
 }
 
 func (d *datasourceVariableLookup) add(templateVariable templateVariable) {
-	var refs []DataSourceRef
+	var refs []dslookup.DataSourceRef
 
 	datasourceType, isDataSourceTypeValid := templateVariable.query.(string)
 	if !isDataSourceTypeValid {
@@ -81,8 +86,8 @@ func (d *datasourceVariableLookup) add(templateVariable templateVariable) {
 	d.variableNameToRefs[templateVariable.name] = unique(refs)
 }
 
-func unique(refs []DataSourceRef) []DataSourceRef {
-	var uniqueRefs []DataSourceRef
+func unique(refs []dslookup.DataSourceRef) []dslookup.DataSourceRef {
+	var uniqueRefs []dslookup.DataSourceRef
 	uidPresence := make(map[string]bool)
 	for _, ref := range refs {
 		if !uidPresence[ref.UID] {
@@ -93,25 +98,25 @@ func unique(refs []DataSourceRef) []DataSourceRef {
 	return uniqueRefs
 }
 
-func (d *datasourceVariableLookup) getDatasourceRefs(name string) []DataSourceRef {
+func (d *datasourceVariableLookup) getDatasourceRefs(name string) []dslookup.DataSourceRef {
 	refs, ok := d.variableNameToRefs[name]
 	if ok {
 		return refs
 	}
 
-	return []DataSourceRef{}
+	return []dslookup.DataSourceRef{}
 }
 
-func newDatasourceVariableLookup(dsLookup DatasourceLookup) *datasourceVariableLookup {
+func newDatasourceVariableLookup(dsLookup dslookup.DatasourceLookup) *datasourceVariableLookup {
 	return &datasourceVariableLookup{
-		variableNameToRefs: make(map[string][]DataSourceRef),
+		variableNameToRefs: make(map[string][]dslookup.DataSourceRef),
 		dsLookup:           dsLookup,
 	}
 }
 
 // nolint:gocyclo
 // ReadDashboard will take a byte stream and return dashboard info
-func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, error) {
+func ReadDashboard(stream io.Reader, lookup dslookup.DatasourceLookup) (*DashboardInfo, error) {
 	dash := &DashboardInfo{}
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
@@ -261,6 +266,8 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 	}
 
 	replaceDatasourceVariables(dash, datasourceVariablesLookup)
+	fillDefaultDatasources(dash, lookup)
+	filterOutSpecialDatasources(dash)
 
 	targets := newTargetInfo(lookup)
 	for _, panel := range dash.Panels {
@@ -271,26 +278,74 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 	return dash, iter.Error
 }
 
+func panelRequiresDatasource(panel PanelInfo) bool {
+	return panel.Type != "row"
+}
+
+func fillDefaultDatasources(dash *DashboardInfo, lookup dslookup.DatasourceLookup) {
+	for i, panel := range dash.Panels {
+		if len(panel.Datasource) != 0 || !panelRequiresDatasource(panel) {
+			continue
+		}
+
+		defaultDs := lookup.ByRef(nil)
+		if defaultDs != nil {
+			dash.Panels[i].Datasource = []dslookup.DataSourceRef{*defaultDs}
+		}
+	}
+}
+
+func filterOutSpecialDatasources(dash *DashboardInfo) {
+	for i, panel := range dash.Panels {
+		var dsRefs []dslookup.DataSourceRef
+
+		// partition into actual datasource references and variables
+		for _, ds := range panel.Datasource {
+			switch ds.UID {
+			case "-- Mixed --":
+				// The actual datasources used as targets will remain
+				continue
+			case "-- Dashboard --":
+				// The `Dashboard` datasource refers to the results of the query used in another panel
+				continue
+			default:
+				dsRefs = append(dsRefs, ds)
+			}
+		}
+
+		dash.Panels[i].Datasource = dsRefs
+	}
+}
+
 func replaceDatasourceVariables(dash *DashboardInfo, datasourceVariablesLookup *datasourceVariableLookup) {
 	for i, panel := range dash.Panels {
-		var dsVariableRefs []DataSourceRef
-		var dsRefs []DataSourceRef
+		var dsVariableRefs []dslookup.DataSourceRef
+		var dsRefs []dslookup.DataSourceRef
 
 		// partition into actual datasource references and variables
 		for i := range panel.Datasource {
-			isVariableRef := strings.HasPrefix(panel.Datasource[i].UID, "$")
-			if isVariableRef {
+			uid := panel.Datasource[i].UID
+			if isVariableRef(uid) {
 				dsVariableRefs = append(dsVariableRefs, panel.Datasource[i])
 			} else {
 				dsRefs = append(dsRefs, panel.Datasource[i])
 			}
 		}
 
-		dash.Panels[i].Datasource = append(dsRefs, findDatasourceRefsForVariables(dsVariableRefs, datasourceVariablesLookup)...)
+		variables := findDatasourceRefsForVariables(dsVariableRefs, datasourceVariablesLookup)
+		dash.Panels[i].Datasource = append(dsRefs, variables...)
 	}
 }
 
-func getDataSourceVariableName(dsVariableRef DataSourceRef) string {
+func isSpecialDatasource(uid string) bool {
+	return uid == "-- Mixed --" || uid == "-- Dashboard --"
+}
+
+func isVariableRef(uid string) bool {
+	return strings.HasPrefix(uid, "$")
+}
+
+func getDataSourceVariableName(dsVariableRef dslookup.DataSourceRef) string {
 	if strings.HasPrefix(dsVariableRef.UID, "${") {
 		return strings.TrimPrefix(strings.TrimSuffix(dsVariableRef.UID, "}"), "${")
 	}
@@ -298,8 +353,8 @@ func getDataSourceVariableName(dsVariableRef DataSourceRef) string {
 	return strings.TrimPrefix(dsVariableRef.UID, "$")
 }
 
-func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVariablesLookup *datasourceVariableLookup) []DataSourceRef {
-	var referencedDs []DataSourceRef
+func findDatasourceRefsForVariables(dsVariableRefs []dslookup.DataSourceRef, datasourceVariablesLookup *datasourceVariableLookup) []dslookup.DataSourceRef {
+	var referencedDs []dslookup.DataSourceRef
 	for _, dsVariableRef := range dsVariableRefs {
 		variableName := getDataSourceVariableName(dsVariableRef)
 		refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
@@ -309,7 +364,7 @@ func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVa
 }
 
 // will always return strings for now
-func readPanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelInfo {
+func readPanelInfo(iter *jsoniter.Iterator, lookup dslookup.DatasourceLookup) PanelInfo {
 	panel := PanelInfo{}
 
 	targets := newTargetInfo(lookup)

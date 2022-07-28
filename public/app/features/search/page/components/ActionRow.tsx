@@ -101,8 +101,14 @@ export const ActionRow: FC<Props> = ({
             Datasource: {query.datasource}
           </Button>
         )}
-        {layout !== SearchLayout.Folders && config.featureToggles.panelTitleSearch && (
-          <Checkbox value={includePanels} onChange={() => setIncludePanels(!includePanels)} label="Include panels" />
+        {config.featureToggles.panelTitleSearch && (
+          <Checkbox
+            data-testid="include-panels"
+            disabled={layout === SearchLayout.Folders}
+            value={includePanels}
+            onChange={() => setIncludePanels(!includePanels)}
+            label="Include panels"
+          />
         )}
 
         <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
