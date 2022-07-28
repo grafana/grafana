@@ -44,10 +44,10 @@ func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (a
 		case "alertmanager":
 			return apimodels.AlertmanagerBackend, nil
 		default:
-			return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
+			return 0, fmt.Errorf("%w %s", errUnexpectedBackendType, ds.Type)
 		}
 	}
-	return 0, fmt.Errorf("unexpected backend type (%v)", datasourceUID)
+	return 0, errBackendDoesNotExist
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.

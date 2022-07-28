@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -34,14 +32,14 @@ func (f *AlertmanagerApiHandler) getService(ctx *models.ReqContext) (*LotexAM, e
 	case apimodels.AlertmanagerBackend:
 		return f.AMSvc, nil
 	default:
-		return nil, fmt.Errorf("unexpected backend type (%v)", t)
+		return nil, unexpectedBackendTypeError(t, apimodels.AlertmanagerBackend)
 	}
 }
 
 func (f *AlertmanagerApiHandler) handleRouteGetAMStatus(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return response.Error(400, err.Error(), nil)
+		return errorToResponse(err)
 	}
 
 	return s.RouteGetAMStatus(ctx)
@@ -50,7 +48,7 @@ func (f *AlertmanagerApiHandler) handleRouteGetAMStatus(ctx *models.ReqContext, 
 func (f *AlertmanagerApiHandler) handleRouteCreateSilence(ctx *models.ReqContext, body apimodels.PostableSilence, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RouteCreateSilence(ctx, body)
@@ -59,7 +57,7 @@ func (f *AlertmanagerApiHandler) handleRouteCreateSilence(ctx *models.ReqContext
 func (f *AlertmanagerApiHandler) handleRouteDeleteAlertingConfig(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RouteDeleteAlertingConfig(ctx)
@@ -68,7 +66,7 @@ func (f *AlertmanagerApiHandler) handleRouteDeleteAlertingConfig(ctx *models.Req
 func (f *AlertmanagerApiHandler) handleRouteDeleteSilence(ctx *models.ReqContext, silenceID string, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RouteDeleteSilence(ctx, silenceID)
@@ -77,7 +75,7 @@ func (f *AlertmanagerApiHandler) handleRouteDeleteSilence(ctx *models.ReqContext
 func (f *AlertmanagerApiHandler) handleRouteGetAlertingConfig(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RouteGetAlertingConfig(ctx)
@@ -86,7 +84,7 @@ func (f *AlertmanagerApiHandler) handleRouteGetAlertingConfig(ctx *models.ReqCon
 func (f *AlertmanagerApiHandler) handleRouteGetAMAlertGroups(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RouteGetAMAlertGroups(ctx)
@@ -95,7 +93,7 @@ func (f *AlertmanagerApiHandler) handleRouteGetAMAlertGroups(ctx *models.ReqCont
 func (f *AlertmanagerApiHandler) handleRouteGetAMAlerts(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RouteGetAMAlerts(ctx)
@@ -104,7 +102,7 @@ func (f *AlertmanagerApiHandler) handleRouteGetAMAlerts(ctx *models.ReqContext, 
 func (f *AlertmanagerApiHandler) handleRouteGetSilence(ctx *models.ReqContext, silenceID string, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RouteGetSilence(ctx, silenceID)
@@ -113,7 +111,7 @@ func (f *AlertmanagerApiHandler) handleRouteGetSilence(ctx *models.ReqContext, s
 func (f *AlertmanagerApiHandler) handleRouteGetSilences(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RouteGetSilences(ctx)
@@ -122,25 +120,18 @@ func (f *AlertmanagerApiHandler) handleRouteGetSilences(ctx *models.ReqContext, 
 func (f *AlertmanagerApiHandler) handleRoutePostAlertingConfig(ctx *models.ReqContext, body apimodels.PostableUserConfig, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
-
-	b, err := backendTypeByUID(ctx, f.DatasourceCache)
-	if err != nil {
-		return ErrResp(400, err, "")
+	if !body.AlertmanagerConfig.ReceiverType().Can(apimodels.AlertmanagerReceiverType) {
+		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.AlertmanagerBackend, body.AlertmanagerConfig.ReceiverType().String()))
 	}
-
-	if err := body.AlertmanagerConfig.ReceiverType().MatchesBackend(b); err != nil {
-		return ErrResp(400, err, "bad match")
-	}
-
 	return s.RoutePostAlertingConfig(ctx, body)
 }
 
 func (f *AlertmanagerApiHandler) handleRoutePostAMAlerts(ctx *models.ReqContext, body apimodels.PostableAlerts, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RoutePostAMAlerts(ctx, body)
@@ -149,7 +140,7 @@ func (f *AlertmanagerApiHandler) handleRoutePostAMAlerts(ctx *models.ReqContext,
 func (f *AlertmanagerApiHandler) handleRoutePostTestReceivers(ctx *models.ReqContext, body apimodels.TestReceiversConfigBodyParams, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
 
 	return s.RoutePostTestReceivers(ctx, body)
@@ -196,6 +187,9 @@ func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAMAlerts(ctx *models.ReqC
 }
 
 func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAlertingConfig(ctx *models.ReqContext, conf apimodels.PostableUserConfig) response.Response {
+	if !conf.AlertmanagerConfig.ReceiverType().Can(apimodels.GrafanaReceiverType) {
+		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, conf.AlertmanagerConfig.ReceiverType().String()))
+	}
 	return f.GrafanaSvc.RoutePostAlertingConfig(ctx, conf)
 }
 
