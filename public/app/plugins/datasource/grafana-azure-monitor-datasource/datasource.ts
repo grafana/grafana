@@ -208,7 +208,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 
-  queriesOnInitDashboard(
+  trackQueries(
     queries: AzureMonitorQuery[],
     dashboardId?: string,
     orgId?: number,

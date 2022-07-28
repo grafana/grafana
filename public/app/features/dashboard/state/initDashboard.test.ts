@@ -43,9 +43,9 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 const mockQueriesOnInitDashboard = jest.fn();
-const mockGetDS = jest.fn().mockImplementation((uid: string): Promise<{ queriesOnInitDashboard?: Function }> => {
+const mockGetDS = jest.fn().mockImplementation((uid: string): Promise<{ trackQueries?: Function }> => {
   if (uid === 'DSwithQueriesOnInitDashboard') {
-    return Promise.resolve({ queriesOnInitDashboard: mockQueriesOnInitDashboard });
+    return Promise.resolve({ trackQueries: mockQueriesOnInitDashboard });
   } else {
     return Promise.resolve({});
   }

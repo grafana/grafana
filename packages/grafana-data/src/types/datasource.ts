@@ -353,10 +353,11 @@ abstract class DataSourceApi<
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
 
   /*
-   * Optionally, use this method to report information about queries
+   * Optionally, use this method to track information about queries.
+   * Only executed once, during the dashboard initialization.
    * @alpha -- experimental
    */
-  queriesOnInitDashboard?(
+  trackQueries?(
     queries: TQuery[],
     dashboardId?: string,
     orgId?: number,

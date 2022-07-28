@@ -107,20 +107,20 @@ async function fetchDashboard(
   }
 }
 
-const queriesOnInitDashboard = (
+const trackQueriesOnInitDashboard = (
   panels: PanelModel[],
   dashboardId: string,
   orgId?: number,
   userId?: number,
   grafanaVersion?: string
 ): void => {
-  let queries: { [key: string]: DataQuery[] } = getQueriesFromDashboardPerDS(panels, {});
+  const queries = getQueriesFromDashboardPerDS(panels);
   const datasourceSrv = getDataSourceSrv();
 
-  Object.keys(queries).forEach((key) => {
-    datasourceSrv.get(key).then((value) => {
-      if (value.queriesOnInitDashboard) {
-        value.queriesOnInitDashboard(queries[key], dashboardId, orgId, userId, grafanaVersion);
+  Object.keys(queries).forEach((datasourceId) => {
+    datasourceSrv.get(datasourceId).then((ds) => {
+      if (ds.trackQueries) {
+        ds.trackQueries(queries[datasourceId], dashboardId, orgId, userId, grafanaVersion);
       }
     });
   });
@@ -128,8 +128,8 @@ const queriesOnInitDashboard = (
 
 const getQueriesFromDashboardPerDS = (
   panels: PanelModel[],
-  queries: { [key: string]: DataQuery[] } = {}
-): { [key: string]: DataQuery[] } => {
+  queries: { [datasourceId: string]: DataQuery[] } = {}
+): { [datasourceId: string]: DataQuery[] } => {
   panels.forEach((panel) => {
     if (panel.panels) {
       getQueriesFromDashboardPerDS(panel.panels, queries);
@@ -255,14 +255,16 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       setWeekStart(config.bootData.user.weekStart);
     }
 
-    // yay we are done
-    queriesOnInitDashboard(
+    // call trackQueries from data sources
+    trackQueriesOnInitDashboard(
       dashboard.panels,
       dashboard.uid,
       storeState.user.orgId,
       storeState.user.user?.id,
       config.buildInfo.version
     );
+
+    // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
