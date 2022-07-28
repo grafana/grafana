@@ -192,6 +192,11 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:        "prometheusStreamingJSONParserTest",
+			Description: "Run both old and streaming requests and log differences",
+			State:       FeatureStateBeta,
+		},
+		{
 			Name:            "validateDashboardsOnSave",
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateAlpha,
