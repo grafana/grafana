@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"gocloud.dev/blob"
 )
 
@@ -81,6 +82,11 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityWarning,
 			Text:     "folder is disabled (in configuration)",
+		})
+	} else if setting.Env == setting.Prod {
+		meta.Notice = append(meta.Notice, data.Notice{
+			Severity: data.NoticeSeverityError,
+			Text:     "git is only supported in dev mode (for now)",
 		})
 	}
 
