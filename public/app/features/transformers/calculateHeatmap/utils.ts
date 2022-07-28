@@ -1,4 +1,4 @@
-import { guessDec, roundDec } from '@grafana/data';
+import { guessDecimals, roundDecimals } from '@grafana/data';
 
 const { abs, pow } = Math;
 
@@ -7,16 +7,16 @@ export const fixedDec = new Map();
 export function genIncrs(base: number, minExp: number, maxExp: number, mults: number[]) {
   let incrs = [];
 
-  let multDec = mults.map(guessDec);
+  let multDec = mults.map(guessDecimals);
 
   for (let exp = minExp; exp < maxExp; exp++) {
     let expa = abs(exp);
-    let mag = roundDec(pow(base, exp), expa);
+    let mag = roundDecimals(pow(base, exp), expa);
 
     for (let i = 0; i < mults.length; i++) {
       let _incr = mults[i] * mag;
       let dec = (_incr >= 0 && exp >= 0 ? 0 : expa) + (exp >= multDec[i] ? 0 : multDec[i]);
-      let incr = roundDec(_incr, dec);
+      let incr = roundDecimals(_incr, dec);
       incrs.push(incr);
       fixedDec.set(incr, dec);
     }

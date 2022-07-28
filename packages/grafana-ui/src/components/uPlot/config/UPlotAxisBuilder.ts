@@ -4,9 +4,9 @@ import {
   dateTimeFormat,
   DecimalCount,
   GrafanaTheme2,
-  guessDec,
+  guessDecimals,
   isBooleanUnit,
-  roundDec,
+  roundDecimals,
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
@@ -185,9 +185,9 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => {
-        let decimals = vals.length >= 2 ? guessDec(roundDec(vals[1] - vals[0], 6)) : undefined;
-        return vals.map((v) => formatValue!(v, decimals));
+      config.values = (u: uPlot, splits, axisIdx, tickSpace, tickIncr) => {
+        let decimals = guessDecimals(roundDecimals(tickIncr, 6));
+        return splits.map((v) => formatValue!(v, decimals));
       };
     }
 
