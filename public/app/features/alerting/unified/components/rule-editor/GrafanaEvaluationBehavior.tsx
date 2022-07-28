@@ -55,7 +55,8 @@ const evaluateEveryValidationOptions: RegisterOptions = {
   },
 };
 
-function useEvaluateEveryGlobalLimit(alertGroupEvaluateEvery: string) {
+// TODO Move to more generic place
+export function useEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery: string) {
   const evaluateEveryMilis = parseDurationToMiliseconds(alertGroupEvaluateEvery);
   const evaluateEveryGlobalLimitMilis = parseDurationToMiliseconds(config.unifiedAlerting.minInterval);
 
@@ -73,7 +74,7 @@ export const GrafanaEvaluationBehavior: FC = () => {
     watch,
   } = useFormContext<RuleFormValues>();
 
-  const { exceedsLimit: exceedsGlobalEvaluationLimit } = useEvaluateEveryGlobalLimit(watch('evaluateEvery'));
+  const { exceedsLimit: exceedsGlobalEvaluationLimit } = useEvaluationIntervalGlobalLimit(watch('evaluateEvery'));
 
   const evaluateEveryId = 'eval-every-input';
   const evaluateForId = 'eval-for-input';

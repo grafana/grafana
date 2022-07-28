@@ -162,7 +162,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           <div className={styles.leftSide}>
             {rule.promRule && (
               <DetailsField label="Health" horizontal={true}>
-                <RuleHealth rule={rule.promRule} />
+                <RuleHealth rule={rule.promRule} group={rule.group} />
               </DetailsField>
             )}
             {!!rule.labels && !!Object.keys(rule.labels).length && (

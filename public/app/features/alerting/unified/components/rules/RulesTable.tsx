@@ -152,7 +152,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         id: 'health',
         label: 'Health',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: { promRule } }) => (promRule ? <RuleHealth rule={promRule} /> : null),
+        renderCell: ({ data: { promRule, group } }) => (promRule ? <RuleHealth rule={promRule} group={group} /> : null),
         size: '75px',
       },
     ];
