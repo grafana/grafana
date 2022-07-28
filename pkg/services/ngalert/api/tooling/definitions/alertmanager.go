@@ -1001,29 +1001,6 @@ func (r ReceiverType) String() string {
 // are valid in all backends.
 func (r ReceiverType) Can(other ReceiverType) bool { return r&other != 0 }
 
-// MatchesBackend determines if a config payload can be sent to a particular backend type
-func (r ReceiverType) MatchesBackend(backend Backend) error {
-	msg := func(backend Backend, receiver ReceiverType) error {
-		return fmt.Errorf(
-			"unexpected backend type (%s) for receiver type (%s)",
-			backend.String(),
-			receiver.String(),
-		)
-	}
-	var ok bool
-	switch backend {
-	case GrafanaBackend:
-		ok = r.Can(GrafanaReceiverType)
-	case AlertmanagerBackend:
-		ok = r.Can(AlertmanagerReceiverType)
-	default:
-	}
-	if !ok {
-		return msg(backend, r)
-	}
-	return nil
-}
-
 type GettableApiReceiver struct {
 	config.Receiver          `yaml:",inline"`
 	GettableGrafanaReceivers `yaml:",inline"`
