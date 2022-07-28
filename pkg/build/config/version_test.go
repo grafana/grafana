@@ -28,7 +28,9 @@ func TestGetMetadata(t *testing.T) {
 		metadata, err := config.GetMetadata(filepath.Join(dir, "dist"))
 		require.NoError(t, err)
 		require.Equal(t, metadata, &config.Metadata{})
-		os.RemoveAll(dir)
+		if err := os.RemoveAll(dir); err != nil {
+			t.Fatal(err)
+		}
 	})
 
 	for _, tc := range tcs {
@@ -36,7 +38,9 @@ func TestGetMetadata(t *testing.T) {
 		t.Run("Should return valid metadata, tag mode, ", func(t *testing.T) {
 			testMetadata(t, dir, tc.version, tc.mode)
 		})
-		os.RemoveAll(dir)
+		if err := os.RemoveAll(dir); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -84,9 +88,9 @@ func createVersionJSON(t *testing.T, version string, file string, mode config.Ve
 		ReleaseMode:    mode,
 	}
 
+	//nolint:gosec
 	f, err := os.Create(file)
 	require.NoError(t, err)
 
-	// nolint:gosec
 	require.NoError(t, json.NewEncoder(f).Encode(metadata))
 }
