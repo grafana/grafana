@@ -3,8 +3,7 @@ import { startCase, uniqBy } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { EditorRow, EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../../datasource';
 import { MetricDescriptor } from '../../types';

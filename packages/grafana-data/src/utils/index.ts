@@ -6,7 +6,7 @@ export * from './deprecationWarning';
 export * from './csv';
 export * from './logs';
 export * from './labels';
-export * from './labels';
+export * from './numbers';
 export * from './object';
 export * from './namedColorsPalette';
 export * from './series';

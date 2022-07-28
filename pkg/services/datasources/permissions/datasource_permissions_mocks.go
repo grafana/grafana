@@ -4,14 +4,20 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type mockDatasourcePermissionService struct {
-	DsResult  []*models.DataSource
-	ErrResult error
+	DsResult    []*datasources.DataSource
+	DsUidResult []string
+	ErrResult   error
 }
 
-func (m *mockDatasourcePermissionService) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *models.DatasourcesPermissionFilterQuery) error {
+func (m *mockDatasourcePermissionService) FilterDatasourceUidsBasedOnQueryPermissions(ctx context.Context, user *models.SignedInUser, datasourceUids []string) ([]string, error) {
+	return m.DsUidResult, m.ErrResult
+}
+
+func (m *mockDatasourcePermissionService) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *datasources.DatasourcesPermissionFilterQuery) error {
 	cmd.Result = m.DsResult
 	return m.ErrResult
 }

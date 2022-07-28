@@ -1,17 +1,13 @@
 package buffered
 
 import (
-	"context"
 	"math"
-	"net/http"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
@@ -19,57 +15,6 @@ import (
 )
 
 var now = time.Now()
-
-type FakeRoundTripper struct {
-	Req *http.Request
-}
-
-func (frt *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	frt.Req = req
-	return &http.Response{}, nil
-}
-
-func FakeMiddleware(rt *FakeRoundTripper) sdkhttpclient.Middleware {
-	return sdkhttpclient.NamedMiddlewareFunc("fake", func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
-		return rt
-	})
-}
-
-func TestPrometheus_ExecuteTimeSeriesQuery(t *testing.T) {
-	t.Run("adding req headers", func(t *testing.T) {
-		// This makes sure we add req headers from the front end request to the request to prometheus. We do that
-		// through contextual middleware so this setup is a bit complex and the test itself goes a bit too much into
-		// internals.
-
-		// This ends the trip and saves the request on the instance so we can inspect it.
-		rt := &FakeRoundTripper{}
-		// DefaultMiddlewares also contain contextual middleware which is the one we need to use.
-		middlewares := sdkhttpclient.DefaultMiddlewares()
-		middlewares = append(middlewares, FakeMiddleware(rt))
-
-		// Setup http client in at least similar way to how grafana provides it to the service
-		provider := sdkhttpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: sdkhttpclient.DefaultMiddlewares()})
-		roundTripper, err := provider.GetTransport(sdkhttpclient.Options{
-			Middlewares: middlewares,
-		})
-		require.NoError(t, err)
-
-		buffered, err := New(roundTripper, nil, backend.DataSourceInstanceSettings{JSONData: []byte("{}")}, &logtest.Fake{})
-		require.NoError(t, err)
-
-		_, err = buffered.ExecuteTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{},
-			// This header should end up in the outgoing request to prometheus
-			Headers: map[string]string{"foo": "bar"},
-			Queries: []backend.DataQuery{{
-				JSON: []byte(`{"expr": "metric{label=\"test\"}", "rangeQuery": true}`),
-			}},
-		})
-		require.NoError(t, err)
-		require.NotNil(t, rt.Req)
-		require.Equal(t, http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}, "foo": []string{"bar"}}, rt.Req.Header)
-	})
-}
 
 func TestPrometheus_timeSeriesQuery_formatLegend(t *testing.T) {
 	t.Run("converting metric name", func(t *testing.T) {

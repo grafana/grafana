@@ -15,6 +15,11 @@ export enum AxisPlacement {
   Top = 'top',
 }
 
+export enum AxisColorMode {
+  Series = 'series',
+  Text = 'text',
+}
+
 export enum VisibilityMode {
   Always = 'always',
   Auto = 'auto',
@@ -118,6 +123,8 @@ export interface ScaleDistributionConfig {
 }
 
 export interface AxisConfig {
+  axisCenteredZero?: boolean;
+  axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
@@ -161,7 +168,6 @@ export interface GraphThresholdsStyleConfig {
 export type LegendPlacement = ('bottom' | 'right');
 
 export enum LegendDisplayMode {
-  Hidden = 'hidden',
   List = 'list',
   Table = 'table',
 }
@@ -200,6 +206,14 @@ export interface OptionsWithTooltip {
 export interface OptionsWithLegend {
   legend: VizLegendOptions;
 }
+
+export interface OptionsWithTimezones {
+  timezones?: string[];
+}
+
+export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
+  timezones: [],
+};
 
 export interface OptionsWithTextFormatting {
   text?: VizTextDisplayOptions;
@@ -274,6 +288,7 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
   placement: LegendPlacement;
+  showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
   width?: number;

@@ -1,4 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -176,4 +177,15 @@ export function getDatasourceAPIUid(dataSourceName: string) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
   }
   return ds.uid;
+}
+
+export function getFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
+  return getRulesDataSources()[0];
+}
+
+export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
+  const defaultDataSource = getDataSourceSrv().getInstanceSettings('default');
+  const defaultIsCompatible = defaultDataSource?.meta.alerting ?? false;
+
+  return defaultIsCompatible ? defaultDataSource : getFirstCompatibleDataSource();
 }

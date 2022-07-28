@@ -146,7 +146,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               <DataSourcePicker
                 key={`${exploreId}-ds-picker`}
                 onChange={this.onChangeDatasource}
-                current={this.props.datasourceName}
+                current={this.props.datasourceRef}
                 hideTextValue={showSmallDataSourcePicker}
                 width={showSmallDataSourcePicker ? 8 : undefined}
               />
@@ -233,7 +233,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
 
   return {
     datasourceMissing,
-    datasourceName: datasourceInstance?.name,
+    datasourceRef: datasourceInstance?.getRef(),
     datasourceType: datasourceInstance?.type,
     loading,
     range,

@@ -102,10 +102,10 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	_ = withStoredImages(ctx, n.logger, n.images,
-		func(index int, image *ngmodels.Image) error {
+		func(index int, image ngmodels.Image) error {
 			// If there is an image for this alert and the image has been uploaded
 			// to a public URL then include it as an annotation
-			if image != nil && image.URL != "" {
+			if image.URL != "" {
 				as[index].Annotations["image"] = model.LabelValue(image.URL)
 			}
 			return nil

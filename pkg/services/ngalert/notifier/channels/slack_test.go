@@ -64,6 +64,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -99,6 +100,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -128,12 +130,13 @@ func TestSlackNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-with-url"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertImageToken__": "test-with-url"},
 					},
 				},
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -177,6 +180,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "2 firing, 0 resolved",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -225,6 +229,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{

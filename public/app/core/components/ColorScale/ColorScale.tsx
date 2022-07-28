@@ -154,7 +154,6 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     position: relative;
     pointer-events: none;
     white-space: nowrap;
-    height: 10px;
   `,
   follower: css`
     position: absolute;

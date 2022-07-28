@@ -177,6 +177,14 @@ List of enabled loggers.
 
 Keep dashboard content in the logs (request or response fields). This can significantly increase the size of your logs.
 
+### verbose
+
+Log all GET requests and always include request body for generic POST/PUT/PATCH requests.
+
+### log_all_status_codes
+
+Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
+
 ## [auditing.logs.file]
 
 ### path

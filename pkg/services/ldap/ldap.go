@@ -10,6 +10,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/ldap.v3"
@@ -114,6 +115,9 @@ func (server *Server) Dial() error {
 			return err
 		}
 	}
+
+	timeout := time.Duration(server.Config.Timeout) * time.Second
+
 	for _, host := range strings.Split(server.Config.Host, " ") {
 		// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
@@ -128,17 +132,17 @@ func (server *Server) Dial() error {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if server.Config.StartTLS {
-				server.Connection, err = ldap.Dial("tcp", address)
+				server.Connection, err = dialWithTimeout("tcp", address, timeout)
 				if err == nil {
 					if err = server.Connection.StartTLS(tlsCfg); err == nil {
 						return nil
 					}
 				}
 			} else {
-				server.Connection, err = ldap.DialTLS("tcp", address, tlsCfg)
+				server.Connection, err = dialTLSWithTimeout("tcp", address, tlsCfg, timeout)
 			}
 		} else {
-			server.Connection, err = ldap.Dial("tcp", address)
+			server.Connection, err = dialWithTimeout("tcp", address, timeout)
 		}
 
 		if err == nil {
@@ -146,6 +150,30 @@ func (server *Server) Dial() error {
 		}
 	}
 	return err
+}
+
+// dialWithTimeout applies the specified timeout
+// and connects to the given address on the given network using net.Dial
+func dialWithTimeout(network, addr string, timeout time.Duration) (*ldap.Conn, error) {
+	c, err := net.DialTimeout(network, addr, timeout)
+	if err != nil {
+		return nil, err
+	}
+	conn := ldap.NewConn(c, false)
+	conn.Start()
+	return conn, nil
+}
+
+// dialTLSWithTimeout applies the specified timeout
+// connects to the given address on the given network using tls.Dial
+func dialTLSWithTimeout(network, addr string, config *tls.Config, timeout time.Duration) (*ldap.Conn, error) {
+	c, err := tls.DialWithDialer(&net.Dialer{Timeout: timeout}, network, addr, config)
+	if err != nil {
+		return nil, err
+	}
+	conn := ldap.NewConn(c, true)
+	conn.Start()
+	return conn, nil
 }
 
 // Close closes the LDAP connection
@@ -466,7 +494,7 @@ func (server *Server) AdminBind() error {
 	err := server.userBind(server.Config.BindDN, server.Config.BindPassword)
 	if err != nil {
 		server.log.Error(
-			"Cannot authenticate admin user in LDAP",
+			"Cannot authenticate admin user in LDAP. Verify bind configuration",
 			"error",
 			err,
 		)

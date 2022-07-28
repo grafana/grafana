@@ -79,6 +79,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     }
   }
 
+  const cellGap = asNumber(angular.cards?.cardPadding, 2);
   const options: PanelOptions = {
     calculate,
     calculation,
@@ -86,7 +87,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       ...defaultPanelOptions.color,
       steps: 128, // best match with existing colors
     },
-    cellGap: asNumber(angular.cards?.cardPadding, 2),
+    cellGap: cellGap ? cellGap : 1, // default to size 1
     cellRadius: asNumber(angular.cards?.cardRound), // just to keep it
     yAxis: {
       axisPlacement: oldYAxis.show === false ? AxisPlacement.Hidden : AxisPlacement.Left,
@@ -104,7 +105,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       layout: getHeatmapCellLayout(angular.yBucketBound),
     },
     legend: {
-      show: Boolean(angular.legend.show),
+      show: Boolean(angular.legend?.show),
     },
     showValue: VisibilityMode.Never,
     tooltip: {
@@ -121,7 +122,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
   }
 
   // Migrate color options
-  const color = angular.color;
+  const color = angular.color ?? {};
   switch (color?.mode) {
     case 'spectrum': {
       options.color.mode = HeatmapColorMode.Scheme;

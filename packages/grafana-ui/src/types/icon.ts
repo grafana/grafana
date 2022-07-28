@@ -24,6 +24,7 @@ export const getAvailableIcons = () =>
     'arrow-right',
     'arrow-up',
     'arrows-h',
+    'arrows-v',
     'backward',
     'bars',
     'bell',
@@ -106,6 +107,7 @@ export const getAvailableIcons = () =>
     'heart',
     'heart-break',
     'history',
+    'home',
     'home-alt',
     'horizontal-align-center',
     'horizontal-align-left',
@@ -179,6 +181,7 @@ export const getAvailableIcons = () =>
     'vertical-align-center',
     'vertical-align-top',
     'wrap-text',
+    'rss',
     'x',
   ] as const;
 

@@ -11,11 +11,11 @@ import {
   PanelData,
 } from '@grafana/data';
 import { Button, Table } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { QueryGroupOptions } from 'app/types';
 
-import Page from '../../core/components/Page/Page';
 import { PanelRenderer } from '../panel/components/PanelRenderer';
 import { QueryGroup } from '../query/components/QueryGroup';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';

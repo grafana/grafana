@@ -24,7 +24,8 @@ export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  urlFolderId?: string | null;
+  urlFolderId?: string;
+  panelType?: string;
   accessToken?: string;
   routeName?: string;
   fixUrl: boolean;
@@ -84,7 +85,11 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.New: {
-        return getNewDashboardModelData(args.urlFolderId);
+        return getNewDashboardModelData(args.urlFolderId, args.panelType);
+      }
+      case DashboardRoutes.Path: {
+        const path = args.urlSlug ?? '';
+        return await dashboardLoaderSrv.loadDashboard(DashboardRoutes.Path, path, path);
       }
       default:
         throw { message: 'Unknown route ' + args.routeName };
@@ -213,7 +218,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-export function getNewDashboardModelData(urlFolderId?: string | null): any {
+export function getNewDashboardModelData(urlFolderId?: string, panelType?: string): any {
   const data = {
     meta: {
       canStar: false,
@@ -226,7 +231,7 @@ export function getNewDashboardModelData(urlFolderId?: string | null): any {
       title: 'New dashboard',
       panels: [
         {
-          type: 'add-panel',
+          type: panelType ?? 'add-panel',
           gridPos: { x: 0, y: 0, w: 12, h: 9 },
           title: 'Panel Title',
         },

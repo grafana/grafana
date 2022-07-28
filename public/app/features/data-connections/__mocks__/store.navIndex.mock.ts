@@ -1,8 +1,10 @@
-export default {
+import { NavIndex, NavSection } from '@grafana/data';
+
+export const navIndex: NavIndex = {
   dashboards: {
     id: 'dashboards',
     text: 'Dashboards',
-    section: 'core',
+    section: NavSection.Core,
     subTitle: 'Manage dashboards and folders',
     icon: 'apps',
     url: '/dashboards',
@@ -74,7 +76,7 @@ export default {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -147,7 +149,7 @@ export default {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -220,7 +222,7 @@ export default {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -293,7 +295,7 @@ export default {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -366,7 +368,7 @@ export default {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -436,7 +438,7 @@ export default {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -512,7 +514,7 @@ export default {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -588,7 +590,7 @@ export default {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -661,7 +663,7 @@ export default {
   explore: {
     id: 'explore',
     text: 'Explore',
-    section: 'core',
+    section: NavSection.Core,
     subTitle: 'Explore your data',
     icon: 'compass',
     url: '/explore',
@@ -670,7 +672,7 @@ export default {
   alerting: {
     id: 'alerting',
     text: 'Alerting',
-    section: 'core',
+    section: NavSection.Core,
     subTitle: 'Alert rules and notifications',
     icon: 'bell',
     url: '/alerting/list',
@@ -737,7 +739,7 @@ export default {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -805,7 +807,7 @@ export default {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -873,7 +875,7 @@ export default {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -941,7 +943,7 @@ export default {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -1009,7 +1011,7 @@ export default {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -1077,7 +1079,7 @@ export default {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -1148,7 +1150,7 @@ export default {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: 'core',
+      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -1211,7 +1213,7 @@ export default {
   'data-connections': {
     id: 'data-connections',
     text: 'Data Connections',
-    section: 'core',
+    section: NavSection.Core,
     icon: 'link',
     url: '/data-connections',
     sortWeight: -1500,
@@ -1259,7 +1261,7 @@ export default {
     parentItem: {
       id: 'data-connections',
       text: 'Data Connections',
-      section: 'core',
+      section: NavSection.Core,
       icon: 'link',
       url: '/data-connections',
       sortWeight: -1500,
@@ -1304,7 +1306,7 @@ export default {
     parentItem: {
       id: 'data-connections',
       text: 'Data Connections',
-      section: 'core',
+      section: NavSection.Core,
       icon: 'link',
       url: '/data-connections',
       sortWeight: -1500,
@@ -1349,7 +1351,7 @@ export default {
     parentItem: {
       id: 'data-connections',
       text: 'Data Connections',
-      section: 'core',
+      section: NavSection.Core,
       icon: 'link',
       url: '/data-connections',
       sortWeight: -1500,
@@ -1394,7 +1396,7 @@ export default {
     parentItem: {
       id: 'data-connections',
       text: 'Data Connections',
-      section: 'core',
+      section: NavSection.Core,
       icon: 'link',
       url: '/data-connections',
       sortWeight: -1500,
@@ -1433,7 +1435,7 @@ export default {
   'plugin-page-basic-app': {
     id: 'plugin-page-basic-app',
     text: 'Basic App',
-    section: 'plugin',
+    section: NavSection.Plugin,
     img: 'public/plugins/basic-app/img/logo.svg',
     url: '/a/basic-app/one',
     sortWeight: -1400,
@@ -1467,7 +1469,7 @@ export default {
     parentItem: {
       id: 'plugin-page-grafana-synthetic-monitoring-app',
       text: 'Synthetic Monitoring',
-      section: 'plugin',
+      section: NavSection.Plugin,
       img: 'public/plugins/grafana-synthetic-monitoring-app/img/logo.svg',
       url: '/a/grafana-synthetic-monitoring-app/home',
       sortWeight: -1400,
@@ -1502,7 +1504,7 @@ export default {
   'plugin-page-cloudflare-app': {
     id: 'plugin-page-cloudflare-app',
     text: 'Cloudflare Grafana App',
-    section: 'plugin',
+    section: NavSection.Plugin,
     img: 'public/plugins/cloudflare-app/img/cf_icon.png',
     sortWeight: -1400,
     children: [
@@ -1519,7 +1521,7 @@ export default {
   'plugin-page-grafana-easystart-app': {
     id: 'plugin-page-grafana-easystart-app',
     text: 'Integrations and Connections',
-    section: 'plugin',
+    section: NavSection.Plugin,
     img: 'public/plugins/grafana-easystart-app/img/logo.svg',
     url: '/a/grafana-easystart-app',
     sortWeight: -1400,
@@ -1527,7 +1529,7 @@ export default {
   'plugin-page-redis-explorer-app': {
     id: 'plugin-page-redis-explorer-app',
     text: 'Redis Explorer',
-    section: 'plugin',
+    section: NavSection.Plugin,
     img: 'public/plugins/redis-explorer-app/img/logo.svg',
     url: '/a/redis-explorer-app/',
     sortWeight: -1400,
@@ -1567,7 +1569,7 @@ export default {
   'plugin-page-grafana-synthetic-monitoring-app': {
     id: 'plugin-page-grafana-synthetic-monitoring-app',
     text: 'Synthetic Monitoring',
-    section: 'plugin',
+    section: NavSection.Plugin,
     img: 'public/plugins/grafana-synthetic-monitoring-app/img/logo.svg',
     url: '/a/grafana-synthetic-monitoring-app/home',
     sortWeight: -1400,
@@ -1601,7 +1603,7 @@ export default {
   'plugin-page-grafana-k6-app': {
     id: 'plugin-page-grafana-k6-app',
     text: 'k6 Cloud App',
-    section: 'plugin',
+    section: NavSection.Plugin,
     img: 'public/plugins/grafana-k6-app/img/logo.svg',
     url: '/a/grafana-k6-app',
     sortWeight: -1400,
@@ -1609,7 +1611,7 @@ export default {
   cfg: {
     id: 'cfg',
     text: 'Configuration',
-    section: 'config',
+    section: NavSection.Config,
     subTitle: 'Organization: Main Org.',
     icon: 'cog',
     url: '/datasources',
@@ -1668,7 +1670,7 @@ export default {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -1728,7 +1730,7 @@ export default {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -1788,7 +1790,7 @@ export default {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -1848,7 +1850,7 @@ export default {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -1908,7 +1910,7 @@ export default {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -1968,7 +1970,7 @@ export default {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -2022,7 +2024,7 @@ export default {
   admin: {
     id: 'admin',
     text: 'Server Admin',
-    section: 'config',
+    section: NavSection.Config,
     subTitle: 'Manage all users and orgs',
     icon: 'shield',
     url: '/admin/users',
@@ -2069,7 +2071,7 @@ export default {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2117,7 +2119,7 @@ export default {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2165,7 +2167,7 @@ export default {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2213,7 +2215,7 @@ export default {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2261,7 +2263,7 @@ export default {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: 'config',
+      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2304,7 +2306,7 @@ export default {
   profile: {
     id: 'profile',
     text: 'admin',
-    section: 'config',
+    section: NavSection.Config,
     img: '/avatar/46d229b033af06a191ff2267bca9ae56',
     url: '/profile',
     sortWeight: -1100,
@@ -2345,7 +2347,7 @@ export default {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: 'config',
+      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2387,7 +2389,7 @@ export default {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: 'config',
+      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2429,7 +2431,7 @@ export default {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: 'config',
+      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2473,7 +2475,7 @@ export default {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: 'config',
+      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2510,7 +2512,7 @@ export default {
   help: {
     id: 'help',
     text: 'Help',
-    section: 'config',
+    section: NavSection.Config,
     subTitle: 'Grafana v9.0.0-pre (abb5c6109a)',
     icon: 'question-circle',
     url: '#',

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
@@ -17,12 +17,13 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
   const styles = getStyles(theme);
 
   return (
-    <table className="filter-table">
+    <table className={cx(styles.section, 'filter-table')}>
       <thead>
         <tr>
           <th>Name</th>
           <th>Expires</th>
           <th>Created</th>
+          <th>Last used at</th>
           <th />
         </tr>
       </thead>
@@ -35,6 +36,7 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
                 <TokenExpiration timeZone={timeZone} token={key} />
               </td>
               <td>{formatDate(timeZone, key.created)}</td>
+              <td>{formatLastUsedAtDate(timeZone, key.lastUsedAt)}</td>
               <td>
                 <DeleteButton
                   aria-label={`Delete service account token ${key.name}`}
@@ -50,6 +52,13 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
     </table>
   );
 };
+
+function formatLastUsedAtDate(timeZone: TimeZone, lastUsedAt?: string): string {
+  if (!lastUsedAt) {
+    return 'Never';
+  }
+  return dateTimeFormat(lastUsedAt, { timeZone });
+}
 
 function formatDate(timeZone: TimeZone, expiration?: string): string {
   if (!expiration) {
@@ -114,5 +123,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   neverExpire: css`
     color: ${theme.colors.text.secondary};
+  `,
+  section: css`
+    margin-bottom: ${theme.spacing(4)};
   `,
 });

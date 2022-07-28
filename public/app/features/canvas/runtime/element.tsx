@@ -26,9 +26,6 @@ export class ElementState implements LayerElement {
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
 
-  // Determine whether or not element is in motion or not (via moveable)
-  isMoving = false;
-
   // Temp stored constraint for visualization purposes (switch to top / left constraint to simplify some functionality)
   tempConstraint: Constraint | undefined;
 
@@ -84,7 +81,10 @@ export class ElementState implements LayerElement {
     const { vertical, horizontal } = constraint ?? {};
     const placement = this.options.placement ?? ({} as Placement);
 
+    const editingEnabled = this.getScene()?.isEditingEnabled;
+
     const style: React.CSSProperties = {
+      cursor: editingEnabled ? 'grab' : 'auto',
       position: 'absolute',
       // Minimum element size is 10x10
       minWidth: '10px',

@@ -91,7 +91,7 @@ func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query
 		if err != nil {
 			return err
 		} else if !has {
-			return models.ErrDashboardSnapshotNotFound
+			return dashboardsnapshots.ErrDashboardSnapshotNotFound
 		}
 
 		query.Result = &snapshot

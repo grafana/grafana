@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { useTheme2 } from '../../themes';
@@ -9,7 +10,7 @@ import { VerticalGroup } from '../Layout/Layout';
 import { IconButton, IconButtonVariant } from './IconButton';
 import mdx from './IconButton.mdx';
 
-export default {
+const meta: ComponentMeta<typeof IconButton> = {
   title: 'Buttons/IconButton',
   component: IconButton,
   decorators: [withCenteredStory],
@@ -71,3 +72,5 @@ const RenderScenario = ({ background }: ScenarioProps) => {
     </div>
   );
 };
+
+export default meta;

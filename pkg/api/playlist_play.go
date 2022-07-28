@@ -16,7 +16,7 @@ func (hs *HTTPServer) populateDashboardsByID(ctx context.Context, dashboardByIDs
 
 	if len(dashboardByIDs) > 0 {
 		dashboardQuery := models.GetDashboardsQuery{DashboardIds: dashboardByIDs}
-		if err := hs.dashboardService.GetDashboards(ctx, &dashboardQuery); err != nil {
+		if err := hs.DashboardService.GetDashboards(ctx, &dashboardQuery); err != nil {
 			return result, err
 		}
 

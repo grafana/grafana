@@ -1,3 +1,5 @@
+import { t } from '@lingui/macro';
+
 import { PanelMenuItem } from '@grafana/data';
 import { AngularComponent, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
@@ -10,6 +12,7 @@ import {
   duplicatePanel,
   removePanel,
   sharePanel,
+  toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
@@ -42,6 +45,11 @@ export function getPanelMenu(
   const onSharePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
+  };
+
+  const onToggleLegend = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    toggleLegend(panel);
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
@@ -90,8 +98,12 @@ export function getPanelMenu(
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
+    const viewTextTranslation = t({
+      id: 'panel.header-menu.view',
+      message: `View`,
+    });
     menu.push({
-      text: 'View',
+      text: viewTextTranslation,
       iconClassName: 'eye',
       onClick: onViewPanel,
       shortcut: 'v',
@@ -107,8 +119,13 @@ export function getPanelMenu(
     });
   }
 
+  const shareTextTranslation = t({
+    id: 'panel.header-menu.share',
+    message: `Share`,
+  });
+
   menu.push({
-    text: 'Share',
+    text: shareTextTranslation,
     iconClassName: 'share-alt',
     onClick: onSharePanel,
     shortcut: 'p s',
@@ -118,17 +135,29 @@ export function getPanelMenu(
     menu.push({
       text: 'Explore',
       iconClassName: 'compass',
-      shortcut: 'x',
       onClick: onNavigateToExplore,
+      shortcut: 'x',
     });
   }
+
+  menu.push({
+    text: panel.options.legend?.showLegend ? 'Hide legend' : 'Show legend',
+    iconClassName: 'exchange-alt',
+    onClick: onToggleLegend,
+    shortcut: 'p l',
+  });
 
   const inspectMenu: PanelMenuItem[] = [];
 
   // Only show these inspect actions for data plugins
   if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    const dataTextTranslation = t({
+      id: 'panel.header-menu.inspect-data',
+      message: `Data`,
+    });
+
     inspectMenu.push({
-      text: 'Data',
+      text: dataTextTranslation,
       onClick: (e: React.MouseEvent<any>) => onInspectPanel('data'),
     });
 
@@ -140,14 +169,23 @@ export function getPanelMenu(
     }
   }
 
+  const jsonTextTranslation = t({
+    id: 'panel.header-menu.inspect-json',
+    message: `Panel JSON`,
+  });
+
   inspectMenu.push({
-    text: 'Panel JSON',
+    text: jsonTextTranslation,
     onClick: (e: React.MouseEvent<any>) => onInspectPanel('json'),
   });
 
+  const inspectTextTranslation = t({
+    id: 'panel.header-menu.inspect',
+    message: `Inspect`,
+  });
   menu.push({
     type: 'submenu',
-    text: 'Inspect',
+    text: inspectTextTranslation,
     iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
     shortcut: 'i',
@@ -205,9 +243,13 @@ export function getPanelMenu(
   }
 
   if (!panel.isEditing && subMenu.length) {
+    const moreTextTranslation = t({
+      id: 'panel.header-menu.more',
+      message: `More...`,
+    });
     menu.push({
       type: 'submenu',
-      text: 'More...',
+      text: moreTextTranslation,
       iconClassName: 'cube',
       subMenu,
       onClick: onMore,
