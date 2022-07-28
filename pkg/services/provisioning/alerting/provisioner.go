@@ -60,7 +60,7 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	if err != nil {
 		return fmt.Errorf("contact points: %w", err)
 	}
-	err = mtProvisioner.Provision(ctx, files)
+	err = mtProvisioner.Unprovision(ctx, files)
 	if err != nil {
 		return fmt.Errorf("mute times: %w", err)
 	}
