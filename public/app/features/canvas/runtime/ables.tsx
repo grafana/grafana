@@ -26,8 +26,10 @@ export const settingsViewable = {
           transform: 'translate(-50%, 0px)',
           zIndex: 100,
         }}
-        onClick={() => {
-          console.log('settingsViewable');
+        onClick={(event) => {
+          const container = moveable.getContainer();
+          const evt = new PointerEvent('contextmenu', { clientX: event.clientX, clientY: event.clientY });
+          container.dispatchEvent(evt);
         }}
       >
         {``}
