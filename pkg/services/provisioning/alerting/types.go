@@ -21,6 +21,8 @@ type AlertingFile struct {
 	ResetPolicies       []int64
 	MuteTimes           []MuteTime
 	DeleteMuteTimes     []DeleteMuteTime
+	Templates           []Template
+	DeleteTemplates     []DeleteTemplate
 }
 
 type AlertingFileV1 struct {
@@ -34,6 +36,8 @@ type AlertingFileV1 struct {
 	ResetPolicies       []values.Int64Value     `json:"resetPolicies" yaml:"resetPolicies"`
 	MuteTimes           []MuteTimeV1            `json:"muteTimes" yaml:"muteTimes"`
 	DeleteMuteTimes     []DeleteMuteTimeV1      `json:"deleteMuteTimes" yaml:"deleteMuteTimes"`
+	Templates           []TemplateV1            `json:"templates" yaml:"templates"`
+	DeleteTemplates     []DeleteTemplateV1      `json:"deleteTemplates" yaml:"deleteTemplates"`
 }
 
 func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
@@ -49,7 +53,24 @@ func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
 	if err := fileV1.mapMuteTimes(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing mute times: %w", err)
 	}
+	if err := fileV1.mapTemplates(&alertingFile); err != nil {
+		return AlertingFile{}, fmt.Errorf("failure parsing templates: %w", err)
+	}
 	return alertingFile, nil
+}
+
+func (fileV1 *AlertingFileV1) mapTemplates(alertingFile *AlertingFile) error {
+	for _, ttV1 := range fileV1.Templates {
+		alertingFile.Templates = append(alertingFile.Templates, ttV1.mapToModel())
+	}
+	for _, deleteV1 := range fileV1.DeleteTemplates {
+		delReq, err := deleteV1.mapToModel()
+		if err != nil {
+			return err
+		}
+		alertingFile.DeleteTemplates = append(alertingFile.DeleteTemplates, delReq)
+	}
+	return nil
 }
 
 func (fileV1 *AlertingFileV1) mapMuteTimes(alertingFile *AlertingFile) error {
