@@ -75,6 +75,12 @@ steps:
   image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - yarn run prettier:check
   - yarn run lint
   - yarn run i18n:compile
@@ -138,6 +144,12 @@ steps:
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
@@ -239,6 +251,12 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
@@ -279,10 +297,11 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - wire-install
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
@@ -496,6 +515,12 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
@@ -641,6 +666,12 @@ steps:
   - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 trigger:
   event:
   - pull_request
@@ -731,6 +762,12 @@ steps:
   - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 trigger:
   branch: main
   event:
@@ -773,6 +810,12 @@ steps:
   - grabpl
   image: grafana/build-container:1.5.9
   name: yarn-install
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - yarn run prettier:check
   - yarn run lint
@@ -829,6 +872,12 @@ steps:
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
@@ -925,6 +974,12 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
@@ -990,10 +1045,11 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - wire-install
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
@@ -1343,6 +1399,12 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
@@ -1527,6 +1589,12 @@ steps:
   image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
@@ -1639,10 +1707,17 @@ steps:
   image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss ${DRONE_TAG}
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
+  - ./bin/build build-backend --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
   - gen-version
   - wire-install
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
@@ -1936,6 +2011,12 @@ steps:
   image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - grabpl
@@ -2226,6 +2307,12 @@ steps:
   image: grafana/build-container:1.5.9
   name: init-enterprise
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - make gen-go
   depends_on:
   - init-enterprise
@@ -2254,10 +2341,11 @@ steps:
   image: grafana/build-container:1.5.9
   name: verify-gen-cue
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise ${DRONE_TAG}
+  - ./bin/build build-backend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
   - gen-version
   - wire-install
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
@@ -2289,10 +2377,11 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-plugins
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 ${DRONE_TAG}
+  - ./bin/build build-backend --jobs 8 --edition enterprise2 ${DRONE_TAG}
   depends_on:
   - gen-version
   - wire-install
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: build-backend-enterprise2
 - commands:
@@ -2571,6 +2660,12 @@ steps:
       from_secret: github_token
   image: grafana/build-container:1.5.9
   name: init-enterprise
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
@@ -3523,10 +3618,17 @@ steps:
   image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
+  - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - wire-install
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
@@ -3790,6 +3892,12 @@ steps:
   - grabpl
   image: grafana/build-container:1.5.9
   name: yarn-install
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
@@ -4055,6 +4163,12 @@ steps:
   image: grafana/build-container:1.5.9
   name: init-enterprise
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - make gen-go
   depends_on:
   - init-enterprise
@@ -4083,10 +4197,11 @@ steps:
   image: grafana/build-container:1.5.9
   name: verify-gen-cue
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - wire-install
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
@@ -4119,11 +4234,12 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-plugins
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-amd64
   depends_on:
   - gen-version
   - wire-install
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: build-backend-enterprise2
 - commands:
@@ -4390,6 +4506,12 @@ steps:
   environment: {}
   image: grafana/build-container:1.5.9
   name: init-enterprise
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
@@ -4864,6 +4986,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 419f84644385caa3d64cdfdf1f5dcd2b4ddfd02dfb5a24589de45e3ed03cb0bd
+hmac: 63ee096e5fd4d4147f43465937c4976e0d64a1dffa74206282cd9c8edf6494c0
 
 ...
