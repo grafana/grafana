@@ -50,6 +50,7 @@ export const Pages = {
        */
       nav: 'Dashboard navigation',
       navV2: 'data-testid Dashboard navigation',
+      publicDashboardTag: 'Public Dashboard tag',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -176,6 +177,20 @@ export const Pages = {
   },
   SharePanelModal: {
     linkToRenderedImage: 'Link to rendered image',
+  },
+  ShareDashboardModal: {
+    shareButton: 'Share dashboard or panel',
+    PublicDashboard: {
+      Tab: 'Tab Public Dashboard',
+      WillBePublicCheckbox: 'Public Dashboard will be public checkbox',
+      LimitedDSCheckbox: 'Public Dashboard limited datasources checkbox',
+      CostIncreaseCheckbox: 'Public Dashboard cost may increase checkbox',
+      EnableSwitch: 'Public Dashboard on off switch',
+      SaveConfigButton: 'Public Dashboard save config button',
+      CopyUrlInput: 'Public Dashboard copy url input',
+      CopyUrlButton: 'Public Dashboard copy url button',
+      TemplateVariablesWarningAlert: 'Public Dashboard disabled template variables alert',
+    },
   },
   Explore: {
     url: '/explore',
