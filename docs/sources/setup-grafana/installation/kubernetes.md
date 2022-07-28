@@ -13,12 +13,12 @@ This page explains how to install and run Grafana on Kubernetes (K8S). It uses K
 
 ## Deploy Grafana OS on Kubernetes
 
-This section explains how to install Grafana using Kubernetes. 
+This section explains how to install Grafana using Kubernetes.
 If you are interested in the Grafana Enterprise version of this information, see [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes).
 
 ### Create a Grafana Kubernetes manifest
 
-1. Create a file called `grafana.yaml`.  
+1. Create a file called `grafana.yaml`.
 1. Copy and paste the following contents and save the file.
 
 ```yaml
@@ -124,8 +124,8 @@ The process for deploying Grafana Enterprise is almost identical to the precedin
 
 ### Obtain Grafana Enterprise license
 
-To run Grafana Enterprise, you need a valid license. 
-To obtain a license, [contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise). 
+To run Grafana Enterprise, you need a valid license.
+To obtain a license, [contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise).
 This topic assumes that you have a valid license in a `license.jwt` file.
 Associate your license with a URL that you can use later in the topic.
 
@@ -252,6 +252,7 @@ spec:
   sessionAffinity: None
   type: LoadBalancer
 ```
+
 > **Caution:** If you use `LoadBalancer` in the Service and depending on your cloud platform and network configuration, doing so might expose your Grafana instance to the Internet. To eliminate this risk, use `ClusterIP` to restrict access from within the cluster Grafana is deployed to.
 
 1. Send manifest to Kubernetes API Server
