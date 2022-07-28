@@ -4,7 +4,7 @@ import { Meta, Story } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
+import { EditorField, Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 
 import { getAvailableIcons, IconName } from '../../types';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -306,6 +306,30 @@ export const WidthAuto: Story = (args) => {
           {...args}
           width="auto"
         />
+      </div>
+    </>
+  );
+};
+
+export const MinWidth: Story = (args) => {
+  const [value, setValue] = useState<SelectableValue<string>>({ label: 'Avg', value: 'average' });
+
+  return (
+    <>
+      <div style={{ width: '100%' }}>
+        <EditorField label="Group by function">
+          <Select
+            options={generateOptions()}
+            value={value}
+            onChange={(v) => {
+              setValue(v);
+              action('onChange')(v);
+            }}
+            {...args}
+            width="auto"
+            minWidth={13}
+          />
+        </EditorField>
       </div>
     </>
   );

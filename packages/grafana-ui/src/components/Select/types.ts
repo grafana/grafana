@@ -83,6 +83,7 @@ export interface SelectCommonProps<T> {
   ) => boolean;
   /** Message to display isLoading=true*/
   loadingMessage?: string;
+  minWidth?: number;
 }
 
 export interface SelectAsyncProps<T> {

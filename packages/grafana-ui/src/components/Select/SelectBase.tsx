@@ -140,13 +140,14 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
   formatOptionLabel,
+  minWidth,
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
   const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
-  const selectStyles = useCustomSelectStyles(theme, width);
+  const selectStyles = useCustomSelectStyles(theme, width, minWidth);
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).

@@ -43,7 +43,11 @@ export default function resetSelectStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | string | undefined) {
+export function useCustomSelectStyles(
+  theme: GrafanaTheme2,
+  width: number | string | undefined,
+  minWidth?: number | undefined
+) {
   return useMemo(() => {
     return {
       ...resetSelectStyles(theme),
@@ -68,11 +72,12 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
       container: () => ({
         width: width ? theme.spacing(width) : '100%',
         display: width === 'auto' ? 'inline-flex' : 'flex',
+        minWidth: minWidth ? theme.spacing(minWidth) : 'auto',
       }),
       option: (provided: any, state: any) => ({
         ...provided,
         opacity: state.isDisabled ? 0.5 : 1,
       }),
     };
-  }, [theme, width]);
+  }, [theme, width, minWidth]);
 }
