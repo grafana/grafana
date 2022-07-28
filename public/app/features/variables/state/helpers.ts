@@ -107,7 +107,7 @@ export const getVariableState = (
   return variables;
 };
 
-export const getVariableTestContext = <Model extends VariableModel>(
+export const getVariableTestContext = <Model extends TypedVariableModel>(
   adapter: VariableAdapter<Model>,
   variableOverrides: Partial<Model> = {}
 ) => {
@@ -125,7 +125,7 @@ export const getVariableTestContext = <Model extends VariableModel>(
 
   const initialState: VariablesState = {
     '0': { ...defaultVariable, ...variableOverrides },
-  } as unknown as VariablesState; // PR TODO: ???
+  };
 
   return { initialState };
 };

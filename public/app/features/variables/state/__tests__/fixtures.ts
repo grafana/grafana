@@ -33,7 +33,7 @@ export function createVariableOption(value: string, text?: string, selected = fa
   };
 }
 
-export function createQueryVariable(input: Partial<QueryVariableModel>): QueryVariableModel {
+export function createQueryVariable(input: Partial<QueryVariableModel> = {}): QueryVariableModel {
   return {
     ...createBaseVariableModel(),
     type: 'query',
