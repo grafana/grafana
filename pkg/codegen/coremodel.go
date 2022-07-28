@@ -346,7 +346,7 @@ var currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
 // This is the base variant of the schema. It does not include any composed
 // plugin schemas.{{ end }}
 func Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "dashboard"), cueFS, lib, opts...)
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "{{ .Name }}"), cueFS, lib, opts...)
 }
 
 var _ thema.LineageFactory = Lineage
@@ -358,7 +358,7 @@ type Coremodel struct {
 	lin thema.Lineage
 }
 
-// Lineage returns the canonical dashboard Lineage.
+// Lineage returns the canonical {{ .Name }} Lineage.
 func (c *Coremodel) Lineage() thema.Lineage {
 	return c.lin
 }
