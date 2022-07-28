@@ -94,6 +94,7 @@ describe('BarChart utils', () => {
       showValue: VisibilityMode.Always,
       legend: {
         displayMode: LegendDisplayMode.List,
+        showLegend: true,
         placement: 'bottom',
         calcs: [],
       },

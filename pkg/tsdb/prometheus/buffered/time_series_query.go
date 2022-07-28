@@ -362,14 +362,14 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 			tags[string(k)] = string(v)
 		}
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
+		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, len(v.Values))
 
 		for i, k := range v.Values {
 			timeField.Set(i, k.Timestamp.Time().UTC())
 			value := float64(k.Value)
 
 			if !math.IsNaN(value) {
-				valueField.Set(i, &value)
+				valueField.Set(i, value)
 			}
 		}
 

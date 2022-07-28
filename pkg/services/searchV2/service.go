@@ -112,7 +112,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		}
 		err := s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
 		if err != nil {
-			s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email)
+			s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email, "login", getSignedInUserQuery.Login)
 			return nil, errors.New("auth error")
 		}
 

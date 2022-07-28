@@ -19,7 +19,7 @@ type Props = {
 const OFFSET_X = 10;
 const OFFSET_Y = 32;
 
-export const InlineEdit = ({ onClose, id, scene }: Props) => {
+export function InlineEdit({ onClose, id, scene }: Props) {
   const root = scene.root.div!.getBoundingClientRect();
   const windowHeight = window.innerHeight;
   const windowWidth = window.innerWidth;
@@ -96,7 +96,7 @@ export const InlineEdit = ({ onClose, id, scene }: Props) => {
       </div>
     </Portal>
   );
-};
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   inlineEditorContainer: css`
