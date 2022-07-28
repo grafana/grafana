@@ -254,8 +254,6 @@ export class Scene {
   };
 
   disableNonTargets = (target: HTMLElement | SVGElement, disable: boolean): ElementState | undefined => {
-    // We will probably want to add memoization to this as we are calling on drag / resize
-
     const stack = [...this.root.elements];
     while (stack.length > 0) {
       const currentElement = stack.shift();
