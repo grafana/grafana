@@ -3,19 +3,18 @@ import React, { useEffect, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
-
-import {
-  VisualQueryModeller,
-  QueryBuilderOperation,
-  QueryBuilderOperationParamValue,
-  QueryBuilderOperationDef,
-  QueryBuilderOperationParamDef,
-} from '../shared/types';
+import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
 import { getOperationParamId } from './operationUtils';
+import {
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  QueryBuilderOperationParamDef,
+  QueryBuilderOperationParamValue,
+  VisualQueryModeller,
+} from './types';
 
 export interface Props {
   operation: QueryBuilderOperation;

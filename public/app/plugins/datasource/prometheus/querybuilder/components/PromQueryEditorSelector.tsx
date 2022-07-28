@@ -25,6 +25,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
+  const [showExplain, setShowExplain] = useState(false);
 
   const query = getQueryWithDefaults(props.query, app);
   const [rawQuery, setRawQuery] = useRawQuery();
@@ -67,6 +68,10 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
     onChange(query);
   };
 
+  const onShowExplainChange = (e: SyntheticEvent<HTMLInputElement>) => {
+    setShowExplain(e.currentTarget.checked);
+  };
+
   return (
     <>
       <ConfirmModal
@@ -101,6 +106,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         {editorMode === QueryEditorMode.Builder && (
           <>
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
+            <QueryHeaderSwitch label="Explain" value={showExplain} onChange={onShowExplainChange} />
             <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
           </>
         )}
@@ -120,7 +126,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} />}
+        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} showExplain={showExplain} />}
         {editorMode === QueryEditorMode.Builder && (
           <PromQueryBuilderContainer
             query={query}
@@ -129,6 +135,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             onRunQuery={props.onRunQuery}
             data={data}
             showRawQuery={rawQuery}
+            showExplain={showExplain}
           />
         )}
         {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={query.expr} />}
