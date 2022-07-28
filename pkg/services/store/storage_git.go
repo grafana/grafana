@@ -63,7 +63,9 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 		})
 	}
 
-	s := &rootStorageGit{}
+	s := &rootStorageGit{
+		settings: cfg,
+	}
 	if meta.Notice == nil {
 		err := os.MkdirAll(localWorkCache, 0750)
 		if err != nil {
@@ -72,6 +74,13 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 				Text:     err.Error(),
 			})
 		}
+	}
+
+	if scfg.Disabled {
+		meta.Notice = append(meta.Notice, data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     "folder is disabled (in configuration)",
+		})
 	}
 
 	if meta.Notice == nil {
@@ -151,8 +160,8 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 		s.repo = repo
 
 		// Try pulling after init
-		if s.repo != nil {
-			err = s.Pull()
+		if s.repo != nil && !scfg.Disabled {
+			err = s.Sync()
 			if err != nil {
 				meta.Notice = append(meta.Notice, data.Notice{
 					Severity: data.NoticeSeverityError,
@@ -163,7 +172,6 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 	}
 
 	s.meta = meta
-	s.settings = cfg
 	return s
 }
 

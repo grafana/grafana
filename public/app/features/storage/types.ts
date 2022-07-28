@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { QueryResultMetaNotice, SelectableValue } from '@grafana/data';
 
 export enum StorageView {
   Data = 'data',
@@ -22,6 +22,7 @@ export interface StorageInfo {
   editable?: boolean;
   builtin?: boolean;
   ready?: boolean;
+  notice?: QueryResultMetaNotice[];
   config: StorageConfig;
 }
 

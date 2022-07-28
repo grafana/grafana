@@ -2,7 +2,19 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Checkbox, Field, Form, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Field,
+  Form,
+  HorizontalGroup,
+  Input,
+  RadioButtonGroup,
+  Spinner,
+  Stack,
+  TextArea,
+} from '@grafana/ui';
 import { getGrafanaStorage } from 'app/features/storage/storage';
 import { ItemOptions, WorkflowID } from 'app/features/storage/types';
 
@@ -60,7 +72,7 @@ export function SaveWorkflowForm(props: SaveProps) {
         }
         setSaving(true);
 
-        options = { ...options, message: data.message, title: data.title };
+        options = { ...options, message: data.message };
         const result = await onSubmit(saveModel.clone, options, dashboard);
         if (result.status === 'success') {
           if (options.saveVariables) {
@@ -76,33 +88,35 @@ export function SaveWorkflowForm(props: SaveProps) {
       }}
     >
       {({ register, errors }) => (
-        <Stack direction="column" gap={2}>
-          {hasTimeChanged && (
-            <Checkbox
-              checked={!!options.saveTimerange}
-              onChange={() =>
-                onOptionsChange({
-                  ...options,
-                  saveTimerange: !options.saveTimerange,
-                })
-              }
-              label="Save current time range as dashboard default"
-              aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
-            />
-          )}
-          {hasVariableChanged && (
-            <Checkbox
-              checked={!!options.saveVariables}
-              onChange={() =>
-                onOptionsChange({
-                  ...options,
-                  saveVariables: !options.saveVariables,
-                })
-              }
-              label="Save current variable values as dashboard default"
-              aria-label={selectors.pages.SaveDashboardModal.saveVariables}
-            />
-          )}
+        <Stack direction="column" gap={1}>
+          <Stack direction="column" gap={1}>
+            {hasTimeChanged && (
+              <Checkbox
+                checked={!!options.saveTimerange}
+                onChange={() =>
+                  onOptionsChange({
+                    ...options,
+                    saveTimerange: !options.saveTimerange,
+                  })
+                }
+                label="Save current time range as dashboard default"
+                aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
+              />
+            )}
+            {hasVariableChanged && (
+              <Checkbox
+                checked={!!options.saveVariables}
+                onChange={() =>
+                  onOptionsChange({
+                    ...options,
+                    saveVariables: !options.saveVariables,
+                  })
+                }
+                label="Save current variable values as dashboard default"
+                aria-label={selectors.pages.SaveDashboardModal.saveVariables}
+              />
+            )}
+          </Stack>
 
           <Field label="Workflow">
             <RadioButtonGroup value={workflow} options={workflows} onChange={setWorkflow} />
@@ -110,15 +124,17 @@ export function SaveWorkflowForm(props: SaveProps) {
 
           {workflow === WorkflowID.PR && (
             <Field label="PR Title">
-              <TextArea {...register('title')} placeholder="Enter a PR title" autoFocus rows={1} />
+              <Input {...register('title')} placeholder="Enter a PR title" autoFocus />
             </Field>
           )}
 
           <Field label="Message">
-            <TextArea {...register('message')} placeholder="Add a note to describe your changes." autoFocus rows={5} />
+            <TextArea {...register('message')} placeholder="Add a note to describe your changes." rows={5} />
           </Field>
 
-          <Stack alignItems="center">
+          <Alert severity="warning" title="Not yet supported" />
+
+          <HorizontalGroup>
             <Button variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
@@ -131,7 +147,7 @@ export function SaveWorkflowForm(props: SaveProps) {
               {saveText}
             </Button>
             {!saveModel.hasChanges && <div>No changes to save</div>}
-          </Stack>
+          </HorizontalGroup>
         </Stack>
       )}
     </Form>
