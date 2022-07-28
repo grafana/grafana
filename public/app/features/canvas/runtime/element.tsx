@@ -71,7 +71,7 @@ export class ElementState implements LayerElement {
   }
 
   /** Use the configured options to update CSS style properties directly on the wrapper div **/
-  applyLayoutStylesToDiv() {
+  applyLayoutStylesToDiv(disable?: boolean) {
     if (this.isRoot()) {
       // Root supersedes layout engine and is always 100% width + height of panel
       return;
@@ -85,6 +85,7 @@ export class ElementState implements LayerElement {
 
     const style: React.CSSProperties = {
       cursor: editingEnabled ? 'grab' : 'auto',
+      pointerEvents: disable ? 'none' : 'auto',
       position: 'absolute',
       // Minimum element size is 10x10
       minWidth: '10px',

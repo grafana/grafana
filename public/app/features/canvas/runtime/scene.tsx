@@ -253,6 +253,26 @@ export class Scene {
     return undefined;
   };
 
+  disableNonTargets = (target: HTMLElement | SVGElement, disable: boolean): ElementState | undefined => {
+    // We will probably want to add memoization to this as we are calling on drag / resize
+
+    const stack = [...this.root.elements];
+    while (stack.length > 0) {
+      const currentElement = stack.shift();
+
+      if (currentElement && currentElement.div && currentElement.div !== target) {
+        currentElement.applyLayoutStylesToDiv(disable);
+      }
+
+      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
+      for (const nestedElement of nestedElements) {
+        stack.unshift(nestedElement);
+      }
+    }
+
+    return undefined;
+  };
+
   setRef = (sceneContainer: HTMLDivElement) => {
     this.div = sceneContainer;
   };
@@ -331,6 +351,7 @@ export class Scene {
       })
       .on('dragStart', (event) => {
         this.ignoreDataUpdate = true;
+        this.disableNonTargets(event.target, true);
       })
       .on('dragGroupStart', (event) => {
         this.ignoreDataUpdate = true;
@@ -364,6 +385,7 @@ export class Scene {
 
         this.moved.next(Date.now());
         this.ignoreDataUpdate = false;
+        this.disableNonTargets(event.target, false);
       })
       .on('resizeStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
