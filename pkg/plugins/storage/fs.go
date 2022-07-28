@@ -24,22 +24,22 @@ var (
 	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside of the plugins directory")
 )
 
-type FileSystem struct {
+type FS struct {
 	store      map[string]string
 	mu         sync.RWMutex
 	pluginsDir string
 	log        logger.Logger
 }
 
-func NewFileSystem(logger logger.Logger, pluginsDir string) *FileSystem {
-	return &FileSystem{
+func FileSystem(logger logger.Logger, pluginsDir string) *FS {
+	return &FS{
 		store:      make(map[string]string),
 		pluginsDir: pluginsDir,
 		log:        logger,
 	}
 }
 
-func (fs *FileSystem) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadCloser) (
+func (fs *FS) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadCloser) (
 	*ExtractedPluginArchive, error) {
 	pluginDir, err := fs.extractFiles(ctx, pluginArchive, pluginID, fs.pluginsDir)
 	if err != nil {
@@ -73,7 +73,7 @@ func (fs *FileSystem) Add(ctx context.Context, pluginID string, pluginArchive *z
 	}, nil
 }
 
-func (fs *FileSystem) Remove(_ context.Context, pluginID string) error {
+func (fs *FS) Remove(_ context.Context, pluginID string) error {
 	fs.mu.RLock()
 	pluginDir, exists := fs.store[pluginID]
 	fs.mu.RUnlock()
@@ -91,7 +91,7 @@ func (fs *FileSystem) Remove(_ context.Context, pluginID string) error {
 	return os.RemoveAll(pluginDir)
 }
 
-func (fs *FileSystem) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID, destPath string) (string, error) {
+func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID, destPath string) (string, error) {
 	installDir := filepath.Join(destPath, pluginID)
 	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
 		fs.log.Debugf("Removing existing installation of plugin %s", installDir)

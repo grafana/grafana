@@ -25,7 +25,7 @@ func TestAdd(t *testing.T) {
 
 	pluginID := "test-app"
 
-	fs := NewFileSystem(&fakeLogger{}, testDir)
+	fs := FileSystem(&fakeLogger{}, testDir)
 	archive, err := fs.Add(context.Background(), pluginID, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
 	require.NotNil(t, archive)
 	require.NoError(t, err)
@@ -45,7 +45,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	i := &FileSystem{log: &fakeLogger{}}
+	i := &FS{log: &fakeLogger{}}
 
 	pluginDir := t.TempDir()
 	pluginJSON := filepath.Join(pluginDir, "plugin.json")
@@ -86,7 +86,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestExtractFiles(t *testing.T) {
-	i := &FileSystem{log: &fakeLogger{}}
+	i := &FS{log: &fakeLogger{}}
 	pluginsDir := setupFakePluginsDir(t)
 
 	t.Run("Should preserve file permissions for plugin backend binaries for linux and darwin", func(t *testing.T) {

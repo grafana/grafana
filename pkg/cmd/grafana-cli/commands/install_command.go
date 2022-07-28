@@ -75,7 +75,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 		}
 	}
 
-	pluginFs := storage.NewFileSystem(services.Logger, c.PluginDirectory())
+	pluginFs := storage.FileSystem(services.Logger, c.PluginDirectory())
 	extractedArchive, err := pluginFs.Add(ctx, pluginID, archive.File)
 	if err != nil {
 		return err

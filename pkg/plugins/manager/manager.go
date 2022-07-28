@@ -47,7 +47,7 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader, pluginRepo, storage.NewFileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath))
+	}, pluginLoader, pluginRepo, storage.FileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath))
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
