@@ -88,67 +88,35 @@
   "data": {
     "values": [
       [
-        "folder",
-        "dashboard",
-        "dashboard",
         "dashboard"
       ],
       [
-        "ujaM1h6nz",
-        "7MeksYbmk",
-        "vmie2cmWz",
-        "xMsQdBfWz"
+        "ujaM1h6nz"
       ],
       [
-        "abc2",
-        "Alerting with TestData",
-        "Bar Gauge Demo",
-        "Bar Gauge Demo Unfilled"
+        "abc2"
       ],
       [
-        "",
-        "",
-        "",
         ""
       ],
       [
-        "/dashboards/f/ujaM1h6nz/abc2",
-        "/d/7MeksYbmk/alerting-with-testdata",
-        "/d/vmie2cmWz/bar-gauge-demo",
-        "/d/xMsQdBfWz/bar-gauge-demo-unfilled"
+        "/dashboards/f/ujaM1h6nz/abc2"
       ],
       [
-        null,
         [
-          "gdev",
-          "alerting"
-        ],
-        [
-          "gdev",
-          "demo"
-        ],
-        [
-          "gdev",
-          "demo"
+          "gdev"
         ]
       ],
       [
-        [],
-        [
-          "datasource-1"
-        ],
         [
           "datasource-2",
           "datasource-3",
-          "datasource-4"
-        ],
-        []
+          "datasource-4",
+          "grafana"
+        ]
       ],
       [
-        "",
-        "yboVMzb7z",
-        "yboVMzb7z",
-        "yboVMzb7z"
+        ""
       ]
     ]
   }
