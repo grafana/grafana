@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 type Service struct {
