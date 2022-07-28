@@ -113,7 +113,6 @@ const useContactPointsState = (alertManagerName: string) => {
 
 interface ReceiverItem {
   name: string;
-  types: string[]; //??
   types: string[];
   provisioned?: boolean;
 }
@@ -141,6 +140,7 @@ function LastNotify({ lastNotify }: { lastNotify: string }) {
     <Stack alignItems="center">
       <div>{dateTime(lastNotify).locale('en').fromNow(true)} ago</div>
       <Icon name="exclamation-triangle" />
+      <Icon name="clock-nine" />
       <div>{dateTimeFormat(lastNotify, { format: 'YYYY-MM-DD HH:mm:ss' })}</div>
     </Stack>
   );
