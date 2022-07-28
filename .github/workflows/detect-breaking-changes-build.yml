@@ -123,7 +123,7 @@ jobs:
       - name: Unzip artifact from base
         run: unzip -j base_built_packages.zip -d ./base && rm base_built_packages.zip
 
-      - name: Get link for the Github Action job
+      - name: Get link for the GitHub Action job
         id: job
         uses: actions/github-script@v6
         with:

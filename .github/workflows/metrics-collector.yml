@@ -8,7 +8,7 @@
 #
 # https://github.com/grafana/grafana-github-actions/blob/main/metrics-collector/index.ts
 #
-name: Github issue metrics collection
+name: GitHub issue metrics collection
 on:
   schedule:
     - cron: "*/10 * * * *"

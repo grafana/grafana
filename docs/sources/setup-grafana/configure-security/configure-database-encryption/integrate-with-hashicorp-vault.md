@@ -2,15 +2,15 @@
 aliases:
   - /docs/grafana/latest/enterprise/vault/
   - /docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/integrate-with-hashicorp-vault/
-description: Learn how to integrate Grafana with Hashicorp Vault so that you can use
+description: Learn how to integrate Grafana with HashiCorp Vault so that you can use
   secrets for configuration and provisioning.
-title: Integrate Grafana with Hashicorp Vault
+title: Integrate Grafana with HashiCorp Vault
 weight: 500
 ---
 
-# Integrate Grafana with Hashicorp Vault
+# Integrate Grafana with HashiCorp Vault
 
-If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../../configure-grafana/" >}}) and [Provisioning]({{< relref "../../../administration/provisioning/" >}}).
+If you manage your secrets with [HashiCorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../../configure-grafana/" >}}) and [Provisioning]({{< relref "../../../administration/provisioning/" >}}).
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 

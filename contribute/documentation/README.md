@@ -129,13 +129,13 @@ Suppose you are writing content for a site called _Doggie handbook_. You might o
 
 Before you begin writing, we recommend that you fork and clone the Grafana repository so that you can use a text editor locally to create branches, commit your changes, and create a PR.
 
-While this document doesn't include git commands or descriptions of Github operations, you might find these links useful.
+While this document doesn't include git commands or descriptions of GitHub operations, you might find these links useful.
 
 - [Install git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git): We store all source code, including documentation, in Git repositories.
 - [Fork a repo](https://docs.github.com/en/get-started/quickstart/fork-a-repo): Locate the repo you want to clone, and fork it.
 - [Clone a repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository): Clone the repository to your local machine.
 - [Create a branch](https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging): Before you make change, create a branch. Do not push changes against the `main` branch.
-- [Create a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request): After you add, commit, and push your changes, create a PR in Github.
+- [Create a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request): After you add, commit, and push your changes, create a PR in GitHub.
 
 #### Use a documentation template to contribute a topic
 
@@ -173,9 +173,9 @@ When you are ready for other people to review your work, perform the following t
 
 1. [Commit](https://git-scm.com/docs/git-commit) your changes.
 
-1. [Push](https://git-scm.com/docs/git-push) your changes to Github.
+1. [Push](https://git-scm.com/docs/git-push) your changes to GitHub.
 
-1. [Create a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) in Github.
+1. [Create a PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) in GitHub.
 
 The docs build system automatically conducts a series of tests to ensure that the content doesn't conflict with other content in the docs repository.
 
