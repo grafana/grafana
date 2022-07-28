@@ -7,7 +7,7 @@ import (
 
 type NotificiationPolicyV1 struct {
 	OrgID  values.Int64Value `json:"orgId" yaml:"orgId"`
-	Policy definitions.Route `json:"policy" yaml:"policy"`
+	Policy definitions.Route `json:",inline" yaml:",inline"`
 }
 
 func (v1 *NotificiationPolicyV1) mapToModel() NotificiationPolicy {
