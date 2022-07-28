@@ -4,7 +4,17 @@ import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Card, FilterInput, Icon, IconName, TagList, useStyles2, VerticalGroup } from '@grafana/ui';
+import {
+  Button,
+  Card,
+  FilterInput,
+  HorizontalGroup,
+  Icon,
+  IconName,
+  TagList,
+  useStyles2,
+  VerticalGroup,
+} from '@grafana/ui';
 
 import { getGrafanaStorage } from './storage';
 import { StorageInfo, StorageView } from './types';
@@ -58,9 +68,24 @@ export function RootView({ root, onPathChange }: Props) {
         {roots.map((s) => (
           <Card key={s.config.prefix} href={`admin/storage/${s.config.prefix}/`}>
             <Card.Heading>{s.config.name}</Card.Heading>
-            <Card.Meta className={styles.clickable}>{s.config.description}</Card.Meta>
+            <Card.Meta className={styles.clickable}>
+              {s.config.description}
+              {s.config.git?.remote && <a href={s.config.git?.remote}>{s.config.git?.remote}</a>}
+            </Card.Meta>
             <Card.Tags className={styles.clickable}>
-              <TagList tags={getTags(s)} />
+              <HorizontalGroup>
+                <TagList tags={getTags(s)} />
+                <Button
+                  variant="secondary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    alert('x');
+                  }}
+                >
+                  Pull
+                </Button>
+              </HorizontalGroup>
             </Card.Tags>
             <Card.Figure className={styles.clickable}>
               <Icon name={getIconName(s.config.type)} size="xxxl" className={styles.secondaryTextColor} />

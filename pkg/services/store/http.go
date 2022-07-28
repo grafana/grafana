@@ -44,6 +44,7 @@ func (s *standardStorageService) RegisterHTTPRoutes(storageRoute routing.RouteRe
 	storageRoute.Get("/list/", routing.Wrap(s.list))
 	storageRoute.Get("/list/*", routing.Wrap(s.list))
 	storageRoute.Get("/read/*", routing.Wrap(s.read))
+	storageRoute.Get("/options/*", routing.Wrap(s.getOptions))
 
 	// Write paths
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
@@ -168,6 +169,55 @@ func (s *standardStorageService) read(c *models.ReqContext) response.Response {
 		c.Resp.Header().Set("Content-Type", "image/svg+xml")
 	}
 	return response.Respond(200, file.Contents)
+}
+
+func (s *standardStorageService) getOptions(c *models.ReqContext) response.Response {
+	type workflowInfo struct {
+		Type        string `json:"value"` // value matches selectable value
+		Label       string `json:"label"`
+		Description string `json:"description,omitempty"`
+	}
+	type optionInfo struct {
+		Path      string         `json:"path,omitempty"`
+		Workflows []workflowInfo `json:"workflows"`
+	}
+
+	// full path is api/storage/read/upload/example.jpg, but we only want the part after read
+	scope, path := getPathAndScope(c)
+	root, _ := s.tree.getRoot(c.OrgId, scope)
+	if root == nil {
+		return response.Error(400, "cannot call read: "+scope, nil)
+	}
+
+	meta := root.Meta()
+	options := optionInfo{
+		Path:      path,
+		Workflows: make([]workflowInfo, 0),
+	}
+	if meta.Config.Type == rootStorageTypeGit && meta.Config.Git != nil {
+		cfg := meta.Config.Git
+		options.Workflows = append(options.Workflows, workflowInfo{
+			Type:        "PR",
+			Label:       "Create pull request",
+			Description: "Create a new upstream pull request",
+		})
+		if !cfg.RequirePullRequest {
+			options.Workflows = append(options.Workflows, workflowInfo{
+				Type:        "push",
+				Label:       "Push to " + cfg.Branch,
+				Description: "Push commit to upstrem repository",
+			})
+		}
+	} else if meta.ReadOnly {
+		// nothing?
+	} else {
+		options.Workflows = append(options.Workflows, workflowInfo{
+			Type:        "save",
+			Label:       "Save",
+			Description: "Save directly",
+		})
+	}
+	return response.JSON(200, options)
 }
 
 func (s *standardStorageService) delete(c *models.ReqContext) response.Response {

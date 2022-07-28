@@ -1,3 +1,5 @@
+import { SelectableValue } from '@grafana/data';
+
 export enum StorageView {
   Data = 'data',
   Config = 'config',
@@ -15,25 +17,6 @@ export interface UploadReponse {
   message: string;
   path: string;
 }
-
-// editable: true,
-// builtin: true,
-// ready: true,
-// config: {
-// type: "disk",
-// prefix: "public-static",
-// name: "Public static files",
-// description: "Access files from the static public files",
-// disk: {
-// path: "/Users/ryan/workspace/grafana/grafana/public",
-// roots: [
-// "/testdata/",
-// "/img/",
-// "/gazetteer/",
-// "/maps/"
-// ]
-// }
-// }
 
 export interface StorageInfo {
   editable?: boolean;
@@ -58,4 +41,14 @@ export interface StorageConfig {
     accessToken: string;
   };
   sql?: {};
+}
+
+export enum WorkflowID {
+  Save = 'save',
+  PR = 'PR',
+  Push = 'push',
+}
+export interface ItemOptions {
+  path: string;
+  workflows: Array<SelectableValue<WorkflowID>>;
 }

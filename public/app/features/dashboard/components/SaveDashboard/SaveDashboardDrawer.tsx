@@ -11,14 +11,16 @@ import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
+import { SaveWorkflowForm } from './forms/SaveWorkflowForm';
 import { SaveDashboardData, SaveDashboardModalProps, SaveDashboardOptions } from './types';
 import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const [options, setOptions] = useState<SaveDashboardOptions>({});
 
-  const isProvisioned = dashboard.meta.provisioned;
-  const isNew = dashboard.version === 0;
+  const isFromStorage = dashboard.uid.indexOf('/') > 0;
+  const isProvisioned = dashboard.meta.provisioned && !isFromStorage;
+  const isNew = dashboard.version === 0 && !isFromStorage;
 
   const previous = useAsync(async () => {
     if (isNew) {
@@ -75,6 +77,20 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
         <div>
           <Spinner />
         </div>
+      );
+    }
+
+    if (isFromStorage) {
+      return (
+        <SaveWorkflowForm
+          dashboard={dashboard}
+          saveModel={data}
+          onCancel={onDismiss}
+          onSuccess={onSuccess}
+          onSubmit={onDashboardSave}
+          options={options}
+          onOptionsChange={setOptions}
+        />
       );
     }
 
