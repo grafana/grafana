@@ -5,7 +5,6 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
@@ -15,7 +14,7 @@ import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequi
 import { useSearchQuery } from '../../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
-import { reportDashboardListViewed } from '../reporting';
+import { reportDashboardListViewed, reportSearchResultInteraction, reportSearchQueryInteraction } from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
@@ -66,6 +65,7 @@ export const SearchView = ({
   const isFolders = layout === SearchLayout.Folders;
 
   const [listKey, setListKey] = useState(Date.now());
+  const eventTrackingNamespace = folderDTO ? 'manage_dashboards' : 'dashboard_search';
 
   const searchQuery = useMemo(() => {
     const q: SearchQuery = {
@@ -104,12 +104,13 @@ export const SearchView = ({
   // Search usage reporting
   useDebounce(
     () => {
-      reportDashboardListViewed(folderDTO ? 'manage_dashboards' : 'dashboard_search', {
+      reportDashboardListViewed(eventTrackingNamespace, {
         layout: query.layout,
         starred: query.starred,
         sortValue: query.sort?.value,
         query: query.query,
         tagCount: query.tag?.length,
+        includePanels,
       });
     },
     1000,
@@ -117,24 +118,24 @@ export const SearchView = ({
   );
 
   const onClickItem = () => {
-    reportInteraction('grafana_search_result_clicked', {
+    reportSearchResultInteraction(eventTrackingNamespace, {
       layout: query.layout,
       starred: query.starred,
       sortValue: query.sort?.value,
       query: query.query,
       tagCount: query.tag?.length,
-      includePanels: false,
+      includePanels,
     });
   };
 
   const results = useAsync(() => {
-    reportInteraction('grafana_search_query_submitted', {
+    reportSearchQueryInteraction(eventTrackingNamespace, {
       layout: query.layout,
       starred: query.starred,
       sortValue: query.sort?.value,
       query: query.query,
       tagCount: query.tag?.length,
-      includePanels: false,
+      includePanels,
     });
 
     if (searchQuery.starred) {
