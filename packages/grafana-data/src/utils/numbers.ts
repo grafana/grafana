@@ -6,6 +6,10 @@
  * ref: https://stackoverflow.com/a/48764436
  */
 export function roundDecimals(val: number, dec = 0) {
+  if (Number.isInteger(val)) {
+    return val;
+  }
+
   let p = 10 ** dec;
   let n = val * p * (1 + Number.EPSILON);
   return Math.round(n) / p;
