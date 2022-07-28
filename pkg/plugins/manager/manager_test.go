@@ -857,7 +857,7 @@ type fakeFsManager struct {
 	removed int
 }
 
-func (fsm *fakeFsManager) Add(_ context.Context, _ *zip.ReadCloser, _, _ string) (*storage.ExtractedPluginArchive, error) {
+func (fsm *fakeFsManager) Add(_ context.Context, _ string, _ *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 	fsm.added++
 	return &storage.ExtractedPluginArchive{}, nil
 }
