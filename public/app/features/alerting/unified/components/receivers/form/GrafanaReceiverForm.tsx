@@ -114,7 +114,12 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
     ? (existing.grafana_managed_receiver_configs ?? []).some((item) => Boolean(item.provenance))
     : false;
 
-  const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || hasProvisionedItems;
+  // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one
+  // or a Mimir-based AlertManager
+  const isManageableAlertManagerDataSource = !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+
+  const isEditable = isManageableAlertManagerDataSource && !hasProvisionedItems;
+  const isTestable = isManageableAlertManagerDataSource || hasProvisionedItems;
 
   if (grafanaNotifiers.result) {
     return (
@@ -122,7 +127,8 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
         {hasProvisionedItems && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
 
         <ReceiverForm<GrafanaChannelValues>
-          readOnly={readOnly}
+          isEditable={isEditable}
+          isTestable={isTestable}
           config={config}
           onSubmit={onSubmit}
           initialValues={existingValue}

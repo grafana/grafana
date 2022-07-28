@@ -144,10 +144,15 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     theme,
   });
 
+  // assumes BucketMax is [1]
+  let countField = frame.fields[2];
+  let dispY = countField.display;
+
   builder.addAxis({
     scaleKey: 'y',
     isTime: false,
     placement: AxisPlacement.Left,
+    formatValue: (v, decimals) => formattedValueToString(dispY!(v, countField.config.decimals ?? decimals)),
     //splits: config.xSplits,
     //values: config.xValues,
     //grid: false,

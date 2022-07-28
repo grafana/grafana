@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -372,7 +373,7 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.
 	if storagePath == "" {
 		storagePath = filestorage.Delimiter
 	}
-	return root.Store().DeleteFolder(ctx, storagePath, &filestorage.DeleteFolderOptions{Force: true, AccessFilter: guardian.getPathFilter(ActionFilesDelete)})
+	return root.Store().DeleteFolder(ctx, storagePath, &filestorage.DeleteFolderOptions{Force: cmd.Force, AccessFilter: guardian.getPathFilter(ActionFilesDelete)})
 }
 
 func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.SignedInUser, cmd *CreateFolderCmd) error {
@@ -417,4 +418,54 @@ func (s *standardStorageService) Delete(ctx context.Context, user *models.Signed
 		return err
 	}
 	return nil
+}
+
+type workflowInfo struct {
+	Type        WriteValueWorkflow `json:"value"` // value matches selectable value
+	Label       string             `json:"label"`
+	Description string             `json:"description,omitempty"`
+}
+type optionInfo struct {
+	Path      string         `json:"path,omitempty"`
+	Workflows []workflowInfo `json:"workflows"`
+}
+
+func (s *standardStorageService) getWorkflowOptions(ctx context.Context, user *models.SignedInUser, path string) (optionInfo, error) {
+	options := optionInfo{
+		Path:      path,
+		Workflows: make([]workflowInfo, 0),
+	}
+
+	scope, _ := splitFirstSegment(path)
+	root, _ := s.tree.getRoot(user.OrgId, scope)
+	if root == nil {
+		return options, fmt.Errorf("can not read")
+	}
+
+	meta := root.Meta()
+	if meta.Config.Type == rootStorageTypeGit && meta.Config.Git != nil {
+		cfg := meta.Config.Git
+		options.Workflows = append(options.Workflows, workflowInfo{
+			Type:        WriteValueWorkflow_PR,
+			Label:       "Create pull request",
+			Description: "Create a new upstream pull request",
+		})
+		if !cfg.RequirePullRequest {
+			options.Workflows = append(options.Workflows, workflowInfo{
+				Type:        WriteValueWorkflow_Push,
+				Label:       "Push to " + cfg.Branch,
+				Description: "Push commit to upstrem repository",
+			})
+		}
+	} else if meta.ReadOnly {
+		// nothing?
+	} else {
+		options.Workflows = append(options.Workflows, workflowInfo{
+			Type:        WriteValueWorkflow_Save,
+			Label:       "Save",
+			Description: "Save directly",
+		})
+	}
+
+	return options, nil
 }

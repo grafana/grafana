@@ -9,13 +9,21 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type WriteValueWorkflow = string
+
+var (
+	WriteValueWorkflow_Save WriteValueWorkflow = "save" // or empty
+	WriteValueWorkflow_PR   WriteValueWorkflow = "pr"
+	WriteValueWorkflow_Push WriteValueWorkflow = "push"
+)
+
 type WriteValueRequest struct {
-	Path    string
-	User    *models.SignedInUser
-	Body    json.RawMessage `json:"body,omitempty"`
-	Message string          `json:"message,omitempty"`
-	Title   string          `json:"title,omitempty"`  // For PRs
-	Action  string          `json:"action,omitempty"` // pr | save
+	Path     string
+	User     *models.SignedInUser
+	Body     json.RawMessage    `json:"body,omitempty"`
+	Message  string             `json:"message,omitempty"`
+	Title    string             `json:"title,omitempty"`    // For PRs
+	Workflow WriteValueWorkflow `json:"workflow,omitempty"` // pr | save
 }
 
 type WriteValueResponse struct {

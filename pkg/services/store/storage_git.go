@@ -207,7 +207,7 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 		cmd.Path = s.settings.Root + "/" + cmd.Path
 	}
 
-	if cmd.Action == "pr" {
+	if cmd.Workflow == WriteValueWorkflow_PR {
 		prcmd := makePRCommand{
 			baseBranch: s.settings.Branch,
 			headBranch: fmt.Sprintf("grafana_ui_%d", time.Now().UnixMilli()),
@@ -254,8 +254,8 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 		return res, nil
 	}
 
-	// Commit to main
-	if true {
+	// Push to remote branch (save)
+	if cmd.Workflow == WriteValueWorkflow_Push || true {
 		res := &WriteValueResponse{
 			Branch: s.settings.Branch,
 		}

@@ -86,6 +86,7 @@ type DashboardThumbnail struct {
 	Image            []byte         `json:"image"`
 	MimeType         string         `json:"mimeType"`
 	Updated          time.Time      `json:"updated"`
+	DsUIDs           string         `json:"-" xorm:"ds_uids"`
 }
 
 //
@@ -123,6 +124,7 @@ type FindDashboardThumbnailCountCommand struct {
 
 type FindDashboardsWithStaleThumbnailsCommand struct {
 	IncludeManuallyUploadedThumbnails bool
+	IncludeThumbnailsWithEmptyDsUIDs  bool
 	Theme                             Theme
 	Kind                              ThumbnailKind
 	Result                            []*DashboardWithStaleThumbnail
@@ -133,6 +135,7 @@ type SaveDashboardThumbnailCommand struct {
 	DashboardVersion int
 	Image            []byte
 	MimeType         string
+	DatasourceUIDs   []string
 
 	Result *DashboardThumbnail
 }

@@ -66,27 +66,30 @@ export function RootView({ root, onPathChange }: Props) {
         )}
       </div>
       <VerticalGroup>
-        {roots.map((s) => (
-          <Card key={s.config.prefix} href={`admin/storage/${s.config.prefix}/`}>
-            <Card.Heading>{s.config.name}</Card.Heading>
-            <Card.Meta className={styles.clickable}>
-              {s.config.description}
-              {s.config.git?.remote && <a href={s.config.git?.remote}>{s.config.git?.remote}</a>}
-            </Card.Meta>
-            {s.notice?.map((notice) => (
-              <Alert key={notice.text} severity={notice.severity} title={notice.text} />
-            ))}
+        {roots.map((s) => {
+          const ok = s.ready;
+          return (
+            <Card key={s.config.prefix} href={ok ? `admin/storage/${s.config.prefix}/` : undefined}>
+              <Card.Heading>{s.config.name}</Card.Heading>
+              <Card.Meta className={styles.clickable}>
+                {s.config.description}
+                {s.config.git?.remote && <a href={s.config.git?.remote}>{s.config.git?.remote}</a>}
+              </Card.Meta>
+              {s.notice?.map((notice) => (
+                <Alert key={notice.text} severity={notice.severity} title={notice.text} />
+              ))}
 
-            <Card.Tags className={styles.clickable}>
-              <HorizontalGroup>
-                <TagList tags={getTags(s)} />
-              </HorizontalGroup>
-            </Card.Tags>
-            <Card.Figure className={styles.clickable}>
-              <Icon name={getIconName(s.config.type)} size="xxxl" className={styles.secondaryTextColor} />
-            </Card.Figure>
-          </Card>
-        ))}
+              <Card.Tags className={styles.clickable}>
+                <HorizontalGroup>
+                  <TagList tags={getTags(s)} />
+                </HorizontalGroup>
+              </Card.Tags>
+              <Card.Figure className={styles.clickable}>
+                <Icon name={getIconName(s.config.type)} size="xxxl" className={styles.secondaryTextColor} />
+              </Card.Figure>
+            </Card>
+          );
+        })}
       </VerticalGroup>
     </div>
   );
