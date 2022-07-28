@@ -15,7 +15,6 @@ import { QueryEditorMode } from '../shared/types';
 import { changeEditorMode, getQueryWithDefaults, useExplain, useRawQuery } from '../state';
 
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
-import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
@@ -103,9 +102,9 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
           options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
         />
 
+        <QueryHeaderSwitch label="Explain" value={showExplain} onChange={onShowExplainChange} />
         {editorMode === QueryEditorMode.Builder && (
           <>
-            <QueryHeaderSwitch label="Explain" value={showExplain} onChange={onShowExplainChange} />
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
             <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
           </>
@@ -138,10 +137,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             showExplain={showExplain}
           />
         )}
-        {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={query.expr} />}
-        {editorMode !== QueryEditorMode.Explain && (
-          <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
-        )}
+        <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
       </EditorRows>
     </>
   );
