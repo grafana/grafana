@@ -46,6 +46,39 @@ export class SQLSearcher implements GrafanaSearcher {
       limit: query.limit ?? 1000, // default 1k max values
       tag: query.tags,
       sort: query.sort,
+    };
+
+    query = await replaceCurrentFolderQuery(query);
+    if (query.query === '*') {
+      if (query.kind?.length === 1 && query.kind[0] === 'folder') {
+        q.type = 'dash-folder';
+      }
+    } else if (query.query?.length) {
+      q.query = query.query;
+    }
+
+    if (query.uid) {
+      q.dashboardUID = query.uid;
+    } else if (query.location?.length) {
+      let info = this.locationInfo[query.location];
+      if (!info) {
+        // This will load all folder folders
+        await this.doAPIQuery({ type: 'dash-folder', limit: 999 });
+        info = this.locationInfo[query.location];
+      }
+      q.folderIds = [info.folderId ?? 0];
+    }
+    return this.doAPIQuery(q);
+  }
+
+  async starred(query: SearchQuery): Promise<QueryResponse> {
+    if (query.facet?.length) {
+      throw 'facets not supported!';
+    }
+    const q: APIQuery = {
+      limit: query.limit ?? 1000, // default 1k max values
+      tag: query.tags,
+      sort: query.sort,
       starred: query.starred,
     };
 

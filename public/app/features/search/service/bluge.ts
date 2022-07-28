@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -15,6 +15,21 @@ export class BlugeSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw 'facets not supported!';
     }
+    return doSearchQuery(query);
+  }
+
+  async starred(query: SearchQuery): Promise<QueryResponse> {
+    if (query.facet?.length) {
+      throw 'facets not supported!';
+    }
+    // get the starred dashboards
+    const starsUIDS = await getBackendSrv().get('api/user/stars');
+    // discard the query from the user?
+    // handle errors if any
+    console.log({ starsUIDS });
+    query = {
+      uid: starsUIDS,
+    };
     return doSearchQuery(query);
   }
 

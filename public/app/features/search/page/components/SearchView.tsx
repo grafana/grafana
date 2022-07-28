@@ -115,6 +115,9 @@ export const SearchView = ({
   );
 
   const results = useAsync(() => {
+    if (searchQuery.starred) {
+      return getGrafanaSearcher().starred(searchQuery);
+    }
     return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
 
@@ -144,6 +147,13 @@ export const SearchView = ({
     // trigger again the search to the backend
     onQueryTextChange(query.query);
   };
+
+  const getStarredItems = useCallback(
+    (e) => {
+      onStarredFilterChange(e);
+    },
+    [onStarredFilterChange]
+  );
 
   const renderResults = () => {
     const value = results.value;
@@ -265,7 +275,7 @@ export const SearchView = ({
             onLayoutChange(v);
           }}
           showStarredFilter={hidePseudoFolders}
-          onStarredFilterChange={!hidePseudoFolders ? undefined : onStarredFilterChange}
+          onStarredFilterChange={!hidePseudoFolders ? undefined : getStarredItems}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}

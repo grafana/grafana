@@ -69,6 +69,7 @@ export interface QueryResponse {
 
 export interface GrafanaSearcher {
   search: (query: SearchQuery) => Promise<QueryResponse>;
+  starred: (query: SearchQuery) => Promise<QueryResponse>;
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
 }
