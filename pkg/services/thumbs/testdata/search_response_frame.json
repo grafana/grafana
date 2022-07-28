@@ -111,7 +111,8 @@
         [
           "datasource-2",
           "datasource-3",
-          "datasource-4"
+          "datasource-4",
+          "grafana"
         ]
       ],
       [

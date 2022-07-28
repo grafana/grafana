@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 type getDatasourceUidsForDashboard func(ctx context.Context, dashboardUid string, orgId int64) ([]string, error)
@@ -58,6 +59,17 @@ func getDatasourceUIDs(resp *backend.DataResponse, uid string) ([]string, error)
 	return uids, nil
 }
 
+func filterOutGrafanaDs(uids []string) []string {
+	var filtered []string
+	for _, uid := range uids {
+		if uid != grafanads.DatasourceUID {
+			filtered = append(filtered, uid)
+		}
+	}
+
+	return filtered
+}
+
 func (d *dsUidsLookup) getDatasourceUidsForDashboard(ctx context.Context, dashboardUid string, orgId int64) ([]string, error) {
 	if d.searchService.IsDisabled() {
 		return nil, nil
@@ -70,5 +82,10 @@ func (d *dsUidsLookup) getDatasourceUidsForDashboard(ctx context.Context, dashbo
 		UIDs: []string{dashboardUid},
 	})
 
-	return getDatasourceUIDs(dashQueryResponse, dashboardUid)
+	uids, err := getDatasourceUIDs(dashQueryResponse, dashboardUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return filterOutGrafanaDs(uids), nil
 }
