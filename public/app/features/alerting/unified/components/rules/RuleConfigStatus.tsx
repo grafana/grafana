@@ -1,0 +1,48 @@
+import { css } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { config } from '@grafana/runtime/src';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui/src';
+
+import { CombinedRule } from '../../../../../types/unified-alerting';
+import { useEvaluationIntervalGlobalLimit } from '../rule-editor/GrafanaEvaluationBehavior';
+
+interface RuleConfigStatusProps {
+  rule: CombinedRule;
+}
+
+export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
+  const styles = useStyles2(getStyles);
+  const { exceedsLimit } = useEvaluationIntervalGlobalLimit(rule.group.interval ?? '');
+
+  if (!exceedsLimit) {
+    return null;
+  }
+
+  return (
+    <Tooltip
+      theme="error"
+      content={
+        <div>
+          A minimum evaluation interval of{' '}
+          <span className={styles.globalLimitValue}>{config.unifiedAlerting.minInterval}</span> have been configured in
+          Grafana and will be used for this alert rule instead of {rule.group.interval} configured for the alert group.
+        </div>
+      }
+    >
+      <Icon name="stopwatch-slash" className={styles.icon} />
+    </Tooltip>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    globalLimitValue: css`
+      font-weight: ${theme.typography.fontWeightBold};
+    `,
+    icon: css`
+      fill: ${theme.colors.warning.text};
+    `,
+  };
+}
