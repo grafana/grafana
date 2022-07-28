@@ -73,6 +73,11 @@ const (
 	alertMaxAttempts = 8
 	alertPollPeriod  = 1000 * time.Millisecond
 	logsQueryMode    = "Logs"
+
+	// QueryTypes
+	annotationQuery = "annotationQuery"
+	logAction       = "logAction"
+	timeSeriesQuery = "timeSeriesQuery"
 )
 
 var plog = log.New("tsdb.cloudwatch")
@@ -356,15 +361,13 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		return e.executeLogAlertQuery(ctx, req)
 	}
 
-	queryType := model.QueryType
-
 	var result *backend.QueryDataResponse
-	switch queryType {
-	case "annotationQuery":
+	switch model.QueryType {
+	case annotationQuery:
 		result, err = e.executeAnnotationQuery(req.PluginContext, model, q)
-	case "logAction":
+	case logAction:
 		result, err = e.executeLogActions(ctx, req)
-	case "timeSeriesQuery":
+	case timeSeriesQuery:
 		fallthrough
 	default:
 		result, err = e.executeTimeSeriesQuery(ctx, req)

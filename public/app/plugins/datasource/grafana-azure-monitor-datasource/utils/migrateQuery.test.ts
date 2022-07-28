@@ -33,7 +33,6 @@ const azureMonitorQueryV7 = {
     aggregation: 'Average',
     allowedTimeGrainsMs: [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
     dimensionFilters: [{ dimension: 'dependency/success', filter: '', operator: 'eq' }],
-    metricDefinition: 'microsoft.insights/components',
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
     resourceGroup: 'cloud-datasources',
@@ -54,7 +53,6 @@ const azureMonitorQueryV8 = {
   azureMonitor: {
     aggregation: 'Average',
     dimensionFilters: [],
-    metricDefinition: 'microsoft.insights/components',
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
     resourceGroup: 'cloud-datasources',
@@ -82,7 +80,6 @@ const modernMetricsQuery: AzureMonitorQuery = {
     alias: '{{ dimensionvalue }}',
     allowedTimeGrainsMs: [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
     dimensionFilters: [{ dimension: 'dependency/success', filters: ['*'], operator: 'eq' }],
-    metricDefinition: 'microsoft.insights/components',
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
     resourceGroup: 'cloud-datasources',
@@ -158,7 +155,7 @@ describe('AzureMonitor: migrateQuery', () => {
         ...azureMonitorQueryV8,
         azureMonitor: {
           ...azureMonitorQueryV8.azureMonitor,
-          metricDefinition: '$ns',
+          metricNamespace: '$ns',
         },
       };
       const result = migrateQuery(query, templateSrv, setErrorMock);
@@ -291,6 +288,21 @@ describe('AzureMonitor: migrateQuery', () => {
                 filters: ['testFilter'],
               },
             ],
+          }),
+        })
+      );
+    });
+
+    it('correctly migrates a metric definition', () => {
+      const result = migrateQuery(
+        { ...azureMonitorQueryV8, azureMonitor: { metricDefinition: 'ms.ns/mn' } },
+        templateSrv
+      );
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            metricNamespace: 'ms.ns/mn',
+            metricDefinition: undefined,
           }),
         })
       );
