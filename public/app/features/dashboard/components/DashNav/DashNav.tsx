@@ -160,7 +160,7 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (dashboard.meta.publicDashboardEnabled) {
-      buttons.push(<Tag name="Public" colorIndex={5} aria-label={selectors.publicDashboardTag}></Tag>);
+      buttons.push(<Tag name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>);
     }
 
     if (dashboard.uid && config.featureToggles.dashboardComments) {

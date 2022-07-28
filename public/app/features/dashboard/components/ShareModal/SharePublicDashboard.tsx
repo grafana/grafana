@@ -99,7 +99,7 @@ export const SharePublicDashboard = (props: Props) => {
         <Alert
           severity="warning"
           title="dashboard cannot be public"
-          aria-label={selectors.TemplateVariablesWarningAlert}
+          data-testid={selectors.TemplateVariablesWarningAlert}
         >
           This dashboard cannot be made public because it has template variables
         </Alert>
@@ -128,7 +128,7 @@ export const SharePublicDashboard = (props: Props) => {
                   label="Your entire dashboard will be public"
                   value={acknowledgements.public}
                   disabled={publicDashboardPersisted(publicDashboard)}
-                  aria-label={selectors.WillBePublicCheckbox}
+                  data-testid={selectors.WillBePublicCheckbox}
                   onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
                 />
               </div>
@@ -138,7 +138,7 @@ export const SharePublicDashboard = (props: Props) => {
                   label="Publishing currently only works with a subset of datasources"
                   value={acknowledgements.datasources}
                   disabled={publicDashboardPersisted(publicDashboard)}
-                  aria-label={selectors.LimitedDSCheckbox}
+                  data-testid={selectors.LimitedDSCheckbox}
                   onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
                 />
                 <LinkButton
@@ -156,7 +156,7 @@ export const SharePublicDashboard = (props: Props) => {
                 label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
                 value={acknowledgements.usage}
                 disabled={publicDashboardPersisted(publicDashboard)}
-                aria-label={selectors.CostIncreaseCheckbox}
+                data-testid={selectors.CostIncreaseCheckbox}
                 onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
               />
               <LinkButton
@@ -198,7 +198,7 @@ export const SharePublicDashboard = (props: Props) => {
               <Field label="Enabled" description="Configures whether current dashboard can be available publicly">
                 <Switch
                   disabled={dashboardHasTemplateVariables(dashboardVariables)}
-                  aria-label={selectors.EnableSwitch}
+                  data-testid={selectors.EnableSwitch}
                   value={publicDashboard?.isEnabled}
                   onChange={() => {
                     reportInteraction('grafana_dashboards_public_enable_clicked', {
@@ -217,10 +217,10 @@ export const SharePublicDashboard = (props: Props) => {
                   <Input
                     value={generatePublicDashboardUrl(publicDashboard)}
                     readOnly
-                    aria-label={selectors.CopyUrlInput}
+                    data-testid={selectors.CopyUrlInput}
                     addonAfter={
                       <ClipboardButton
-                        aria-label={selectors.CopyUrlButton}
+                        data-testid={selectors.CopyUrlButton}
                         variant="primary"
                         icon="copy"
                         getText={() => {
@@ -234,7 +234,7 @@ export const SharePublicDashboard = (props: Props) => {
                 </Field>
               )}
             </FieldSet>
-            <Button disabled={!acknowledged()} onClick={onSavePublicConfig} aria-label={selectors.SaveConfigButton}>
+            <Button disabled={!acknowledged()} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
               Save Sharing Configuration
             </Button>
           </div>
