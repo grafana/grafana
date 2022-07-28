@@ -123,7 +123,11 @@ const sharedReducerSlice = createSlice({
         return;
       }
 
-      const instanceState = getInstanceState<VariableWithOptions>(state, action.payload.id);
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (!('options' in instanceState)) {
+        return;
+      }
+
       const { option } = action.payload.data;
       const current = { ...option, text: ensureStringValues(option?.text), value: ensureStringValues(option?.value) };
 

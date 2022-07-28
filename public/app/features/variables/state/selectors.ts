@@ -1,5 +1,19 @@
 import memoizeOne from 'memoize-one';
 
+import {
+  AdHocVariableModel,
+  ConstantVariableModel,
+  CustomVariableModel,
+  DashboardVariableModel,
+  DataSourceVariableModel,
+  IntervalVariableModel,
+  OrgVariableModel,
+  QueryVariableModel,
+  TextBoxVariableModel,
+  UserVariableModel,
+  VariableType,
+} from '@grafana/data';
+
 import { getState } from '../../../store/store';
 import { StoreState } from '../../../types';
 import { VariableModel } from '../types';
@@ -109,6 +123,36 @@ export function getVariableWithName(name: string, state: StoreState = getState()
   return getVariable({ id: name, rootStateKey: lastKey, type: 'query' }, state, false);
 }
 
-export function getInstanceState<Model extends VariableModel = VariableModel>(state: VariablesState, id: string) {
-  return state[id] as Model;
+export function getInstanceState(state: VariablesState, id: string) {
+  return state[id];
+}
+
+type VariableTypeMap = {
+  query: QueryVariableModel;
+  adhoc: AdHocVariableModel;
+  constant: ConstantVariableModel;
+  datasource: DataSourceVariableModel;
+  interval: IntervalVariableModel;
+  textbox: TextBoxVariableModel;
+  custom: CustomVariableModel;
+  system: DashboardVariableModel | OrgVariableModel | UserVariableModel;
+};
+
+export function getInstanceStateOfType<
+  IVariableState extends VariablesState,
+  IModel extends IVariableState[string],
+  IType extends IModel['type']
+>(state: IVariableState, id: string, type: IType): IModel & { type: IType } {
+  const variableModel = state[id];
+
+  if (variableModel.type !== type) {
+    variableModel;
+    // ^?
+    throw new Error('Unexpected variable type');
+  }
+
+  variableModel;
+  // ^?
+
+  return variableModel;
 }
