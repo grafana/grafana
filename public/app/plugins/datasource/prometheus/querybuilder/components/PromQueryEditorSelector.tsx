@@ -105,8 +105,8 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
 
         {editorMode === QueryEditorMode.Builder && (
           <>
-            <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
             <QueryHeaderSwitch label="Explain" value={showExplain} onChange={onShowExplainChange} />
+            <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
             <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
           </>
         )}
