@@ -1,5 +1,5 @@
 import { shallow } from 'enzyme';
-import React, { PureComponent } from 'react';
+import React from 'react';
 import { Editor } from 'slate';
 
 import { createTheme } from '@grafana/data';
