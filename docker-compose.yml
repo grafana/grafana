@@ -17,6 +17,7 @@ services:
 
   mysql:
     image: percona:5.7.30
+    platform: linux/amd64
     container_name: pmm-agent_mysql
     command: >
       --sql-mode="ANSI_QUOTES"
