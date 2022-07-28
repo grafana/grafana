@@ -42,6 +42,8 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
 		service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
 			Return(&models.Dashboard{}, nil).Maybe()
+		service.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+			Return(&PublicDashboard{}, nil).Maybe()
 
 		testServer := setupTestServer(t, cfg, qs, featuremgmt.WithFeatures(), service, nil)
 
@@ -94,6 +96,8 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 			service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.PublicDashboardResult, test.PublicDashboardErr).Maybe()
+			service.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(&PublicDashboard{}, nil).Maybe()
 
 			testServer := setupTestServer(
 				t,
