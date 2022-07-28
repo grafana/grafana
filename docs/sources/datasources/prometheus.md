@@ -15,7 +15,7 @@ weight: 1300
 
 Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-> **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.[Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
+> **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
 
 ## Prometheus settings
 
@@ -65,7 +65,7 @@ For more information about Prometheus query language, refer to the [Prometheus d
 
 ![Autocomplete](/static/img/docs/prometheus/autocomplete-9-1.png 'Autocomplete')
 
-Autocomplete kicks automatically in appropriate times during typing. Use `ctrl/cmd + space` to trigger autocomplete manually when needed. Autocomplete can suggest both static functions, aggregations and keywords but also dynamic items like metrics and labels. Autocomplete dropdown also shows documentation for the suggested items, either static one or dynamic metric documentation where available.
+Autocomplete kicks automatically in appropriate times during typing. Use `ctrl/cmd + space` to trigger autocomplete manually when needed. Autocomplete can suggest both static functions, aggregations, and keywords but also dynamic items like metrics and labels. Autocomplete dropdown also shows documentation for the suggested items, either static one or dynamic metric documentation where available.
 
 In [Explore]({{< relref "../explore/" >}}) use `shift + enter` to run the query.
 
@@ -164,7 +164,7 @@ Same set of option is available as in the `Code` mode. See the [Code mode option
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place.
+Instead of hard-coding things like server, application, and sensor name in your metric queries, you can use variables in their place.
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 

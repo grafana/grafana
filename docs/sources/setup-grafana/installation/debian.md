@@ -16,7 +16,7 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "../upgrade-grafana/" >}}) for tips and guidance on updating an existing installation.
 
-> **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.[Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
+> **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
 
 ## 1. Download and install
 
@@ -176,7 +176,7 @@ Start Grafana by running:
 - Installs configuration file to `/etc/grafana/grafana.ini`
 - Installs systemd service (if systemd is available) name `grafana-server.service`
 - The default configuration sets the log file at `/var/log/grafana/grafana.log`
-- The default configuration specifies a SQLite3 db at `/var/lib/grafana/grafana.db`
+- The default configuration specifies a SQLite3 DB at `/var/lib/grafana/grafana.db`
 - Installs HTML/JS/CSS and other Grafana files at `/usr/share/grafana`
 
 ## Next steps

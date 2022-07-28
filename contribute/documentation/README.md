@@ -4,7 +4,7 @@ We provide these guidelines to help our contributors make additions or correctio
 
 ## Welcome
 
-Welcome. We're glad you're here to help make our technical documentation even better. We develop content that leads our users to success using Grafana products. Technical accuracy is our primary consideration, and we value the use of inclusive language. We regard your feedback as a gift - thanks for reading through these guidelines.
+We're glad you're here to help make our technical documentation even better. We develop content that leads our users to success using Grafana products. Technical accuracy is our primary consideration, and we value the use of inclusive language. We regard your feedback as a gift - thanks for reading through these guidelines.
 
 ### Intended audience
 
@@ -19,7 +19,7 @@ All Grafana Enterprise and OSS documentation is located in the [Grafana open sou
 
 > The `_index.md` file is required.
 
-### Writing in markdown
+### Writing in Markdown
 
 We write technical documentation using [Markdown](https://en.wikipedia.org/wiki/Markdown). We've put together a short guide to help you how to structure and format your content.
 
@@ -100,7 +100,7 @@ At Grafana Labs, we use the principles of topic-based authoring when we write te
 Technical content is divided into three topic types: concept, task, and reference.
 
 - **Concept**: A concept topic explains _what_ a feature (or idea) is, and why it is important.
-- **Task**: A task topic explains _how_ to complete an end user procedure in the system. Task topics contain steps.
+- **Task**: A task topic explains _how_ to complete an end-user procedure in the system. Task topics contain steps.
 - **Reference** A reference topic contains lookup information that a user might consult when they complete a task. Documenting a list of values with descriptions is a common form of reference topic.
 
 **Example**
@@ -202,7 +202,7 @@ Pretend you are explaining your topic to a brand new Grafana user or developer.
 Use the following sentence structure when you write: _subject_—_verb_—_object_. If you are telling a user to do something, write an imperative sentence. For example “Enter the refresh rate time interval and click Save.”
 
 - You can also start a sentence with an _if_ clause, which positions the condition before the action.
-- Limit the number of words in a sentence to 20..
+- Limit the number of words in a sentence to 20.
 
 ### Use active voice
 
