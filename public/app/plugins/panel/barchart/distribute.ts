@@ -1,6 +1,4 @@
-function roundDec(val: number, dec: number) {
-  return Math.round(val * (dec = 10 ** dec)) / dec;
-}
+import { roundDec } from '@grafana/data';
 
 export const SPACE_BETWEEN = 1;
 export const SPACE_AROUND = 2;

@@ -1,18 +1,8 @@
-const { abs, round, pow } = Math;
+import { guessDec, roundDec } from '@grafana/data';
 
-// https://stackoverflow.com/a/48764436
-// rounds half away from zero
-export function roundDec(val: number, dec = 0) {
-  let p = 10 ** dec;
-  let n = val * p * (1 + Number.EPSILON);
-  return round(n) / p;
-}
+const { abs, pow } = Math;
 
 export const fixedDec = new Map();
-
-export function guessDec(num: number) {
-  return (('' + num).split('.')[1] || '').length;
-}
 
 export function genIncrs(base: number, minExp: number, maxExp: number, mults: number[]) {
   let incrs = [];
