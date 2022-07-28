@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"archive/zip"
@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/logger"
-	"github.com/grafana/grafana/pkg/plugins/repository"
 )
 
 type Client struct {
@@ -36,7 +35,7 @@ func newClient(skipTLSVerify bool, logger logger.Logger) *Client {
 	}
 }
 
-func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts repository.CompatabilityOpts) (*repository.PluginArchive, error) {
+func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatabilityOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
@@ -63,12 +62,12 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 		return nil, err
 	}
 
-	return &repository.PluginArchive{
+	return &PluginArchive{
 		File: rc,
 	}, nil
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts repository.CompatabilityOpts) (err error) {
+func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatabilityOpts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -150,7 +149,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	return nil
 }
 
-func (c *Client) sendReq(url *url.URL, compatOpts repository.CompatabilityOpts) ([]byte, error) {
+func (c *Client) sendReq(url *url.URL, compatOpts CompatabilityOpts) ([]byte, error) {
 	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
@@ -172,7 +171,7 @@ func (c *Client) sendReq(url *url.URL, compatOpts repository.CompatabilityOpts) 
 	return ioutil.ReadAll(bodyReader)
 }
 
-func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts repository.CompatabilityOpts) (io.ReadCloser, error) {
+func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatabilityOpts) (io.ReadCloser, error) {
 	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
@@ -185,7 +184,7 @@ func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts repository.Compatabil
 	return c.handleResp(res, compatOpts)
 }
 
-func (c *Client) createReq(url *url.URL, compatOpts repository.CompatabilityOpts) (*http.Request, error) {
+func (c *Client) createReq(url *url.URL, compatOpts CompatabilityOpts) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
@@ -199,7 +198,7 @@ func (c *Client) createReq(url *url.URL, compatOpts repository.CompatabilityOpts
 	return req, err
 }
 
-func (c *Client) handleResp(res *http.Response, compatOpts repository.CompatabilityOpts) (io.ReadCloser, error) {
+func (c *Client) handleResp(res *http.Response, compatOpts CompatabilityOpts) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := ioutil.ReadAll(res.Body)
 		defer func() {
@@ -208,7 +207,7 @@ func (c *Client) handleResp(res *http.Response, compatOpts repository.Compatabil
 			}
 		}()
 		if err != nil || len(body) == 0 {
-			return nil, repository.Response4xxError{StatusCode: res.StatusCode}
+			return nil, Response4xxError{StatusCode: res.StatusCode}
 		}
 		var message string
 		var jsonBody map[string]string
@@ -218,7 +217,7 @@ func (c *Client) handleResp(res *http.Response, compatOpts repository.Compatabil
 		} else {
 			message = jsonBody["message"]
 		}
-		return nil, repository.Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: compatOpts.String()}
+		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: compatOpts.String()}
 	}
 
 	if res.StatusCode/100 != 2 {

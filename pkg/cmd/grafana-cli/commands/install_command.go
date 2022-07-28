@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/plugins/repository"
-	"github.com/grafana/grafana/pkg/plugins/repository/service"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
@@ -50,20 +49,16 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	pluginID := c.Args().First()
 	version := c.Args().Get(1)
-	return InstallPlugin(context.Background(), pluginID, version, c)
+	return installPlugin(context.Background(), pluginID, version, c)
 }
 
-// InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
+// installPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugin's directory.
-func InstallPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
+func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
 	skipTLSVerify := c.Bool("insecure")
-	repo := service.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
+	repo := repository.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
-	compatOpts := repository.CompatabilityOpts{
-		GrafanaVersion: services.GrafanaVersion,
-		OS:             runtime.GOOS,
-		Arch:           runtime.GOARCH,
-	}
+	compatOpts := repository.NewCompatabilityOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
 
 	pluginZipURL := c.PluginURL()
 	var archive *repository.PluginArchive

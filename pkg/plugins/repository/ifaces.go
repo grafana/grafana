@@ -22,6 +22,14 @@ type CompatabilityOpts struct {
 	Arch           string
 }
 
+func NewCompatabilityOpts(grafanaVersion, os, arch string) CompatabilityOpts {
+	return CompatabilityOpts{
+		GrafanaVersion: grafanaVersion,
+		OS:             os,
+		Arch:           arch,
+	}
+}
+
 func (co CompatabilityOpts) OSAndArch() string {
 	return fmt.Sprintf("%s-%s", strings.ToLower(co.OS), co.Arch)
 }

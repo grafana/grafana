@@ -56,7 +56,7 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 			return err
 		}
 
-		err = InstallPlugin(context.Background(), p.ID, "", c)
+		err = installPlugin(context.Background(), p.ID, "", c)
 		if err != nil {
 			return err
 		}

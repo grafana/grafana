@@ -1,24 +1,22 @@
-package service
+package repository
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/plugins/repository"
 )
 
 func TestSelectVersion(t *testing.T) {
-	i := &Service{log: &fakeLogger{}}
+	i := &Manager{log: &fakeLogger{}}
 
 	t.Run("Should return error when requested version does not exist", func(t *testing.T) {
-		_, err := i.selectVersion(createPlugin(versionArg{version: "version"}), "1.1.1", repository.CompatabilityOpts{})
+		_, err := i.selectVersion(createPlugin(versionArg{version: "version"}), "1.1.1", CompatabilityOpts{})
 		require.Error(t, err)
 	})
 
 	t.Run("Should return error when no version supports current arch", func(t *testing.T) {
-		_, err := i.selectVersion(createPlugin(versionArg{version: "version", arch: []string{"non-existent"}}), "", repository.CompatabilityOpts{})
+		_, err := i.selectVersion(createPlugin(versionArg{version: "version", arch: []string{"non-existent"}}), "", CompatabilityOpts{})
 		require.Error(t, err)
 	})
 
@@ -26,7 +24,7 @@ func TestSelectVersion(t *testing.T) {
 		_, err := i.selectVersion(createPlugin(
 			versionArg{version: "2.0.0"},
 			versionArg{version: "1.1.1", arch: []string{"non-existent"}},
-		), "1.1.1", repository.CompatabilityOpts{})
+		), "1.1.1", CompatabilityOpts{})
 		require.Error(t, err)
 	})
 
@@ -34,19 +32,19 @@ func TestSelectVersion(t *testing.T) {
 		ver, err := i.selectVersion(createPlugin(
 			versionArg{version: "2.0.0", arch: []string{"non-existent"}},
 			versionArg{version: "1.0.0"},
-		), "", repository.CompatabilityOpts{})
+		), "", CompatabilityOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "1.0.0", ver.Version)
 	})
 
 	t.Run("Should return latest version when no version specified", func(t *testing.T) {
-		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "", repository.CompatabilityOpts{})
+		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "", CompatabilityOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "2.0.0", ver.Version)
 	})
 
 	t.Run("Should return requested version", func(t *testing.T) {
-		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "1.0.0", repository.CompatabilityOpts{})
+		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "1.0.0", CompatabilityOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "1.0.0", ver.Version)
 	})
@@ -57,21 +55,21 @@ type versionArg struct {
 	arch    []string
 }
 
-func createPlugin(versions ...versionArg) *repository.Plugin {
-	p := &repository.Plugin{
-		Versions: []repository.Version{},
+func createPlugin(versions ...versionArg) *Plugin {
+	p := &Plugin{
+		Versions: []Version{},
 	}
 
 	for _, version := range versions {
-		ver := repository.Version{
+		ver := Version{
 			Version: version.version,
 			Commit:  fmt.Sprintf("commit_%s", version.version),
 			URL:     fmt.Sprintf("url_%s", version.version),
 		}
 		if version.arch != nil {
-			ver.Arch = map[string]repository.ArchMeta{}
+			ver.Arch = map[string]ArchMeta{}
 			for _, arch := range version.arch {
-				ver.Arch[arch] = repository.ArchMeta{
+				ver.Arch[arch] = ArchMeta{
 					SHA256: fmt.Sprintf("sha256_%s", arch),
 				}
 			}

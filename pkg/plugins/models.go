@@ -12,10 +12,9 @@ const (
 )
 
 var (
-	ErrInstallCorePlugin          = errors.New("cannot install a Core plugin")
-	ErrUninstallCorePlugin        = errors.New("cannot uninstall a Core plugin")
-	ErrInvalidPluginVersionFormat = errors.New("plugin version format is invalid")
-	ErrPluginNotInstalled         = errors.New("plugin is not installed")
+	ErrInstallCorePlugin   = errors.New("cannot install a Core plugin")
+	ErrUninstallCorePlugin = errors.New("cannot uninstall a Core plugin")
+	ErrPluginNotInstalled  = errors.New("plugin is not installed")
 )
 
 type NotFoundError struct {

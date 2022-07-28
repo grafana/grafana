@@ -71,15 +71,7 @@ func (m *PluginManager) registeredPlugins(ctx context.Context) map[string]struct
 }
 
 func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.CompatabilityOpts) error {
-	if version != "" && !isSemVerExpr(version) {
-		return plugins.ErrInvalidPluginVersionFormat
-	}
-
-	compatOpts := repository.CompatabilityOpts{
-		GrafanaVersion: opts.GrafanaVersion,
-		OS:             opts.OS,
-		Arch:           opts.Arch,
-	}
+	compatOpts := repository.NewCompatabilityOpts(opts.GrafanaVersion, opts.OS, opts.Arch)
 
 	var pluginArchive *repository.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID); exists {
