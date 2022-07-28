@@ -187,7 +187,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (formatValue) {
       config.values = (u: uPlot, splits, axisIdx, tickSpace, tickIncr) => {
         let decimals = guessDecimals(roundDecimals(tickIncr, 6));
-        return splits.map((v) => formatValue!(v, decimals));
+        return splits.map((v) => formatValue!(v, decimals > 0 ? decimals : undefined));
       };
     }
 

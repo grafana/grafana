@@ -7,12 +7,15 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataHoverPayload,
+  DecimalCount,
   EventBus,
   formattedValueToString,
   getValueFormat,
   GrafanaTheme2,
+  guessDecimals,
   incrRoundDn,
   incrRoundUp,
+  roundDecimals,
   TimeRange,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
@@ -407,7 +410,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     size: yAxisConfig.axisWidth || null,
     label: yAxisConfig.axisLabel,
     theme: theme,
-    formatValue: (v: number) => formattedValueToString(dispY(v)),
+    formatValue: (v, decimals) => formattedValueToString(dispY(v, yField.config.decimals ?? decimals)),
     splits: isOrdianalY
       ? (self: uPlot) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);

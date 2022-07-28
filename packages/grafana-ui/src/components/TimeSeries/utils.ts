@@ -269,7 +269,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
             placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
             show: customConfig.hideFrom?.viz === false,
