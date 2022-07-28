@@ -11,27 +11,24 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/logger"
 )
 
-const (
-	grafanaComAPIRoot = "https://grafana.com/api/plugins"
-)
-
 type Manager struct {
 	client *Client
 
-	repoURL string
+	baseURL string
 	log     logger.Logger
 }
 
-func New(skipTLSVerify bool, repoURL string, logger logger.Logger) *Manager {
-	return &Manager{
-		client:  newClient(skipTLSVerify, logger),
-		repoURL: repoURL,
-		log:     logger,
-	}
+func ProvideService() *Manager {
+	defaultBaseURL := "https://grafana.com/api/plugins"
+	return New(false, defaultBaseURL, logger.NewLogger("plugin.repository"))
 }
 
-func ProvideService() *Manager {
-	return New(false, grafanaComAPIRoot, logger.NewLogger("plugin.repository"))
+func New(skipTLSVerify bool, baseURL string, logger logger.Logger) *Manager {
+	return &Manager{
+		client:  newClient(skipTLSVerify, logger),
+		baseURL: baseURL,
+		log:     logger,
+	}
 }
 
 // GetPluginArchive fetches the requested plugin archive
@@ -74,14 +71,14 @@ func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version 
 	return &PluginDownloadOptions{
 		Version:      v.Version,
 		Checksum:     checksum,
-		PluginZipURL: fmt.Sprintf("%s/%s/versions/%s/download", grafanaComAPIRoot, pluginID, v.Version),
+		PluginZipURL: fmt.Sprintf("%s/%s/versions/%s/download", m.baseURL, pluginID, v.Version),
 	}, nil
 }
 
 func (m *Manager) pluginMetadata(pluginID string, compatOpts CompatabilityOpts) (Plugin, error) {
-	m.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, m.repoURL)
+	m.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, m.baseURL)
 
-	u, err := url.Parse(grafanaComAPIRoot)
+	u, err := url.Parse(m.baseURL)
 	if err != nil {
 		return Plugin{}, err
 	}

@@ -71,7 +71,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
-		// We can ignore this gosec G304 warning since `repoURL` stems from command line flag "pluginUrl". If the
+		// We can ignore this gosec G304 warning since `pluginURL` stems from command line flag "pluginUrl". If the
 		// user shouldn't be able to read the file, it should be handled through filesystem permissions.
 		// nolint:gosec
 		f, err := os.Open(pluginURL)
