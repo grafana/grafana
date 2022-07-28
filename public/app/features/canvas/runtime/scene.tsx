@@ -427,10 +427,10 @@ export class Scene {
       targets = event.selected;
       this.updateSelection({ targets });
 
-      // @TODO Figure out click-drag functionality without phantom mouseup issue
-      // https://github.com/daybrush/moveable/issues/481
-
       if (event.isDragStart) {
+        if (this.isEditingEnabled && this.selecto?.getSelectedTargets().length) {
+          this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+        }
         event.inputEvent.preventDefault();
         setTimeout(() => {
           this.moveable!.dragStart(event.inputEvent);
