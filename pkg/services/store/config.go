@@ -29,6 +29,8 @@ func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
 	fpath := filepath.Join(cfg.DataPath, "storage", "storage.json")
 	g := &GlobalStorageConfig{}
 	if _, err := os.Stat(fpath); err == nil {
+		// nolint:gosec
+		// We can ignore the gosec G304 warning since the path is hardcoded above
 		body, err := ioutil.ReadFile(fpath)
 		if err != nil {
 			return g, err

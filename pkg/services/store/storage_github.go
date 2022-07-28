@@ -75,6 +75,9 @@ func (g *githubHelper) pushCommit(ctx context.Context, ref *github.Reference, cm
 	}
 
 	tree, _, err := g.client.Git.CreateTree(ctx, g.repoOwner, g.repoName, *ref.Object.SHA, entries)
+	if err != nil {
+		return err
+	}
 
 	// Get the parent commit to attach the commit to.
 	parent, _, err := g.client.Repositories.GetCommit(ctx, g.repoOwner, g.repoName, *ref.Object.SHA, nil)

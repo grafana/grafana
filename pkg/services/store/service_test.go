@@ -109,6 +109,9 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
 	}, authService, cfg)
+	store.cfg = &GlobalStorageConfig{
+		AllowUnsanitizedSvgUpload: true,
+	}
 
 	return store, mockStorage, storageName
 }

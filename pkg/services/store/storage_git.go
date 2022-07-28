@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -85,7 +86,7 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 
 	if meta.Notice == nil {
 		repo, err := git.PlainOpen(localWorkCache)
-		if err == git.ErrRepositoryNotExists {
+		if errors.Is(err, git.ErrRepositoryNotExists) {
 			repo, err = git.PlainClone(localWorkCache, false, &git.CloneOptions{
 				URL:      cfg.Remote,
 				Progress: os.Stdout,
