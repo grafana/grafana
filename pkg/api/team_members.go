@@ -15,7 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// GET /api/teams/:teamId/members
+// swagger:route GET /teams/{team_id}/members teams getTeamMembers
+//
+// Get Team Members.
+//
+// Responses:
+// 200: getTeamMembersResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
@@ -56,7 +65,16 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, filteredMembers)
 }
 
-// POST /api/teams/:teamId/members
+// swagger:route POST /teams/{team_id}/members teams addTeamMember
+//
+// Add Team Member.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 	cmd := models.AddTeamMemberCommand{}
 	var err error
@@ -93,7 +111,16 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 	})
 }
 
-// PUT /:teamId/members/:userId
+// swagger:route PUT /teams/{team_id}/members/{user_id} teams updateTeamMember
+//
+// Update Team Member.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	cmd := models.UpdateTeamMemberCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -140,7 +167,16 @@ func getPermissionName(permission models.PermissionType) string {
 	return permissionName
 }
 
-// DELETE /api/teams/:teamId/members/:userId
+// swagger:route DELETE /teams/{team_id}/members/{user_id} teams removeTeamMember
+//
+// Remove Member From Team.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	orgId := c.OrgId
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
@@ -182,4 +218,51 @@ var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService 
 		return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
 	}
 	return nil
+}
+
+// swagger:parameters getTeamMembers
+type GetTeamMembersParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters addTeamMember
+type AddTeamMemberParams struct {
+	// in:body
+	// required:true
+	Body models.AddTeamMemberCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters updateTeamMember
+type UpdateTeamMemberParams struct {
+	// in:body
+	// required:true
+	Body models.UpdateTeamMemberCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters removeTeamMember
+type RemoveTeamMemberParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:response getTeamMembersResponse
+type GetTeamMembersResponse struct {
+	// The response message
+	// in: body
+	Body []*models.TeamMemberDTO `json:"body"`
 }

@@ -250,7 +250,7 @@ def benchmark_ldap_step():
 
 
 def build_storybook_step(edition, ver_mode):
-    if edition in ('enterprise', 'enterprise2') and ver_mode == 'release':
+    if edition in ('enterprise', 'enterprise2'):
         return None
 
     return {
@@ -341,13 +341,6 @@ def e2e_tests_artifacts(edition):
 
 
 def upload_cdn_step(edition, ver_mode, trigger=None):
-    src_dir = ''
-    if ver_mode == "release":
-        bucket = "$${PRERELEASE_BUCKET}"
-        src_dir = " --src-dir artifacts/static-assets"
-    else:
-        bucket = "grafana-static-assets"
-
     deps = []
     if edition in 'enterprise2':
         deps.extend([
@@ -975,14 +968,6 @@ def upload_packages_step(edition, ver_mode, trigger=None):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2'):
         return None
 
-    if ver_mode == 'release':
-        cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
-    elif edition == 'enterprise2':
-        cmd = './bin/grabpl upload-packages --edition {}'.format(
-            edition)
-    else:
-        cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
-
     deps = []
     if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
         deps.extend([
@@ -999,7 +984,7 @@ def upload_packages_step(edition, ver_mode, trigger=None):
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': [cmd, ],
+        'commands': ['./bin/grabpl upload-packages --edition {}'.format(edition),],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step.update(trigger)

@@ -52,6 +52,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   helpEnabled = false;
   profileEnabled = false;
   ldapEnabled = false;
+  jwtHeaderName = '';
+  jwtUrlLogin = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
   samlName = '';
