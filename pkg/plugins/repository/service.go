@@ -12,10 +12,10 @@ import (
 )
 
 type Manager struct {
-	client *Client
-
+	client  *Client
 	baseURL string
-	log     logger.Logger
+
+	log logger.Logger
 }
 
 func ProvideService() *Manager {

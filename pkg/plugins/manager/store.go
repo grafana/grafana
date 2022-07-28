@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Masterminds/semver"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repository"
 )
@@ -175,14 +173,4 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 	}
 
 	return m.pluginStorage.Remove(ctx, plugin.ID)
-}
-
-func isSemVerExpr(version string) bool {
-	if version == "" {
-		return false
-	}
-	if _, err := semver.NewConstraint(version); err == nil {
-		return true
-	}
-	return false
 }
