@@ -26,6 +26,7 @@ export class BlugeSearcher implements GrafanaSearcher {
     const starsUIDS = await getBackendSrv().get('api/user/stars');
     const starredQuery = {
       uid: starsUIDS,
+      query: query.query ?? '*',
     };
     return doSearchQuery(starredQuery);
   }
