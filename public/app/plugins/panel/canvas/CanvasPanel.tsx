@@ -126,7 +126,7 @@ export class CanvasPanel extends Component<Props, State> {
     });
 
     this.setState({ refresh: this.state.refresh + 1 });
-    // console.log('send changes', root);
+    activePanelSubject.next({ panel: this });
   };
 
   shouldComponentUpdate(nextProps: Props, nextState: State) {

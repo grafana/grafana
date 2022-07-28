@@ -112,7 +112,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		}
 		err := s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
 		if err != nil {
-			s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email)
+			s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email, "login", getSignedInUserQuery.Login)
 			return nil, errors.New("auth error")
 		}
 
@@ -175,5 +175,13 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	return doSearchQuery(ctx, s.logger, index, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
+	response := doSearchQuery(ctx, s.logger, index, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
+
+	if q.WithAllowedActions {
+		if err := s.addAllowedActionsField(ctx, orgID, signedInUser, response); err != nil {
+			s.logger.Error("error when adding the allowedActions field", "err", err)
+		}
+	}
+
+	return response
 }

@@ -1,14 +1,13 @@
-import { Story } from '@storybook/react';
+import { Meta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { FeatureState } from '@grafana/data';
 import { InfoBox, FeatureInfoBox, VerticalGroup } from '@grafana/ui';
 
 import { FeatureInfoBoxProps } from './FeatureInfoBox';
-import { InfoBoxProps } from './InfoBox';
 import mdx from './InfoBox.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Layout/InfoBox',
   component: InfoBox,
   decorators: [],
@@ -46,7 +45,7 @@ const defaultProps: FeatureInfoBoxProps = {
   ),
 };
 
-const InfoBoxTemplate: Story<InfoBoxProps> = (args) => {
+const InfoBoxTemplate: ComponentStory<typeof InfoBox> = (args) => {
   return (
     <VerticalGroup>
       <div>Deprecrated component, use Alert with info severity</div>
@@ -57,7 +56,7 @@ const InfoBoxTemplate: Story<InfoBoxProps> = (args) => {
 export const infoBox = InfoBoxTemplate.bind({});
 infoBox.args = defaultProps;
 
-const FeatureInfoBoxTemplate: Story<FeatureInfoBoxProps> = (args) => {
+const FeatureInfoBoxTemplate: ComponentStory<typeof FeatureInfoBox> = (args) => {
   return (
     <VerticalGroup>
       <div>Deprecrated component, use Alert with info severity</div>
@@ -68,3 +67,5 @@ const FeatureInfoBoxTemplate: Story<FeatureInfoBoxProps> = (args) => {
 
 export const featureInfoBox = FeatureInfoBoxTemplate.bind({});
 featureInfoBox.args = defaultProps;
+
+export default meta;

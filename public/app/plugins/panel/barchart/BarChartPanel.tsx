@@ -12,7 +12,6 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { LegendDisplayMode } from '@grafana/schema';
 import {
   GraphNG,
   GraphNGProps,
@@ -183,7 +182,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
   const renderLegend = (config: UPlotConfigBuilder) => {
     const { legend } = options;
-    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
+    if (!config || legend.showLegend === false) {
       return null;
     }
 
@@ -236,7 +235,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       frame: alignedFrame,
       getTimeRange,
       theme,
-      timeZone,
+      timeZones: [timeZone],
       eventBus,
       orientation,
       barWidth,
@@ -266,7 +265,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       preparePlotFrame={(f) => f[0]} // already processed in by the panel above!
       renderLegend={renderLegend}
       legend={options.legend}
-      timeZone={timeZone}
+      timeZones={timeZone}
       timeRange={{ from: 1, to: 1 } as unknown as TimeRange} // HACK
       structureRev={structureRev}
       width={width}

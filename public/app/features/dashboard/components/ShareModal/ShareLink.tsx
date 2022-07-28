@@ -1,3 +1,4 @@
+import { Trans, t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -8,12 +9,6 @@ import config from 'app/core/config';
 
 import { ShareModalTabProps } from './types';
 import { buildImageUrl, buildShareUrl } from './utils';
-
-const themeOptions: Array<SelectableValue<string>> = [
-  { label: 'Current', value: 'current' },
-  { label: 'Dark', value: 'dark' },
-  { label: 'Light', value: 'light' },
-];
 
 export interface Props extends ShareModalTabProps {}
 
@@ -86,37 +81,85 @@ export class ShareLink extends PureComponent<Props, State> {
     const selectors = e2eSelectors.pages.SharePanelModal;
     const isDashboardSaved = Boolean(dashboard.id);
 
+    const timeRangeLabelTranslation = t({
+      id: 'share-modal.link.time-range-label',
+      message: `Lock time range`,
+    });
+
+    const timeRangeDescriptionTranslation = t({
+      id: 'share-modal.link.time-range-description',
+      message: `Transforms the current relative time range to an absolute time range`,
+    });
+
+    const shortenURLTranslation = t({
+      id: 'share-modal.link.shorten-url',
+      message: `Shorten URL`,
+    });
+
+    const linkURLTranslation = t({
+      id: 'share-modal.link.link-url',
+      message: `Link URL`,
+    });
+
+    const themeOptions: Array<SelectableValue<string>> = [
+      {
+        label: t({
+          id: 'share-modal.link.theme-current',
+          message: `Current`,
+        }),
+        value: 'current',
+      },
+      {
+        label: t({
+          id: 'share-modal.link.theme-dark',
+          message: `Dark`,
+        }),
+        value: 'dark',
+      },
+      {
+        label: t({
+          id: 'share-modal.link.theme-light',
+          message: `Light`,
+        }),
+        value: 'light',
+      },
+    ];
+
     return (
       <>
         <p className="share-modal-info-text">
-          Create a direct link to this dashboard or panel, customized with the options below.
+          <Trans id="share-modal.link.info-text">
+            Create a direct link to this dashboard or panel, customized with the options below.
+          </Trans>
         </p>
         <FieldSet>
-          <Field
-            label="Lock time range"
-            description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}
-          >
+          <Field label={timeRangeLabelTranslation} description={isRelativeTime ? timeRangeDescriptionTranslation : ''}>
             <Switch
               id="share-current-time-range"
               value={useCurrentTimeRange}
               onChange={this.onUseCurrentTimeRangeChange}
             />
           </Field>
-          <Field label="Theme">
+          <Field
+            label={t({
+              id: 'share-modal.link.theme',
+              message: `Theme`,
+            })}
+          >
             <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
           </Field>
-          <Field label="Shorten URL">
+          <Field label={shortenURLTranslation}>
             <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
           </Field>
 
-          <Field label="Link URL">
+          <Field label={linkURLTranslation}>
             <Input
               id="link-url-input"
               value={shareUrl}
               readOnly
               addonAfter={
                 <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl}>
-                  Copy
+                  <Trans id="share-modal.link.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }
             />
@@ -128,31 +171,45 @@ export class ShareLink extends PureComponent<Props, State> {
             {isDashboardSaved && (
               <div className="gf-form">
                 <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
-                  <Icon name="camera" /> Direct link rendered image
+                  <Icon name="camera" />
+                  &nbsp;
+                  <Trans id="share-modal.link.rendered-image">Direct link rendered image</Trans>
                 </a>
               </div>
             )}
 
             {!isDashboardSaved && (
-              <Alert severity="info" title="Dashboard is not saved" bottomSpacing={0}>
-                To render a panel image, you must save the dashboard first.
+              <Alert
+                severity="info"
+                title={t({ id: 'share-modal.link.save-alert', message: `Dashboard is not saved` })}
+                bottomSpacing={0}
+              >
+                <Trans id="share-modal.link.save-dashboard">
+                  To render a panel image, you must save the dashboard first.
+                </Trans>
               </Alert>
             )}
           </>
         )}
 
         {panel && !config.rendererAvailable && (
-          <Alert severity="info" title="Image renderer plugin not installed" bottomSpacing={0}>
-            <>To render a panel image, you must install the </>
-            <a
-              href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="external-link"
-            >
-              Grafana image renderer plugin
-            </a>
-            . Please contact your Grafana administrator to install the plugin.
+          <Alert
+            severity="info"
+            title={t({ id: 'share-modal.link.render-alert', message: `Image renderer plugin not installed` })}
+            bottomSpacing={0}
+          >
+            <Trans id="share-modal.link.render-instructions">
+              To render a panel image, you must install the&nbsp;
+              <a
+                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="external-link"
+              >
+                Grafana image renderer plugin
+              </a>
+              . Please contact your Grafana administrator to install the plugin.
+            </Trans>
           </Alert>
         )}
       </>

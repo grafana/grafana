@@ -183,14 +183,7 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 		return err
 	}
 	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			q.Result = append(q.Result, &models.SchedulableAlertRule{
-				UID:             rule.UID,
-				OrgID:           rule.OrgID,
-				IntervalSeconds: rule.IntervalSeconds,
-				Version:         rule.Version,
-			})
-		}
+		q.Result = append(q.Result, rules...)
 	}
 	return nil
 }
