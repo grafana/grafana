@@ -233,7 +233,6 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const rows: RowItemTableProps[] = useMemo(
     () =>
       config.alertmanager_config.receivers?.map((receiver: Receiver) => ({
-        id: receiver.id,
         id: receiver.name,
         data: {
           name: receiver.name,
