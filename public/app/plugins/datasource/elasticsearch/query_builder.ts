@@ -1,5 +1,3 @@
-import { gte, lt } from 'semver';
-
 import { InternalTimeZones } from '@grafana/data';
 
 import {
@@ -23,11 +21,9 @@ import { convertOrderByToMetricId, getScriptValue } from './utils';
 
 export class ElasticQueryBuilder {
   timeField: string;
-  esVersion: string;
 
-  constructor(options: { timeField: string; esVersion: string }) {
+  constructor(options: { timeField: string }) {
     this.timeField = options.timeField;
-    this.esVersion = options.esVersion;
   }
 
   getRangeFilter() {
@@ -54,7 +50,7 @@ export class ElasticQueryBuilder {
 
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
-      if (aggDef.settings.orderBy === '_term' && gte(this.esVersion, '6.0.0')) {
+      if (aggDef.settings.orderBy === '_term') {
         queryNode.terms.order['_key'] = aggDef.settings.order;
       } else {
         queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -152,11 +148,6 @@ export class ElasticQueryBuilder {
         _doc: { order: 'desc' },
       },
     ];
-
-    // fields field not supported on ES 5.x
-    if (lt(this.esVersion, '5.0.0')) {
-      query.fields = ['*', '_source'];
-    }
 
     query.script_fields = {};
     return query;
@@ -415,13 +406,7 @@ export class ElasticQueryBuilder {
   }
 
   private buildScript(script: string) {
-    if (gte(this.esVersion, '5.6.0')) {
-      return script;
-    }
-
-    return {
-      inline: script,
-    };
+    return script;
   }
 
   private toNumber(stringValue: unknown): unknown | number {
@@ -480,7 +465,7 @@ export class ElasticQueryBuilder {
     switch (orderBy) {
       case 'key':
       case 'term':
-        const keyname = gte(this.esVersion, '6.0.0') ? '_key' : '_term';
+        const keyname = '_key';
         query.aggs['1'].terms.order[keyname] = order;
         break;
       case 'doc_count':

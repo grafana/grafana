@@ -35,7 +35,7 @@ describe('ConfigEditor', () => {
         onOptionsChange={(options) => {
           expect(options.jsonData.esVersion).toBe('5.0.0');
           expect(options.jsonData.timeField).toBe('@timestamp');
-          expect(options.jsonData.maxConcurrentShardRequests).toBe(256);
+          expect(options.jsonData.maxConcurrentShardRequests).toBe(5);
         }}
         options={options}
       />
