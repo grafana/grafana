@@ -12,7 +12,7 @@ import { FeedbackLink } from '../shared/FeedbackLink';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
-import { changeEditorMode, getQueryWithDefaults, useRawQuery } from '../state';
+import { changeEditorMode, getQueryWithDefaults, useExplain, useRawQuery } from '../state';
 
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
@@ -25,7 +25,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
-  const [showExplain, setShowExplain] = useState(false);
+  const [showExplain, setShowExplain] = useExplain();
 
   const query = getQueryWithDefaults(props.query, app);
   const [rawQuery, setRawQuery] = useRawQuery();
