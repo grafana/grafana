@@ -39,7 +39,7 @@ export function getValidQueryLayout(q: DashboardQuery): SearchLayout {
 
   // Folders is not valid when a query exists
   if (layout === SearchLayout.Folders) {
-    if (q.query || q.sort) {
+    if (q.query || q.sort || q.starred) {
       return SearchLayout.List;
     }
   }

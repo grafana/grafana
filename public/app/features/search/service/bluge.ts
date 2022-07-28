@@ -24,13 +24,10 @@ export class BlugeSearcher implements GrafanaSearcher {
     }
     // get the starred dashboards
     const starsUIDS = await getBackendSrv().get('api/user/stars');
-    // discard the query from the user?
-    // handle errors if any
-    console.log({ starsUIDS });
-    query = {
+    const starredQuery = {
       uid: starsUIDS,
     };
-    return doSearchQuery(query);
+    return doSearchQuery(starredQuery);
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
