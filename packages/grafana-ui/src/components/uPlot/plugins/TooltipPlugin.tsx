@@ -1,5 +1,4 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 
 import {
@@ -55,7 +54,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   const [focusedPointIdxs, setFocusedPointIdxs] = useState<Array<number | null>>([]);
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
-  const isMounted = useMountedState();
+  const displayMode = useRef<string>(mode);
 
   const pluginId = `TooltipPlugin`;
 
@@ -67,9 +66,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
     let bbox: DOMRect | undefined = undefined;
+    displayMode.current = mode;
 
     const plotEnter = () => {
-      if (!isMounted()) {
+      if (displayMode.current === TooltipDisplayMode.None) {
         return;
       }
       setIsActive(true);
@@ -77,7 +77,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     };
 
     const plotLeave = () => {
-      if (!isMounted()) {
+      if (displayMode.current === TooltipDisplayMode.None) {
         return;
       }
       setCoords(null);
@@ -107,6 +107,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     if (tooltipInterpolator) {
       // Custom toolitp positioning
       config.addHook('setCursor', (u) => {
+        if (displayMode.current === TooltipDisplayMode.None) {
+          return;
+        }
+
         tooltipInterpolator(
           setFocusedSeriesIdx,
           setFocusedPointIdx,
@@ -130,7 +134,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       });
     } else {
       config.addHook('setLegend', (u) => {
-        if (!isMounted()) {
+        if (displayMode.current === TooltipDisplayMode.None) {
           return;
         }
         setFocusedPointIdx(u.legend.idx!);
@@ -139,7 +143,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
       // default series/datapoint idx retireval
       config.addHook('setCursor', (u) => {
-        if (!bbox || !isMounted()) {
+        if (!bbox || displayMode.current === TooltipDisplayMode.None) {
           return;
         }
 
@@ -152,7 +156,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       });
 
       config.addHook('setSeries', (_, idx) => {
-        if (!isMounted()) {
+        if (displayMode.current === TooltipDisplayMode.None) {
           return;
         }
         setFocusedSeriesIdx(idx);
@@ -168,7 +172,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         plotInstance.current.root.parentElement?.removeEventListener('blur', plotLeave);
       }
     };
-  }, [config, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);
+  }, [config, mode, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);
 
   if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
     return null;
