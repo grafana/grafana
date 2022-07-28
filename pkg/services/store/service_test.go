@@ -176,14 +176,26 @@ func TestShouldDelegateFolderCreation(t *testing.T) {
 
 func TestShouldDelegateFolderDeletion(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
+	cmds := []*DeleteFolderCmd{
+		{
+			Path:  storageName,
+			Force: false,
+		},
+		{
+			Path:  storageName,
+			Force: true,
+		}}
 
-	mockStorage.On("DeleteFolder", mock.Anything, "/", mock.Anything).Return(nil)
+	ctx := context.Background()
 
-	err := service.DeleteFolder(context.Background(), dummyUser, &DeleteFolderCmd{
-		Path:  storageName,
-		Force: true,
-	})
-	require.NoError(t, err)
+	for _, cmd := range cmds {
+		mockStorage.On("DeleteFolder", ctx, "/", &filestorage.DeleteFolderOptions{
+			Force:        cmd.Force,
+			AccessFilter: allowAllPathFilter,
+		}).Once().Return(nil)
+		err := service.DeleteFolder(ctx, dummyUser, cmd)
+		require.NoError(t, err)
+	}
 }
 
 func TestShouldUploadSvg(t *testing.T) {

@@ -79,9 +79,16 @@ export const ActionRow: FC<Props> = ({
     <div className={styles.actionRow}>
       <HorizontalGroup spacing="md" width="auto">
         <TagFilter isClearable={false} tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
-        {layout !== SearchLayout.Folders && config.featureToggles.panelTitleSearch && (
-          <Checkbox value={includePanels} onChange={() => setIncludePanels(!includePanels)} label="Include panels" />
+        {config.featureToggles.panelTitleSearch && (
+          <Checkbox
+            data-testid="include-panels"
+            disabled={layout === SearchLayout.Folders}
+            value={includePanels}
+            onChange={() => setIncludePanels(!includePanels)}
+            label="Include panels"
+          />
         )}
+
         {showStarredFilter && (
           <div className={styles.checkboxWrapper}>
             <Checkbox label="Starred" onChange={onStarredFilterChange} value={query.starred} />

@@ -143,6 +143,15 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	}
 
 	authService := newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
+		// Public is OK to read regardless of user settings
+		if storageName == RootPublicStatic {
+			return map[string]filestorage.PathFilter{
+				ActionFilesRead:   allowAllPathFilter,
+				ActionFilesWrite:  denyAllPathFilter,
+				ActionFilesDelete: denyAllPathFilter,
+			}
+		}
+
 		if user == nil {
 			return nil
 		}
@@ -171,12 +180,6 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		}
 
 		switch storageName {
-		case RootPublicStatic:
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   allowAllPathFilter,
-				ActionFilesWrite:  denyAllPathFilter,
-				ActionFilesDelete: denyAllPathFilter,
-			}
 		case RootDevenv:
 			return map[string]filestorage.PathFilter{
 				ActionFilesRead:   allowAllPathFilter,
@@ -328,7 +331,7 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.
 	if storagePath == "" {
 		storagePath = filestorage.Delimiter
 	}
-	return root.Store().DeleteFolder(ctx, storagePath, &filestorage.DeleteFolderOptions{Force: true, AccessFilter: guardian.getPathFilter(ActionFilesDelete)})
+	return root.Store().DeleteFolder(ctx, storagePath, &filestorage.DeleteFolderOptions{Force: cmd.Force, AccessFilter: guardian.getPathFilter(ActionFilesDelete)})
 }
 
 func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.SignedInUser, cmd *CreateFolderCmd) error {
