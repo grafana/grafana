@@ -5,7 +5,7 @@ import { LoadingState, VariableType } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
-import { VariableModel, VariableOption, VariableWithOptions } from '../types';
+import { VariableModel, VariableOption } from '../types';
 import { ensureStringValues } from '../utils';
 
 import { getInstanceState, getNextVariableIndex } from './selectors';

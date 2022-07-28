@@ -63,7 +63,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   getVariables(): TypedVariableModel[] {
-    return this.dependencies.getVariables() as TypedVariableModel[];
+    return this.dependencies.getVariables();
   }
 
   updateIndex() {

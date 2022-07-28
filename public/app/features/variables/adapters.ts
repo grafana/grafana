@@ -8,6 +8,7 @@ import { VariablePickerProps } from './pickers/types';
 import { VariablesState } from './state/types';
 import { VariableModel, VariableOption } from './types';
 
+// JOSH PR TODO: Model here probably should be TypedVariableModel instead?
 export interface VariableAdapter<Model extends VariableModel> {
   id: VariableType;
   description: string;

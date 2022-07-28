@@ -15,7 +15,7 @@ export function getVariable(
   state: StoreState,
   throwWhenMissing: false
 ): TypedVariableModel | undefined;
-export function getVariable(identifier: KeyedVariableIdentifier, state: StoreState): TypedVariableModel;
+export function getVariable(identifier: KeyedVariableIdentifier, state?: StoreState): TypedVariableModel;
 export function getVariable(
   identifier: KeyedVariableIdentifier,
   state: StoreState = getState(),
@@ -50,7 +50,7 @@ export function getVariablesState(key: string, state: StoreState = getState()): 
   return state.templating.keys[toStateKey(key)] ?? getInitialTemplatingState();
 }
 
-export function getVariablesByKey(key: string, state: StoreState = getState()): VariableModel[] {
+export function getVariablesByKey(key: string, state: StoreState = getState()): TypedVariableModel[] {
   return getFilteredVariablesByKey(defaultVariablesFilter, key, state);
 }
 

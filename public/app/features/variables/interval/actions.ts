@@ -7,7 +7,6 @@ import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable } from '../state/selectors';
 import { KeyedVariableIdentifier } from '../state/types';
-import { IntervalVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { createIntervalOptions } from './reducer';

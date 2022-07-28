@@ -4,7 +4,7 @@ import { VariableType } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { VariableAdapter, variableAdapters } from '../adapters';
-import { initialVariableModelState, QueryVariableModel } from '../types';
+import { QueryVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { createQueryVariable } from './__tests__/fixtures';

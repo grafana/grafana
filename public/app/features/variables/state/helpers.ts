@@ -1,6 +1,6 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
-import { LoadingState, TypedVariableModel } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 
 import { DashboardState, StoreState } from '../../../types';

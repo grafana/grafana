@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { VariableType } from '@grafana/data';
+import { TypedVariableModel, VariableType } from '@grafana/data';
 
 import { ThunkResult } from '../../../types';
 import { variableAdapters } from '../adapters';
@@ -102,13 +102,15 @@ export const switchToNewMode =
     const identifier: VariableIdentifier = { type, id };
     const global = false;
     const index = getNewVariableIndex(rootStateKey, getState());
-    const model: VariableModel = cloneDeep(variableAdapters.get(type).initialState);
+
+    // JOSH PR TODO: cloneDeep isnt type safe, and I think this is closer to the type VariableModel?
+    const model: TypedVariableModel = cloneDeep(variableAdapters.get(type).initialState);
+
     model.id = id;
     model.name = id;
     model.rootStateKey = rootStateKey;
-    dispatch(
-      toKeyedAction(rootStateKey, addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index })))
-    );
+    const variablePayload = toVariablePayload<AddVariable>(identifier, { global, model, index });
+    dispatch(toKeyedAction(rootStateKey, addVariable(variablePayload)));
     dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
   };
 

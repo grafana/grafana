@@ -10,7 +10,6 @@ import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable } from '../state/selectors';
 import { KeyedVariableIdentifier } from '../state/types';
-import { DataSourceVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { createDataSourceOptions } from './reducer';

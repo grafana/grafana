@@ -8,7 +8,7 @@ import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../../state/selectors';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../../state/types';
-import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+import { VariableOption, VariableWithOptions } from '../../types';
 import { containsSearchFilter, getCurrentValue, toVariablePayload } from '../../utils';
 import { NavigationKey } from '../types';
 

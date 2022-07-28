@@ -105,7 +105,11 @@ export class VariableQueryRunner {
 
       this.updateOptionsResults.next({ identifier, state: LoadingState.Loading });
 
-      const variable = getVariable<QueryVariableModel>(identifier, getState());
+      const variable = getVariable(identifier, getState());
+      if (variable.type !== 'query') {
+        throw new Error('Variable is not a query variable');
+      }
+
       const timeSrv = getTimeSrv();
       const runnerArgs = { variable, datasource, searchFilter, timeSrv, runRequest };
       const runner = queryRunners.getRunnerForDatasource(datasource);
