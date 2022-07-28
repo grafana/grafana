@@ -143,7 +143,7 @@ export const ExternalAlertmanagers = () => {
     <div>
       <h4>External Alertmanagers</h4>
       <Alert title="External Alertmanager changes" severity="info">
-        The way you configure external Alertmanagers has changed. 
+        The way you configure external Alertmanagers has changed.
         <br />
         You can now use configured Alertmanager data sources as receivers of your Grafana-managed alerts.
         <br />

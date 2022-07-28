@@ -104,7 +104,7 @@ export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
 
     // Multiple Alertmanagers of the same URL may exist (e.g. with different credentials)
     // Alertmanager response only contains URLs, so in case of duplication, we are not able
-    // to distinguish which is which, resulting in an inconclusive status. 
+    // to distinguish which is which, resulting in an inconclusive status.
     const isStatusInconclusive = matchingDroppedUrls + matchingActiveUrls > 1;
 
     const status = isDropped ? 'dropped' : isActive ? 'active' : 'pending';
