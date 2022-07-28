@@ -253,13 +253,13 @@ export class Scene {
     return undefined;
   };
 
-  disableNonTargets = (target: HTMLElement | SVGElement, disable: boolean) => {
+  setNonTargetPointerEvents = (target: HTMLElement | SVGElement, disablePointerEvents: boolean) => {
     const stack = [...this.root.elements];
     while (stack.length > 0) {
       const currentElement = stack.shift();
 
       if (currentElement && currentElement.div && currentElement.div !== target) {
-        currentElement.applyLayoutStylesToDiv(disable);
+        currentElement.applyLayoutStylesToDiv(disablePointerEvents);
       }
 
       const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
@@ -347,7 +347,7 @@ export class Scene {
       })
       .on('dragStart', (event) => {
         this.ignoreDataUpdate = true;
-        this.disableNonTargets(event.target, true);
+        this.setNonTargetPointerEvents(event.target, true);
       })
       .on('dragGroupStart', (event) => {
         this.ignoreDataUpdate = true;
@@ -381,7 +381,7 @@ export class Scene {
 
         this.moved.next(Date.now());
         this.ignoreDataUpdate = false;
-        this.disableNonTargets(event.target, false);
+        this.setNonTargetPointerEvents(event.target, false);
       })
       .on('resizeStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
