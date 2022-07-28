@@ -26,7 +26,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
   return (
     <div className="gf-form-group">
       <div className="gf-form">
-        <InlineFormLabel width={12}>Graphite Query</InlineFormLabel>
+        <InlineFormLabel width={12}>InfluxQL Query</InlineFormLabel>
         <Input
           value={eventQuery}
           onChange={(e) => setEventQuery(e.currentTarget.value || '')}
