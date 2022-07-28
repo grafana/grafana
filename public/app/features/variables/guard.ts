@@ -52,7 +52,6 @@ export const isMulti = (model: VariableModel): model is VariableWithMultiSupport
   return withMulti.hasOwnProperty('multi') && typeof withMulti.multi === 'boolean';
 };
 
-// PR JOSH TODO: write some unit tests for this
 export const hasOptions = (model: VariableModel): model is VariableWithOptions => {
   return 'options' in model;
 };

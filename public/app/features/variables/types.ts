@@ -65,11 +65,10 @@ export enum TransactionStatus {
   Completed = 'Completed',
 }
 
-export const initialVariableModelState: BaseVariableModel = {
+export const initialVariableModelState: Omit<BaseVariableModel, 'type'> = {
   id: NEW_VARIABLE_ID,
   rootStateKey: null,
   name: '',
-  type: 'query',
   global: false,
   index: -1,
   hide: VariableHide.dontHide,

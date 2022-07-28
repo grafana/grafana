@@ -5,6 +5,7 @@ import { LoadingState, VariableType } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
+import { hasOptions } from '../guard';
 import { VariableModel, VariableOption } from '../types';
 import { ensureStringValues } from '../utils';
 
@@ -124,7 +125,7 @@ const sharedReducerSlice = createSlice({
       }
 
       const instanceState = getInstanceState(state, action.payload.id);
-      if (!('options' in instanceState)) {
+      if (!hasOptions(instanceState)) {
         return;
       }
 
