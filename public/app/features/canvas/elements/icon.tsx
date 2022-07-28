@@ -80,6 +80,11 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
       top: 0,
       left: 0,
     },
+    background: {
+      color: {
+        fixed: 'transparent',
+      },
+    },
     ...options,
     config: {
       path: {

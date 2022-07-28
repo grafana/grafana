@@ -49,6 +49,11 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
 
   getNewOptions: (options) => ({
     ...options,
+    background: {
+      color: {
+        fixed: 'transparent',
+      },
+    },
   }),
 
   // Called when data changes

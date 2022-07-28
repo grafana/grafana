@@ -79,6 +79,11 @@ export const windTurbineItem: CanvasElementItem<any, any> = {
 
   getNewOptions: (options) => ({
     ...options,
+    background: {
+      color: {
+        fixed: 'transparent',
+      },
+    },
   }),
 
   // Called when data changes
