@@ -1,4 +1,4 @@
-package manager
+package dashboards
 
 import (
 	"context"
@@ -12,13 +12,25 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var _ FileStore = (*FileStoreManager)(nil)
+
+type FileStoreManager struct {
+	pluginStore plugins.Store
+}
+
+func ProvideFileStoreManager(pluginStore plugins.Store) *FileStoreManager {
+	return &FileStoreManager{
+		pluginStore: pluginStore,
+	}
+}
+
 var openDashboardFile = func(name string) (fs.File, error) {
 	// Wrapping in filepath.Clean to properly handle
 	// gosec G304 Potential file inclusion via variable rule.
 	return os.Open(filepath.Clean(name))
 }
 
-func (m *PluginManager) ListPluginDashboardFiles(ctx context.Context, args *plugins.ListPluginDashboardFilesArgs) (*plugins.ListPluginDashboardFilesResult, error) {
+func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *ListPluginDashboardFilesArgs) (*ListPluginDashboardFilesResult, error) {
 	if args == nil {
 		return nil, fmt.Errorf("args cannot be nil")
 	}
@@ -27,7 +39,7 @@ func (m *PluginManager) ListPluginDashboardFiles(ctx context.Context, args *plug
 		return nil, fmt.Errorf("args.PluginID cannot be empty")
 	}
 
-	plugin, exists := m.Plugin(ctx, args.PluginID)
+	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginID)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: args.PluginID}
 	}
@@ -37,12 +49,12 @@ func (m *PluginManager) ListPluginDashboardFiles(ctx context.Context, args *plug
 		references = append(references, include.Path)
 	}
 
-	return &plugins.ListPluginDashboardFilesResult{
+	return &ListPluginDashboardFilesResult{
 		FileReferences: references,
 	}, nil
 }
 
-func (m *PluginManager) GetPluginDashboardFileContents(ctx context.Context, args *plugins.GetPluginDashboardFileContentsArgs) (*plugins.GetPluginDashboardFileContentsResult, error) {
+func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, args *GetPluginDashboardFileContentsArgs) (*GetPluginDashboardFileContentsResult, error) {
 	if args == nil {
 		return nil, fmt.Errorf("args cannot be nil")
 	}
@@ -55,7 +67,7 @@ func (m *PluginManager) GetPluginDashboardFileContents(ctx context.Context, args
 		return nil, fmt.Errorf("args.FileReference cannot be empty")
 	}
 
-	plugin, exists := m.Plugin(ctx, args.PluginID)
+	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginID)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: args.PluginID}
 	}
@@ -84,9 +96,7 @@ func (m *PluginManager) GetPluginDashboardFileContents(ctx context.Context, args
 		return nil, err
 	}
 
-	return &plugins.GetPluginDashboardFileContentsResult{
+	return &GetPluginDashboardFileContentsResult{
 		Content: file,
 	}, nil
 }
-
-var _ plugins.DashboardFileStore = &PluginManager{}

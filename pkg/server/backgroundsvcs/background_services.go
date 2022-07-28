@@ -34,7 +34,7 @@ import (
 
 func ProvideBackgroundServiceRegistry(
 	httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
-	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, pm *manager.PluginManager,
+	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, o *manager.Orchestrator,
 	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService, tracing tracing.Tracer,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, usageStats *uss.UsageStats,
 	statsCollector *statscollector.Service, grafanaUpdateChecker *updatechecker.GrafanaService,
@@ -58,7 +58,7 @@ func ProvideBackgroundServiceRegistry(
 		tokenService,
 		provisioning,
 		alerting,
-		pm,
+		o,
 		grafanaUpdateChecker,
 		pluginsUpdateChecker,
 		metrics,

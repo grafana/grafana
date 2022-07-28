@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"context"
-	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -63,34 +62,4 @@ type ErrorResolver interface {
 type PluginLoaderAuthorizer interface {
 	// CanLoadPlugin confirms if a plugin is authorized to load
 	CanLoadPlugin(plugin *Plugin) bool
-}
-
-// ListPluginDashboardFilesArgs list plugin dashboard files argument model.
-type ListPluginDashboardFilesArgs struct {
-	PluginID string
-}
-
-// GetPluginDashboardFilesArgs list plugin dashboard files result model.
-type ListPluginDashboardFilesResult struct {
-	FileReferences []string
-}
-
-// GetPluginDashboardFileContentsArgs get plugin dashboard file content argument model.
-type GetPluginDashboardFileContentsArgs struct {
-	PluginID      string
-	FileReference string
-}
-
-// GetPluginDashboardFileContentsResult get plugin dashboard file content result model.
-type GetPluginDashboardFileContentsResult struct {
-	Content io.ReadCloser
-}
-
-// DashboardFileStore is the interface for plugin dashboard file storage.
-type DashboardFileStore interface {
-	// ListPluginDashboardFiles lists plugin dashboard files.
-	ListPluginDashboardFiles(ctx context.Context, args *ListPluginDashboardFilesArgs) (*ListPluginDashboardFilesResult, error)
-
-	// GetPluginDashboardFileContents gets the referenced plugin dashboard file content.
-	GetPluginDashboardFileContents(ctx context.Context, args *GetPluginDashboardFileContentsArgs) (*GetPluginDashboardFileContentsResult, error)
 }
