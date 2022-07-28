@@ -1,4 +1,3 @@
-import { debounce } from 'lodash';
 import React, { useCallback } from 'react';
 
 import { QueryField } from '@grafana/ui';
@@ -20,10 +19,12 @@ export function GraphiteTextEditor({ rawQuery }: Props) {
     [dispatch]
   );
 
-  // debounce the query to not run it on every keystroke
-  // do this to allow updating query on copy and paste
-  // issue https://github.com/grafana/grafana/issues/48145
-  const updateQueryDebounced = debounce(updateQuery, 500);
+  const pasteQuery = useCallback(async () => {
+    const query = await navigator.clipboard.readText();
+
+    dispatch(actions.updateQuery({ query }));
+    dispatch(actions.runQuery());
+  }, [dispatch]);
 
   const runQuery = useCallback(() => {
     dispatch(actions.runQuery());
@@ -32,8 +33,9 @@ export function GraphiteTextEditor({ rawQuery }: Props) {
   return (
     <QueryField
       query={rawQuery}
-      onChange={updateQueryDebounced}
+      onChange={updateQuery}
       onBlur={runQuery}
+      onPaste={pasteQuery}
       onRunQuery={runQuery}
       placeholder={'Enter a Graphite query (run with Shift+Enter)'}
       portalOrigin="graphite"

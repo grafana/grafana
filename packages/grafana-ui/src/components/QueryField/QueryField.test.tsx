@@ -1,5 +1,5 @@
 import { shallow } from 'enzyme';
-import React from 'react';
+import React, { PureComponent } from 'react';
 import { Editor } from 'slate';
 
 import { createTheme } from '@grafana/data';
@@ -45,8 +45,26 @@ describe('<QueryField />', () => {
     expect(onRun.mock.calls.length).toBe(1);
   });
 
+  it('should execute query on paste', () => {
+    const onPaste = jest.fn();
+    const wrapper = shallow(
+      <UnThemedQueryField
+        theme={createTheme()}
+        query="my query"
+        onTypeahead={jest.fn()}
+        onPaste={onPaste}
+        portalOrigin="mock-origin"
+      />
+    );
+    const field = wrapper.instance() as UnThemedQueryField;
+    expect(onPaste.mock.calls.length).toBe(0);
+    field.onPaste();
+    expect(onPaste.mock.calls.length).toBe(1);
+  });
+
   it('should run onChange with clean text', () => {
     const onChange = jest.fn();
+
     const wrapper = shallow(
       <UnThemedQueryField
         theme={createTheme()}
@@ -56,6 +74,7 @@ describe('<QueryField />', () => {
         portalOrigin="mock-origin"
       />
     );
+
     const field = wrapper.instance() as UnThemedQueryField;
     field.runOnChange();
     expect(onChange.mock.calls.length).toBe(1);
@@ -65,6 +84,7 @@ describe('<QueryField />', () => {
   it('should run custom on blur, but not necessarily execute query', () => {
     const onBlur = jest.fn();
     const onRun = jest.fn();
+
     const wrapper = shallow(
       <UnThemedQueryField
         theme={createTheme()}
@@ -75,6 +95,7 @@ describe('<QueryField />', () => {
         portalOrigin="mock-origin"
       />
     );
+
     const field = wrapper.instance() as UnThemedQueryField;
     expect(onBlur.mock.calls.length).toBe(0);
     expect(onRun.mock.calls.length).toBe(0);

@@ -177,13 +177,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     state.target.target = action.payload.query;
     handleTargetChanged(state);
   }
-  // fix for issue https://github.com/grafana/grafana/issues/48145
-  // to allow saving and displaying a query on copying and pasting
-  // debounce the query to not call it on typing
-  // run the query if the state is not paused
-  if (!state.paused && actions.updateQuery.match(action)) {
-    state.refresh();
-  }
+
   if (actions.runQuery.match(action)) {
     state.refresh();
   }
