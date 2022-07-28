@@ -24,6 +24,7 @@ export interface TeamMember {
 
 export interface TeamGroup {
   groupId: string;
+  description: string;
   teamId: number;
 }
 

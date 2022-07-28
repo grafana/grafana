@@ -5704,10 +5704,6 @@ exports[`better eslint`] = {
     "public/app/features/teams/CreateTeam.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/teams/TeamGroupSync.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/features/teams/TeamMemberRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

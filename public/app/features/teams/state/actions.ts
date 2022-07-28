@@ -71,10 +71,10 @@ export function loadTeamGroups(): ThunkResult<void> {
   };
 }
 
-export function addTeamGroup(groupId: string): ThunkResult<void> {
+export function addTeamGroup(groupId: string, groupDesc: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    await getBackendSrv().post(`/api/teams/${team.id}/groups`, { groupId: groupId });
+    await getBackendSrv().post(`/api/teams/${team.id}/groups`, { groupId: groupId, description: groupDesc });
     dispatch(loadTeamGroups());
   };
 }

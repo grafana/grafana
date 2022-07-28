@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, SyntheticEvent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow } from '@grafana/ui';
@@ -32,6 +32,7 @@ interface OwnProps {
 interface State {
   isAdding: boolean;
   newGroupId: string;
+  newGroupDesc: string;
 }
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -42,7 +43,7 @@ const headerTooltip = `Sync LDAP, OAuth or SAML groups with your Grafana teams.`
 export class TeamGroupSync extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { isAdding: false, newGroupId: '' };
+    this.state = { isAdding: false, newGroupId: '', newGroupDesc: '' };
   }
 
   componentDidMount() {
@@ -57,14 +58,18 @@ export class TeamGroupSync extends PureComponent<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onNewGroupIdChanged = (event: any) => {
+  onNewGroupIdChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ newGroupId: event.target.value });
   };
 
-  onAddGroup = (event: any) => {
+  onNewGroupDescChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ newGroupDesc: event.target.value });
+  };
+
+  onAddGroup = (event: SyntheticEvent) => {
     event.preventDefault();
-    this.props.addTeamGroup(this.state.newGroupId);
-    this.setState({ isAdding: false, newGroupId: '' });
+    this.props.addTeamGroup(this.state.newGroupId, this.state.newGroupDesc);
+    this.setState({ isAdding: false, newGroupId: '', newGroupDesc: '' });
   };
 
   onRemoveGroup = (group: TeamGroup) => {
@@ -80,6 +85,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
     return (
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
+        <td>{group.description}</td>
         <td style={{ width: '1%' }}>
           <Button
             size="sm"
@@ -96,7 +102,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isAdding, newGroupId } = this.state;
+    const { isAdding, newGroupId, newGroupDesc } = this.state;
     const { groups, isReadOnly } = this.props;
     return (
       <div>
@@ -131,7 +137,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             <form onSubmit={this.onAddGroup}>
               <InlineFieldRow>
                 <InlineField
-                  label={'Add External Group'}
+                  label={'External Group ID'}
                   tooltip="LDAP Group Example: cn=users,ou=groups,dc=grafana,dc=org."
                 >
                   <Input
@@ -140,6 +146,16 @@ export class TeamGroupSync extends PureComponent<Props, State> {
                     placeholder=""
                     value={newGroupId}
                     onChange={this.onNewGroupIdChanged}
+                    disabled={isReadOnly}
+                  />
+                </InlineField>
+                <InlineField label={'Description'} tooltip="Mapping description for the group. Informative only.">
+                  <Input
+                    type="text"
+                    id={'add-desc'}
+                    placeholder=""
+                    value={newGroupDesc}
+                    onChange={this.onNewGroupDescChanged}
                     disabled={isReadOnly}
                   />
                 </InlineField>
@@ -175,6 +191,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               <thead>
                 <tr>
                   <th>External Group ID</th>
+                  <th>Mapping Description</th>
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>

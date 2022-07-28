@@ -37,18 +37,23 @@ describe('TeamGroupSync', () => {
     setup({ addTeamGroup: mockAddGroup });
     // Empty List CTA "Add group" button is second in the DOM order
     await userEvent.click(screen.getAllByRole('button', { name: /add group/i })[1]);
-    expect(screen.getByRole('textbox', { name: /add external group/i })).toBeVisible();
+    expect(screen.getByRole('textbox', { name: /external group id/i })).toBeVisible();
 
-    await userEvent.type(screen.getByRole('textbox', { name: /add external group/i }), 'test/group');
+    await userEvent.type(screen.getByRole('textbox', { name: /external group id/i }), 'test/group');
+
+    expect(screen.getByRole('textbox', { name: /description/i })).toBeVisible();
+
+    await userEvent.type(screen.getByRole('textbox', { name: /description/i }), 'test group description');
+
     await userEvent.click(screen.getAllByRole('button', { name: /add group/i })[0]);
     await waitFor(() => {
-      expect(mockAddGroup).toHaveBeenCalledWith('test/group');
+      expect(mockAddGroup).toHaveBeenCalledWith('test/group', 'test group description');
     });
   });
 
   it('should call remove group', async () => {
     const mockRemoveGroup = jest.fn();
-    const mockGroup: TeamGroup = { teamId: 1, groupId: 'some/group' };
+    const mockGroup: TeamGroup = { teamId: 1, groupId: 'some/group', description: '' };
     setup({ removeTeamGroup: mockRemoveGroup, groups: [mockGroup] });
     await userEvent.click(screen.getByRole('button', { name: 'Remove group some/group' }));
     await waitFor(() => {
