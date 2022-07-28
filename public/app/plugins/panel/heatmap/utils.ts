@@ -7,15 +7,12 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataHoverPayload,
-  DecimalCount,
   EventBus,
   formattedValueToString,
   getValueFormat,
   GrafanaTheme2,
-  guessDecimals,
   incrRoundDn,
   incrRoundUp,
-  roundDecimals,
   TimeRange,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
