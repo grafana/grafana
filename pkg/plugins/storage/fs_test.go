@@ -25,8 +25,8 @@ func TestAdd(t *testing.T) {
 
 	pluginID := "test-app"
 
-	i := &FileSystem{log: &fakeLogger{}}
-	archive, err := i.Add(context.Background(), zipFile(t, "./testdata/plugin-with-symlinks.zip"), pluginID, testDir)
+	fs := NewFileSystem(&fakeLogger{}, testDir)
+	archive, err := fs.Add(context.Background(), pluginID, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
 	require.NotNil(t, archive)
 	require.NoError(t, err)
 
