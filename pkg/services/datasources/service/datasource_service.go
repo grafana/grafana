@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"net/http"
 	"strconv"
 	"strings"
@@ -299,6 +300,11 @@ func (s *Service) GetTLSConfig(ctx context.Context, ds *datasources.DataSource, 
 
 func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	decryptedValues := make(map[string]string)
+
+	if shouldIgnoreDecryptedValue(ds) {
+		return decryptedValues, nil
+	}
+
 	secret, exist, err := s.SecretsStore.Get(ctx, ds.OrgId, ds.Name, secretType)
 	if err != nil {
 		return nil, err
@@ -319,6 +325,11 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 	}
 
 	return decryptedValues, nil
+}
+
+func shouldIgnoreDecryptedValue(ds *datasources.DataSource) bool {
+	// special case for ---Grafana-- datasource, we just need to return an empty decrypted value
+	return ds.Uid == grafanads.DatasourceUID && ds.Name == grafanads.DatasourceName
 }
 
 func (s *Service) decryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {

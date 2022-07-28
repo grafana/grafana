@@ -597,6 +597,20 @@ func TestService_GetDecryptedValues(t *testing.T) {
 	})
 }
 
+func Test_shouldIgnoreDecryptedValue(t *testing.T) {
+	t.Run("should return true for grafana datasource", func(t *testing.T) {
+		require.True(t, shouldIgnoreDecryptedValue(&datasources.DataSource{Uid: "grafana", Name: "-- Grafana --"}))
+	})
+
+	t.Run("should return false for other datasources", func(t *testing.T) {
+		require.False(t, shouldIgnoreDecryptedValue(&datasources.DataSource{Uid: "different_Uid", Name: "-- Grafana --"}))
+		require.False(t, shouldIgnoreDecryptedValue(&datasources.DataSource{Uid: "grafana", Name: "different_name"}))
+		require.False(t, shouldIgnoreDecryptedValue(&datasources.DataSource{Uid: "", Name: "-- Grafana --"}))
+		require.False(t, shouldIgnoreDecryptedValue(&datasources.DataSource{Uid: "grafana", Name: ""}))
+		require.False(t, shouldIgnoreDecryptedValue(&datasources.DataSource{Uid: "different_Uid", Name: "different_name"}))
+	})
+}
+
 const caCert string = `-----BEGIN CERTIFICATE-----
 MIIDATCCAemgAwIBAgIJAMQ5hC3CPDTeMA0GCSqGSIb3DQEBCwUAMBcxFTATBgNV
 BAMMDGNhLWs4cy1zdGhsbTAeFw0xNjEwMjcwODQyMjdaFw00NDAzMTQwODQyMjda
