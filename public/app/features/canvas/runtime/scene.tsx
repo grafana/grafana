@@ -253,7 +253,7 @@ export class Scene {
     return undefined;
   };
 
-  disableNonTargets = (target: HTMLElement | SVGElement, disable: boolean): ElementState | undefined => {
+  disableNonTargets = (target: HTMLElement | SVGElement, disable: boolean) => {
     const stack = [...this.root.elements];
     while (stack.length > 0) {
       const currentElement = stack.shift();
@@ -267,8 +267,6 @@ export class Scene {
         stack.unshift(nestedElement);
       }
     }
-
-    return undefined;
   };
 
   setRef = (sceneContainer: HTMLDivElement) => {
