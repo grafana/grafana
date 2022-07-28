@@ -142,12 +142,12 @@ export const ExternalAlertmanagers = () => {
   return (
     <div>
       <h4>External Alertmanagers</h4>
-      <Alert title="External alertmanagers changes" severity="info">
-        We changed the way of management of external Alertmanagers
+      <Alert title="External Alertmanager changes" severity="info">
+        The way you configure external Alertmanagers has changed. 
         <br />
-        From now on, you can use configured Alertmanager data sources as receivers of your Grafana-managed alerts
+        You can now use configured Alertmanager data sources as receivers of your Grafana-managed alerts.
         <br />
-        Check our documentation to find our more.
+        For more information, refer to our documentation.
       </Alert>
 
       <ExternalAlertmanagerDataSources
@@ -159,7 +159,7 @@ export const ExternalAlertmanagers = () => {
         <div className={styles.amChoice}>
           <Field
             label="Send alerts to"
-            description="Configures how the Grafana alert rule evaluation engine Alertmanager will handle your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured above), or both."
+            description="Configures how the Grafana alert rule evaluation engine Alertmanager handles your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured above), or both."
           >
             <RadioButtonGroup
               options={alertmanagerChoices}
@@ -172,9 +172,9 @@ export const ExternalAlertmanagers = () => {
 
       <h5>Alertmanagers by URL</h5>
       <Alert severity="warning" title="Deprecation Notice">
-        The URL-based configuration of Alertmanagers is now deprecated and will be removed in Grafana 9.2.0
+        The URL-based configuration of Alertmanagers is deprecated and will be removed in Grafana 9.2.0.
         <br />
-        Please use Alertmanager data sources to configure your external Alertmanagers.
+        Use Alertmanager data sources to configure your external Alertmanagers.
       </Alert>
 
       <div className={styles.muted}>

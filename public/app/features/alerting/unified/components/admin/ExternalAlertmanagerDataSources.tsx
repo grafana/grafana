@@ -28,8 +28,8 @@ export function ExternalAlertmanagerDataSources({ alertmanagers, inactive }: Ext
         <CallToActionCard
           message={
             <div>
-              There are no Alertmanager data sources configured to receive Grafana-managed alerts <br />
-              You can change this by selecting Receive Grafana Alerts in a data source configuration
+              There are no Alertmanager data sources configured to receive Grafana-managed alerts. <br />
+              You can change this by selecting Receive Grafana Alerts in a data source configuration.
             </div>
           }
           callToActionElement={<LinkButton href="/datasources">Go to data sources</LinkButton>}
@@ -62,7 +62,7 @@ export function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMd
       <Card.Heading className={styles.externalHeading}>
         {dataSource.name}{' '}
         {statusInconclusive && (
-          <Tooltip content="Multiple Alertmangers have the same URL configured. The state might be inconclusive">
+          <Tooltip content="Multiple Alertmangers have the same URL configured. The state might be inconclusive.">
             <Icon name="exclamation-triangle" size="md" className={styles.externalWarningIcon} />
           </Tooltip>
         )}
@@ -81,7 +81,7 @@ export function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMd
           <Badge
             text="Inactive"
             color="red"
-            tooltip="Grafana is configured to send alerts to the built-in internal alermanager only. External Alertmanages will not receive any alerts"
+            tooltip="Grafana is configured to send alerts to the built-in internal Alertmanager only. External Alertmanagers do not receive any alerts."
           />
         ) : (
           <Badge
