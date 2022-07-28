@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultColor } from '../element';
 
 interface DroneFrontData {
   rollAngle?: number;
@@ -29,7 +29,7 @@ const DroneFrontDisplay: FC<CanvasElementProps<DroneFrontConfig, DroneFrontData>
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
       viewBox="0 0 1300 290"
-      style={{ transform: droneFrontTransformStyle }}
+      style={{ transform: droneFrontTransformStyle, fill: defaultColor }}
     >
       <g className="arms" stroke="black" strokeWidth="28px">
         <line x1="510" x2="320" y1="100" y2="150" />

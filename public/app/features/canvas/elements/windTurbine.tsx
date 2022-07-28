@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultColor } from '../element';
 
 interface WindTurbineData {
   rpm?: number;
@@ -24,7 +24,7 @@ const WindTurbineDisplay: FC<CanvasElementProps<WindTurbineConfig, WindTurbineDa
   const windTurbineAnimation = `spin ${data?.rpm ? 60 / Math.abs(data.rpm) : 0}s linear infinite`;
 
   return (
-    <svg viewBox="0 0 189.326 283.989" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 189.326 283.989" preserveAspectRatio="xMidYMid meet" style={{ fill: defaultColor }}>
       <symbol id="blade">
         <path
           fill="#e6e6e6"

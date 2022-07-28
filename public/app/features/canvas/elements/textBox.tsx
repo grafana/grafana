@@ -9,7 +9,7 @@ import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimen
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { ColorDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultColor } from '../element';
 
 export enum Align {
   Left = 'left',
@@ -80,7 +80,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   getNewOptions: (options) => ({
     background: {
       color: {
-        fixed: 'grey',
+        fixed: defaultColor,
       },
     },
     ...options,
