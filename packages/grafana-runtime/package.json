@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@grafana/agent-web": "^0.3.0",
+    "@grafana/agent-web": "^0.4.0",
     "@grafana/data": "9.1.0-pre",
     "@grafana/e2e-selectors": "9.1.0-pre",
     "@grafana/ui": "9.1.0-pre",
@@ -31,30 +31,30 @@
     "lodash": "4.17.21",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "rxjs": "7.5.5",
+    "rxjs": "7.5.6",
     "systemjs": "0.20.19",
     "tslib": "2.4.0"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
-    "@rollup/plugin-commonjs": "22.0.0",
+    "@rollup/plugin-commonjs": "22.0.1",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@testing-library/dom": "8.13.0",
     "@testing-library/react": "12.1.4",
-    "@testing-library/user-event": "14.2.0",
+    "@testing-library/user-event": "14.3.0",
     "@types/angular": "1.8.4",
     "@types/history": "4.7.11",
-    "@types/jest": "28.1.1",
+    "@types/jest": "28.1.6",
     "@types/lodash": "4.14.182",
     "@types/react": "17.0.42",
     "@types/react-dom": "17.0.14",
     "@types/systemjs": "^0.20.6",
     "lodash": "4.17.21",
     "rimraf": "3.0.2",
-    "rollup": "2.75.6",
+    "rollup": "2.77.2",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.6.4"
+    "typescript": "4.7.4"
   },
   "types": "src/index.ts"
 }

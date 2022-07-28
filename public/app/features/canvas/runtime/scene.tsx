@@ -309,6 +309,7 @@ export class Scene {
 
     this.selecto = new Selecto({
       container: this.div,
+      rootContainer: this.div,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
       selectFromInside: false,
@@ -413,6 +414,11 @@ export class Scene {
       const isTargetAlreadySelected = this.selecto
         ?.getSelectedTargets()
         .includes(selectedTarget.parentElement.parentElement);
+
+      // Apply grabbing cursor while dragging, applyLayoutStylesToDiv() resets it to grab when done
+      if (this.isEditingEnabled && isTargetMoveableElement && this.selecto?.getSelectedTargets().length) {
+        this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+      }
 
       if (isTargetMoveableElement || isTargetAlreadySelected) {
         // Prevent drawing selection box when selected target is a moveable element or already selected

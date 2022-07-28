@@ -20,7 +20,7 @@ const prefixSuffixOpts = {
   }, {}),
 };
 
-export default {
+const meta: Meta = {
   title: 'Forms/Input',
   component: Input,
   decorators: [withCenteredStory],
@@ -62,7 +62,7 @@ export default {
     // validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
     width: { control: { type: 'range', min: 10, max: 200, step: 10 } },
   },
-} as Meta;
+};
 
 export const Simple: Story = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
@@ -111,3 +111,5 @@ export const WithFieldValidation: Story = (args) => {
     </div>
   );
 };
+
+export default meta;

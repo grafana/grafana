@@ -155,7 +155,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 	require.NotNil(t, folder)
 
 	// Grant our test Viewer with permission to admin the folder
-	acls := []*models.DashboardAcl{
+	acls := []*models.DashboardACL{
 		{
 			DashboardID: folder.Id,
 			OrgID:       testOrgID,
@@ -650,7 +650,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			desc:         "org viewer with the correct permissions can invite a user as a viewer in his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionUsersCreate}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{

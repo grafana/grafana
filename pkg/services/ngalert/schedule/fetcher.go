@@ -13,7 +13,7 @@ import (
 // hashUIDs returns a fnv64 hash of the UIDs for all alert rules.
 // The order of the alert rules does not matter as hashUIDs sorts
 // the UIDs in increasing order.
-func hashUIDs(alertRules []*models.SchedulableAlertRule) uint64 {
+func hashUIDs(alertRules []*models.AlertRule) uint64 {
 	h := fnv.New64()
 	for _, uid := range sortedUIDs(alertRules) {
 		// We can ignore err as fnv64 does not return an error
@@ -24,7 +24,7 @@ func hashUIDs(alertRules []*models.SchedulableAlertRule) uint64 {
 }
 
 // sortedUIDs returns a slice of sorted UIDs.
-func sortedUIDs(alertRules []*models.SchedulableAlertRule) []string {
+func sortedUIDs(alertRules []*models.AlertRule) []string {
 	uids := make([]string, 0, len(alertRules))
 	for _, alertRule := range alertRules {
 		uids = append(uids, alertRule.UID)
@@ -47,6 +47,7 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) error {
 	if err := sch.ruleStore.GetAlertRulesForScheduling(ctx, &q); err != nil {
 		return fmt.Errorf("failed to get alert rules: %w", err)
 	}
+	sch.log.Debug("alert rules fetched", "count", len(q.Result))
 	sch.schedulableAlertRules.set(q.Result)
 	return nil
 }

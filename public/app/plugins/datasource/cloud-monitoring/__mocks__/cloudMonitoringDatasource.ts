@@ -13,6 +13,7 @@ export const createMockDatasource = (overrides?: Partial<Datasource>) => {
     getProjects: jest.fn().mockResolvedValue([]),
     getDefaultProject: jest.fn().mockReturnValue('cloud-monitoring-default-project'),
     templateSrv,
+    getSLOServices: jest.fn().mockResolvedValue([]),
     ...overrides,
   };
 

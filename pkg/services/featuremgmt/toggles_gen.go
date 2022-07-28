@@ -47,10 +47,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoServiceGraph
-	// show service
-	FlagTempoServiceGraph = "tempoServiceGraph"
-
 	// FlagTempoApmTable
 	// Show APM table
 	FlagTempoApmTable = "tempoApmTable"
@@ -114,10 +110,6 @@ const (
 	// FlagExport
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"
-
-	// FlagStorageLocalUpload
-	// allow uploads to local storage
-	FlagStorageLocalUpload = "storageLocalUpload"
 
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query

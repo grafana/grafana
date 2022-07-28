@@ -33,6 +33,8 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
+
+	DeleteUserPermissions(ctx context.Context, userID int64) error
 }
 
 type RoleRegistry interface {
@@ -43,6 +45,7 @@ type RoleRegistry interface {
 type PermissionsStore interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	DeleteUserPermissions(ctx context.Context, userID int64) error
 }
 
 type TeamPermissionsService interface {
