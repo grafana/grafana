@@ -1,13 +1,18 @@
 import { css } from '@emotion/css';
 import React, { FC, useState } from 'react';
-import { useFormContext, RegisterOptions } from 'react-hook-form';
+import { RegisterOptions, useFormContext } from 'react-hook-form';
 
-import { parseDuration, durationToMilliseconds, GrafanaTheme2 } from '@grafana/data';
+import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
-import { positiveDurationValidationPattern, durationValidationPattern } from '../../utils/time';
+import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
+import {
+  durationValidationPattern,
+  parseDurationToMilliseconds,
+  positiveDurationValidationPattern,
+} from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
@@ -15,10 +20,6 @@ import { PreviewRule } from './PreviewRule';
 import { RuleEditorSection } from './RuleEditorSection';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
-
-function parseDurationToMilliseconds(duration: string) {
-  return durationToMilliseconds(parseDuration(duration));
-}
 
 const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
@@ -60,16 +61,6 @@ const evaluateEveryValidationOptions: RegisterOptions = {
   },
 };
 
-// TODO Move to more generic place
-export function useEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery: string) {
-  const evaluateEveryMilis = parseDurationToMilliseconds(alertGroupEvaluateEvery);
-  const evaluateEveryGlobalLimitMilis = parseDurationToMilliseconds(config.unifiedAlerting.minInterval);
-
-  const exceedsLimit = evaluateEveryGlobalLimitMilis > evaluateEveryMilis && evaluateEveryMilis > 0;
-
-  return { exceedsLimit };
-}
-
 export const GrafanaEvaluationBehavior: FC = () => {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
@@ -79,7 +70,7 @@ export const GrafanaEvaluationBehavior: FC = () => {
     watch,
   } = useFormContext<RuleFormValues>();
 
-  const { exceedsLimit: exceedsGlobalEvaluationLimit } = useEvaluationIntervalGlobalLimit(watch('evaluateEvery'));
+  const { exceedsLimit: exceedsGlobalEvaluationLimit } = checkEvaluationIntervalGlobalLimit(watch('evaluateEvery'));
 
   const evaluateEveryId = 'eval-every-input';
   const evaluateForId = 'eval-for-input';

@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime/src';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui/src';
 
 import { CombinedRule } from '../../../../../types/unified-alerting';
-import { useEvaluationIntervalGlobalLimit } from '../rule-editor/GrafanaEvaluationBehavior';
+import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 
 interface RuleConfigStatusProps {
   rule: CombinedRule;
@@ -14,7 +14,7 @@ interface RuleConfigStatusProps {
 
 export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
   const styles = useStyles2(getStyles);
-  const { exceedsLimit } = useEvaluationIntervalGlobalLimit(rule.group.interval ?? '');
+  const { exceedsLimit } = checkEvaluationIntervalGlobalLimit(rule.group.interval ?? '');
 
   if (!exceedsLimit) {
     return null;
