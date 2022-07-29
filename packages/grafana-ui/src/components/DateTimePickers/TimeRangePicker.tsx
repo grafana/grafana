@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
+import React, { memo, FormEvent, createRef, useState, ReactElement, ReactNode } from 'react';
 
 import {
   isDateTime,
@@ -46,6 +46,7 @@ export interface TimeRangePickerProps extends Themeable {
   //Internationalization
   timeRangeListTitleMessage?: string;
   timeRangeListRoleDescriptionMessage?: string;
+  timeRangeListEmptyListMessage?: ReactNode;
 }
 
 export interface State {
@@ -73,6 +74,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
     //Internationalization
     timeRangeListTitleMessage,
     timeRangeListRoleDescriptionMessage,
+    timeRangeListEmptyListMessage,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -141,6 +143,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
               //Internationalization
               timeRangeListTitleMessage={timeRangeListTitleMessage}
               timeRangeListRoleDescriptionMessage={timeRangeListRoleDescriptionMessage}
+              timeRangeListEmptyListMessage={timeRangeListEmptyListMessage}
             />
           </section>
         </FocusScope>

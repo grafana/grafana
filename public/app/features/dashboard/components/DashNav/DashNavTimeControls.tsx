@@ -1,5 +1,5 @@
-import { t } from '@lingui/macro';
-import React, { Component } from 'react';
+import { t, Trans } from '@lingui/macro';
+import React, { Component, memo } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
@@ -104,6 +104,7 @@ export class DashNavTimeControls extends Component<Props> {
             id: 'time-range.list.aria-role-description',
             message: 'Time range selection',
           })}
+          timeRangeListEmptyListMessage={<EmptyListTranslated />}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
@@ -129,3 +130,28 @@ export class DashNavTimeControls extends Component<Props> {
     );
   }
 }
+
+const EmptyListTranslated = memo(() => {
+  return (
+    <Trans id="time-range.list.empty-recent">
+      <div>
+        <span>
+          It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
+          recently used intervals will appear here.
+        </span>
+      </div>
+      <div>
+        <a
+          // className={styles.link}
+          href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
+          target="_new"
+        >
+          Read the documentation
+        </a>
+        <span> to find out more about how to enter custom time ranges.</span>
+      </div>
+    </Trans>
+  );
+});
+
+EmptyListTranslated.displayName = 'EmptyListTranslated';
