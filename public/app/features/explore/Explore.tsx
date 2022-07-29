@@ -332,6 +332,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showTrace,
       showNodeGraph,
       timeZone,
+      containerWidth,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -375,7 +376,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               />
               <ResponseErrorContainer exploreId={exploreId} />
             </PanelContainer>
-            <AutoSizer onResize={this.onResize} disableHeight>
+            <AutoSizer onResize={this.onResize} disableHeight defaultWidth={containerWidth}>
               {({ width }) => {
                 if (width === 0) {
                   return null;
@@ -444,6 +445,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showNodeGraph,
     loading,
     graphStyle,
+    containerWidth,
   } = item;
 
   return {
@@ -464,6 +466,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showNodeGraph,
     loading,
     graphStyle,
+    containerWidth,
   };
 }
 

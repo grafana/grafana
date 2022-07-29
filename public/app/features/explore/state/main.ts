@@ -12,7 +12,7 @@ import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/uti
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 
-import { paneReducer } from './explorePane';
+import { changeSizeAction, paneReducer } from './explorePane';
 import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
 
 //
@@ -118,6 +118,11 @@ export const splitOpen: SplitOpen = (options): ThunkResult<void> => {
 
     const urlState = serializeStateToUrlParam(rightUrlState);
     locationService.partial({ right: urlState }, true);
+
+    dispatch(
+      changeSizeAction({ exploreId: ExploreId.right, height: window.innerHeight, width: window.innerWidth / 2 })
+    );
+    dispatch(changeSizeAction({ exploreId: ExploreId.left, height: window.innerHeight, width: window.innerWidth / 2 }));
   };
 };
 
