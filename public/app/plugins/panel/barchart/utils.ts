@@ -1,5 +1,5 @@
 import { orderBy } from 'lodash';
-import { Padding } from 'uplot';
+import uPlot, { Padding } from 'uplot';
 
 import {
   ArrayVector,
@@ -302,7 +302,7 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
   // Add padding to the bottom to avoid clipping the rotated labels.
   const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
 
-  return [0, paddingRight, paddingBottom, paddingLeft];
+  return [Math.round(UPLOT_AXIS_FONT_SIZE * uPlot.pxRatio), paddingRight, paddingBottom, paddingLeft];
 }
 
 /** @internal */
