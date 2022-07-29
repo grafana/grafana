@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import {
   Button,
   Checkbox,
@@ -24,12 +25,18 @@ interface FormDTO {
   message: string;
 }
 
-export function SaveToStorageForm(props: SaveProps) {
-  const { dashboard, saveModel, onSubmit, onCancel, onSuccess, onOptionsChange } = props;
+interface Props extends SaveProps {
+  isNew?: boolean;
+  isCopy?: boolean;
+}
+
+export function SaveToStorageForm(props: Props) {
+  const { dashboard, saveModel, onSubmit, onCancel, onSuccess, onOptionsChange, isNew, isCopy } = props;
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
   const [saving, setSaving] = useState(false);
   const [response, setResponse] = useState<WriteValueResponse>();
+  const [path, setPath] = useState(dashboard.uid);
   const [workflow, setWorkflow] = useState(WorkflowID.Save);
   const saveText = useMemo(() => {
     switch (workflow) {
@@ -79,6 +86,7 @@ export function SaveToStorageForm(props: SaveProps) {
 
   let options = props.options;
   const workflows = item.value?.workflows ?? [];
+  const canSave = saveModel.hasChanges || isNew || isCopy;
 
   return (
     <Form
@@ -88,7 +96,13 @@ export function SaveToStorageForm(props: SaveProps) {
         }
         setSaving(true);
 
-        const uid = saveModel.clone.uid;
+        let uid = saveModel.clone.uid;
+        if (isNew || isCopy) {
+          uid = path;
+          if (!uid.endsWith('-dash.json')) {
+            uid += '-dash.json';
+          }
+        }
         const rsp = await getGrafanaStorage().write(uid, {
           body: saveModel.clone,
           kind: 'dashboard',
@@ -109,6 +123,11 @@ export function SaveToStorageForm(props: SaveProps) {
           if (!rsp.pending) {
             // should close
             onSuccess();
+
+            // Need to update the URL
+            if (isNew || isCopy) {
+              locationService.push(`/g/${uid}`);
+            }
           }
         } else {
           setSaving(false);
@@ -147,6 +166,18 @@ export function SaveToStorageForm(props: SaveProps) {
             )}
           </Stack>
 
+          {(isNew || isCopy) && (
+            <Field label="Path">
+              <Input
+                value={path ?? ''}
+                required
+                autoFocus
+                placeholder="Full path (todo, help validate)"
+                onChange={(v) => setPath(v.currentTarget.value)}
+              />
+            </Field>
+          )}
+
           {!isJustSave(item.value) && (
             <Field label="Workflow">
               <RadioButtonGroup value={workflow} options={workflows} onChange={setWorkflow} />
@@ -169,13 +200,13 @@ export function SaveToStorageForm(props: SaveProps) {
             </Button>
             <Button
               type="submit"
-              disabled={!saveModel.hasChanges}
+              disabled={!canSave}
               icon={saving ? 'fa fa-spinner' : undefined}
               aria-label={selectors.pages.SaveDashboardModal.save}
             >
               {saveText}
             </Button>
-            {!saveModel.hasChanges && <div>No changes to save</div>}
+            {!canSave && <div>No changes to save</div>}
           </HorizontalGroup>
         </Stack>
       )}

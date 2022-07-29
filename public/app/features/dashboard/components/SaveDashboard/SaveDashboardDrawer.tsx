@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
+import { config } from '@grafana/runtime';
 import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -18,7 +19,7 @@ import { useDashboardSave } from './useDashboardSave';
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const [options, setOptions] = useState<SaveDashboardOptions>({});
 
-  const isFromStorage = dashboard.uid.indexOf('/') > 0;
+  const isFromStorage = config.featureToggles.dashboardsFromStorage && dashboard.uid.indexOf('/') > 0;
   const isProvisioned = dashboard.meta.provisioned && !isFromStorage;
   const isNew = dashboard.version === 0 && !isFromStorage;
 
@@ -90,6 +91,8 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
           onSubmit={onDashboardSave}
           options={options}
           onOptionsChange={setOptions}
+          isNew={isNew}
+          isCopy={isCopy}
         />
       );
     }
