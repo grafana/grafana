@@ -48,10 +48,8 @@ func TestRequiresValidAccessToken(t *testing.T) {
 
 		request, err := http.NewRequest("GET", "/api/public/ma/events/myAccessToken", nil)
 		require.NoError(t, err)
-		fakeStore := &publicdashboards.FakePublicDashboardStore{}
-		fakeStore.On("AccessTokenExists", mock.Anything, mock.Anything).Return(false, fmt.Errorf("not found"))
 
-		resp := runMiddleware(request, publicdashboardsService.ProvideService(setting.NewCfg(), fakeStore))
+		resp := runMiddleware(request, mockAccessTokenExistsResponse(false, fmt.Errorf("error not found")))
 
 		require.Equal(t, http.StatusInternalServerError, resp.Code)
 	})
