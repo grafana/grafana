@@ -96,8 +96,6 @@ class WrapperUnconnected extends PureComponent<Props> {
     const hasSplit = Boolean(left) && Boolean(right);
     const rightContainerWidth = this.props.exploreState[ExploreId.right]?.containerWidth;
 
-    //const isRightMain = !Boolean(left) && Boolean(right); // for SplitPaneWrapper, the left panel always shows, so we need to put right variables in the left panel if left is closed
-
     return (
       <div className={styles.pageScrollbarWrapper}>
         <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />

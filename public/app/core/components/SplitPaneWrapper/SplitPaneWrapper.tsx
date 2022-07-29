@@ -31,7 +31,6 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    console.log('splitpane unmount');
     window.removeEventListener('resize', this.updateSplitPaneSize);
   }
 
