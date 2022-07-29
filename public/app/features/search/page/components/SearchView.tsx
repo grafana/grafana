@@ -48,7 +48,16 @@ export const SearchView = ({
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
-  const { query, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery({});
+  const {
+    query,
+    onTagFilterChange,
+    onStarredFilterChange,
+    onTagAdd,
+    onDatasourceChange,
+    onSortChange,
+    onLayoutChange,
+    onClearStarred,
+  } = useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
@@ -66,6 +75,7 @@ export const SearchView = ({
       sort: query.sort?.value,
       explain: query.explain,
       withAllowedActions: query.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
+      starred: query.starred,
     };
 
     // Only dashboards have additional properties
@@ -106,6 +116,9 @@ export const SearchView = ({
   );
 
   const results = useAsync(() => {
+    if (searchQuery.starred) {
+      return getGrafanaSearcher().starred(searchQuery);
+    }
     return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
 
@@ -135,6 +148,13 @@ export const SearchView = ({
     // trigger again the search to the backend
     onQueryTextChange(query.query);
   };
+
+  const getStarredItems = useCallback(
+    (e) => {
+      onStarredFilterChange(e);
+    },
+    [onStarredFilterChange]
+  );
 
   const renderResults = () => {
     const value = results.value;
@@ -252,9 +272,14 @@ export const SearchView = ({
               if (query.query) {
                 onQueryTextChange(''); // parent will clear the sort
               }
+              if (query.starred) {
+                onClearStarred();
+              }
             }
             onLayoutChange(v);
           }}
+          showStarredFilter={hidePseudoFolders}
+          onStarredFilterChange={!hidePseudoFolders ? undefined : getStarredItems}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}
