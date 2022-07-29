@@ -5,8 +5,8 @@ e2e.scenario({
   itName: 'Ensure you can import a number of json test dashboards from a specific test directory',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: true,
+  skipScenario: false,
   scenario: () => {
-    e2e.flows.importDashboards('/dashboards', 1000);
+    e2e.flows.importDashboards('/e2e/dashboards', 1000);
   },
 });

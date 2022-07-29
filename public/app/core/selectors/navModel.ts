@@ -43,7 +43,7 @@ function getSectionRoot(node: NavModelItem): NavModelItem {
   if (root.children) {
     root.children = root.children.map((item) => {
       if (item.id === node.id) {
-        return { ...node, active: true };
+        return { ...item, active: true };
       }
 
       return item;
