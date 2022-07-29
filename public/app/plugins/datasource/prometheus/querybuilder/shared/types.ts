@@ -99,8 +99,6 @@ export interface QueryBuilderOperationParamEditorProps {
 export enum QueryEditorMode {
   Code = 'code',
   Builder = 'builder',
-  // When explain section is removed, we need to remove this query editor mode
-  Explain = 'explain',
 }
 
 export interface VisualQueryModeller {

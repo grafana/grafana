@@ -26,7 +26,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
-  const { flag: rawQuery, setFlag: setRawQuery } = useFlag(promQueryEditorRawQueryKey);
+  const { flag: rawQuery, setFlag: setRawQuery } = useFlag(promQueryEditorRawQueryKey, true);
 
   const query = getQueryWithDefaults(props.query, app);
   // This should be filled in from the defaults by now.
