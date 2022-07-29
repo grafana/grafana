@@ -14,7 +14,12 @@ import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequi
 import { useSearchQuery } from '../../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
-import { reportDashboardListViewed } from '../reporting';
+import {
+  reportDashboardListViewed,
+  reportSearchResultInteraction,
+  reportSearchQueryInteraction,
+  reportSearchFailedQueryInteraction,
+} from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
@@ -65,6 +70,7 @@ export const SearchView = ({
   const isFolders = layout === SearchLayout.Folders;
 
   const [listKey, setListKey] = useState(Date.now());
+  const eventTrackingNamespace = folderDTO ? 'manage_dashboards' : 'dashboard_search';
 
   const searchQuery = useMemo(() => {
     const q: SearchQuery = {
@@ -103,23 +109,55 @@ export const SearchView = ({
   // Search usage reporting
   useDebounce(
     () => {
-      reportDashboardListViewed(folderDTO ? 'manage_dashboards' : 'dashboard_search', {
+      reportDashboardListViewed(eventTrackingNamespace, {
         layout: query.layout,
         starred: query.starred,
         sortValue: query.sort?.value,
         query: query.query,
         tagCount: query.tag?.length,
+        includePanels,
       });
     },
     1000,
-    [folderDTO, query.layout, query.starred, query.sort?.value, query.query?.length, query.tag?.length]
+    []
   );
 
+  const onClickItem = () => {
+    reportSearchResultInteraction(eventTrackingNamespace, {
+      layout: query.layout,
+      starred: query.starred,
+      sortValue: query.sort?.value,
+      query: query.query,
+      tagCount: query.tag?.length,
+      includePanels,
+    });
+  };
+
   const results = useAsync(() => {
+    const trackingInfo = {
+      layout: query.layout,
+      starred: query.starred,
+      sortValue: query.sort?.value,
+      query: query.query,
+      tagCount: query.tag?.length,
+      includePanels,
+    };
+
+    reportSearchQueryInteraction(eventTrackingNamespace, trackingInfo);
+
     if (searchQuery.starred) {
-      return getGrafanaSearcher().starred(searchQuery);
+      return getGrafanaSearcher()
+        .starred(searchQuery)
+        .catch((error) =>
+          reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+        );
     }
-    return getGrafanaSearcher().search(searchQuery);
+
+    return getGrafanaSearcher()
+      .search(searchQuery)
+      .catch((error) =>
+        reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+      );
   }, [searchQuery]);
 
   const clearSelection = useCallback(() => {
@@ -200,6 +238,7 @@ export const SearchView = ({
             renderStandaloneBody={true}
             tags={query.tag}
             key={listKey}
+            onClickItem={onClickItem}
           />
         );
       }
@@ -211,6 +250,7 @@ export const SearchView = ({
           tags={query.tag}
           onTagSelected={onTagAdd}
           hidePseudoFolders={hidePseudoFolders}
+          onClickItem={onClickItem}
         />
       );
     }
@@ -229,6 +269,7 @@ export const SearchView = ({
               onTagSelected: onTagAdd,
               keyboardEvents,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
+              onClickItem: onClickItem,
             };
 
             if (layout === SearchLayout.Grid) {
