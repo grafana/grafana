@@ -38,9 +38,6 @@ export function parseResourceURI(resourceURI: string) {
   const matches = RESOURCE_URI_REGEX.exec(resourceURI);
   const groups: RegexGroups = matches?.groups ?? {};
   const { subscription, resourceGroup, metricNamespaceAndResource } = groups;
-  if (!subscription) {
-    return undefined;
-  }
   const { metricNamespace, resourceName } = parseNamespaceAndName(metricNamespaceAndResource);
 
   return { subscription, resourceGroup, metricNamespace, resourceName };
@@ -73,7 +70,8 @@ function matchURI(rowURI: string, resourceURI: string) {
     rowParams?.subscription === targetParams?.subscription &&
     rowParams?.resourceGroup === targetParams?.resourceGroup &&
     // metricNamespace may include a subresource that we don't need to compare
-    rowParams?.metricNamespace?.split('/')[0] === targetParams?.metricNamespace?.split('/')[0] &&
+    rowParams?.metricNamespace?.toLowerCase().split('/')[0] ===
+      targetParams?.metricNamespace?.toLowerCase().split('/')[0] &&
     // resourceName may include a subresource that we don't need to compare
     rowParams?.resourceName?.split('/')[0] === targetParams?.resourceName?.split('/')[0]
   );

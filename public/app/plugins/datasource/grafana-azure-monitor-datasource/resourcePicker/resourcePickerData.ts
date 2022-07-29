@@ -39,23 +39,25 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     this.resourcePath = `${routeNames.resourceGraph}`;
   }
 
-  async fetchInitialRows(type: ResourcePickerQueryType, currentSelection?: string): Promise<ResourceRowGroup> {
+  async fetchInitialRows(
+    type: ResourcePickerQueryType,
+    currentSelection?: AzureMetricResource
+  ): Promise<ResourceRowGroup> {
     const subscriptions = await this.getSubscriptions();
     if (!currentSelection) {
       return subscriptions;
     }
 
     let resources = subscriptions;
-    const parsedURI = parseResourceURI(currentSelection);
-    if (parsedURI) {
-      const resourceGroupURI = `/subscriptions/${parsedURI.subscription}/resourceGroups/${parsedURI.resourceGroup}`;
+    if (currentSelection.subscription) {
+      const resourceGroupURI = `/subscriptions/${currentSelection.subscription}/resourceGroups/${currentSelection.resourceGroup}`;
 
-      if (parsedURI.resourceGroup) {
-        const resourceGroups = await this.getResourceGroupsBySubscriptionId(parsedURI.subscription, type);
-        resources = addResources(resources, `/subscriptions/${parsedURI.subscription}`, resourceGroups);
+      if (currentSelection.resourceGroup) {
+        const resourceGroups = await this.getResourceGroupsBySubscriptionId(currentSelection.subscription, type);
+        resources = addResources(resources, `/subscriptions/${currentSelection.subscription}`, resourceGroups);
       }
 
-      if (parsedURI.resourceName) {
+      if (currentSelection.resourceName) {
         const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI, type);
         resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
       }
@@ -94,7 +96,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       if (!parsedUri || !(parsedUri.resourceName || parsedUri.resourceGroup || parsedUri.subscription)) {
         throw new Error('unable to fetch resource details');
       }
-      let id = parsedUri.subscription;
+      let id = parsedUri.subscription ?? '';
       let type = ResourceRowType.Subscription;
       if (parsedUri.resourceName) {
         id = parsedUri.resourceName;
