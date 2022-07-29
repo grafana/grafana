@@ -436,6 +436,16 @@ describe('templateSrv', () => {
       const result = _templateSrv.formatValue(['test', 'test"2'], 'json|percentencode');
       expect(result).toBe('%5B%22test%22%2C%22test%5C%222%22%5D');
     });
+
+    it('single value and jsonwithoutquote format should render JSON format string, But the double quotation marks around it have been removed', () => {
+      const result = _templateSrv.formatValue('Test Value"', 'jsonwithoutquote');
+      expect(result).toBe('Test Value\\"');
+    });
+
+    it('multi value and jsonwithoutquote format should render JSON format string, like json', () => {
+      const result = _templateSrv.formatValue(['test', 'test"2'], 'jsonwithoutquote');
+      expect(result).toBe('["test","test\\"2"]');
+    });
   });
 
   describe('can check if variable exists', () => {
