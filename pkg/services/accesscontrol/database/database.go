@@ -63,7 +63,7 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 	params := []interface{}{}
 	q := `WHERE role.id IN (`
 
-	// This is an additional security. We should never reach this with userID set to 0.
+	// This is an additional security. We should never have permissions granted to userID 0.
 	// Only allow real users to get user/team permissions (anonymous/apikeys)
 	if userID > 0 {
 		q += `
