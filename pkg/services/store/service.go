@@ -171,7 +171,7 @@ func ProvideService(
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootResources,
+			}, RootSystem,
 				"System",
 				"Grafana system storage",
 				&StorageSQLConfig{}, sql, orgId))
