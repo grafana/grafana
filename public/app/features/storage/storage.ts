@@ -4,7 +4,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DashboardDTO } from 'app/types';
 
-import { UploadReponse, StorageInfo, ItemOptions } from './types';
+import { UploadReponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse, WorkflowID } from './types';
 
 // Likely should be built into the search interface!
 export interface GrafanaStorage {
@@ -26,6 +26,9 @@ export interface GrafanaStorage {
    */
   getDashboard: (path: string) => Promise<DashboardDTO>;
   saveDashboard: (options: SaveDashboardCommand) => Promise<any>;
+
+  /** Saves dashbaords */
+  write: (options: WriteValueRequest) => Promise<WriteValueResponse>;
 }
 
 class SimpleStorage implements GrafanaStorage {
@@ -151,28 +154,21 @@ class SimpleStorage implements GrafanaStorage {
       return Promise.reject('Dashboards from storage is not enabled');
     }
 
-    const blob = new Blob([JSON.stringify(options.dashboard)], {
-      type: 'application/json',
-    });
-
     const uid = options.dashboard.uid;
-    const formData = new FormData();
-    if (options.message) {
-      formData.append('message', options.message);
-    }
-    formData.append('overwriteExistingFile', options.overwrite === false ? 'false' : 'true');
-    formData.append('file.path', uid);
-    formData.append('file', blob);
-    const res = await fetch('/api/storage/upload', {
-      method: 'POST',
-      body: formData,
+    const rsp = await this.write({
+      path: uid,
+      body: options.dashboard,
+      kind: 'dashboard',
+      message: options.message,
+      workflow: WorkflowID.Save,
     });
+    console.log('saved', rsp);
 
-    let body = (await res.json()) as UploadReponse;
-    if (res.status !== 200 && !body?.err) {
-      console.log('SAVE', options, body);
-      return Promise.reject({ message: body?.message ?? res.statusText });
-    }
+    // let body = (await res.json()) as UploadReponse;
+    // if (res.status !== 200 && !body?.err) {
+    //   console.log('SAVE', options, body);
+    //   return Promise.reject({ message: body?.message ?? res.statusText });
+    // }
 
     return {
       uid,
@@ -180,6 +176,10 @@ class SimpleStorage implements GrafanaStorage {
       slug: uid,
       status: 'success',
     };
+  }
+
+  async write(options: WriteValueRequest): Promise<WriteValueResponse> {
+    return backendSrv.post<WriteValueResponse>('/api/storage/write', options);
   }
 
   async getConfig() {

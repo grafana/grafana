@@ -21,17 +21,19 @@ import (
 
 const rootStorageTypeGit = "git"
 
-type rootStorageGit struct {
-	baseStorageRuntime
+var _ storageRuntime = &rootStorageGit{}
 
+type rootStorageGit struct {
 	settings *StorageGitConfig
 	repo     *git.Repository
 	root     string // repostitory root
 
 	github *githubHelper
+	meta   RootStorageMeta
+	store  filestorage.FileStorage
 }
 
-func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGit {
+func newGitStorage(meta RootStorageMeta, scfg RootStorageConfig, localWorkCache string) *rootStorageGit {
 	cfg := scfg.Git
 	if cfg == nil {
 		cfg = &StorageGitConfig{}
@@ -42,9 +44,7 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 	scfg.S3 = nil
 	scfg.Git = cfg
 
-	meta := RootStorageMeta{
-		Config: scfg,
-	}
+	meta.Config = scfg
 	if scfg.Prefix == "" {
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
@@ -180,6 +180,14 @@ func newGitStorage(scfg RootStorageConfig, localWorkCache string) *rootStorageGi
 
 	s.meta = meta
 	return s
+}
+
+func (s *rootStorageGit) Meta() RootStorageMeta {
+	return s.meta
+}
+
+func (s *rootStorageGit) Store() filestorage.FileStorage {
+	return s.store
 }
 
 func (s *rootStorageGit) Pull() error {

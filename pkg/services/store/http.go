@@ -48,14 +48,27 @@ func (s *standardStorageService) RegisterHTTPRoutes(storageRoute routing.RouteRe
 
 	// Write paths
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
-	storageRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(s.delete))
-	storageRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(s.upload))
-	storageRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(s.createFolder))
-	storageRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(s.deleteFolder))
+	storageRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(s.doDelete))
+	storageRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(s.doUpload))
+	storageRoute.Post("/write", reqGrafanaAdmin, routing.Wrap(s.doWrite))
+	storageRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(s.doCreateFolder))
+	storageRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(s.doDeleteFolder))
 	storageRoute.Get("/config", reqGrafanaAdmin, routing.Wrap(s.getConfig))
 }
 
-func (s *standardStorageService) upload(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doWrite(c *models.ReqContext) response.Response {
+	cmd := &WriteValueRequest{}
+	if err := web.Bind(c.Req, cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	rsp, err := s.write(c.Req.Context(), c.SignedInUser, cmd)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "save error", err)
+	}
+	return response.JSON(200, rsp)
+}
+
+func (s *standardStorageService) doUpload(c *models.ReqContext) response.Response {
 	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
 	quotaReached, err := s.quotaService.CheckQuotaReached(c.Req.Context(), "file", nil)
 	if err != nil {
@@ -180,7 +193,7 @@ func (s *standardStorageService) getOptions(c *models.ReqContext) response.Respo
 	return response.JSON(200, opts)
 }
 
-func (s *standardStorageService) delete(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doDelete(c *models.ReqContext) response.Response {
 	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
 	scope, path := getPathAndScope(c)
 
@@ -195,7 +208,7 @@ func (s *standardStorageService) delete(c *models.ReqContext) response.Response 
 	})
 }
 
-func (s *standardStorageService) deleteFolder(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doDeleteFolder(c *models.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -224,7 +237,7 @@ func (s *standardStorageService) deleteFolder(c *models.ReqContext) response.Res
 	})
 }
 
-func (s *standardStorageService) createFolder(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doCreateFolder(c *models.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)

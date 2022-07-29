@@ -49,6 +49,26 @@ export enum WorkflowID {
   PR = 'PR',
   Push = 'push',
 }
+
+export interface WriteValueRequest {
+  path: string;
+  kind: string;
+  body: {}; // json body
+  message?: string;
+  title?: string;
+  workflow: WorkflowID;
+}
+
+export interface WriteValueResponse {
+  code: number;
+  message?: string;
+  url?: string;
+  hash?: string;
+  branch?: string;
+  pending?: boolean;
+  size?: number;
+}
+
 export interface ItemOptions {
   path: string;
   workflows: Array<SelectableValue<WorkflowID>>;

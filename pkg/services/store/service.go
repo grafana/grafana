@@ -27,6 +27,7 @@ var ErrValidationFailed = errors.New("request validation failed")
 var ErrFileAlreadyExists = errors.New("file exists")
 var ErrStorageNotFound = errors.New("storage not found")
 var ErrAccessDenied = errors.New("access denied")
+var ErrOnlyDashboardSaveSupported = errors.New("only dashboard save is currently supported")
 
 const RootPublicStatic = "public-static"
 const RootResources = "resources"
@@ -102,7 +103,10 @@ func ProvideService(
 
 	// always exists
 	globalRoots := []storageRuntime{
-		newDiskStorage(RootStorageConfig{
+		newDiskStorage(RootStorageMeta{
+			ReadOnly: true,
+			Builtin:  true,
+		}, RootStorageConfig{
 			Prefix:      RootPublicStatic,
 			Name:        "Public static files",
 			Description: "Access files from the static public files",
@@ -115,14 +119,16 @@ func ProvideService(
 					"/maps/",
 				},
 			},
-		}).setReadOnly(true).setBuiltin(true),
+		}),
 	}
 
 	// Development dashboards
 	if settings.AddDevEnv && setting.Env != setting.Prod {
 		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
 		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
-			s := newDiskStorage(RootStorageConfig{
+			s := newDiskStorage(RootStorageMeta{
+				ReadOnly: false,
+			}, RootStorageConfig{
 				Prefix:      RootDevenv,
 				Name:        "Development Environment",
 				Description: "Explore files within the developer environment directly",
@@ -131,7 +137,7 @@ func ProvideService(
 					Roots: []string{
 						"/dev-dashboards/",
 					},
-				}}).setReadOnly(false)
+				}})
 			globalRoots = append(globalRoots, s)
 		}
 	}
@@ -155,19 +161,21 @@ func ProvideService(
 
 		// Custom upload files
 		storages = append(storages,
-			newSQLStorage(RootResources,
+			newSQLStorage(RootStorageMeta{
+				Builtin: true,
+			}, RootResources,
 				"Resources",
 				"Upload custom resource files",
-				&StorageSQLConfig{}, sql, orgId).
-				setBuiltin(true))
+				&StorageSQLConfig{}, sql, orgId))
 
 		// System settings
 		storages = append(storages,
-			newSQLStorage(RootSystem,
+			newSQLStorage(RootStorageMeta{
+				Builtin: true,
+			}, RootResources,
 				"System",
 				"Grafana system storage",
-				&StorageSQLConfig{}, sql, orgId).
-				setBuiltin(true))
+				&StorageSQLConfig{}, sql, orgId))
 
 		return storages
 	}
@@ -209,27 +217,11 @@ func ProvideService(
 			return nil
 		}
 
-		switch storageName {
-		case RootDevenv:
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   allowAllPathFilter,
-				ActionFilesWrite:  denyAllPathFilter,
-				ActionFilesDelete: denyAllPathFilter,
-			}
-		case RootResources:
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   allowAllPathFilter,
-				ActionFilesWrite:  allowAllPathFilter,
-				ActionFilesDelete: allowAllPathFilter,
-			}
-
-		// Default ADMIN role is read only
-		default:
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   allowAllPathFilter,
-				ActionFilesWrite:  denyAllPathFilter,
-				ActionFilesDelete: denyAllPathFilter,
-			}
+		// Admin can do anything
+		return map[string]filestorage.PathFilter{
+			ActionFilesRead:   allowAllPathFilter,
+			ActionFilesWrite:  allowAllPathFilter,
+			ActionFilesDelete: allowAllPathFilter,
 		}
 	})
 
@@ -418,6 +410,32 @@ func (s *standardStorageService) Delete(ctx context.Context, user *models.Signed
 		return err
 	}
 	return nil
+}
+
+func (s *standardStorageService) write(ctx context.Context, user *models.SignedInUser, req *WriteValueRequest) (*WriteValueResponse, error) {
+	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(req.Path))
+	if !guardian.canWrite(req.Path) {
+		return nil, ErrAccessDenied
+	}
+
+	root, storagePath := s.tree.getRoot(getOrgId(user), req.Path)
+	if root == nil {
+		return nil, ErrStorageNotFound
+	}
+
+	if root.Meta().ReadOnly {
+		return nil, ErrUnsupportedStorage
+	}
+
+	// not svg!
+	if req.EntityType != EntityTypeDashboard {
+		return nil, ErrOnlyDashboardSaveSupported
+	}
+
+	// Modify the save request
+	req.Path = storagePath
+	req.User = user
+	return root.Write(ctx, req)
 }
 
 type workflowInfo struct {

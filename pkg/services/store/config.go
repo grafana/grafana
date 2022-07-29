@@ -135,9 +135,9 @@ type StorageGCSConfig struct {
 func newStorage(cfg RootStorageConfig, localWorkCache string) (storageRuntime, error) {
 	switch cfg.Type {
 	case rootStorageTypeDisk:
-		return newDiskStorage(cfg), nil
+		return newDiskStorage(RootStorageMeta{}, cfg), nil
 	case rootStorageTypeGit:
-		return newGitStorage(cfg, localWorkCache), nil
+		return newGitStorage(RootStorageMeta{}, cfg, localWorkCache), nil
 	}
 
 	return nil, fmt.Errorf("unsupported store: " + cfg.Type)
