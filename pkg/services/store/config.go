@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -24,7 +25,7 @@ type GlobalStorageConfig struct {
 	Roots []RootStorageConfig `json:"roots"`
 }
 
-func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
+func LoadStorageConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*GlobalStorageConfig, error) {
 	changed := false
 	fpath := filepath.Join(cfg.DataPath, "storage", "storage.json")
 	g := &GlobalStorageConfig{}
@@ -44,24 +45,40 @@ func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
 		changed = true
 	}
 
-	if g.Roots == nil {
+	if g.Roots == nil && features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
 		g.Roots = append(g.Roots, RootStorageConfig{
-			Type:     "git",
-			Prefix:   "it",
-			Name:     "Your git repository",
-			Disabled: true, // will not clone until enabled explicitly
+			Type:   "git",
+			Prefix: "it-A",
+			Name:   "Repository that requires pull requests",
 			Git: &StorageGitConfig{
-				Remote:             "github.com/ryantxu/test-repo-export-0002",
+				Remote:             "https://github.com/grafana/hackathon-2022-03-git-dash-A",
 				Branch:             "main",
-				Root:               "org_1/root", // the dashboard files
+				Root:               "dashboards", // the dashboard files
 				RequirePullRequest: true,
-				AccessToken:        "${GRAFANA_STORAGE_GITHUB_ACCESS_TOKEN}",
+				AccessToken:        "$GRAFANA_STORAGE_GITHUB_ACCESS_TOKEN",
+			},
+		})
+		g.Roots = append(g.Roots, RootStorageConfig{
+			Type:   "git",
+			Prefix: "it-B",
+			Name:   "Another repo (can push to main)",
+			Git: &StorageGitConfig{
+				Remote:             "https://github.com/grafana/hackathon-2022-03-git-dash-B",
+				Branch:             "main",
+				Root:               "dashboards", // the dashboard files
+				RequirePullRequest: false,
+				AccessToken:        "$GRAFANA_STORAGE_GITHUB_ACCESS_TOKEN",
 			},
 		})
 		changed = true
 	}
 
 	g.filepath = fpath
+
+	// Also configured from ini files
+	if cfg.Storage.AllowUnsanitizedSvgUpload {
+		g.AllowUnsanitizedSvgUpload = true
+	}
 
 	// Save a template version in config
 	if changed && setting.Env != setting.Prod {
@@ -75,6 +92,7 @@ func (c *GlobalStorageConfig) save() error {
 	if err != nil {
 		return err
 	}
+	os.MkdirAll(filepath.Dir(c.filepath), 0700)
 	return ioutil.WriteFile(c.filepath, out, 0600)
 }
 

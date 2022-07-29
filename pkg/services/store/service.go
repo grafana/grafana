@@ -95,12 +95,9 @@ func ProvideService(
 	cfg *setting.Cfg,
 	quotaService quota.Service,
 ) StorageService {
-	settings, err := LoadStorageConfig(cfg)
+	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
 		grafanaStorageLogger.Warn("error loading storage config", "error", err)
-	}
-	if cfg.Storage.AllowUnsanitizedSvgUpload {
-		settings.AllowUnsanitizedSvgUpload = true
 	}
 
 	// always exists

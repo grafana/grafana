@@ -136,7 +136,7 @@ func newGitStorage(meta RootStorageMeta, scfg RootStorageConfig, localWorkCache 
 					if token == "" {
 						meta.Notice = append(meta.Notice, data.Notice{
 							Severity: data.NoticeSeverityError,
-							Text:     "Unable to find token environment variable: " + token,
+							Text:     "Unable to find token environment variable: " + cfg.AccessToken,
 						})
 					}
 				}
