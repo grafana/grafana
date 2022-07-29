@@ -11,7 +11,7 @@ import {
 } from 'app/features/dimensions';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
-import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/APIEditor';
+import { APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/APIEditor';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 import { LineConfig } from '../types';
@@ -145,36 +145,36 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
           // Configured values
           fixed: 'grey',
         },
-      })
-      .addSliderInput({
-        category,
-        path: 'config.stroke.width',
-        name: 'Stroke',
-        defaultValue: 0,
-        settings: {
-          min: 0,
-          max: 10,
-        },
-      })
-      .addCustomEditor({
-        category,
-        id: 'config.stroke.color',
-        path: 'config.stroke.color',
-        name: 'Stroke color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {
-          // Configured values
-          fixed: 'grey',
-        },
-        showIf: (cfg) => Boolean(cfg?.config?.stroke?.width),
-      })
-      .addCustomEditor({
-        category,
-        id: 'apiSelector',
-        path: 'config.api',
-        name: 'API',
-        editor: APIEditor,
       });
+    // .addSliderInput({
+    //   category,
+    //   path: 'config.stroke.width',
+    //   name: 'Stroke',
+    //   defaultValue: 0,
+    //   settings: {
+    //     min: 0,
+    //     max: 10,
+    //   },
+    // })
+    // .addCustomEditor({
+    //   category,
+    //   id: 'config.stroke.color',
+    //   path: 'config.stroke.color',
+    //   name: 'Stroke color',
+    //   editor: ColorDimensionEditor,
+    //   settings: {},
+    //   defaultValue: {
+    //     // Configured values
+    //     fixed: 'grey',
+    //   },
+    //   showIf: (cfg) => Boolean(cfg?.config?.stroke?.width),
+    // })
+    // .addCustomEditor({
+    //   category,
+    //   id: 'apiSelector',
+    //   path: 'config.api',
+    //   name: 'API',
+    //   editor: APIEditor,
+    // });
   },
 };
