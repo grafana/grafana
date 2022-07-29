@@ -77,7 +77,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 		path = "api/v1/query"
 	default:
 		// this should not happen because getDatasourceByUID would not return the data source
-		return errorToResponse(unexpectedDatasourceType(ds.Type, "loki, prometheus"))
+		return errorToResponse(unexpectedDatasourceTypeError(ds.Type, "loki, prometheus"))
 	}
 
 	t := timeNow()

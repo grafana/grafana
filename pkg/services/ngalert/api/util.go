@@ -41,24 +41,17 @@ func getDatasourceByUID(ctx *models.ReqContext, cache datasources.CacheService, 
 	if err != nil {
 		return nil, err
 	}
-	var actual apimodels.Backend
-	switch ds.Type {
-	case "loki", "prometheus":
-		actual = apimodels.LoTexRulerBackend
-	case "alertmanager":
-		actual = apimodels.AlertmanagerBackend
-	default:
-		var expected string
-		switch expectedType {
-		case apimodels.AlertmanagerBackend:
-			expected = "alertmanager"
-		case apimodels.LoTexRulerBackend:
-			expected = "loki,prometheus"
+	switch expectedType {
+	case apimodels.AlertmanagerBackend:
+		if ds.Type != "alertmanager" {
+			return nil, unexpectedDatasourceTypeError(ds.Type, "alertmanager")
 		}
-		return nil, errUnexpectedDatasourceType(ds.Type, expected)
-	}
-	if actual != expectedType {
-		return nil, unexpectedBackendTypeError(actual, expectedType)
+	case apimodels.LoTexRulerBackend:
+		if ds.Type != "loki" && ds.Type != "prometheus" {
+			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus")
+		}
+	default:
+		return nil, unexpectedDatasourceTypeError(ds.Type, expectedType.String())
 	}
 	return ds, nil
 }
