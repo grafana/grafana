@@ -28,13 +28,13 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   },
   pattern: durationValidationPattern,
   validate: (value) => {
-    // 0 is a special value meaning for equals evaluation interval
-    if (value === '0' || value === '0s') {
-      return true;
-    }
-
     const millisFor = parseDurationToMilliseconds(value);
     const millisEvery = parseDurationToMilliseconds(evaluateEvery);
+
+    // 0 is a special value meaning for equals evaluation interval
+    if (millisFor === 0) {
+      return true;
+    }
 
     return millisFor >= millisEvery ? true : 'For must be greater than or equal to evaluate every.';
   },

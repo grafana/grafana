@@ -8,10 +8,10 @@ export function getAllDataSources(): Array<DataSourceInstanceSettings<DataSource
 }
 
 export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery: string) {
-  const evaluateEveryMilis = parseDurationToMilliseconds(alertGroupEvaluateEvery);
-  const evaluateEveryGlobalLimitMilis = parseDurationToMilliseconds(config.unifiedAlerting.minInterval);
+  const evaluateEveryMillis = parseDurationToMilliseconds(alertGroupEvaluateEvery);
+  const evaluateEveryGlobalLimitMillis = parseDurationToMilliseconds(config.unifiedAlerting.minInterval);
 
-  const exceedsLimit = evaluateEveryGlobalLimitMilis > evaluateEveryMilis && evaluateEveryMilis > 0;
+  const exceedsLimit = evaluateEveryGlobalLimitMillis > evaluateEveryMillis && evaluateEveryMillis > 0;
 
-  return { globalLimit: evaluateEveryGlobalLimitMilis, exceedsLimit };
+  return { globalLimit: evaluateEveryGlobalLimitMillis, exceedsLimit };
 }
