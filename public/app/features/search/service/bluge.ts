@@ -13,14 +13,14 @@ import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, Sear
 export class BlugeSearcher implements GrafanaSearcher {
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
-      throw 'facets not supported!';
+      throw new Error('facets not supported!');
     }
     return doSearchQuery(query);
   }
 
   async starred(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
-      throw 'facets not supported!';
+      throw new Error('facets not supported!');
     }
     // get the starred dashboards
     const starsUIDS = await getBackendSrv().get('api/user/stars');
