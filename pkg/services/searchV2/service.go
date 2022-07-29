@@ -34,7 +34,7 @@ type StandardSearchService struct {
 	dashboardIndexingBatchSize int
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl, storageService store.StorageService) SearchService {
 	config := newConfig(cfg)
 	s := &StandardSearchService{
 		cfg: cfg,
@@ -57,6 +57,7 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 		},
 		s.getDashboardIndexFactory,
 		entityEventStore,
+		storageService,
 	)
 	return s
 }

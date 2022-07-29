@@ -33,9 +33,13 @@ const RootSystem = "system"
 const brandingStorage = "branding"
 const SystemBrandingStorage = "system/" + brandingStorage
 
+const searchServiceStorage = "search"
+const SystemSearchServiceStorage = "system/" + searchServiceStorage
+
 var (
 	SystemBrandingReader = &models.SignedInUser{OrgId: 1}
 	SystemBrandingAdmin  = &models.SignedInUser{OrgId: 1}
+	SearchServiceAdmin   = &models.SignedInUser{OrgId: 1}
 )
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
@@ -164,6 +168,15 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 					ActionFilesDelete: systemBrandingFilter,
 				}
 			}
+
+			if user == SearchServiceAdmin {
+				searchFilter := createSearchServicePathFilter()
+				return map[string]filestorage.PathFilter{
+					ActionFilesRead:   searchFilter,
+					ActionFilesWrite:  searchFilter,
+					ActionFilesDelete: searchFilter,
+				}
+			}
 		}
 
 		if !user.IsGrafanaAdmin {
@@ -201,6 +214,14 @@ func createSystemBrandingPathFilter() filestorage.PathFilter {
 	return filestorage.NewPathFilter(
 		[]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, // access to all folders and files inside `/branding/`
 		[]string{filestorage.Delimiter + brandingStorage},                         // access to the `/branding` folder itself, but not to any other sibling folder
+		nil,
+		nil)
+}
+
+func createSearchServicePathFilter() filestorage.PathFilter {
+	return filestorage.NewPathFilter(
+		[]string{filestorage.Delimiter + searchServiceStorage + filestorage.Delimiter}, // access to all folders and files inside `/search/`
+		[]string{filestorage.Delimiter + searchServiceStorage},                         // access to the `/search` folder itself, but not to any other sibling folder
 		nil,
 		nil)
 }

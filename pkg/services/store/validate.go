@@ -95,6 +95,11 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 		return success()
 	case EntityTypeImage:
 		return s.validateImage(ctx, user, req)
+	case EntityTypeArchive:
+		if user == SearchServiceAdmin {
+			return success()
+		}
+		return fail("archives accepted from search service only")
 	default:
 		return fail("unknown entity")
 	}

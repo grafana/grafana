@@ -12,7 +12,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/filestorage"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store"
 
 	"github.com/blugelabs/bluge"
@@ -23,6 +26,11 @@ import (
 type buildSignal struct {
 	orgID int64
 	done  chan error
+}
+
+type fileStore interface {
+	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
+	Upload(ctx context.Context, user *models.SignedInUser, req *store.UploadRequest) error
 }
 
 type eventStore interface {
@@ -36,6 +44,7 @@ type orgIndexManager struct {
 	config       orgManagerConfig
 	indexFactory IndexFactory
 	eventStore   eventStore
+	fileStore    fileStore
 	logger       log.Logger
 	syncCh       chan chan struct{}
 	buildSignals chan buildSignal
@@ -49,12 +58,13 @@ type orgManagerConfig struct {
 	BackupBaseDir         string
 }
 
-func newOrgIndexManager(config orgManagerConfig, indexFactory IndexFactory, eventStore eventStore) *orgIndexManager {
+func newOrgIndexManager(config orgManagerConfig, indexFactory IndexFactory, eventStore eventStore, fileStore fileStore) *orgIndexManager {
 	config.BackupBaseDir = "data/gf_search"
 	return &orgIndexManager{
 		config:       config,
 		indexFactory: indexFactory,
 		eventStore:   eventStore,
+		fileStore:    fileStore,
 		perOrgIndex:  map[int64]Index{},
 		logger:       log.New("index_manager_" + config.Name),
 		buildSignals: make(chan buildSignal),
@@ -126,14 +136,22 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 		if err != nil {
 			return err
 		}
-		//err = m.compressBackup(ctx)
-		//if err != nil {
-		//	return err
-		//}
+		err = m.compressBackup(ctx)
+		if err != nil {
+			return err
+		}
 		//err = m.decompressBackup(ctx)
 		//if err != nil {
 		//	return err
 		//}
+		err = m.uploadBackup(ctx)
+		if err != nil {
+			return err
+		}
+		err = m.downloadBackup(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	// This semaphore channel allows limiting concurrent async re-indexing routines to 1.
@@ -503,4 +521,39 @@ func (m *orgIndexManager) decompressBackup(_ context.Context) error {
 	}
 	reader := bytes.NewReader(content)
 	return decompressToFolder(reader, uncompressedBackupPath)
+}
+
+func (m *orgIndexManager) uploadBackup(ctx context.Context) error {
+	started := time.Now()
+	defer func() {
+		m.logger.Info("uploaded backup", "elapsed", time.Since(started))
+	}()
+	compressedFilePath := "data/backup.tar.gz"
+	content, err := ioutil.ReadFile(compressedFilePath)
+	if err != nil {
+		return fmt.Errorf("error uploading backup: %w", err)
+	}
+	err = m.fileStore.Upload(ctx, store.SearchServiceAdmin, &store.UploadRequest{
+		Contents:              content,
+		Path:                  "system/search/backup.tar.gz",
+		EntityType:            store.EntityTypeArchive,
+		OverwriteExistingFile: true,
+	})
+	if err != nil {
+		return fmt.Errorf("error uploading backup: %w", err)
+	}
+	return nil
+}
+
+func (m *orgIndexManager) downloadBackup(ctx context.Context) error {
+	started := time.Now()
+	defer func() {
+		m.logger.Info("downloaded backup", "elapsed", time.Since(started))
+	}()
+	f, err := m.fileStore.Read(ctx, store.SearchServiceAdmin, "system/search/backup.tar.gz")
+	if err != nil {
+		return fmt.Errorf("error reading backup: %w", err)
+	}
+	fmt.Println(len(f.Contents))
+	return nil
 }
