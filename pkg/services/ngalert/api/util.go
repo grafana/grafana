@@ -39,9 +39,6 @@ func getDatasourceByUID(ctx *models.ReqContext, cache datasources.CacheService, 
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
 	ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
-		if err == datasources.ErrDataSourceNotFound {
-			return nil, errBackendDoesNotExist
-		}
 		return nil, err
 	}
 	var actual apimodels.Backend

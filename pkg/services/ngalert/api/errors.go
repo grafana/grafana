@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 var (
-	errBackendDoesNotExist      = errors.New("unknown backend type")
 	errUnexpectedBackendType    = errors.New("unexpected backend type")
 	errUnexpectedDatasourceType = errors.New("unexpected datasource type")
 )
@@ -30,7 +30,7 @@ func backendTypeDoesNotMatchPayloadTypeError(backendType apimodels.Backend, payl
 }
 
 func errorToResponse(err error) response.Response {
-	if errors.Is(err, errBackendDoesNotExist) {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return ErrResp(404, err, "")
 	}
 	if errors.Is(err, errUnexpectedBackendType) || errors.Is(err, errUnexpectedDatasourceType) {
