@@ -1,5 +1,7 @@
 import { e2e } from '@grafana/e2e';
 
+import testDashboard from '../dashboards/TestDashboard.json';
+
 e2e.scenario({
   describeName: 'Import Dashboards Test',
   itName: 'Ensure you can import a number of json test dashboards from a specific test directory',
@@ -7,6 +9,6 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.importDashboards('/e2e/dashboards', 1000);
+    e2e.flows.importDashboard(testDashboard, 1000, true);
   },
 });
