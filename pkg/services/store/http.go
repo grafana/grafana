@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -284,13 +283,10 @@ func (s *standardStorageService) getConfig(c *models.ReqContext) response.Respon
 	orgId := c.OrgId
 	t := s.tree
 	t.assureOrgIsInitialized(orgId)
-	for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
-		roots = append(roots, f.Meta())
-	}
-	if orgId != ac.GlobalOrgID {
-		for _, f := range t.rootsByOrgId[orgId] {
-			roots = append(roots, f.Meta())
-		}
+
+	storages := t.getStorages(orgId)
+	for _, s := range storages {
+		roots = append(roots, s.Meta())
 	}
 	return response.JSON(200, roots)
 }
