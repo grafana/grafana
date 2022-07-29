@@ -16,7 +16,7 @@ import { RuleEditorSection } from './RuleEditorSection';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
-function parseDurationToMiliseconds(duration: string) {
+function parseDurationToMilliseconds(duration: string) {
   return durationToMilliseconds(parseDuration(duration));
 }
 
@@ -27,8 +27,13 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   },
   pattern: durationValidationPattern,
   validate: (value) => {
-    const millisFor = parseDurationToMiliseconds(value);
-    const millisEvery = parseDurationToMiliseconds(evaluateEvery);
+    // 0 is a special value meaning for equals evaluation interval
+    if (value === '0' || value === '0s') {
+      return true;
+    }
+
+    const millisFor = parseDurationToMilliseconds(value);
+    const millisEvery = parseDurationToMilliseconds(evaluateEvery);
 
     return millisFor >= millisEvery ? true : 'For must be greater than or equal to evaluate every.';
   },
@@ -57,8 +62,8 @@ const evaluateEveryValidationOptions: RegisterOptions = {
 
 // TODO Move to more generic place
 export function useEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery: string) {
-  const evaluateEveryMilis = parseDurationToMiliseconds(alertGroupEvaluateEvery);
-  const evaluateEveryGlobalLimitMilis = parseDurationToMiliseconds(config.unifiedAlerting.minInterval);
+  const evaluateEveryMilis = parseDurationToMilliseconds(alertGroupEvaluateEvery);
+  const evaluateEveryGlobalLimitMilis = parseDurationToMilliseconds(config.unifiedAlerting.minInterval);
 
   const exceedsLimit = evaluateEveryGlobalLimitMilis > evaluateEveryMilis && evaluateEveryMilis > 0;
 
