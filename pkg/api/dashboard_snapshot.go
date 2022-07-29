@@ -187,7 +187,10 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Respon
 
 	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		if errors.Is(err, dashboardsnapshots.ErrDashboardSnapshotNotFound) {
+			return response.Error(http.StatusNotFound, "Failed to find dashboard snapshot", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboard snapshot", err)
 	}
 
 	snapshot := query.Result
