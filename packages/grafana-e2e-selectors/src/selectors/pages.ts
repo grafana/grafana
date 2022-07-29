@@ -50,7 +50,7 @@ export const Pages = {
        */
       nav: 'Dashboard navigation',
       navV2: 'data-testid Dashboard navigation',
-      publicDashboardTag: 'Public Dashboard tag',
+      publicDashboardTag: 'data-testid public dashboard tag',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -182,14 +182,14 @@ export const Pages = {
     shareButton: 'Share dashboard or panel',
     PublicDashboard: {
       Tab: 'Tab Public Dashboard',
-      WillBePublicCheckbox: 'Public Dashboard will be public checkbox',
-      LimitedDSCheckbox: 'Public Dashboard limited datasources checkbox',
-      CostIncreaseCheckbox: 'Public Dashboard cost may increase checkbox',
-      EnableSwitch: 'Public Dashboard on off switch',
-      SaveConfigButton: 'Public Dashboard save config button',
-      CopyUrlInput: 'Public Dashboard copy url input',
-      CopyUrlButton: 'Public Dashboard copy url button',
-      TemplateVariablesWarningAlert: 'Public Dashboard disabled template variables alert',
+      WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
+      LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
+      CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
+      EnableSwitch: 'data-testid public dashboard on off switch',
+      SaveConfigButton: 'data-testid public dashboard save config button',
+      CopyUrlInput: 'data-testid public dashboard copy url input',
+      CopyUrlButton: 'data-testid public dashboard copy url button',
+      TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
     },
   },
   Explore: {
