@@ -11,8 +11,9 @@ import { buildVisualQueryFromString } from '../parsing';
 import { FeedbackLink } from '../shared/FeedbackLink';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
+import { promQueryEditorExplainKey, promQueryEditorRawQueryKey, useFlag } from '../shared/hooks/useFlag';
 import { QueryEditorMode } from '../shared/types';
-import { changeEditorMode, getQueryWithDefaults, useExplain, useRawQuery } from '../state';
+import { changeEditorMode, getQueryWithDefaults } from '../state';
 
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
@@ -24,10 +25,10 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
-  const [showExplain, setShowExplain] = useExplain();
+  const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
+  const { flag: rawQuery, setFlag: setRawQuery } = useFlag(promQueryEditorRawQueryKey);
 
   const query = getQueryWithDefaults(props.query, app);
-  const [rawQuery, setRawQuery] = useRawQuery();
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
 
@@ -68,7 +69,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   };
 
   const onShowExplainChange = (e: SyntheticEvent<HTMLInputElement>) => {
-    setShowExplain(e.currentTarget.checked);
+    setExplain(e.currentTarget.checked);
   };
 
   return (
@@ -102,7 +103,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
           options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
         />
 
-        <QueryHeaderSwitch label="Explain" value={showExplain} onChange={onShowExplainChange} />
+        <QueryHeaderSwitch label="Explain" value={explain} onChange={onShowExplainChange} />
         {editorMode === QueryEditorMode.Builder && (
           <>
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
@@ -125,7 +126,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} showExplain={showExplain} />}
+        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} showExplain={explain} />}
         {editorMode === QueryEditorMode.Builder && (
           <PromQueryBuilderContainer
             query={query}
@@ -134,7 +135,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             onRunQuery={props.onRunQuery}
             data={data}
             showRawQuery={rawQuery}
-            showExplain={showExplain}
+            showExplain={explain}
           />
         )}
         <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
