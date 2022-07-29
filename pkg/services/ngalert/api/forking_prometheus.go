@@ -47,15 +47,9 @@ func (f *PrometheusApiHandler) handleRouteGetGrafanaRuleStatuses(ctx *models.Req
 }
 
 func (f *PrometheusApiHandler) getService(ctx *models.ReqContext) (*LotexProm, error) {
-	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	_, err := getDatasourceByUID(ctx, f.DatasourceCache, apimodels.LoTexRulerBackend)
 	if err != nil {
 		return nil, err
 	}
-
-	switch t {
-	case apimodels.LoTexRulerBackend:
-		return f.ProxySvc, nil
-	default:
-		return nil, unexpectedBackendTypeError(t, apimodels.LoTexRulerBackend)
-	}
+	return f.ProxySvc, nil
 }

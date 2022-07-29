@@ -102,15 +102,9 @@ func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesConfig(ctx *models.ReqC
 }
 
 func (f *RulerApiHandler) getService(ctx *models.ReqContext) (*LotexRuler, error) {
-	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	_, err := getDatasourceByUID(ctx, f.DatasourceCache, apimodels.LoTexRulerBackend)
 	if err != nil {
 		return nil, err
 	}
-
-	switch t {
-	case apimodels.LoTexRulerBackend:
-		return f.LotexRuler, nil
-	default:
-		return nil, unexpectedBackendTypeError(t, apimodels.LoTexRulerBackend)
-	}
+	return f.LotexRuler, nil
 }

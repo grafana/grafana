@@ -35,19 +35,35 @@ func toMacaronPath(path string) string {
 	}))
 }
 
-func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
+func getDatasourceByUID(ctx *models.ReqContext, cache datasources.CacheService, expectedType apimodels.Backend) (*datasources.DataSource, error) {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
-	if ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache); err == nil {
-		switch ds.Type {
-		case "loki", "prometheus":
-			return apimodels.LoTexRulerBackend, nil
-		case "alertmanager":
-			return apimodels.AlertmanagerBackend, nil
-		default:
-			return 0, fmt.Errorf("%w %s", errUnexpectedBackendType, ds.Type)
+	ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
+	if err != nil {
+		if err == datasources.ErrDataSourceNotFound {
+			return nil, errBackendDoesNotExist
 		}
+		return nil, err
 	}
-	return 0, errBackendDoesNotExist
+	var actual apimodels.Backend
+	switch ds.Type {
+	case "loki", "prometheus":
+		actual = apimodels.LoTexRulerBackend
+	case "alertmanager":
+		actual = apimodels.AlertmanagerBackend
+	default:
+		var expected string
+		switch expectedType {
+		case apimodels.AlertmanagerBackend:
+			expected = "alertmanager"
+		case apimodels.LoTexRulerBackend:
+			expected = "loki,prometheus"
+		}
+		return nil, errUnexpectedDatasourceType(ds.Type, expected)
+	}
+	if actual != expectedType {
+		return nil, unexpectedBackendTypeError(actual, expectedType)
+	}
+	return ds, nil
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.

@@ -23,17 +23,11 @@ func NewForkingAM(datasourceCache datasources.CacheService, proxy *LotexAM, graf
 }
 
 func (f *AlertmanagerApiHandler) getService(ctx *models.ReqContext) (*LotexAM, error) {
-	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	_, err := getDatasourceByUID(ctx, f.DatasourceCache, apimodels.AlertmanagerBackend)
 	if err != nil {
 		return nil, err
 	}
-
-	switch t {
-	case apimodels.AlertmanagerBackend:
-		return f.AMSvc, nil
-	default:
-		return nil, unexpectedBackendTypeError(t, apimodels.AlertmanagerBackend)
-	}
+	return f.AMSvc, nil
 }
 
 func (f *AlertmanagerApiHandler) handleRouteGetAMStatus(ctx *models.ReqContext, dsUID string) response.Response {
