@@ -7,6 +7,7 @@ import { Scene } from 'app/features/canvas/runtime/scene';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
 import { FrameState } from '../../../../features/canvas/runtime/frame';
+import { getElementTypes } from '../utils';
 
 import { PlacementEditor } from './PlacementEditor';
 import { optionBuilder } from './options';
@@ -57,17 +58,14 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
     // Dynamically fill the selected element
     build: (builder, context) => {
       const { options } = opts.element;
-      const layerTypes = canvasElementRegistry.selectOptions(
-        options?.type // the selected value
-          ? [options.type] // as an array
-          : [DEFAULT_CANVAS_ELEMENT_CONFIG.type]
-      );
+      const current = options?.type ? [options.type] : [DEFAULT_CANVAS_ELEMENT_CONFIG.type];
+      const layerTypes = getElementTypes(opts.scene.shouldShowAdvancedTypes, current);
 
       builder.addSelect({
         path: 'type',
         name: undefined as any, // required, but hide space
         settings: {
-          options: layerTypes.options,
+          options: layerTypes,
         },
       });
 
