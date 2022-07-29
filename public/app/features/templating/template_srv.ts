@@ -143,24 +143,25 @@ export class TemplateSrv implements BaseTemplateSrv {
       format = FormatRegistryID.glob;
     }
 
-    // some formats have arguments that come after ':' character
-    let args = format.split(':');
-    if (args.length > 1) {
-      format = args[0];
-      args = args.slice(1);
-    } else {
-      args = [];
+    const formats = format.split('|');
+    for (let fmt of formats) {
+      // some formats have arguments that come after ':' character
+      let args = fmt.split(':');
+      if (args.length > 1) {
+        fmt = args[0];
+        args = args.slice(1);
+      } else {
+        args = [];
+      }
+      let formatItem = formatRegistry.getIfExists(fmt);
+      if (!formatItem) {
+        console.error(`Variable format ${fmt} not found. Using glob format as fallback.`);
+        formatItem = formatRegistry.get(FormatRegistryID.glob);
+      }
+      const options: FormatOptions = { value, args, text: text ?? value };
+      value = formatItem.formatter(options, variable);
     }
-
-    let formatItem = formatRegistry.getIfExists(format);
-
-    if (!formatItem) {
-      console.error(`Variable format ${format} not found. Using glob format as fallback.`);
-      formatItem = formatRegistry.get(FormatRegistryID.glob);
-    }
-
-    const options: FormatOptions = { value, args, text: text ?? value };
-    return formatItem.formatter(options, variable);
+    return value;
   }
 
   setGrafanaVariable(name: string, value: any) {
