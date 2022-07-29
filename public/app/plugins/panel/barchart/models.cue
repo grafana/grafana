@@ -24,24 +24,45 @@ Panel: thema.#Lineage & {
 	seqs: [
 		{
 			schemas: [
+				// v0.0
 				{
 					PanelOptions: {
 						ui.OptionsWithLegend
 						ui.OptionsWithTooltip
 						ui.OptionsWithTextFormatting
-						orientation: ui.VizOrientation
-						// TODO this default is a guess based on common devenv values
+						// TODO docs
+						xField?: string
+						// TODO docs
+						colorByField?: string
+						// TODO docs
+						orientation: ui.VizOrientation | *"auto"
+						// TODO docs
+						barRadius?: int32 | *0
+						// TODO docs
+						xTickLabelRotation: int32 | *0
+						// TODO docs
+						xTickLabelMaxLength: int32
+						// TODO docs
+						// negative values indicate backwards skipping behavior
+						xTickLabelSpacing?: int32 | *0
+						// TODO docs
 						stacking:   ui.StackingMode | *"none"
-						showValue:  ui.VisibilityMode
-						barWidth:   number
-						groupWidth: number
+						// TODO docs
+						showValue:  ui.VisibilityMode | *"auto"
+						// TODO docs
+						barWidth:   float64 | *0.97
+						// TODO docs
+						groupWidth: float64 | *0.7
 					} @cuetsy(kind="interface")
 					PanelFieldConfig: {
 						ui.AxisConfig
 						ui.HideableFieldConfig
-						lineWidth?:    number
-						fillOpacity?:  number
-						gradientMode?: ui.GraphGradientMode
+						// TODO docs
+						lineWidth?:    int32 | *1
+						// TODO docs
+						fillOpacity?:  float64 & >= 0 & <= 100 | *80
+						// TODO docs
+						gradientMode?: ui.GraphGradientMode | *"none"
 					} @cuetsy(kind="interface")
 				},
 			]
