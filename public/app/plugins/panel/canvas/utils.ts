@@ -25,17 +25,13 @@ export function doSelect(scene: Scene, element: ElementState | FrameState) {
   }
 }
 
-export function getElementTypes(shouldShowAdvancedTypes: boolean | undefined) {
+export function getElementTypes(
+  shouldShowAdvancedTypes: boolean | undefined,
+  current: string[] | undefined = undefined
+) {
   return shouldShowAdvancedTypes
     ? canvasElementRegistry.selectOptions().options
-    : canvasElementRegistry.selectOptions(undefined, (elementItem: CanvasElementItem<any, any>) => {
-        let result = false;
-        defaultElementItems.forEach((item) => {
-          if (item.id === elementItem.id) {
-            result = true;
-          }
-        });
-
-        return result;
+    : canvasElementRegistry.selectOptions(current, (elementItem: CanvasElementItem<any, any>) => {
+        return !!defaultElementItems.filter((item) => item.id === elementItem.id).length;
       }).options;
 }

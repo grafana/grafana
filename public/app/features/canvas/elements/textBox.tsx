@@ -78,15 +78,15 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   },
 
   getNewOptions: (options) => ({
-    background: {
-      color: {
-        fixed: defaultColor,
-      },
-    },
     ...options,
     config: {
       align: Align.Left,
       valign: VAlign.Middle,
+    },
+    background: {
+      color: {
+        fixed: defaultColor,
+      },
     },
   }),
 
