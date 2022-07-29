@@ -256,17 +256,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
-			apiRoute.Group("/storage", func(storageRoute routing.RouteRegister) {
-				storageRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
-				storageRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
-				storageRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
-
-				// Write paths
-				storageRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Delete))
-				storageRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Upload))
-				storageRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.CreateFolder))
-				storageRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.DeleteFolder))
-			})
+			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
 		}
 
 		// current org

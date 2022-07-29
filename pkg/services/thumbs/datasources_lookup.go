@@ -60,7 +60,7 @@ func getDatasourceUIDs(resp *backend.DataResponse, uid string) ([]string, error)
 }
 
 func filterOutGrafanaDs(uids []string) []string {
-	var filtered []string
+	filtered := make([]string, 0)
 	for _, uid := range uids {
 		if uid != grafanads.DatasourceUID {
 			filtered = append(filtered, uid)

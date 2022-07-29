@@ -27,6 +27,7 @@ const createDefaultProps = () => {
     datasource,
     onRunQuery: () => {},
     onChange: () => {},
+    showExplain: false,
   };
 
   return props;

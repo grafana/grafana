@@ -598,7 +598,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'grafana/docker-puppeteer:1.0.0',
+        'image': 'grafana/docker-puppeteer:1.1.0',
         'depends_on': [
             'grafana-server' + enterprise2_suffix(edition),
         ],
