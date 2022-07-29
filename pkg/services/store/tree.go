@@ -91,9 +91,7 @@ func (t *nestedTree) GetFile(ctx context.Context, orgId int64, path string) (*fi
 
 func (t *nestedTree) getStorages(orgId int64) []storageRuntime {
 	globalStorages := make([]storageRuntime, 0)
-	for _, s := range t.rootsByOrgId[ac.GlobalOrgID] {
-		globalStorages = append(globalStorages, s)
-	}
+	globalStorages = append(globalStorages, t.rootsByOrgId[ac.GlobalOrgID]...)
 
 	if orgId == ac.GlobalOrgID {
 		return globalStorages
