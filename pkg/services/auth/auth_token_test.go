@@ -41,7 +41,7 @@ func TestUserAuthToken(t *testing.T) {
 		userToken := createToken()
 
 		t.Run("Can count active tokens", func(t *testing.T) {
-			count, err := ctx.tokenService.ActiveTokenCount(context.Background())
+			count, err := ctx.activeTokenService.ActiveTokenCount(context.Background())
 			require.Nil(t, err)
 			require.Equal(t, int64(1), count)
 		})
@@ -209,7 +209,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.Nil(t, notGood)
 
 			t.Run("should not find active token when expired", func(t *testing.T) {
-				count, err := ctx.tokenService.ActiveTokenCount(context.Background())
+				count, err := ctx.activeTokenService.ActiveTokenCount(context.Background())
 				require.Nil(t, err)
 				require.Equal(t, int64(0), count)
 			})
@@ -534,25 +534,35 @@ func createTestContext(t *testing.T) *testContext {
 	maxInactiveDurationVal, _ := time.ParseDuration("168h")
 	maxLifetimeDurationVal, _ := time.ParseDuration("720h")
 	sqlstore := sqlstore.InitTestDB(t)
+
+	cfg := &setting.Cfg{
+		LoginMaxInactiveLifetime:     maxInactiveDurationVal,
+		LoginMaxLifetime:             maxLifetimeDurationVal,
+		TokenRotationIntervalMinutes: 10,
+	}
+
 	tokenService := &UserAuthTokenService{
 		SQLStore: sqlstore,
-		Cfg: &setting.Cfg{
-			LoginMaxInactiveLifetime:     maxInactiveDurationVal,
-			LoginMaxLifetime:             maxLifetimeDurationVal,
-			TokenRotationIntervalMinutes: 10,
-		},
-		log: log.New("test-logger"),
+		Cfg:      cfg,
+		log:      log.New("test-logger"),
+	}
+
+	activeTokenService := &ActiveAuthTokenService{
+		cfg:      cfg,
+		sqlStore: sqlstore,
 	}
 
 	return &testContext{
-		sqlstore:     sqlstore,
-		tokenService: tokenService,
+		sqlstore:           sqlstore,
+		tokenService:       tokenService,
+		activeTokenService: activeTokenService,
 	}
 }
 
 type testContext struct {
-	sqlstore     *sqlstore.SQLStore
-	tokenService *UserAuthTokenService
+	sqlstore           *sqlstore.SQLStore
+	tokenService       *UserAuthTokenService
+	activeTokenService *ActiveAuthTokenService
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
