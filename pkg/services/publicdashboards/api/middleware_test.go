@@ -45,7 +45,6 @@ func TestRequiresValidAccessToken(t *testing.T) {
 	})
 
 	t.Run("Returns 500 when public dashboard service gives an error", func(t *testing.T) {
-
 		request, err := http.NewRequest("GET", "/api/public/ma/events/myAccessToken", nil)
 		require.NoError(t, err)
 
