@@ -46,6 +46,7 @@ export class ElementState implements LayerElement {
       horizontal: HorizontalConstraint.Left,
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
+    options.background = options.background ?? { color: { fixed: 'transparent' } };
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
