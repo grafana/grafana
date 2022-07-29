@@ -175,12 +175,13 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 //
 // Responses:
 // 200: getDashboardSnapshotResponse
+// 400: badRequestError
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Response {
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
-		return response.Error(404, "Snapshot not found", nil)
+		return response.Error(http.StatusBadRequest, "Empty snapshot key", nil)
 	}
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
