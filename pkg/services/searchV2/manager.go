@@ -1,6 +1,7 @@
 package searchV2
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -125,6 +126,14 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 		if err != nil {
 			return err
 		}
+		//err = m.compressBackup(ctx)
+		//if err != nil {
+		//	return err
+		//}
+		//err = m.decompressBackup(ctx)
+		//if err != nil {
+		//	return err
+		//}
 	}
 
 	// This semaphore channel allows limiting concurrent async re-indexing routines to 1.
@@ -464,4 +473,34 @@ func (m *orgIndexManager) saveBackup(_ context.Context, currentEventID int64, or
 		return fmt.Errorf("can't rename tmp backup dir %s: %w", tmpDir, err)
 	}
 	return nil
+}
+
+func (m *orgIndexManager) compressBackup(_ context.Context) error {
+	backupBaseDir := m.config.BackupBaseDir
+	var buf bytes.Buffer
+	err := compressFolder(backupBaseDir, &buf)
+	if err != nil {
+		return fmt.Errorf("can't compress backup folder: %w", err)
+	}
+	tmpFile, err := ioutil.TempFile("", "gf_"+m.config.Name+"_backup_compressed")
+	if err != nil {
+		return fmt.Errorf("can't create tmp file for compressed backup: %w", err)
+	}
+	err = ioutil.WriteFile(tmpFile.Name(), buf.Bytes(), 0700)
+	if err != nil {
+		return fmt.Errorf("can't write into tmp file: %w", err)
+	}
+	//defer func() { _ = os.RemoveAll(tmpFile.Name()) }()
+	return os.Rename(tmpFile.Name(), "data/backup.tar.gz")
+}
+
+func (m *orgIndexManager) decompressBackup(_ context.Context) error {
+	compressedFilePath := "data/backup.tar.gz"
+	uncompressedBackupPath := "data/gf_search_uncompressed"
+	content, err := ioutil.ReadFile(compressedFilePath)
+	if err != nil {
+		return err
+	}
+	reader := bytes.NewReader(content)
+	return decompressToFolder(reader, uncompressedBackupPath)
 }
