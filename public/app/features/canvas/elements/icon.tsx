@@ -13,7 +13,7 @@ import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/APIEditor';
 
-import { CanvasElementItem, CanvasElementProps, defaultColor } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 import { LineConfig } from '../types';
 
 export interface IconConfig {
@@ -86,7 +86,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         mode: ResourceDimensionMode.Fixed,
         fixed: 'img/icons/unicons/question-circle.svg',
       },
-      fill: { fixed: defaultColor },
+      fill: { fixed: defaultBgColor },
     },
     background: {
       color: {
@@ -107,7 +107,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
     const data: IconData = {
       path,
-      fill: cfg.fill ? ctx.getColor(cfg.fill).value() : defaultColor,
+      fill: cfg.fill ? ctx.getColor(cfg.fill).value() : defaultBgColor,
       api: cfg?.api ?? undefined,
     };
 

@@ -6,7 +6,7 @@ import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensi
 import { TextDimensionConfig } from 'app/features/dimensions/types';
 import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/APIEditor';
 
-import { CanvasElementItem, CanvasElementProps, defaultColor } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 
 interface ButtonData {
   text?: string;
@@ -28,7 +28,7 @@ class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, Butto
     };
 
     return (
-      <Button type="submit" onClick={onClick} style={{ background: defaultColor }}>
+      <Button type="submit" onClick={onClick} style={{ background: defaultBgColor }}>
         {data?.text}
       </Button>
     );
