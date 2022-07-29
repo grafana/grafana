@@ -27,11 +27,7 @@ type PluginSource struct {
 }
 
 func ProvideOrchestrator(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*Orchestrator, error) {
-	pm := NewOrchestrator(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader)
-	if err := pm.Init(); err != nil {
-		return nil, err
-	}
-	return pm, nil
+	return NewOrchestrator(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader), nil
 }
 
 func NewOrchestrator(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource,
@@ -46,14 +42,8 @@ func NewOrchestrator(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSo
 	}
 }
 
-func (m *Orchestrator) Init() error {
-	return m.sync(context.Background(), m.pluginSources...)
-}
-
 func (m *Orchestrator) Run(ctx context.Context) error {
-	<-ctx.Done()
-	m.processManager.Shutdown(ctx)
-	return ctx.Err()
+	return m.sync(ctx, m.pluginSources...)
 }
 
 func (m *Orchestrator) sync(ctx context.Context, pluginSources ...PluginSource) error {

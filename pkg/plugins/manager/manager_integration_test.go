@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -92,17 +93,23 @@ func TestPluginManager_int_init(t *testing.T) {
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
-	pm, err := ProvideService(cfg, registry.NewInMemory(), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+	reg := registry.ProvideService()
+	orchestrator, err := ProvideOrchestrator(cfg, reg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
 		provider.ProvideService(coreRegistry)))
 	require.NoError(t, err)
+	ps := store.ProvideService(reg)
 
 	ctx := context.Background()
-	verifyCorePluginCatalogue(t, ctx, pm)
-	verifyBundledPlugins(t, ctx, pm)
-	verifyPluginStaticRoutes(t, ctx, pm)
+
+	err = orchestrator.Run(ctx)
+	require.NoError(t, err)
+
+	verifyCorePluginCatalogue(t, ctx, ps)
+	verifyBundledPlugins(t, ctx, ps)
+	verifyPluginStaticRoutes(t, ctx, ps)
 }
 
-func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, pm *PluginManager) {
+func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Service) {
 	t.Helper()
 
 	expPanels := map[string]struct{}{
@@ -168,53 +175,53 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, pm *PluginMana
 		"test-app": {},
 	}
 
-	panels := pm.Plugins(ctx, plugins.Panel)
+	panels := ps.Plugins(ctx, plugins.Panel)
 	assert.Equal(t, len(expPanels), len(panels))
 	for _, p := range panels {
-		p, exists := pm.Plugin(ctx, p.ID)
+		p, exists := ps.Plugin(ctx, p.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expPanels, p.ID)
-		assert.Contains(t, pm.registeredPlugins(ctx), p.ID)
+		//assert.Contains(t, ps.registeredPlugins(ctx), p.ID)
 	}
 
-	dataSources := pm.Plugins(ctx, plugins.DataSource)
+	dataSources := ps.Plugins(ctx, plugins.DataSource)
 	assert.Equal(t, len(expDataSources), len(dataSources))
 	for _, ds := range dataSources {
-		p, exists := pm.Plugin(ctx, ds.ID)
+		p, exists := ps.Plugin(ctx, ds.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expDataSources, ds.ID)
-		assert.Contains(t, pm.registeredPlugins(ctx), ds.ID)
+		//assert.Contains(t, ps.registeredPlugins(ctx), ds.ID)
 	}
 
-	apps := pm.Plugins(ctx, plugins.App)
+	apps := ps.Plugins(ctx, plugins.App)
 	assert.Equal(t, len(expApps), len(apps))
 	for _, app := range apps {
-		p, exists := pm.Plugin(ctx, app.ID)
+		p, exists := ps.Plugin(ctx, app.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expApps, app.ID)
-		assert.Contains(t, pm.registeredPlugins(ctx), app.ID)
+		//assert.Contains(t, ps.registeredPlugins(ctx), app.ID)
 	}
 
-	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(pm.Plugins(ctx)))
+	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
 }
 
-func verifyBundledPlugins(t *testing.T, ctx context.Context, pm *PluginManager) {
+func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) {
 	t.Helper()
 
 	dsPlugins := make(map[string]struct{})
-	for _, p := range pm.Plugins(ctx, plugins.DataSource) {
+	for _, p := range ps.Plugins(ctx, plugins.DataSource) {
 		dsPlugins[p.ID] = struct{}{}
 	}
 
 	pluginRoutes := make(map[string]*plugins.StaticRoute)
-	for _, r := range pm.Routes() {
+	for _, r := range ps.Routes() {
 		pluginRoutes[r.PluginID] = r
 	}
 
-	inputPlugin, exists := pm.Plugin(ctx, "input")
+	inputPlugin, exists := ps.Plugin(ctx, "input")
 	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
 	assert.True(t, exists)
 	assert.NotNil(t, dsPlugins["input"])
@@ -225,19 +232,19 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, pm *PluginManager) 
 	}
 }
 
-func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, pm *PluginManager) {
+func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, ps *store.Service) {
 	routes := make(map[string]*plugins.StaticRoute)
-	for _, route := range pm.Routes() {
+	for _, route := range ps.Routes() {
 		routes[route.PluginID] = route
 	}
 
 	assert.Len(t, routes, 2)
 
-	inputPlugin, _ := pm.Plugin(ctx, "input")
+	inputPlugin, _ := ps.Plugin(ctx, "input")
 	assert.NotNil(t, routes["input"])
 	assert.Equal(t, routes["input"].Directory, inputPlugin.PluginDir)
 
-	testAppPlugin, _ := pm.Plugin(ctx, "test-app")
+	testAppPlugin, _ := ps.Plugin(ctx, "test-app")
 	assert.Contains(t, routes, "test-app")
 	assert.Equal(t, routes["test-app"].Directory, testAppPlugin.PluginDir)
 }

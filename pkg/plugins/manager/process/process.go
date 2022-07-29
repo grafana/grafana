@@ -21,11 +21,21 @@ type Manager struct {
 	log log.Logger
 }
 
+func ProvideService(pluginRegistry registry.Service) *Manager {
+	return NewManager(pluginRegistry)
+}
+
 func NewManager(pluginRegistry registry.Service) *Manager {
 	return &Manager{
 		pluginRegistry: pluginRegistry,
 		log:            log.New("plugin.process.manager"),
 	}
+}
+
+func (m *Manager) Run(ctx context.Context) error {
+	<-ctx.Done()
+	m.Shutdown(ctx)
+	return ctx.Err()
 }
 
 func (m *Manager) Start(ctx context.Context, pluginID string) error {

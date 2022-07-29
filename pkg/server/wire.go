@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	processManager "github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	managerStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
@@ -172,6 +173,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.StaticRouteResolver), new(*managerStore.Service)),
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
+	processManager.ProvideService,
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
