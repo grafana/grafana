@@ -25,7 +25,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
   }>({});
 
   const isMultiSelect = () => {
-    return item.op === operators[0].label;
+    return item.op === operators[0].label || item.op === operators[3].label;
   };
 
   const getSelectOptionsFromString = (item?: string): string[] => {
