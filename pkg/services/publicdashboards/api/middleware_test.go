@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -41,6 +42,18 @@ func TestRequiresValidAccessToken(t *testing.T) {
 		resp := runMiddleware(request, mockAccessTokenExistsResponse(false, nil))
 
 		require.Equal(t, http.StatusBadRequest, resp.Code)
+	})
+
+	t.Run("Returns 500 when public dashboard service gives an error", func(t *testing.T) {
+
+		request, err := http.NewRequest("GET", "/api/public/ma/events/myAccessToken", nil)
+		require.NoError(t, err)
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
+		fakeStore.On("AccessTokenExists", mock.Anything, mock.Anything).Return(false, fmt.Errorf("not found"))
+
+		resp := runMiddleware(request, publicdashboardsService.ProvideService(setting.NewCfg(), fakeStore))
+
+		require.Equal(t, http.StatusInternalServerError, resp.Code)
 	})
 }
 
