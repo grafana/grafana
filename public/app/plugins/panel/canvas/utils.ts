@@ -30,7 +30,7 @@ export function getElementTypes(
   current: string[] | undefined = undefined
 ) {
   return shouldShowAdvancedTypes
-    ? canvasElementRegistry.selectOptions().options
+    ? canvasElementRegistry.selectOptions(current, (elementItem) => elementItem.id !== 'button').options
     : canvasElementRegistry.selectOptions(current, (elementItem: CanvasElementItem<any, any>) => {
         return !!defaultElementItems.filter((item) => item.id === elementItem.id).length;
       }).options;

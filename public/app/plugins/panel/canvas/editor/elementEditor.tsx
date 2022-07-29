@@ -96,9 +96,6 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         layer.registerOptionsUI(builder, ctx);
       }
 
-      optionBuilder.addBackground(builder, ctx);
-      optionBuilder.addBorder(builder, ctx);
-
       builder.addCustomEditor({
         category: ['Layout'],
         id: 'content',
@@ -107,6 +104,9 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         editor: PlacementEditor,
         settings: opts,
       });
+
+      optionBuilder.addBackground(builder, ctx);
+      optionBuilder.addBorder(builder, ctx);
     },
   };
 }

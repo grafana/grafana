@@ -20,7 +20,7 @@ export const defaultElementItems = [
   textBoxItem,
 ];
 
-const advancedElementItems = [buttonItem, droneTopItem, droneFrontItem, droneSideItem, windTurbineItem];
+const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];
 
 export const canvasElementRegistry = new Registry<CanvasElementItem>(() => [
   ...defaultElementItems,
