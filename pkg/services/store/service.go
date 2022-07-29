@@ -1,7 +1,9 @@
 package store
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -431,6 +433,13 @@ func (s *standardStorageService) write(ctx context.Context, user *models.SignedI
 	if req.EntityType != EntityTypeDashboard {
 		return nil, ErrOnlyDashboardSaveSupported
 	}
+
+	// Save pretty JSON
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, req.Body, "", "  "); err != nil {
+		return nil, err
+	}
+	req.Body = prettyJSON.Bytes()
 
 	// Modify the save request
 	req.Path = storagePath

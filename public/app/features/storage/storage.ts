@@ -1,10 +1,9 @@
 import { DataFrame, dataFrameFromJSON, DataFrameJSON, getDisplayProcessor } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DashboardDTO } from 'app/types';
 
-import { UploadReponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse, WorkflowID } from './types';
+import { UploadReponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse } from './types';
 
 // Likely should be built into the search interface!
 export interface GrafanaStorage {
@@ -25,10 +24,9 @@ export interface GrafanaStorage {
    * Longer term, this will call an "Entity API" that is eventually backed by storage
    */
   getDashboard: (path: string) => Promise<DashboardDTO>;
-  saveDashboard: (options: SaveDashboardCommand) => Promise<any>;
 
   /** Saves dashbaords */
-  write: (options: WriteValueRequest) => Promise<WriteValueResponse>;
+  write: (path: string, options: WriteValueRequest) => Promise<WriteValueResponse>;
 }
 
 class SimpleStorage implements GrafanaStorage {
@@ -149,37 +147,8 @@ class SimpleStorage implements GrafanaStorage {
     };
   }
 
-  async saveDashboard(options: SaveDashboardCommand): Promise<any> {
-    if (!config.featureToggles.dashboardsFromStorage) {
-      return Promise.reject('Dashboards from storage is not enabled');
-    }
-
-    const uid = options.dashboard.uid;
-    const rsp = await this.write({
-      path: uid,
-      body: options.dashboard,
-      kind: 'dashboard',
-      message: options.message,
-      workflow: WorkflowID.Save,
-    });
-    console.log('saved', rsp);
-
-    // let body = (await res.json()) as UploadReponse;
-    // if (res.status !== 200 && !body?.err) {
-    //   console.log('SAVE', options, body);
-    //   return Promise.reject({ message: body?.message ?? res.statusText });
-    // }
-
-    return {
-      uid,
-      url: `/g/${uid}`,
-      slug: uid,
-      status: 'success',
-    };
-  }
-
-  async write(options: WriteValueRequest): Promise<WriteValueResponse> {
-    return backendSrv.post<WriteValueResponse>('/api/storage/write', options);
+  async write(path: string, options: WriteValueRequest): Promise<WriteValueResponse> {
+    return backendSrv.post<WriteValueResponse>(`/api/storage/write/${path}`, options);
   }
 
   async getConfig() {

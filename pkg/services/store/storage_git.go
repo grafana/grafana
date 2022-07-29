@@ -212,7 +212,7 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 	}
 	// Write to the correct subfolder
 	if s.settings.Root != "" {
-		cmd.Path = s.settings.Root + "/" + cmd.Path
+		cmd.Path = s.settings.Root + cmd.Path
 	}
 
 	if cmd.Workflow == WriteValueWorkflow_PR {
@@ -236,7 +236,7 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 		err = s.github.pushCommit(ctx, ref, cmd)
 		if err != nil {
 			res.Code = 500
-			res.Message = "error creating commit"
+			res.Message = fmt.Sprintf("error creating commit: %s", err.Error())
 			return res, nil
 		}
 

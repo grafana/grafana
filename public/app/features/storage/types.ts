@@ -46,12 +46,11 @@ export interface StorageConfig {
 
 export enum WorkflowID {
   Save = 'save',
-  PR = 'PR',
+  PR = 'pr',
   Push = 'push',
 }
 
 export interface WriteValueRequest {
-  path: string;
   kind: string;
   body: {}; // json body
   message?: string;

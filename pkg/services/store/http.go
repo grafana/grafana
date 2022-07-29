@@ -48,19 +48,21 @@ func (s *standardStorageService) RegisterHTTPRoutes(storageRoute routing.RouteRe
 
 	// Write paths
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
+	storageRoute.Post("/write/*", reqGrafanaAdmin, routing.Wrap(s.doWrite))
 	storageRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(s.doDelete))
 	storageRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(s.doUpload))
-	storageRoute.Post("/write", reqGrafanaAdmin, routing.Wrap(s.doWrite))
 	storageRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(s.doCreateFolder))
 	storageRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(s.doDeleteFolder))
 	storageRoute.Get("/config", reqGrafanaAdmin, routing.Wrap(s.getConfig))
 }
 
 func (s *standardStorageService) doWrite(c *models.ReqContext) response.Response {
+	scope, path := getPathAndScope(c)
 	cmd := &WriteValueRequest{}
 	if err := web.Bind(c.Req, cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+	cmd.Path = scope + "/" + path
 	rsp, err := s.write(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "save error", err)

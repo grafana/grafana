@@ -11,7 +11,7 @@ import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
-import { SaveWorkflowForm } from './forms/SaveWorkflowForm';
+import { SaveToStorageForm } from './forms/SaveToStorageForm';
 import { SaveDashboardData, SaveDashboardModalProps, SaveDashboardOptions } from './types';
 import { useDashboardSave } from './useDashboardSave';
 
@@ -82,7 +82,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
 
     if (isFromStorage) {
       return (
-        <SaveWorkflowForm
+        <SaveToStorageForm
           dashboard={dashboard}
           saveModel={data}
           onCancel={onDismiss}

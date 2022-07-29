@@ -19,7 +19,7 @@ var (
 
 type WriteValueRequest struct {
 	User       *models.SignedInUser
-	Path       string             `json:"path,omitempty"`
+	Path       string             // added from URL
 	EntityType EntityType         `json:"kind,omitempty"` // for now only dashboard
 	Body       json.RawMessage    `json:"body,omitempty"`
 	Message    string             `json:"message,omitempty"`
