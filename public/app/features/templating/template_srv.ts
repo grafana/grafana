@@ -63,6 +63,8 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   getVariables(): TypedVariableModel[] {
+    // TODO: we remove this type assertion in a later PR
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this.dependencies.getVariables() as TypedVariableModel[];
   }
 

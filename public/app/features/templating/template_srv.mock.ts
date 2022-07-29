@@ -22,6 +22,8 @@ export class TemplateSrvMock implements TemplateSrv {
         name: key,
         label: key,
       };
+      // TODO: we remove this type assertion in a later PR
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     }) as TypedVariableModel[];
   }
 

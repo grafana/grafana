@@ -69,6 +69,7 @@ export const initialVariableModelState: BaseVariableModel = {
   id: NEW_VARIABLE_ID,
   rootStateKey: null,
   name: '',
+  // TODO: in a later PR, remove type and type this object to Partial<BaseVariableModel>
   type: 'query',
   global: false,
   index: -1,
