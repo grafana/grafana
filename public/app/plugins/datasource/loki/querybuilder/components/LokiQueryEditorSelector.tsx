@@ -9,11 +9,16 @@ import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybu
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
+import {
+  lokiQueryEditorExplainKey,
+  lokiQueryEditorRawQueryKey,
+  useFlag,
+} from '../../../prometheus/querybuilder/shared/hooks/useFlag';
 import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { changeEditorMode, getQueryWithDefaults, useExplain, useRawQuery } from '../state';
+import { changeEditorMode, getQueryWithDefaults } from '../state';
 import { LokiQueryPattern } from '../types';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
@@ -24,8 +29,8 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
-  const [explain, setExplain] = useExplain();
-  const [rawQuery, setRawQuery] = useRawQuery();
+  const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
+  const { flag: rawQuery, setFlag: setRawQuery } = useFlag(lokiQueryEditorRawQueryKey);
 
   const query = getQueryWithDefaults(props.query);
   // This should be filled in from the defaults by now.
