@@ -36,5 +36,8 @@ func errorToResponse(err error) response.Response {
 	if errors.Is(err, errUnexpectedBackendType) || errors.Is(err, errUnexpectedDatasourceType) {
 		return ErrResp(400, err, "")
 	}
+	if errors.Is(err, ErrAuthorization) {
+		ErrResp(401, err, "")
+	}
 	return ErrResp(500, err, "")
 }
