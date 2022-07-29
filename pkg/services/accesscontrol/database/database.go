@@ -75,7 +75,7 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 		SELECT tr.role_id FROM team_role as tr
 		INNER JOIN team_member as tm ON tm.team_id = tr.team_id
 		WHERE tm.user_id = ? AND tr.org_id = ?`
-		params = append(params, userID, orgID, globalOrgID, userID, orgID)
+		params = []interface{}{userID, orgID, globalOrgID, userID, orgID}
 	}
 
 	if len(roles) != 0 {
