@@ -1,17 +1,22 @@
 package store
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -24,6 +29,7 @@ var ErrValidationFailed = errors.New("request validation failed")
 var ErrFileAlreadyExists = errors.New("file exists")
 var ErrStorageNotFound = errors.New("storage not found")
 var ErrAccessDenied = errors.New("access denied")
+var ErrOnlyDashboardSaveSupported = errors.New("only dashboard save is currently supported")
 
 const RootPublicStatic = "public-static"
 const RootResources = "resources"
@@ -52,6 +58,9 @@ type CreateFolderCmd struct {
 type StorageService interface {
 	registry.BackgroundService
 
+	// Register the HTTP
+	RegisterHTTPRoutes(routing.RouteRegister)
+
 	// List folder contents
 	List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error)
 
@@ -72,20 +81,31 @@ type StorageService interface {
 	sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error)
 }
 
-type storageServiceConfig struct {
-	allowUnsanitizedSvgUpload bool
-}
-
 type standardStorageService struct {
-	sql         *sqlstore.SQLStore
-	tree        *nestedTree
-	cfg         storageServiceConfig
-	authService storageAuthService
+	sql          *sqlstore.SQLStore
+	tree         *nestedTree
+	cfg          *GlobalStorageConfig
+	authService  storageAuthService
+	quotaService quota.Service
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
+func ProvideService(
+	sql *sqlstore.SQLStore,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	quotaService quota.Service,
+) StorageService {
+	settings, err := LoadStorageConfig(cfg, features)
+	if err != nil {
+		grafanaStorageLogger.Warn("error loading storage config", "error", err)
+	}
+
+	// always exists
 	globalRoots := []storageRuntime{
-		newDiskStorage(RootStorageConfig{
+		newDiskStorage(RootStorageMeta{
+			ReadOnly: true,
+			Builtin:  true,
+		}, RootStorageConfig{
 			Prefix:      RootPublicStatic,
 			Name:        "Public static files",
 			Description: "Access files from the static public files",
@@ -98,14 +118,16 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 					"/maps/",
 				},
 			},
-		}).setReadOnly(true).setBuiltin(true),
+		}),
 	}
 
 	// Development dashboards
-	if setting.Env != setting.Prod {
+	if settings.AddDevEnv && setting.Env != setting.Prod {
 		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
 		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
-			s := newDiskStorage(RootStorageConfig{
+			s := newDiskStorage(RootStorageMeta{
+				ReadOnly: false,
+			}, RootStorageConfig{
 				Prefix:      RootDevenv,
 				Name:        "Development Environment",
 				Description: "Explore files within the developer environment directly",
@@ -114,8 +136,21 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 					Roots: []string{
 						"/dev-dashboards/",
 					},
-				}}).setReadOnly(false)
+				}})
+			globalRoots = append(globalRoots, s)
+		}
+	}
 
+	for _, root := range settings.Roots {
+		if root.Prefix == "" {
+			grafanaStorageLogger.Warn("Invalid root configuration", "cfg", root)
+			continue
+		}
+		s, err := newStorage(root, filepath.Join(cfg.DataPath, "storage", "cache", root.Prefix))
+		if err != nil {
+			grafanaStorageLogger.Warn("error loading storage config", "error", err)
+		}
+		if s != nil {
 			globalRoots = append(globalRoots, s)
 		}
 	}
@@ -125,19 +160,21 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 
 		// Custom upload files
 		storages = append(storages,
-			newSQLStorage(RootResources,
+			newSQLStorage(RootStorageMeta{
+				Builtin: true,
+			}, RootResources,
 				"Resources",
 				"Upload custom resource files",
-				&StorageSQLConfig{}, sql, orgId).
-				setBuiltin(true))
+				&StorageSQLConfig{}, sql, orgId))
 
 		// System settings
 		storages = append(storages,
-			newSQLStorage(RootSystem,
+			newSQLStorage(RootStorageMeta{
+				Builtin: true,
+			}, RootResources,
 				"System",
 				"Grafana system storage",
-				&StorageSQLConfig{}, sql, orgId).
-				setBuiltin(true))
+				&StorageSQLConfig{}, sql, orgId))
 
 		return storages
 	}
@@ -179,25 +216,18 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			return nil
 		}
 
-		switch storageName {
-		case RootDevenv:
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   allowAllPathFilter,
-				ActionFilesWrite:  denyAllPathFilter,
-				ActionFilesDelete: denyAllPathFilter,
-			}
-		case RootResources:
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   allowAllPathFilter,
-				ActionFilesWrite:  allowAllPathFilter,
-				ActionFilesDelete: allowAllPathFilter,
-			}
-		default:
-			return nil
+		// Admin can do anything
+		return map[string]filestorage.PathFilter{
+			ActionFilesRead:   allowAllPathFilter,
+			ActionFilesWrite:  allowAllPathFilter,
+			ActionFilesDelete: allowAllPathFilter,
 		}
 	})
 
-	return newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
+	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
+	s.quotaService = quotaService
+	s.cfg = settings
+	return s
 }
 
 func createSystemBrandingPathFilter() filestorage.PathFilter {
@@ -208,7 +238,13 @@ func createSystemBrandingPathFilter() filestorage.PathFilter {
 		nil)
 }
 
-func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRuntime, initializeOrgStorages func(orgId int64) []storageRuntime, authService storageAuthService, cfg *setting.Cfg) *standardStorageService {
+func newStandardStorageService(
+	sql *sqlstore.SQLStore,
+	globalRoots []storageRuntime,
+	initializeOrgStorages func(orgId int64) []storageRuntime,
+	authService storageAuthService,
+	cfg *setting.Cfg,
+) *standardStorageService {
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
 
@@ -221,9 +257,6 @@ func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRunt
 		sql:         sql,
 		tree:        res,
 		authService: authService,
-		cfg: storageServiceConfig{
-			allowUnsanitizedSvgUpload: cfg.Storage.AllowUnsanitizedSvgUpload,
-		},
 	}
 }
 
@@ -376,4 +409,87 @@ func (s *standardStorageService) Delete(ctx context.Context, user *models.Signed
 		return err
 	}
 	return nil
+}
+
+func (s *standardStorageService) write(ctx context.Context, user *models.SignedInUser, req *WriteValueRequest) (*WriteValueResponse, error) {
+	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(req.Path))
+	if !guardian.canWrite(req.Path) {
+		return nil, ErrAccessDenied
+	}
+
+	root, storagePath := s.tree.getRoot(getOrgId(user), req.Path)
+	if root == nil {
+		return nil, ErrStorageNotFound
+	}
+
+	if root.Meta().ReadOnly {
+		return nil, ErrUnsupportedStorage
+	}
+
+	// not svg!
+	if req.EntityType != EntityTypeDashboard {
+		return nil, ErrOnlyDashboardSaveSupported
+	}
+
+	// Save pretty JSON
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, req.Body, "", "  "); err != nil {
+		return nil, err
+	}
+	req.Body = prettyJSON.Bytes()
+
+	// Modify the save request
+	req.Path = storagePath
+	req.User = user
+	return root.Write(ctx, req)
+}
+
+type workflowInfo struct {
+	Type        WriteValueWorkflow `json:"value"` // value matches selectable value
+	Label       string             `json:"label"`
+	Description string             `json:"description,omitempty"`
+}
+type optionInfo struct {
+	Path      string         `json:"path,omitempty"`
+	Workflows []workflowInfo `json:"workflows"`
+}
+
+func (s *standardStorageService) getWorkflowOptions(ctx context.Context, user *models.SignedInUser, path string) (optionInfo, error) {
+	options := optionInfo{
+		Path:      path,
+		Workflows: make([]workflowInfo, 0),
+	}
+
+	scope, _ := splitFirstSegment(path)
+	root, _ := s.tree.getRoot(user.OrgId, scope)
+	if root == nil {
+		return options, fmt.Errorf("can not read")
+	}
+
+	meta := root.Meta()
+	if meta.Config.Type == rootStorageTypeGit && meta.Config.Git != nil {
+		cfg := meta.Config.Git
+		options.Workflows = append(options.Workflows, workflowInfo{
+			Type:        WriteValueWorkflow_PR,
+			Label:       "Create pull request",
+			Description: "Create a new upstream pull request",
+		})
+		if !cfg.RequirePullRequest {
+			options.Workflows = append(options.Workflows, workflowInfo{
+				Type:        WriteValueWorkflow_Push,
+				Label:       "Push to " + cfg.Branch,
+				Description: "Push commit to upstrem repository",
+			})
+		}
+	} else if meta.ReadOnly {
+		// nothing?
+	} else {
+		options.Workflows = append(options.Workflows, workflowInfo{
+			Type:        WriteValueWorkflow_Save,
+			Label:       "Save",
+			Description: "Save directly",
+		})
+	}
+
+	return options, nil
 }
