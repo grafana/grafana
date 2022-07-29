@@ -450,6 +450,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           <SplitPaneWrapper
             leftPaneComponents={this.renderPanelAndEditor(styles)}
             rightPaneComponents={this.renderOptionsPane()}
+            topPaneVisible={true}
             uiState={uiState}
             updateUiState={updatePanelEditorUIState}
             rightPaneVisible={uiState.isPanelOptionsVisible}

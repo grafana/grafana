@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
@@ -13,7 +14,7 @@ import { getNavModel } from '../../core/selectors/navModel';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
+import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction, cleanupPaneAction } from './state/main';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -40,6 +41,7 @@ const mapStateToProps = (state: StoreState) => {
 const mapDispatchToProps = {
   resetExploreAction,
   richHistoryUpdatedAction,
+  cleanupPaneAction,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -47,6 +49,16 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
 class WrapperUnconnected extends PureComponent<Props> {
   componentWillUnmount() {
+    const { left, right } = this.props.queryParams;
+
+    if (Boolean(left)) {
+      cleanupPaneAction({ exploreId: ExploreId.left });
+    }
+
+    if (Boolean(right)) {
+      cleanupPaneAction({ exploreId: ExploreId.right });
+    }
+
     this.props.resetExploreAction({});
   }
 
@@ -82,19 +94,32 @@ class WrapperUnconnected extends PureComponent<Props> {
   render() {
     const { left, right } = this.props.queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
+    const rightContainerWidth = this.props.exploreState[ExploreId.right]?.containerWidth;
+
+    //const isRightMain = !Boolean(left) && Boolean(right); // for SplitPaneWrapper, the left panel always shows, so we need to put right variables in the left panel if left is closed
 
     return (
       <div className={styles.pageScrollbarWrapper}>
         <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
         <div className={styles.exploreWrapper}>
-          <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
-          </ErrorBoundaryAlert>
-          {hasSplit && (
-            <ErrorBoundaryAlert style="page">
-              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
-            </ErrorBoundaryAlert>
-          )}
+          <SplitPaneWrapper
+            topPaneVisible={false}
+            leftPaneComponents={
+              <ErrorBoundaryAlert style="page" key="left">
+                <ExplorePaneContainer key="leftContainer" exploreId={ExploreId.left} urlQuery={left} minSize={100} />
+              </ErrorBoundaryAlert>
+            }
+            rightPaneComponents={
+              <ErrorBoundaryAlert style="page" key="right">
+                <ExplorePaneContainer key="rightContainer" exploreId={ExploreId.right} urlQuery={right} minSize={100} />
+              </ErrorBoundaryAlert>
+            }
+            uiState={{ topPaneSize: 0, rightPaneSize: rightContainerWidth || 0 }}
+            rightPaneVisible={hasSplit}
+            updateUiState={() => {
+              /* handled by changeSizeAction */
+            }}
+          />
         </div>
       </div>
     );

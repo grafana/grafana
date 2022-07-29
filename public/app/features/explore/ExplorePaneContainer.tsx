@@ -22,7 +22,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import Explore from './Explore';
 import { initializeExplore, refreshExplore } from './state/explorePane';
-import { lastSavedUrl, cleanupPaneAction } from './state/main';
+import { lastSavedUrl } from './state/main';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -43,7 +43,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 interface OwnProps extends Themeable2 {
   exploreId: ExploreId;
   urlQuery: string;
-  split: boolean;
+  minSize: number;
 }
 
 interface Props extends OwnProps, ConnectedProps<typeof connector> {}
@@ -84,7 +84,6 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
 
   componentWillUnmount() {
     this.exploreEvents.removeAllListeners();
-    this.props.cleanupPaneAction({ exploreId: this.props.exploreId });
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -105,12 +104,12 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, split, exploreId, initialized } = this.props;
+    const { theme, exploreId, initialized } = this.props;
     const styles = getStyles(theme);
-    const exploreClass = cx(styles.explore, split && styles.exploreSplit);
+    const exploreClass = cx(styles.explore);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
-        {initialized && <Explore exploreId={exploreId} />}
+        {initialized && <Explore exploreId={exploreId} minSize={this.props.minSize} />}
       </div>
     );
   }
@@ -143,7 +142,6 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
 const mapDispatchToProps = {
   initializeExplore,
   refreshExplore,
-  cleanupPaneAction,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

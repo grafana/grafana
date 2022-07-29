@@ -71,6 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
   theme: GrafanaTheme2;
+  minSize: number;
 }
 
 enum ExploreDrawer {
@@ -177,7 +178,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onResize = (size: { height: number; width: number }) => {
-    this.props.changeSize(this.props.exploreId, size);
+    if (size.width > this.props.minSize) {
+      this.props.changeSize(this.props.exploreId, size);
+    }
   };
 
   onStartScanning = () => {
@@ -479,4 +482,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default compose(connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+export default compose(connector, withTheme2)(Explore) as React.ComponentType<{
+  exploreId: ExploreId;
+  minSize: number;
+}>;

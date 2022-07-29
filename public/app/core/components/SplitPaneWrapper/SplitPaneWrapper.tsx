@@ -16,6 +16,7 @@ interface Props {
   rightPaneComponents: ReactNode;
   uiState: { topPaneSize: number; rightPaneSize: number };
   rightPaneVisible?: boolean;
+  topPaneVisible?: boolean;
   updateUiState: (uiState: { topPaneSize?: number; rightPaneSize?: number }) => void;
 }
 
@@ -30,6 +31,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
+    console.log('splitpane unmount');
     window.removeEventListener('resize', this.updateSplitPaneSize);
   }
 
@@ -98,7 +100,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   }
 
   render() {
-    const { rightPaneVisible, rightPaneComponents, uiState } = this.props;
+    const { rightPaneVisible, topPaneVisible, rightPaneComponents, leftPaneComponents, uiState } = this.props;
     // Limit options pane width to 90% of screen.
     const styles = getStyles(config.theme);
 
@@ -107,7 +109,11 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       uiState.rightPaneSize <= 1 ? uiState.rightPaneSize * window.innerWidth : uiState.rightPaneSize;
 
     if (!rightPaneVisible) {
-      return this.renderHorizontalSplit();
+      if (topPaneVisible) {
+        return this.renderHorizontalSplit();
+      } else {
+        return leftPaneComponents;
+      }
     }
 
     return (
@@ -120,7 +126,8 @@ export class SplitPaneWrapper extends PureComponent<Props> {
         onDragStarted={() => (document.body.style.cursor = 'col-resize')}
         onDragFinished={(size) => this.onDragFinished(Pane.Right, size)}
       >
-        {this.renderHorizontalSplit()}
+        {topPaneVisible && this.renderHorizontalSplit()}
+        {!topPaneVisible && leftPaneComponents}
         {rightPaneComponents}
       </SplitPane>
     );
