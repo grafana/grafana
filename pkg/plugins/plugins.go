@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -299,6 +301,29 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 		return backendplugin.ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
+}
+
+func (p *Plugin) BackendExecutablePath() string {
+	if !p.Backend || p.IsCorePlugin() {
+		return ""
+	}
+
+	os := strings.ToLower(runtime.GOOS)
+	arch := runtime.GOARCH
+	extension := ""
+
+	if os == "windows" {
+		extension = ".exe"
+	}
+
+	binaryName := p.Executable
+	if p.IsSecretsManager() {
+		binaryName = "secrets_plugin_start"
+	} else if p.IsRenderer() {
+		binaryName = "plugin_start"
+	}
+
+	return fmt.Sprintf("%s_%s_%s%s", binaryName, os, strings.ToLower(arch), extension)
 }
 
 func (p *Plugin) RegisterClient(c backendplugin.Plugin) {

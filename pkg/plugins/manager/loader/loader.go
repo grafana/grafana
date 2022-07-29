@@ -27,8 +27,9 @@ import (
 )
 
 var (
-	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
-	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
+	ErrInvalidPluginJSON          = errors.New("did not find valid type or id properties in plugin.json")
+	ErrInvalidPluginJSONFilePath  = errors.New("invalid plugin.json filepath was provided")
+	ErrRequiredPluginFileNotFound = errors.New("could not find a required plugin file")
 )
 
 var _ plugins.ErrorResolver = (*Loader)(nil)
@@ -98,7 +99,11 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	// calculate initial signature state
 	loadedPlugins := make(map[string]*plugins.Plugin)
 	for pluginDir, pluginJSON := range foundPlugins {
-		plugin := createPluginBase(pluginJSON, class, pluginDir, l.log)
+		plugin, err := createPluginBase(pluginJSON, class, pluginDir)
+		if err != nil {
+			l.log.Warn("Could not load plugin", "path", pluginDir, "err", err)
+			continue
+		}
 
 		sig, err := signature.Calculate(l.log, plugin)
 		if err != nil {
@@ -147,23 +152,6 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 
 		// clear plugin error if a pre-existing error has since been resolved
 		delete(l.errs, plugin.ID)
-
-		// verify module.js exists for SystemJS to load
-		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
-			module := filepath.Join(plugin.PluginDir, "module.js")
-			if exists, err := fs.Exists(module); err != nil {
-				return nil, err
-			} else if !exists {
-				l.log.Warn("Plugin missing module.js",
-					"pluginID", plugin.ID,
-					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
-					"path", module)
-			}
-		}
-
-		if plugin.IsApp() {
-			setDefaultNavURL(plugin)
-		}
 
 		if plugin.Parent != nil && plugin.Parent.IsApp() {
 			configureAppChildOPlugin(plugin.Parent, plugin)
@@ -232,7 +220,7 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, logger log.Logger) *plugins.Plugin {
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (*plugins.Plugin, error) {
 	plugin := &plugins.Plugin{
 		JSONData:  pluginJSON,
 		PluginDir: pluginDir,
@@ -243,8 +231,30 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDi
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
 	setImages(plugin)
+	setDefaultNavURL(plugin)
 
-	return plugin
+	// verify module.js exists for SystemJS to load
+	if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
+		module := filepath.Join(plugin.PluginDir, "module.js")
+		if exists, err := fs.Exists(module); err != nil {
+			return nil, err
+		} else if !exists {
+			plugin.Logger().Warn("Plugin missing module.js, If you loaded this plugin from git, make sure to compile it", "path", module)
+			return nil, ErrRequiredPluginFileNotFound
+		}
+	}
+
+	if plugin.Backend && !plugin.IsCorePlugin() {
+		backendBinary := filepath.Join(plugin.PluginDir, plugin.BackendExecutablePath())
+		if exists, err := fs.Exists(backendBinary); err != nil {
+			return nil, err
+		} else if !exists {
+			plugin.Logger().Warn("Plugin missing backend executable")
+			return nil, ErrRequiredPluginFileNotFound
+		}
+	}
+
+	return plugin, nil
 }
 
 func setImages(p *plugins.Plugin) {
@@ -257,6 +267,10 @@ func setImages(p *plugins.Plugin) {
 }
 
 func setDefaultNavURL(p *plugins.Plugin) {
+	if !p.IsApp() {
+		return
+	}
+
 	// slugify pages
 	for _, include := range p.Includes {
 		if include.Slug == "" {
