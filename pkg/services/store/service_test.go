@@ -42,20 +42,24 @@ var (
 		}
 	})
 	publicRoot, _            = filepath.Abs("../../../public")
-	publicStaticFilesStorage = newDiskStorage(RootStorageConfig{
-		Prefix: "public",
-		Name:   "Public static files",
-		Disk: &StorageLocalDiskConfig{
-			Path: publicRoot,
-			Roots: []string{
-				"/testdata/",
-				"/img/icons/",
-				"/img/bg/",
-				"/gazetteer/",
-				"/maps/",
-				"/upload/",
-			},
-		}}).setReadOnly(true).setBuiltin(true)
+	publicStaticFilesStorage = newDiskStorage(
+		RootStorageMeta{
+			Builtin:  true,
+			ReadOnly: true,
+		}, RootStorageConfig{
+			Prefix: "public",
+			Name:   "Public static files",
+			Disk: &StorageLocalDiskConfig{
+				Path: publicRoot,
+				Roots: []string{
+					"/testdata/",
+					"/img/icons/",
+					"/img/bg/",
+					"/gazetteer/",
+					"/maps/",
+					"/upload/",
+				},
+			}})
 )
 
 func TestListFiles(t *testing.T) {
@@ -96,6 +100,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	storageName := "resources"
 	mockStorage := &filestorage.MockFileStorage{}
 	sqlStorage := newSQLStorage(
+		RootStorageMeta{},
 		storageName, "Testing upload", "dummy descr",
 		&StorageSQLConfig{},
 		sqlstore.InitTestDB(t),
@@ -109,6 +114,9 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
 	}, authService, cfg)
+	store.cfg = &GlobalStorageConfig{
+		AllowUnsanitizedSvgUpload: true,
+	}
 
 	return store, mockStorage, storageName
 }
