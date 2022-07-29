@@ -1,4 +1,4 @@
-// Copyright 2021 Grafana Labs
+// Copyright 2022 Grafana Labs
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,11 +37,11 @@ Panel: thema.#Lineage & {
 						// TODO docs
 						orientation: ui.VizOrientation | *"auto"
 						// TODO docs
-						barRadius?: int32 | *0
+						barRadius?: float64 & >= 0 & <= 0.5 | *0
 						// TODO docs
-						xTickLabelRotation: int32 | *0
+						xTickLabelRotation: int32 & >= -90 & <= 90 | *0
 						// TODO docs
-						xTickLabelMaxLength: int32
+						xTickLabelMaxLength: int32 & >= 0
 						// TODO docs
 						// negative values indicate backwards skipping behavior
 						xTickLabelSpacing?: int32 | *0
@@ -50,17 +50,17 @@ Panel: thema.#Lineage & {
 						// TODO docs
 						showValue:  ui.VisibilityMode | *"auto"
 						// TODO docs
-						barWidth:   float64 | *0.97
+						barWidth:   float64 & >= 0 & <= 1 | *0.97
 						// TODO docs
-						groupWidth: float64 | *0.7
+						groupWidth: float64 & >= 0 & <= 1 | *0.7
 					} @cuetsy(kind="interface")
 					PanelFieldConfig: {
 						ui.AxisConfig
 						ui.HideableFieldConfig
 						// TODO docs
-						lineWidth?:    int32 | *1
+						lineWidth?:    int32 & >= 0 & <= 10 | *1
 						// TODO docs
-						fillOpacity?:  float64 & >= 0 & <= 100 | *80
+						fillOpacity?:  int32 & >= 0 & <= 100 | *80
 						// TODO docs
 						gradientMode?: ui.GraphGradientMode | *"none"
 					} @cuetsy(kind="interface")
