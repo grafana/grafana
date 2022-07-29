@@ -5,14 +5,15 @@ import { Draw, Modify } from 'ol/interaction';
 import { Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource } from 'ol/source';
 import { getArea, getLength } from 'ol/sphere';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme } from '@grafana/data';
-import { IconButton, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+import { formattedValueToString, GrafanaTheme, SelectableValue } from '@grafana/data';
+import { IconButton, RadioButtonGroup, Select, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { style, labelStyle, tipStyle, modifyStyle, segmentStyle } from '../globalStyles';
+import { MapMeasure, MapMeasureOptions, measures } from '../utils/measure';
 
 type Props = {
   map: Map;
@@ -27,7 +28,26 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   const [menuActive, setMenuActive] = useState<boolean>(false);
 
   // Options State
-  const [typeSelect, setTypeSelect] = useState<string>('LineString');
+  const [options, setOptions] = useState<MapMeasureOptions>({
+    action: measures[1].value!,
+    unit: measures[1].units[0].value!,
+    unitLabel: measures[1].units[0].labelOverlay,
+  });
+  const unit = useMemo(() => {
+    const action = measures.find((m: MapMeasure) => m.value === options.action) ?? measures[0];
+    const current = action.getUnit(options.unit);
+    const fn = action.value === 'area' ? getArea : getLength;
+    const measure = (geo: Geometry) => {
+      const v = fn(geo);
+      return formattedValueToString(current.format(v));
+    };
+    return {
+      current,
+      options: action.units,
+      measure,
+    };
+  }, [options]);
+
   const clearPrevious = true;
   const showSegments = false;
 
@@ -48,14 +68,15 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
       }
       vector.set('visible', true);
       map.removeInteraction(draw); // Remove last interaction
-      addInteraction(map, typeSelect, showSegments, clearPrevious);
+      const a = measures.find((v: MapMeasure) => v.value === options.action) ?? measures[0];
+      addInteraction(map, a.geometry, showSegments, clearPrevious);
     }
   }
 
   return (
     <div className={`${measureStyle.infoWrap} ol-unselectable ol-control`} style={{ backgroundColor: '#22252b' }}>
       <IconButton
-        name="ruler-combined"
+        name={options.action === 'area' ? 'ruler-combined' : 'ruler'}
         style={{ backgroundColor: 'rgba(204, 204, 220, 0.16)', display: 'inline-block', marginRight: '2px' }}
         tooltip={`${menuActive ? 'hide' : 'show'} measure tools`}
         tooltipPlacement="top"
@@ -75,18 +96,30 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
             }}
           />
           <RadioButtonGroup
-            value={typeSelect}
-            options={[
-              { label: 'area', value: 'Polygon' },
-              { label: 'length', value: 'LineString' },
-            ]}
+            value={options.action}
+            options={measures}
             size="sm"
-            onChange={(e) => {
+            onChange={(e: string) => {
               map.removeInteraction(draw);
-              setTypeSelect(e);
-              addInteraction(map, e, showSegments, clearPrevious);
+              const m = measures.find((v: MapMeasure) => v.value === e) ?? measures[0];
+              const unit = m.getUnit(options.unit);
+              setOptions({ ...options, action: m.value!, unit: unit.value!, unitLabel: unit.labelOverlay });
+              addInteraction(map, m.geometry, showSegments, clearPrevious);
             }}
           />
+          <Select
+            className={`${measureStyle.unitSelect}`}
+            value={unit.current}
+            options={unit.options}
+            isSearchable={false}
+            // TODO: apply units to measure calculations and map display
+            onChange={(v: SelectableValue<string>) => {
+              const a = measures.find((v: SelectableValue<string>) => v.value === options.action) ?? measures[0];
+              const unit = a.getUnit(v.value) ?? a.units[0];
+              setOptions({ ...options, unit: unit.value!, unitLabel: unit.labelOverlay });
+            }}
+          />
+          <span className={`${measureStyle.unitSelectOverlay}`}>{options.unitLabel}</span>
         </>
       ) : null}
     </div>
@@ -107,6 +140,7 @@ const modify = new Modify({ source: source, style: modifyStyle });
 let tipPoint: Geometry;
 let draw: Draw; // global so we can remove it later
 
+// TODO: Replace with generic measure function that incorporates units
 const formatLength = function (line: Geometry) {
   const length = getLength(line);
   let output;
@@ -216,5 +250,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     background: ${tinycolor(theme.colors.panelBg).setAlpha(0.7).toString()};
     border-radius: 2px;
     padding: 8px;
+  `,
+  unitSelect: css`
+    min-width: 150px;
+  `,
+  unitSelectOverlay: css`
+    font-size: 11px;
+    margin-right: 5px;
+    margin-top: -25px;
+    pointer-events: none;
+    position: absolute;
   `,
 }));
