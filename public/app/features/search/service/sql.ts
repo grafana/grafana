@@ -40,7 +40,7 @@ export class SQLSearcher implements GrafanaSearcher {
 
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
-      throw 'facets not supported!';
+      throw new Error('facets not supported!');
     }
     const q: APIQuery = {
       limit: query.limit ?? 1000, // default 1k max values
@@ -73,7 +73,7 @@ export class SQLSearcher implements GrafanaSearcher {
 
   async starred(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
-      throw 'facets not supported!';
+      throw new Error('facets not supported!');
     }
     const q: APIQuery = {
       limit: query.limit ?? 1000, // default 1k max values
