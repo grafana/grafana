@@ -132,8 +132,8 @@ export const GrafanaEvaluationBehavior: FC = () => {
       {exceedsGlobalEvaluationLimit && (
         <Alert severity="warning" title="Global evalutation interval limit exceeded">
           A minimum evaluation interval of{' '}
-          <span className={styles.globalLimitValue}>{config.unifiedAlerting.minInterval}</span> have been configured in
-          Grafana and will be used for this alert rule. <br />
+          <span className={styles.globalLimitValue}>{config.unifiedAlerting.minInterval}</span> has been configured in
+          Grafana. <br />
           Please contact the administrator to configure a lower interval.
         </Alert>
       )}
