@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, FormEvent } from 'react';
+import React, { FC, FormEvent, useEffect } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -74,6 +74,12 @@ export const ActionRow: FC<Props> = ({
     localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
     onLayoutChange(layout);
   };
+
+  useEffect(() => {
+    if (includePanels && layout === SearchLayout.Folders) {
+      setIncludePanels(false);
+    }
+  }, [layout, includePanels, setIncludePanels]);
 
   return (
     <div className={styles.actionRow}>
