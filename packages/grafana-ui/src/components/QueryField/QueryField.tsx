@@ -203,17 +203,6 @@ export class UnThemedQueryField extends React.PureComponent<QueryFieldProps, Que
     return next();
   };
 
-  /**
-   * There is no default behavior for copying and pasting a query, so only run the method defined from the plugin.
-   */
-  onPaste = () => {
-    const { onPaste } = this.props;
-
-    if (onPaste) {
-      onPaste();
-    }
-  };
-
   cleanText(text: string) {
     // RegExp with invisible characters we want to remove - currently only carriage return (newlines are visible)
     const newText = text.replace(/[\r]/g, '');
@@ -237,7 +226,7 @@ export class UnThemedQueryField extends React.PureComponent<QueryFieldProps, Que
             readOnly={this.props.disabled}
             onBlur={this.handleBlur}
             onClick={this.props.onClick}
-            onPaste={this.onPaste}
+            onPaste={this.props.onPaste}
             // onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);

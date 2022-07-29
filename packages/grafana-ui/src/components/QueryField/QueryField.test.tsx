@@ -58,7 +58,7 @@ describe('<QueryField />', () => {
     );
     const field = wrapper.instance() as UnThemedQueryField;
     expect(onPaste.mock.calls.length).toBe(0);
-    field.onPaste();
+    field.props.onPaste?.();
     expect(onPaste.mock.calls.length).toBe(1);
   });
 
