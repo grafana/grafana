@@ -49,6 +49,30 @@ describe('AzureMonitor ResourcePicker utils', () => {
     it('returns undefined for invalid input', () => {
       expect(parseResourceURI('44693801-6ee6-49de-9b2d-9106972f9572')).toEqual({});
     });
+
+    it('returns a valid response with a missing element in the metric namespace and name', () => {
+      expect(
+        parseResourceURI(
+          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/foo'
+        )
+      ).toEqual({
+        metricNamespace: 'foo',
+        resourceGroup: 'cloud-datasources',
+        resourceName: '',
+        subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
+      });
+
+      expect(
+        parseResourceURI(
+          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/foo/bar'
+        )
+      ).toEqual({
+        metricNamespace: 'foo/bar',
+        resourceGroup: 'cloud-datasources',
+        resourceName: '',
+        subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
+      });
+    });
   });
 
   describe('findRow', () => {
