@@ -92,7 +92,10 @@ func (c *GlobalStorageConfig) save() error {
 	if err != nil {
 		return err
 	}
-	os.MkdirAll(filepath.Dir(c.filepath), 0700)
+	err = os.MkdirAll(filepath.Dir(c.filepath), 0700)
+	if err != nil {
+		return err
+	}
 	return ioutil.WriteFile(c.filepath, out, 0600)
 }
 
@@ -123,7 +126,8 @@ type StorageGitConfig struct {
 
 	// Pull interval?
 	// Requires pull request?
-	RequirePullRequest bool `json:"requirePullRequest"`
+	RequirePullRequest bool   `json:"requirePullRequest"`
+	PullInterval       string `json:"pullInterval"`
 
 	// SECURE JSON :grimicing:
 	AccessToken string `json:"accessToken,omitempty"` // Simplest auth method for github

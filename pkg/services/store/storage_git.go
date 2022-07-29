@@ -174,6 +174,25 @@ func newGitStorage(meta RootStorageMeta, scfg RootStorageConfig, localWorkCache 
 					Severity: data.NoticeSeverityError,
 					Text:     "unable to pull: " + err.Error(),
 				})
+			} else if cfg.PullInterval != "" {
+				t, err := time.ParseDuration(cfg.PullInterval)
+				if err != nil {
+					meta.Notice = append(meta.Notice, data.Notice{
+						Severity: data.NoticeSeverityError,
+						Text:     "Invalid pull interval " + cfg.PullInterval,
+					})
+				} else {
+					ticker := time.NewTicker(t)
+					go func() {
+						for range ticker.C {
+							grafanaStorageLogger.Info("try git pull", "branch", s.settings.Remote)
+							err = s.Sync()
+							if err != nil {
+								grafanaStorageLogger.Info("error pulling", "error", err)
+							}
+						}
+					}()
+				}
 			}
 		}
 	}
