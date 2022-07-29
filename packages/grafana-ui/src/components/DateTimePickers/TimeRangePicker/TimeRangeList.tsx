@@ -34,6 +34,8 @@ interface Props {
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
   placeholderEmpty?: ReactNode;
+  //Internationalization
+  timeRangeListRoleDescriptionMessage?: string;
 }
 
 export const TimeRangeList: React.FC<Props> = (props) => {
@@ -60,12 +62,12 @@ export const TimeRangeList: React.FC<Props> = (props) => {
   );
 };
 
-const Options: React.FC<Props> = ({ options, value, onChange, title }) => {
+const Options: React.FC<Props> = ({ options, value, onChange, title, timeRangeListRoleDescriptionMessage }) => {
   const styles = getOptionsStyles();
 
   return (
     <>
-      <ul aria-roledescription="Time range selection">
+      <ul aria-roledescription={timeRangeListRoleDescriptionMessage || 'Time range selection'}>
         {options.map((option, index) => (
           <TimeRangeOption
             key={keyForOption(option, index)}

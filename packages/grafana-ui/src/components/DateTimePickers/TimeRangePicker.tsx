@@ -43,6 +43,9 @@ export interface TimeRangePickerProps extends Themeable {
   history?: TimeRange[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
+  //Internationalization
+  timeRangeListTitleMessage?: string;
+  timeRangeListRoleDescriptionMessage?: string;
 }
 
 export interface State {
@@ -67,6 +70,9 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
     onChangeFiscalYearStartMonth,
     hideQuickRanges,
     widthOverride,
+    //Internationalization
+    timeRangeListTitleMessage,
+    timeRangeListRoleDescriptionMessage,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -132,6 +138,9 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
               onChangeTimeZone={onChangeTimeZone}
               onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
               hideQuickRanges={hideQuickRanges}
+              //Internationalization
+              timeRangeListTitleMessage={timeRangeListTitleMessage}
+              timeRangeListRoleDescriptionMessage={timeRangeListRoleDescriptionMessage}
             />
           </section>
         </FocusScope>

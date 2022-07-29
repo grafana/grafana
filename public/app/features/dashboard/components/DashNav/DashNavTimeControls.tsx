@@ -98,6 +98,12 @@ export class DashNavTimeControls extends Component<Props> {
           onZoom={this.onZoom}
           onChangeTimeZone={this.onChangeTimeZone}
           onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
+          //Internationalization
+          timeRangeListTitleMessage={t({ id: 'time-range.list.title', message: 'Recently used absolute ranges' })}
+          timeRangeListRoleDescriptionMessage={t({
+            id: 'time-range.list.aria-role-description',
+            message: 'Time range selection',
+          })}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}

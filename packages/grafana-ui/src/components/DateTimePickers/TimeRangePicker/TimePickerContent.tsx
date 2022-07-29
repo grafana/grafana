@@ -32,6 +32,9 @@ interface Props {
   isReversed?: boolean;
   hideQuickRanges?: boolean;
   widthOverride?: number;
+  //Internationalization
+  timeRangeListTitleMessage?: string;
+  timeRangeListRoleDescriptionMessage?: string;
 }
 
 export interface PropsWithScreenSize extends Props {
@@ -58,6 +61,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
     hideTimeZone,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
+    timeRangeListRoleDescriptionMessage,
   } = props;
   const isHistoryEmpty = !history?.length;
   const isContainerTall =
@@ -91,7 +95,12 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
             <CustomScrollbar>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
               {!hideQuickRanges && (
-                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
+                <TimeRangeList
+                  options={filteredQuickOptions}
+                  onChange={onChangeTimeOption}
+                  value={timeOption}
+                  timeRangeListRoleDescriptionMessage={timeRangeListRoleDescriptionMessage}
+                />
               )}
             </CustomScrollbar>
           </div>
@@ -122,7 +131,16 @@ export const TimePickerContent: React.FC<Props> = (props) => {
 };
 
 const NarrowScreenForm: React.FC<FormProps> = (props) => {
-  const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory } = props;
+  const {
+    value,
+    hideQuickRanges,
+    onChange,
+    timeZone,
+    historyOptions = [],
+    showHistory,
+    timeRangeListTitleMessage,
+    timeRangeListRoleDescriptionMessage,
+  } = props;
   const theme = useTheme2();
   const styles = getNarrowScreenStyles(theme);
   const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
@@ -159,10 +177,11 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
           </div>
           {showHistory && (
             <TimeRangeList
-              title="Recently used absolute ranges"
+              title={timeRangeListTitleMessage || 'Recently used absolute ranges'}
               options={historyOptions}
               onChange={onChangeTimeOption}
               placeholderEmpty={null}
+              timeRangeListRoleDescriptionMessage={timeRangeListRoleDescriptionMessage}
             />
           )}
         </div>
@@ -172,7 +191,16 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
 };
 
 const FullScreenForm: React.FC<FormProps> = (props) => {
-  const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions } = props;
+  const {
+    onChange,
+    value,
+    timeZone,
+    fiscalYearStartMonth,
+    isReversed,
+    historyOptions,
+    timeRangeListTitleMessage,
+    timeRangeListRoleDescriptionMessage,
+  } = props;
   const theme = useTheme2();
   const styles = getFullScreenStyles(theme, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
@@ -197,10 +225,11 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
       {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList
-            title="Recently used absolute ranges"
+            title={timeRangeListTitleMessage || 'Recently used absolute ranges'}
             options={historyOptions || []}
             onChange={onChangeTimeOption}
             placeholderEmpty={<EmptyRecentList />}
+            timeRangeListRoleDescriptionMessage={timeRangeListRoleDescriptionMessage}
           />
         </div>
       )}
