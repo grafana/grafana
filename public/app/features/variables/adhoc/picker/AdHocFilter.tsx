@@ -1,6 +1,7 @@
 import React, { PureComponent, ReactNode } from 'react';
 
 import { DataSourceRef, SelectableValue } from '@grafana/data';
+import { Segment } from '@grafana/ui';
 import { AdHocVariableFilter } from 'app/features/variables/types';
 
 import { AdHocFilterBuilder } from './AdHocFilterBuilder';
@@ -17,6 +18,7 @@ interface Props {
   // Passes options to the datasources getTagKeys(options?: any) method
   // which is called to fetch the available filter key options in AdHocFilterKey.tsx
   getTagKeysOptions?: any;
+  disabled?: boolean;
 }
 
 /**
@@ -47,35 +49,43 @@ export class AdHocFilter extends PureComponent<Props> {
   };
 
   render() {
-    const { filters } = this.props;
+    const { filters, disabled } = this.props;
 
     return (
       <div className="gf-form-inline">
-        {this.renderFilters(filters)}
-        <AdHocFilterBuilder
-          datasource={this.props.datasource!}
-          appendBefore={filters.length > 0 ? <ConditionSegment label="AND" /> : null}
-          onCompleted={this.appendFilterToVariable}
-          getTagKeysOptions={this.props.getTagKeysOptions}
-        />
+        {this.renderFilters(filters, disabled)}
+
+        {!disabled && (
+          <AdHocFilterBuilder
+            datasource={this.props.datasource!}
+            appendBefore={filters.length > 0 ? <ConditionSegment label="AND" /> : null}
+            onCompleted={this.appendFilterToVariable}
+            getTagKeysOptions={this.props.getTagKeysOptions}
+          />
+        )}
       </div>
     );
   }
 
-  renderFilters(filters: AdHocVariableFilter[]) {
+  renderFilters(filters: AdHocVariableFilter[], disabled?: boolean) {
+    if (filters.length === 0 && disabled) {
+      return <Segment disabled={disabled} value="No filters" options={[]} onChange={() => {}} />;
+    }
+
     return filters.reduce((segments: ReactNode[], filter, index) => {
       if (segments.length > 0) {
         segments.push(<ConditionSegment label="AND" key={`condition-${index}`} />);
       }
-      segments.push(this.renderFilterSegments(filter, index));
+      segments.push(this.renderFilterSegments(filter, index, disabled));
       return segments;
     }, []);
   }
 
-  renderFilterSegments(filter: AdHocVariableFilter, index: number) {
+  renderFilterSegments(filter: AdHocVariableFilter, index: number, disabled?: boolean) {
     return (
       <React.Fragment key={`filter-${index}`}>
         <AdHocFilterRenderer
+          disabled={disabled}
           datasource={this.props.datasource!}
           filter={filter}
           onKeyChange={this.onChange(index, 'key')}
