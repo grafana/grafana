@@ -169,6 +169,7 @@ async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,
     [QueryEditorMode.Builder]: /Builder/,
+    [QueryEditorMode.Explain]: /Explain/,
   }[mode];
 
   const switchEl = screen.getByLabelText(label);

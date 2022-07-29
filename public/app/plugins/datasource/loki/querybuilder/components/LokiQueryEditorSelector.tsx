@@ -100,9 +100,9 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           }}
           options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
         />
+        <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />
         {editorMode === QueryEditorMode.Builder && (
           <>
-            <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
             <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/50785" />
           </>
