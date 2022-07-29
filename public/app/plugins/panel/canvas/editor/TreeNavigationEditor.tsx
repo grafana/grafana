@@ -9,18 +9,13 @@ import { Button, HorizontalGroup, useTheme2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
-import {
-  CanvasElementItem,
-  CanvasElementOptions,
-  canvasElementRegistry,
-  defaultElementItems,
-} from '../../../../features/canvas';
+import { CanvasElementOptions, canvasElementRegistry } from '../../../../features/canvas';
 import { notFoundItem } from '../../../../features/canvas/elements/notFound';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
 import { getTreeData, onNodeDrop, TreeElement } from '../tree';
 import { DragNode, DropNode } from '../types';
-import { doSelect } from '../utils';
+import { doSelect, getElementTypes } from '../utils';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
 import { TreeViewEditorProps } from './elementEditor';
@@ -138,18 +133,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     }
   };
 
-  const typeOptions = settings.scene.shouldShowAdvancedTypes
-    ? canvasElementRegistry.selectOptions().options
-    : canvasElementRegistry.selectOptions(undefined, (elementItem: CanvasElementItem<any, any>) => {
-        let result = false;
-        defaultElementItems.forEach((item) => {
-          if (item.id === elementItem.id) {
-            result = true;
-          }
-        });
-
-        return result;
-      }).options;
+  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes);
 
   return (
     <>
