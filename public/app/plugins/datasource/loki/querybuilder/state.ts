@@ -26,7 +26,6 @@ export function getDefaultEditorMode(expr: string) {
   switch (value) {
     case QueryEditorMode.Builder:
     case QueryEditorMode.Code:
-    case QueryEditorMode.Explain:
       return value;
     default:
       return QueryEditorMode.Builder;
@@ -85,7 +84,7 @@ const queryEditorExplainLocalStorageKey = 'LokiQueryEditorExplainDefault';
 
 function getExplainVisibility(): boolean {
   const val = store.get(queryEditorExplainLocalStorageKey);
-  return val === undefined ? true : Boolean(parseInt(val, 10));
+  return val === undefined ? false : Boolean(parseInt(val, 10));
 }
 
 function setExplainVisibility(value: boolean) {
