@@ -7,12 +7,12 @@
   ],
   "datasource": [
     {
-      "uid": "gdev-testdata",
-      "type": "testdata"
-    },
-    {
       "uid": "default.uid",
       "type": "default.type"
+    },
+    {
+      "uid": "PD8C576611E62080A",
+      "type": "testdata"
     }
   ],
   "panels": [
@@ -23,12 +23,12 @@
       "pluginVersion": "9.1.0-pre",
       "datasource": [
         {
-          "uid": "gdev-testdata",
-          "type": "testdata"
-        },
-        {
           "uid": "default.uid",
           "type": "default.type"
+        },
+        {
+          "uid": "PD8C576611E62080A",
+          "type": "testdata"
         }
       ]
     }
