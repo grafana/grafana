@@ -1,5 +1,6 @@
 interface AnnotationsDataFrameViewDTO {
   id: string;
+  /** @deprecate */
   dashboardId: number;
   dashboardUID: string;
   time: number;
