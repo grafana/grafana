@@ -43,8 +43,8 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   display: ButtonDisplay,
 
   defaultSize: {
-    width: 200,
-    height: 50,
+    width: 32,
+    height: 32,
   },
 
   getNewOptions: (options) => ({
@@ -53,6 +53,12 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       color: {
         fixed: 'transparent',
       },
+    },
+    placement: {
+      width: 32,
+      height: 32,
+      top: 0,
+      left: 0,
     },
   }),
 
