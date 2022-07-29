@@ -10,33 +10,13 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/quota"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
-
-// HTTPStorageService passes raw HTTP requests to a well typed storage service
-type HTTPStorageService interface {
-	List(c *models.ReqContext) response.Response
-	Read(c *models.ReqContext) response.Response
-	Delete(c *models.ReqContext) response.Response
-	DeleteFolder(c *models.ReqContext) response.Response
-	CreateFolder(c *models.ReqContext) response.Response
-	Upload(c *models.ReqContext) response.Response
-}
-
-type httpStorage struct {
-	store        StorageService
-	quotaService quota.Service
-}
-
-func ProvideHTTPService(store StorageService, quotaService quota.Service) HTTPStorageService {
-	return &httpStorage{
-		store:        store,
-		quotaService: quotaService,
-	}
-}
 
 func UploadErrorToStatusCode(err error) int {
 	switch {
@@ -60,7 +40,37 @@ func UploadErrorToStatusCode(err error) int {
 	}
 }
 
-func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
+func (s *standardStorageService) RegisterHTTPRoutes(storageRoute routing.RouteRegister) {
+	storageRoute.Get("/list/", routing.Wrap(s.list))
+	storageRoute.Get("/list/*", routing.Wrap(s.list))
+	storageRoute.Get("/read/*", routing.Wrap(s.read))
+	storageRoute.Get("/options/*", routing.Wrap(s.getOptions))
+
+	// Write paths
+	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
+	storageRoute.Post("/write/*", reqGrafanaAdmin, routing.Wrap(s.doWrite))
+	storageRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(s.doDelete))
+	storageRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(s.doUpload))
+	storageRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(s.doCreateFolder))
+	storageRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(s.doDeleteFolder))
+	storageRoute.Get("/config", reqGrafanaAdmin, routing.Wrap(s.getConfig))
+}
+
+func (s *standardStorageService) doWrite(c *models.ReqContext) response.Response {
+	scope, path := getPathAndScope(c)
+	cmd := &WriteValueRequest{}
+	if err := web.Bind(c.Req, cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	cmd.Path = scope + "/" + path
+	rsp, err := s.write(c.Req.Context(), c.SignedInUser, cmd)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "save error", err)
+	}
+	return response.JSON(200, rsp)
+}
+
+func (s *standardStorageService) doUpload(c *models.ReqContext) response.Response {
 	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
 	quotaReached, err := s.quotaService.CheckQuotaReached(c.Req.Context(), "file", nil)
 	if err != nil {
@@ -127,7 +137,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 				entityType = EntityTypeImage
 			}
 
-			err = s.store.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
+			err = s.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
 				Contents:              data,
 				EntityType:            entityType,
 				Path:                  path,
@@ -157,10 +167,10 @@ func getMultipartFormValue(req *http.Request, key string) string {
 	return v[0]
 }
 
-func (s *httpStorage) Read(c *models.ReqContext) response.Response {
+func (s *standardStorageService) read(c *models.ReqContext) response.Response {
 	// full path is api/storage/read/upload/example.jpg, but we only want the part after read
 	scope, path := getPathAndScope(c)
-	file, err := s.store.Read(c.Req.Context(), c.SignedInUser, scope+"/"+path)
+	file, err := s.Read(c.Req.Context(), c.SignedInUser, scope+"/"+path)
 	if err != nil {
 		return response.Error(400, "cannot call read", err)
 	}
@@ -176,11 +186,20 @@ func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 	return response.Respond(200, file.Contents)
 }
 
-func (s *httpStorage) Delete(c *models.ReqContext) response.Response {
+func (s *standardStorageService) getOptions(c *models.ReqContext) response.Response {
+	scope, path := getPathAndScope(c)
+	opts, err := s.getWorkflowOptions(c.Req.Context(), c.SignedInUser, scope+"/"+path)
+	if err != nil {
+		return response.Error(400, err.Error(), err)
+	}
+	return response.JSON(200, opts)
+}
+
+func (s *standardStorageService) doDelete(c *models.ReqContext) response.Response {
 	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
 	scope, path := getPathAndScope(c)
 
-	err := s.store.Delete(c.Req.Context(), c.SignedInUser, scope+"/"+path)
+	err := s.Delete(c.Req.Context(), c.SignedInUser, scope+"/"+path)
 	if err != nil {
 		return response.Error(400, "failed to delete the file: "+err.Error(), err)
 	}
@@ -191,7 +210,7 @@ func (s *httpStorage) Delete(c *models.ReqContext) response.Response {
 	})
 }
 
-func (s *httpStorage) DeleteFolder(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doDeleteFolder(c *models.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -209,7 +228,7 @@ func (s *httpStorage) DeleteFolder(c *models.ReqContext) response.Response {
 
 	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
 	_, path := getPathAndScope(c)
-	if err := s.store.DeleteFolder(c.Req.Context(), c.SignedInUser, cmd); err != nil {
+	if err := s.DeleteFolder(c.Req.Context(), c.SignedInUser, cmd); err != nil {
 		return response.Error(400, "failed to delete the folder: "+err.Error(), err)
 	}
 
@@ -220,7 +239,7 @@ func (s *httpStorage) DeleteFolder(c *models.ReqContext) response.Response {
 	})
 }
 
-func (s *httpStorage) CreateFolder(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doCreateFolder(c *models.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -236,7 +255,7 @@ func (s *httpStorage) CreateFolder(c *models.ReqContext) response.Response {
 		return response.Error(400, "empty path", err)
 	}
 
-	if err := s.store.CreateFolder(c.Req.Context(), c.SignedInUser, cmd); err != nil {
+	if err := s.CreateFolder(c.Req.Context(), c.SignedInUser, cmd); err != nil {
 		return response.Error(400, "failed to create the folder: "+err.Error(), err)
 	}
 
@@ -247,10 +266,10 @@ func (s *httpStorage) CreateFolder(c *models.ReqContext) response.Response {
 	})
 }
 
-func (s *httpStorage) List(c *models.ReqContext) response.Response {
+func (s *standardStorageService) list(c *models.ReqContext) response.Response {
 	params := web.Params(c.Req)
 	path := params["*"]
-	frame, err := s.store.List(c.Req.Context(), c.SignedInUser, path)
+	frame, err := s.List(c.Req.Context(), c.SignedInUser, path)
 	if err != nil {
 		return response.Error(400, "error reading path", err)
 	}
@@ -258,4 +277,20 @@ func (s *httpStorage) List(c *models.ReqContext) response.Response {
 		return response.Error(404, "not found", nil)
 	}
 	return response.JSONStreaming(http.StatusOK, frame)
+}
+
+func (s *standardStorageService) getConfig(c *models.ReqContext) response.Response {
+	roots := make([]RootStorageMeta, 0)
+	orgId := c.OrgId
+	t := s.tree
+	t.assureOrgIsInitialized(orgId)
+	for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
+		roots = append(roots, f.Meta())
+	}
+	if orgId != ac.GlobalOrgID {
+		for _, f := range t.rootsByOrgId[orgId] {
+			roots = append(roots, f.Meta())
+		}
+	}
+	return response.JSON(200, roots)
 }

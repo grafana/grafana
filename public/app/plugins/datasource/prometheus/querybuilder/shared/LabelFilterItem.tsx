@@ -25,7 +25,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
   }>({});
 
   const isMultiSelect = () => {
-    return item.op === operators[0].label;
+    return operators.find((op) => op.label === item.op)?.isMultiValue;
   };
 
   const getSelectOptionsFromString = (item?: string): string[] => {
@@ -127,8 +127,8 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
 }
 
 const operators = [
-  { label: '=~', value: '=~' },
-  { label: '=', value: '=' },
-  { label: '!=', value: '!=' },
-  { label: '!~', value: '!~' },
+  { label: '=~', value: '=~', isMultiValue: true },
+  { label: '=', value: '=', isMultiValue: false },
+  { label: '!=', value: '!=', isMultiValue: false },
+  { label: '!~', value: '!~', isMultiValue: true },
 ];
