@@ -20,11 +20,14 @@ export function GraphiteTextEditor({ rawQuery }: Props) {
   );
 
   const pasteQuery = useCallback(async () => {
-    const query = await navigator.clipboard.readText();
+    // only run query if the text editor input is empty
+    if (!rawQuery) {
+      const query = await navigator.clipboard.readText();
 
-    dispatch(actions.updateQuery({ query }));
-    dispatch(actions.runQuery());
-  }, [dispatch]);
+      dispatch(actions.updateQuery({ query }));
+      dispatch(actions.runQuery());
+    }
+  }, [dispatch, rawQuery]);
 
   const runQuery = useCallback(() => {
     dispatch(actions.runQuery());
