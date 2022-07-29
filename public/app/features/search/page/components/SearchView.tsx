@@ -14,7 +14,12 @@ import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequi
 import { useSearchQuery } from '../../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
-import { reportDashboardListViewed, reportSearchResultInteraction, reportSearchQueryInteraction } from '../reporting';
+import {
+  reportDashboardListViewed,
+  reportSearchResultInteraction,
+  reportSearchQueryInteraction,
+  reportSearchFailedQueryInteraction,
+} from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
@@ -129,20 +134,30 @@ export const SearchView = ({
   };
 
   const results = useAsync(() => {
-    reportSearchQueryInteraction(eventTrackingNamespace, {
+    const trackingInfo = {
       layout: query.layout,
       starred: query.starred,
       sortValue: query.sort?.value,
       query: query.query,
       tagCount: query.tag?.length,
       includePanels,
-    });
+    };
+
+    reportSearchQueryInteraction(eventTrackingNamespace, trackingInfo);
 
     if (searchQuery.starred) {
-      return getGrafanaSearcher().starred(searchQuery);
+      return getGrafanaSearcher()
+        .starred(searchQuery)
+        .catch((error) =>
+          reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+        );
     }
 
-    return getGrafanaSearcher().search(searchQuery);
+    return getGrafanaSearcher()
+      .search(searchQuery)
+      .catch((error) =>
+        reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+      );
   }, [searchQuery]);
 
   const clearSelection = useCallback(() => {

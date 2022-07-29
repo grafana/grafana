@@ -25,6 +25,13 @@ export const reportSearchQueryInteraction = (dashboardListType: DashboardListTyp
   reportInteraction(`${dashboardListType}_query_submitted`, getQuerySearchContext(query));
 };
 
+export const reportSearchFailedQueryInteraction = (
+  dashboardListType: DashboardListType,
+  { error, ...query }: QueryProps & { error?: string }
+) => {
+  reportInteraction(`${dashboardListType}_query_failed`, { ...getQuerySearchContext(query), error });
+};
+
 const getQuerySearchContext = (query: QueryProps) => {
   const showPreviews = query.layout === SearchLayout.Grid;
   const previewsEnabled = Boolean(config.featureToggles.panelTitleSearch);
