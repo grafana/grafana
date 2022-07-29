@@ -9,6 +9,6 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.importDashboard(testDashboard, 1000, true);
+    e2e.flows.importDashboard(testDashboard, 1000);
   },
 });
