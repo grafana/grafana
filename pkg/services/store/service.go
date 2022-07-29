@@ -40,8 +40,8 @@ const brandingStorage = "branding"
 const SystemBrandingStorage = "system/" + brandingStorage
 
 var (
-	SystemBrandingReader = &models.SignedInUser{OrgId: 1}
-	SystemBrandingAdmin  = &models.SignedInUser{OrgId: 1}
+	SystemBrandingReader = &models.SignedInUser{OrgId: ac.GlobalOrgID}
+	SystemBrandingAdmin  = &models.SignedInUser{OrgId: ac.GlobalOrgID}
 )
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
@@ -178,6 +178,8 @@ func ProvideService(
 
 		return storages
 	}
+
+	globalRoots = append(globalRoots, initializeOrgStorages(ac.GlobalOrgID)...)
 
 	authService := newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
 		// Public is OK to read regardless of user settings
