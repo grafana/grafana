@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
-)
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+)
 
 //nolint:goconst
 func TestUserAuth(t *testing.T) {
