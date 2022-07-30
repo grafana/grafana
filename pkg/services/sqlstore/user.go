@@ -188,7 +188,7 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) 
 	return &user, createErr
 }
 
-func notServiceAccountFilter(ss *SQLStore) string {
+func NotServiceAccountFilter(ss *SQLStore) string {
 	return fmt.Sprintf("%s.is_service_account = %s",
 		ss.Dialect.Quote("user"),
 		ss.Dialect.BooleanStr(false))
@@ -199,7 +199,7 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 		usr := new(user.User)
 
 		has, err := sess.ID(query.Id).
-			Where(notServiceAccountFilter(ss)).
+			Where(NotServiceAccountFilter(ss)).
 			Get(usr)
 
 		if err != nil {
@@ -234,7 +234,7 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 			where = "LOWER(login)=LOWER(?)"
 		}
 
-		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
+		has, err := sess.Where(NotServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
 		if err != nil {
 			return err
 		}
@@ -248,7 +248,7 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 				where = "LOWER(email)=LOWER(?)"
 			}
 			usr = &user.User{}
-			has, err = sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
+			has, err = sess.Where(NotServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
 		}
 
 		if err != nil {
@@ -281,7 +281,7 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 			where = "LOWER(email)=LOWER(?)"
 		}
 
-		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.Email).Get(usr)
+		has, err := sess.Where(NotServiceAccountFilter(ss)).Where(where, query.Email).Get(usr)
 
 		if err != nil {
 			return err
@@ -316,7 +316,7 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user); err != nil {
+		if _, err := sess.ID(cmd.UserId).Where(NotServiceAccountFilter(ss)).Update(&user); err != nil {
 			return err
 		}
 
@@ -345,7 +345,7 @@ func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUs
 			Updated:  time.Now(),
 		}
 
-		_, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user)
+		_, err := sess.ID(cmd.UserId).Where(NotServiceAccountFilter(ss)).Update(&user)
 		return err
 	})
 }
@@ -406,7 +406,7 @@ func removeUserOrg(sess *DBSession, userID int64) error {
 func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var usr user.User
-		has, err := sess.ID(query.UserId).Where(notServiceAccountFilter(ss)).Get(&usr)
+		has, err := sess.ID(query.UserId).Where(NotServiceAccountFilter(ss)).Get(&usr)
 
 		if err != nil {
 			return err
@@ -459,7 +459,7 @@ func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrg
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserId)
-		sess.Where(notServiceAccountFilter(ss))
+		sess.Where(NotServiceAccountFilter(ss))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
 		sess.OrderBy("org.name")
 		err := sess.Find(&query.Result)
@@ -702,7 +702,7 @@ func (ss *SQLStore) DisableUser(ctx context.Context, cmd *models.DisableUserComm
 		usr := user.User{}
 		sess := dbSess.Table("user")
 
-		if has, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&usr); err != nil {
+		if has, err := sess.ID(cmd.UserId).Where(NotServiceAccountFilter(ss)).Get(&usr); err != nil {
 			return err
 		} else if !has {
 			return user.ErrUserNotFound
@@ -732,7 +732,7 @@ func (ss *SQLStore) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisa
 			disableParams = append(disableParams, v)
 		}
 
-		_, err := sess.Where(notServiceAccountFilter(ss)).Exec(disableParams...)
+		_, err := sess.Where(NotServiceAccountFilter(ss)).Exec(disableParams...)
 		return err
 	})
 }
@@ -750,7 +750,7 @@ func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cm
 func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
 	// Check if user exists
 	usr := user.User{ID: cmd.UserId}
-	has, err := sess.Where(notServiceAccountFilter(ss)).Get(&usr)
+	has, err := sess.Where(NotServiceAccountFilter(ss)).Get(&usr)
 	if err != nil {
 		return err
 	}
@@ -839,85 +839,11 @@ func UserUpdates() []string {
 	return deletes
 }
 
-func (ss *SQLStore) updateUserIds(intoUser user.User, fromUser user.User, sess *DBSession) error {
-	// TODO:
-	/*
-		tables that have user_id references
-
-			tbl_name |
-			--- |
-			temp_user |
-			star |
-			org_user |
-			dashboard_snapshot |
-			quota |
-			preferences |
-			annotation |
-			team_member |
-			dashboard_acl |
-			user_auth |
-			user_auth_token |
-			user_role |
-			query_history_star |
-
-			tables take using this query
-			```sql
-			select tbl_name, sql from sqlite_master where sql like '%CREATE TABLE%%user_id%'
-			and type = 'table';
-			```
-	*/
-	sql := `
-	UPDATE team_member
-	SET user_id = ?
-	WHERE user_id = ?;
-
-	UPDATE user_role
-	SET user_id = ?
-	WHERE user_id = ?;
-	`
-	_, err := sess.Exec(sql, intoUser.ID, fromUser.ID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// MergeUser sets the user Server Admin flag
-func (ss *SQLStore) MergeUser(ctx context.Context, intoUserId int64, fromUserIds []int64) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		var intoUser user.User
-		if _, err := sess.ID(intoUserId).Where(notServiceAccountFilter(ss)).Get(&intoUser); err != nil {
-			return err
-		}
-
-		for _, fromUserId := range fromUserIds {
-			var fromUser user.User
-			if _, err := sess.ID(fromUserId).Where(notServiceAccountFilter(ss)).Get(&fromUser); err != nil {
-				return err
-			}
-			// update all tables fromUserIds to intoUserIds
-			err := ss.updateUserIds(intoUser, fromUser, sess)
-			if err != nil {
-				return err
-			}
-
-			// deletes the from user
-
-			// TODO: make test verify that before deleting a user, we make sure that that reference is not present in any tables
-			delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
-			if delErr != nil {
-				return delErr
-			}
-		}
-		return nil
-	})
-}
-
 // UpdateUserPermissions sets the user Server Admin flag
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		var user user.User
-		if _, err := sess.ID(userID).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
+		if _, err := sess.ID(userID).Where(NotServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		}
 

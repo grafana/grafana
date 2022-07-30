@@ -18,7 +18,7 @@ func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserComman
 		var usr user.User
 		session := sess.ID(cmd.UserId)
 		if !cmd.AllowAddingServiceAccount {
-			session = session.Where(notServiceAccountFilter(ss))
+			session = session.Where(NotServiceAccountFilter(ss))
 		}
 
 		if exists, err := session.Get(&usr); err != nil {
@@ -250,7 +250,7 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var usr user.User
-		if exists, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&usr); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Where(NotServiceAccountFilter(ss)).Get(&usr); err != nil {
 			return err
 		} else if !exists {
 			return user.ErrUserNotFound
