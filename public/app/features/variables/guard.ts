@@ -2,7 +2,6 @@ import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
 import {
-  CustomVariableSupport,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -11,7 +10,6 @@ import {
   DataSourceRef,
   MetricFindValue,
   StandardVariableQuery,
-  StandardVariableSupport,
   VariableModel,
   VariableSupportType,
 } from '@grafana/data';
@@ -43,31 +41,22 @@ export const isConstant = (model: VariableModel): model is ConstantVariableModel
   return model.type === 'constant';
 };
 
+/** @deprecated use a if (model.type === "datasource") type narrowing check instead */
 export const isDataSource = (model: VariableModel): model is DataSourceVariableModel => {
   return model.type === 'datasource';
 };
 
 export const isMulti = (model: VariableModel): model is VariableWithMultiSupport => {
-  const withMulti = model as VariableWithMultiSupport;
-  return withMulti.hasOwnProperty('multi') && typeof withMulti.multi === 'boolean';
+  return 'multi' in model;
 };
 
 export const hasOptions = (model: VariableModel): model is VariableWithOptions => {
-  return hasObjectProperty(model, 'options');
+  return 'options' in model;
 };
 
 export const hasCurrent = (model: VariableModel): model is VariableWithOptions => {
-  return hasObjectProperty(model, 'current');
+  return 'current' in model;
 };
-
-function hasObjectProperty(model: VariableModel, property: string): model is VariableWithOptions {
-  if (!model) {
-    return false;
-  }
-
-  const withProperty = model as Record<string, any>;
-  return withProperty.hasOwnProperty(property) && typeof withProperty[property] === 'object';
-}
 
 export function isLegacyAdHocDataSource(datasource: null | DataSourceRef | string): datasource is string {
   if (datasource === null) {
@@ -97,7 +86,6 @@ interface DataSourceWithStandardVariableSupport<
 }
 
 interface DataSourceWithCustomVariableSupport<
-  VariableQuery extends DataQuery = any,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
@@ -144,9 +132,7 @@ export const hasStandardVariableSupport = <
     return false;
   }
 
-  const variableSupport = datasource.variables as StandardVariableSupport<DataSourceApi<TQuery, TOptions>>;
-
-  return Boolean(variableSupport.toDataQuery);
+  return Boolean(datasource.variables.toDataQuery);
 };
 
 export const hasCustomVariableSupport = <
@@ -154,7 +140,7 @@ export const hasCustomVariableSupport = <
   TOptions extends DataSourceJsonData = DataSourceJsonData
 >(
   datasource: DataSourceApi<TQuery, TOptions>
-): datasource is DataSourceWithCustomVariableSupport<any, TQuery, TOptions> => {
+): datasource is DataSourceWithCustomVariableSupport<TQuery, TOptions> => {
   if (!datasource.variables) {
     return false;
   }
@@ -163,7 +149,7 @@ export const hasCustomVariableSupport = <
     return false;
   }
 
-  const variableSupport = datasource.variables as CustomVariableSupport<DataSourceApi<TQuery, TOptions>>;
+  const variableSupport = datasource.variables;
 
   return Boolean(variableSupport.query) && Boolean(variableSupport.editor);
 };
