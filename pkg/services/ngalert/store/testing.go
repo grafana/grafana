@@ -183,8 +183,23 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 	if err := f.Hook(*q); err != nil {
 		return err
 	}
+	q.FoldersTitles = make(map[string]string)
 	for _, rules := range f.Rules {
-		q.Result = append(q.Result, rules...)
+		for _, rule := range rules {
+			q.Rules = append(q.Rules, rule)
+			if !q.PopulateFolders {
+				continue
+			}
+			if _, ok := q.FoldersTitles[rule.NamespaceUID]; !ok {
+				if folders, ok := f.Folders[rule.OrgID]; ok {
+					for _, folder := range folders {
+						if folder.Uid == rule.NamespaceUID {
+							q.FoldersTitles[rule.NamespaceUID] = folder.Title
+						}
+					}
+				}
+			}
+		}
 	}
 	return nil
 }

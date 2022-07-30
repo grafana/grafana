@@ -92,3 +92,29 @@ func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
 		rule.For = time.Duration(rule.IntervalSeconds*rand.Int63n(9)+1) * time.Second
 	}
 }
+
+func Test_getFilterByOrgsString(t *testing.T) {
+	t.Run("should return empty string if map is empty", func(t *testing.T) {
+		store := &DBstore{
+			Cfg: setting.UnifiedAlertingSettings{
+				DisabledOrgs: map[int64]struct{}{},
+			},
+		}
+		require.Empty(t, store.getFilterByOrgsString())
+	})
+	t.Run("should return correct expression if map is not empty", func(t *testing.T) {
+		orgs := map[int64]struct{}{
+			1: {},
+			2: {},
+			3: {},
+		}
+		store := &DBstore{
+			Cfg: setting.UnifiedAlertingSettings{
+				DisabledOrgs: orgs,
+			},
+		}
+
+		result := store.getFilterByOrgsString()
+		require.Equal(t, "NOT IN (1,2,3)", result)
+	})
+}

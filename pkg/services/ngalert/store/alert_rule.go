@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -416,23 +417,56 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	return folder, nil
 }
 
+func (st DBstore) getFilterByOrgsString() string {
+	if len(st.Cfg.DisabledOrgs) == 0 {
+		return ""
+	}
+	builder := strings.Builder{}
+	builder.WriteString("org_id NOT IN(")
+	idx := len(st.Cfg.DisabledOrgs)
+	for orgId := range st.Cfg.DisabledOrgs {
+		builder.WriteString(strconv.FormatInt(orgId, 10))
+		idx--
+		if idx == 0 {
+			builder.WriteString(")")
+		}
+		builder.WriteString(",")
+	}
+
+	return builder.String()
+}
+
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
+	var folders []struct {
+		Uid   string
+		Title string
+	}
+	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alerts := make([]*ngmodels.AlertRule, 0)
-		q := sess.Table(ngmodels.AlertRule{})
-		if len(st.Cfg.DisabledOrgs) > 0 {
-			excludeOrgs := make([]interface{}, 0, len(st.Cfg.DisabledOrgs))
-			for orgID := range st.Cfg.DisabledOrgs {
-				excludeOrgs = append(excludeOrgs, orgID)
+		foldersSql := "SELECT D.uid, D.title FROM dashboard AS D WHERE is_folder = 1 AND EXISTS (SELECT 1 FROM alert_rule AS A WHERE D.uid = A.namespace_uid)"
+		alertRulesSql := "SELECT * FROM alert_rule"
+
+		filter := st.getFilterByOrgsString()
+		if filter != "" {
+			foldersSql += " AND " + filter
+			alertRulesSql += " WHERE " + filter
+
+		}
+
+		if err := sess.SQL(alertRulesSql).Find(&rules); err != nil {
+			return fmt.Errorf("failed to fetch alert rules: %w", err)
+		}
+		query.Rules = rules
+		if query.PopulateFolders {
+			if err := sess.SQL(foldersSql).Find(&folders); err != nil {
+				return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
 			}
-			q = q.NotIn("org_id", excludeOrgs...)
+			query.FoldersTitles = make(map[string]string, len(folders))
+			for _, folder := range folders {
+				query.FoldersTitles[folder.Uid] = folder.Title
+			}
 		}
-		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
-		if err := q.Find(&alerts); err != nil {
-			return err
-		}
-		query.Result = alerts
 		return nil
 	})
 }
