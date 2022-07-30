@@ -114,7 +114,7 @@ export function getVariableWithName(name: string, state: StoreState = getState()
   return getVariable({ id: name, rootStateKey: lastKey, type: 'query' }, state, false);
 }
 
-// TODO: remove the generic and cast assertion in a later PR
+// TODO: remove the generic and type assertion in a later PR
 export function getInstanceState<Model extends GenericVariableModel = GenericVariableModel>(
   state: VariablesState,
   id: string
