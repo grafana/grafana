@@ -323,7 +323,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss
+  - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
@@ -1071,7 +1071,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss
+  - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
@@ -1739,7 +1739,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss
+  - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
@@ -2367,7 +2367,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise
+  - ./bin/build  build-plugins --jobs 8 --edition enterprise
   depends_on:
   - gen-version
   - yarn-install
@@ -3650,7 +3650,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss
+  - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
@@ -4224,7 +4224,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise
+  - ./bin/build  build-plugins --jobs 8 --edition enterprise
   depends_on:
   - gen-version
   - yarn-install
@@ -4986,6 +4986,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 63ee096e5fd4d4147f43465937c4976e0d64a1dffa74206282cd9c8edf6494c0
+hmac: 59bc4ace6f43445d37011ea116c52ef83c6a7c9570de7487947771c2e8cee64f
 
 ...
