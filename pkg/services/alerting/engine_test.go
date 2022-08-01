@@ -48,7 +48,6 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 // A mock implementation of the AlertStore interface, allowing to override certain methods individually
 type AlertStoreMock struct {
 	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) error
-	getDataSource                      func(context.Context, *datasources.GetDataSourceQuery) error
 	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
 	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
 }
