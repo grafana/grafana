@@ -9,11 +9,12 @@ import (
 )
 
 type ProvisionerConfig struct {
-	Path                 string
-	DashboardService     dashboards.DashboardService
-	DashboardProvService dashboards.DashboardProvisioningService
-	RuleService          provisioning.AlertRuleService
-	ContactPointService  provisioning.ContactPointService
+	Path                       string
+	DashboardService           dashboards.DashboardService
+	DashboardProvService       dashboards.DashboardProvisioningService
+	RuleService                provisioning.AlertRuleService
+	ContactPointService        provisioning.ContactPointService
+	NotificiationPolicyService provisioning.NotificationPolicyService
 }
 
 func Provision(ctx context.Context, cfg ProvisionerConfig) error {
@@ -39,8 +40,15 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	if err != nil {
 		return err
 	}
-	// TODO: provision notificiation policy in between so that when applying it
-	//       new objects already exists and old ones are still there
+	npProvisioner := NewNotificationPolicyProvisoner(logger, cfg.NotificiationPolicyService)
+	err = npProvisioner.Provision(ctx, files)
+	if err != nil {
+		return err
+	}
+	err = npProvisioner.Unprovision(ctx, files)
+	if err != nil {
+		return err
+	}
 	err = cpProvisioner.Unprovision(ctx, files)
 	if err != nil {
 		return err
