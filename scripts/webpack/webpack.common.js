@@ -7,8 +7,11 @@ const CopyUniconsPlugin = require('./plugins/CopyUniconsPlugin');
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
 // monkey patch crypto due to https://github.com/webpack/webpack/issues/14532
-const crypto_orig_createHash = crypto.createHash;
-crypto.createHash = (algorithm) => crypto_orig_createHash(algorithm === 'md4' ? 'sha256' : algorithm);
+// only for nodejs 17 or higher
+if (process.version.split('.')[0] >= 17) {
+  const crypto_orig_createHash = crypto.createHash;
+  crypto.createHash = (algorithm) => crypto_orig_createHash(algorithm === 'md4' ? 'sha256' : algorithm);
+}
 
 module.exports = {
   target: 'web',
