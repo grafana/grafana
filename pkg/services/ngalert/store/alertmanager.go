@@ -210,22 +210,34 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID, limit int
 	if limit < 1 {
 		return 0, fmt.Errorf("failed to delete old configurations: limit is set to '%d' but needs to be > 0", limit)
 	}
-	var affactedRows int64
+	var affectedRows int64
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		highest := &models.AlertConfiguration{}
+		ok, err := sess.Desc("id").Where("org_id = ?", orgID).Limit(1).Get(highest)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			// No configurations exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
+		threshold := highest.ID - limit
+		if threshold < 1 {
+			// Fewer than `limit` records even exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
 		res, err := sess.Exec(`
 			DELETE FROM 
 				alert_configuration 
 			WHERE
 				org_id = ?
 			AND 
-				id NOT IN (
-					SELECT T.* FROM (
-						SELECT id 
-						FROM alert_configuration 
-						WHERE org_id = ? ORDER BY id DESC LIMIT ?
-					)AS T
-				)
-		`, orgID, orgID, limit)
+				id < ?
+		`, orgID, threshold)
 		if err != nil {
 			return err
 		}
@@ -233,11 +245,11 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID, limit int
 		if err != nil {
 			return err
 		}
-		affactedRows = rows
-		if affactedRows > 0 {
-			st.Logger.Info("deleted old alert_configuration(s)", "org", orgID, "limit", limit, "delete_count", affactedRows)
+		affectedRows = rows
+		if affectedRows > 0 {
+			st.Logger.Info("deleted old alert_configuration(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
 		}
 		return nil
 	})
-	return affactedRows, err
+	return affectedRows, err
 }
