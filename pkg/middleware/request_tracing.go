@@ -74,14 +74,14 @@ func RequestTracing(tracer tracing.Tracer) web.Handler {
 		// fmt.Println("TRACE ID:", traceID)
 		var thisCtx context.Context
 		wireContext := tracer.Extract(req.Context(), req.Header)
-		for k, v := range req.Header {
-			fmt.Println("STRING:", k, v)
-		}
+		// for k, v := range req.Header {
+		// 	fmt.Println("STRING:", k, v)
+		// }
 		if len(req.Header["Uber-Trace-Id"]) != 0 {
 			traceIDShort := req.Header["Uber-Trace-Id"][0][0:16]
 			traceIDString := traceIDShort + "0000000000000000"
-			traceID, err := trace.TraceIDFromHex(string(traceIDString))
-			fmt.Println("TRACE ID:", traceIDShort, string(traceIDString), traceID, err)
+			traceID, err := trace.TraceIDFromHex(traceIDString)
+			fmt.Println("TRACE ID:", traceIDShort, traceIDString, traceID, err)
 			spanID, err := trace.SpanIDFromHex(req.Header["Uber-Trace-Id"][0][17:33])
 			fmt.Println("SPAN ID:", spanID, err)
 			spanContext := trace.NewSpanContext(trace.SpanContextConfig{TraceID: traceID, SpanID: spanID})

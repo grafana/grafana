@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -250,10 +249,14 @@ func (ft *fakeTracer) Run(context.Context) error {
 	return nil
 }
 
-func (ft *fakeTracer) Start(ctx context.Context, _ string, _ ...trace.SpanStartOption) (context.Context, tracing.Span) {
+func (ft *fakeTracer) Start(ctx context.Context, _ string, _ ...*tracing.SpanContext) (context.Context, tracing.Span) {
 	return ctx, nil
 }
 
 func (ft *fakeTracer) Inject(context.Context, http.Header, tracing.Span) {
 
+}
+
+func (ft *fakeTracer) Extract(context.Context, http.Header) tracing.SpanContext {
+	return tracing.SpanContext{}
 }
