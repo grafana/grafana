@@ -39,7 +39,9 @@ To learn more about Service Accounts, see the [documentation]({{< relref "../adm
 
 #### JWT URL embedding
 
-You can now easily embed Grafana in other applications by adding a JWT token directly in the Grafana's URL, for example, it can look like `https://example.grafana.net/dashboard/uuid?aut_token=<jwt_token>`. When the JWT token is passed through the request URL to Grafana, Grafana will validate and authenticate the token linked to a specific user, allowing access to dashboards which that user can view. To see JWT URL embedding in action, see the [sample project](https://github.com/grafana/grafana-iframe-oauth-sample).
+You can now easily embed Grafana in other applications by adding a JWT token directly in the Grafana's URL, for example,`https://example.grafana.net/dashboard/uuid?aut_token=<jwt_token>`. 
+When the JWT token is passed through the request URL to Grafana, Grafana validates and authenticates the token linked to a specific user, allowing access to dashboards which that user can view. 
+To see JWT URL embedding in action, see the [sample project](https://github.com/grafana/grafana-iframe-oauth-sample).
 
 {{< figure src="/static/img/docs/dashboards/jwt-url-embedding-9-1.png" max-width="750px" caption="A JWT token used to embed Grafana" >}}
 
