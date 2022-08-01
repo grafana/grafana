@@ -927,7 +927,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	if dashboardStore == nil {
 		sql := sqlstore.InitTestDB(t)
-		dashboardStore = database.ProvideDashboardStore(sql)
+		dashboardStore = database.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
