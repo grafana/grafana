@@ -23,6 +23,15 @@ func main() {
 				&buildIDFlag,
 			},
 		},
+		{
+			Name:      "gen-version",
+			Usage:     "Generate dist/version.json",
+			ArgsUsage: "[version]",
+			Action:    ArgCountWrapper(1, GenerateVersion),
+			Flags: []cli.Flag{
+				&buildIDFlag,
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
