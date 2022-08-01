@@ -20,4 +20,9 @@ var (
 		Name:  "variants",
 		Usage: "Comma-separated list of variants to build",
 	}
+	triesFlag = cli.IntFlag{
+		Name:  "tries",
+		Usage: "Specify number of tries before failing",
+		Value: 1,
+	}
 )
