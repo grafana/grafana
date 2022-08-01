@@ -16,7 +16,10 @@ weight: -33
 
 # What's new in Grafana v9.1
 
-We're excited to announce Grafana v9.1, with a variety of improvements that focus on Grafana's usability, performance, and security. Read on to learn about new options to share and embed dashboards, search and navigation enhancements, new panel options and additional authentication features. You can also find out more about new Single Sign-On and role-based access control options in Grafana Enterprise, and more. For details, see the complete [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+We're excited to announce Grafana v9.1, with a variety of improvements that focus on Grafana's usability, performance, and security. 
+Read on to learn about new options to share and embed dashboards, search and navigation enhancements, new panel options, and additional authentication features. 
+You can also find out more about new single sign-on and role-based access control options in Grafana Enterprise, and more. 
+For details, see the complete [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## OSS
 
