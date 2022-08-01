@@ -53,13 +53,6 @@ type AlertStoreMock struct {
 	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
 }
 
-func (a *AlertStoreMock) GetDataSource(c context.Context, cmd *datasources.GetDataSourceQuery) error {
-	if a.getDataSource != nil {
-		return a.getDataSource(c, cmd)
-	}
-	return nil
-}
-
 func (a *AlertStoreMock) GetAlertById(c context.Context, cmd *models.GetAlertByIdQuery) error {
 	return nil
 }
@@ -126,7 +119,9 @@ func TestEngineProcessJob(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 
 	store := &AlertStoreMock{}
-	dsMock := &fd.FakeDataSourceService{}
+	dsMock := &fd.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{{Id: 1, Type: datasources.DS_PROMETHEUS}},
+	}
 	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
@@ -141,11 +136,6 @@ func TestEngineProcessJob(t *testing.T) {
 				return err
 			}
 			q.Result = []*models.Alert{{Settings: settings}}
-			return nil
-		}
-
-		store.getDataSource = func(ctx context.Context, q *datasources.GetDataSourceQuery) error {
-			q.Result = &datasources.DataSource{Id: 1, Type: datasources.DS_PROMETHEUS}
 			return nil
 		}
 

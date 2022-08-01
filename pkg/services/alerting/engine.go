@@ -26,24 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-// AlertStore is a subset of SQLStore API to satisfy the needs of the alerting service.
-// A subset is needed to make it easier to mock during the tests.
-type AlertStore interface {
-	GetAlertById(context.Context, *models.GetAlertByIdQuery) error
-	GetAllAlertQueryHandler(context.Context, *models.GetAllAlertsQuery) error
-	GetAlertStatesForDashboard(context.Context, *models.GetAlertStatesForDashboardQuery) error
-	HandleAlertsQuery(context.Context, *models.GetAlertsQuery) error
-	//GetDataSource(context.Context, *datasources.GetDataSourceQuery) error
-	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
-	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
-	GetAlertNotificationUidWithId(context.Context, *models.GetAlertNotificationUidQuery) error
-	GetAlertNotificationsWithUidToSend(context.Context, *models.GetAlertNotificationsWithUidToSendQuery) error
-	GetOrCreateAlertNotificationState(context.Context, *models.GetOrCreateNotificationStateQuery) error
-	SetAlertState(context.Context, *models.SetAlertStateCommand) error
-	PauseAlert(context.Context, *models.PauseAlertCommand) error
-	PauseAllAlerts(context.Context, *models.PauseAllAlertCommand) error
-}
-
 // AlertEngine is the background process that
 // schedules alert evaluations and makes sure notifications
 // are sent.
@@ -78,12 +60,6 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService, tracer tracing.Tracer, store AlertStore, cfg *setting.Cfg,
 	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService) *AlertEngine {
-	// storeLog := log.New("alerting.store")
-	// store := &sqlStore{
-	// 	cache: *cacheService,
-	// 	db:    db,
-	// 	log:   storeLog,
-	// }
 	e := &AlertEngine{
 		Cfg:                cfg,
 		RenderService:      renderer,

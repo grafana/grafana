@@ -13,9 +13,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
+// AlertStore is a subset of SQLStore API to satisfy the needs of the alerting service.
+// A subset is needed to make it easier to mock during the tests.
+type AlertStore interface {
+	GetAlertById(context.Context, *models.GetAlertByIdQuery) error
+	GetAllAlertQueryHandler(context.Context, *models.GetAllAlertsQuery) error
+	GetAlertStatesForDashboard(context.Context, *models.GetAlertStatesForDashboardQuery) error
+	HandleAlertsQuery(context.Context, *models.GetAlertsQuery) error
+	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
+	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
+	GetAlertNotificationUidWithId(context.Context, *models.GetAlertNotificationUidQuery) error
+	GetAlertNotificationsWithUidToSend(context.Context, *models.GetAlertNotificationsWithUidToSendQuery) error
+	GetOrCreateAlertNotificationState(context.Context, *models.GetOrCreateNotificationStateQuery) error
+	SetAlertState(context.Context, *models.SetAlertStateCommand) error
+	PauseAlert(context.Context, *models.PauseAlertCommand) error
+	PauseAllAlerts(context.Context, *models.PauseAllAlertCommand) error
+}
+
 type sqlStore struct {
 	db    db.DB
-	cache localcache.CacheService
+	cache *localcache.CacheService
 	log   *log.ConcreteLogger
 }
 
@@ -24,7 +41,7 @@ func ProvideAlertStore(
 	cacheService *localcache.CacheService) AlertStore {
 	return &sqlStore{
 		db:    db,
-		cache: *cacheService,
+		cache: cacheService,
 		log:   log.New("alerting.store"),
 	}
 }
