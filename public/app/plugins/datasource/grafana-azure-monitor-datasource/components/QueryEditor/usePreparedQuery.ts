@@ -2,17 +2,14 @@ import deepEqual from 'fast-deep-equal';
 import { defaults } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { AzureMonitorErrorish, AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import migrateQuery from '../../utils/migrateQuery';
 
 const DEFAULT_QUERY = {
   queryType: AzureQueryType.AzureMonitor,
 };
 
-const prepareQuery = (
-  query: AzureMonitorQuery,
-  setError: (errorSource: string, error: AzureMonitorErrorish) => void
-) => {
+const prepareQuery = (query: AzureMonitorQuery) => {
   // Note: _.defaults does not apply default values deeply.
   const withDefaults = defaults({}, query, DEFAULT_QUERY);
   const migratedQuery = migrateQuery(withDefaults);
@@ -25,12 +22,8 @@ const prepareQuery = (
 /**
  * Returns queries with some defaults + migrations, and calls onChange function to notify if it changes
  */
-const usePreparedQuery = (
-  query: AzureMonitorQuery,
-  onChangeQuery: (newQuery: AzureMonitorQuery) => void,
-  setError: (errorSource: string, error: AzureMonitorErrorish) => void
-) => {
-  const preparedQuery = useMemo(() => prepareQuery(query, setError), [query, setError]);
+const usePreparedQuery = (query: AzureMonitorQuery, onChangeQuery: (newQuery: AzureMonitorQuery) => void) => {
+  const preparedQuery = useMemo(() => prepareQuery(query), [query]);
 
   useEffect(() => {
     if (preparedQuery !== query) {
