@@ -30,7 +30,7 @@ import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
-import { constraintViewable, dimensionViewable } from './ables';
+import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -334,10 +334,11 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
-      ables: [dimensionViewable, constraintViewable(this)],
+      ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
         dimensionViewable: allowChanges,
         constraintViewable: allowChanges,
+        settingsViewable: allowChanges,
       },
       origin: false,
       className: this.styles.selected,
