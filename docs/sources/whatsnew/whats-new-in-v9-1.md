@@ -127,7 +127,7 @@ Reporting is better in a few specific ways in Grafana 9.1:
 
 - You can save a draft of a report, in case you need to make a quick update to a dashboard or make other changes before publishing the report.
 - Each page of a report PDF includes the dashboard's name, which is useful for multi-page reports.
-- You can send the same dashboard in a report multiple times with different time ranges - for example sharing last month's numbers as compared to the numbers for this month. Note that the dashboard will use the same template variables if you attach it to a report twice.
+- You can send the same dashboard in a report multiple times with different time ranges—for example, sharing last month's numbers as compared to the numbers for this month. The dashboard uses the same template variables if you attach the dashboard to a report twice.
 
 To learn more about reporting, see the [documentation]({{< relref "../enterprise/reporting/" >}}).
 
