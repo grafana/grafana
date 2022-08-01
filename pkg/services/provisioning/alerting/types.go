@@ -10,6 +10,8 @@ type configVersion struct {
 	APIVersion values.Int64Value `json:"apiVersion" yaml:"apiVersion"`
 }
 
+type OrgID int64
+
 type AlertingFile struct {
 	configVersion
 	Filename            string
@@ -18,7 +20,7 @@ type AlertingFile struct {
 	ContactPoints       []ContactPoint
 	DeleteContactPoints []DeleteContactPoint
 	Policies            []NotificiationPolicy
-	ResetPolicies       []int64
+	ResetPolicies       []OrgID
 }
 
 type AlertingFileV1 struct {
@@ -52,7 +54,7 @@ func (fileV1 *AlertingFileV1) mapPolicies(alertingFile *AlertingFile) {
 		alertingFile.Policies = append(alertingFile.Policies, npV1.mapToModel())
 	}
 	for _, orgIDV1 := range fileV1.ResetPolicies {
-		alertingFile.ResetPolicies = append(alertingFile.ResetPolicies, orgIDV1.Value())
+		alertingFile.ResetPolicies = append(alertingFile.ResetPolicies, OrgID(orgIDV1.Value()))
 	}
 }
 
