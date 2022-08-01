@@ -126,7 +126,7 @@ export const generateColumns = (
         classNames += ' ' + styles.missingTitleText;
       }
       return (
-        <a {...p.cellProps} href={p.userProps.href} className={classNames} title={name}>
+        <a {...p.cellProps} href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
           {name}
         </a>
       );

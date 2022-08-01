@@ -1,4 +1,4 @@
-package rules
+package alerting
 
 import (
 	"encoding/json"
@@ -10,46 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
-
-type configVersion struct {
-	APIVersion values.Int64Value `json:"apiVersion" yaml:"apiVersion"`
-}
-
-type RuleFile struct {
-	configVersion
-	Groups      []AlertRuleGroup
-	DeleteRules []RuleDelete
-}
-
-type RuleFileV1 struct {
-	configVersion
-	Groups      []AlertRuleGroupV1 `json:"groups" yaml:"groups"`
-	DeleteRules []RuleDeleteV1     `json:"deleteRules" yaml:"deleteRules"`
-}
-
-func (ruleFileV1 *RuleFileV1) MapToModel() (RuleFile, error) {
-	ruleFile := RuleFile{}
-	ruleFile.configVersion = ruleFileV1.configVersion
-	for _, groupV1 := range ruleFileV1.Groups {
-		group, err := groupV1.mapToModel()
-		if err != nil {
-			return RuleFile{}, err
-		}
-		ruleFile.Groups = append(ruleFile.Groups, group)
-	}
-	for _, ruleDeleteV1 := range ruleFileV1.DeleteRules {
-		orgID := ruleDeleteV1.OrgID.Value()
-		if orgID < 1 {
-			orgID = 1
-		}
-		ruleDelete := RuleDelete{
-			UID:   ruleDeleteV1.UID.Value(),
-			OrgID: orgID,
-		}
-		ruleFile.DeleteRules = append(ruleFile.DeleteRules, ruleDelete)
-	}
-	return ruleFile, nil
-}
 
 type RuleDelete struct {
 	UID   string
@@ -69,7 +29,7 @@ type AlertRuleGroupV1 struct {
 	Rules    []AlertRuleV1      `json:"rules" yaml:"rules"`
 }
 
-func (ruleGroupV1 *AlertRuleGroupV1) mapToModel() (AlertRuleGroup, error) {
+func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (AlertRuleGroup, error) {
 	ruleGroup := AlertRuleGroup{}
 	ruleGroup.Name = ruleGroupV1.Name.Value()
 	if strings.TrimSpace(ruleGroup.Name) == "" {

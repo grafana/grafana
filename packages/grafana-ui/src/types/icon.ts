@@ -166,6 +166,7 @@ export const getAvailableIcons = () =>
     'square-shape',
     'star',
     'step-backward',
+    'stopwatch-slash',
     'sync',
     'table',
     'tag-alt',

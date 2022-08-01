@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "types": ["cypress"]
+    "types": ["cypress"],
+    "resolveJsonModule": true
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": ["**/*.ts"]
