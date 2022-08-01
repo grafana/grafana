@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import {
   DragDropContext,
   Draggable,
@@ -12,8 +12,11 @@ import {
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';
+import { dispatch } from 'app/store/store';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { updateRulesOrder } from '../../state/actions';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
 import { isAlertingRule, isRecordingRule } from '../../utils/rules';
@@ -30,14 +33,41 @@ type CombinedRuleWithUID = { uid: string } & CombinedRule;
 
 export const ReorderCloudGroupModal: FC<ModalProps> = (props) => {
   const { group, namespace, onClose } = props;
+  const [rulesList, setRulesList] = useState<CombinedRule[]>(group.rules);
+
   const styles = useStyles2(getStyles);
 
-  const onDragEnd = useCallback((result: DropResult) => {
-    console.log(result);
-  }, []);
+  const onDragEnd = useCallback(
+    (result: DropResult) => {
+      if (!result.destination) {
+        return;
+      }
+
+      const sameIndex = result.destination.index === result.source.index;
+      if (sameIndex) {
+        return;
+      }
+
+      const newOrderedRules = reorder(rulesList, result.source.index, result.destination.index);
+      setRulesList(newOrderedRules);
+
+      const rulesSourceName =
+        typeof namespace.rulesSource === 'string' ? namespace.rulesSource : namespace.rulesSource.name;
+
+      dispatch(
+        updateRulesOrder({
+          namespaceName: namespace.name,
+          groupName: group.name,
+          rulesSourceName: rulesSourceName,
+          newRules: newOrderedRules.filter((rule) => rule.rulerRule).map((rule) => rule.rulerRule),
+        })
+      );
+    },
+    [group.name, namespace.name, namespace.rulesSource, rulesList]
+  );
 
   // assign unique but stable identifiers to each (alerting / recording) rule
-  const rulesWithUID: CombinedRuleWithUID[] = group.rules.map((rule) => ({
+  const rulesWithUID: CombinedRuleWithUID[] = rulesList.map((rule) => ({
     ...rule,
     uid: String(hashRulerRule(rule.rulerRule!)), // TODO fix this coercion?
   }));
@@ -82,14 +112,15 @@ interface ListItemProps extends React.HTMLAttributes<HTMLDivElement> {
   provided: DraggableProvided;
   rule: CombinedRule;
   isClone?: boolean;
+  isDragging?: boolean;
 }
 
-const ListItem = ({ provided, rule, isClone = false }: ListItemProps) => {
+const ListItem = ({ provided, rule, isClone = false, isDragging = false }: ListItemProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div
-      className={cx(styles.listItem, isClone && 'isClone')}
+      className={cx(styles.listItem, isClone && 'isClone', isDragging && 'isDragging')}
       ref={provided.innerRef}
       {...provided.draggableProps}
       {...provided.dragHandleProps}
@@ -153,7 +184,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
 
     &.isClone {
-      border: solid 1px ${theme.colors.border.medium};
+      border: solid 1px ${theme.colors.primary.shade};
     }
   `,
   listContainer: css`
@@ -177,3 +208,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: ${theme.spacing(2)};
   `,
 });
+
+function reorder<T>(rules: T[], startIndex: number, endIndex: number): T[] {
+  const result = Array.from(rules);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+
+  return result;
+}
