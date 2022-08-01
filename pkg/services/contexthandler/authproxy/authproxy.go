@@ -241,12 +241,17 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *models.ReqContext) (int64, error) {
 		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
+		UserLookupParams: models.UserLookupParams{
+			Login:  &extUser.Login,
+			Email:  &extUser.Email,
+			UserID: nil,
+		},
 	}
 	if err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert); err != nil {
 		return 0, err
 	}
 
-	return upsert.Result.Id, nil
+	return upsert.Result.ID, nil
 }
 
 // loginViaHeader logs in user from the header only
@@ -298,6 +303,11 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) 
 		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
+		UserLookupParams: models.UserLookupParams{
+			UserID: nil,
+			Login:  &extUser.Login,
+			Email:  &extUser.Email,
+		},
 	}
 
 	err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
@@ -305,7 +315,7 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) 
 		return 0, err
 	}
 
-	return upsert.Result.Id, nil
+	return upsert.Result.ID, nil
 }
 
 // getDecodedHeader gets decoded value of a header with given headerName

@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/services/datasources"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -46,7 +46,7 @@ type rawNode struct {
 	Query      map[string]interface{}
 	QueryType  string
 	TimeRange  TimeRange
-	DataSource *models.DataSource
+	DataSource *datasources.DataSource
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -138,7 +138,7 @@ const (
 type DSNode struct {
 	baseNode
 	query      json.RawMessage
-	datasource *models.DataSource
+	datasource *datasources.DataSource
 
 	orgID      int64
 	queryType  string
@@ -237,7 +237,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		}
 
 		dataSource := dn.datasource.Type
-		if isAllFrameVectors(dataSource, qr.Frames) {
+		if isAllFrameVectors(dataSource, qr.Frames) { // Prometheus Specific Handling
 			vals, err = framesToNumbers(qr.Frames)
 			if err != nil {
 				return mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
@@ -247,6 +247,12 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
+			// Handle Untyped NoData
+			if len(frame.Fields) == 0 {
+				return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
+			}
+
+			// Handle Numeric Table
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
 				logger.Debug("expression datasource query (numberSet)", "query", refID)
 				numberSet, err := extractNumberSet(frame)
@@ -268,7 +274,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
 			// the WideToMany() function to error out, which results in unhealthy alerts.
 			// This check should be removed once inconsistencies in data source responses are solved.
-			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == models.DS_INFLUXDB {
+			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == datasources.DS_INFLUXDB {
 				logger.Warn("ignoring InfluxDB data frame due to missing numeric fields", "frame", frame)
 				continue
 			}

@@ -7,7 +7,9 @@ import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginOption,
 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { Input, InlineField } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createWarningNotification } from 'app/core/copy/appNotification';
@@ -17,16 +19,43 @@ import { store } from 'app/store/store';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 
+import { LogGroupSelector } from './LogGroupSelector';
 import { XrayLinkConfig } from './XrayLinkConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
 
 export const ConfigEditor: FC<Props> = (props: Props) => {
   const { options } = props;
+  const { defaultLogGroups, logsTimeout, defaultRegion } = options.jsonData;
+  const [saved, setSaved] = useState(!!options.version && options.version > 1);
 
-  const datasource = useDatasource(options.name);
+  const datasource = useDatasource(options.name, saved);
   useAuthenticationWarning(options.jsonData);
-  const logsTimeoutError = useTimoutValidation(props.options.jsonData.logsTimeout);
+  const logsTimeoutError = useTimoutValidation(logsTimeout);
+  useEffect(() => {
+    setSaved(false);
+  }, [
+    props.options.jsonData.assumeRoleArn,
+    props.options.jsonData.authType,
+    props.options.jsonData.defaultRegion,
+    props.options.jsonData.endpoint,
+    props.options.jsonData.externalId,
+    props.options.jsonData.profile,
+    props.options.secureJsonData?.accessKey,
+    props.options.secureJsonData?.secretKey,
+  ]);
+
+  const saveOptions = async (): Promise<void> => {
+    if (saved) {
+      return;
+    }
+    await getBackendSrv()
+      .put(`/api/datasources/${options.id}`, options)
+      .then((result: { datasource: any }) => {
+        updateDatasourcePluginOption(props, 'version', result.datasource.version);
+      });
+    setSaved(true);
+  };
 
   return (
     <>
@@ -52,7 +81,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         <InlineField
           label="Timeout"
           labelWidth={28}
-          tooltip='Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
+          tooltip='Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
           invalid={Boolean(logsTimeoutError)}
         >
           <Input
@@ -61,6 +90,23 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
             value={options.jsonData.logsTimeout || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
             title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}
+          />
+        </InlineField>
+        <InlineField
+          label="Default Log Groups"
+          labelWidth={28}
+          tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
+        >
+          <LogGroupSelector
+            region={defaultRegion ?? ''}
+            selectedLogGroups={defaultLogGroups ?? []}
+            datasource={datasource}
+            onChange={(logGroups) => {
+              updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);
+            }}
+            onOpenMenu={saveOptions}
+            width={60}
+            saved={saved}
           />
         </InlineField>
       </div>
@@ -91,10 +137,14 @@ function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
   }, [jsonData.authType, jsonData.database, jsonData.profile]);
 }
 
-function useDatasource(datasourceName: string) {
+function useDatasource(datasourceName: string, saved: boolean) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
 
   useEffect(() => {
+    // reload the datasource when it's saved
+    if (!saved) {
+      return;
+    }
     getDatasourceSrv()
       .loadDatasource(datasourceName)
       .then((datasource) => {
@@ -102,7 +152,7 @@ function useDatasource(datasourceName: string) {
         // So a "as" type assertion here is a necessary evil.
         setDatasource(datasource as CloudWatchDatasource);
       });
-  }, [datasourceName]);
+  }, [datasourceName, saved]);
 
   return datasource;
 }

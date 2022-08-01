@@ -1,87 +1,62 @@
 import { cx, css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React from 'react';
+import React, { forwardRef, useState, useEffect, useMemo } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { Input } from '../Input/Input';
+import { Input, Props as InputProps } from '../Input/Input';
 
 import { ColorPickerProps } from './ColorPickerPopover';
 
-interface ColorInputState {
-  previousColor: string;
-  value: string;
-}
+interface ColorInputProps extends ColorPickerProps, Omit<InputProps, 'color' | 'onChange'> {}
 
-interface ColorInputProps extends ColorPickerProps {
-  style?: React.CSSProperties;
-  className?: string;
-}
+const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(({ color, onChange, ...inputProps }, ref) => {
+  const [value, setValue] = useState(color);
+  const [previousColor, setPreviousColor] = useState(color);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const updateColor = useMemo(() => debounce(onChange, 100), []);
 
-class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
-  constructor(props: ColorInputProps) {
-    super(props);
-    this.state = {
-      previousColor: props.color,
-      value: props.color,
-    };
-
-    this.updateColor = debounce(this.updateColor, 100);
-  }
-
-  static getDerivedStateFromProps(props: ColorPickerProps, state: ColorInputState) {
-    const newColor = tinycolor(props.color);
-    if (newColor.isValid() && props.color !== state.previousColor) {
-      return {
-        ...state,
-        previousColor: props.color,
-        value: newColor.toString(),
-      };
+  useEffect(() => {
+    const newColor = tinycolor(color);
+    if (newColor.isValid() && color !== previousColor) {
+      setValue(newColor.toString());
+      setPreviousColor(color);
     }
+  }, [color, previousColor]);
 
-    return state;
-  }
-  updateColor = (color: string) => {
-    this.props.onChange(color);
-  };
-
-  onChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+  const onChangeColor = (event: React.SyntheticEvent<HTMLInputElement>) => {
     const newColor = tinycolor(event.currentTarget.value);
 
-    this.setState({
-      value: event.currentTarget.value,
-    });
+    setValue(event.currentTarget.value);
 
     if (newColor.isValid()) {
-      this.updateColor(newColor.toString());
+      updateColor(newColor.toString());
     }
   };
 
-  onBlur = () => {
-    const newColor = tinycolor(this.state.value);
+  const onBlur = () => {
+    const newColor = tinycolor(value);
 
     if (!newColor.isValid()) {
-      this.setState({
-        value: this.props.color,
-      });
+      setValue(color);
     }
   };
 
-  render() {
-    const { value } = this.state;
-    return (
-      <Input
-        className={this.props.className}
-        value={value}
-        onChange={this.onChange}
-        onBlur={this.onBlur}
-        addonBefore={<ColorPreview color={this.props.color} />}
-      />
-    );
-  }
-}
+  return (
+    <Input
+      {...inputProps}
+      value={value}
+      onChange={onChangeColor}
+      onBlur={onBlur}
+      addonBefore={<ColorPreview color={color} />}
+      ref={ref}
+    />
+  );
+});
+
+ColorInput.displayName = 'ColorInput';
 
 export default ColorInput;
 

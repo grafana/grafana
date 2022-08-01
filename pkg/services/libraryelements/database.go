@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -26,6 +27,8 @@ SELECT DISTINCT
 	, u2.email AS updated_by_email
 	, (SELECT COUNT(connection_id) FROM ` + models.LibraryElementConnectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
 )
+
+const deleteInvalidConnections = "DELETE FROM library_element_connection WHERE connection_id IN (SELECT connection_id as id FROM library_element_connection WHERE element_id=? EXCEPT SELECT id from dashboard)"
 
 func getFromLibraryElementDTOWithMeta(dialect migrator.Dialect) string {
 	user := dialect.Quote("user")
@@ -179,6 +182,12 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 			return err
 		}
+
+		// Delete any hanging/invalid connections
+		if _, err = session.Exec(deleteInvalidConnections, element.ID); err != nil {
+			return err
+		}
+
 		var connectionIDs []struct {
 			ConnectionID int64 `xorm:"connection_id"`
 		}
@@ -548,7 +557,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 		}
 		var libraryElementConnections []libraryElementConnectionWithMeta
 		builder := sqlstore.SQLBuilder{}
-		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
+		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email, dashboard.uid AS connection_uid")
 		builder.Write(" FROM " + models.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.Dialect.Quote("user") + " AS u1 ON lec.created_by = u1.id")
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
@@ -562,11 +571,12 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 
 		for _, connection := range libraryElementConnections {
 			connections = append(connections, LibraryElementConnectionDTO{
-				ID:           connection.ID,
-				Kind:         connection.Kind,
-				ElementID:    connection.ElementID,
-				ConnectionID: connection.ConnectionID,
-				Created:      connection.Created,
+				ID:            connection.ID,
+				Kind:          connection.Kind,
+				ElementID:     connection.ElementID,
+				ConnectionID:  connection.ConnectionID,
+				ConnectionUID: connection.ConnectionUID,
+				Created:       connection.Created,
 				CreatedBy: LibraryElementDTOMetaUser{
 					ID:        connection.CreatedBy,
 					Name:      connection.CreatedByName,
@@ -699,7 +709,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 
 		if len(folderUIDs) == 0 {
-			return models.ErrFolderNotFound
+			return dashboards.ErrFolderNotFound
 		}
 
 		if len(folderUIDs) != 1 {

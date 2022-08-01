@@ -12,10 +12,6 @@
     "logos": {
       "small": "img/icn-heatmap-panel.svg",
       "large": "img/icn-heatmap-panel.svg"
-    },
-    "links": [
-      { "name": "Brendan Gregg - Heatmaps", "url": "http://www.brendangregg.com/heatmaps.html" },
-      { "name": "Brendan Gregg - Latency Heatmaps", "url": " http://www.brendangregg.com/HeatMaps/latency.html" }
-    ]
+    }
   }
 }

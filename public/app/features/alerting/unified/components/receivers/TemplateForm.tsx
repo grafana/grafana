@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 import { useForm, Validate } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
@@ -13,6 +14,8 @@ import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
 import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+
+import { TemplateEditor } from './TemplateEditor';
 
 interface Values {
   name: string;
@@ -83,6 +86,8 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
     handleSubmit,
     register,
     formState: { errors },
+    getValues,
+    setValue,
   } = useForm<Values>({
     mode: 'onSubmit',
     defaultValues: existing ?? defaults,
@@ -143,12 +148,18 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
           invalid={!!errors.content?.message}
           required
         >
-          <TextArea
-            {...register('content', { required: { value: true, message: 'Required.' } })}
-            className={styles.textarea}
-            placeholder="Message"
-            rows={12}
-          />
+          <div className={styles.editWrapper}>
+            <AutoSizer>
+              {({ width, height }) => (
+                <TemplateEditor
+                  value={getValues('content')}
+                  width={width}
+                  height={height}
+                  onBlur={(value) => setValue('content', value)}
+                />
+              )}
+            </AutoSizer>
+          </div>
         </Field>
         <div className={styles.buttons}>
           {loading && (
@@ -188,5 +199,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   textarea: css`
     max-width: 758px;
+  `,
+  editWrapper: css`
+    display: block;
+    position: relative;
+    width: 640px;
+    height: 320px;
   `,
 });

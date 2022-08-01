@@ -324,7 +324,7 @@ Sets the maximum amount of time a connection may be reused. The default is 14400
 
 ### locking_attempt_timeout_sec
 
-For "mysql", if `lockingMigration` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+For "mysql", if the `migrationLocking` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
@@ -683,7 +683,8 @@ Default is `false`.
 
 Set to `true` to automatically add new users to the main organization
 (id 1). When set to `false`, new users automatically cause a new
-organization to be created for that new user. Default is `true`.
+organization to be created for that new user. The organization will be
+created even if the `allow_org_create` setting is set to `false`. Default is `true`.
 
 ### auto_assign_org_id
 
@@ -1103,6 +1104,10 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 Sentry javascript agent is initialized. Default is `false`.
 
+### provider
+
+Defines which provider to use `sentry` or `grafana`. Default is `sentry`
+
 ### sentry_dsn
 
 Sentry DSN if you want to send events to Sentry
@@ -1122,6 +1127,22 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 ### log_endpoint_burst_limit
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
+
+### instrumentations_errors_enabled
+
+Turn on error instrumentation. Only affects Grafana Javascript Agent.
+
+### instrumentations_console_enabled
+
+Turn on console instrumentation. Only affects Grafana Javascript Agent
+
+### instrumentations_webvitals_enabled
+
+Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
+
+### api_key
+
+If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.
 
 <hr>
 
@@ -1282,6 +1303,18 @@ The maximum number of screenshots that can be taken at the same time. This optio
 ### upload_external_image_storage
 
 Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. Please see `[external_image_storage]` for further configuration options. If this option is false then screenshots will be persisted to disk for up to `temp_data_lifetime`.
+
+<hr>
+
+## [unified_alerting.reserved_labels]
+
+For more information about Grafana Reserved Labels, refer to [Labels in Grafana Alerting]({{< relref "../../alerting/fundamentals/annotation-label/how-to-use-labels/#grafana-reserved-labels" >}}).
+
+### disabled_labels
+
+Comma-separated list of reserved labels added by the Grafana Alerting engine that should be disabled.
+
+For example: `disabled_labels=grafana_folder`
 
 <hr>
 

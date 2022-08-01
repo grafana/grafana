@@ -42,7 +42,9 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
+import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
+import { GrafanaContextType } from './core/context/GrafanaContext';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
@@ -53,6 +55,7 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
+import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -90,6 +93,8 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export class GrafanaApp {
+  context!: GrafanaContextType;
+
   async init() {
     try {
       setBackendSrv(backendSrv);
@@ -146,6 +151,13 @@ export class GrafanaApp {
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);
 
+      this.context = {
+        backend: backendSrv,
+        location: locationService,
+        chrome: new AppChromeService(),
+        config,
+      };
+
       ReactDOM.render(
         React.createElement(AppWrapper, {
           app: this,
@@ -200,6 +212,22 @@ function initEchoSrv() {
         ...config.sentry,
         user: config.bootData.user,
         buildInfo: config.buildInfo,
+      })
+    );
+  }
+  if (config.grafanaJavascriptAgent.enabled) {
+    registerEchoBackend(
+      new GrafanaJavascriptAgentBackend({
+        ...config.grafanaJavascriptAgent,
+        app: {
+          version: config.buildInfo.version,
+          environment: config.buildInfo.env,
+        },
+        buildInfo: config.buildInfo,
+        user: {
+          id: String(config.bootData.user?.id),
+          email: config.bootData.user?.email,
+        },
       })
     );
   }

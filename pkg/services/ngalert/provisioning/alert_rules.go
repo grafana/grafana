@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -17,12 +19,14 @@ type AlertRuleService struct {
 	baseIntervalSeconds    int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
+	quotas                 QuotaChecker
 	xact                   TransactionManager
 	log                    log.Logger
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
+	quotas QuotaChecker,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
 	baseIntervalSeconds int64,
@@ -32,6 +36,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		baseIntervalSeconds:    baseIntervalSeconds,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
+		quotas:                 quotas,
 		xact:                   xact,
 		log:                    log,
 	}
@@ -56,7 +61,7 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 // CreateAlertRule creates a new alert rule. This function will ignore any
 // interval that is set in the rule struct and use the already existing group
 // interval or the default one.
-func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
+func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance, userID int64) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
 	}
@@ -81,6 +86,18 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		} else {
 			return errors.New("couldn't find newly created id")
 		}
+
+		limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{
+			OrgID:  rule.OrgID,
+			UserID: userID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to check alert rule quota: %w", err)
+		}
+		if limitReached {
+			return models.ErrQuotaReached
+		}
+
 		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
 	})
 	if err != nil {
@@ -89,9 +106,35 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	return rule, nil
 }
 
+func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (definitions.AlertRuleGroup, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{folder},
+		RuleGroup:     group,
+	}
+	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+		return definitions.AlertRuleGroup{}, err
+	}
+	if len(q.Result) == 0 {
+		return definitions.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
+	}
+	res := definitions.AlertRuleGroup{
+		Title:     q.Result[0].RuleGroup,
+		FolderUID: q.Result[0].NamespaceUID,
+		Interval:  q.Result[0].IntervalSeconds,
+		Rules:     []models.AlertRule{},
+	}
+	for _, r := range q.Result {
+		if r != nil {
+			res.Rules = append(res.Rules, *r)
+		}
+	}
+	return res, nil
+}
+
 // UpdateRuleGroup will update the interval for all rules in the group.
-func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
-	if err := models.ValidateRuleGroupInterval(interval, service.baseIntervalSeconds); err != nil {
+func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, intervalSeconds int64) error {
+	if err := models.ValidateRuleGroupInterval(intervalSeconds, service.baseIntervalSeconds); err != nil {
 		return err
 	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -106,11 +149,11 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 		}
 		updateRules := make([]store.UpdateRule, 0, len(query.Result))
 		for _, rule := range query.Result {
-			if rule.IntervalSeconds == interval {
+			if rule.IntervalSeconds == intervalSeconds {
 				continue
 			}
 			newRule := *rule
-			newRule.IntervalSeconds = interval
+			newRule.IntervalSeconds = intervalSeconds
 			updateRules = append(updateRules, store.UpdateRule{
 				Existing: rule,
 				New:      newRule,
@@ -137,7 +180,6 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	service.log.Info("update rule", "ID", storedRule.ID, "labels", fmt.Sprintf("%+v", rule.Labels))
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
 			{

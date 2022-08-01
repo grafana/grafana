@@ -200,8 +200,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Name: "fixed:test:test",
 					},
 					Grants: []string{"Admin"},
 				},
@@ -213,8 +212,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "custom:test:test",
+						Name: "custom:test:test",
 					},
 					Grants: []string{"Admin"},
 				},
@@ -227,8 +225,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Name: "fixed:test:test",
 					},
 					Grants: []string{"WrongAdmin"},
 				},
@@ -241,15 +238,13 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Name: "fixed:test:test",
 					},
 					Grants: []string{"Admin"},
 				},
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test2:test2",
+						Name: "fixed:test2:test2",
 					},
 					Grants: []string{"Admin"},
 				},
@@ -299,7 +294,6 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version:     1,
 						Name:        "fixed:test:test",
 						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
 					},
@@ -313,7 +307,6 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version:     1,
 						Name:        "fixed:test:test",
 						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
 					},
@@ -321,8 +314,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 				},
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test2:test2",
+						Name: "fixed:test2:test2",
 						Permissions: []accesscontrol.Permission{
 							{Action: "test:test2"},
 							{Action: "test:test3", Scope: "test:*"},
@@ -376,7 +368,6 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 	}
 	registration := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
 			UID:         "fixed:test:test",
 			Name:        "fixed:test:test",
 			Description: "Test role",
@@ -439,7 +430,6 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 	}
 	registration := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
 			UID:         "fixed:test:test",
 			Name:        "fixed:test:test",
 			Description: "Test role",

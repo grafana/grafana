@@ -24,6 +24,7 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
+export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
@@ -79,6 +80,7 @@ export { TableCellDisplayMode, TableSortByFieldState } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
+export { VerticalTab } from './Tabs/VerticalTab';
 export { TabContent } from './Tabs/TabContent';
 export { Counter } from './Tabs/Counter';
 
@@ -178,7 +180,8 @@ export { RangeSlider } from './Slider/RangeSlider';
 export { Form } from './Forms/Form';
 export { sharedInputStyle } from './Forms/commonStyles';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow, ButtonProps } from './Button';
+export { Button, LinkButton, ButtonVariant, ButtonGroup, ButtonProps } from './Button';
+export { ToolbarButton, ToolbarButtonRow } from './ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
@@ -210,6 +213,8 @@ export { Input, getInputStyles } from './Input/Input';
 export { AutoSizeInput } from './Input/AutoSizeInput';
 export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
+export * from './SecretInput';
+export * from './SecretTextArea';
 
 export { Switch, InlineSwitch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
@@ -223,6 +228,7 @@ export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 export { ButtonSelect } from './Dropdown/ButtonSelect';
+export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 
 // Export this until we've figured out a good approach to inline form styles.
@@ -260,3 +266,4 @@ export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
+export * from './QueryEditor';

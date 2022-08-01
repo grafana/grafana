@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/util"
@@ -17,13 +19,19 @@ import (
 )
 
 func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalResponse {
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 		return response.Error(http.StatusForbidden, "Access denied to data source", err)
 	}
-	if errors.Is(err, models.ErrDataSourceNotFound) {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return response.Error(http.StatusNotFound, "Data source not found", err)
 	}
-	var badQuery *query.ErrBadQuery
+
+	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
+	if errors.As(err, &secretsPlugin) {
+		return response.Error(http.StatusInternalServerError, fmt.Sprint("Secrets Plugin error: ", err.Error()), err)
+	}
+
+	var badQuery query.ErrBadQuery
 	if errors.As(err, &badQuery) {
 		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
 	}
@@ -36,7 +44,20 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 }
 
 // QueryMetricsV2 returns query metrics.
-// POST /api/ds/query   DataSource query w/ expressions
+// swagger:route POST /ds/query ds queryMetricsWithExpressions
+//
+// DataSource query metrics with expressions
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:query`.
+//
+// Responses:
+// 200: queryMetricsWithExpressionsRespons
+// 207: queryMetricsWithExpressionsRespons
+// 401: unauthorisedError
+// 400: badRequestError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	reqDTO := dtos.MetricRequest{}
 	if err := web.Bind(c.Req, &reqDTO); err != nil {
@@ -66,4 +87,18 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 	}
 
 	return response.JSONStreaming(statusCode, qdr)
+}
+
+// swagger:parameters queryMetricsWithExpressions
+type QueryMetricsWithExpressionsBodyParams struct {
+	// in:body
+	// required:true
+	Body dtos.MetricRequest `json:"body"`
+}
+
+// swagger:response queryMetricsWithExpressionsRespons
+type QueryMetricsWithExpressionsRespons struct {
+	// The response message
+	// in: body
+	Body *backend.QueryDataResponse `json:"body"`
 }

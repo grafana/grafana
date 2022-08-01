@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -26,7 +27,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type RulerSrv struct {
@@ -34,7 +34,7 @@ type RulerSrv struct {
 	provenanceStore provisioning.ProvisioningStore
 	store           store.RuleStore
 	DatasourceCache datasources.CacheService
-	QuotaService    *quota.QuotaService
+	QuotaService    quota.Service
 	scheduleService schedule.ScheduleService
 	log             log.Logger
 	cfg             *setting.UnifiedAlertingSettings
@@ -42,14 +42,12 @@ type RulerSrv struct {
 }
 
 var (
-	errQuotaReached        = errors.New("quota has been exceeded")
 	errProvisionedResource = errors.New("request affects resources created via provisioning API")
 )
 
-// RouteDeleteAlertRules deletes all alert rules user is authorized to access in the namespace (request parameter :Namespace)
-// or, if specified, a group of rules (request parameter :Groupname) in the namespace
-func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
+// RouteDeleteAlertRules deletes all alert rules user is authorized to access in the given namespace
+// or, if non-empty, a specific group of rules in the namespace
+func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle string, group string) response.Response {
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
@@ -59,7 +57,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 		namespace.Title,
 	}
 	var ruleGroup string
-	if group, ok := web.Params(c.Req)[":Groupname"]; ok {
+	if group != "" {
 		ruleGroup = group
 		loggerCtx = append(loggerCtx, "group", group)
 	}
@@ -158,8 +156,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 }
 
 // RouteGetNamespaceRulesConfig returns all rules in a specific folder that user has access to
-func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
+func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext, namespaceTitle string) response.Response {
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
@@ -201,14 +198,12 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 
 // RouteGetRulesGroupConfig returns rules that belong to a specific group in a specific namespace (folder).
 // If user does not have access to at least one of the rule in the group, returns status 401 Unauthorized
-func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
+func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext, namespaceTitle string, ruleGroup string) response.Response {
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
-	ruleGroup := web.Params(c.Req)[":Groupname"]
 	q := ngmodels.ListAlertRulesQuery{
 		OrgID:         c.SignedInUser.OrgId,
 		NamespaceUIDs: []string{namespace.Uid},
@@ -307,8 +302,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	return response.JSON(http.StatusOK, result)
 }
 
-func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
+func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceTitle string) response.Response {
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
@@ -399,14 +393,14 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 
 		if len(finalChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
-				OrgId:  c.OrgId,
-				UserId: c.UserId,
+				OrgID:  c.OrgId,
+				UserID: c.UserId,
 			}) // alert rule is table name
 			if err != nil {
 				return fmt.Errorf("failed to get alert rules quota: %w", err)
 			}
 			if limitReached {
-				return errQuotaReached
+				return ngmodels.ErrQuotaReached
 			}
 		}
 		return nil
@@ -417,7 +411,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedResource) {
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
-		} else if errors.Is(err, errQuotaReached) {
+		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
 		} else if errors.Is(err, ErrAuthorization) {
 			return ErrResp(http.StatusUnauthorized, err, "")
@@ -431,7 +425,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.Existing.UID,
-		})
+		}, rule.Existing.Version+1)
 	}
 
 	for _, rule := range finalChanges.Delete {
@@ -489,8 +483,9 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			Provenance:      provenance,
 		},
 	}
+	forDuration := model.Duration(r.For)
 	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         model.Duration(r.For),
+		For:         &forDuration,
 		Annotations: r.Annotations,
 		Labels:      r.Labels,
 	}
@@ -501,7 +496,7 @@ func toNamespaceErrorResponse(err error) response.Response {
 	if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
 		return ErrResp(http.StatusForbidden, err, err.Error())
 	}
-	if errors.Is(err, models.ErrDashboardIdentifierNotSet) {
+	if errors.Is(err, dashboards.ErrDashboardIdentifierNotSet) {
 		return ErrResp(http.StatusBadRequest, err, err.Error())
 	}
 	return apierrors.ToFolderErrorResponse(err)

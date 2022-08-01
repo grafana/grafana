@@ -1,22 +1,8 @@
 package models
 
 import (
-	"errors"
 	"strings"
 	"time"
-)
-
-// Typed errors
-var (
-	ErrFolderNotFound                = errors.New("folder not found")
-	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")
-	ErrFolderTitleEmpty              = errors.New("folder title cannot be empty")
-	ErrFolderWithSameUIDExists       = errors.New("a folder/dashboard with the same uid already exists")
-	ErrFolderInvalidUID              = errors.New("invalid uid for folder provided")
-	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
-	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
-	ErrFolderAccessDenied            = errors.New("access denied to folder")
-	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
 )
 
 type Folder struct {
@@ -31,7 +17,7 @@ type Folder struct {
 
 	UpdatedBy int64
 	CreatedBy int64
-	HasAcl    bool
+	HasACL    bool
 }
 
 // NewFolder creates a new Folder
@@ -49,7 +35,7 @@ func DashboardToFolder(dash *Dashboard) *Folder {
 		Id:        dash.Id,
 		Uid:       dash.Uid,
 		Title:     dash.Title,
-		HasAcl:    dash.HasAcl,
+		HasACL:    dash.HasACL,
 		Url:       dash.GetUrl(),
 		Version:   dash.Version,
 		Created:   dash.Created,
@@ -109,7 +95,7 @@ type HasEditPermissionInFoldersQuery struct {
 	Result       bool
 }
 
-type HasAdminPermissionInFoldersQuery struct {
+type HasAdminPermissionInDashboardsOrFoldersQuery struct {
 	SignedInUser *SignedInUser
 	Result       bool
 }

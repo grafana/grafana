@@ -176,9 +176,20 @@ const (
 type SignatureType string
 
 const (
-	GrafanaSignature SignatureType = "grafana"
-	PrivateSignature SignatureType = "private"
+	GrafanaSignature     SignatureType = "grafana"
+	CommercialSignature  SignatureType = "commercial"
+	CommunitySignature   SignatureType = "community"
+	PrivateSignature     SignatureType = "private"
+	PrivateGlobSignature SignatureType = "private-glob"
 )
+
+func (s SignatureType) IsValid() bool {
+	switch s {
+	case GrafanaSignature, CommercialSignature, CommunitySignature, PrivateSignature, PrivateGlobSignature:
+		return true
+	}
+	return false
+}
 
 type PluginFiles map[string]struct{}
 

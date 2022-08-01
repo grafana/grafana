@@ -108,7 +108,7 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1"},
-						Annotations: model.LabelSet{"__alertScreenshotToken__": "test-image-1"},
+						Annotations: model.LabelSet{"__alertImageToken__": "test-image-1"},
 					},
 				},
 			},

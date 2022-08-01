@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -10,7 +10,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { ButtonSelect } from './ButtonSelect';
 
-export default {
+const meta: ComponentMeta<typeof ButtonSelect> = {
   title: 'Forms/Select/ButtonSelect',
   component: ButtonSelect,
   decorators: [withCenteredStory],
@@ -19,9 +19,9 @@ export default {
       exclude: ['className', 'options', 'value', 'tooltipContent'],
     },
   },
-} as Meta;
+};
 
-export const Basic: Story = (args) => {
+export const Basic: ComponentStory<typeof ButtonSelect> = (args) => {
   const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
   const options: Array<SelectableValue<string>> = [initialValue, { label: 'Another label', value: 'Another value' }];
   return (
@@ -51,3 +51,5 @@ Basic.args = {
   narrow: true,
   variant: 'default',
 };
+
+export default meta;
