@@ -28,14 +28,18 @@ type StandardSearchService struct {
 
 	logger log.Logger
 
-	dashboardIndexExtender     DashboardIndexExtender
-	dashboardIndexManager      *orgIndexManager
-	dashboardReIndexCh         chan bool
-	dashboardIndexingBatchSize int
+	dashboardIndexExtender       DashboardIndexExtender
+	dashboardIndexManager        *orgIndexManager
+	dashboardReIndexCh           chan bool
+	dashboardIndexingBatchSize   int
+	dashboardReindexingBatchSize int
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl, storageService store.StorageService) SearchService {
-	config := newConfig(cfg)
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl, storageService store.StorageService) (SearchService, error) {
+	config, err := newConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
 	s := &StandardSearchService{
 		cfg: cfg,
 		sql: sql,
@@ -44,26 +48,30 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			sql: sql,
 			ac:  ac,
 		},
-		logger:                     log.New("searchV2"),
-		dashboardIndexExtender:     &NoopExtender{},
-		dashboardReIndexCh:         make(chan bool, 1),
-		dashboardIndexingBatchSize: config.DashboardIndexingBatchSize,
+		logger:                       log.New("searchV2"),
+		dashboardIndexExtender:       &NoopExtender{},
+		dashboardReIndexCh:           make(chan bool, 1),
+		dashboardIndexingBatchSize:   config.DashboardIndexingBatchSize,
+		dashboardReindexingBatchSize: config.DashboardReindexingBatchSize,
 	}
+
 	s.dashboardIndexManager = newOrgIndexManager(
 		orgManagerConfig{
 			Name:                  "dashboard",
 			ReIndexInterval:       config.DashboardReIndexInterval,
 			EventsPollingInterval: config.DashboardEventsPollingInterval,
+			BackupMode:            config.DashboardBackup,
+			BackupDiskPath:        config.DashboardBackupDiskPath,
 		},
 		s.getDashboardIndexFactory,
 		entityEventStore,
 		storageService,
 	)
-	return s
+	return s, nil
 }
 
 func (s *StandardSearchService) getDashboardIndexFactory(ctx context.Context, orgID int64, writer *bluge.Writer) (Index, error) {
-	return createDashboardIndex(ctx, orgID, writer, newSQLDashboardLoader(s.sql), s.dashboardIndexExtender.GetDocumentExtender(), newFolderIDLookup(s.sql), s.dashboardIndexingBatchSize)
+	return createDashboardIndex(ctx, orgID, writer, newSQLDashboardLoader(s.sql), s.dashboardIndexExtender.GetDocumentExtender(), newFolderIDLookup(s.sql), s.dashboardIndexingBatchSize, s.dashboardReindexingBatchSize)
 }
 
 func (s *StandardSearchService) IsDisabled() bool {

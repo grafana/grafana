@@ -62,7 +62,7 @@ func initTestIndexFromDashesExtended(t *testing.T, orgID int64, dashboards []das
 		dashboardLoader,
 		extender,
 		func(ctx context.Context, folderId int64) (string, error) { return "x", nil },
-		0,
+		0, 0,
 	)
 	require.NoError(t, err)
 	require.NotNil(t, index)

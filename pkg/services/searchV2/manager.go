@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -39,6 +38,22 @@ type eventStore interface {
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
 
+type backupMode string
+
+const (
+	backupModeNone backupMode = "none"
+	backupModeDisk backupMode = "disk"
+	backupModeSql  backupMode = "sql"
+)
+
+type orgManagerConfig struct {
+	Name                  string
+	ReIndexInterval       time.Duration
+	EventsPollingInterval time.Duration
+	BackupMode            backupMode
+	BackupDiskPath        string
+}
+
 type orgIndexManager struct {
 	mu           sync.RWMutex
 	config       orgManagerConfig
@@ -51,15 +66,7 @@ type orgIndexManager struct {
 	perOrgIndex  map[int64]Index
 }
 
-type orgManagerConfig struct {
-	Name                  string
-	ReIndexInterval       time.Duration
-	EventsPollingInterval time.Duration
-	BackupBaseDir         string
-}
-
 func newOrgIndexManager(config orgManagerConfig, indexFactory IndexFactory, eventStore eventStore, fileStore fileStore) *orgIndexManager {
-	config.BackupBaseDir = "data/gf_search"
 	return &orgIndexManager{
 		config:       config,
 		indexFactory: indexFactory,
@@ -97,27 +104,12 @@ const (
 )
 
 func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignalCh chan bool) error {
-	reIndexInterval := m.config.ReIndexInterval
-	if reIndexInterval == 0 {
-		reIndexInterval = defaultReIndexInterval
-	}
-	fullReIndexTimer := time.NewTimer(reIndexInterval)
-	defer fullReIndexTimer.Stop()
-
-	eventsPollingInterval := m.config.EventsPollingInterval
-	if eventsPollingInterval == 0 {
-		eventsPollingInterval = defaultEventsPollingInterval
-	}
-	eventsPollingTimer := time.NewTimer(eventsPollingInterval)
-	defer eventsPollingTimer.Stop()
-
 	var lastEventID int64
 	var loadOK bool
 	var err error
 
 	lastEventID, loadOK, err = m.loadFromBackup(ctx, orgIDs)
 	if err != nil {
-		println(1)
 		return err
 	}
 	if !loadOK {
@@ -136,22 +128,6 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 		if err != nil {
 			return err
 		}
-		err = m.compressBackup(ctx)
-		if err != nil {
-			return err
-		}
-		//err = m.decompressBackup(ctx)
-		//if err != nil {
-		//	return err
-		//}
-		err = m.uploadBackup(ctx)
-		if err != nil {
-			return err
-		}
-		err = m.downloadBackup(ctx)
-		if err != nil {
-			return err
-		}
 	}
 
 	// This semaphore channel allows limiting concurrent async re-indexing routines to 1.
@@ -160,12 +136,28 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 	// Channel to handle signals about asynchronous full re-indexing completion.
 	reIndexDoneCh := make(chan int64, 1)
 
+	// Sometimes we know that forced re-indexing is required.
 	needForcedReindex := false
+
+	reIndexInterval := m.config.ReIndexInterval
+	if reIndexInterval == 0 {
+		reIndexInterval = defaultReIndexInterval
+	}
+	fullReIndexTimer := time.NewTimer(reIndexInterval)
+	defer fullReIndexTimer.Stop()
+
+	eventsPollingInterval := m.config.EventsPollingInterval
+	if eventsPollingInterval == 0 {
+		eventsPollingInterval = defaultEventsPollingInterval
+	}
+	eventsPollingTimer := time.NewTimer(eventsPollingInterval)
+	defer eventsPollingTimer.Stop()
 
 	for {
 		select {
 		case doneCh := <-m.syncCh:
 			// Executed on search read requests to make sure index is consistent.
+			// This should be reasonably fast most of the time.
 			lastEventID = m.applyIndexUpdates(ctx, lastEventID)
 			close(doneCh)
 		case <-eventsPollingTimer.C:
@@ -209,6 +201,7 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 			// entity events non-atomically (outside of transaction) and do not cover all possible entity
 			// change places, so periodic re-indexing fixes possibly broken state.
 			lastIndexedEventID := lastEventID
+
 			go func(needForcedReindex bool) {
 				// Do full re-index asynchronously to avoid blocking index synchronization
 				// on read for a long time.
@@ -225,21 +218,23 @@ func (m *orgIndexManager) run(ctx context.Context, orgIDs []int64, reIndexSignal
 				} else {
 					m.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started), "name", m.config.Name)
 				}
+				err = m.saveBackup(ctx, lastIndexedEventID, orgIDs)
+				if err != nil {
+					m.logger.Error("Backup saving error", "error", err, "name", m.config.Name)
+				}
 				reIndexDoneCh <- lastIndexedEventID
 			}(needForcedReindex)
+
+			// Now when full re-indexing started we must unset flag for forced re-indexing.
 			needForcedReindex = false
 		case lastIndexedEventID := <-reIndexDoneCh:
-			err = m.saveBackup(ctx, lastEventID, orgIDs)
-			if err != nil {
-				return err
-			}
 			// Asynchronous re-indexing is finished. Set lastEventID to the value which
 			// was actual at the re-indexing start – so that we could re-apply all the
 			// events happened during async index build process and make sure it's consistent.
 			if lastEventID != lastIndexedEventID {
 				m.logger.Info("Re-apply event ID to last indexed", "currentEventID", lastEventID, "lastIndexedEventID", lastIndexedEventID, "name", m.config.Name)
 				lastEventID = lastIndexedEventID
-				// Apply events immediately.
+				// Apply possibly missed events immediately.
 				eventsPollingTimer.Reset(0)
 			}
 			fullReIndexTimer.Reset(reIndexInterval)
@@ -381,14 +376,39 @@ type metaContent struct {
 }
 
 func (m *orgIndexManager) loadFromBackup(ctx context.Context, orgIDs []int64) (int64, bool, error) {
-	backupBaseDir := m.config.BackupBaseDir
-	if _, err := os.Stat(backupBaseDir); os.IsNotExist(err) {
-		err := os.MkdirAll(backupBaseDir, 0700)
-		if err != nil {
-			return 0, false, fmt.Errorf("can't create backup dir %s: %w", backupBaseDir, err)
-		}
+	var backupBaseDir string
+	if m.config.BackupMode == backupModeNone {
 		return 0, false, nil
+	} else if m.config.BackupMode == backupModeDisk {
+		backupDiskPath := m.config.BackupDiskPath
+		if _, err := os.Stat(backupDiskPath); os.IsNotExist(err) {
+			err := os.MkdirAll(backupDiskPath, 0700)
+			if err != nil {
+				return 0, false, fmt.Errorf("can't create backup dir %s: %w", backupDiskPath, err)
+			}
+			return 0, false, nil
+		}
+		backupBaseDir = backupDiskPath
+	} else if m.config.BackupMode == backupModeSql {
+		content, ok, err := m.downloadBackup(ctx)
+		if err != nil {
+			return 0, false, err
+		}
+		if !ok {
+			return 0, false, nil
+		}
+		tmpDir, cancel, err := m.decompressBackup(ctx, content)
+		if err != nil {
+			return 0, false, err
+		}
+		defer cancel()
+		backupBaseDir = tmpDir
+	} else {
+		return 0, false, fmt.Errorf("unsupported backup mode: %s", m.config.BackupMode)
 	}
+
+	started := time.Now()
+
 	metaFile := filepath.Join(backupBaseDir, "meta.json")
 	if _, err := os.Stat(metaFile); err != nil {
 		if os.IsNotExist(err) {
@@ -410,7 +430,6 @@ func (m *orgIndexManager) loadFromBackup(ctx context.Context, orgIDs []int64) (i
 
 	for _, orgID := range orgIDs {
 		orgBackupDir := filepath.Join(backupBaseDir, "org_"+strconv.FormatInt(orgID, 10))
-		m.logger.Info("Start loading initial org index from backup", "orgId", orgID, "name", m.config.Name)
 		started := time.Now()
 		config := bluge.InMemoryFromBackup(orgBackupDir)
 		dashboardWriter, err := bluge.OpenWriter(config)
@@ -421,20 +440,27 @@ func (m *orgIndexManager) loadFromBackup(ctx context.Context, orgIDs []int64) (i
 		if err != nil {
 			return 0, false, fmt.Errorf("error loading initial index %s for org %d from backup: %w", m.config.Name, orgID, err)
 		}
-		m.logger.Info("Finish loading initial org index from backup", "elapsed", time.Since(started), "name", m.config.Name, "orgId", orgID)
-
+		m.logger.Info("Loaded initial index from backup", "elapsed", time.Since(started), "name", m.config.Name, "orgId", orgID)
 		m.mu.Lock()
 		m.perOrgIndex[orgID] = index
 		m.mu.Unlock()
 	}
+	m.logger.Info("Backup fully loaded", "name", m.config.Name, "elapsed", time.Since(started), "mode", m.config.BackupMode)
 	return meta.EventID, true, nil
 }
 
-func (m *orgIndexManager) saveBackup(_ context.Context, currentEventID int64, orgIDs []int64) error {
-	backupBaseDir := m.config.BackupBaseDir
-	if _, err := os.Stat(backupBaseDir); os.IsNotExist(err) {
-		return fmt.Errorf("dir does not exists: %s", backupBaseDir)
+func (m *orgIndexManager) saveBackup(ctx context.Context, currentEventID int64, orgIDs []int64) error {
+	if m.config.BackupMode == backupModeNone {
+		return nil
+	} else if m.config.BackupMode == backupModeDisk {
+
+	} else if m.config.BackupMode == backupModeSql {
+
+	} else {
+		return fmt.Errorf("unsupported backup mode: %s", m.config.BackupMode)
 	}
+
+	started := time.Now()
 
 	tmpDir, err := ioutil.TempDir("", "gf_"+m.config.Name+"_backup_tmp")
 	if err != nil {
@@ -479,63 +505,70 @@ func (m *orgIndexManager) saveBackup(_ context.Context, currentEventID int64, or
 		m.logger.Info("Finish backup of org index", "orgId", orgID, "name", m.config.Name, "elapsed", time.Since(started))
 	}
 
-	// TODO: os.Rename returns error if destination dir exists, so we remove existing backup dir first.
-	// This means we can't move atomically. Is there a way?
-	err = os.RemoveAll(backupBaseDir)
-	if err != nil {
-		return fmt.Errorf("can't remove backup dir: %w", err)
+	if m.config.BackupMode == backupModeDisk {
+		if _, err := os.Stat(m.config.BackupDiskPath); os.IsNotExist(err) {
+			return fmt.Errorf("dir does not exists: %s", m.config.BackupDiskPath)
+		}
+		// TODO: os.Rename returns error if destination dir exists, so we remove existing backup dir first.
+		// This means we can't move atomically. Is there a way?
+		err = os.RemoveAll(m.config.BackupDiskPath)
+		if err != nil {
+			return fmt.Errorf("can't remove backup dir: %w", err)
+		}
+		err = os.Rename(tmpDir, m.config.BackupDiskPath)
+		if err != nil {
+			return fmt.Errorf("can't rename tmp backup dir %s: %w", tmpDir, err)
+		}
+	} else if m.config.BackupMode == backupModeSql {
+		tmpFileName, cancel, err := m.compressBackup(ctx, tmpDir)
+		if err != nil {
+			return fmt.Errorf("can't compress backup: %w", err)
+		}
+		defer cancel()
+		err = m.uploadBackup(ctx, tmpFileName)
+		if err != nil {
+			return fmt.Errorf("can't upload backup: %w", err)
+		}
 	}
-
-	err = os.Rename(tmpDir, backupBaseDir)
-	if err != nil {
-		return fmt.Errorf("can't rename tmp backup dir %s: %w", tmpDir, err)
-	}
+	m.logger.Info("Backup saved", "name", m.config.Name, "elapsed", time.Since(started), "mode", m.config.BackupMode)
 	return nil
 }
 
-func (m *orgIndexManager) compressBackup(_ context.Context) error {
-	backupBaseDir := m.config.BackupBaseDir
+func (m *orgIndexManager) compressBackup(_ context.Context, tmpDir string) (string, func(), error) {
+	started := time.Now()
+	defer func() {
+		m.logger.Info("Compressed backup to tmp file", "elapsed", time.Since(started), "name", m.config.Name)
+	}()
 	var buf bytes.Buffer
-	err := compressFolder(backupBaseDir, &buf)
+	err := compressFolder(tmpDir, &buf)
 	if err != nil {
-		return fmt.Errorf("can't compress backup folder: %w", err)
+		return "", nil, fmt.Errorf("can't compress backup folder: %w", err)
 	}
 	tmpFile, err := ioutil.TempFile("", "gf_"+m.config.Name+"_backup_compressed")
 	if err != nil {
-		return fmt.Errorf("can't create tmp file for compressed backup: %w", err)
+		return "", nil, fmt.Errorf("can't create tmp file for compressed backup: %w", err)
 	}
 	err = ioutil.WriteFile(tmpFile.Name(), buf.Bytes(), 0700)
 	if err != nil {
-		return fmt.Errorf("can't write into tmp file: %w", err)
+		return "", nil, fmt.Errorf("can't write into tmp file: %w", err)
 	}
-	//defer func() { _ = os.RemoveAll(tmpFile.Name()) }()
-	return os.Rename(tmpFile.Name(), "data/backup.tar.gz")
+	return tmpFile.Name(), func() {
+		_ = os.Remove(tmpFile.Name())
+	}, nil
 }
 
-func (m *orgIndexManager) decompressBackup(_ context.Context) error {
-	compressedFilePath := "data/backup.tar.gz"
-	uncompressedBackupPath := "data/gf_search_uncompressed"
-	content, err := ioutil.ReadFile(compressedFilePath)
-	if err != nil {
-		return err
-	}
-	reader := bytes.NewReader(content)
-	return decompressToFolder(reader, uncompressedBackupPath)
-}
-
-func (m *orgIndexManager) uploadBackup(ctx context.Context) error {
+func (m *orgIndexManager) uploadBackup(ctx context.Context, fromFile string) error {
 	started := time.Now()
 	defer func() {
-		m.logger.Info("uploaded backup", "elapsed", time.Since(started))
+		m.logger.Info("Uploaded backup file", "elapsed", time.Since(started), "name", m.config.Name)
 	}()
-	compressedFilePath := "data/backup.tar.gz"
-	content, err := ioutil.ReadFile(compressedFilePath)
+	content, err := ioutil.ReadFile(fromFile)
 	if err != nil {
 		return fmt.Errorf("error uploading backup: %w", err)
 	}
 	err = m.fileStore.Upload(ctx, store.SearchServiceAdmin, &store.UploadRequest{
 		Contents:              content,
-		Path:                  "system/search/backup.tar.gz",
+		Path:                  m.getSQLBackupFilePath(),
 		EntityType:            store.EntityTypeArchive,
 		OverwriteExistingFile: true,
 	})
@@ -545,15 +578,40 @@ func (m *orgIndexManager) uploadBackup(ctx context.Context) error {
 	return nil
 }
 
-func (m *orgIndexManager) downloadBackup(ctx context.Context) error {
+func (m *orgIndexManager) downloadBackup(ctx context.Context) ([]byte, bool, error) {
 	started := time.Now()
 	defer func() {
-		m.logger.Info("downloaded backup", "elapsed", time.Since(started))
+		m.logger.Info("Downloaded backup file", "elapsed", time.Since(started), "name", m.config.Name)
 	}()
-	f, err := m.fileStore.Read(ctx, store.SearchServiceAdmin, "system/search/backup.tar.gz")
+	f, err := m.fileStore.Read(ctx, store.SearchServiceAdmin, m.getSQLBackupFilePath())
 	if err != nil {
-		return fmt.Errorf("error reading backup: %w", err)
+		return nil, false, fmt.Errorf("error reading backup: %w", err)
 	}
-	fmt.Println(len(f.Contents))
-	return nil
+	if f == nil {
+		return nil, false, nil
+	}
+	return f.Contents, true, nil
+}
+
+func (m *orgIndexManager) decompressBackup(_ context.Context, content []byte) (string, func(), error) {
+	started := time.Now()
+	defer func() {
+		m.logger.Info("Decompressed backup to tmp dir", "elapsed", time.Since(started), "name", m.config.Name)
+	}()
+	tmpDir, err := ioutil.TempDir("", "gf_"+m.config.Name+"_decompressed_tmp")
+	if err != nil {
+		return "", nil, fmt.Errorf("can't create tmp dir for backup: %w", err)
+	}
+	reader := bytes.NewReader(content)
+	err = decompressToFolder(reader, tmpDir)
+	if err != nil {
+		return "", nil, fmt.Errorf("error decompressing backup: %w", err)
+	}
+	return tmpDir, func() {
+		_ = os.RemoveAll(tmpDir)
+	}, nil
+}
+
+func (m *orgIndexManager) getSQLBackupFilePath() string {
+	return "system/search/backup_" + m.config.Name + ".tar.gz"
 }
