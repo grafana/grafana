@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/urfave/cli/v2"
 )
 
