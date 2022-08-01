@@ -32,13 +32,6 @@ var (
 		},
 		[]string{"reason"},
 	)
-	dashboardSearchSuccessRequestsCounter = promauto.NewCounter(
-		prometheus.CounterOpts{
-			Name:      "dashboard_search_successes_total",
-			Help:      "A counter for successful dashboard search requests",
-			Namespace: namespace,
-			Subsystem: subsystem,
-		})
 	dashboardSearchSuccessRequestsDuration = promauto.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:      "dashboard_search_successes_duration_seconds",
@@ -192,6 +185,7 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	query := s.doDashboardQuery(ctx, user, orgID, q)
 
 	duration := time.Since(start).Seconds()
+	s.logger.Info("Search duration", "dur", duration)
 	if query.Error != nil {
 		dashboardSearchFailureRequestsDuration.Observe(duration)
 	} else {
@@ -247,9 +241,7 @@ func (s *StandardSearchService) doDashboardQuery(ctx context.Context, user *back
 		}
 	}
 
-	if response.Error == nil {
-		dashboardSearchSuccessRequestsCounter.Inc()
-	} else {
+	if response.Error != nil {
 		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
 			"reason": "search_query_error",
 		}).Inc()
