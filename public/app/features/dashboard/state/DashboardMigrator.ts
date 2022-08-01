@@ -76,7 +76,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 36;
+    this.dashboard.schemaVersion = 37;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -775,6 +775,18 @@ export class DashboardMigrator {
           return panel;
         });
       }
+    }
+
+    if (oldVersion < 37) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.options?.legend && panel.options.legend.displayMode === 'hidden') {
+          panel.options.legend.displayMode = 'list';
+          panel.options.legend.showLegend = false;
+        } else if (panel.options?.legend) {
+          panel.options.legend = { ...panel.options?.legend, showLegend: true };
+        }
+        return panel;
+      });
     }
 
     if (panelUpgrades.length === 0) {

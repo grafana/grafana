@@ -21,6 +21,7 @@ export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
+export { InlineToast } from './InlineToast/InlineToast';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
@@ -228,6 +229,7 @@ export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 export { ButtonSelect } from './Dropdown/ButtonSelect';
+export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 
 // Export this until we've figured out a good approach to inline form styles.
@@ -265,3 +267,4 @@ export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
+export * from './QueryEditor';

@@ -9,17 +9,36 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// GET /api/user  (current authenticated user)
+// swagger:route GET /user signed_in_user getSignedInUser
+//
+// Get (current authenticated user)
+//
+// Responses:
+// 200: userResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetSignedInUser(c *models.ReqContext) response.Response {
 	return hs.getUserUserProfile(c, c.UserId)
 }
 
-// GET /api/users/:id
+// swagger:route GET /users/{user_id} users getUserByID
+//
+// Get user by id.
+//
+// Responses:
+// 200: userResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserByID(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -32,8 +51,8 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 	query := models.GetUserProfileQuery{UserId: userID}
 
 	if err := hs.SQLStore.GetUserProfile(c.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to get user", err)
 	}
@@ -52,12 +71,21 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 	return response.JSON(http.StatusOK, query.Result)
 }
 
-// GET /api/users/lookup
+// swagger:route GET /users/lookup users getUserByLoginOrEmail
+//
+// Get user by login or email.
+//
+// Responses:
+// 200: userResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Response {
 	query := models.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
 	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to get user", err)
 	}
@@ -76,7 +104,15 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, &result)
 }
 
-// POST /api/user
+// swagger:route PUT /user signed_in_user updateSignedInUser
+//
+// Update signed in User.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response {
 	cmd := models.UpdateUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -94,7 +130,18 @@ func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response
 	return hs.handleUpdateUser(c.Req.Context(), cmd)
 }
 
-// POST /api/users/:id
+// swagger:route PUT /users/{user_id} users updateUser
+//
+// Update user.
+//
+// Update the user identified by id.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateUser(c *models.ReqContext) response.Response {
 	cmd := models.UpdateUserCommand{}
 	var err error
@@ -141,7 +188,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd models.UpdateUse
 	}
 
 	if err := hs.SQLStore.UpdateUser(ctx, &cmd); err != nil {
-		if errors.Is(err, models.ErrCaseInsensitive) {
+		if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to update user", err)
@@ -150,17 +197,51 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd models.UpdateUse
 	return response.Success("User updated")
 }
 
-// GET /api/user/orgs
+// swagger:route GET /user/orgs signed_in_user getSignedInUserOrgList
+//
+// Organizations of the actual User.
+//
+// Return a list of all organizations of the current user.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: getSignedInUserOrgListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetSignedInUserOrgList(c *models.ReqContext) response.Response {
 	return hs.getUserOrgList(c.Req.Context(), c.UserId)
 }
 
-// GET /api/user/teams
+// swagger:route GET /user/teams signed_in_user getSignedInUserTeamList
+//
+// Teams that the actual User is member of.
+//
+// Return a list of all teams that the current user is member of.
+//
+// Responses:
+// 200: getSignedInUserTeamListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetSignedInUserTeamList(c *models.ReqContext) response.Response {
 	return hs.getUserTeamList(c, c.OrgId, c.UserId)
 }
 
-// GET /api/users/:id/teams
+// swagger:route GET /users/{user_id}/teams users getUserTeams
+//
+// Get teams for user.
+//
+// Get teams for user identified by id.
+//
+// Responses:
+// 200: getUserTeamsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserTeams(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -182,7 +263,18 @@ func (hs *HTTPServer) getUserTeamList(c *models.ReqContext, orgID int64, userID 
 	return response.JSON(http.StatusOK, query.Result)
 }
 
-// GET /api/users/:id/orgs
+// swagger:route GET /users/{user_id}/orgs users getUserOrgList
+//
+// Get organizations for user.
+//
+// Get organizations for user identified by id.
+//
+// Responses:
+// 200: getUserOrgListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserOrgList(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -219,7 +311,18 @@ func (hs *HTTPServer) validateUsingOrg(ctx context.Context, userID int64, orgID 
 	return valid
 }
 
-// POST /api/user/using/:id
+// swagger:route POST /user/using/{org_id} signed_in_user userSetUsingOrg
+//
+// Switch user context for signed in user.
+//
+// Switch user context to the given organization.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) UserSetUsingOrg(c *models.ReqContext) response.Response {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -260,6 +363,21 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
 	c.Redirect(hs.Cfg.AppSubURL + "/")
 }
 
+// swagger:route PUT /user/password signed_in_user changeUserPassword
+//
+// Change Password.
+//
+// Changes the password for the user.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response {
 	cmd := models.ChangeUserPasswordCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -306,6 +424,15 @@ func redirectToChangePassword(c *models.ReqContext) {
 	c.Redirect("/profile/password", 302)
 }
 
+// swagger:route PUT /user/helpflags/{flag_id} signed_in_user setHelpFlag
+//
+// Set user help flag.
+//
+// Responses:
+// 200: helpFlagResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) SetHelpFlag(c *models.ReqContext) response.Response {
 	flag, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -327,6 +454,15 @@ func (hs *HTTPServer) SetHelpFlag(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }
 
+// swagger:route GET /user/helpflags/clear signed_in_user clearHelpFlags
+//
+// Clear user help flag.
+//
+// Responses:
+// 200: helpFlagResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) ClearHelpFlags(c *models.ReqContext) response.Response {
 	cmd := models.SetUserHelpFlagCommand{
 		UserId:     c.UserId,
@@ -359,4 +495,159 @@ func GetAuthProviderLabel(authModule string) string {
 	default:
 		return "OAuth"
 	}
+}
+
+// swagger:parameters searchUsers
+type SearchUsersParams struct {
+	// Limit the maximum number of users to return per page
+	// in:query
+	// required:false
+	// default:1000
+	Limit int64 `json:"perpage"`
+	// Page index for starting fetching users
+	// in:query
+	// required:false
+	// default:1
+	Page int64 `json:"page"`
+}
+
+// swagger:parameters searchUsersWithPaging
+
+type SearchUsersWithPagingParams struct {
+	// Limit the maximum number of users to return per page
+	// in:query
+	// required:false
+	// default:1000
+	Limit int64 `json:"perpage"`
+	// Page index for starting fetching users
+	// in:query
+	// required:false
+	// default:1
+	Page int64 `json:"page"`
+	// Query allows return results where the query value is contained in one of the name, login or email fields. Query values with spaces need to be URL encoded e.g. query=Jane%20Doe
+	// in:query
+	// required:false
+	Query string `json:"query"`
+}
+
+// swagger:parameters updateSignedInUser
+type UpdateSignedInUserParams struct {
+	// To change the email, name, login, theme, provide another one.
+	// in:body
+	// required:true
+	Body models.UpdateUserCommand `json:"body"`
+}
+
+// swagger:parameters userSetUsingOrg
+type UserSetUsingOrgParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters setHelpFlag
+type SetHelpFlagParams struct {
+	// in:path
+	// required:true
+	FlagID string `json:"flag_id"`
+}
+
+// swagger:parameters changeUserPassword
+type ChangeUserPasswordParams struct {
+	// To change the email, name, login, theme, provide another one.
+	// in:body
+	// required:true
+	Body models.ChangeUserPasswordCommand `json:"body"`
+}
+
+// swagger:parameters getUserByID
+type GetUserByIDParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getUserOrgList
+type GetUserOrgListParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getUserTeams
+type GetUserTeamsParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getUserByLoginOrEmail
+type GetUserByLoginOrEmailParams struct {
+	// loginOrEmail of the user
+	// in:query
+	// required:true
+	LoginOrEmail string `json:"loginOrEmail"`
+}
+
+// swagger:parameters updateUser
+type UpdateUserParams struct {
+	// To change the email, name, login, theme, provide another one.
+	// in:body
+	// required:true
+	Body models.UpdateUserCommand `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:response searchUsersResponse
+type SearchUsersResponse struct {
+	// The response message
+	// in: body
+	Body models.SearchUserQueryResult `json:"body"`
+}
+
+// swagger:response userResponse
+type UserResponse struct {
+	// The response message
+	// in: body
+	Body models.UserProfileDTO `json:"body"`
+}
+
+// swagger:response getUserOrgListResponse
+type GetUserOrgListResponse struct {
+	// The response message
+	// in: body
+	Body []*models.UserOrgDTO `json:"body"`
+}
+
+// swagger:response getSignedInUserOrgListResponse
+type GetSignedInUserOrgListResponse struct {
+	// The response message
+	// in: body
+	Body []*models.UserOrgDTO `json:"body"`
+}
+
+// swagger:response getUserTeamsResponse
+type GetUserTeamsResponse struct {
+	// The response message
+	// in: body
+	Body []*models.TeamDTO `json:"body"`
+}
+
+// swagger:response getSignedInUserTeamListResponse
+type GetSignedInUserTeamListResponse struct {
+	// The response message
+	// in: body
+	Body []*models.TeamDTO `json:"body"`
+}
+
+// swagger:response helpFlagResponse
+type HelpFlagResponse struct {
+	// The response message
+	// in: body
+	Body struct {
+		HelpFlags1 int64  `json:"helpFlags1"`
+		Message    string `json:"message"`
+	} `json:"body"`
 }

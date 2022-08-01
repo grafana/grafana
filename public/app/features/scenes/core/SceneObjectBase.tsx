@@ -1,21 +1,21 @@
-import { useObservable } from 'react-use';
+import { useEffect } from 'react';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { EventBusSrv } from '@grafana/data';
+import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
 import {
   SceneDataState,
   SceneObject,
-  SceneLayoutState,
-  SceneObjectState,
   SceneComponent,
   SceneEditor,
-  SceneObjectList,
   SceneTimeRange,
   isSceneObject,
+  SceneObjectState,
+  SceneLayoutChild,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
@@ -119,7 +119,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
   useState() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useObservable(this.subject, this.state);
+    return useSceneObjectState(this);
   }
 
   /**
@@ -185,10 +185,9 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     }
 
     // Clone layout children
-    const layout = this.state as any as SceneLayoutState;
-    if (layout.children) {
-      const newChildren: SceneObjectList = [];
-      for (const child of layout.children) {
+    if ('children' in this.state) {
+      const newChildren: SceneLayoutChild[] = [];
+      for (const child of this.state.children) {
         newChildren.push(child.clone());
       }
       (clonedState as any).children = newChildren;
@@ -198,4 +197,19 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
     return new (this.constructor as any)(clonedState);
   }
+}
+
+/**
+ * This hook is always returning model.state instead of a useState that remembers the last state emitted on the subject
+ * The reason for this is so that if the model instance change this function will always return the latest state.
+ */
+function useSceneObjectState<TState>(model: SceneObjectBase<TState>): TState {
+  const forceUpdate = useForceUpdate();
+
+  useEffect(() => {
+    const s = model.subject.subscribe(forceUpdate);
+    return () => s.unsubscribe();
+  }, [model, forceUpdate]);
+
+  return model.state;
 }

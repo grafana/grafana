@@ -11,6 +11,7 @@ import {
   DataSourceApi,
   ExplorePanelsState,
   PreferredVisualisationType,
+  DataSourceRef,
   ExploreGraphStyle,
   ExploreId,
 } from '@grafana/data';
@@ -137,10 +138,14 @@ export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphS
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
+ *
+ * The `datasource` param will be passed to the datasource service `get` function
+ * and can be either a string that is the name or uid, or a datasourceRef
+ * This is to maximize compatability with how datasources are accessed from the URL param.
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasourceNameOrUid: string,
+  datasource: DataSourceRef | string,
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
@@ -154,7 +159,7 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       const orgId = getState().user.orgId;
-      const loadResult = await loadAndInitDatasource(orgId, datasourceNameOrUid);
+      const loadResult = await loadAndInitDatasource(orgId, datasource);
       instance = loadResult.instance;
       history = loadResult.history;
     }
@@ -203,6 +208,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
+    // datasource will either be name or UID here
     const { datasource, queries, range: urlRange, panelsState } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 

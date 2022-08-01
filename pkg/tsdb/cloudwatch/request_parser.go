@@ -37,7 +37,7 @@ type QueryJson struct {
 	Statistic         *string                `json:"statistic,omitempty"`
 	Statistics        []*string              `json:"statistics,omitempty"`
 	TimezoneUTCOffset string                 `json:"timezoneUTCOffset,omitempty"`
-	QueryType         string                 `json:"queryType,omitempty"`
+	QueryType         string                 `json:"type,omitempty"`
 	Hide              *bool                  `json:"hide,omitempty"`
 	Alias             *string                `json:"alias,omitempty"`
 }
@@ -58,7 +58,7 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 		}
 
 		queryType := model.QueryType
-		if queryType != "timeSeriesQuery" && queryType != "" {
+		if queryType != timeSeriesQuery && queryType != "" {
 			continue
 		}
 
@@ -166,7 +166,7 @@ func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTi
 		Label:             "",
 		MatchExact:        true,
 		Statistic:         "",
-		ReturnData:        false,
+		ReturnData:        true,
 		UsedExpression:    "",
 		RefId:             refId,
 		Id:                model.Id,

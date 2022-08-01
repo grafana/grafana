@@ -159,3 +159,47 @@ export function isQueryPipelineErrorFiltering(query: string): boolean {
 
   return isQueryPipelineErrorFiltering;
 }
+
+export function isQueryWithLabelFormat(query: string): boolean {
+  let queryWithLabelFormat = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (type): false | void => {
+      if (type.name === 'LabelFormatExpr') {
+        queryWithLabelFormat = true;
+      }
+    },
+  });
+  return queryWithLabelFormat;
+}
+
+export function getLogQueryFromMetricsQuery(query: string): string {
+  if (isLogsQuery(query)) {
+    return query;
+  }
+
+  const tree = parser.parse(query);
+
+  // Log query in metrics query composes of Selector & PipelineExpr
+  let selector = '';
+  tree.iterate({
+    enter: (type, from, to): false | void => {
+      if (type.name === 'Selector') {
+        selector = query.substring(from, to);
+        return false;
+      }
+    },
+  });
+
+  let pipelineExpr = '';
+  tree.iterate({
+    enter: (type, from, to): false | void => {
+      if (type.name === 'PipelineExpr') {
+        pipelineExpr = query.substring(from, to);
+        return false;
+      }
+    },
+  });
+
+  return selector + pipelineExpr;
+}

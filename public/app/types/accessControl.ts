@@ -50,6 +50,8 @@ export enum AccessControlAction {
   DataSourcesWrite = 'datasources:write',
   DataSourcesDelete = 'datasources:delete',
   DataSourcesPermissionsRead = 'datasources.permissions:read',
+  DataSourcesCachingRead = 'datasources.caching:read',
+  DataSourcesInsightsRead = 'datasources.insights:read',
 
   ActionServerStatsRead = 'server.stats:read',
 

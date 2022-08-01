@@ -65,6 +65,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 
+	"github.com/grafana/grafana/pkg/services/correlations"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -122,11 +123,12 @@ type HTTPServer struct {
 	SearchService                search.Service
 	ShortURLService              shorturls.Service
 	QueryHistoryService          queryhistory.Service
+	CorrelationsService          correlations.Service
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
 	ThumbService                 thumbs.Service
 	ExportService                export.ExportService
-	StorageService               store.HTTPStorageService
+	StorageService               store.StorageService
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
@@ -188,7 +190,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginManager plugins.Manager, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
@@ -200,7 +202,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, storageService store.HTTPStorageService,
+	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
@@ -208,8 +210,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, playlistService playlist.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
-	kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck,
+	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
+	playlistService playlist.Service, kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -239,6 +241,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		cleanUpService:               cleanUpService,
 		ShortURLService:              shortURLService,
 		QueryHistoryService:          queryHistoryService,
+		CorrelationsService:          correlationsService,
 		Features:                     features,
 		ThumbService:                 thumbService,
 		StorageService:               storageService,
