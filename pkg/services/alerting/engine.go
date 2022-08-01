@@ -44,7 +44,7 @@ type AlertEngine struct {
 	resultHandler      resultHandler
 	usageStatsService  usagestats.Service
 	tracer             tracing.Tracer
-	SQLStore           AlertStore
+	AlertStore         AlertStore
 	dashAlertExtractor DashAlertExtractor
 	dashboardService   dashboards.DashboardService
 	datasourceService  datasources.DataSourceService
@@ -67,7 +67,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 		DataService:        dataService,
 		usageStatsService:  usageStatsService,
 		tracer:             tracer,
-		SQLStore:           store,
+		AlertStore:         store,
 		dashAlertExtractor: dashAlertExtractor,
 		dashboardService:   dashboardService,
 		datasourceService:  dsService,
@@ -193,7 +193,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
-	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.SQLStore, e.dashboardService, e.datasourceService)
+	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.AlertStore, e.dashboardService, e.datasourceService)
 	evalContext.Ctx = alertCtx
 
 	go func() {

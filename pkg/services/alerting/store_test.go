@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -43,7 +44,8 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	setup := func(t *testing.T) {
 		store = &sqlStore{
-			db: sqlstore.InitTestDB(t),
+			db:  sqlstore.InitTestDB(t),
+			log: log.New(),
 		}
 
 		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")
@@ -277,7 +279,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 	defer resetTimeNow()
 
 	t.Run("Given an alert", func(t *testing.T) {
-		sqlStore := sqlStore{db: sqlstore.InitTestDB(t)}
+		sqlStore := sqlStore{db: sqlstore.InitTestDB(t), log: log.New()}
 
 		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, false, "alert")
 		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New(), sqlStore)

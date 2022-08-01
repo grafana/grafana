@@ -26,7 +26,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		},
 	}
 	ae := &AlertEngine{
-		SQLStore:          store,
+		AlertStore:        store,
 		datasourceService: dsMock,
 	}
 

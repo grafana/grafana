@@ -4,8 +4,11 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -15,12 +18,16 @@ import (
 )
 
 func TestService(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := &sqlStore{
+		db:    sqlstore.InitTestDB(t),
+		log:   &log.ConcreteLogger{},
+		cache: localcache.New(time.Minute, time.Minute),
+	}
 
 	nType := "test"
 	registerTestNotifier(nType)
 
-	s := ProvideService(sqlStore, ossencryption.ProvideService(), nil)
+	s := ProvideService(sqlStore.db, ossencryption.ProvideService(), nil)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "alert_notification_service_test"
