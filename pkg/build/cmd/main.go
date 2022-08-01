@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/urfave/cli/v2"
