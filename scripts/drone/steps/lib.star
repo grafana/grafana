@@ -44,7 +44,7 @@ def gen_version_step(ver_mode):
             'grabpl',
         ],
         'commands': [
-            './bin/grabpl gen-version {}'.format(args),
+            './bin/build gen-version {}'.format(args),
         ],
     }
 
