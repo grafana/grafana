@@ -29,7 +29,11 @@ For details, see the complete [changelog](https://github.com/grafana/grafana/blo
 
 Service accounts are an evolution in machine access within Grafana. You can create multiple API tokens per service account with independent expiration dates, and temporarily disable a service account without deleting it. These benefits make Service Accounts a more flexible way for Terraform and other apps to authenticate with Grafana.
 
-Service accounts also work with [role-based access control]({{< relref "../enterprise/access-control/" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}): you can improve security by granting service accounts specific roles to limit the functions they can perform. Service accounts have been in beta since Grafana v8.5, and during that time we've improved the UI and migration path from API keys, and made it possible to add service accounts to teams and inherit team permissions. To learn more about Service Accounts, see the [documentation]({{< relref "../administration/service-accounts" >}}).
+Service accounts also work with [role-based access control]({{< relref "../enterprise/access-control/" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}). 
+You can improve security by granting service accounts specific roles to limit the functions they can perform. 
+Service accounts have been in beta since Grafana v8.5. 
+During that time, we've improved the UI and migration path from API keys, made it possible to add service accounts to teams, and inherit team permissions. 
+To learn more about Service Accounts, see the [documentation]({{< relref "../administration/service-accounts" >}}).
 
 {{< figure src="/static/img/docs/service-accounts/add-service-account-token-9-1.png" max-width="750px" caption="Adding a service account token" >}}
 
