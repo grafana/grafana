@@ -316,6 +316,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 	ag.FolderUID = folderUID
 	ag.Title = group
 	err := srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgId, ag, c.UserId, alerting_models.ProvenanceAPI)
+	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
 	if err != nil {
 		if errors.Is(err, store.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
