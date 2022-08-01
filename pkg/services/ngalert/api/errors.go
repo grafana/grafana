@@ -32,7 +32,7 @@ func errorToResponse(err error) response.Response {
 		return ErrResp(400, err, "")
 	}
 	if errors.Is(err, ErrAuthorization) {
-		ErrResp(401, err, "")
+		return ErrResp(401, err, "")
 	}
 	return ErrResp(500, err, "")
 }
