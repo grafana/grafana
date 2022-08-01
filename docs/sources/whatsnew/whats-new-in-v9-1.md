@@ -237,14 +237,3 @@ To leverage your existing Active Directory in an efficient way without having to
 
 SAML Single Logout allows users to log out from all applications associated with the current IdP (Identity Provider) session established via SAML Single Sign-On (SSO).
 To enable integration of more use cases, we have added support for an HTTP-Redirect binding for a Single Logout.
-
-#### AWS Secrets Manager integration
-
-For version 9.1, we are introducing a new capability that will allow you to store data source secrets, like passwords and API keys, in AWS Secrets Manager instead of in Grafana's default SQL database.
-Storing secrets in AWS Secrets Manager allows for more comprehensive secret management, as well as built-in secret rotation for certain databases, and extension options for others.
-
-This feature comes in the form of a new private plugin called `Grafana-AWS-SecretsManager`.
-Enterprise users can install this plugin with the [Grafana CLI]((< relref "../cli/" >)) and configure it through the Grafana `custom.ini` file.
-You can install this plugin in on-premises Grafana or within the AWS ecosystem, and migrate existing datasource secrets to AWS Secrets Manager to use it with both new and existing Grafana instances.
-
-To learn more about storing secrets in AWS Secrets Manager, see the [documentation]({{< relref "../setup-grafana/configure-security/configure-database-encryption/store-secrets-using-aws-secrets-manager-plugin/" >}}), and stay tuned for further enhancements to this feature in future releases.
