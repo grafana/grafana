@@ -1,9 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
 import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { replaceCurrentFolderQuery } from './utils';
@@ -13,13 +13,26 @@ import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, Sear
 export class BlugeSearcher implements GrafanaSearcher {
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
-      throw 'facets not supported!';
+      throw new Error('facets not supported!');
     }
     return doSearchQuery(query);
   }
 
+  async starred(query: SearchQuery): Promise<QueryResponse> {
+    if (query.facet?.length) {
+      throw new Error('facets not supported!');
+    }
+    // get the starred dashboards
+    const starsUIDS = await getBackendSrv().get('api/user/stars');
+    const starredQuery = {
+      uid: starsUIDS,
+      query: query.query ?? '*',
+    };
+    return doSearchQuery(starredQuery);
+  }
+
   async tags(query: SearchQuery): Promise<TermCount[]> {
-    const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+    const ds = await getGrafanaDatasource();
     const target = {
       refId: 'TagsQuery',
       queryType: GrafanaQueryType.Search,
@@ -74,7 +87,7 @@ const nextPageSizes = 100;
 
 async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   query = await replaceCurrentFolderQuery(query);
-  const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  const ds = await getGrafanaDatasource();
   const target = {
     refId: 'Search',
     queryType: GrafanaQueryType.Search,

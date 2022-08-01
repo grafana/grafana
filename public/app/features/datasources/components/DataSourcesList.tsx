@@ -9,7 +9,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction } from 'app/types';
 
-import { getDataSources, getDataSourcesCount, useLoadDataSources } from '../state';
+import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 
@@ -40,6 +40,7 @@ export type ViewProps = {
 
 export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, hasCreateRights }: ViewProps) {
   const styles = useStyles(getStyles);
+  const dataSourcesRoutes = useDataSourcesRoutes();
 
   if (isLoading) {
     return <PageLoader />;
@@ -51,7 +52,7 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
         buttonDisabled={!hasCreateRights}
         title="No data sources defined"
         buttonIcon="database"
-        buttonLink="datasources/new"
+        buttonLink={dataSourcesRoutes.New}
         buttonTitle="Add data source"
         proTip="You can also define data sources through configuration files."
         proTipLink="http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list"
@@ -71,7 +72,7 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
         {dataSources.map((dataSource) => {
           return (
             <li key={dataSource.uid}>
-              <Card href={`datasources/edit/${dataSource.uid}`}>
+              <Card href={dataSourcesRoutes.Edit.replace(/:uid/gi, dataSource.uid)}>
                 <Card.Heading>{dataSource.name}</Card.Heading>
                 <Card.Figure>
                   <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />

@@ -14,7 +14,20 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// POST /api/org/users
+// swagger:route POST /org/users org addOrgUserToCurrentOrg
+//
+// Add a new user to the current organization
+//
+// Adds a global user to the current organization.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users:add` with scope `users:*`.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Response {
 	cmd := models.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -24,7 +37,20 @@ func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Resp
 	return hs.addOrgUserHelper(c, cmd)
 }
 
-// POST /api/orgs/:orgId/users
+// swagger:route POST /orgs/{org_id}/users orgs addOrgUser
+//
+// Add a new user to the current organization
+//
+// Adds a global user to the current organization.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users:add` with scope `users:*`.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
 	cmd := models.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -73,7 +99,19 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 	})
 }
 
-// GET /api/org/users
+// swagger:route GET /org/users org getOrgUsersForCurrentOrg
+//
+// Get all users within the current organization.
+//
+// Returns all org users within the current organization. Accessible to users with org admin role.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users:read` with scope `users:*`.
+//
+// Responses:
+// 200: getOrgUsersForCurrentOrgResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
 	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
@@ -89,7 +127,20 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, result)
 }
 
-// GET /api/org/users/lookup
+// swagger:route GET /org/users/lookup org getOrgUsersForCurrentOrgLookup
+//
+// Get all users within the current organization (lookup)
+//
+// Returns all org users within the current organization, but with less detailed information.
+// Accessible to users with org admin role, admin in any folder or admin of any team.
+// Mainly used by Grafana UI for providing list of users when adding team members and when editing folder/dashboard permissions.
+//
+// Responses:
+// 200: getOrgUsersForCurrentOrgLookupResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
 	orgUsers, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
 		OrgId:                    c.OrgId,
@@ -116,7 +167,21 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 	return response.JSON(http.StatusOK, result)
 }
 
-// GET /api/orgs/:orgId/users
+// swagger:route GET /orgs/{org_id}/users orgs getOrgUsers
+//
+// Get Users in Organization.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users:read` with scope `users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: getOrgUsersResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
@@ -208,7 +273,19 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, query.Result)
 }
 
-// PATCH /api/org/users/:userId
+// swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg
+//
+// Updates the given user
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users.role:update` with scope `users:*`.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
 	cmd := models.UpdateOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -223,7 +300,19 @@ func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.
 	return hs.updateOrgUserHelper(c, cmd)
 }
 
-// PATCH /api/orgs/:orgId/users/:userId
+// swagger:route PATCH /orgs/{org_id}/users/{user_id} orgs updateOrgUser
+//
+// Update Users in Organization.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users.role:update` with scope `users:*`.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
 	cmd := models.UpdateOrgUserCommand{}
 	var err error
@@ -258,7 +347,19 @@ func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd models.Updat
 	return response.Success("Organization user updated")
 }
 
-// DELETE /api/org/users/:userId
+// swagger:route DELETE /org/users/{user_id} org removeOrgUserForCurrentOrg
+//
+// Delete user in current organization
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users:remove` with scope `users:*`.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
@@ -272,7 +373,19 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.
 	})
 }
 
-// DELETE /api/orgs/:orgId/users/:userId
+// swagger:route DELETE /orgs/{org_id}/users/{user_id} orgs removeOrgUser
+//
+// Delete user in current organization
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users:remove` with scope `users:*`.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) RemoveOrgUser(c *models.ReqContext) response.Response {
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
@@ -301,4 +414,99 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *models.Remov
 	}
 
 	return response.Success("User removed from organization")
+}
+
+// swagger:parameters addOrgUserToCurrentOrg
+type AddOrgUserToCurrentOrgParams struct {
+	// in:body
+	// required:true
+	Body models.AddOrgUserCommand `json:"body"`
+}
+
+// swagger:parameters addOrgUser
+type AddOrgUserParams struct {
+	// in:body
+	// required:true
+	Body models.AddOrgUserCommand `json:"body"`
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters getOrgUsersForCurrentOrgLookup
+type LookupOrgUsersParams struct {
+	// in:query
+	// required:false
+	Query string `json:"query"`
+	// in:query
+	// required:false
+	Limit int `json:"limit"`
+}
+
+// swagger:parameters getOrgUsers
+type GetOrgUsersParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters updateOrgUserForCurrentOrg
+type UpdateOrgUserForCurrentOrgParams struct {
+	// in:body
+	// required:true
+	Body models.UpdateOrgUserCommand `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters updateOrgUser
+type UpdateOrgUserParams struct {
+	// in:body
+	// required:true
+	Body models.UpdateOrgUserCommand `json:"body"`
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters removeOrgUserForCurrentOrg
+type RemoveOrgUserForCurrentOrgParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters removeOrgUser
+type RemoveOrgUserParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:response getOrgUsersForCurrentOrgLookupResponse
+type GetOrgUsersForCurrentOrgLookupResponse struct {
+	// The response message
+	// in: body
+	Body []*dtos.UserLookupDTO `json:"body"`
+}
+
+// swagger:response getOrgUsersForCurrentOrgResponse
+type GetOrgUsersForCurrentOrgResponse struct {
+	// The response message
+	// in: body
+	Body []*models.OrgUserDTO `json:"body"`
+}
+
+// swagger:response getOrgUsersResponse
+type GetOrgUsersResponse struct {
+	// The response message
+	// in: body
+	Body []*models.OrgUserDTO `json:"body"`
 }

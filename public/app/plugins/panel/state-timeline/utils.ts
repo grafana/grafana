@@ -56,7 +56,7 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   frame,
   theme,
-  timeZone,
+  timeZones,
   getTimeRange,
   mode,
   eventBus,
@@ -68,7 +68,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   mergeValues,
   getValueColor,
 }) => {
-  const builder = new UPlotConfigBuilder(timeZone);
+  const builder = new UPlotConfigBuilder(timeZones[0]);
 
   const xScaleUnit = 'time';
   const xScaleKey = 'x';
@@ -185,7 +185,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
-    timeZone,
+    timeZone: timeZones[0],
     theme,
     grid: { show: true },
   });
@@ -497,7 +497,7 @@ export function prepareTimelineLegendItems(
   options: VizLegendOptions,
   theme: GrafanaTheme2
 ): VizLegendItem[] | undefined {
-  if (!frames || options.displayMode === 'hidden') {
+  if (!frames || options.showLegend === false) {
     return undefined;
   }
 

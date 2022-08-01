@@ -16,7 +16,7 @@ const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
 export default function migrateQuery(
   query: AzureMonitorQuery,
   templateSrv: TemplateSrv,
-  setError: (errorSource: string, error: AzureMonitorErrorish) => void
+  setError?: (errorSource: string, error: AzureMonitorErrorish) => void
 ): AzureMonitorQuery {
   let workingQuery = query;
 
@@ -81,6 +81,7 @@ function migrateToDefaultNamespace(query: AzureMonitorQuery): AzureMonitorQuery 
       azureMonitor: {
         ...query.azureMonitor,
         metricNamespace: query.azureMonitor.metricDefinition,
+        metricDefinition: undefined,
       },
     };
   }
@@ -116,13 +117,13 @@ function migrateResourceUri(
   }
 
   const { subscription } = query;
-  const { resourceGroup, metricDefinition, resourceName } = azureMonitorQuery;
-  if (!(subscription && resourceGroup && metricDefinition && resourceName)) {
+  const { resourceGroup, metricNamespace, resourceName } = azureMonitorQuery;
+  if (!(subscription && resourceGroup && metricNamespace && resourceName)) {
     return query;
   }
 
-  const metricDefinitionArray = metricDefinition.split('/');
-  if (metricDefinitionArray.some((p) => templateSrv.replace(p).split('/').length > 2)) {
+  const metricNamespaceArray = metricNamespace.split('/');
+  if (metricNamespaceArray.some((p) => templateSrv.replace(p).split('/').length > 2)) {
     // If a metric definition includes template variable with a subresource e.g.
     // Microsoft.Storage/storageAccounts/libraries, it's not possible to generate a valid
     // resource URI
@@ -173,9 +174,9 @@ function migrateResourceUri(
   const resourceUri = UrlBuilder.buildResourceUri(
     subscription,
     resourceGroup,
-    metricDefinition,
-    resourceName,
-    templateSrv
+    templateSrv,
+    metricNamespace,
+    resourceName
   );
 
   return {
