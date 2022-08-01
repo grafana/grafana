@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
@@ -78,13 +79,25 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
-		if len(args) == 3 {
+		if len(args) >= 3 {
 			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
 		}
-		return fmt.Sprintf("FLOOR(DATEDIFF(second, '1970-01-01', %s)/%.0f)*%.0f", args[0], interval.Seconds(), interval.Seconds()), nil
+
+		result := fmt.Sprintf("FLOOR(DATEDIFF(second, '1970-01-01', %s)/%.0f)*%.0f", args[0], interval.Seconds(), interval.Seconds())
+
+		if len(args) == 4 {
+			timezoneOffset, err := util.CalculateMacroTimezoneOffset(args)
+			if err != nil {
+				return "", err
+			}
+
+			result = fmt.Sprintf("%s %s", result, timezoneOffset)
+		}
+
+		return result, nil
 	case "__timeGroupAlias":
 		tg, err := m.evaluateMacro(timeRange, query, "__timeGroup", args)
 		if err == nil {

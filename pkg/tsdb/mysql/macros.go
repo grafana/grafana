@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
@@ -85,47 +85,27 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
-		if len(args) == 3 {
+		if len(args) >= 3 {
 			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
 		}
-		return fmt.Sprintf("UNIX_TIMESTAMP(%s) DIV %.0f * %.0f", args[0], interval.Seconds(), interval.Seconds()), nil
-	case "__timeGroupAlias":
-		tg, err := m.evaluateMacro(timeRange, query, "__timeGroup", args)
-		if err == nil {
-			return tg + " AS \"time\"", nil
-		}
-		return "", err
-	case "__timeGroupTZ":
-		tg, err := m.evaluateMacro(timeRange, query, "__timeGroup", args)
-		if err == nil {
-			if len(args) >= 4 {
-				trimmedArg := strings.Trim(args[3], "\"")
-				sign := trimmedArg[:1]
-				timeStr := strings.Split(trimmedArg[1:], ":")
-				timeParsed, err := time.ParseDuration(timeStr[0] + "h" + timeStr[1] + "m")
 
-				if err != nil {
-					return "", fmt.Errorf("timezone argument error %v", args[3])
-				}
+		result := fmt.Sprintf("UNIX_TIMESTAMP(%s) DIV %.0f * %.0f", args[0], interval.Seconds(), interval.Seconds())
 
-				var offset string
-				if sign == "-" {
-					offset = "+"
-				} else {
-					offset = "-"
-				}
-
-				return fmt.Sprintf(" %v %v %d", tg, offset, int(timeParsed.Seconds())), nil
+		if len(args) == 4 {
+			timezoneOffset, err := util.CalculateMacroTimezoneOffset(args)
+			if err != nil {
+				return "", err
 			}
 
-			return "", fmt.Errorf("timezone argument missing")
+			result = fmt.Sprintf("%s %s", result, timezoneOffset)
 		}
-		return "", err
-	case "__timeGroupAliasTZ":
-		tg, err := m.evaluateMacro(timeRange, query, "__timeGroupTZ", args)
+
+		return result, nil
+	case "__timeGroupAlias":
+		tg, err := m.evaluateMacro(timeRange, query, "__timeGroup", args)
 		if err == nil {
 			return tg + " AS \"time\"", nil
 		}
