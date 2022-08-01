@@ -40,6 +40,9 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	if !inviteDto.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
+	if !c.OrgRole.Includes(inviteDto.Role) && !c.IsGrafanaAdmin {
+		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
+	}
 
 	// first try get existing user
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
@@ -60,15 +63,6 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		return hs.inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
 	}
 
-	// Evaluate permissions for inviting a new user to Grafana
-	hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionUsersCreate))
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
-	}
-	if !hasAccess {
-		return response.Error(http.StatusForbidden, "Permission denied: not permitted to create a new user", err)
-	}
-
 	if setting.DisableLoginForm {
 		return response.Error(400, "Cannot invite when login is disabled.", nil)
 	}
@@ -79,6 +73,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	cmd.Name = inviteDto.Name
 	cmd.Status = models.TmpUserInvitePending
 	cmd.InvitedByUserId = c.UserId
+	var err error
 	cmd.Code, err = util.GetRandomString(30)
 	if err != nil {
 		return response.Error(500, "Could not generate random string", err)
