@@ -185,7 +185,6 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	query := s.doDashboardQuery(ctx, user, orgID, q)
 
 	duration := time.Since(start).Seconds()
-	s.logger.Info("Search duration", "dur", duration)
 	if query.Error != nil {
 		dashboardSearchFailureRequestsDuration.Observe(duration)
 	} else {
