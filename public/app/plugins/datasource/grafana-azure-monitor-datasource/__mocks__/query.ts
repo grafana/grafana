@@ -35,7 +35,6 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
       allowedTimeGrainsMs: [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
       // dimensionFilter: '*',
       dimensionFilters: [],
-      metricDefinition: 'Microsoft.Compute/virtualMachines',
       metricName: 'Metric A',
       metricNamespace: 'Microsoft.Compute/virtualMachines',
       resourceGroup: 'grafanastaging',

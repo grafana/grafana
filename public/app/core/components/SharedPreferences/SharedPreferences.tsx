@@ -20,6 +20,7 @@ import {
   WeekStartPicker,
   FeatureBadge,
 } from '@grafana/ui';
+import { ENGLISH_US, FRENCH_FRANCE, SPANISH_SPAIN } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
@@ -50,21 +51,21 @@ const languages: Array<SelectableValue<string>> = [
     }),
   },
   {
-    value: 'en',
+    value: ENGLISH_US,
     label: t({
       id: 'common.locale.en',
       message: 'English',
     }),
   },
   {
-    value: 'es',
+    value: SPANISH_SPAIN,
     label: t({
       id: 'common.locale.es',
       message: 'Spanish',
     }),
   },
   {
-    value: 'fr',
+    value: FRENCH_FRANCE,
     label: t({
       id: 'common.locale.fr',
       message: 'French',
