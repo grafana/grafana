@@ -13,6 +13,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+func mockTimeNow() {
+	var timeSeed int64
+	timeNow = func() time.Time {
+		loc := time.FixedZone("MockZoneUTC-5", -5*60*60)
+		fakeNow := time.Unix(timeSeed, 0).In(loc)
+		timeSeed++
+		return fakeNow
+	}
+}
+
+func resetTimeNow() {
+	timeNow = time.Now
+}
+
 func TestIntegrationApiKeyDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
