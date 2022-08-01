@@ -22,7 +22,7 @@ var (
 	// ConfigRecordsLimit defines the limit of how many alertmanager configuration versions
 	// should be stored in the database for each organization including the current one.
 	// Has to be > 0
-	ConfigRecordsLimit int64 = 100
+	ConfigRecordsLimit int = 100
 )
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
@@ -206,14 +206,22 @@ func getInsertQuery(driver string) string {
 	}
 }
 
-func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID, limit int64) (int64, error) {
+const uintMax = ^uint(0)
+const intMax = int(uintMax >> 1)
+
+func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {
 	if limit < 1 {
 		return 0, fmt.Errorf("failed to delete old configurations: limit is set to '%d' but needs to be > 0", limit)
 	}
+
+	if limit < 1 {
+		limit = ConfigRecordsLimit
+	}
+
 	var affectedRows int64
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		highest := &models.AlertConfiguration{}
-		ok, err := sess.Desc("id").Where("org_id = ?", orgID).Limit(1).Get(highest)
+		oldest := &models.AlertConfiguration{}
+		ok, err := sess.Desc("id").Where("org_id = ?", orgID).Limit(1, limit-1).Get(oldest)
 		if err != nil {
 			return err
 		}
@@ -223,7 +231,7 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID, limit int
 			return nil
 		}
 
-		threshold := highest.ID - limit
+		threshold := oldest.ID - 1
 		if threshold < 1 {
 			// Fewer than `limit` records even exist. Nothing to clean up.
 			affectedRows = 0
