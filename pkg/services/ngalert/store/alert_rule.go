@@ -291,21 +291,7 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		}
 
 		// Sort in memory. This is safe since we do not use a LIMIT clause on the rules.
-		sort.Slice(alertRules, func(i, j int) bool {
-			if alertRules[i].NamespaceUID != alertRules[j].NamespaceUID {
-				return alertRules[i].NamespaceUID < alertRules[j].NamespaceUID
-			}
-
-			if alertRules[i].RuleGroup != alertRules[j].RuleGroup {
-				return alertRules[i].RuleGroup < alertRules[j].RuleGroup
-			}
-
-			if alertRules[i].RuleGroupIndex != alertRules[j].RuleGroupIndex {
-				return alertRules[i].RuleGroupIndex < alertRules[j].RuleGroupIndex
-			}
-
-			return alertRules[i].ID < alertRules[j].ID
-		})
+		sortRulesInPlaceInMemory(alertRules)
 
 		query.Result = alertRules
 		return nil
@@ -426,10 +412,10 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			}
 			q = q.NotIn("org_id", excludeOrgs...)
 		}
-		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 		if err := q.Find(&alerts); err != nil {
 			return err
 		}
+		sortRulesInPlaceInMemory(alerts)
 		query.Result = alerts
 		return nil
 	})
@@ -499,4 +485,22 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: field `for` cannot be negative", ngmodels.ErrAlertRuleFailedValidation)
 	}
 	return nil
+}
+
+func sortRulesInPlaceInMemory(alertRules []*ngmodels.AlertRule) {
+	sort.Slice(alertRules, func(i, j int) bool {
+		if alertRules[i].NamespaceUID != alertRules[j].NamespaceUID {
+			return alertRules[i].NamespaceUID < alertRules[j].NamespaceUID
+		}
+
+		if alertRules[i].RuleGroup != alertRules[j].RuleGroup {
+			return alertRules[i].RuleGroup < alertRules[j].RuleGroup
+		}
+
+		if alertRules[i].RuleGroupIndex != alertRules[j].RuleGroupIndex {
+			return alertRules[i].RuleGroupIndex < alertRules[j].RuleGroupIndex
+		}
+
+		return alertRules[i].ID < alertRules[j].ID
+	})
 }
