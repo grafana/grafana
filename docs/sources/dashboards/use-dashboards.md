@@ -112,6 +112,8 @@ Panel title search based on an updated dashboard search approach. Previously, Gr
 
 In addition to the ability to search panels, search performance has also improved: Both querying and sorting have become faster, and results are more relevant, as Grafana now uses full-text search techniques.
 
+{{< figure src="/static/img/docs/v91/dashboard_search_by_panel_title_annotated.png" width="700px" >}}
+
 #### Enable panelTitleSearch feature toggle
 
 1. Modify the [configuration file]({{< relref "../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `panelTitleSearch` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}).
