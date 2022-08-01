@@ -7,7 +7,7 @@ import { Alert, InlineField, Select } from '@grafana/ui';
 
 import DataSource from '../../datasource';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType, AzureResourceGraphQuery } from '../../types';
+import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
