@@ -46,7 +46,7 @@ You can now use GitHub OAuth2 to map users or teams to specific [Grafana organiz
 
 #### (Beta) Panel title search and search improvements
 
-We've improved the performance of searching by panel title. If a panel's title matches your search query, it will be displayed in the search results. This feature will be rolled out to Grafana Cloud users over the course of several weeks, or can be accessed by enabling the panelTitleSearch feature toggle.
+We've improved the performance of searching by panel title. If a panel's title matches your search query, it will be displayed in the search results. This feature will be rolled out to Grafana Cloud users over the course of several weeks, or can be accessed by enabling the `panelTitleSearch` feature toggle.
 
 Panel title search uses our updated dashboard search approach. Previously, Grafana used SQL database queries to find dashboards by title. With the feature toggle enabled, Grafana can build an in-memory index of all dashboards. To learn more about search in Grafana, see the [documentation]({{< relref "../dashboards/use-dashboards/#dashboard-search" >}}).
 
