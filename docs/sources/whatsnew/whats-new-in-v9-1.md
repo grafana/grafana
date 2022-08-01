@@ -141,7 +141,7 @@ To learn more, see the [documentation]({{< relref "../dashboards/dashboard-publi
 #### Provisioning improvements for Grafana Alerting
 
 You can provision your Grafana Alerting resources directly from disk, which is a process you might already follow for your dashboards or data sources.
-Grafana Alerting resources are provisioned once when you initally configure Grafana.
+Grafana Alerting resources are provisioned once when you initially configure Grafana.
 
 Provisioning for Grafana Alerting currently supports these resources:
 
