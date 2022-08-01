@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -77,14 +76,14 @@ func (e *AlertEngine) IsDisabled() bool {
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
-	notificationService *notifications.NotificationService, tracer tracing.Tracer, db db.DB, cfg *setting.Cfg,
+	notificationService *notifications.NotificationService, tracer tracing.Tracer, store AlertStore, cfg *setting.Cfg,
 	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService) *AlertEngine {
-	storeLog := log.New("alerting.store")
-	store := &sqlStore{
-		cache: *cacheService,
-		db:    db,
-		log:   storeLog,
-	}
+	// storeLog := log.New("alerting.store")
+	// store := &sqlStore{
+	// 	cache: *cacheService,
+	// 	db:    db,
+	// 	log:   storeLog,
+	// }
 	e := &AlertEngine{
 		Cfg:                cfg,
 		RenderService:      renderer,

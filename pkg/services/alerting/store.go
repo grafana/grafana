@@ -19,6 +19,16 @@ type sqlStore struct {
 	log   *log.ConcreteLogger
 }
 
+func ProvideAlertStore(
+	db db.DB,
+	cacheService *localcache.CacheService) AlertStore {
+	return &sqlStore{
+		db:    db,
+		cache: *cacheService,
+		log:   log.New("alerting.store"),
+	}
+}
+
 func (ss *sqlStore) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		alert := models.Alert{}
