@@ -23,6 +23,28 @@ func main() {
 				&buildIDFlag,
 			},
 		},
+		{
+			Name:   "build-docker",
+			Usage:  "Build Grafana Docker images",
+			Action: ArgCountWrapper(1, BuildDocker),
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+				&cli.BoolFlag{
+					Name:  "ubuntu",
+					Usage: "Use Ubuntu base image",
+				},
+				&cli.BoolFlag{
+					Name:  "shouldSave",
+					Usage: "Should save docker image to tarball",
+				},
+				&cli.StringFlag{
+					Name:  "archs",
+					Value: strings.Join(docker.AllArchs, ","),
+					Usage: "Comma separated architectures to build",
+				},
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
