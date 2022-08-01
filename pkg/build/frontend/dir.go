@@ -1,0 +1,3 @@
+package frontend
+
+const GrafanaDir = "."
