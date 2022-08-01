@@ -220,32 +220,16 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, lim
 
 	var affectedRows int64
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		oldest := &models.AlertConfiguration{}
-		ok, err := sess.Desc("id").Where("org_id = ?", orgID).Limit(1, limit-1).Get(oldest)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			// No configurations exist. Nothing to clean up.
-			affectedRows = 0
-			return nil
-		}
-
-		threshold := oldest.ID - 1
-		if threshold < 1 {
-			// Fewer than `limit` records even exist. Nothing to clean up.
-			affectedRows = 0
-			return nil
-		}
-
 		res, err := sess.Exec(`
 			DELETE FROM 
 				alert_configuration 
 			WHERE
 				org_id = ?
 			AND 
-				id < ?
-		`, orgID, threshold)
+				id <= (SELECT * FROM (
+					SELECT id FROM alert_configuration WHERE org_id = ? ORDER BY id DESC LIMIT 1 OFFSET ?
+				) AS G)
+		`, orgID, orgID, limit)
 		if err != nil {
 			return err
 		}
