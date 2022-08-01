@@ -1,4 +1,4 @@
-package rules
+package alerting
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ import (
 func TestRuleGroup(t *testing.T) {
 	t.Run("a valid rule group should not error", func(t *testing.T) {
 		rg := validRuleGroupV1(t)
-		_, err := rg.mapToModel()
+		_, err := rg.MapToModel()
 		require.NoError(t, err)
 	})
 	t.Run("a rule group with out a name should error", func(t *testing.T) {
@@ -21,7 +21,7 @@ func TestRuleGroup(t *testing.T) {
 		err := yaml.Unmarshal([]byte(""), &name)
 		require.NoError(t, err)
 		rg.Name = name
-		_, err = rg.mapToModel()
+		_, err = rg.MapToModel()
 		require.Error(t, err)
 	})
 	t.Run("a rule group with out a folder should error", func(t *testing.T) {
@@ -30,7 +30,7 @@ func TestRuleGroup(t *testing.T) {
 		err := yaml.Unmarshal([]byte(""), &folder)
 		require.NoError(t, err)
 		rg.Folder = folder
-		_, err = rg.mapToModel()
+		_, err = rg.MapToModel()
 		require.Error(t, err)
 	})
 	t.Run("a rule group with out an interval should error", func(t *testing.T) {
@@ -39,7 +39,7 @@ func TestRuleGroup(t *testing.T) {
 		err := yaml.Unmarshal([]byte(""), &interval)
 		require.NoError(t, err)
 		rg.Interval = interval
-		_, err = rg.mapToModel()
+		_, err = rg.MapToModel()
 		require.Error(t, err)
 	})
 	t.Run("a rule group with an invalid interval should error", func(t *testing.T) {
@@ -48,13 +48,13 @@ func TestRuleGroup(t *testing.T) {
 		err := yaml.Unmarshal([]byte("10x"), &interval)
 		require.NoError(t, err)
 		rg.Interval = interval
-		_, err = rg.mapToModel()
+		_, err = rg.MapToModel()
 		require.Error(t, err)
 	})
 	t.Run("a rule group with an empty org id should default to 1", func(t *testing.T) {
 		rg := validRuleGroupV1(t)
 		rg.OrgID = values.Int64Value{}
-		rgMapped, err := rg.mapToModel()
+		rgMapped, err := rg.MapToModel()
 		require.NoError(t, err)
 		require.Equal(t, int64(1), rgMapped.OrgID)
 	})
@@ -64,7 +64,7 @@ func TestRuleGroup(t *testing.T) {
 		err := yaml.Unmarshal([]byte("-1"), &orgID)
 		require.NoError(t, err)
 		rg.OrgID = orgID
-		rgMapped, err := rg.mapToModel()
+		rgMapped, err := rg.MapToModel()
 		require.NoError(t, err)
 		require.Equal(t, int64(1), rgMapped.OrgID)
 	})
