@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 
 import { Field, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, KeyboardPlugin } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -61,20 +62,23 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      options={options}
     >
       {(config, alignedDataFrame) => {
         return (
           <>
             <KeyboardPlugin config={config} />
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            <TooltipPlugin
-              data={alignedDataFrame}
-              config={config}
-              mode={options.tooltip.mode}
-              sortOrder={options.tooltip.sort}
-              sync={sync}
-              timeZone={timeZone}
-            />
+            {options.tooltip.mode === TooltipDisplayMode.None || (
+              <TooltipPlugin
+                data={alignedDataFrame}
+                config={config}
+                mode={options.tooltip.mode}
+                sortOrder={options.tooltip.sort}
+                sync={sync}
+                timeZone={timeZone}
+              />
+            )}
             {/* Renders annotation markers*/}
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
