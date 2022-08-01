@@ -23,6 +23,18 @@ func main() {
 				&buildIDFlag,
 			},
 		},
+		{
+			Name:      "build-frontend",
+			Usage:     "Build front-end artifacts",
+			ArgsUsage: "[version]",
+			Action:    ArgCountWrapper(1, BuildFrontend),
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+				&buildIDFlag,
+				&noInstallDepsFlag,
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
