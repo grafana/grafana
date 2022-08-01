@@ -7,8 +7,9 @@ import { Alert, InlineField, Select } from '@grafana/ui';
 
 import DataSource from '../../datasource';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType, AzureResourceGraphQuery } from '../../types';
 import useLastError from '../../utils/useLastError';
+import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
 import { Space } from '../Space';
 
@@ -32,6 +33,7 @@ const VariableEditor = (props: Props) => {
     { label: 'Metric Names', value: AzureQueryType.MetricNamesQuery },
     { label: 'Workspaces', value: AzureQueryType.WorkspacesQuery },
     { label: 'Logs', value: AzureQueryType.LogAnalytics },
+    { label: 'Resource Graph', value: AzureQueryType.AzureResourceGraph },
   ];
   if (typeof props.query === 'object' && props.query.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
     // Add the option for the GrafanaTemplateVariableFn only if it's already in use
@@ -193,7 +195,7 @@ const VariableEditor = (props: Props) => {
     });
   };
 
-  const onLogsQueryChange = (queryChange: AzureMonitorQuery) => {
+  const onQueryChange = (queryChange: AzureMonitorQuery) => {
     onChange(queryChange);
   };
 
@@ -214,7 +216,7 @@ const VariableEditor = (props: Props) => {
             subscriptionId={query.subscription}
             query={query}
             datasource={datasource}
-            onChange={onLogsQueryChange}
+            onChange={onQueryChange}
             variableOptionGroup={variableOptionGroup}
             setError={setError}
             hideFormatAs={true}
@@ -285,6 +287,26 @@ const VariableEditor = (props: Props) => {
             value={query.resource || null}
           />
         </InlineField>
+      )}
+      {query.queryType === AzureQueryType.AzureResourceGraph && (
+        <>
+          <ArgQueryEditor
+            subscriptionId={query.subscription}
+            query={query}
+            datasource={datasource}
+            onChange={onQueryChange}
+            variableOptionGroup={variableOptionGroup}
+            setError={setError}
+          />
+          {errorMessage && (
+            <>
+              <Space v={2} />
+              <Alert severity="error" title="An error occurred while requesting data from Azure Monitor">
+                {errorMessage}
+              </Alert>
+            </>
+          )}
+        </>
       )}
     </>
   );

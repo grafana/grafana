@@ -82,6 +82,43 @@ describe('VariableEditor:', () => {
     });
   });
 
+  describe('Azure Resource Graph queries:', () => {
+    const ARGquery = {
+      refId: 'A',
+      queryType: AzureQueryType.AzureResourceGraph,
+      azureResourceGraph: {
+        query: 'Resources | distinct type',
+      },
+      subscriptions: ['Subscription1', 'Subscription2'],
+    };
+
+    it('should render', async () => {
+      render(<VariableEditor {...defaultProps} query={ARGquery} />);
+      await waitFor(() => screen.queryByTestId('mockeditor'));
+      expect(screen.queryByLabelText('Subscriptions')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Select subscription')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Select query type')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Select resource group')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Select namespace')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Select resource')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
+    });
+
+    it('should call on change if the query changes', async () => {
+      const onChange = jest.fn();
+      render(<VariableEditor {...defaultProps} query={ARGquery} onChange={onChange} />);
+      await waitFor(() => screen.queryByTestId('mockeditor'));
+      expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
+      await userEvent.type(screen.getByTestId('mockeditor'), '{backspace}');
+      expect(onChange).toHaveBeenCalledWith({
+        ...ARGquery,
+        azureResourceGraph: {
+          query: 'Resources | distinct typ',
+        },
+      });
+    });
+  });
+
   describe('grafana template variable fn queries:', () => {
     it('should render', async () => {
       const props = {
