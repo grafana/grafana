@@ -658,14 +658,9 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     // Update the react overlays
-    let topRight: ReactNode[] = [];
-    if (options.showDebug) {
-      topRight = [<DebugOverlay key="debug" map={this.map} />];
-    }
-
-    let topLeft: ReactNode[] = [];
+    let topRight1: ReactNode[] = [];
     if (options.showMeasure) {
-      topLeft = [
+      topRight1 = [
         <MeasureOverlay
           key="measure"
           map={this.map}
@@ -677,7 +672,12 @@ export class GeomapPanel extends Component<Props, State> {
       ];
     }
 
-    this.setState({ topRight, topLeft });
+    let topRight2: ReactNode[] = [];
+    if (options.showDebug) {
+      topRight2 = [<DebugOverlay key="debug" map={this.map} />];
+    }
+
+    this.setState({ topRight1, topRight2 });
   }
 
   getLegends() {
@@ -692,7 +692,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    let { ttip, ttipOpen, topRight, legends, topLeft } = this.state;
+    let { ttip, ttipOpen, topRight1, legends, topRight2 } = this.state;
     const { options } = this.props;
     const showScale = options.controls.showScale;
     if (!ttipOpen && options.tooltip?.mode === TooltipMode.None) {
@@ -706,8 +706,8 @@ export class GeomapPanel extends Component<Props, State> {
           <div className={this.style.map} ref={this.initMapRef}></div>
           <GeomapOverlay
             bottomLeft={legends}
-            topRight={topRight}
-            topLeft={topLeft}
+            topRight1={topRight1}
+            topRight2={topRight2}
             blStyle={{ bottom: showScale ? '35px' : '8px' }}
           />
         </div>

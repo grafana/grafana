@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Button, HorizontalGroup, IconButton, RadioButtonGroup, Select, stylesFactory } from '@grafana/ui';
+import { Button, IconButton, RadioButtonGroup, Select, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { MapMeasure, MapMeasureOptions, measures } from '../utils/measure';
@@ -33,7 +33,6 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   const unit = useMemo(() => {
     const action = measures.find((m: MapMeasure) => m.value === options.action) ?? measures[0];
     const current = action.getUnit(options.unit);
-    console.log({ action, options, current });
     vector.setOptions(options);
     return {
       current,
@@ -67,15 +66,18 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   }
 
   return (
-    <div className={`${measureStyle.infoWrap}`} style={{ backgroundColor: '#22252b' }}>
+    <div
+      className={`${measureStyle.infoWrap} ${!menuActive ? measureStyle.infoWrapClosed : null}`}
+      style={{ backgroundColor: '#22252b' }}
+    >
       {menuActive ? (
         <div>
-          <HorizontalGroup width="200px">
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <RadioButtonGroup
               value={options.action}
               options={measures}
               size="md"
-              fullWidth={true}
+              fullWidth={false}
               onChange={(e: string) => {
                 map.removeInteraction(vector.draw);
                 const m = measures.find((v: MapMeasure) => v.value === e) ?? measures[0];
@@ -84,8 +86,8 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
                 vector.addInteraction(map, m.geometry, showSegments, clearPrevious);
               }}
             />
-            <Button icon="times" variant="secondary" size="sm" onClick={toggleMenu} />
-          </HorizontalGroup>
+            <Button style={{ marginLeft: 'auto' }} icon="times" variant="secondary" size="sm" onClick={toggleMenu} />
+          </div>
           <Select
             className={measureStyle.unitSelect}
             value={unit.current}
@@ -100,8 +102,8 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
         </div>
       ) : (
         <IconButton
+          className={measureStyle.icon}
           name="ruler-combined"
-          style={{ backgroundColor: 'rgba(204, 204, 220, 0.16)', display: 'inline-block', marginRight: '2px' }}
           tooltip="show measure tools"
           tooltipPlacement="left"
           onClick={toggleMenu}
@@ -112,11 +114,22 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  icon: css`
+    background-color: rgba(204, 204, 220, 0.16);
+    display: inline-block;
+    height: 19.25px;
+    margin: 1px;
+    width: 19.25px;
+  `,
   infoWrap: css`
     color: ${theme.colors.text};
     background: ${tinycolor(theme.colors.panelBg).setAlpha(0.7).toString()};
-    border-radius: 2px;
-    padding: 8px;
+    border-radius: 4px;
+    padding: 2px;
+  `,
+  infoWrapClosed: css`
+    height: 25.25px;
+    width: 25.25px;
   `,
   unitSelect: css`
     min-width: 200px;

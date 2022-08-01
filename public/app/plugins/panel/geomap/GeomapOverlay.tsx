@@ -6,9 +6,9 @@ import { config } from '@grafana/runtime';
 import { stylesFactory } from '@grafana/ui';
 
 export interface OverlayProps {
-  topRight?: React.ReactNode[];
+  topRight1?: React.ReactNode[];
+  topRight2?: React.ReactNode[];
   bottomLeft?: React.ReactNode[];
-  topLeft?: React.ReactNode[];
   blStyle?: CSSProperties;
 }
 
@@ -20,11 +20,11 @@ export class GeomapOverlay extends PureComponent<OverlayProps> {
   }
 
   render() {
-    const { topRight, bottomLeft, topLeft } = this.props;
+    const { topRight1, topRight2, bottomLeft } = this.props;
     return (
       <div className={this.style.overlay}>
-        {Boolean(topRight?.length) && <div className={this.style.TR}>{topRight}</div>}
-        {Boolean(topLeft?.length) && <div className={this.style.TL}>{topLeft}</div>}
+        {Boolean(topRight1?.length) && <div className={this.style.TR1}>{topRight1}</div>}
+        {Boolean(topRight2?.length) && <div className={this.style.TR2}>{topRight2}</div>}
         {Boolean(bottomLeft?.length) && (
           <div className={this.style.BL} style={this.props.blStyle}>
             {bottomLeft}
@@ -43,7 +43,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     z-index: 500;
     pointer-events: none;
   `,
-  TR: css`
+  TR1: css`
+    right: 0.5em;
+    pointer-events: auto;
+    position: absolute;
+    top: 0.5em;
+  `,
+  TR2: css`
     position: absolute;
     top: 80px;
     right: 8px;
@@ -54,11 +60,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     bottom: 8px;
     left: 8px;
     pointer-events: auto;
-  `,
-  TL: css`
-    right: 8px;
-    pointer-events: auto;
-    position: absolute;
-    top: 15px;
   `,
 }));
