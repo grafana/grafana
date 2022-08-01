@@ -163,7 +163,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 	})
 }
 
-func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, group definitions.AlertRuleGroup) error {
+func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, group definitions.AlertRuleGroup, userID int64) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
 		return err
 	}
@@ -203,7 +203,8 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		return fmt.Errorf("failed to calculate diff for alert rules: %w", err)
 	}
 
-	// TODO: calculateAutomaticChanges
+	// Refresh all calculated fields.
+	delta = store.UpdateCalculatedRuleFields(delta)
 
 	if len(delta.New) == 0 && len(delta.Update) == 0 && len(delta.Delete) == 0 {
 		return nil
@@ -243,8 +244,18 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			return fmt.Errorf("failed to delete alert rules: %w", err)
 		}
 
-		// After insertions and deletions are done, make sure we aren't exceeding the limit on alert rules.
-		// TODO
+		limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{
+			OrgID:  orgID,
+			UserID: userID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to check alert rule quota: %w", err)
+		}
+		if limitReached {
+			return models.ErrQuotaReached
+		}
+
+		// TODO set provenance
 
 		return nil
 	})
