@@ -193,10 +193,10 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		RuleGroup:    group.Title,
 	}
 	rules := make([]*models.AlertRule, len(group.Rules))
-	for i, r := range group.Rules {
+	for i := range group.Rules {
 		// Interval is actually stored on every single affected rule. Copy this value across all of them. The diff-checking later will see whether it changed.
-		r.IntervalSeconds = group.Interval
-		rules[i] = &r
+		group.Rules[i].IntervalSeconds = group.Interval
+		rules[i] = &group.Rules[i]
 	}
 	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -216,5 +217,15 @@ func dummyRule(title string, orgID int64) models.AlertRule {
 		For:          time.Second * 60,
 		NoDataState:  models.OK,
 		ExecErrState: models.OkErrState,
+	}
+}
+
+func createDummyGroup(title string, orgID int64) definitions.AlertRuleGroup {
+	return definitions.AlertRuleGroup{
+		Title:    title,
+		Interval: 60,
+		Rules: []models.AlertRule{
+			dummyRule("rule-1", orgID),
+		},
 	}
 }
