@@ -20,4 +20,8 @@ var (
 		Name:  "variants",
 		Usage: "Comma-separated list of variants to build",
 	}
+	noInstallDepsFlag = cli.BoolFlag{
+		Name:  "no-install-deps",
+		Usage: "Don't install dependencies",
+	}
 )
