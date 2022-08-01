@@ -31,6 +31,21 @@ describe('LabelFilters', () => {
     expect(getAddButton()).toBeInTheDocument();
   });
 
+  it('renders multiple values for regex selectors', async () => {
+    setup([
+      { label: 'bar', op: '!~', value: 'baz|bat|bau' },
+      { label: 'foo', op: '!~', value: 'fop|for|fos' },
+    ]);
+    expect(screen.getByText(/bar/)).toBeInTheDocument();
+    expect(screen.getByText(/baz/)).toBeInTheDocument();
+    expect(screen.getByText(/bat/)).toBeInTheDocument();
+    expect(screen.getByText(/bau/)).toBeInTheDocument();
+    expect(screen.getByText(/foo/)).toBeInTheDocument();
+    expect(screen.getByText(/for/)).toBeInTheDocument();
+    expect(screen.getByText(/fos/)).toBeInTheDocument();
+    expect(getAddButton()).toBeInTheDocument();
+  });
+
   it('adds new label', async () => {
     const { onChange } = setup([{ label: 'foo', op: '=', value: 'bar' }]);
     await userEvent.click(getAddButton());
