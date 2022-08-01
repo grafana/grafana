@@ -206,9 +206,6 @@ func getInsertQuery(driver string) string {
 	}
 }
 
-const uintMax = ^uint(0)
-const intMax = int(uintMax >> 1)
-
 func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {
 	if limit < 1 {
 		return 0, fmt.Errorf("failed to delete old configurations: limit is set to '%d' but needs to be > 0", limit)
