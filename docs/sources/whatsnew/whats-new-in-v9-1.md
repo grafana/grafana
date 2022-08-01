@@ -174,7 +174,11 @@ Now, you can rotate keys and re-encrypt secrets via API. This makes it easier to
 
 #### Audit all actions in Grafana using Verbose Mode
 
-Auditing logs helps you manage and mitigate activity, and meet compliance requirements. By default, Grafana emits an audit log with every action that changes something (like a user creating or updating a dashboard, or updating another user's permissions). If you want to record all actions on the Grafana server, including GETs and page views, you can now turn on `verbose mode`. This results in more logs, but it can be useful to debug specific issues or make sure you catch everything happening in Grafana for security or compliance reasons. To learn more, see the [configuration documentation]({{< relref "../setup-grafana/configure-grafana/enterprise-configuration/#verbose" >}}).
+Auditing logs helps you manage and mitigate activity and meet compliance requirements. 
+By default, Grafana emits an audit log with every action that changes something (like a user creating or updating a dashboard or updating another user's permissions). 
+If you want to record all actions on the Grafana server, including GETs and page views, you can now turn on `verbose mode`. 
+This results in more logs, but it can be useful to debug specific issues or make sure you catch everything happening in Grafana for security or compliance reasons. 
+To learn more, see the [configuration documentation]({{< relref "../setup-grafana/configure-grafana/enterprise-configuration/#verbose" >}}).
 
 {{< figure src="/static/img/docs/enterprise/verbose-audit-logs-9-1.png" max-width="750px" caption="Verbose audit logging output" >}}
 
