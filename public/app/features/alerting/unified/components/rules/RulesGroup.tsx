@@ -19,7 +19,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 
 import { ActionIcon } from './ActionIcon';
-import { EditCloudGroupModal } from './EditCloudGroupModal';
+import { EditCloudGroupModal } from './EditRuleGroupModal';
 import { RuleStats } from './RuleStats';
 import { RulesTable } from './RulesTable';
 
