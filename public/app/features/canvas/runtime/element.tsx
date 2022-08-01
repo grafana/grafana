@@ -322,6 +322,8 @@ export class ElementState implements LayerElement {
                 css.backgroundSize = '100% 100%';
                 break;
             }
+          } else {
+            css.backgroundImage = '';
           }
         }
       }
