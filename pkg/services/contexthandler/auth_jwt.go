@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const InvalidJWT = "Invalid JWT"
@@ -17,6 +18,10 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	}
 
 	jwtToken := ctx.Req.Header.Get(h.Cfg.JWTAuthHeaderName)
+	if jwtToken == "" && h.Cfg.JWTAuthURLLogin {
+		jwtToken = ctx.Req.URL.Query().Get("auth_token")
+	}
+
 	if jwtToken == "" {
 		return false
 	}
@@ -66,6 +71,11 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 			ReqContext:    ctx,
 			SignupAllowed: h.Cfg.JWTAuthAutoSignUp,
 			ExternalUser:  extUser,
+			UserLookupParams: models.UserLookupParams{
+				UserID: nil,
+				Login:  &query.Login,
+				Email:  &query.Email,
+			},
 		}
 		if err := h.loginService.UpsertUser(ctx.Req.Context(), upsert); err != nil {
 			ctx.Logger.Error("Failed to upsert JWT user", "error", err)
@@ -74,7 +84,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	}
 
 	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			ctx.Logger.Debug(
 				"Failed to find user using JWT claims",
 				"email_claim", query.Email,

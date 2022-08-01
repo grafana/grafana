@@ -253,6 +253,22 @@ export class Scene {
     return undefined;
   };
 
+  setNonTargetPointerEvents = (target: HTMLElement | SVGElement, disablePointerEvents: boolean) => {
+    const stack = [...this.root.elements];
+    while (stack.length > 0) {
+      const currentElement = stack.shift();
+
+      if (currentElement && currentElement.div && currentElement.div !== target) {
+        currentElement.applyLayoutStylesToDiv(disablePointerEvents);
+      }
+
+      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
+      for (const nestedElement of nestedElements) {
+        stack.unshift(nestedElement);
+      }
+    }
+  };
+
   setRef = (sceneContainer: HTMLDivElement) => {
     this.div = sceneContainer;
   };
@@ -266,7 +282,6 @@ export class Scene {
 
   private updateSelection = (selection: SelectionParams) => {
     this.moveable!.target = selection.targets;
-
     if (this.skipNextSelectionBroadcast) {
       this.skipNextSelectionBroadcast = false;
       return;
@@ -309,8 +324,11 @@ export class Scene {
 
     this.selecto = new Selecto({
       container: this.div,
+      rootContainer: this.div,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
+      selectFromInside: false,
+      hitRate: 0,
     });
 
     this.moveable = new Moveable(this.div!, {
@@ -329,6 +347,7 @@ export class Scene {
       })
       .on('dragStart', (event) => {
         this.ignoreDataUpdate = true;
+        this.setNonTargetPointerEvents(event.target, true);
       })
       .on('dragGroupStart', (event) => {
         this.ignoreDataUpdate = true;
@@ -362,6 +381,7 @@ export class Scene {
 
         this.moved.next(Date.now());
         this.ignoreDataUpdate = false;
+        this.setNonTargetPointerEvents(event.target, false);
       })
       .on('resizeStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -412,6 +432,11 @@ export class Scene {
         ?.getSelectedTargets()
         .includes(selectedTarget.parentElement.parentElement);
 
+      // Apply grabbing cursor while dragging, applyLayoutStylesToDiv() resets it to grab when done
+      if (this.isEditingEnabled && isTargetMoveableElement && this.selecto?.getSelectedTargets().length) {
+        this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+      }
+
       if (isTargetMoveableElement || isTargetAlreadySelected) {
         // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
@@ -421,6 +446,9 @@ export class Scene {
       this.updateSelection({ targets });
 
       if (event.isDragStart) {
+        if (this.isEditingEnabled && this.selecto?.getSelectedTargets().length) {
+          this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+        }
         event.inputEvent.preventDefault();
         setTimeout(() => {
           this.moveable!.dragStart(event.inputEvent);

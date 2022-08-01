@@ -1419,11 +1419,11 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 		return
 	}
 
-	var aclItems []*models.DashboardAcl
+	var aclItems []*models.DashboardACL
 	for _, item := range items {
 		role := item.roleType
 		permission := item.permission
-		aclItems = append(aclItems, &models.DashboardAcl{
+		aclItems = append(aclItems, &models.DashboardACL{
 			DashboardID: folderID,
 			Role:        &role,
 			Permission:  permission,

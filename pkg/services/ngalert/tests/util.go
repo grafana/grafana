@@ -63,13 +63,15 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	)
 
 	ng, err := ngalert.ProvideService(
-		cfg, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
+		cfg, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus,
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
-		SQLStore:         ng.SQLStore,
-		BaseInterval:     baseInterval * time.Second,
+		SQLStore: ng.SQLStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: baseInterval * time.Second,
+		},
 		Logger:           log.New("ngalert-test"),
 		DashboardService: dashboardService,
 	}

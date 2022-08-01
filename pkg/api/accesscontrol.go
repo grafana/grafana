@@ -31,6 +31,7 @@ var (
 	ScopeProvisionersPlugins       = ac.Scope("provisioners", "plugins")
 	ScopeProvisionersDatasources   = ac.Scope("provisioners", "datasources")
 	ScopeProvisionersNotifications = ac.Scope("provisioners", "notifications")
+	ScopeProvisionersAlertRules    = ac.Scope("provisioners", "alerting")
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
@@ -229,12 +230,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: ac.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
-			Description: "Create teams and read organisation users and service accounts (required to manage the created teams).",
+			Description: "Create teams and read organisation users (required to manage the created teams).",
 			Group:       "Teams",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionTeamsCreate},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
-				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
 			},
 		},
 		Grants: teamCreatorGrants,
@@ -427,13 +427,6 @@ var orgsAccessEvaluator = ac.EvalPermission(ActionOrgsRead)
 var orgsCreateAccessEvaluator = ac.EvalAll(
 	ac.EvalPermission(ActionOrgsRead),
 	ac.EvalPermission(ActionOrgsCreate),
-)
-
-// usersInviteEvaluator is used to protect the "Configuration > Users > Invite" page access
-// accessible to org admins and server admins by default
-var usersInviteEvaluator = ac.EvalAny(
-	ac.EvalPermission(ac.ActionUsersCreate),
-	ac.EvalPermission(ac.ActionOrgUsersAdd),
 )
 
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access

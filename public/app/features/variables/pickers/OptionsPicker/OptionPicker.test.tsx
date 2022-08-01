@@ -37,6 +37,7 @@ function setupTestContext({ pickerState = {}, variable = {} }: Args = {}) {
   const props: VariablePickerProps<VariableWithMultiSupport | VariableWithOptions> = {
     variable: v,
     onVariableChange,
+    readOnly: false,
   };
   const Picker = optionPickerFactory();
   const optionsPicker: OptionsPickerState = { ...initialOptionPickerState, ...pickerState };

@@ -47,10 +47,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoServiceGraph
-	// show service
-	FlagTempoServiceGraph = "tempoServiceGraph"
-
 	// FlagTempoApmTable
 	// Show APM table
 	FlagTempoApmTable = "tempoApmTable"
@@ -107,13 +103,13 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
+	// FlagDashboardsFromStorage
+	// Load dashboards from the generic storage interface
+	FlagDashboardsFromStorage = "dashboardsFromStorage"
+
 	// FlagExport
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"
-
-	// FlagStorageLocalUpload
-	// allow uploads to local storage
-	FlagStorageLocalUpload = "storageLocalUpload"
 
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query
@@ -139,10 +135,6 @@ const (
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
 
-	// FlagAzureMonitorExperimentalUI
-	// Use grafana-experimental UI in Azure Monitor
-	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
-
 	// FlagTraceToMetrics
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
@@ -150,6 +142,10 @@ const (
 	// FlagPrometheusStreamingJSONParser
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagPrometheusStreamingJSONParserTest
+	// Run both old and streaming requests and log differences
+	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
 
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db

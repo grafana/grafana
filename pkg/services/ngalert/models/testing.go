@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,19 +40,11 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 
 		var annotations map[string]string = nil
 		if rand.Int63()%2 == 0 {
-			qty := rand.Intn(5)
-			annotations = make(map[string]string, qty)
-			for i := 0; i < qty; i++ {
-				annotations[util.GenerateShortUID()] = util.GenerateShortUID()
-			}
+			annotations = GenerateAlertLabels(rand.Intn(5), "ann-")
 		}
 		var labels map[string]string = nil
 		if rand.Int63()%2 == 0 {
-			qty := rand.Intn(5)
-			labels = make(map[string]string, qty)
-			for i := 0; i < qty; i++ {
-				labels[util.GenerateShortUID()] = util.GenerateShortUID()
-			}
+			labels = GenerateAlertLabels(rand.Intn(5), "lbl-")
 		}
 
 		var dashUID *string = nil
@@ -91,6 +85,11 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 	}
 }
 
+func WithNotEmptyLabels(count int, prefix string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Labels = GenerateAlertLabels(count, prefix)
+	}
+}
 func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
@@ -131,6 +130,14 @@ func WithSequentialGroupIndex() AlertRuleMutator {
 		rule.RuleGroupIndex = idx
 		idx++
 	}
+}
+
+func GenerateAlertLabels(count int, prefix string) data.Labels {
+	labels := make(data.Labels, count)
+	for i := 0; i < count; i++ {
+		labels[prefix+"key-"+util.GenerateShortUID()] = prefix + "value-" + util.GenerateShortUID()
+	}
+	return labels
 }
 
 func GenerateAlertQuery() AlertQuery {
@@ -178,7 +185,15 @@ func GenerateAlertRules(count int, f func() *AlertRule) []*AlertRule {
 	return result
 }
 
-// GenerateGroupKey generates many random alert rules. Does not guarantee that rules are unique (by UID)
+// GenerateRuleKey generates a random alert rule key
+func GenerateRuleKey(orgID int64) AlertRuleKey {
+	return AlertRuleKey{
+		OrgID: orgID,
+		UID:   util.GenerateShortUID(),
+	}
+}
+
+// GenerateGroupKey generates a random group key
 func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
 	return AlertRuleGroupKey{
 		OrgID:        orgID,

@@ -324,7 +324,7 @@ Sets the maximum amount of time a connection may be reused. The default is 14400
 
 ### locking_attempt_timeout_sec
 
-For "mysql", if `lockingMigration` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+For "mysql", if the `migrationLocking` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
@@ -683,7 +683,8 @@ Default is `false`.
 
 Set to `true` to automatically add new users to the main organization
 (id 1). When set to `false`, new users automatically cause a new
-organization to be created for that new user. Default is `true`.
+organization to be created for that new user. The organization will be
+created even if the `allow_org_create` setting is set to `false`. Default is `true`.
 
 ### auto_assign_org_id
 

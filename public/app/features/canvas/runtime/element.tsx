@@ -71,7 +71,7 @@ export class ElementState implements LayerElement {
   }
 
   /** Use the configured options to update CSS style properties directly on the wrapper div **/
-  applyLayoutStylesToDiv() {
+  applyLayoutStylesToDiv(disablePointerEvents?: boolean) {
     if (this.isRoot()) {
       // Root supersedes layout engine and is always 100% width + height of panel
       return;
@@ -81,7 +81,11 @@ export class ElementState implements LayerElement {
     const { vertical, horizontal } = constraint ?? {};
     const placement = this.options.placement ?? ({} as Placement);
 
+    const editingEnabled = this.getScene()?.isEditingEnabled;
+
     const style: React.CSSProperties = {
+      cursor: editingEnabled ? 'grab' : 'auto',
+      pointerEvents: disablePointerEvents ? 'none' : 'auto',
       position: 'absolute',
       // Minimum element size is 10x10
       minWidth: '10px',
@@ -193,18 +197,28 @@ export class ElementState implements LayerElement {
     if (!elementContainer) {
       elementContainer = this.div && this.div.getBoundingClientRect();
     }
+    let parentBorderWidth = 0;
     if (!parentContainer) {
       parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
+      parentBorderWidth = parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
     const relativeTop =
-      elementContainer && parentContainer ? Math.round(elementContainer.top - parentContainer.top) : 0;
+      elementContainer && parentContainer
+        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth)
+        : 0;
     const relativeBottom =
-      elementContainer && parentContainer ? Math.round(parentContainer.bottom - elementContainer.bottom) : 0;
+      elementContainer && parentContainer
+        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom)
+        : 0;
     const relativeLeft =
-      elementContainer && parentContainer ? Math.round(elementContainer.left - parentContainer.left) : 0;
+      elementContainer && parentContainer
+        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth)
+        : 0;
     const relativeRight =
-      elementContainer && parentContainer ? Math.round(parentContainer.right - elementContainer.right) : 0;
+      elementContainer && parentContainer
+        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right)
+        : 0;
 
     const placement = {} as Placement;
 

@@ -53,6 +53,14 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(403, "Access denied to this dashboard", nil)
 }
 
+// swagger:route POST /dashboards/trim dashboards trimDashboard
+//
+// Trim defaults from dashboard.
+//
+// Responses:
+// 200: trimDashboardResponse
+// 401: unauthorisedError
+// 500: internalServerError
 func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 	cmd := models.TrimDashboardCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -71,12 +79,36 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
+// swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
+//
+// Get dashboard by uid.
+//
+// Will return the dashboard given the dashboard unique identifier (uid).
+//
+// Responses:
+// 200: dashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
+
+	var (
+		hasPublicDashboard bool
+		err                error
+	)
+	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		hasPublicDashboard, err = hs.PublicDashboardsApi.PublicDashboardService.PublicDashboardEnabled(c.Req.Context(), dash.Uid)
+		if err != nil {
+			return response.Error(500, "Error while retrieving public dashboards", err)
+		}
+	}
+
 	// When dash contains only keys id, uid that means dashboard data is not valid and json decode failed.
 	if dash.Data != nil {
 		isEmptyData := true
@@ -133,12 +165,13 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		UpdatedBy:              updater,
 		CreatedBy:              creator,
 		Version:                dash.Version,
-		HasAcl:                 dash.HasAcl,
+		HasACL:                 dash.HasACL,
 		IsFolder:               dash.IsFolder,
 		FolderId:               dash.FolderId,
 		Url:                    dash.GetUrl(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
+		PublicDashboardEnabled: hasPublicDashboard,
 	}
 
 	// lookup folder title
@@ -242,6 +275,18 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return query.Result, nil
 }
 
+// DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
+//
+// Delete dashboard by uid.
+//
+// Will delete the dashboard given the specified unique identifier (uid).
+//
+// Responses:
+// 200: deleteDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Response {
 	return hs.deleteDashboard(c)
 }
@@ -295,6 +340,21 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	})
 }
 
+// swagger:route POST /dashboards/db dashboards postDashboard
+//
+// Create / Update dashboard
+//
+// Creates a new dashboard or updates an existing dashboard.
+//
+// Responses:
+// 200: postDashboardResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 412: preconditionFailedError
+// 422: unprocessableEntityError
+// 500: internalServerError
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 	cmd := models.SaveDashboardCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -443,9 +503,16 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	})
 }
 
-// GetHomeDashboard returns the home dashboard.
+// swagger:route GET /dashboards/home dashboards getHomeDashboard
+//
+// Get home dashboard.
+//
+// Responses:
+// 200: getHomeDashboardResponse
+// 401: unauthorisedError
+// 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.OrgId, UserID: c.SignedInUser.UserId}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.OrgId, UserID: c.SignedInUser.UserId, Teams: c.Teams}
 	homePage := hs.Cfg.HomePage
 
 	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
@@ -529,7 +596,31 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext
 	dash.Set("panels", panels)
 }
 
-// GetDashboardVersions returns all dashboard versions as JSON
+// swagger:route GET /dashboards/id/{DashboardID}/versions dashboard_versions getDashboardVersionsByID
+//
+// Gets all existing versions for the dashboard.
+//
+// Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: dashboardVersionsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /dashboards/uid/{uid}/versions dashboard_versions getDashboardVersionsByUID
+//
+// Gets all existing versions for the dashboard using UID.
+//
+// Responses:
+// 200: dashboardVersionsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Response {
 	var dashID int64
 
@@ -588,7 +679,31 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, res)
 }
 
-// GetDashboardVersion returns the dashboard version with the given ID.
+// swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByID
+//
+// Get a specific dashboard version.
+//
+// Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: dashboardVersionResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByUID
+//
+// Get a specific dashboard version using UID.
+//
+// Responses:
+// 200: dashboardVersionResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Response {
 	var dashID int64
 
@@ -649,7 +764,19 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, dashVersionMeta)
 }
 
-// POST /api/dashboards/calculate-diff performs diffs on two dashboards
+// swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
+//
+// Perform diff on two dashboards.
+//
+// Produces:
+// - application/json
+// - text/html
+//
+// Responses:
+// 200: calculateDashboardDiffResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Response {
 	apiOptions := dtos.CalculateDiffOptions{}
 	if err := web.Bind(c.Req, &apiOptions); err != nil {
@@ -729,7 +856,31 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 	return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "text/html")
 }
 
-// RestoreDashboardVersion restores a dashboard to the given version.
+// swagger:route POST /dashboards/id/{DashboardID}/restore dashboard_versions restoreDashboardVersionByID
+//
+// Restore a dashboard to a given dashboard version.
+//
+// Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: postDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route POST /dashboards/uid/{uid}/restore dashboard_versions restoreDashboardVersionByUID
+//
+// Restore a dashboard to a given dashboard version using UID.
+//
+// Responses:
+// 200: postDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Response {
 	var dashID int64
 
@@ -780,6 +931,14 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 	return hs.postDashboard(c, saveCmd)
 }
 
+// swagger:route GET /dashboards/tags dashboards getDashboardTags
+//
+// Get all dashboards tags of an organisation.
+//
+// Responses:
+// 200: getDashboardsTagsResponse
+// 401: unauthorisedError
+// 500: internalServerError
 func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
 	query := models.GetDashboardTagsQuery{OrgId: c.OrgId}
 	err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
@@ -810,4 +969,231 @@ func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
 		uids = append(uids, q.Result.Uid)
 	}
 	c.JSON(http.StatusOK, uids)
+}
+
+// swagger:parameters renderReportPDF
+type RenderReportPDFParams struct {
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters restoreDashboardVersionByID
+type RestoreDashboardVersionByIDParams struct {
+	// in:body
+	// required:true
+	Body dtos.RestoreDashboardVersionCommand
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters getDashboardVersionsByID
+type GetDashboardVersionsByIDParams struct {
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters getDashboardVersionsByUID
+type GetDashboardVersionsByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters restoreDashboardVersionByUID
+type RestoreDashboardVersionByUIDParams struct {
+	// in:body
+	// required:true
+	Body dtos.RestoreDashboardVersionCommand
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters getDashboardVersionByID
+type GetDashboardVersionByIDParams struct {
+	// in:path
+	DashboardID int64
+	// in:path
+	DashboardVersionID int64
+}
+
+// swagger:parameters getDashboardVersionByUID
+type GetDashboardVersionByUIDParams struct {
+	// in:path
+	DashboardVersionID int64
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters getDashboardVersions getDashboardVersionsByUID
+type GetDashboardVersionsParams struct {
+	// Maximum number of results to return
+	// in:query
+	// required:false
+	// default:0
+	Limit int `json:"limit"`
+
+	// Version to start from when returning queries
+	// in:query
+	// required:false
+	// default:0
+	Start int `json:"start"`
+}
+
+// swagger:parameters getDashboardByUID
+type GetDashboardByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters deleteDashboardByUID
+type DeleteDashboardByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters postDashboard
+type PostDashboardParams struct {
+	// in:body
+	// required:true
+	Body models.SaveDashboardCommand
+}
+
+// swagger:parameters calculateDashboardDiff
+type CalcDashboardDiffParams struct {
+	// in:body
+	// required:true
+	Body struct {
+		Base dtos.CalculateDiffTarget `json:"base" binding:"Required"`
+		New  dtos.CalculateDiffTarget `json:"new" binding:"Required"`
+		// The type of diff to return
+		// Description:
+		// * `basic`
+		// * `json`
+		// Enum: basic,json
+		DiffType string `json:"diffType" binding:"Required"`
+	}
+}
+
+// swagger:parameters trimDashboard
+type TrimDashboardParams struct {
+	// in:body
+	// required:true
+	Body models.TrimDashboardCommand
+}
+
+// swagger:response dashboardResponse
+type DashboardResponse struct {
+	// The response message
+	// in: body
+	Body dtos.DashboardFullWithMeta `json:"body"`
+}
+
+// swagger:response deleteDashboardResponse
+type DeleteDashboardResponse struct {
+	// The response message
+	// in: body
+	Body struct {
+		// ID Identifier of the deleted dashboard.
+		// required: true
+		// example: 65
+		ID int64 `json:"id"`
+
+		// Title Title of the deleted dashboard.
+		// required: true
+		// example: My Dashboard
+		Title string `json:"title"`
+
+		// Message Message of the deleted dashboard.
+		// required: true
+		// example: Dashboard My Dashboard deleted
+		Message string `json:"message"`
+	} `json:"body"`
+}
+
+// swagger:response postDashboardResponse
+type PostDashboardResponse struct {
+	// in: body
+	Body struct {
+		// Status status of the response.
+		// required: true
+		// example: success
+		Status string `json:"status"`
+
+		// Slug The slug of the dashboard.
+		// required: true
+		// example: my-dashboard
+		Slug string `json:"title"`
+
+		// Version The version of the dashboard.
+		// required: true
+		// example: 2
+		Verion int64 `json:"version"`
+
+		// ID The unique identifier (id) of the created/updated dashboard.
+		// required: true
+		// example: 1
+		ID string `json:"id"`
+
+		// UID The unique identifier (uid) of the created/updated dashboard.
+		// required: true
+		// example: nHz3SXiiz
+		UID string `json:"uid"`
+
+		// URL The relative URL for accessing the created/updated dashboard.
+		// required: true
+		// example: /d/nHz3SXiiz/my-dashboard
+		URL string `json:"url"`
+	} `json:"body"`
+}
+
+// swagger:response calculateDashboardDiffResponse
+type CalculateDashboardDiffResponse struct {
+	// in: body
+	Body []byte `json:"body"`
+}
+
+// swagger:response trimDashboardResponse
+type TrimDashboardResponse struct {
+	// in: body
+	Body dtos.TrimDashboardFullWithMeta `json:"body"`
+}
+
+// swagger:response getHomeDashboardResponse
+type GetHomeDashboardResponse struct {
+	// in: body
+	Body GetHomeDashboardResponseBody `json:"body"`
+}
+
+// swagger:response getDashboardsTagsResponse
+type DashboardsTagsResponse struct {
+	// in: body
+	Body []*models.DashboardTagCloudItem `json:"body"`
+}
+
+// Get home dashboard response.
+// swagger:model GetHomeDashboardResponse
+type GetHomeDashboardResponseBody struct {
+	// swagger:allOf
+	// required: false
+	dtos.DashboardFullWithMeta
+
+	// swagger:allOf
+	// required: false
+	dtos.DashboardRedirect
+}
+
+// swagger:response dashboardVersionsResponse
+type DashboardVersionsResponse struct {
+	// in: body
+	Body []*dashver.DashboardVersionDTO `json:"body"`
+}
+
+// swagger:response dashboardVersionResponse
+type DashboardVersionResponse struct {
+	// in: body
+	Body *dashver.DashboardVersionMeta `json:"body"`
 }

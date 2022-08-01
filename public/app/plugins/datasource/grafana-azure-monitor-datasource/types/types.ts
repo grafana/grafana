@@ -129,14 +129,6 @@ export interface AzureMonitorLocalizedValue {
   localizedValue: string;
 }
 
-export interface AzureMonitorMetricDefinitionsResponse {
-  data: {
-    value: Array<{ name: string; type: string; location?: string }>;
-  };
-  status: number;
-  statusText: string;
-}
-
 export interface AzureMonitorResourceGroupsResponse {
   data: {
     value: Array<{ name: string }>;
@@ -233,19 +225,18 @@ export interface AzureGetMetricNamespacesQuery {
 export interface LegacyAzureGetMetricNamespacesQuery {
   subscription: string;
   resourceGroup: string;
-  metricDefinition: string;
-  resourceName: string;
+  metricNamespace?: string;
+  resourceName?: string;
 }
 
 export interface AzureGetMetricNamesQuery {
   resourceUri: string;
-  metricNamespace: string;
+  metricNamespace?: string;
 }
 
 export interface LegacyAzureGetMetricNamesQuery {
   subscription: string;
   resourceGroup: string;
-  metricDefinition: string;
   resourceName: string;
   metricNamespace: string;
 }
@@ -259,7 +250,6 @@ export interface AzureGetMetricMetadataQuery {
 export interface LegacyAzureGetMetricMetadataQuery {
   subscription: string;
   resourceGroup: string;
-  metricDefinition: string;
   resourceName: string;
   metricNamespace: string;
   metricName: string;

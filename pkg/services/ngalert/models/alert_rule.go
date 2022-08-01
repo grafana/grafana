@@ -137,17 +137,6 @@ type AlertRule struct {
 	Labels      map[string]string
 }
 
-type SchedulableAlertRule struct {
-	Title           string
-	UID             string `xorm:"uid"`
-	OrgID           int64  `xorm:"org_id"`
-	IntervalSeconds int64
-	Version         int64
-	NamespaceUID    string `xorm:"namespace_uid"`
-	RuleGroup       string
-	RuleGroupIndex  int `xorm:"rule_group_idx"`
-}
-
 type LabelOption func(map[string]string)
 
 func WithoutInternalLabels() LabelOption {
@@ -226,11 +215,6 @@ func (alertRule *AlertRule) GetKey() AlertRuleKey {
 // GetGroupKey returns the identifier of a group the rule belongs to
 func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 	return AlertRuleGroupKey{OrgID: alertRule.OrgID, NamespaceUID: alertRule.NamespaceUID, RuleGroup: alertRule.RuleGroup}
-}
-
-// GetKey returns the alert definitions identifier
-func (alertRule *SchedulableAlertRule) GetKey() AlertRuleKey {
-	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
 }
 
 // PreSave sets default values and loads the updated model for each alert query.
@@ -316,9 +300,7 @@ type ListAlertRulesQuery struct {
 }
 
 type GetAlertRulesForSchedulingQuery struct {
-	ExcludeOrgIDs []int64
-
-	Result []*SchedulableAlertRule
+	Result []*AlertRule
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
