@@ -59,6 +59,11 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
     hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
+  // check if group has provisioned items
+  const isProvisioned = group.rules.some((rule) => {
+    return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
+  });
+
   const deleteGroup = () => {
     dispatch(deleteRulesGroupAction(namespace, group));
     setIsDeletingGroup(false);
@@ -78,7 +83,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
     if (folderUID) {
       const baseUrl = `${config.appSubUrl}/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
       if (folder?.canSave) {
-        if (viewMode === 'grouped') {
+        if (viewMode === 'grouped' && !isProvisioned) {
           actionIcons.push(
             <ActionIcon
               aria-label="edit rule group"
@@ -90,7 +95,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
             />
           );
         }
-        if (viewMode === 'grouped') {
+        if (viewMode === 'grouped' && !isProvisioned) {
           actionIcons.push(
             <ActionIcon
               aria-label="re-order rules"
