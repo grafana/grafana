@@ -85,10 +85,10 @@ export const windTurbineItem: CanvasElementItem<any, any> = {
       },
     },
     placement: {
-      width: 100,
-      height: 155,
-      top: 0,
-      left: 0,
+      width: options?.placement?.width ?? 100,
+      height: options?.placement?.height ?? 155,
+      top: options?.placement?.top,
+      left: options?.placement?.left,
     },
   }),
 

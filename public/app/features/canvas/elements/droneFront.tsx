@@ -90,10 +90,10 @@ export const droneFrontItem: CanvasElementItem<any, any> = {
       },
     },
     placement: {
-      width: 100,
-      height: 26,
-      top: 0,
-      left: 0,
+      width: options?.placement?.width ?? 100,
+      height: options?.placement?.height ?? 26,
+      top: options?.placement?.top,
+      left: options?.placement?.left,
     },
   }),
 
