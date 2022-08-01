@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -15,6 +16,7 @@ type ProvisionerConfig struct {
 	RuleService                provisioning.AlertRuleService
 	ContactPointService        provisioning.ContactPointService
 	NotificiationPolicyService provisioning.NotificationPolicyService
+	MuteTimingService          provisioning.MuteTimingService
 }
 
 func Provision(ctx context.Context, cfg ProvisionerConfig) error {
@@ -33,25 +35,34 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 		cfg.RuleService)
 	err = ruleProvisioner.Provision(ctx, files)
 	if err != nil {
-		return err
+		return fmt.Errorf("alert rules: %w", err)
 	}
 	cpProvisioner := NewContactPointProvisoner(logger, cfg.ContactPointService)
 	err = cpProvisioner.Provision(ctx, files)
 	if err != nil {
-		return err
+		return fmt.Errorf("contact points: %w", err)
+	}
+	mtProvisioner := NewMuteTimesProvisioner(logger, cfg.MuteTimingService)
+	err = mtProvisioner.Provision(ctx, files)
+	if err != nil {
+		return fmt.Errorf("mute times: %w", err)
 	}
 	npProvisioner := NewNotificationPolicyProvisoner(logger, cfg.NotificiationPolicyService)
 	err = npProvisioner.Provision(ctx, files)
 	if err != nil {
-		return err
+		return fmt.Errorf("notification policies: %w", err)
 	}
 	err = npProvisioner.Unprovision(ctx, files)
 	if err != nil {
-		return err
+		return fmt.Errorf("notification policies: %w", err)
 	}
 	err = cpProvisioner.Unprovision(ctx, files)
 	if err != nil {
-		return err
+		return fmt.Errorf("contact points: %w", err)
+	}
+	err = mtProvisioner.Unprovision(ctx, files)
+	if err != nil {
+		return fmt.Errorf("mute times: %w", err)
 	}
 	logger.Info("finished to provision alerting")
 	return nil

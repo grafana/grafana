@@ -21,6 +21,8 @@ type AlertingFile struct {
 	DeleteContactPoints []DeleteContactPoint
 	Policies            []NotificiationPolicy
 	ResetPolicies       []OrgID
+	MuteTimes           []MuteTime
+	DeleteMuteTimes     []DeleteMuteTime
 }
 
 type AlertingFileV1 struct {
@@ -32,21 +34,38 @@ type AlertingFileV1 struct {
 	DeleteContactPoints []DeleteContactPointV1  `json:"deleteContactPoints" yaml:"deleteContactPoints"`
 	Policies            []NotificiationPolicyV1 `json:"policies" yaml:"policies"`
 	ResetPolicies       []values.Int64Value     `json:"resetPolicies" yaml:"resetPolicies"`
+	MuteTimes           []MuteTimeV1            `json:"muteTimes" yaml:"muteTimes"`
+	DeleteMuteTimes     []DeleteMuteTimeV1      `json:"deleteMuteTimes" yaml:"deleteMuteTimes"`
 }
 
 func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
 	alertingFile := AlertingFile{}
 	alertingFile.Filename = fileV1.Filename
-	err := fileV1.mapRules(&alertingFile)
-	if err != nil {
+	if err := fileV1.mapRules(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing rules: %w", err)
 	}
-	err = fileV1.mapContactPoint(&alertingFile)
-	if err != nil {
+	if err := fileV1.mapContactPoint(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing contact points: %w", err)
 	}
 	fileV1.mapPolicies(&alertingFile)
+	if err := fileV1.mapMuteTimes(&alertingFile); err != nil {
+		return AlertingFile{}, fmt.Errorf("failure parsing mute times: %w", err)
+	}
 	return alertingFile, nil
+}
+
+func (fileV1 *AlertingFileV1) mapMuteTimes(alertingFile *AlertingFile) error {
+	for _, mtV1 := range fileV1.MuteTimes {
+		alertingFile.MuteTimes = append(alertingFile.MuteTimes, mtV1.mapToModel())
+	}
+	for _, deleteV1 := range fileV1.DeleteMuteTimes {
+		delReq, err := deleteV1.mapToModel()
+		if err != nil {
+			return err
+		}
+		alertingFile.DeleteMuteTimes = append(alertingFile.DeleteMuteTimes, delReq)
+	}
+	return nil
 }
 
 func (fileV1 *AlertingFileV1) mapPolicies(alertingFile *AlertingFile) {
