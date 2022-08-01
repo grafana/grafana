@@ -406,12 +406,12 @@ def build_frontend_step(edition, ver_mode):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-frontend --jobs 8 ' + \
+            './bin/build build-frontend --jobs 8 ' + \
             '--edition {} ${{DRONE_TAG}}'.format(edition),
         ]
     else:
         cmds = [
-            './bin/grabpl build-frontend --jobs 8 --edition {} '.format(edition) + \
+            './bin/build build-frontend --jobs 8 --edition {} '.format(edition) + \
             '--build-id {}'.format(build_no),
         ]
 
