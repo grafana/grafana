@@ -241,7 +241,11 @@ export const SharePublicDashboard = (props: Props) => {
                 severity="warning"
               />
             )}
-            <Button disabled={!acknowledged() || props.dashboard.hasUnsavedChanges()} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
+            <Button
+              disabled={!acknowledged() || props.dashboard.hasUnsavedChanges()}
+              onClick={onSavePublicConfig}
+              data-testid={selectors.SaveConfigButton}
+            >
               Save Sharing Configuration
             </Button>
           </div>
