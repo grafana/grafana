@@ -359,7 +359,7 @@ steps:
   name: grafana-server
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
+  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
   environment:
@@ -368,7 +368,7 @@ steps:
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
+  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
@@ -377,7 +377,7 @@ steps:
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
+  - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
   environment:
@@ -386,7 +386,7 @@ steps:
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
+  - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
   environment:
@@ -1129,7 +1129,7 @@ steps:
   name: grafana-server
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
+  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
   environment:
@@ -1138,7 +1138,7 @@ steps:
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
+  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
@@ -1147,7 +1147,7 @@ steps:
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
+  - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
   environment:
@@ -1156,7 +1156,7 @@ steps:
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
+  - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
   environment:
@@ -1831,7 +1831,7 @@ steps:
   name: grafana-server
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -1840,7 +1840,7 @@ steps:
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -1849,7 +1849,7 @@ steps:
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -1858,7 +1858,7 @@ steps:
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -2472,7 +2472,7 @@ steps:
   name: grafana-server
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -2481,7 +2481,7 @@ steps:
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -2490,7 +2490,7 @@ steps:
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -2499,7 +2499,7 @@ steps:
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -3748,7 +3748,7 @@ steps:
   name: grafana-server
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -3757,7 +3757,7 @@ steps:
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -3766,7 +3766,7 @@ steps:
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -3775,7 +3775,7 @@ steps:
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -4337,7 +4337,7 @@ steps:
   name: grafana-server
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -4346,7 +4346,7 @@ steps:
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -4355,7 +4355,7 @@ steps:
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -4364,7 +4364,7 @@ steps:
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
   environment:
@@ -5016,6 +5016,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 968320e69b8531451dec23ac2d586296616533986c9e9a767410975109220072
+hmac: 83e3587dd37f16f7bcb992a6d541be5d48191578052f0b06ded4eade8ca64d02
 
 ...
