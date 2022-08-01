@@ -205,7 +205,10 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 
 	// TODO: calculateAutomaticChanges
 
-	// TODO: exit out early if no delta.New or no delta.Update or no delta.Delete
+	if len(delta.New) == 0 && len(delta.Update) == 0 && len(delta.Delete) == 0 {
+		return nil
+	}
+
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		inserts := make([]models.AlertRule, 0, len(delta.New))
 		for _, insert := range delta.New {
