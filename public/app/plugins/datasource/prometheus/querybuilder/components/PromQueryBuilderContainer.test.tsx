@@ -34,7 +34,7 @@ describe('PromQueryBuilderContainer', () => {
 });
 
 function setup(queryOverrides: Partial<PromQuery> = {}) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = (new EmptyLanguageProviderMock() as unknown) as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
       url: '',
@@ -55,6 +55,7 @@ function setup(queryOverrides: Partial<PromQuery> = {}) {
     },
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
+    showExplain: false,
   };
 
   const { container } = render(<PromQueryBuilderContainer {...props} />);

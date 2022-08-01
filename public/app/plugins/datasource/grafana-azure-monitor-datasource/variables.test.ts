@@ -8,7 +8,7 @@ import { AzureMonitorQuery, AzureQueryType } from './types';
 import { VariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getTemplateSrv: () => ({
     replace: (val: string) => {
       return val;
@@ -98,14 +98,16 @@ describe('VariableSupport', () => {
       });
     });
 
-    it('can fetch metricDefinitions with a default subscriptionId', (done) => {
+    it('can fetch metricNamespaces with a default subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
           azureLogAnalyticsDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricDefinitions: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNamespaces: jest.fn().mockResolvedValue(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -114,7 +116,7 @@ describe('VariableSupport', () => {
             refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              kind: 'MetricDefinitionsQuery',
+              kind: 'MetricNamespaceQuery',
               rawQuery: 'Namespaces(resourceGroup)',
             },
           } as AzureMonitorQuery,
@@ -127,11 +129,13 @@ describe('VariableSupport', () => {
       });
     });
 
-    it('can fetch metricDefinitions with a subscriptionId', (done) => {
+    it('can fetch metricNamespaces with a subscriptionId', (done) => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
-          getMetricDefinitions: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNamespaces: jest.fn().mockResolvedValue(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -140,7 +144,7 @@ describe('VariableSupport', () => {
             refId: 'A',
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
-              kind: 'MetricDefinitionsQuery',
+              kind: 'MetricNamespaceQuery',
               rawQuery: 'Namespaces(resourceGroup, subscriptionId)',
             },
           } as AzureMonitorQuery,
@@ -170,7 +174,7 @@ describe('VariableSupport', () => {
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
               kind: 'ResourceNamesQuery',
-              rawQuery: 'ResourceNames(resourceGroup, metricDefinition)',
+              rawQuery: 'ResourceNames(resourceGroup, metricNamespace)',
             },
           } as AzureMonitorQuery,
         ],
@@ -196,7 +200,7 @@ describe('VariableSupport', () => {
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
               kind: 'ResourceNamesQuery',
-              rawQuery: 'ResourceNames(subscriptionId, resourceGroup, metricDefinition)',
+              rawQuery: 'ResourceNames(subscriptionId, resourceGroup, metricNamespace)',
             },
           } as AzureMonitorQuery,
         ],
@@ -227,7 +231,7 @@ describe('VariableSupport', () => {
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
               kind: 'MetricNamespaceQuery',
-              rawQuery: 'metricNamespace(resourceGroup, metricDefinition, resourceName)',
+              rawQuery: 'metricNamespace(resourceGroup, metricNamespace, resourceName)',
             },
           } as AzureMonitorQuery,
         ],
@@ -255,7 +259,7 @@ describe('VariableSupport', () => {
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
               kind: 'MetricNamespaceQuery',
-              rawQuery: 'metricNamespace(subscriptionId, resourceGroup, metricDefinition, resourceName)',
+              rawQuery: 'metricNamespace(subscriptionId, resourceGroup, metricNamespace, resourceName)',
             },
           } as AzureMonitorQuery,
         ],
@@ -286,7 +290,7 @@ describe('VariableSupport', () => {
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
               kind: 'MetricNamesQuery',
-              rawQuery: 'metricNames(resourceGroup, metricDefinition, resourceName, metricNamespace)',
+              rawQuery: 'metricNames(resourceGroup, metricNamespace, resourceName, metricNamespace)',
             },
           } as AzureMonitorQuery,
         ],
@@ -314,7 +318,7 @@ describe('VariableSupport', () => {
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
               kind: 'MetricNamesQuery',
-              rawQuery: 'metricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace)',
+              rawQuery: 'metricNames(subscription, resourceGroup, metricNamespace, resourceName, metricNamespace)',
             },
           } as AzureMonitorQuery,
         ],
@@ -393,12 +397,12 @@ describe('VariableSupport', () => {
             if (sub === 'subscriptionId' && rg === 'resourceGroup') {
               return Promise.resolve(expectedResults);
             }
-            return Promise.resolve([`getMetricDefinitions unexpected input: ${sub}, ${rg}`]);
+            return Promise.resolve([`getmetricNamespaces unexpected input: ${sub}, ${rg}`]);
           }),
         })
       );
       const mockRequest = {
-        targets: ['Namespaces(subscriptionId, resourceGroup)' as unknown as AzureMonitorQuery],
+        targets: [('Namespaces(subscriptionId, resourceGroup)' as unknown) as AzureMonitorQuery],
       } as DataQueryRequest<AzureMonitorQuery>;
       const observables = variableSupport.query(mockRequest);
       observables.subscribe((result: DataQueryResponseData) => {
@@ -443,7 +447,7 @@ describe('VariableSupport', () => {
             queryType: AzureQueryType.GrafanaTemplateVariableFn,
             grafanaTemplateVariableFn: {
               kind: 'MetricNamesQuery',
-              rawQuery: 'metricNames(resourceGroup, metricDefinition, resourceName, metricNamespace)',
+              rawQuery: 'metricNames(resourceGroup, metricNamespace, resourceName, metricNamespace)',
             },
           } as AzureMonitorQuery,
         ],

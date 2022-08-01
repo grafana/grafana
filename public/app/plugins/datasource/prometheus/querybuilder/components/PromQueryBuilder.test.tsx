@@ -1,4 +1,4 @@
-import { render, screen, getByText, waitFor } from '@testing-library/react';
+import { getByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -186,7 +186,7 @@ describe('PromQueryBuilder', () => {
 });
 
 function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = (new EmptyLanguageProviderMock() as unknown) as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
       url: '',
@@ -202,6 +202,7 @@ function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
     onRunQuery: () => {},
     onChange: () => {},
     data,
+    showExplain: false,
   };
 
   const { container } = render(<PromQueryBuilder {...props} query={query} />);

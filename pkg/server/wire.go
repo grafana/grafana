@@ -6,6 +6,10 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
+	"github.com/grafana/grafana/pkg/services/store/sanitizer"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -74,7 +78,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
@@ -105,7 +108,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -201,7 +203,6 @@ var wireBasicSet = wire.NewSet(
 	search.ProvideService,
 	searchV2.ProvideService,
 	store.ProvideService,
-	store.ProvideHTTPService,
 	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
@@ -224,6 +225,8 @@ var wireBasicSet = wire.NewSet(
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
 	oauthtoken.ProvideService,
+	auth.ProvideActiveAuthTokenService,
+	wire.Bind(new(models.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	tempo.ProvideService,
 	loki.ProvideService,

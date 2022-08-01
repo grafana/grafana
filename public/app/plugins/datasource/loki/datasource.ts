@@ -82,8 +82,7 @@ export class LokiDatasource
     DataSourceWithLogsContextSupport,
     DataSourceWithLogsVolumeSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
-    DataSourceWithQueryExportSupport<LokiQuery>
-{
+    DataSourceWithQueryExportSupport<LokiQuery> {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -152,7 +151,15 @@ export class LokiDatasource
         ...fixedRequest,
         targets: streamQueries,
       };
-      return merge(...streamQueries.map((q) => doLokiChannelStream(q, this, streamRequest)));
+      return merge(
+        ...streamQueries.map((q) =>
+          doLokiChannelStream(
+            this.applyTemplateVariables(q, request.scopedVars),
+            this, // the datasource
+            streamRequest
+          )
+        )
+      );
     }
 
     if (fixedRequest.liveStreaming) {

@@ -74,7 +74,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
           this.getAnnotations({
             range: request.range,
             rangeRaw: request.range.raw,
-            annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
+            annotation: (target as unknown) as AnnotationQuery<GrafanaAnnotationQuery>,
             dashboard: getDashboardSrv().getCurrent(),
           })
         );
@@ -158,7 +158,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
   async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
     const templateSrv = getTemplateSrv();
-    const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
+    const annotation = (options.annotation as unknown) as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
     const params: any = {
       from: options.range.from.valueOf(),
@@ -170,11 +170,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     if (target.type === GrafanaAnnotationType.Dashboard) {
       // if no dashboard id yet return
-      if (!options.dashboard.id) {
+      if (!options.dashboard.uid) {
         return Promise.resolve({ data: [] });
       }
       // filter by dashboard id
-      params.dashboardId = options.dashboard.id;
+      params.dashboardUID = options.dashboard.uid;
       // remove tags filter if any
       delete params.tags;
     } else {
@@ -202,7 +202,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     const annotations = await getBackendSrv().get(
       '/api/annotations',
       params,
-      `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.id}`
+      `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.uid}`
     );
     return { data: [toDataFrame(annotations)] };
   }

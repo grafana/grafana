@@ -114,8 +114,6 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs]({{< ref "/docs/grafana/v8.5/alerting/old-alerting/add-notification-template/" >}}).
-
 ### Content security policy support
 
 We have added support for [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP), a layer of security that helps detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks.
@@ -233,7 +231,7 @@ The following Grafana 7.4 changes might break previous functionality.
 
 ### Plugin compatibility
 
-We have upgraded AngularJS from version 1.6.6 to 1.8.2. Due to this upgrade some old angular plugins might stop working and will require a small update. This is due to the deprecation and removal of pre-assigned bindings. So if your custom angular controllers expect component bindings in the controller constructor you need to move this code to an $onInit function. For more details on how to migrate AngularJS code open the migration guide and search for pre-assigning bindings.
+We have upgraded AngularJS from version 1.6.6 to 1.8.2. Due to this upgrade some old angular plugins might stop working and will require a small update. This is due to the deprecation and removal of pre-assigned bindings. So if your custom angular controllers expect component bindings in the controller constructor you need to move this code to an \$onInit function. For more details on how to migrate AngularJS code open the migration guide and search for pre-assigning bindings.
 
 In order not to break all angular panel plugins and data sources we have some custom angular inject behavior that makes sure that bindings for these controllers are still set before constructor is called so many old angular panels and data source plugins will still work.
 

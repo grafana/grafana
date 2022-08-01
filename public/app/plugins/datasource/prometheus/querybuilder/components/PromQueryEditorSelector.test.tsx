@@ -58,7 +58,7 @@ const defaultProps = {
     },
     undefined,
     undefined,
-    new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider
+    (new EmptyLanguageProviderMock() as unknown) as PromQlLanguageProvider
   ),
   query: defaultQuery,
   onRunQuery: () => {},
@@ -80,11 +80,6 @@ describe('PromQueryEditorSelector', () => {
   it('shows builder when builder mode is set', async () => {
     renderWithMode(QueryEditorMode.Builder);
     expectBuilder();
-  });
-
-  it('shows explain when explain mode is set', async () => {
-    renderWithMode(QueryEditorMode.Explain);
-    expectExplain();
   });
 
   it('changes to builder mode', async () => {
@@ -121,17 +116,6 @@ describe('PromQueryEditorSelector', () => {
       expr: defaultQuery.expr,
       range: true,
       editorMode: QueryEditorMode.Code,
-    });
-  });
-
-  it('changes to explain mode', async () => {
-    const { onChange } = renderWithMode(QueryEditorMode.Code);
-    await switchToMode(QueryEditorMode.Explain);
-    expect(onChange).toBeCalledWith({
-      refId: 'A',
-      expr: defaultQuery.expr,
-      range: true,
-      editorMode: QueryEditorMode.Explain,
     });
   });
 
@@ -181,15 +165,9 @@ function expectBuilder() {
   expect(screen.getByText('Metric')).toBeInTheDocument();
 }
 
-function expectExplain() {
-  // Base message when there is no query
-  expect(screen.getByText(/Fetch all series/)).toBeInTheDocument();
-}
-
 async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,
-    [QueryEditorMode.Explain]: /Explain/,
     [QueryEditorMode.Builder]: /Builder/,
   }[mode];
 

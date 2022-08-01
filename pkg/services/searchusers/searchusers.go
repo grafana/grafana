@@ -23,6 +23,17 @@ func ProvideUsersService(sqlStore sqlstore.Store, searchUserFilter models.Search
 	return &OSSService{sqlStore: sqlStore, searchUserFilter: searchUserFilter}
 }
 
+// swagger:route GET /users users searchUsers
+//
+// Get users.
+//
+// Returns all users that the authenticated user has permission to view, admin permission required.
+//
+// Responses:
+// 200: searchUsersResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {
 	query, err := s.SearchUser(c)
 	if err != nil {
@@ -32,6 +43,16 @@ func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, query.Result.Users)
 }
 
+// swagger:route GET /users/search users searchUsersWithPaging
+//
+// Get users with paging.
+//
+// Responses:
+// 200: searchUsersResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (s *OSSService) SearchUsersWithPaging(c *models.ReqContext) response.Response {
 	query, err := s.SearchUser(c)
 	if err != nil {

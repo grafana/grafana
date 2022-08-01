@@ -25,7 +25,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
   }>({});
 
   const isMultiSelect = () => {
-    return item.op === operators[0].label;
+    return operators.find((op) => op.label === item.op)?.isMultiValue;
   };
 
   const getSelectOptionsFromString = (item?: string): string[] => {
@@ -64,11 +64,11 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           options={state.labelNames}
           onChange={(change) => {
             if (change.label) {
-              onChange({
+              onChange(({
                 ...item,
                 op: item.op ?? defaultOp,
                 label: change.label,
-              } as any as QueryBuilderLabelFilter);
+              } as any) as QueryBuilderLabelFilter);
             }
           }}
         />
@@ -80,7 +80,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           width="auto"
           onChange={(change) => {
             if (change.value != null) {
-              onChange({ ...item, op: change.value } as any as QueryBuilderLabelFilter);
+              onChange(({ ...item, op: change.value } as any) as QueryBuilderLabelFilter);
             }
           }}
         />
@@ -109,14 +109,14 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           options={getOptions()}
           onChange={(change) => {
             if (change.value) {
-              onChange({ ...item, value: change.value, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
+              onChange(({ ...item, value: change.value, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);
             } else {
               const changes = change
                 .map((change: any) => {
                   return change.label;
                 })
                 .join('|');
-              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
+              onChange(({ ...item, value: changes, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);
             }
           }}
         />
@@ -127,8 +127,8 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
 }
 
 const operators = [
-  { label: '=~', value: '=~' },
-  { label: '=', value: '=' },
-  { label: '!=', value: '!=' },
-  { label: '!~', value: '!~' },
+  { label: '=~', value: '=~', isMultiValue: true },
+  { label: '=', value: '=', isMultiValue: false },
+  { label: '!=', value: '!=', isMultiValue: false },
+  { label: '!~', value: '!~', isMultiValue: true },
 ];

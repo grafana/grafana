@@ -46,10 +46,8 @@ export interface AzureMetricQuery {
   resourceUri?: string;
   resourceGroup?: string;
 
-  /** Resource type */
-  metricDefinition?: string;
-
   resourceName?: string;
+  /** Resource type */
   metricNamespace?: string;
   metricName?: string;
   timeGrain?: string;
@@ -67,6 +65,9 @@ export interface AzureMetricQuery {
 
   /** @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration */
   dimensionFilter?: string;
+
+  /** @deprecated Use metricNamespace instead */
+  metricDefinition?: string;
 }
 
 /**

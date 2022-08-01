@@ -15,12 +15,33 @@ import (
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
-// GET /api/user/auth-tokens
+// swagger:route GET /user/auth-tokens signed_in_user getUserAuthTokens
+//
+// Auth tokens of the actual User.
+//
+// Return a list of all auth tokens (devices) that the actual user currently have logged in from.
+//
+// Responses:
+// 200: getUserAuthTokensResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserAuthTokens(c *models.ReqContext) response.Response {
 	return hs.getUserAuthTokensInternal(c, c.UserId)
 }
 
-// POST /api/user/revoke-auth-token
+// swagger:route POST /user/revoke-auth-token signed_in_user revokeUserAuthToken
+//
+// Revoke an auth token of the actual User.
+//
+// Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) RevokeUserAuthToken(c *models.ReqContext) response.Response {
 	cmd := models.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -152,4 +173,17 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User auth token revoked",
 	})
+}
+
+// swagger:parameters revokeUserAuthToken
+type RevokeUserAuthTokenParams struct {
+	// in:body
+	// required:true
+	Body models.RevokeAuthTokenCmd `json:"body"`
+}
+
+// swagger:response getUserAuthTokensResponse
+type GetUserAuthTokensResponse struct {
+	// in:body
+	Body []*models.UserToken `json:"body"`
 }

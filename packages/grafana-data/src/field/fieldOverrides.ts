@@ -8,6 +8,7 @@ import {
   ApplyFieldOverrideOptions,
   DataFrame,
   DataLink,
+  DecimalCount,
   DisplayProcessor,
   DisplayValue,
   DynamicConfigValue,
@@ -213,9 +214,18 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 // 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
 // 3. sufficently optimize text formatting and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
-  const cache = new Map<any, DisplayValue>();
+  type dispCache = Map<any, DisplayValue>;
+  // decimals -> cache mapping, -1 is unspecified decimals
+  const caches = new Map<number, dispCache>();
 
-  return (value: any) => {
+  // pre-init caches for up to 15 decimals
+  for (let i = -1; i <= 15; i++) {
+    caches.set(i, new Map());
+  }
+
+  return (value: any, decimals?: DecimalCount) => {
+    let cache = caches.get(decimals ?? -1)!;
+
     let v = cache.get(value);
 
     if (!v) {
@@ -224,7 +234,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
         cache.clear();
       }
 
-      v = disp(value);
+      v = disp(value, decimals);
 
       // convert to hex6 or hex8 so downstream we can cheaply test for alpha (and set new alpha)
       // via a simple length check (in colorManipulator) rather using slow parsing via tinycolor
@@ -340,119 +350,117 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 }
 
-export const getLinksSupplier =
-  (
-    frame: DataFrame,
-    field: Field,
-    fieldScopedVars: ScopedVars,
-    replaceVariables: InterpolateFunction,
-    timeZone?: TimeZone
-  ) =>
-  (config: ValueLinkConfig): Array<LinkModel<Field>> => {
-    if (!field.config.links || field.config.links.length === 0) {
-      return [];
-    }
-    const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
-    const { timeField } = getTimeField(frame);
+export const getLinksSupplier = (
+  frame: DataFrame,
+  field: Field,
+  fieldScopedVars: ScopedVars,
+  replaceVariables: InterpolateFunction,
+  timeZone?: TimeZone
+) => (config: ValueLinkConfig): Array<LinkModel<Field>> => {
+  if (!field.config.links || field.config.links.length === 0) {
+    return [];
+  }
+  const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
+  const { timeField } = getTimeField(frame);
 
-    return field.config.links.map((link: DataLink) => {
-      const variablesQuery = locationUtil.getVariablesUrlParams();
-      let dataFrameVars = {};
-      let valueVars = {};
+  return field.config.links.map((link: DataLink) => {
+    const variablesQuery = locationUtil.getVariablesUrlParams();
+    let dataFrameVars = {};
+    let valueVars = {};
 
-      // We are not displaying reduction result
-      if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
-        const fieldsProxy = getFieldDisplayValuesProxy({
-          frame,
-          rowIndex: config.valueRowIndex,
-          timeZone: timeZone,
-        });
+    // We are not displaying reduction result
+    if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
+      const fieldsProxy = getFieldDisplayValuesProxy({
+        frame,
+        rowIndex: config.valueRowIndex,
+        timeZone: timeZone,
+      });
 
-        valueVars = {
-          raw: field.values.get(config.valueRowIndex),
-          numeric: fieldsProxy[field.name].numeric,
-          text: fieldsProxy[field.name].text,
-          time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
-        };
-
-        dataFrameVars = {
-          __data: {
-            value: {
-              name: frame.name,
-              refId: frame.refId,
-              fields: fieldsProxy,
-            },
-            text: 'Data',
-          },
-        };
-      } else {
-        if (config.calculatedValue) {
-          valueVars = {
-            raw: config.calculatedValue.numeric,
-            numeric: config.calculatedValue.numeric,
-            text: formattedValueToString(config.calculatedValue),
-          };
-        }
-      }
-
-      const variables = {
-        ...fieldScopedVars,
-        __value: {
-          text: 'Value',
-          value: valueVars,
-        },
-        ...dataFrameVars,
-        [DataLinkBuiltInVars.keepTime]: {
-          text: timeRangeUrl,
-          value: timeRangeUrl,
-        },
-        [DataLinkBuiltInVars.includeVars]: {
-          text: variablesQuery,
-          value: variablesQuery,
-        },
+      valueVars = {
+        raw: field.values.get(config.valueRowIndex),
+        numeric: fieldsProxy[field.name].numeric,
+        text: fieldsProxy[field.name].text,
+        time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
       };
 
-      if (link.onClick) {
-        return {
-          href: link.url,
-          title: replaceVariables(link.title || '', variables),
-          target: link.targetBlank ? '_blank' : undefined,
-          onClick: (evt, origin) => {
-            link.onClick!({
-              origin: origin ?? field,
-              e: evt,
-              replaceVariables: (v) => replaceVariables(v, variables),
-            });
+      dataFrameVars = {
+        __data: {
+          value: {
+            name: frame.name,
+            refId: frame.refId,
+            fields: fieldsProxy,
           },
-          origin: field,
+          text: 'Data',
+        },
+      };
+    } else {
+      if (config.calculatedValue) {
+        valueVars = {
+          raw: config.calculatedValue.numeric,
+          numeric: config.calculatedValue.numeric,
+          text: formattedValueToString(config.calculatedValue),
         };
       }
+    }
 
-      if (link.internal) {
-        // For internal links at the moment only destination is Explore.
-        return mapInternalLinkToExplore({
-          link,
-          internalLink: link.internal,
-          scopedVars: variables,
-          field,
-          range: {} as any,
-          replaceVariables,
-        });
-      }
+    const variables = {
+      ...fieldScopedVars,
+      __value: {
+        text: 'Value',
+        value: valueVars,
+      },
+      ...dataFrameVars,
+      [DataLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DataLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    };
 
-      let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
-      href = replaceVariables(href, variables);
-      href = locationUtil.processUrl(href);
-
-      const info: LinkModel<Field> = {
-        href,
+    if (link.onClick) {
+      return {
+        href: link.url,
         title: replaceVariables(link.title || '', variables),
         target: link.targetBlank ? '_blank' : undefined,
+        onClick: (evt, origin) => {
+          link.onClick!({
+            origin: origin ?? field,
+            e: evt,
+            replaceVariables: (v) => replaceVariables(v, variables),
+          });
+        },
         origin: field,
       };
-      return info;
-    });
-  };
+    }
+
+    if (link.internal) {
+      // For internal links at the moment only destination is Explore.
+      return mapInternalLinkToExplore({
+        link,
+        internalLink: link.internal,
+        scopedVars: variables,
+        field,
+        range: {} as any,
+        replaceVariables,
+      });
+    }
+
+    let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
+    href = replaceVariables(href, variables);
+    href = locationUtil.processUrl(href);
+
+    const info: LinkModel<Field> = {
+      href,
+      title: replaceVariables(link.title || '', variables),
+      target: link.targetBlank ? '_blank' : undefined,
+      origin: field,
+    };
+    return info;
+  });
+};
 
 /**
  * Return a copy of the DataFrame with raw data

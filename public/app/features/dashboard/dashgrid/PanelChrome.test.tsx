@@ -22,15 +22,15 @@ function setupTestContext(options: Partial<Props>) {
   const mockStore = configureMockStore();
   const store = mockStore({ dashboard: { panels: [] } });
   const subject: ReplaySubject<PanelData> = new ReplaySubject<PanelData>();
-  const panelQueryRunner = {
+  const panelQueryRunner = ({
     getData: () => subject,
     run: () => {
       subject.next({ state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() });
     },
-  } as unknown as PanelQueryRunner;
-  const timeSrv = {
+  } as unknown) as PanelQueryRunner;
+  const timeSrv = ({
     timeRange: jest.fn(),
-  } as unknown as TimeSrv;
+  } as unknown) as TimeSrv;
   setTimeSrv(timeSrv);
 
   const defaults: Props = {
@@ -43,18 +43,21 @@ function setupTestContext(options: Partial<Props>) {
       getOptions: jest.fn(),
       getDisplayTitle: jest.fn(),
     }),
-    dashboard: {
+    dashboard: ({
       panelInitialized: jest.fn(),
       getTimezone: () => 'browser',
       events: new EventBusSrv(),
+      canAddAnnotations: jest.fn(),
+      canEditAnnotations: jest.fn(),
+      canDeleteAnnotations: jest.fn(),
       meta: {
         isPublic: false,
       },
-    } as unknown as DashboardModel,
-    plugin: {
+    } as unknown) as DashboardModel,
+    plugin: ({
       meta: { skipDataQuery: false },
       panel: TestPanelComponent,
-    } as unknown as PanelPlugin,
+    } as unknown) as PanelPlugin,
     isViewing: true,
     isEditing: false,
     isInView: false,
