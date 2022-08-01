@@ -74,7 +74,7 @@ In your tracing datasource configuration, select a metrics datasource, add tags,
 
 {{< figure src="/static/img/docs/panels/trace-to-metrics-9-1.png" max-width="750px" caption="Linking a trace to a metrics query" >}}
 
-#### (Beta) APM Table
+#### (Beta) APM table
 
 You can now get APM data with Grafana. The data is shown in a handy table in the Tempo datasource under the Service Graph tab. This feature can be accessed by enabling the `tempoApmTable` feature toggle. You will need to enable the metrics generator to receive the data for the APM table.
 
