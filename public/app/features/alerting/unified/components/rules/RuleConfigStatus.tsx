@@ -14,6 +14,7 @@ interface RuleConfigStatusProps {
 
 export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
   const styles = useStyles2(getStyles);
+
   const { exceedsLimit } = checkEvaluationIntervalGlobalLimit(rule.group.interval ?? '');
 
   if (!exceedsLimit) {
