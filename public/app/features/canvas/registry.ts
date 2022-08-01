@@ -15,12 +15,14 @@ export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
   name: `Element 1`,
 };
 
-export const canvasElementRegistry = new Registry<CanvasElementItem>(() => [
+export const defaultElementItems = [
   iconItem, // default for now
   textBoxItem,
-  buttonItem,
-  droneTopItem,
-  droneFrontItem,
-  droneSideItem,
-  windTurbineItem,
+];
+
+const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];
+
+export const canvasElementRegistry = new Registry<CanvasElementItem>(() => [
+  ...defaultElementItems,
+  ...advancedElementItems,
 ]);
