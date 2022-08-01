@@ -456,7 +456,7 @@ steps:
   image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
 - commands:
-  - ./bin/grabpl build-docker --edition oss -archs amd64
+  - ./bin/build build-docker --edition oss -archs amd64
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -1257,7 +1257,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl build-docker --edition oss
+  - ./bin/build build-docker --edition oss
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -1269,7 +1269,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl build-docker --edition oss --ubuntu
+  - ./bin/build build-docker --edition oss --ubuntu
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -1793,7 +1793,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: copy-packages-for-docker
 - commands:
-  - ./bin/grabpl build-docker --edition oss --shouldSave
+  - ./bin/build build-docker --edition oss --shouldSave
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -1805,7 +1805,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl build-docker --edition oss --shouldSave --ubuntu
+  - ./bin/build build-docker --edition oss --shouldSave --ubuntu
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -2433,7 +2433,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: copy-packages-for-docker
 - commands:
-  - ./bin/grabpl build-docker --edition enterprise --shouldSave
+  - ./bin/build build-docker --edition enterprise --shouldSave
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -2445,7 +2445,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl build-docker --edition enterprise --shouldSave --ubuntu
+  - ./bin/build build-docker --edition enterprise --shouldSave --ubuntu
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -3710,7 +3710,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: copy-packages-for-docker
 - commands:
-  - ./bin/grabpl build-docker --edition oss --shouldSave
+  - ./bin/build build-docker --edition oss --shouldSave
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -3722,7 +3722,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl build-docker --edition oss --shouldSave --ubuntu
+  - ./bin/build build-docker --edition oss --shouldSave --ubuntu
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -4298,7 +4298,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: copy-packages-for-docker
 - commands:
-  - ./bin/grabpl build-docker --edition enterprise --shouldSave
+  - ./bin/build build-docker --edition enterprise --shouldSave
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -4310,7 +4310,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl build-docker --edition enterprise --shouldSave --ubuntu
+  - ./bin/build build-docker --edition enterprise --shouldSave --ubuntu
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -5016,6 +5016,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 968320e69b8531451dec23ac2d586296616533986c9e9a767410975109220072
+hmac: 0ea0edaa1edab8dca0914a4423e286c697e50e1eae492eab67bcf7317ddfce45
 
 ...

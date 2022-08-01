@@ -798,7 +798,7 @@ def copy_packages_for_docker_step():
 
 
 def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    cmd = './bin/grabpl build-docker --edition {}'.format(edition)
+    cmd = './bin/build build-docker --edition {}'.format(edition)
     if publish:
         cmd += ' --shouldSave'
 
