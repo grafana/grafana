@@ -17,6 +17,7 @@ type ProvisionerConfig struct {
 	ContactPointService        provisioning.ContactPointService
 	NotificiationPolicyService provisioning.NotificationPolicyService
 	MuteTimingService          provisioning.MuteTimingService
+	TemplateService            provisioning.TemplateService
 }
 
 func Provision(ctx context.Context, cfg ProvisionerConfig) error {
@@ -47,6 +48,11 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	if err != nil {
 		return fmt.Errorf("mute times: %w", err)
 	}
+	ttProvsioner := NewTextTemplateProvisioner(logger, cfg.TemplateService)
+	err = ttProvsioner.Provision(ctx, files)
+	if err != nil {
+		return fmt.Errorf("text templates: %w", err)
+	}
 	npProvisioner := NewNotificationPolicyProvisoner(logger, cfg.NotificiationPolicyService)
 	err = npProvisioner.Provision(ctx, files)
 	if err != nil {
@@ -63,6 +69,10 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	err = mtProvisioner.Unprovision(ctx, files)
 	if err != nil {
 		return fmt.Errorf("mute times: %w", err)
+	}
+	err = ttProvsioner.Unprovision(ctx, files)
+	if err != nil {
+		return fmt.Errorf("text templates: %w", err)
 	}
 	logger.Info("finished to provision alerting")
 	return nil
