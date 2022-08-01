@@ -234,7 +234,14 @@ export const SharePublicDashboard = (props: Props) => {
                 </Field>
               )}
             </FieldSet>
-            <Button disabled={!acknowledged()} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
+
+            {props.dashboard.hasUnsavedChanges() && (
+              <Alert
+                title="Please save your dashboard changes before updating the public configuration"
+                severity="warning"
+              />
+            )}
+            <Button disabled={!acknowledged() || props.dashboard.hasUnsavedChanges()} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
               Save Sharing Configuration
             </Button>
           </div>

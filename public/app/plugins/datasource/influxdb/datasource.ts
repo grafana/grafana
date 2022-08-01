@@ -1,7 +1,6 @@
-import { cloneDeep, extend, get, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { cloneDeep, extend, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   AnnotationEvent,
@@ -13,9 +12,7 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
-  dateTime,
   FieldType,
-  LoadingState,
   MetricFindValue,
   QueryResultMeta,
   ScopedVars,
@@ -553,85 +550,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       },
       [] as string[]
     ).join('&');
-  }
-
-  testDatasource() {
-    if (this.isFlux) {
-      // TODO: eventually use the real /health endpoint
-      const request: DataQueryRequest<InfluxQuery> = {
-        targets: [{ refId: 'test', query: 'buckets()' }],
-        requestId: `${this.id}-health-${uuidv4()}`,
-        dashboardId: 0,
-        panelId: 0,
-        interval: '1m',
-        intervalMs: 60000,
-        maxDataPoints: 423,
-        range: {
-          from: dateTime(1000),
-          to: dateTime(2000),
-        },
-      } as DataQueryRequest<InfluxQuery>;
-
-      return lastValueFrom(super.query(request))
-        .then((res: DataQueryResponse) => {
-          if (!res || !res.data || res.state !== LoadingState.Done) {
-            console.error('InfluxDB Error', res);
-            return { status: 'error', message: 'Error reading InfluxDB' };
-          }
-          const first = res.data[0];
-          if (first && first.length) {
-            return { status: 'success', message: `${first.length} buckets found` };
-          }
-          console.error('InfluxDB Error', res);
-          return { status: 'error', message: 'Error reading buckets' };
-        })
-        .catch((err: any) => {
-          console.error('InfluxDB Error', err);
-          return { status: 'error', message: err.message };
-        });
-    }
-
-    if (this.isMigrationToggleOnAndIsAccessProxy()) {
-      const target: InfluxQuery = {
-        refId: 'metricFindQuery',
-        query: 'SHOW TAG KEYS',
-        rawQuery: true,
-      };
-      return lastValueFrom(super.query({ targets: [target] } as DataQueryRequest))
-        .then((res: DataQueryResponse) => {
-          if (!res || !res.data || res.state !== LoadingState.Done) {
-            return {
-              status: 'error',
-              message: 'Error reading InfluxDB.',
-            };
-          }
-          if (res.data?.length) {
-            return { status: 'success', message: 'Data source is working.' };
-          }
-          return {
-            status: 'error',
-            message: 'Successfully connected to InfluxDB, but no tags found.',
-          };
-        })
-        .catch((err: any) => {
-          return { status: 'error', message: err.message };
-        });
-    }
-
-    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
-    const query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
-
-    return lastValueFrom(this._seriesQuery(query))
-      .then((res: any) => {
-        const error = get(res, 'results[0].error');
-        if (error) {
-          return { status: 'error', message: error };
-        }
-        return { status: 'success', message: 'Data source is working' };
-      })
-      .catch((err: any) => {
-        return { status: 'error', message: err.message };
-      });
   }
 
   _influxRequest(method: string, url: string, data: any, options?: any) {

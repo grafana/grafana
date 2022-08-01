@@ -19,9 +19,9 @@
 //  +----------------+----------------+-------------------------+------------------+--------------------------------------+--------------------------+---------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 //  | Name: kind     | Name: uid      | Name: name              | Name: panel_type | Name: url                            | Name: tags               | Name: ds_uid              | Name: location | Name: allowed_actions                                                                                                                                                                                                                                             |
 //  | Labels:        | Labels:        | Labels:                 | Labels:          | Labels:                              | Labels:                  | Labels:                   | Labels:        | Labels:                                                                                                                                                                                                                                                           |
-//  | Type: []string | Type: []string | Type: []string          | Type: []string   | Type: []string                       | Type: []*json.RawMessage | Type: []*json.RawMessage  | Type: []string | Type: []json.RawMessage                                                                                                                                                                                                                                           |
+//  | Type: []string | Type: []string | Type: []string          | Type: []string   | Type: []string                       | Type: []*json.RawMessage | Type: []json.RawMessage   | Type: []string | Type: []json.RawMessage                                                                                                                                                                                                                                           |
 //  +----------------+----------------+-------------------------+------------------+--------------------------------------+--------------------------+---------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-//  | folder         | ujaM1h6nz      | abc2                    |                  | /dashboards/f/ujaM1h6nz/abc2         | null                     | null                      |                | [{"kind":"folder","uid":"ujaM1h6nz","actions":["folders:read"]}]                                                                                                                                                                                                  |
+//  | folder         | ujaM1h6nz      | abc2                    |                  | /dashboards/f/ujaM1h6nz/abc2         | null                     | []                        |                | [{"kind":"folder","uid":"ujaM1h6nz","actions":["folders:read"]}]                                                                                                                                                                                                  |
 //  | dashboard      | 7MeksYbmk      | Alerting with TestData  |                  | /d/7MeksYbmk/alerting-with-testdata  | [                        | [                         | yboVMzb7z      | [{"kind":"dashboard","uid":"7MeksYbmk","actions":["dashboards:write"]},{"kind":"datasource","uid":"datasource-1","actions":[]}]                                                                                                                                   |
 //  |                |                |                         |                  |                                      |           "gdev",        |           "datasource-1"  |                |                                                                                                                                                                                                                                                                   |
 //  |                |                |                         |                  |                                      |           "alerting"     |         ]                 |                |                                                                                                                                                                                                                                                                   |
@@ -115,8 +115,7 @@
             "name": "ds_uid",
             "type": "other",
             "typeInfo": {
-              "frame": "json.RawMessage",
-              "nullable": true
+              "frame": "json.RawMessage"
             }
           },
           {
@@ -183,7 +182,7 @@
             ]
           ],
           [
-            null,
+            [],
             [
               "datasource-1"
             ],

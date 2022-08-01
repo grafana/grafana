@@ -493,6 +493,36 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.exec()
 		})
 
+		middlewareScenario(t, "Request body should not be read in default context handler, but query should be altered - jwt", func(t *testing.T, sc *scenarioContext) {
+			sc.fakeReq("POST", "/?targetOrgId=123&auth_token=token")
+			body := "key=value"
+			sc.req.Body = io.NopCloser(strings.NewReader(body))
+
+			sc.handlerFunc = func(c *models.ReqContext) {
+				t.Log("Handler called")
+				defer func() {
+					err := c.Req.Body.Close()
+					require.NoError(t, err)
+				}()
+
+				require.Equal(t, "", c.Req.URL.Query().Get("auth_token"))
+
+				bodyAfterHandler, e := io.ReadAll(c.Req.Body)
+				require.NoError(t, e)
+				require.Equal(t, body, string(bodyAfterHandler))
+			}
+
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			sc.req.Header.Set("Content-Length", strconv.Itoa(len(body)))
+			sc.m.Post("/", sc.defaultHandler)
+			sc.exec()
+		}, func(cfg *setting.Cfg) {
+			cfg.JWTAuthEnabled = true
+			cfg.JWTAuthURLLogin = true
+			cfg.JWTAuthHeaderName = "X-WEBAUTH-TOKEN"
+		})
+
 		middlewareScenario(t, "Should get an existing user from header", func(t *testing.T, sc *scenarioContext) {
 			const userID int64 = 12
 			const orgID int64 = 2
