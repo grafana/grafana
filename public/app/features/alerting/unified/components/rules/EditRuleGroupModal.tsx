@@ -12,7 +12,7 @@ import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { durationValidationPattern } from '../../utils/time';
 
-interface Props {
+interface ModalProps {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
   onClose: () => void;
@@ -24,7 +24,7 @@ interface FormValues {
   groupInterval: string;
 }
 
-export function EditCloudGroupModal(props: Props): React.ReactElement {
+export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const { namespace, group, onClose } = props;
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
