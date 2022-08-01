@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import Map from 'ol/Map';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
@@ -15,10 +15,9 @@ type Props = {
   map: Map;
   menuActiveState: (value: boolean) => void;
 };
-// TODO change to useRef
-const vector = new MeasureVectorLayer();
 
 export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
+  const vector = useRef(new MeasureVectorLayer());
   const measureStyle = getStyles(config.theme);
 
   // Menu State Management
@@ -33,7 +32,7 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   const unit = useMemo(() => {
     const action = measures.find((m: MapMeasure) => m.value === options.action) ?? measures[0];
     const current = action.getUnit(options.unit);
-    vector.setOptions(options);
+    vector.current.setOptions(options);
     return {
       current,
       options: action.units,
@@ -49,19 +48,19 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
     // TODO: consolidate into one state
     menuActiveState(!menuActive);
     if (menuActive) {
-      map.removeInteraction(vector.draw);
-      vector.setVisible(false);
+      map.removeInteraction(vector.current.draw);
+      vector.current.setVisible(false);
     } else {
       if (firstLoad) {
         // Initialize on first load
         setFirstLoad(false);
-        map.addLayer(vector);
-        map.addInteraction(vector.modify);
+        map.addLayer(vector.current);
+        map.addInteraction(vector.current.modify);
       }
-      vector.setVisible(true);
-      map.removeInteraction(vector.draw); // Remove last interaction
+      vector.current.setVisible(true);
+      map.removeInteraction(vector.current.draw); // Remove last interaction
       const a = measures.find((v: MapMeasure) => v.value === options.action) ?? measures[0];
-      vector.addInteraction(map, a.geometry, showSegments, clearPrevious);
+      vector.current.addInteraction(map, a.geometry, showSegments, clearPrevious);
     }
   }
 
@@ -79,11 +78,11 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
               size="md"
               fullWidth={false}
               onChange={(e: string) => {
-                map.removeInteraction(vector.draw);
+                map.removeInteraction(vector.current.draw);
                 const m = measures.find((v: MapMeasure) => v.value === e) ?? measures[0];
                 const unit = m.getUnit(options.unit);
                 setOptions({ ...options, action: m.value!, unit: unit.value! });
-                vector.addInteraction(map, m.geometry, showSegments, clearPrevious);
+                vector.current.addInteraction(map, m.geometry, showSegments, clearPrevious);
               }}
             />
             <Button style={{ marginLeft: 'auto' }} icon="times" variant="secondary" size="sm" onClick={toggleMenu} />
