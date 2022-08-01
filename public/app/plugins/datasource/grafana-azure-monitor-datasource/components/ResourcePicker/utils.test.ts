@@ -94,6 +94,24 @@ describe('AzureMonitor ResourcePicker utils', () => {
         )
       ).toEqual(rows[0]);
     });
+
+    it('should find a row ignoring a resource group case', () => {
+      const rows: ResourceRowGroup = [
+        {
+          id: '',
+          uri: '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/CLOUD-DATASOURCES/providers/microsoft.storage/storageaccounts/csb100320016c43d2d0',
+          name: '',
+          type: ResourceRowType.Resource,
+          typeLabel: '',
+        },
+      ];
+      expect(
+        findRow(
+          rows,
+          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0'
+        )
+      ).toEqual(rows[0]);
+    });
   });
 
   describe('setResource', () => {

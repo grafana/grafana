@@ -68,7 +68,7 @@ function matchURI(rowURI: string, resourceURI: string) {
 
   return (
     rowParams?.subscription === targetParams?.subscription &&
-    rowParams?.resourceGroup === targetParams?.resourceGroup &&
+    rowParams?.resourceGroup?.toLowerCase() === targetParams?.resourceGroup?.toLowerCase() &&
     // metricNamespace may include a subresource that we don't need to compare
     rowParams?.metricNamespace?.toLowerCase().split('/')[0] ===
       targetParams?.metricNamespace?.toLowerCase().split('/')[0] &&
