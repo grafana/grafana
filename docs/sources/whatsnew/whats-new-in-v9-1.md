@@ -79,7 +79,13 @@ The beta heatmap announced in version 9.0 is now used throughout Grafana. Its pe
 
 You can now link metrics queries to your traces. This feature can be accessed by enabling the `traceToMetrics` feature toggle.
 
-In your tracing datasource configuration, select a metrics datasource, add tags, and write your queries. Each query will appear as a link on each span. The configured tag values will be dynamically added to your metrics queries. You can link to any metric you'd like, and metrics for span durations, counts, and errors filtered by service or span are a great starting point. The metrics generator introduced in Tempo 1.4 pairs extremely well with Trace to Metrics. To learn more about the metrics generator, see the [blog post](https://grafana.com/blog/2022/05/02/new-in-grafana-tempo-1.4-introducing-the-metrics-generator/).
+In your tracing datasource configuration, select a metrics datasource, add tags, and write your queries.
+Each query appears as a link on each span.
+The configured tag values are dynamically added to your metrics queries. 
+You can link to any metric you'd like. 
+Metrics for span durations, counts, and errors filtered by service or span are a great starting point.
+The metrics generator introduced in Tempo 1.4 pairs extremely well with Trace to Metrics. 
+To learn more about the metrics generator, see the [blog post](https://grafana.com/blog/2022/05/02/new-in-grafana-tempo-1.4-introducing-the-metrics-generator/).
 
 {{< figure src="/static/img/docs/panels/trace-to-metrics-9-1.png" max-width="750px" caption="Linking a trace to a metrics query" >}}
 
