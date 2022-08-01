@@ -41,14 +41,14 @@ var (
 		})
 	dashboardSearchSuccessRequestsDuration = promauto.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:      "dashboard_search_success_duration_seconds",
+			Name:      "dashboard_search_successes_duration_seconds",
 			Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 15},
 			Namespace: namespace,
 			Subsystem: subsystem,
 		})
 	dashboardSearchFailureRequestsDuration = promauto.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:      "dashboard_search_failure_duration_seconds",
+			Name:      "dashboard_search_failures_duration_seconds",
 			Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 15},
 			Namespace: namespace,
 			Subsystem: subsystem,
