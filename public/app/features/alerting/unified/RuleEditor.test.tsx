@@ -35,7 +35,6 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
 
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
-// jest.mock('./utils/config');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
