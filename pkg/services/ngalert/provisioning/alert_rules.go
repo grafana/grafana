@@ -163,7 +163,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 	})
 }
 
-func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, group definitions.AlertRuleGroup, userID int64) error {
+func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, group definitions.AlertRuleGroup, userID int64, provenance models.Provenance) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
 		return err
 	}
@@ -255,7 +255,23 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			return models.ErrQuotaReached
 		}
 
-		// TODO set provenance
+		// Set provenances for all affected rules.
+		for _, delete := range delta.Delete {
+			if err := service.provenanceStore.DeleteProvenance(ctx, delete, orgID); err != nil {
+				// We failed to clean up the record, but this doesn't break things. Log it and move on.
+				service.log.Warn("failed to delete provenance record for rule: %w", err)
+			}
+		}
+		for _, update := range delta.Update {
+			if err := service.provenanceStore.SetProvenance(ctx, update.New, orgID, provenance); err != nil {
+				return err
+			}
+		}
+		for _, create := range delta.New {
+			if err := service.provenanceStore.SetProvenance(ctx, create, orgID, provenance); err != nil {
+				return err
+			}
+		}
 
 		return nil
 	})
