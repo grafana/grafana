@@ -656,7 +656,7 @@ def shellcheck_step():
             'grabpl',
         ],
         'commands': [
-            './bin/grabpl shellcheck',
+            './bin/build shellcheck',
         ],
     }
 
