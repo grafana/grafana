@@ -41,7 +41,8 @@ function getSectionRoot(node: NavModelItem): NavModelItem {
 function enrichNodeWithActiveState(node: NavModelItem): NavModelItem {
   const nodeCopy = { ...node };
   if (nodeCopy.parentItem) {
-    const root = (nodeCopy.parentItem = { ...nodeCopy.parentItem });
+    nodeCopy.parentItem = { ...nodeCopy.parentItem };
+    const root = nodeCopy.parentItem;
 
     if (root.children) {
       root.children = root.children.map((item) => {
