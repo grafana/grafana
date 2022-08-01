@@ -52,6 +52,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   helpEnabled = false;
   profileEnabled = false;
   ldapEnabled = false;
+  jwtHeaderName = '';
+  jwtUrlLogin = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
   samlName = '';
@@ -117,6 +119,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
+  unifiedAlerting = { minInterval: '' };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {

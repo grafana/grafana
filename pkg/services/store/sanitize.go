@@ -20,7 +20,7 @@ func (s *standardStorageService) sanitizeContents(ctx context.Context, user *mod
 				Content:  req.Contents,
 			})
 			if err != nil {
-				if s.cfg.allowUnsanitizedSvgUpload {
+				if s.cfg != nil && s.cfg.AllowUnsanitizedSvgUpload {
 					grafanaStorageLogger.Debug("allowing unsanitized svg upload", "filename", req.Path, "sanitizationError", err)
 					return req.Contents, nil
 				} else {

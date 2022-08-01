@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -26,7 +26,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		folders[0] = job.cfg.GeneralFolderPath // "general"
 	}
 
-	lookup, err := searchV2.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
+	lookup, err := dslookup.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
 	if err != nil {
 		return err
 	}
