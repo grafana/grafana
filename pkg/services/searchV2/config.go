@@ -39,5 +39,9 @@ func newConfig(cfg *setting.Cfg) (config, error) {
 		return config{}, fmt.Errorf("unknown dashboard index backup mode: %s", backMode)
 	}
 
+	if c.DashboardBackup == backupModeDisk && c.DashboardBackupDiskPath == "" {
+		return config{}, fmt.Errorf("search: disk backup mode for dashboard index requires explicit path to backup directory set over dashboard_backup_disk_path")
+	}
+
 	return c, nil
 }
