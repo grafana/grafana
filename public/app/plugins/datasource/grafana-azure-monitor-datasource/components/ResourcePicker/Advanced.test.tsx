@@ -16,7 +16,7 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(onChange).toHaveBeenCalledWith({ subscription: 'd' });
 
     rerender(<Advanced onChange={onChange} resource={{ subscription: 'def-123' }} />);
-    expect(screen.getByDisplayValue('def-123')).toBeInTheDocument();
+    expect(screen.getByLabelText('Subscription').outerHTML).toMatch('value="def-123"');
   });
 
   it('should set a parameter as uri', async () => {
@@ -29,7 +29,7 @@ describe('AzureMonitor ResourcePicker', () => {
     await userEvent.type(subsInput, '/');
     expect(onChange).toHaveBeenCalledWith('/');
 
-    rerender(<Advanced onChange={onChange} resource={{ subscription: '/subscriptions/sub' }} />);
-    expect(screen.getByDisplayValue('/subscriptions/sub')).toBeInTheDocument();
+    rerender(<Advanced onChange={onChange} resource={'/subscriptions/sub'} />);
+    expect(screen.getByLabelText('Resource URI').outerHTML).toMatch('value="/subscriptions/sub"');
   });
 });
