@@ -39,14 +39,14 @@ describe('SearchSrv', () => {
           .fn()
           .mockReturnValueOnce(
             Promise.resolve([
-              { id: 2, title: 'second but first' },
-              { id: 1, title: 'first but second' },
+              { uid: 'DSNdW0gVk', title: 'second but first' },
+              { uid: 'srx16xR4z', title: 'first but second' },
             ])
           )
           .mockReturnValue(Promise.resolve([]))
       );
 
-      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
+      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue(['srx16xR4z', 'DSNdW0gVk']);
 
       return searchSrv.search({ query: '' }).then((res) => {
         results = res;
@@ -71,14 +71,16 @@ describe('SearchSrv', () => {
             .fn()
             .mockReturnValueOnce(
               Promise.resolve([
-                { id: 2, title: 'two' },
-                { id: 1, title: 'one' },
+                { uid: 'DSNdW0gVk', title: 'two' },
+                { uid: 'srx16xR4z', title: 'one' },
               ])
             )
             .mockReturnValue(Promise.resolve([]))
         );
 
-        impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([4, 5, 1, 2, 3]);
+        impressionSrv.getDashboardOpened = jest
+          .fn()
+          .mockReturnValue(['Xrx16x4z', 'CSxdW0gYA', 'srx16xR4z', 'DSNdW0gVk', 'xSxdW0gYA']);
 
         return searchSrv.search({ query: '' }).then((res) => {
           results = res;
@@ -87,8 +89,8 @@ describe('SearchSrv', () => {
 
       it('should return 2 dashboards', () => {
         expect(results[0].items.length).toBe(2);
-        expect(results[0].items[0].id).toBe(1);
-        expect(results[0].items[1].id).toBe(2);
+        expect(results[0].items[0].uid).toBe('srx16xR4z');
+        expect(results[0].items[1].uid).toBe('DSNdW0gVk');
       });
     });
   });
@@ -119,14 +121,14 @@ describe('SearchSrv', () => {
           .fn()
           .mockReturnValueOnce(
             Promise.resolve([
-              { id: 1, title: 'starred and recent', isStarred: true },
-              { id: 2, title: 'recent' },
+              { uid: 'srx16xR4z', title: 'starred and recent', isStarred: true },
+              { uid: 'DSNdW0gVk', title: 'recent' },
             ])
           )
-          .mockReturnValue(Promise.resolve([{ id: 1, title: 'starred and recent' }]))
+          .mockReturnValue(Promise.resolve([{ uid: 'srx16xR4z', title: 'starred and recent' }]))
       );
 
-      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
+      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue(['srx16xR4z', 'DSNdW0gVk']);
       return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });

@@ -31,14 +31,14 @@ export class SearchSrv {
   }
 
   private queryForRecentDashboards(): Promise<DashboardSearchHit[]> {
-    const dashIds: number[] = take(impressionSrv.getDashboardOpened(), 30);
-    if (dashIds.length === 0) {
+    const dashUIDs: string[] = take(impressionSrv.getDashboardOpened(), 30);
+    if (dashUIDs.length === 0) {
       return Promise.resolve([]);
     }
 
-    return backendSrv.search({ dashboardIds: dashIds }).then((result) => {
-      return dashIds
-        .map((orderId) => result.find((result) => result.id === orderId))
+    return backendSrv.search({ dashboardUIDs: dashUIDs }).then((result) => {
+      return dashUIDs
+        .map((orderId) => result.find((result) => result.uid === orderId))
         .filter((hit) => hit && !hit.isStarred) as DashboardSearchHit[];
     });
   }
