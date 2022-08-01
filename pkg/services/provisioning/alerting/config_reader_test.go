@@ -23,6 +23,15 @@ const (
 	testFileMissingUID                  = "./testdata/contact_points/missing-uid"
 	testFileWhitespaceUID               = "./testdata/contact_points/whitespace-uid"
 	testFileMultipleCps                 = "./testdata/contact_points/multiple-contact-points"
+	testFileCorrectProperties_np        = "./testdata/notificiation_policies/correct-properties"
+	testFileCorrectPropertiesWithOrg_np = "./testdata/notificiation_policies/correct-properties-with-org"
+	testFileMultipleNps                 = "./testdata/notificiation_policies/multiple-policies"
+	testFileCorrectProperties_mt        = "./testdata/mute_times/correct-properties"
+	testFileCorrectPropertiesWithOrg_mt = "./testdata/mute_times/correct-properties-with-org"
+	testFileMultipleMts                 = "./testdata/mute_times/multiple-mute-times"
+	testFileCorrectProperties_t         = "./testdata/templates/correct-properties"
+	testFileCorrectPropertiesWithOrg_t  = "./testdata/templates/correct-properties-with-org"
+	testFileMultipleTs                  = "./testdata/templates/multiple-templates"
 )
 
 func TestConfigReader(t *testing.T) {
@@ -99,5 +108,53 @@ func TestConfigReader(t *testing.T) {
 		file, err := configReader.readConfig(ctx, testFileMultipleCps)
 		require.NoError(t, err)
 		require.Len(t, file[0].ContactPoints, 2)
+	})
+	t.Run("a notification policy file with correct properties and specific org should not error", func(t *testing.T) {
+		_, err := configReader.readConfig(ctx, testFileCorrectProperties_np)
+		require.NoError(t, err)
+	})
+	t.Run("a notification policy file with correct properties and specific org should not error", func(t *testing.T) {
+		file, err := configReader.readConfig(ctx, testFileCorrectPropertiesWithOrg_np)
+		require.NoError(t, err)
+		t.Run("when an organization is set it should not overwrite it with the default of 1", func(t *testing.T) {
+			require.Equal(t, int64(1337), file[0].Policies[0].OrgID)
+		})
+	})
+	t.Run("the config reader should be able to read a file with multiple notification policies", func(t *testing.T) {
+		file, err := configReader.readConfig(ctx, testFileMultipleNps)
+		require.NoError(t, err)
+		require.Len(t, file[0].Policies, 2)
+	})
+	t.Run("a mute times file with correct properties and specific org should not error", func(t *testing.T) {
+		_, err := configReader.readConfig(ctx, testFileCorrectProperties_mt)
+		require.NoError(t, err)
+	})
+	t.Run("a mute times file with correct properties and specific org should not error", func(t *testing.T) {
+		file, err := configReader.readConfig(ctx, testFileCorrectPropertiesWithOrg_mt)
+		require.NoError(t, err)
+		t.Run("when an organization is set it should not overwrite it with the default of 1", func(t *testing.T) {
+			require.Equal(t, int64(1337), file[0].MuteTimes[0].OrgID)
+		})
+	})
+	t.Run("the config reader should be able to read a file with multiple mute times", func(t *testing.T) {
+		file, err := configReader.readConfig(ctx, testFileMultipleMts)
+		require.NoError(t, err)
+		require.Len(t, file[0].MuteTimes, 2)
+	})
+	t.Run("a template file with correct properties and specific org should not error", func(t *testing.T) {
+		_, err := configReader.readConfig(ctx, testFileCorrectProperties_t)
+		require.NoError(t, err)
+	})
+	t.Run("a template file with correct properties and specific org should not error", func(t *testing.T) {
+		file, err := configReader.readConfig(ctx, testFileCorrectPropertiesWithOrg_t)
+		require.NoError(t, err)
+		t.Run("when an organization is set it should not overwrite it with the default of 1", func(t *testing.T) {
+			require.Equal(t, int64(1337), file[0].Templates[0].OrgID)
+		})
+	})
+	t.Run("the config reader should be able to read a file with multiple mute times", func(t *testing.T) {
+		file, err := configReader.readConfig(ctx, testFileMultipleTs)
+		require.NoError(t, err)
+		require.Len(t, file[0].Templates, 2)
 	})
 }
