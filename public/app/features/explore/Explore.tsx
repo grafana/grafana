@@ -71,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
   theme: GrafanaTheme2;
-  minSize: number;
+  minWidth: number;
 }
 
 enum ExploreDrawer {
@@ -178,7 +178,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onResize = (size: { height: number; width: number }) => {
-    if (size.width > this.props.minSize) {
+    console.log('resize', this.props.exploreId, this.props.minWidth, size.width);
+    if (size.width > this.props.minWidth) {
       this.props.changeSize(this.props.exploreId, size);
     }
   };
@@ -377,9 +378,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               <ResponseErrorContainer exploreId={exploreId} />
             </PanelContainer>
             <AutoSizer onResize={this.onResize} disableHeight defaultWidth={containerWidth}>
-              {({ width }) => {
-                if (width === 0) {
+              {({ width: inputWidth }) => {
+                if (inputWidth === 0) {
                   return null;
+                }
+                let width = this.props.minWidth;
+                if (inputWidth > this.props.minWidth) {
+                  width = inputWidth;
                 }
 
                 return (
@@ -487,5 +492,5 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export default compose(connector, withTheme2)(Explore) as React.ComponentType<{
   exploreId: ExploreId;
-  minSize: number;
+  minWidth: number;
 }>;

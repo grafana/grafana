@@ -102,14 +102,20 @@ class WrapperUnconnected extends PureComponent<Props> {
         <div className={styles.exploreWrapper}>
           <SplitPaneWrapper
             topPaneVisible={false}
+            minVerticalPaneWidth={400}
             leftPaneComponents={
               <ErrorBoundaryAlert style="page" key="left">
-                <ExplorePaneContainer key="leftContainer" exploreId={ExploreId.left} urlQuery={left} minSize={100} />
+                <ExplorePaneContainer key="leftContainer" exploreId={ExploreId.left} urlQuery={left} minWidth={200} />
               </ErrorBoundaryAlert>
             }
             rightPaneComponents={
               <ErrorBoundaryAlert style="page" key="right">
-                <ExplorePaneContainer key="rightContainer" exploreId={ExploreId.right} urlQuery={right} minSize={100} />
+                <ExplorePaneContainer
+                  key="rightContainer"
+                  exploreId={ExploreId.right}
+                  urlQuery={right}
+                  minWidth={200}
+                />
               </ErrorBoundaryAlert>
             }
             uiState={{ topPaneSize: 0, rightPaneSize: rightContainerWidth || 0 }}

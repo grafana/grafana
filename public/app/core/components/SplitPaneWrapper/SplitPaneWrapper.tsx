@@ -18,6 +18,7 @@ interface Props {
   rightPaneVisible?: boolean;
   topPaneVisible?: boolean;
   updateUiState: (uiState: { topPaneSize?: number; rightPaneSize?: number }) => void;
+  minVerticalPaneWidth?: number;
 }
 
 export class SplitPaneWrapper extends PureComponent<Props> {
@@ -99,7 +100,8 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   }
 
   render() {
-    const { rightPaneVisible, topPaneVisible, rightPaneComponents, leftPaneComponents, uiState } = this.props;
+    const { rightPaneVisible, topPaneVisible, rightPaneComponents, leftPaneComponents, uiState, minVerticalPaneWidth } =
+      this.props;
     // Limit options pane width to 90% of screen.
     const styles = getStyles(config.theme);
 
@@ -115,11 +117,15 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       }
     }
 
+    const rightSize =
+      minVerticalPaneWidth && rightPaneSize < minVerticalPaneWidth ? minVerticalPaneWidth : rightPaneSize;
+
     return (
       <SplitPane
         split="vertical"
         maxSize={-300}
-        size={rightPaneSize}
+        minSize={minVerticalPaneWidth}
+        size={rightSize}
         primary="second"
         resizerClassName={styles.resizerV}
         onDragStarted={() => (document.body.style.cursor = 'col-resize')}

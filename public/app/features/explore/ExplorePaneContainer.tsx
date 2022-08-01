@@ -43,7 +43,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 interface OwnProps extends Themeable2 {
   exploreId: ExploreId;
   urlQuery: string;
-  minSize: number;
+  minWidth: number;
 }
 
 interface Props extends OwnProps, ConnectedProps<typeof connector> {}
@@ -108,7 +108,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
     const exploreClass = cx(styles.explore);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
-        {initialized && <Explore exploreId={exploreId} minSize={this.props.minSize} />}
+        {initialized && <Explore exploreId={exploreId} minWidth={this.props.minWidth} />}
       </div>
     );
   }
