@@ -206,6 +206,9 @@ func getInsertQuery(driver string) string {
 	}
 }
 
+const uintMax = ^uint(0)
+const intMax = int(uintMax >> 1)
+
 func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {
 	if limit < 1 {
 		return 0, fmt.Errorf("failed to delete old configurations: limit is set to '%d' but needs to be > 0", limit)
@@ -217,16 +220,32 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, lim
 
 	var affectedRows int64
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		highest := &models.AlertConfiguration{}
+		ok, err := sess.Desc("id").Where("org_id = ?", orgID).OrderBy("id").Limit(1, limit-1).Get(highest)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			// No configurations exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
+		threshold := highest.ID - 1
+		if threshold < 1 {
+			// Fewer than `limit` records even exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
 		res, err := sess.Exec(`
 			DELETE FROM 
 				alert_configuration 
 			WHERE
 				org_id = ?
 			AND 
-				id <= (SELECT * FROM (
-					SELECT id FROM alert_configuration WHERE org_id = ? ORDER BY id DESC LIMIT 1 OFFSET ?
-				) AS G)
-		`, orgID, orgID, limit)
+				id < ?
+		`, orgID, threshold)
 		if err != nil {
 			return err
 		}
