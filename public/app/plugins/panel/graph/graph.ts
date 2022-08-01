@@ -19,6 +19,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataHoverPayload,
+  DecimalCount,
   FieldDisplay,
   FieldType,
   formattedValueToString,
@@ -945,11 +946,7 @@ class GraphElement {
     return ticks;
   }
 
-  configureAxisMode(
-    axis: { tickFormatter: (val: any, axis: any) => string },
-    format: string,
-    decimals?: number | null
-  ) {
+  configureAxisMode(axis: { tickFormatter: (val: any, axis: any) => string }, format: string, decimals?: DecimalCount) {
     axis.tickFormatter = (val, axis) => {
       const formatter = getValueFormat(format);
 

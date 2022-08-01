@@ -33,6 +33,7 @@ type ItemQuery struct {
 	UserId       int64    `json:"userId"`
 	AlertId      int64    `json:"alertId"`
 	DashboardId  int64    `json:"dashboardId"`
+	DashboardUid string   `json:"dashboardUID"`
 	PanelId      int64    `json:"panelId"`
 	AnnotationId int64    `json:"annotationId"`
 	Tags         []string `json:"tags"`
