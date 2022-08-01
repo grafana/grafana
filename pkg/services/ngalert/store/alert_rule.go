@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -284,12 +285,27 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			q = q.Where("rule_group = ?", query.RuleGroup)
 		}
 
-		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
-
 		alertRules := make([]*ngmodels.AlertRule, 0)
 		if err := q.Find(&alertRules); err != nil {
 			return err
 		}
+
+		// Sort in memory. This is safe since we do not use a LIMIT clause on the rules.
+		sort.Slice(alertRules, func(i, j int) bool {
+			if alertRules[i].NamespaceUID != alertRules[j].NamespaceUID {
+				return alertRules[i].NamespaceUID < alertRules[j].NamespaceUID
+			}
+
+			if alertRules[i].RuleGroup != alertRules[j].RuleGroup {
+				return alertRules[i].RuleGroup < alertRules[j].RuleGroup
+			}
+
+			if alertRules[i].RuleGroupIndex != alertRules[j].RuleGroupIndex {
+				return alertRules[i].RuleGroupIndex < alertRules[j].RuleGroupIndex
+			}
+
+			return alertRules[i].ID < alertRules[j].ID
+		})
 
 		query.Result = alertRules
 		return nil
