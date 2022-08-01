@@ -10,7 +10,6 @@ type configVersion struct {
 	APIVersion values.Int64Value `json:"apiVersion" yaml:"apiVersion"`
 }
 
-
 type OrgID int64
 
 type AlertingFile struct {
