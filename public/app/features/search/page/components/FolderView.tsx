@@ -15,11 +15,18 @@ import { SearchResultsProps } from '../components/SearchResultsTable';
 
 import { DashboardSection, FolderSection } from './FolderSection';
 
-type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected'> & {
+type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected' | 'onClickItem'> & {
   tags?: string[];
   hidePseudoFolders?: boolean;
 };
-export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hidePseudoFolders }: Props) => {
+export const FolderView = ({
+  selection,
+  selectionToggle,
+  onTagSelected,
+  tags,
+  hidePseudoFolders,
+  onClickItem,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
@@ -73,6 +80,7 @@ export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hi
               onTagSelected={onTagSelected}
               section={section}
               tags={tags}
+              onClickItem={onClickItem}
             />
           )}
         </div>

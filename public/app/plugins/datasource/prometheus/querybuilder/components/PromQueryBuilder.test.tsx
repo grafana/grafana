@@ -1,4 +1,4 @@
-import { render, screen, getByText, waitFor } from '@testing-library/react';
+import { getByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -202,6 +202,7 @@ function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
     onRunQuery: () => {},
     onChange: () => {},
     data,
+    showExplain: false,
   };
 
   const { container } = render(<PromQueryBuilder {...props} query={query} />);

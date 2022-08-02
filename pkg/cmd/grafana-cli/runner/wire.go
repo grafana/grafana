@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/encryption"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -34,6 +36,8 @@ var wireSet = wire.NewSet(
 	sqlstore.ProvideService,
 	wire.InterfaceValue(new(usagestats.Service), noOpUsageStats{}),
 	wire.InterfaceValue(new(routing.RouteRegister), noOpRouteRegister{}),
+	encryptionservice.ProvideEncryptionService,
+	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsDatabase.ProvideSecretsStore,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	secretsManager.ProvideSecretsService,

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -242,7 +243,7 @@ func authorizeAccessToRuleGroup(rules []*ngmodels.AlertRule, evaluator func(eval
 // NOTE: if there are rules for deletion, and the user does not have access to data sources that a rule uses, the rule is removed from the list.
 // If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized.
 // Return changes that the user is authorized to perform or ErrAuthorization
-func authorizeRuleChanges(change *changes, evaluator func(evaluator ac.Evaluator) bool) error {
+func authorizeRuleChanges(change *store.GroupDelta, evaluator func(evaluator ac.Evaluator) bool) error {
 	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
 
 	rules, ok := change.AffectedGroups[change.GroupKey]

@@ -6,6 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 
@@ -58,6 +59,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/encryption"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -222,12 +225,16 @@ var wireBasicSet = wire.NewSet(
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
 	oauthtoken.ProvideService,
+	auth.ProvideActiveAuthTokenService,
+	wire.Bind(new(models.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	tempo.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	encryptionservice.ProvideEncryptionService,
+	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
 	secretsDatabase.ProvideSecretsStore,

@@ -179,6 +179,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+		"unifiedAlerting": map[string]interface{}{
+			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
+		},
 	}
 
 	if hs.ThumbService != nil {
