@@ -171,6 +171,7 @@ const setup = (propsOverrides?: {}) => {
     displayLabels: [],
     legend: {
       displayMode: LegendDisplayMode.List,
+      showLegend: true,
       placement: 'right',
       calcs: [],
       values: [PieChartLegendValues.Percent],

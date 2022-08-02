@@ -81,9 +81,7 @@ class AppRootPage extends Component<Props, State> {
     const { params } = this.props.match;
 
     if (prevProps.match.params.pluginId !== params.pluginId) {
-      this.setState({
-        loading: true,
-      });
+      this.setState({ loading: true, plugin: null });
       this.loadPluginSettings();
     }
   }

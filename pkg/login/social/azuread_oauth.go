@@ -65,12 +65,12 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
-	email := extractEmail(claims)
+	email := claims.extractEmail()
 	if email == "" {
 		return nil, errors.New("error getting user info: no email found in access token")
 	}
 
-	role := extractRole(claims, s.autoAssignOrgRole, s.roleAttributeStrict)
+	role := claims.extractRole(s.autoAssignOrgRole, s.roleAttributeStrict)
 	if role == "" {
 		return nil, errors.New("user does not have a valid role")
 	}
@@ -112,7 +112,7 @@ func (s *SocialAzureAD) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func extractEmail(claims azureClaims) string {
+func (claims *azureClaims) extractEmail() string {
 	if claims.Email == "" {
 		if claims.PreferredUsername != "" {
 			return claims.PreferredUsername
@@ -122,7 +122,7 @@ func extractEmail(claims azureClaims) string {
 	return claims.Email
 }
 
-func extractRole(claims azureClaims, autoAssignRole string, strictMode bool) models.RoleType {
+func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) models.RoleType {
 	if len(claims.Roles) == 0 {
 		if strictMode {
 			return models.RoleType("")

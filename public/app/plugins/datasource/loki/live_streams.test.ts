@@ -36,12 +36,11 @@ describe('Live Stream Tests', () => {
     const labels: Labels = { job: 'varlogs' };
     const target = makeTarget('fake', labels);
     const stream = new LiveStreams().getStream(target);
-    expect.assertions(4);
+    expect.assertions(3);
 
     const tests = [
       (val: DataFrame[]) => {
         expect(val[0].length).toEqual(7);
-        expect(val[0].fields[2].labels).toEqual(labels);
       },
       (val: DataFrame[]) => {
         expect(val[0].length).toEqual(8);
@@ -49,10 +48,8 @@ describe('Live Stream Tests', () => {
         const last = { ...view.get(view.length - 1) };
         expect(last).toEqual({
           Time: '2019-08-28T20:50:40.118Z',
-          tsNs: '1567025440118944705',
           id: '25d81461-a66f-53ff-98d5-e39515af4735_A',
           Line: 'Kittens',
-          labels: { filename: '/var/log/sntpc.log' },
         });
       },
     ];

@@ -95,6 +95,7 @@ AxisConfig: {
 	axisSoftMax?:       number
 	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
+	axisCenteredZero?:   bool
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -132,7 +133,7 @@ GraphThresholdsStyleConfig: {
 LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 
 // TODO docs
-LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(kind="enum")
+LegendDisplayMode: "list" | "table" @cuetsy(kind="enum")
 
 // TODO docs
 TableSortByFieldState: {
@@ -170,6 +171,11 @@ OptionsWithTooltip: {
 // TODO docs
 OptionsWithLegend: {
 	legend: VizLegendOptions
+} @cuetsy(kind="interface")
+
+// TODO docs
+OptionsWithTimezones: {
+	timezones?: [...string]
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -229,6 +235,7 @@ GraphFieldConfig: {
 VizLegendOptions: {
 	displayMode:  LegendDisplayMode
 	placement:    LegendPlacement
+	showLegend: 	bool
 	asTable?:     bool
 	isVisible?:   bool
   sortBy?:      string

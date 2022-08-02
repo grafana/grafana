@@ -19,6 +19,7 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -40,7 +41,8 @@ const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
-	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service, authenticator loginpkg.Authenticator) *ContextHandler {
+	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
+	apiKeyService apikey.Service, authenticator loginpkg.Authenticator) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -52,6 +54,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		authProxy:        authProxy,
 		authenticator:    authenticator,
 		loginService:     loginService,
+		apiKeyService:    apiKeyService,
 	}
 }
 
@@ -67,6 +70,7 @@ type ContextHandler struct {
 	authProxy        *authproxy.AuthProxy
 	authenticator    loginpkg.Authenticator
 	loginService     login.Service
+	apiKeyService    apikey.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -197,7 +201,7 @@ func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string
 		return nil, err
 	}
 
-	return h.SQLStore.GetAPIKeyByHash(ctx, hash)
+	return h.apiKeyService.GetAPIKeyByHash(ctx, hash)
 }
 
 func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*models.ApiKey, error) {
@@ -208,7 +212,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*mode
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := h.SQLStore.GetApiKeyByName(ctx, &keyQuery); err != nil {
+	if err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
 		return nil, err
 	}
 
@@ -274,7 +278,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	}
 
 	// update api_key last used date
-	if err := h.SQLStore.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
+	if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
 		reqContext.JsonApiErr(http.StatusInternalServerError, InvalidAPIKey, errKey)
 		return true
 	}
