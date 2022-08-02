@@ -206,7 +206,6 @@ func (p *Plugin) Start(ctx context.Context) error {
 	if p.client == nil {
 		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
 	}
-
 	return p.client.Start(ctx)
 }
 

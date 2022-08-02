@@ -167,7 +167,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	manager.ProvideOrchestrator,
 	manager.ProvideService,
-	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
 	managerStore.ProvideService,

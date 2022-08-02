@@ -16,6 +16,12 @@ func NewLogger(name string) (l *InfraLogWrapper) {
 	}
 }
 
+func WithLogger(logger log.Logger) (l *InfraLogWrapper) {
+	return &InfraLogWrapper{
+		l: logger,
+	}
+}
+
 func (l *InfraLogWrapper) Successf(format string, args ...interface{}) {
 	l.l.Info(fmt.Sprintf(format, args...))
 }
