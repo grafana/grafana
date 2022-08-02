@@ -12,7 +12,7 @@ const options: Array<SelectableValue<BackgroundImageSize>> = [
   { value: BackgroundImageSize.Tile, label: 'Tile' },
 ];
 
-export const BackgroundSizeEditor: FC<StandardEditorProps<any, any, any>> = (props) => {
+export const BackgroundSizeEditor: FC<StandardEditorProps<string, undefined, undefined>> = (props) => {
   const { value, onChange } = props;
 
   const imageSize = value ?? BackgroundImageSize.Cover;
