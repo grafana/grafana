@@ -62,25 +62,25 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
         onExited={onClose}
       >
         <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
-          <div className={styles.mobileHeader}>
-            <Icon name="bars" size="xl" />
-            <IconButton
-              aria-label="Close navigation menu"
-              name="times"
-              onClick={onMenuClose}
-              size="xl"
-              variant="secondary"
-            />
-          </div>
-          <NavBarToggle
-            className={styles.menuCollapseIcon}
-            isExpanded={true}
-            onClick={() => {
-              reportInteraction('grafana_navigation_collapsed');
-              onMenuClose();
-            }}
-          />
           <FocusScope contain autoFocus>
+            <div className={styles.mobileHeader}>
+              <Icon name="bars" size="xl" />
+              <IconButton
+                aria-label="Close navigation menu"
+                name="times"
+                onClick={onMenuClose}
+                size="xl"
+                variant="secondary"
+              />
+            </div>
+            <NavBarToggle
+              className={styles.menuCollapseIcon}
+              isExpanded={true}
+              onClick={() => {
+                reportInteraction('grafana_navigation_collapsed');
+                onMenuClose();
+              }}
+            />
             <nav className={styles.content}>
               <CustomScrollbar hideHorizontalTrack>
                 <ul className={styles.itemList}>
