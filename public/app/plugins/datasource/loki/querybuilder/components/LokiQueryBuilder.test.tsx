@@ -2,6 +2,8 @@ import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+
 import { LokiDatasource } from '../../datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
@@ -17,8 +19,8 @@ const createDefaultProps = () => {
     {
       url: '',
       jsonData: {},
-      meta: {} as any,
-    } as any,
+      meta: {} as DataSourcePluginMeta,
+    } as DataSourceInstanceSettings,
     undefined,
     undefined
   );
