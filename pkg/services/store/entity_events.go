@@ -29,6 +29,7 @@ const (
 	EntityTypeFolder    EntityType = "folder"
 	EntityTypeImage     EntityType = "image"
 	EntityTypeJSON      EntityType = "json"
+	EntityTypeArchive   EntityType = "archive"
 )
 
 // CreateDatabaseEntityId creates entityId for entities stored in the existing SQL tables

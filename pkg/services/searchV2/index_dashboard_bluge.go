@@ -34,7 +34,9 @@ const (
 	DocumentFieldUpdatedAt   = "updated_at"
 )
 
-func initDashboardWriter(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*bluge.Writer, error) {
+const defaultDashboardBatchSize = 100
+
+func initDashboardWriter(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc, batchSize int) (*bluge.Writer, error) {
 	dashboardWriter, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
 	if err != nil {
 		return nil, fmt.Errorf("error opening writer: %v", err)
@@ -49,7 +51,10 @@ func initDashboardWriter(dashboards []dashboard, logger log.Logger, extendDoc Ex
 	// In order to reduce memory usage while initial indexing we are limiting
 	// the size of batch here.
 	docsInBatch := 0
-	maxBatchSize := 100
+	maxBatchSize := defaultDashboardBatchSize
+	if batchSize > 0 {
+		maxBatchSize = batchSize
+	}
 
 	flushIfRequired := func(force bool) error {
 		docsInBatch++

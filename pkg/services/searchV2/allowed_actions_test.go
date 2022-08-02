@@ -84,7 +84,9 @@ var (
 )
 
 func service(t *testing.T) *StandardSearchService {
-	service, ok := ProvideService(&setting.Cfg{Raw: ini.Empty()}, nil, nil, accesscontrolmock.New()).(*StandardSearchService)
+	serviceInterface, err := ProvideService(&setting.Cfg{Raw: ini.Empty()}, nil, nil, accesscontrolmock.New(), nil)
+	require.NoError(t, err)
+	service, ok := serviceInterface.(*StandardSearchService)
 	require.True(t, ok)
 	return service
 }
