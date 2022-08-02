@@ -15,7 +15,7 @@ import { newMockDatasource } from './specs/testData';
 import { AlignmentTypes, MetricDescriptor, MetricKind, ValueTypes } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getTemplateSrv: () => ({
     replace: jest.fn().mockImplementation((s: string) => s),
   }),

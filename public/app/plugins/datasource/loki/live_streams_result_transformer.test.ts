@@ -31,8 +31,7 @@ describe('loki result transformer', () => {
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);
       expect(data.get(0)).toEqual({
         ts: '2020-02-12T15:05:14.265Z',
-        line:
-          't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
+        line: 't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
         id: '07f0607c-04ee-51bd-8a0c-fc0f85d37489',
       });
     });

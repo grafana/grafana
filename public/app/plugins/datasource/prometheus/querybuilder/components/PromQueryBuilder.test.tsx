@@ -186,7 +186,7 @@ describe('PromQueryBuilder', () => {
 });
 
 function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
-  const languageProvider = (new EmptyLanguageProviderMock() as unknown) as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
       url: '',

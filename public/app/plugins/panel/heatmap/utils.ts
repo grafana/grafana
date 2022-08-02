@@ -285,7 +285,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             let scaleMin: number | null, scaleMax: number | null;
 
             [scaleMin, scaleMax] = shouldUseLogScale
-              ? uPlot.rangeLog(dataMin, dataMax, ((yScale.log ?? 2) as unknown) as uPlot.Scale.LogBase, true)
+              ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
               : [dataMin, dataMax];
 
             if (shouldUseLogScale && !isOrdianalY) {
@@ -497,7 +497,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           values: (u, seriesIdx) => {
             let countFacetIdx = !isSparseHeatmap ? 2 : 3;
             return valuesToFills(
-              (u.data[seriesIdx][countFacetIdx] as unknown) as number[],
+              u.data[seriesIdx][countFacetIdx] as unknown as number[],
               palette,
               dataRef.current?.minValue!,
               dataRef.current?.maxValue!
@@ -640,9 +640,9 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         arc
       ) => {
         let d = u.data[seriesIdx];
-        const xs = (d[0] as unknown) as number[];
-        const ys = (d[1] as unknown) as number[];
-        const counts = (d[2] as unknown) as number[];
+        const xs = d[0] as unknown as number[];
+        const ys = d[1] as unknown as number[];
+        const counts = d[2] as unknown as number[];
         const dlen = xs.length;
 
         // fill colors are mapped from interpolating densities / counts along some gradient
@@ -748,7 +748,7 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
       ) => {
         //console.time('heatmapPathsSparse');
 
-        [dataX, dataY] = (dataY as unknown) as number[][];
+        [dataX, dataY] = dataY as unknown as number[][];
 
         let points = new Path2D();
         let fillPaths = [points];
@@ -820,10 +820,10 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
         //console.time('heatmapPathsSparse');
 
         let d = u.data[seriesIdx];
-        const xMaxs = (d[0] as unknown) as number[]; // xMax, do we get interval?
-        const yMins = (d[1] as unknown) as number[];
-        const yMaxs = (d[2] as unknown) as number[];
-        const counts = (d[3] as unknown) as number[];
+        const xMaxs = d[0] as unknown as number[]; // xMax, do we get interval?
+        const yMins = d[1] as unknown as number[];
+        const yMaxs = d[2] as unknown as number[];
+        const counts = d[3] as unknown as number[];
         const dlen = xMaxs.length;
 
         // fill colors are mapped from interpolating densities / counts along some gradient

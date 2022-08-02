@@ -13,7 +13,7 @@ import { AnnoListPanel, Props } from './AnnoListPanel';
 import { PanelOptions } from './models.gen';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -72,7 +72,7 @@ async function setupTestContext({
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),
     },
-    fieldConfig: ({} as unknown) as FieldConfigSource,
+    fieldConfig: {} as unknown as FieldConfigSource,
     height: 400,
     id: 1,
     onChangeTimeRange: jest.fn(),

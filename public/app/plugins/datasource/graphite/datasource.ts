@@ -66,7 +66,8 @@ function convertGlobToRegEx(text: string): string {
 
 export class GraphiteDatasource
   extends DataSourceApi<GraphiteQuery, GraphiteOptions, GraphiteQueryImportConfiguration>
-  implements DataSourceWithQueryExportSupport<GraphiteQuery> {
+  implements DataSourceWithQueryExportSupport<GraphiteQuery>
+{
   basicAuth: string;
   url: string;
   name: string;
@@ -362,12 +363,12 @@ export class GraphiteDatasource
     if (target.target) {
       // Graphite query as target as annotation
       const targetAnnotation = this.templateSrv.replace(target.target, {}, 'glob');
-      const graphiteQuery = ({
+      const graphiteQuery = {
         range: range,
         targets: [{ target: targetAnnotation }],
         format: 'json',
         maxDataPoints: 100,
-      } as unknown) as DataQueryRequest<GraphiteQuery>;
+      } as unknown as DataQueryRequest<GraphiteQuery>;
 
       return lastValueFrom(
         this.query(graphiteQuery).pipe(
@@ -858,7 +859,7 @@ export class GraphiteDatasource
   }
 
   testDatasource() {
-    const query = ({
+    const query = {
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
       range: {
@@ -866,7 +867,7 @@ export class GraphiteDatasource
       },
       targets: [{ target: 'constantLine(100)' }],
       maxDataPoints: 300,
-    } as unknown) as DataQueryRequest<GraphiteQuery>;
+    } as unknown as DataQueryRequest<GraphiteQuery>;
 
     return lastValueFrom(this.query(query)).then(() => ({ status: 'success', message: 'Data source is working' }));
   }

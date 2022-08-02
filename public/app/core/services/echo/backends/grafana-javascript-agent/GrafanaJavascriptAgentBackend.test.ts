@@ -173,13 +173,13 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
 
     backend.transports = [
       /* eslint-disable */
-      ({ send: jest.fn() } as unknown) as BaseTransport,
-      ({ send: jest.fn() } as unknown) as BaseTransport,
+      { send: jest.fn() } as unknown as BaseTransport,
+      { send: jest.fn() } as unknown as BaseTransport,
     ];
     const event: GrafanaJavascriptAgentEchoEvent = {
       type: EchoEventType.GrafanaJavascriptAgent,
-      payload: ({ foo: 'bar' } as unknown) as GrafanaJavascriptAgentEchoEvent,
-      meta: ({} as unknown) as EchoMeta,
+      payload: { foo: 'bar' } as unknown as GrafanaJavascriptAgentEchoEvent,
+      meta: {} as unknown as EchoMeta,
     };
     /* eslint-enable */
     backend.addEvent(event);

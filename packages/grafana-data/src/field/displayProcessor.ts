@@ -173,7 +173,7 @@ function toStringProcessor(value: any): DisplayValue {
 export function getRawDisplayProcessor(): DisplayProcessor {
   return (value: any) => ({
     text: getFieldTypeFromValue(value) === 'other' ? `${JSON.stringify(value, getCircularReplacer())}` : `${value}`,
-    numeric: (null as unknown) as number,
+    numeric: null as unknown as number,
   });
 }
 

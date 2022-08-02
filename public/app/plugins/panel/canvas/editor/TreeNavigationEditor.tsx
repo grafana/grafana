@@ -33,13 +33,15 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
   const selectedBgColor = theme.v1.colors.formInputBorderActive;
   const { settings } = item;
-  const selection = useMemo(() => (settings?.selected ? settings.selected.map((v) => v.getName()) : []), [
-    settings?.selected,
-  ]);
+  const selection = useMemo(
+    () => (settings?.selected ? settings.selected.map((v) => v.getName()) : []),
+    [settings?.selected]
+  );
 
-  const selectionByUID = useMemo(() => (settings?.selected ? settings.selected.map((v) => v.UID) : []), [
-    settings?.selected,
-  ]);
+  const selectionByUID = useMemo(
+    () => (settings?.selected ? settings.selected.map((v) => v.UID) : []),
+    [settings?.selected]
+  );
 
   useEffect(() => {
     setTreeData(getTreeData(item?.settings?.scene.root, selection, selectedBgColor));

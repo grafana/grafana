@@ -12,7 +12,7 @@ import { AzureDataSourceJsonData, AzureQueryType } from '../types';
 const templateSrv = new TemplateSrv();
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getTemplateSrv: () => templateSrv,
 }));
 
@@ -26,11 +26,11 @@ describe('AzureMonitorDatasource', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    ctx.instanceSettings = ({
+    ctx.instanceSettings = {
       name: 'test',
       url: 'http://azuremonitor.com',
       jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor' },
-    } as unknown) as DataSourceInstanceSettings<AzureDataSourceJsonData>;
+    } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
@@ -55,8 +55,7 @@ describe('AzureMonitorDatasource', () => {
     const response = {
       value: [
         {
-          id:
-            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/Azure.ApplicationInsights',
+          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/Azure.ApplicationInsights',
           name: 'Azure.ApplicationInsights',
           type: 'Microsoft.Insights/metricNamespaces',
           classification: 'Custom',
@@ -65,8 +64,7 @@ describe('AzureMonitorDatasource', () => {
           },
         },
         {
-          id:
-            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/microsoft.insights-components',
+          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/microsoft.insights-components',
           name: 'microsoft.insights-components',
           type: 'Microsoft.Insights/metricNamespaces',
           classification: 'Platform',

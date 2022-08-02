@@ -34,7 +34,7 @@ describe('PromQueryBuilderContainer', () => {
 });
 
 function setup(queryOverrides: Partial<PromQuery> = {}) {
-  const languageProvider = (new EmptyLanguageProviderMock() as unknown) as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
       url: '',
