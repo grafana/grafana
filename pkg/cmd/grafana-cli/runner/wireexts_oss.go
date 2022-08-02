@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -49,8 +49,8 @@ var wireExtsSet = wire.NewSet(
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
-	ossencryption.ProvideService,
-	wire.Bind(new(encryption.Internal), new(*ossencryption.Service)),
+	// ossencryption.ProvideService,
+	// wire.Bind(new(encryption.Internal), new(*ossencryption.Service)),
 	auth.ProvideUserAuthTokenService,
 	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
 	wire.Bind(new(models.UserTokenBackgroundService), new(*auth.UserAuthTokenService)),
@@ -90,4 +90,6 @@ var wireExtsSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	secretsStore.ProvideRemotePluginCheck,
 	wire.Bind(new(secretsStore.UseRemoteSecretsPluginCheck), new(*secretsStore.OSSRemoteSecretsPluginCheck)),
+	encryptionprovider.ProvideEncryptionProvider,
+	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 )
