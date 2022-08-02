@@ -785,8 +785,6 @@ export const updateRulesOrder = createAsyncThunk(
             rules: newRules,
           };
 
-          console.log(payload);
-
           await setRulerRuleGroup(rulerConfig, namespaceName, payload);
 
           await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));

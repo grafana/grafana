@@ -14,7 +14,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { updateRulesOrder } from '../../state/actions';
 import { isCloudRulesSource } from '../../utils/datasource';
@@ -59,7 +58,7 @@ export const ReorderCloudGroupModal: FC<ModalProps> = (props) => {
           namespaceName: namespace.name,
           groupName: group.name,
           rulesSourceName: rulesSourceName,
-          newRules: newOrderedRules.filter((rule) => rule.rulerRule).map((rule) => rule.rulerRule),
+          newRules: newOrderedRules.map((rule) => rule.rulerRule),
         })
       );
     },
