@@ -15,7 +15,7 @@ const options: Array<SelectableValue<BackgroundImageSize>> = [
 export const BackgroundSizeEditor: FC<StandardEditorProps<any, any, any>> = (props) => {
   const { value, onChange } = props;
 
-  const imageSize = value ?? BackgroundImageSize.Original;
+  const imageSize = value ?? BackgroundImageSize.Cover;
 
   const onImageSizeChange = useCallback(
     (size) => {
