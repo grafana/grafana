@@ -33,7 +33,7 @@ const VariableEditor = (props: Props) => {
     { label: 'Metric Names', value: AzureQueryType.MetricNamesQuery },
     { label: 'Workspaces', value: AzureQueryType.WorkspacesQuery },
     { label: 'Logs', value: AzureQueryType.LogAnalytics },
-    { label: 'Resource Graph', value: AzureQueryType.AzureResourceGraph },
+    { label: 'Azure Resource Graph', value: AzureQueryType.AzureResourceGraph },
   ];
   if (typeof props.query === 'object' && props.query.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
     // Add the option for the GrafanaTemplateVariableFn only if it's already in use
