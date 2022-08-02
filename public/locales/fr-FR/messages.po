@@ -708,7 +708,7 @@ msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "user-profile.title"
-msgstr "Editer le profil"
+msgstr ""
 
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-session.browser-column"
