@@ -11,6 +11,7 @@ interface Prom {
 
 export const RuleHealth: FC<Prom> = ({ rule }) => {
   const style = useStyles2(getStyle);
+
   if (rule.health === 'err' || rule.health === 'error') {
     return (
       <Tooltip theme="error" content={rule.lastError || 'No error message provided.'}>
@@ -21,6 +22,7 @@ export const RuleHealth: FC<Prom> = ({ rule }) => {
       </Tooltip>
     );
   }
+
   return <>{rule.health}</>;
 };
 
@@ -29,6 +31,7 @@ const getStyle = (theme: GrafanaTheme2) => ({
     display: inline-flex;
     flex-direction: row;
     color: ${theme.colors.warning.text};
+
     & > * + * {
       margin-left: ${theme.spacing(1)};
     }
