@@ -86,7 +86,8 @@ func (t *nestedTree) GetFile(ctx context.Context, orgId int64, path string) (*fi
 	if store == nil {
 		return nil, fmt.Errorf("store not ready")
 	}
-	return store.Get(ctx, path)
+	file, _, err := store.Get(ctx, path, nil)
+	return file, err
 }
 
 func (t *nestedTree) getStorages(orgId int64) []storageRuntime {
