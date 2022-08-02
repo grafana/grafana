@@ -119,7 +119,7 @@ func TestAlertRuleService(t *testing.T) {
 		}
 	})
 
-	t.Run("updating a rule group should bump the version number", func(t *testing.T) {
+	t.Run("updating a rule group's top level fields should bump the version number", func(t *testing.T) {
 		const (
 			orgID              = 123
 			namespaceUID       = "abc"
@@ -146,6 +146,24 @@ func TestAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rule.Version)
 		require.Equal(t, newInterval, rule.IntervalSeconds)
+	})
+
+	t.Run("updating a group by updating a rule should bump that rule's data and version number", func(t *testing.T) {
+		var orgID int64 = 1
+		group := createDummyGroup("group-test-5", orgID)
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		group.Rules[0].Title = "some-other-title-asdf"
+		err = ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "group-test-5")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+		require.Equal(t, "some-other-title-asdf", readGroup.Rules[0].Title)
+		require.Equal(t, int64(2), readGroup.Rules[0].Version)
 	})
 
 	t.Run("alert rule provenace should be correctly checked", func(t *testing.T) {
