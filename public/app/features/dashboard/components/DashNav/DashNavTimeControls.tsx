@@ -104,14 +104,12 @@ export class DashNavTimeControls extends Component<Props> {
             id: 'time-range.list.aria-role-description',
             message: 'Time range selection',
           })}
-          // timeRangeListEmptyListMessage={<EmptyListTranslated />}
           timeRangeListEmptyFirstMessage={t({
-            id: 'time-range.list.empty-second-message',
-            message: `It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
-          recently used intervals will appear here.`,
+            id: 'time-range.list.empty-first-message',
+            message: `It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.`,
           })}
-          timeRangeListEmptySecondMessage={(dataSecondMessage: { stylesEmptyList: string; hrefEmptyList: string }) => (
-            <EmptyListTranslated {...dataSecondMessage} />
+          timeRangeListEmptySecondMessage={(linkClassName: string | undefined, hrefEmptyList: string | undefined) => (
+            <EmptyListTranslated linkClassName={linkClassName} hrefEmptyList={hrefEmptyList} />
           )}
         />
         <RefreshPicker
@@ -140,20 +138,18 @@ export class DashNavTimeControls extends Component<Props> {
 }
 
 interface EmptyListTranslatedProps {
-  stylesEmptyList: string;
-  hrefEmptyList: string;
+  linkClassName: string | undefined;
+  hrefEmptyList: string | undefined;
 }
 
 const EmptyListTranslatedMemo: React.FC<EmptyListTranslatedProps> = (props) => {
-  const { stylesEmptyList, hrefEmptyList } = props;
+  const { linkClassName, hrefEmptyList } = props;
   return (
-    <Trans id="time-range.list.empty-recent">
-      <div>
-        <a className={stylesEmptyList} href={hrefEmptyList} target="_new">
-          Read the documentation
-        </a>
-        <span> to find out more about how to enter custom time ranges.</span>
-      </div>
+    <Trans id="time-range.list.empty-second-message">
+      <a className={linkClassName} href={hrefEmptyList} target="_new">
+        Read the documentation
+      </a>
+      <span> to find out more about how to enter custom time ranges.</span>
     </Trans>
   );
 };
@@ -161,20 +157,3 @@ const EmptyListTranslatedMemo: React.FC<EmptyListTranslatedProps> = (props) => {
 export const EmptyListTranslated = memo(EmptyListTranslatedMemo);
 
 EmptyListTranslated.displayName = 'EmptyListTranslated';
-
-// const EmptyListTranslated: EmptyListTranslatedProps = (props) = memo(() => {
-//   return (
-//     <Trans id="time-range.list.empty-recent">
-//       <div>
-//         <a
-//           className={stylesEmptyList}
-//           href={hrefEmptyList}
-//           target="_new"
-//         >
-//           Read the documentation
-//         </a>
-//         <span> to find out more about how to enter custom time ranges.</span>
-//       </div>
-//     </Trans>
-//   );
-// });

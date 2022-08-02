@@ -37,10 +37,7 @@ interface Props {
   timeRangeListRoleDescriptionMessage?: string;
   // timeRangeListEmptyListMessage?: ReactNode;
   timeRangeListEmptyFirstMessage?: string;
-  timeRangeListEmptySecondMessage?: (dataEmptyList: {
-    stylesEmptyList: string | undefined;
-    hrefEmptyList: string | undefined;
-  }) => ReactNode;
+  timeRangeListEmptySecondMessage?: (linkClassName: string | undefined, hrefEmptyList: string | undefined) => ReactNode;
 }
 
 export interface PropsWithScreenSize extends Props {
@@ -215,11 +212,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
     return onChange(mapOptionToTimeRange(timeOption));
   };
 
-  // const dataSecondMessage:
-  // {
-  //   stylesEmptyList: string;
-  //   hrefEmptyList: string;
-  // }
+  const titleRangeListPlaceholderProps = { timeRangeListEmptyFirstMessage, timeRangeListEmptySecondMessage };
 
   return (
     <>
@@ -242,7 +235,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
             title={timeRangeListTitleMessage || 'Recently used absolute ranges'}
             options={historyOptions || []}
             onChange={onChangeTimeOption}
-            // placeholderEmpty={<EmptyRecentList timeRangeListEmptyFirstMessage={timeRangeListEmptyFirstMessage} timeRangeListEmptySecondMessage={timeRangeListEmptySecondMessage(timeRangeListEmptyFirstMessage, getEmptyListStyles(theme))} />}
+            placeholderEmpty={<EmptyRecentList {...titleRangeListPlaceholderProps} />}
             timeRangeListRoleDescriptionMessage={timeRangeListRoleDescriptionMessage}
           />
         </div>
@@ -251,31 +244,39 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
   );
 };
 
-const EmptyRecentList = memo((timeRangeListEmptyFirstMessage, timeRangeListEmptySecondMessage) => {
+interface EmptyRecentListProps {
+  timeRangeListEmptyFirstMessage: string | undefined;
+  timeRangeListEmptySecondMessage?: (linkClassName: string | undefined, hrefEmptyList: string | undefined) => ReactNode;
+}
+
+const EmptyRecentList: React.FC<EmptyRecentListProps> = memo((props) => {
   const theme = useTheme2();
   const styles = getEmptyListStyles(theme);
-
+  const { timeRangeListEmptyFirstMessage, timeRangeListEmptySecondMessage } = props;
   return (
     <div className={styles.container}>
       <div>
         <span>
           {timeRangeListEmptyFirstMessage ||
-            'It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,recently used intervals will appear here.'}
+            "It looks like you haven't used this time picker before. As soon as you enter some time intervals,recently used intervals will appear here."}
         </span>
       </div>
       <div>
-        {/* { timeRangeListEmptySecondMessage({styles, 'https://grafana.com/docs/grafana/latest/dashboards/time-range-controls'}) || */}
-        <>
-          <a
-            className={styles.link}
-            href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
-            target="_new"
-          >
-            Read the documentation
-          </a>
-          <span> to find out more about how to enter custom time ranges.</span>
-        </>
-        {/* } */}
+        {timeRangeListEmptySecondMessage?.(
+          styles.link,
+          'https://grafana.com/docs/grafana/latest/dashboards/time-range-controls'
+        ) || (
+          <>
+            <a
+              className={styles.link}
+              href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
+              target="_new"
+            >
+              Read the documentation
+            </a>
+            <span> to find out more about how to enter custom time ranges.</span>
+          </>
+        )}
       </div>
     </div>
   );
