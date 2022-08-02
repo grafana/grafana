@@ -146,7 +146,7 @@ describe('LokiDatasource', () => {
         replace: (a: string) => a,
       } as unknown as TemplateSrv;
 
-      const ds = new LokiDatasource(settings, templateSrvMock, timeSrvStub as TimeSrv);
+      const ds = new LokiDatasource(settings, templateSrvMock, timeSrvStub);
 
       // we need to check the final query before it is sent out,
       // and applyTemplateVariables is a convenient place to do that.
@@ -185,7 +185,7 @@ describe('LokiDatasource', () => {
     const ds = new LokiDatasource(
       {} as DataSourceInstanceSettings,
       templateSrvStub as unknown as TemplateSrv,
-      timeSrvStub as TimeSrv
+      timeSrvStub
     );
 
     afterAll(() => {
@@ -858,9 +858,9 @@ function createLokiDSForTests(
   } as DataSourceInstanceSettings;
 
   const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
-  const customSettings = { ...instanceSettings, jsonData: customData };
+  const customSettings: DataSourceInstanceSettings = { ...instanceSettings, jsonData: customData };
 
-  return new LokiDatasource(customSettings as DataSourceInstanceSettings, templateSrvMock, timeSrvStub as TimeSrv);
+  return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub as TimeSrv);
 }
 
 function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQuery> {
