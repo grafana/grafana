@@ -1,28 +1,33 @@
 import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
 
-import { DataFrame, DataFrameView, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Card, FilterInput, Icon, IconName, TagList, useStyles2, VerticalGroup } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Card,
+  FilterInput,
+  HorizontalGroup,
+  Icon,
+  IconName,
+  TagList,
+  useStyles2,
+  VerticalGroup,
+} from '@grafana/ui';
 
-import { StorageView } from './types';
+import { getGrafanaStorage } from './storage';
+import { StorageInfo, StorageView } from './types';
 
 interface Props {
   root: DataFrame;
   onPathChange: (p: string, v?: StorageView) => void;
 }
 
-interface RootFolder {
-  name: string;
-  title: string;
-  storageType: string;
-  description: string;
-  readOnly: boolean;
-  builtIn: boolean;
-}
-
 export function RootView({ root, onPathChange }: Props) {
   const styles = useStyles2(getStyles);
+  const storage = useAsync(getGrafanaStorage().getConfig);
   const [searchQuery, setSearchQuery] = useState<string>('');
   let base = location.pathname;
   if (!base.endsWith('/')) {
@@ -30,11 +35,11 @@ export function RootView({ root, onPathChange }: Props) {
   }
 
   const roots = useMemo(() => {
-    const view = new DataFrameView<RootFolder>(root);
-    const all = view.map((v) => ({ ...v }));
-    if (searchQuery?.length) {
+    const all = storage.value;
+    if (searchQuery?.length && all) {
       const lower = searchQuery.toLowerCase();
-      return all.filter((v) => {
+      return all.filter((r) => {
+        const v = r.config;
         const isMatch = v.name.toLowerCase().indexOf(lower) >= 0 || v.description.toLowerCase().indexOf(lower) >= 0;
         if (isMatch) {
           return true;
@@ -42,8 +47,8 @@ export function RootView({ root, onPathChange }: Props) {
         return false;
       });
     }
-    return all;
-  }, [searchQuery, root]);
+    return all ?? [];
+  }, [searchQuery, storage]);
 
   return (
     <div>
@@ -61,18 +66,30 @@ export function RootView({ root, onPathChange }: Props) {
         )}
       </div>
       <VerticalGroup>
-        {roots.map((v) => (
-          <Card key={v.name} href={`admin/storage/${v.name}/`}>
-            <Card.Heading>{v.title ?? v.name}</Card.Heading>
-            <Card.Meta className={styles.clickable}>{v.description}</Card.Meta>
-            <Card.Tags className={styles.clickable}>
-              <TagList tags={getTags(v)} />
-            </Card.Tags>
-            <Card.Figure className={styles.clickable}>
-              <Icon name={getIconName(v.storageType)} size="xxxl" className={styles.secondaryTextColor} />
-            </Card.Figure>
-          </Card>
-        ))}
+        {roots.map((s) => {
+          const ok = s.ready;
+          return (
+            <Card key={s.config.prefix} href={ok ? `admin/storage/${s.config.prefix}/` : undefined}>
+              <Card.Heading>{s.config.name}</Card.Heading>
+              <Card.Meta className={styles.clickable}>
+                {s.config.description}
+                {s.config.git?.remote && <a href={s.config.git?.remote}>{s.config.git?.remote}</a>}
+              </Card.Meta>
+              {s.notice?.map((notice) => (
+                <Alert key={notice.text} severity={notice.severity} title={notice.text} />
+              ))}
+
+              <Card.Tags className={styles.clickable}>
+                <HorizontalGroup>
+                  <TagList tags={getTags(s)} />
+                </HorizontalGroup>
+              </Card.Tags>
+              <Card.Figure className={styles.clickable}>
+                <Icon name={getIconName(s.config.type)} size="xxxl" className={styles.secondaryTextColor} />
+              </Card.Figure>
+            </Card>
+          );
+        })}
       </VerticalGroup>
     </div>
   );
@@ -89,13 +106,18 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-function getTags(v: RootFolder) {
+function getTags(v: StorageInfo) {
   const tags: string[] = [];
-  if (v.builtIn) {
+  if (v.builtin) {
     tags.push('Builtin');
   }
-  if (v.readOnly) {
+  if (!v.editable) {
     tags.push('Read only');
+  }
+
+  // Error
+  if (!v.ready) {
+    tags.push('Not ready');
   }
   return tags;
 }

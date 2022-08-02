@@ -19,9 +19,9 @@ This API can be used to define correlations between data sources.
 
 ## Create correlations
 
-`POST /api/datasources/uid/:sourceUid/correlations`
+`POST /api/datasources/uid/:sourceUID/correlations`
 
-Creates a correlation between two data sources - the source data source indicated by the path UID, and the target data source which is specified in the body.
+Creates a correlation between two data sources - the source data source identified by `sourceUID` in the path, and the target data source which is specified in the body.
 
 **Example request:**
 
@@ -31,7 +31,7 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
-	"targetUid": "PDDA8E780A17E7EF1",
+	"targetUID": "PDDA8E780A17E7EF1",
 	"label": "My Label",
 	"description": "Logs to Traces",
 }
@@ -39,7 +39,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON body schema:
 
-- **targetUid** – Target data source uid.
+- **targetUID** – Target data source uid.
 - **label** – A label for the correlation.
 - **description** – A description for the correlation.
 
@@ -53,8 +53,8 @@ Content-Type: application/json
   "result": {
     "description": "Logs to Traces",
     "label": "My Label",
-    "sourceUid": "uyBf2637k",
-    "targetUid": "PDDA8E780A17E7EF1",
+    "sourceUID": "uyBf2637k",
+    "targetUID": "PDDA8E780A17E7EF1",
     "uid": "50xhMlg9k"
   }
 }
@@ -67,4 +67,37 @@ Status codes:
 - **401** – Unauthorized
 - **403** – Forbidden, source data source is read-only
 - **404** – Not found, either source or target data source could not be found
+- **500** – Internal error
+
+## Delete correlations
+
+`DELETE /api/datasources/uid/:sourceUID/correlations/:correlationUID`
+
+Deletes a correlation.
+
+**Example request:**
+
+```http
+DELETE /api/datasources/uid/uyBf2637k/correlations/J6gn7d31L HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "message": "Correlation deleted"
+}
+```
+
+Status codes:
+
+- **200** – OK
+- **401** – Unauthorized
+- **403** – Forbidden, data source is read-only
+- **404** – Correlation not found
 - **500** – Internal error

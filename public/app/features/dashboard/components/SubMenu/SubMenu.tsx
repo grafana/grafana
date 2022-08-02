@@ -49,10 +49,12 @@ class SubMenuUnConnected extends PureComponent<Props> {
       return null;
     }
 
+    const readOnlyVariables = dashboard.meta.isSnapshot ?? false;
+
     return (
       <div className="submenu-controls">
         <form aria-label="Template variables" className={styles}>
-          <SubMenuItems variables={variables} />
+          <SubMenuItems variables={variables} readOnly={readOnlyVariables} />
         </form>
         <Annotations
           annotations={annotations}

@@ -74,7 +74,7 @@ You can now dynamically apply value filters to any table column. This option can
 
 {{< figure src="/static/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
 
-[Filter table columns]({{< relref "../visualizations/table/filter-table-columns/" >}}) has been added as a result of this feature.
+[Filter table columns]({{< relref "../visualizations/table/#filter-table-columns" >}}) has been added as a result of this feature.
 
 ### New field override selection options
 

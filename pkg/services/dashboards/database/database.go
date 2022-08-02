@@ -14,10 +14,12 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -25,13 +27,18 @@ type DashboardStore struct {
 	sqlStore *sqlstore.SQLStore
 	log      log.Logger
 	dialect  migrator.Dialect
+	features featuremgmt.FeatureToggles
 }
 
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*DashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore *sqlstore.SQLStore) *DashboardStore {
-	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store"), dialect: sqlStore.Dialect}
+func ProvideDashboardStore(sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles) *DashboardStore {
+	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store"), dialect: sqlStore.Dialect, features: features}
+}
+
+func (d *DashboardStore) emitEntityEvent() bool {
+	return d.features != nil && d.features.IsEnabled(featuremgmt.FlagPanelTitleSearch)
 }
 
 func (d *DashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error) {
@@ -171,7 +178,7 @@ func (d *DashboardStore) GetProvisionedDashboardData(name string) ([]*models.Das
 
 func (d *DashboardStore) SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if err := saveDashboard(sess, &cmd); err != nil {
+		if err := saveDashboard(sess, &cmd, d.emitEntityEvent()); err != nil {
 			return err
 		}
 
@@ -187,7 +194,7 @@ func (d *DashboardStore) SaveProvisionedDashboard(cmd models.SaveDashboardComman
 
 func (d *DashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		return saveDashboard(sess, &cmd)
+		return saveDashboard(sess, &cmd, d.emitEntityEvent())
 	})
 	return cmd.Result, err
 }
@@ -396,7 +403,7 @@ func getExistingDashboardByTitleAndFolder(sess *sqlstore.DBSession, dash *models
 	return isParentFolderChanged, nil
 }
 
-func saveDashboard(sess *sqlstore.DBSession, cmd *models.SaveDashboardCommand) error {
+func saveDashboard(sess *sqlstore.DBSession, cmd *models.SaveDashboardCommand, emitEntityEvent bool) error {
 	dash := cmd.GetDashboardModel()
 
 	userId := cmd.UserId
@@ -507,6 +514,12 @@ func saveDashboard(sess *sqlstore.DBSession, cmd *models.SaveDashboardCommand) e
 
 	cmd.Result = dash
 
+	if emitEntityEvent {
+		_, err := sess.Insert(createEntityEvent(dash, store.EntityEventTypeUpdate))
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -698,11 +711,11 @@ func (d *DashboardStore) GetDashboardsByPluginID(ctx context.Context, query *mod
 
 func (d *DashboardStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		return d.deleteDashboard(cmd, sess)
+		return d.deleteDashboard(cmd, sess, d.emitEntityEvent())
 	})
 }
 
-func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, sess *sqlstore.DBSession) error {
+func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, sess *sqlstore.DBSession, emitEntityEvent bool) error {
 	dashboard := models.Dashboard{Id: cmd.Id, OrgId: cmd.OrgId}
 	has, err := sess.Get(&dashboard)
 	if err != nil {
@@ -812,7 +825,31 @@ func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, ses
 		}
 	}
 
+	if emitEntityEvent {
+		_, err := sess.Insert(createEntityEvent(&dashboard, store.EntityEventTypeDelete))
+		if err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func createEntityEvent(dashboard *models.Dashboard, eventType store.EntityEventType) *store.EntityEvent {
+	var entityEvent *store.EntityEvent
+	if dashboard.IsFolder {
+		entityEvent = &store.EntityEvent{
+			EventType: eventType,
+			EntityId:  store.CreateDatabaseEntityId(dashboard.Uid, dashboard.OrgId, store.EntityTypeFolder),
+			Created:   time.Now().Unix(),
+		}
+	} else {
+		entityEvent = &store.EntityEvent{
+			EventType: eventType,
+			EntityId:  store.CreateDatabaseEntityId(dashboard.Uid, dashboard.OrgId, store.EntityTypeDashboard),
+			Created:   time.Now().Unix(),
+		}
+	}
+	return entityEvent
 }
 
 func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *sqlstore.DBSession) error {
