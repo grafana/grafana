@@ -195,6 +195,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	rules := make([]*models.AlertRule, len(group.Rules))
 	for i := range group.Rules {
 		// Some fields are actually stored on every single affected rule. Copy this value across all of them. The diff-checking later will see whether it changed.
+		group.Rules[i].For = (time.Duration(group.Interval) * time.Second)
 		group.Rules[i].IntervalSeconds = group.Interval
 		group.Rules[i].RuleGroup = group.Title
 		group.Rules[i].NamespaceUID = group.FolderUID

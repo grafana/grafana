@@ -69,6 +69,22 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
 
+	t.Run("group creation should propagate group title correctly", func(t *testing.T) {
+		var orgID int64 = 1
+		group := createDummyGroup("group-test-3", orgID)
+		group.Rules[0].RuleGroup = "something different"
+
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "group-test-3")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		for _, rule := range readGroup.Rules {
+			require.Equal(t, "group-test-3", rule.RuleGroup)
+		}
+	})
+
 	t.Run("alert rule should get interval from existing rule group", func(t *testing.T) {
 		var orgID int64 = 1
 		rule := dummyRule("test#4", orgID)
@@ -85,6 +101,22 @@ func TestAlertRuleService(t *testing.T) {
 		rule, err = ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
+	})
+
+	t.Run("group creation should propagate group interval correctly", func(t *testing.T) {
+		var orgID int64 = 1
+		group := createDummyGroup("group-test-4", orgID)
+		group.Interval = 360
+
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "group-test-4")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		for _, rule := range readGroup.Rules {
+			require.Equal(t, 360*time.Second, rule.For)
+		}
 	})
 
 	t.Run("updating a rule group should bump the version number", func(t *testing.T) {
@@ -248,7 +280,7 @@ func createDummyGroup(title string, orgID int64) definitions.AlertRuleGroup {
 		Interval:  60,
 		FolderUID: "my-namespace",
 		Rules: []models.AlertRule{
-			dummyRule("rule-1", orgID),
+			dummyRule(title+"-"+"rule-1", orgID),
 		},
 	}
 }
