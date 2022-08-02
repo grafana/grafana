@@ -9,14 +9,7 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import {
-  CompletionItemKind,
-  LanguageCompletionProvider,
-  LinkedToken,
-  StatementPosition,
-  SuggestionKind,
-} from '@grafana/experimental';
-import { monacoTypes } from '@grafana/ui';
+import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 
 import { QueryWithDefaults } from './defaults';
 import {
@@ -199,13 +192,5 @@ export {
   TokenType,
   OperatorType,
   StatementPosition,
+  PositionContext,
 } from '@grafana/experimental';
-
-// TODO: export from @grafana/experimental
-export interface PositionContext {
-  position: monacoTypes.IPosition;
-  kind: SuggestionKind[];
-  statementPosition: StatementPosition[];
-  currentToken: LinkedToken | null;
-  range: monacoTypes.IRange;
-}
