@@ -46,7 +46,9 @@ export interface TimeRangePickerProps extends Themeable {
   //Internationalization
   timeRangeListTitleMessage?: string;
   timeRangeListRoleDescriptionMessage?: string;
-  timeRangeListEmptyListMessage?: ReactNode;
+  timeRangeListEmptyFirstMessage?: string;
+  timeRangeListEmptyLinkMessage?: string;
+  timeRangeListEmptySecondMessage?: ReactNode;
 }
 
 export interface State {
@@ -74,7 +76,10 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
     //Internationalization
     timeRangeListTitleMessage,
     timeRangeListRoleDescriptionMessage,
-    timeRangeListEmptyListMessage,
+    // timeRangeListEmptyListMessage,
+    timeRangeListEmptyFirstMessage,
+    timeRangeListEmptyLinkMessage,
+    timeRangeListEmptySecondMessage,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -143,7 +148,10 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
               //Internationalization
               timeRangeListTitleMessage={timeRangeListTitleMessage}
               timeRangeListRoleDescriptionMessage={timeRangeListRoleDescriptionMessage}
-              timeRangeListEmptyListMessage={timeRangeListEmptyListMessage}
+              // timeRangeListEmptyListMessage={timeRangeListEmptyListMessage}
+              timeRangeListEmptyFirstMessage={timeRangeListEmptyFirstMessage}
+              // timeRangeListEmptyLinkMessage={timeRangeListEmptyLinkMessage}
+              // timeRangeListEmptySecondMessage={timeRangeListEmptySecondMessage}
             />
           </section>
         </FocusScope>

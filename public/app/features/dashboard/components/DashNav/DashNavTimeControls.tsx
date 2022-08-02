@@ -104,7 +104,15 @@ export class DashNavTimeControls extends Component<Props> {
             id: 'time-range.list.aria-role-description',
             message: 'Time range selection',
           })}
-          timeRangeListEmptyListMessage={<EmptyListTranslated />}
+          // timeRangeListEmptyListMessage={<EmptyListTranslated />}
+          timeRangeListEmptyFirstMessage={t({
+            id: 'time-range.list.empty-second-message',
+            message: `It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
+          recently used intervals will appear here.`,
+          })}
+          timeRangeListEmptySecondMessage={(dataSecondMessage: { stylesEmptyList: string; hrefEmptyList: string }) => (
+            <EmptyListTranslated {...dataSecondMessage} />
+          )}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
@@ -131,27 +139,42 @@ export class DashNavTimeControls extends Component<Props> {
   }
 }
 
-const EmptyListTranslated = memo(() => {
+interface EmptyListTranslatedProps {
+  stylesEmptyList: string;
+  hrefEmptyList: string;
+}
+
+const EmptyListTranslatedMemo: React.FC<EmptyListTranslatedProps> = (props) => {
+  const { stylesEmptyList, hrefEmptyList } = props;
   return (
     <Trans id="time-range.list.empty-recent">
       <div>
-        <span>
-          It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
-          recently used intervals will appear here.
-        </span>
-      </div>
-      <div>
-        <a
-          // className={styles.link}
-          href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
-          target="_new"
-        >
+        <a className={stylesEmptyList} href={hrefEmptyList} target="_new">
           Read the documentation
         </a>
         <span> to find out more about how to enter custom time ranges.</span>
       </div>
     </Trans>
   );
-});
+};
+
+export const EmptyListTranslated = memo(EmptyListTranslatedMemo);
 
 EmptyListTranslated.displayName = 'EmptyListTranslated';
+
+// const EmptyListTranslated: EmptyListTranslatedProps = (props) = memo(() => {
+//   return (
+//     <Trans id="time-range.list.empty-recent">
+//       <div>
+//         <a
+//           className={stylesEmptyList}
+//           href={hrefEmptyList}
+//           target="_new"
+//         >
+//           Read the documentation
+//         </a>
+//         <span> to find out more about how to enter custom time ranges.</span>
+//       </div>
+//     </Trans>
+//   );
+// });
