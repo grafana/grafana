@@ -272,10 +272,6 @@
    },
    "type": "object"
   },
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 3a6a004ba9 (Regenerate files)
   "AlertRuleGroupMetadata": {
    "properties": {
     "interval": {
@@ -288,11 +284,6 @@
   "AlertStateType": {
    "type": "string"
   },
-<<<<<<< HEAD
-=======
->>>>>>> bf422ca546 (Wire up to full alert rule struct)
-=======
->>>>>>> 3a6a004ba9 (Regenerate files)
   "AlertingRule": {
    "description": "adapted from cortex",
    "properties": {
@@ -3390,6 +3381,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3577,7 +3569,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -3743,7 +3734,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",

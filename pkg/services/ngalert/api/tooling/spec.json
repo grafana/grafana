@@ -2773,10 +2773,6 @@
         }
       }
     },
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 3a6a004ba9 (Regenerate files)
     "AlertRuleGroupMetadata": {
       "type": "object",
       "properties": {
@@ -2789,11 +2785,6 @@
     "AlertStateType": {
       "type": "string"
     },
-<<<<<<< HEAD
-=======
->>>>>>> bf422ca546 (Wire up to full alert rule struct)
-=======
->>>>>>> 3a6a004ba9 (Regenerate files)
     "AlertingRule": {
       "description": "adapted from cortex",
       "type": "object",
@@ -5895,6 +5886,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5919,6 +5911,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -6141,7 +6134,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -6253,7 +6245,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
