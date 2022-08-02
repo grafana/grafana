@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli/v2"
 )
 
 func TestUserManagerListConflictingUsers(t *testing.T) {
@@ -44,74 +45,42 @@ func TestUserManagerListConflictingUsers(t *testing.T) {
 			}
 			_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
 			require.NoError(t, err)
-			m, err := GetUsersWithConflictingEmailsOrLogins(context.Background(), sqlStore)
+			m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
 			require.Equal(t, 2, len(m))
 		}
 	})
 }
 
-func TestMergeUser(t *testing.T) {
-	t.Run("should be able to merge user", func(t *testing.T) {
-		// Restore after destructive operation
-		sqlStore := sqlstore.InitTestDB(t)
+func TestMarshalConflictUser(t *testing.T) {
+	// TODO: add more testcases
+	testCases := []struct {
+		name         string
+		inputRow     string
+		expectedUser ConflictingUser
+	}{{
+		name:     "should be able to marshal expected input row",
+		inputRow: "+ id: 4, email: userduplicatetest1@test.com, login: userduplicatetest1@test.com, last_seen_at: 2012-07-26T16:08:11Z, auth_module:",
+		expectedUser: ConflictingUser{
+			Direction:  "+",
+			Id:         "4",
+			Email:      "userduplicatetest1@test.com",
+			Login:      "userduplicatetest1@test.com",
+			LastSeenAt: "2012-07-26T16:08:11Z",
+			AuthModule: "",
+		},
+	}}
 
-		const testOrgID int64 = 1
-		// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-		if sqlStore.GetDialect().DriverName() != "mysql" {
-			// setup
-			dupUserEmailcmd := user.CreateUserCommand{
-				Email: "USERDUPLICATETEST1@TEST.COM",
-				Name:  "user name 1",
-				Login: "USER_DUPLICATE_TEST_1_LOGIN",
-				OrgID: testOrgID,
-			}
-			userWithUpperCase, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			user := ConflictingUser{}
+			err := user.Marshal(tc.inputRow)
 			require.NoError(t, err)
-
-			// add additional user with conflicting login where DOMAIN is upper case
-			dupUserLogincmd := user.CreateUserCommand{
-				Email: "userduplicatetest1@test.com",
-				Name:  "user name 1",
-				Login: "user_duplicate_test_1_login",
-				OrgID: testOrgID,
-			}
-			userWithLowerCase, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
-			require.NoError(t, err)
-			// fromUser should be replaced by userWithLowerCase
-			team1, err := sqlStore.CreateTeam("group1 name", "test1@test.com", testOrgID)
-			require.NoError(t, err)
-			err = sqlStore.AddTeamMember(userWithUpperCase.ID, testOrgID, team1.Id, false, 0)
-			require.NoError(t, err)
-			// setup finished
-
-			_, err = GetUsersWithConflictingEmailsOrLogins(context.Background(), sqlStore)
-			require.NoError(t, err)
-			// TODO: fix this test
-			_ = mergeUser(context.Background(), userWithLowerCase.ID, nil, sqlStore)
-			// require.NoError(t, mergeErr)
-
-			// // start test
-			// // fromUser should be deleted after merger
-			// t.Logf("testing getting user")
-			// query := &models.GetUserByIdQuery{Id: userWithUpperCase.ID}
-			// err = sqlStore.GetUserById(context.Background(), query)
-			// require.Error(t, user.ErrUserNotFound, err)
-
-			// testUser := &models.SignedInUser{
-			// 	OrgId: testOrgID,
-			// 	Permissions: map[int64]map[string][]string{
-			// 		1: {
-			// 			ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
-			// 			ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
-			// 		},
-			// 	},
-			// }
-			// t.Logf("testing getting team member")
-			// q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: testUser}
-			// err = sqlStore.GetTeamMembers(context.Background(), q1)
-			// require.NoError(t, err)
-			// require.Equal(t, 0, len(q1.Result))
-		}
-	})
+			require.Equal(t, tc.expectedUser.Direction, user.Direction)
+			require.Equal(t, tc.expectedUser.Id, user.Id)
+			require.Equal(t, tc.expectedUser.Email, user.Email)
+			require.Equal(t, tc.expectedUser.Login, user.Login)
+			require.Equal(t, tc.expectedUser.LastSeenAt, user.LastSeenAt)
+		})
+	}
 }
