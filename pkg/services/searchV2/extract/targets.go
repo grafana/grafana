@@ -2,22 +2,24 @@ package extract
 
 import (
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 )
 
 type targetInfo struct {
-	lookup DatasourceLookup
-	uids   map[string]*DataSourceRef
+	lookup dslookup.DatasourceLookup
+	uids   map[string]*dslookup.DataSourceRef
 }
 
-func newTargetInfo(lookup DatasourceLookup) targetInfo {
+func newTargetInfo(lookup dslookup.DatasourceLookup) targetInfo {
 	return targetInfo{
 		lookup: lookup,
-		uids:   make(map[string]*DataSourceRef),
+		uids:   make(map[string]*dslookup.DataSourceRef),
 	}
 }
 
-func (s *targetInfo) GetDatasourceInfo() []DataSourceRef {
-	keys := make([]DataSourceRef, len(s.uids))
+func (s *targetInfo) GetDatasourceInfo() []dslookup.DataSourceRef {
+	keys := make([]dslookup.DataSourceRef, len(s.uids))
 	i := 0
 	for _, v := range s.uids {
 		keys[i] = *v
@@ -31,18 +33,28 @@ func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
 	switch iter.WhatIsNext() {
 	case jsoniter.StringValue:
 		key := iter.ReadString()
-		ds := s.lookup.ByRef(&DataSourceRef{UID: key})
-		s.addRef(ds)
+
+		dsRef := &dslookup.DataSourceRef{UID: key}
+		if !isVariableRef(dsRef.UID) && !isSpecialDatasource(dsRef.UID) {
+			ds := s.lookup.ByRef(dsRef)
+			s.addRef(ds)
+		} else {
+			s.addRef(dsRef)
+		}
 
 	case jsoniter.NilValue:
 		s.addRef(s.lookup.ByRef(nil))
 		iter.Skip()
 
 	case jsoniter.ObjectValue:
-		ref := &DataSourceRef{}
+		ref := &dslookup.DataSourceRef{}
 		iter.ReadVal(ref)
-		ds := s.lookup.ByRef(ref)
-		s.addRef(ds)
+
+		if !isVariableRef(ref.UID) && !isSpecialDatasource(ref.UID) {
+			s.addRef(s.lookup.ByRef(ref))
+		} else {
+			s.addRef(ref)
+		}
 
 	default:
 		v := iter.Read()
@@ -50,7 +62,7 @@ func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
 	}
 }
 
-func (s *targetInfo) addRef(ref *DataSourceRef) {
+func (s *targetInfo) addRef(ref *dslookup.DataSourceRef) {
 	if ref != nil && ref.UID != "" {
 		s.uids[ref.UID] = ref
 	}
