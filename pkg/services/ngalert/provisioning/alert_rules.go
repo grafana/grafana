@@ -335,7 +335,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	return rule, err
 }
 
-func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int64, provenance models.Provenance, ruleUID string) error {
+func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance models.Provenance) error {
 	rule := &models.AlertRule{
 		OrgID: orgID,
 		UID:   ruleUID,
