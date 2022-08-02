@@ -751,6 +751,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
+    "packages/grafana-data/src/types/templateVars.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
     "packages/grafana-data/src/types/trace.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1396,11 +1400,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeOfDayPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangeInput.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOption.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3905,12 +3904,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/features/canvas/runtime/ables.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
     "public/app/features/canvas/runtime/element.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -5694,12 +5687,9 @@ exports[`better eslint`] = {
     "public/app/features/storage/storage.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "public/app/features/teams/CreateTeam.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -5734,6 +5724,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+    ],
+    "public/app/features/templating/template_srv.mock.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/templating/template_srv.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6284,13 +6277,9 @@ exports[`better eslint`] = {
     "public/app/features/variables/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "public/app/features/variables/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6304,9 +6293,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Do not use any type assertions.", "10"]
-    ],
-    "public/app/plugins/datasource/alertmanager/ConfigEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/alertmanager/DataSource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -7576,10 +7562,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/querybuilder/binaryScalarOperations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -8528,8 +8510,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/barchart/BarChartPanel.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/plugins/panel/barchart/TickSpacingEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -8645,6 +8629,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+    ],
+    "public/app/plugins/panel/canvas/utils.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/dashlist/module.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

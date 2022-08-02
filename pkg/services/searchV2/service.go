@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -13,8 +14,38 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+)
+
+var (
+	namespace                             = "grafana"
+	subsystem                             = "search"
+	dashboardSearchFailureRequestsCounter = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "dashboard_search_failures_total",
+			Help:      "A counter for failed dashboard search requests",
+		},
+		[]string{"reason"},
+	)
+	dashboardSearchSuccessRequestsDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:      "dashboard_search_successes_duration_seconds",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Namespace: namespace,
+			Subsystem: subsystem,
+		})
+	dashboardSearchFailureRequestsDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:      "dashboard_search_failures_duration_seconds",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Namespace: namespace,
+			Subsystem: subsystem,
+		})
 )
 
 type StandardSearchService struct {
@@ -150,27 +181,53 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 }
 
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
+	start := time.Now()
+	query := s.doDashboardQuery(ctx, user, orgID, q)
+
+	duration := time.Since(start).Seconds()
+	if query.Error != nil {
+		dashboardSearchFailureRequestsDuration.Observe(duration)
+	} else {
+		dashboardSearchSuccessRequestsDuration.Observe(duration)
+	}
+
+	return query
+}
+
+func (s *StandardSearchService) doDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 	signedInUser, err := s.getUser(ctx, user, orgID)
 	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "get_user_error",
+		}).Inc()
 		rsp.Error = err
 		return rsp
 	}
 
 	filter, err := s.auth.GetDashboardReadFilter(signedInUser)
 	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "get_dashboard_filter_error",
+		}).Inc()
 		rsp.Error = err
 		return rsp
 	}
 
 	index, err := s.dashboardIndex.getOrCreateOrgIndex(ctx, orgID)
 	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "get_index_error",
+		}).Inc()
 		rsp.Error = err
 		return rsp
 	}
 
 	err = s.dashboardIndex.sync(ctx)
 	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "dashboard_index_sync_error",
+		}).Inc()
 		rsp.Error = err
 		return rsp
 	}
@@ -181,6 +238,12 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		if err := s.addAllowedActionsField(ctx, orgID, signedInUser, response); err != nil {
 			s.logger.Error("error when adding the allowedActions field", "err", err)
 		}
+	}
+
+	if response.Error != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "search_query_error",
+		}).Inc()
 	}
 
 	return response

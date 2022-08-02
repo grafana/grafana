@@ -25,6 +25,8 @@ type PublicDashboardServiceImpl struct {
 	store publicdashboards.Store
 }
 
+var LogPrefix = "publicdashboards.service"
+
 // Gives us compile time error if the service does not adhere to the contract of
 // the interface
 var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
@@ -36,7 +38,7 @@ func ProvideService(
 	store publicdashboards.Store,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
-		log:   log.New("publicdashboards"),
+		log:   log.New(LogPrefix),
 		cfg:   cfg,
 		store: store,
 	}
