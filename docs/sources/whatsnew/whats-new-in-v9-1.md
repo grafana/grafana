@@ -51,7 +51,7 @@ To see JWT URL embedding in action, see the [sample project](https://github.com/
 
 You can now use GitHub OAuth2 to map users or teams to specific [Grafana organization roles]({{< relref "../administration/roles-and-permissions/#organization-roles" >}}) by using `role_attribute_path` configuration option.
 Grafana will use [JMESPath](https://jmespath.org/examples.html) for path lookup and role mapping.
-For more information, see the [documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/github/#map-roles" }}).
+For more information, see the [documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/github/#map-roles" >}}).
 
 {{< figure src="/static/img/docs/permissions/org-role-mapping-github-9-1.png" max-width="750px" caption="Configuring GitHub OAuth2 authentication with role mapping" >}}
 
