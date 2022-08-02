@@ -37,6 +37,7 @@ const buildCjsPackage = ({ env }) => {
       'react-inlinesvg', // required to mock Icon svg loading in tests
       '@emotion/react',
       '@emotion/css',
+      /^\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/public\/img\/icons\/.*$/,
     ],
     plugins: [
       // rc-time-picker has a transitive dependency on component-indexof which
