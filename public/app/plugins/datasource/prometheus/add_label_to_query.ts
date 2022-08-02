@@ -1,5 +1,6 @@
 import { parser } from 'lezer-promql';
 
+import { NodeTypeNameValue } from './components/monaco-query-field/monaco-completion-provider/situations/situation';
 import { PromQueryModeller } from './querybuilder/PromQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
@@ -45,7 +46,7 @@ function getVectorSelectorPositions(query: string): VectorSelectorPosition[] {
   const positions: VectorSelectorPosition[] = [];
   tree.iterate({
     enter: (type, from, to, get): false | void => {
-      if (type.name === 'VectorSelector') {
+      if (type.name === NodeTypeNameValue.VectorSelector) {
         const visQuery = buildVisualQueryFromString(query.substring(from, to));
         positions.push({ query: visQuery.query, from, to });
         return false;

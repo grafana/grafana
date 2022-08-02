@@ -1,6 +1,8 @@
 import { SyntaxNode } from '@lezer/common';
 import { parser } from 'lezer-promql';
 
+import { NodeTypeNameValue } from '../components/monaco-query-field/monaco-completion-provider/situations/situation';
+
 import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
   ErrorName,
@@ -79,13 +81,13 @@ interface Context {
 export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   switch (node.name) {
-    case 'MetricIdentifier': {
+    case NodeTypeNameValue.MetricIdentifier: {
       // Expectation is that there is only one of those per query.
       visQuery.metric = getString(expr, node);
       break;
     }
 
-    case 'LabelMatcher': {
+    case NodeTypeNameValue.LabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
       visQuery.labels.push(getLabel(expr, node));
       const err = node.getChild(ErrorName);
@@ -95,22 +97,22 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    case 'FunctionCall': {
+    case NodeTypeNameValue.FunctionCall: {
       handleFunction(expr, node, context);
       break;
     }
 
-    case 'AggregateExpr': {
+    case NodeTypeNameValue.AggregateExpr: {
       handleAggregation(expr, node, context);
       break;
     }
 
-    case 'BinaryExpr': {
+    case NodeTypeNameValue.BinaryExpr: {
       handleBinary(expr, node, context);
       break;
     }
 
-    case ErrorName: {
+    case NodeTypeNameValue.Error: {
       if (isIntervalVariableError(node)) {
         break;
       }
@@ -119,7 +121,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     default: {
-      if (node.name === 'ParenExpr') {
+      if (node.name === NodeTypeNameValue.ParenExpr) {
         // We don't support parenthesis in the query to group expressions. We just report error but go on with the
         // parsing.
         context.errors.push(makeError(expr, node));
@@ -142,9 +144,9 @@ function isIntervalVariableError(node: SyntaxNode) {
 }
 
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
-  const label = getString(expr, node.getChild('LabelName'));
-  const op = getString(expr, node.getChild('MatchOp'));
-  const value = getString(expr, node.getChild('StringLiteral')).replace(/"/g, '');
+  const label = getString(expr, node.getChild(NodeTypeNameValue.LabelName));
+  const op = getString(expr, node.getChild(NodeTypeNameValue.MatchOp));
+  const value = getString(expr, node.getChild(NodeTypeNameValue.StringLiteral)).replace(/"/g, '');
   return {
     label,
     op,
@@ -161,11 +163,11 @@ const rangeFunctions = ['changes', 'rate', 'irate', 'increase', 'delta'];
  */
 function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
-  const nameNode = node.getChild('FunctionIdentifier');
+  const nameNode = node.getChild(NodeTypeNameValue.FunctionIdentifier);
   const funcName = getString(expr, nameNode);
 
-  const body = node.getChild('FunctionCallBody');
-  const callArgs = body!.getChild('FunctionCallArgs');
+  const body = node.getChild(NodeTypeNameValue.FunctionCallBody);
+  const callArgs = body!.getChild(NodeTypeNameValue.FunctionCallArgs);
   const params = [];
   let interval = '';
 
@@ -203,28 +205,28 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
  */
 function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
-  const nameNode = node.getChild('AggregateOp');
+  const nameNode = node.getChild(NodeTypeNameValue.AggregateOp);
   let funcName = getString(expr, nameNode);
 
-  const modifier = node.getChild('AggregateModifier');
+  const modifier = node.getChild(NodeTypeNameValue.AggregateModifier);
   const labels = [];
 
   if (modifier) {
-    const byModifier = modifier.getChild(`By`);
+    const byModifier = modifier.getChild(NodeTypeNameValue.By);
     if (byModifier && funcName) {
       funcName = `__${funcName}_by`;
     }
 
-    const withoutModifier = modifier.getChild(`Without`);
+    const withoutModifier = modifier.getChild(NodeTypeNameValue.Without);
     if (withoutModifier) {
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, modifier, 'GroupingLabel'));
+    labels.push(...getAllByType(expr, modifier, NodeTypeNameValue.GroupingLabel));
   }
 
-  const body = node.getChild('FunctionCallBody');
-  const callArgs = body!.getChild('FunctionCallArgs');
+  const body = node.getChild(NodeTypeNameValue.FunctionCallBody);
+  const callArgs = body!.getChild(NodeTypeNameValue.FunctionCallArgs);
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
@@ -251,9 +253,9 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
   }
   switch (node.name) {
     // In case we have an expression we don't know what kind so we have to look at the child as it can be anything.
-    case 'Expr':
+    case NodeTypeNameValue.Expr:
     // FunctionCallArgs are nested bit weirdly as mentioned so we have to go one deeper in this case.
-    case 'FunctionCallArgs': {
+    case NodeTypeNameValue.FunctionCallArgs: {
       let child = node.firstChild;
       while (child) {
         updateFunctionArgs(expr, child, context, op);
@@ -262,12 +264,12 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       break;
     }
 
-    case 'NumberLiteral': {
+    case NodeTypeNameValue.NumberLiteral: {
       op.params.push(parseFloat(getString(expr, node)));
       break;
     }
 
-    case 'StringLiteral': {
+    case NodeTypeNameValue.StringLiteral: {
       op.params.push(getString(expr, node).replace(/"/g, ''));
       break;
     }
@@ -291,16 +293,16 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  const binModifier = getBinaryModifier(expr, node.getChild('BinModifiers'));
+  const binModifier = getBinaryModifier(expr, node.getChild(NodeTypeNameValue.BinModifiers));
 
   const right = node.lastChild!;
 
   const opDef = binaryScalarOperatorToOperatorName[op];
 
-  const leftNumber = left.getChild('NumberLiteral');
-  const rightNumber = right.getChild('NumberLiteral');
+  const leftNumber = left.getChild(NodeTypeNameValue.NumberLiteral);
+  const rightNumber = right.getChild(NodeTypeNameValue.NumberLiteral);
 
-  const rightBinary = right.getChild('BinaryExpr');
+  const rightBinary = right.getChild(NodeTypeNameValue.BinaryExpr);
 
   if (leftNumber) {
     // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
@@ -317,7 +319,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.name === 'NumberLiteral') {
+    if (leftMostChild?.name === NodeTypeNameValue.NumberLiteral) {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
@@ -364,12 +366,15 @@ function getBinaryModifier(
       // Not sure what this could be, maybe should be an error.
       return undefined;
     }
-    const labels = getString(expr, matcher.getChild('GroupingLabels')?.getChild('GroupingLabelList'));
+    const labels = getString(
+      expr,
+      matcher.getChild(NodeTypeNameValue.GroupingLabels)?.getChild(NodeTypeNameValue.GroupingLabelList)
+    );
     return {
       isMatcher: true,
       isBool: false,
       matches: labels,
-      matchType: matcher.getChild('On') ? 'on' : 'ignoring',
+      matchType: matcher.getChild(NodeTypeNameValue.On) ? 'on' : 'ignoring',
     };
   }
 }
