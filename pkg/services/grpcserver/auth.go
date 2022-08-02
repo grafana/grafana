@@ -9,6 +9,7 @@ import (
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/entity"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"google.golang.org/grpc/codes"
@@ -54,7 +55,7 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 
 	newCtx := purgeHeader(ctx, "authorization")
 
-	err = a.validateToken(ctx, token)
+	newCtx, err = a.validateToken(ctx, token)
 	if err != nil {
 		logger.Warn("request with invalid token", "error", err, "token", token)
 		return ctx, status.Error(codes.Unauthenticated, "invalid token")
@@ -62,28 +63,40 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 	return newCtx, nil
 }
 
-func (a *Authenticator) validateToken(ctx context.Context, keyString string) error {
+func (a *Authenticator) validateToken(ctx context.Context, keyString string) (context.Context, error) {
 	// prefixed decode key
 	decoded, err := apikeygenprefix.Decode(keyString)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	hash, err := decoded.Hash()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	key, err := a.SQLStore.GetAPIKeyByHash(ctx, hash)
+	apikey, err := a.SQLStore.GetAPIKeyByHash(ctx, hash)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if key.Role != models.ROLE_ADMIN {
-		return fmt.Errorf("api key does not have admin role")
+	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := a.SQLStore.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser); err != nil {
+		return nil, err
 	}
 
-	return nil
+	if !querySignedInUser.Result.HasRole(models.ROLE_ADMIN) {
+		return nil, fmt.Errorf("api key does not have admin role")
+	}
+
+	// disabled service accounts are not allowed to access the API
+	if querySignedInUser.Result.IsDisabled {
+		return nil, fmt.Errorf("service account is disabled")
+	}
+
+	newCtx := context.WithValue(ctx, entity.TempSignedInUserKey, querySignedInUser.Result)
+
+	return newCtx, nil
 }
 
 func extractAuthorization(ctx context.Context) (string, error) {

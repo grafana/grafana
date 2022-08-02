@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -215,7 +216,7 @@ func ProvideService(
 			}
 		}
 
-		if !user.IsGrafanaAdmin {
+		if !user.HasRole(models.ROLE_ADMIN) {
 			return nil
 		}
 
@@ -265,6 +266,7 @@ func newStandardStorageService(
 
 func (s *standardStorageService) Run(ctx context.Context) error {
 	grafanaStorageLogger.Info("storage starting")
+	<-ctx.Done()
 	return nil
 }
 
@@ -277,6 +279,7 @@ func getOrgId(user *models.SignedInUser) int64 {
 }
 
 func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error) {
+	backend.Logger.Debug("storage.list", "path", path)
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
 	return s.tree.ListFolder(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
 }

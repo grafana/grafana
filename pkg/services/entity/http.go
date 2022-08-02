@@ -17,7 +17,7 @@ import (
 type key int
 
 const (
-	tempSignedInUserKey key = iota
+	TempSignedInUserKey key = iota
 )
 
 func (s *StandardEntityStoreServer) RegisterEntityRoutes(route routing.RouteRegister) {
@@ -37,7 +37,7 @@ func (s *StandardEntityStoreServer) RegisterKindsRoutes(route routing.RouteRegis
 func (s *StandardEntityStoreServer) doGetEntity(c *models.ReqContext) {
 	params := web.Params(c.Req)
 	urlParams := c.Req.URL.Query()
-	ctx := context.WithValue(c.Req.Context(), tempSignedInUserKey, c.SignedInUser)
+	ctx := context.WithValue(c.Req.Context(), TempSignedInUserKey, c.SignedInUser)
 
 	// Get the history
 	if isTrue(urlParams, "history") {
@@ -114,7 +114,7 @@ func (s *StandardEntityStoreServer) doDelteEntity(c *models.ReqContext) response
 	path := params["*"]
 	urlParams := c.Req.URL.Query()
 
-	ctx := context.WithValue(c.Req.Context(), tempSignedInUserKey, c.SignedInUser)
+	ctx := context.WithValue(c.Req.Context(), TempSignedInUserKey, c.SignedInUser)
 	rsp, err := s.DeleteEntity(ctx, &entity.DeleteEntityRequest{
 		Path:      path,
 		Version:   urlParams.Get("version"),
@@ -142,7 +142,7 @@ func (s *StandardEntityStoreServer) doPR(c *models.ReqContext) response.Response
 }
 
 func (s *StandardEntityStoreServer) doListKinds(c *models.ReqContext) response.Response {
-	ctx := context.WithValue(c.Req.Context(), tempSignedInUserKey, c.SignedInUser)
+	ctx := context.WithValue(c.Req.Context(), TempSignedInUserKey, c.SignedInUser)
 	rsp, err := s.ListKinds(ctx, &entity.ListKindsRequest{})
 	if err != nil {
 		return response.Error(400, "error", err)

@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
 )
 
 type Provider interface {
@@ -49,6 +51,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore sqlstore.Store) (Provider, error)
 	}
 
 	grpcServer := grpc.NewServer(opts...)
+	reflection.Register(grpcServer)
 	s.server = grpcServer
 	return s, nil
 }
@@ -63,17 +66,21 @@ func (s *GPRCServerService) Run(ctx context.Context) error {
 
 	serveErr := make(chan error, 1)
 	go func() {
+		s.logger.Info("GRPC server: starting")
 		err := s.server.Serve(listener)
 		if err != nil {
+			backend.Logger.Error("GRPC server: failed to serve", "err", err)
 			serveErr <- err
 		}
 	}()
 
 	select {
 	case err := <-serveErr:
+		backend.Logger.Error("GRPC server: failed to serve", "err", err)
 		return err
 	case <-ctx.Done():
 	}
+	s.logger.Warn("GRPC server: shutting down")
 	s.server.Stop()
 	return ctx.Err()
 }

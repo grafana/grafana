@@ -3,9 +3,11 @@ package entity
 import (
 	"context"
 	"fmt"
+	"path"
 	"reflect"
 
 	"github.com/gogo/status"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/entity"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
@@ -91,10 +93,11 @@ func (s *StandardEntityStoreServer) GetKinds() entity.KindRegistry {
 }
 
 func (s *StandardEntityStoreServer) GetEntity(ctx context.Context, req *entity.GetEntityRequest) (*entity.EntityMessage, error) {
-	user := ctx.Value(tempSignedInUserKey).(*models.SignedInUser)
+	user := ctx.Value(TempSignedInUserKey).(*models.SignedInUser)
 
 	path := req.Path
 	kind := s.kinds.GetFromSuffix(path)
+	backend.Logger.Debug("GetEntity: ", "path", path)
 	// if kind == nil {
 	// 	kind = entity.FolderKind
 	// 	path = filepath.Join(path, "__folder.json")
@@ -105,13 +108,14 @@ func (s *StandardEntityStoreServer) GetEntity(ctx context.Context, req *entity.G
 	}
 
 	rsp := &entity.EntityMessage{
-		Path: req.Path,
+		Path:    req.Path,
+		Payload: []byte{},
 	}
 	if kind != nil {
 		rsp.Kind = kind.Info().ID
 	}
 
-	if req.WithPayload {
+	if req.WithPayload && file != nil {
 		rsp.Payload = file.Contents
 	}
 
@@ -134,25 +138,40 @@ func (s *StandardEntityStoreServer) GetEntity(ctx context.Context, req *entity.G
 }
 
 func (s *StandardEntityStoreServer) ListFolder(ctx context.Context, req *entity.ListFolderRequest) (*entity.FolderListing, error) {
-	user := ctx.Value(tempSignedInUserKey).(*models.SignedInUser)
-	fmt.Printf("TODO: %v/%v\n", user, req)
-	return nil, status.Errorf(codes.Unimplemented, "method ListFolder not implemented")
+	user := ctx.Value(TempSignedInUserKey).(*models.SignedInUser)
+	res, err := s.store.List(ctx, user, req.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	files := res.GetFileNames()
+	list := &entity.FolderListing{
+		Path:  req.Path,
+		Items: make([]*entity.EntityMessage, 0),
+	}
+
+	for _, file := range files {
+		if e, err := s.GetEntity(ctx, &entity.GetEntityRequest{Path: path.Join(req.Path, file), WithPayload: true}); err == nil && e.Payload != nil {
+			list.Items = append(list.Items, e)
+		}
+	}
+	return list, nil
 }
 
 func (s *StandardEntityStoreServer) SaveEntity(ctx context.Context, req *entity.SaveEntityRequest) (*entity.EntityMessage, error) {
-	user := ctx.Value(tempSignedInUserKey).(*models.SignedInUser)
+	user := ctx.Value(TempSignedInUserKey).(*models.SignedInUser)
 	fmt.Printf("TODO: %v/%v\n", user, req)
 	return nil, status.Errorf(codes.Unimplemented, "method SaveEntity not implemented")
 }
 
 func (s *StandardEntityStoreServer) DeleteEntity(ctx context.Context, req *entity.DeleteEntityRequest) (*entity.DeleteResponse, error) {
-	user := ctx.Value(tempSignedInUserKey).(*models.SignedInUser)
+	user := ctx.Value(TempSignedInUserKey).(*models.SignedInUser)
 	fmt.Printf("TODO: %v/%v\n", user, req)
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEntity not implemented")
 }
 
 func (s *StandardEntityStoreServer) GetEntityHistory(ctx context.Context, req *entity.GetHistoryRequest) (*entity.EntityHistoryResponse, error) {
-	user := ctx.Value(tempSignedInUserKey).(*models.SignedInUser)
+	user := ctx.Value(TempSignedInUserKey).(*models.SignedInUser)
 	fmt.Printf("TODO: %v/%v\n", user, req)
 
 	rsp := &entity.EntityHistoryResponse{
@@ -170,7 +189,7 @@ func (s *StandardEntityStoreServer) GetEntityHistory(ctx context.Context, req *e
 }
 
 func (s *StandardEntityStoreServer) CreatePR(ctx context.Context, req *entity.CreatePullRequest) (*entity.EntityMessage, error) {
-	user := ctx.Value(tempSignedInUserKey).(*models.SignedInUser)
+	user := ctx.Value(TempSignedInUserKey).(*models.SignedInUser)
 	fmt.Printf("TODO: %v/%v\n", user, req)
 
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePR not implemented")

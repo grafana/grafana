@@ -45,6 +45,7 @@ func ProvideBackgroundServiceRegistry(
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
 	grpcServerProvider grpcserver.Provider,
 	healthGRPCService *grpcserver.HealthService,
+	entityGRPCService *grpcserver.EntityService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -78,6 +79,7 @@ func ProvideBackgroundServiceRegistry(
 		authInfoService,
 		grpcServerProvider,
 		healthGRPCService,
+		entityGRPCService,
 	)
 }
 

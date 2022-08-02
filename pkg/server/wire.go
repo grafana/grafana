@@ -310,6 +310,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
 	grpcserver.ProvideService,
+	grpcserver.ProvideEntityService,
 	grpcserver.ProvideHealthService,
 )
 
