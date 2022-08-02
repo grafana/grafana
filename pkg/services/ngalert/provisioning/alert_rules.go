@@ -192,7 +192,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		return fmt.Errorf("failed to calculate diff for alert rules: %w", err)
 	}
 
-	// Refresh all calculated fields.
+	// Refresh all calculated fields across all rules.
 	delta = store.UpdateCalculatedRuleFields(delta)
 
 	if len(delta.New) == 0 && len(delta.Update) == 0 && len(delta.Delete) == 0 {
@@ -200,11 +200,12 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	}
 
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if _, err := service.ruleStore.InsertAlertRules(ctx, dropNilAlertRules(delta.New)); err != nil {
+		uids, err := service.ruleStore.InsertAlertRules(ctx, dropNilAlertRules(delta.New))
+		if err != nil {
 			return fmt.Errorf("failed to insert alert rules: %w", err)
 		}
-		for _, create := range delta.New {
-			if err := service.provenanceStore.SetProvenance(ctx, create, orgID, provenance); err != nil {
+		for uid := range uids {
+			if err := service.provenanceStore.SetProvenance(ctx, &models.AlertRule{UID: uid}, orgID, provenance); err != nil {
 				return err
 			}
 		}
