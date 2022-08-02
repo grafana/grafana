@@ -211,16 +211,6 @@ var adminCommands = []*cli.Command{
 						Usage:  "creates a conflict users file.. Safe to execute multiple times.",
 						Action: runGenerateConflictUsersFile(),
 					},
-					{
-						Name:   "validate-file",
-						Usage:  "validates the conflict file",
-						Action: runValidateConflictUsersFile(),
-					},
-					{
-						Name:   "ingest-file",
-						Usage:  "ingests and executes the conflict file",
-						Action: runIngestConflictUsersFile(),
-					},
 				},
 			},
 		},

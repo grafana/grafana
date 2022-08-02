@@ -1,11 +1,9 @@
 package commands
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
@@ -56,11 +54,11 @@ func runListConflictUsers() func(context *cli.Context) error {
 
 func runGenerateConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
-		sqlStore, err := getSqlStore(context)
+		s, err := getSqlStore(context)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get to sql", err)
 		}
-		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context.Context, sqlStore)
+		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context, s)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 		}
