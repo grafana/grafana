@@ -373,7 +373,7 @@ describe('buildVisualQueryFromString', () => {
         operations: [
           { id: LokiOperationId.Json, params: [] },
           { id: LokiOperationId.Rate, params: ['5m'] },
-          { id: LokiOperationId.SumWihtout, params: ['job', 'name'] },
+          { id: LokiOperationId.SumWithout, params: ['job', 'name'] },
         ],
       })
     );
