@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -19,6 +20,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
+import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { QueryGroupOptions } from 'app/types';
 import {
@@ -609,4 +611,19 @@ function getPluginVersion(plugin: PanelPlugin): string {
 interface PanelOptionsCache {
   properties: any;
   fieldConfig: FieldConfigSource;
+}
+
+// For cases where we immediately want to stringify the panel model without cloning each property
+export function stringifyPanelModel(panel: PanelModel) {
+  const model: any = {};
+
+  Object.entries(panel)
+    .filter(
+      ([prop, val]) => !notPersistedProperties[prop] && panel.hasOwnProperty(prop) && !isEqual(val, defaults[prop])
+    )
+    .forEach(([k, v]) => {
+      model[k] = v;
+    });
+
+  return safeStringifyValue(model);
 }

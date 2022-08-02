@@ -5050,9 +5050,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
-    "@grafana/data": 9.0.4
-    "@grafana/toolkit": 9.0.4
-    "@grafana/ui": 9.0.4
+    "@grafana/data": 9.0.6
+    "@grafana/toolkit": 9.0.6
+    "@grafana/ui": 9.0.6
     "@types/jest": 26.0.15
     "@types/lodash": 4.14.149
     "@types/react": 17.0.30
@@ -5090,12 +5090,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@9.0.4, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@9.0.6, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": 6.0.0
-    "@grafana/schema": 9.0.4
+    "@grafana/schema": 9.0.6
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-json": 4.1.0
@@ -5126,7 +5126,7 @@ __metadata:
     history: 4.10.1
     lodash: 4.17.21
     marked: 4.0.16
-    moment: 2.29.3
+    moment: 2.29.4
     moment-timezone: 0.5.34
     ol: 6.14.1
     papaparse: 5.3.2
@@ -5148,7 +5148,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@9.0.4, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@9.0.6, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -5172,7 +5172,7 @@ __metadata:
     "@babel/core": 7.17.8
     "@babel/preset-env": 7.17.10
     "@cypress/webpack-preprocessor": 5.11.1
-    "@grafana/e2e-selectors": 9.0.4
+    "@grafana/e2e-selectors": 9.0.6
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 22.0.0
@@ -5257,14 +5257,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@9.0.4, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@9.0.6, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
-    "@grafana/data": 9.0.4
-    "@grafana/e2e-selectors": 9.0.4
+    "@grafana/data": 9.0.6
+    "@grafana/e2e-selectors": 9.0.6
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.0.4
+    "@grafana/ui": 9.0.6
     "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.7
@@ -5293,7 +5293,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/schema@9.0.4, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@9.0.6, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -5340,7 +5340,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/toolkit@9.0.4, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@9.0.6, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
@@ -5356,10 +5356,10 @@ __metadata:
     "@babel/preset-env": ^7.16.11
     "@babel/preset-react": ^7.16.7
     "@babel/preset-typescript": ^7.16.7
-    "@grafana/data": 9.0.4
+    "@grafana/data": 9.0.6
     "@grafana/eslint-config": ^4.0.0
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.0.4
+    "@grafana/ui": 9.0.6
     "@jest/core": 27.5.1
     "@types/command-exists": ^1.2.0
     "@types/eslint": 8.4.1
@@ -5443,7 +5443,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@9.0.4, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@9.0.6, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
@@ -5451,9 +5451,9 @@ __metadata:
     "@emotion/css": 11.9.0
     "@emotion/react": 11.9.0
     "@grafana/aws-sdk": 0.0.36
-    "@grafana/data": 9.0.4
-    "@grafana/e2e-selectors": 9.0.4
-    "@grafana/schema": 9.0.4
+    "@grafana/data": 9.0.6
+    "@grafana/e2e-selectors": 9.0.6
+    "@grafana/schema": 9.0.6
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
@@ -5540,7 +5540,7 @@ __metadata:
     lodash: 4.17.21
     memoize-one: 6.0.0
     mock-raf: 1.0.1
-    moment: 2.29.3
+    moment: 2.29.4
     monaco-editor: ^0.31.1
     ol: 6.14.1
     postcss: 8.4.14
@@ -5743,11 +5743,11 @@ __metadata:
   resolution: "@jaegertracing/jaeger-ui-components@workspace:packages/jaeger-ui-components"
   dependencies:
     "@emotion/css": 11.9.0
-    "@grafana/data": 9.0.4
-    "@grafana/e2e-selectors": 9.0.4
-    "@grafana/runtime": 9.0.4
+    "@grafana/data": 9.0.6
+    "@grafana/e2e-selectors": 9.0.6
+    "@grafana/runtime": 9.0.6
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.0.4
+    "@grafana/ui": 9.0.6
     "@testing-library/react": 12.1.4
     "@testing-library/user-event": 14.2.0
     "@types/classnames": ^2.2.7
@@ -5772,7 +5772,7 @@ __metadata:
     lodash: 4.17.21
     lru-memoize: ^1.1.0
     memoize-one: 6.0.0
-    moment: 2.29.3
+    moment: 2.29.4
     moment-timezone: 0.5.34
     prop-types: 15.8.1
     react: 17.0.2
@@ -23125,7 +23125,7 @@ __metadata:
     lru-cache: 7.10.1
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
-    moment: 2.29.3
+    moment: 2.29.4
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
     monaco-promql: 1.7.4
@@ -28851,10 +28851,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.3, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1":
-  version: 2.29.3
-  resolution: "moment@npm:2.29.3"
-  checksum: 2e780e36d9a1823c08a1b6313cbb08bd01ecbb2a9062095820a34f42c878991ccba53abaa6abb103fd5c01e763724f295162a8c50b7e95b4f1c992ef0772d3f0
+"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1":
+  version: 2.29.4
+  resolution: "moment@npm:2.29.4"
+  checksum: 0ec3f9c2bcba38dc2451b1daed5daded747f17610b92427bebe1d08d48d8b7bdd8d9197500b072d14e326dd0ccf3e326b9e3d07c5895d3d49e39b6803b76e80e
   languageName: node
   linkType: hard
 

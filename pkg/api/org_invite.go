@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -38,6 +40,9 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	if !inviteDto.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
+	if !c.OrgRole.Includes(inviteDto.Role) && !c.IsGrafanaAdmin {
+		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
+	}
 
 	// first try get existing user
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
@@ -46,6 +51,15 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 			return response.Error(500, "Failed to query db for existing user check", err)
 		}
 	} else {
+		// Evaluate permissions for adding an existing user to the organization
+		userIDScope := ac.Scope("users", "id", strconv.Itoa(int(userQuery.Result.Id)))
+		hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionOrgUsersAdd, userIDScope))
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
+		}
+		if !hasAccess {
+			return response.Error(http.StatusForbidden, "Permission denied: not permitted to add an existing user to this organisation", err)
+		}
 		return hs.inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
 	}
 

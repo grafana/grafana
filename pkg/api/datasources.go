@@ -235,7 +235,8 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 
 func validateURL(cmdType string, url string) response.Response {
 	if _, err := datasource.ValidateURL(cmdType, url); err != nil {
-		return response.Error(400, fmt.Sprintf("Validation error, invalid URL: %q", url), err)
+		datasourcesLogger.Error("Failed to validate URL", "url", url)
+		return response.Error(http.StatusBadRequest, "Validation error, invalid URL", err)
 	}
 
 	return nil
@@ -622,13 +623,9 @@ func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *models.Dat
 	return response.JSON(http.StatusOK, payload)
 }
 
-func (hs *HTTPServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) map[string]string {
-	return func(ds *models.DataSource) map[string]string {
-		decryptedJsonData, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
-		if err != nil {
-			hs.log.Error("Failed to decrypt secure json data", "error", err)
-		}
-		return decryptedJsonData
+func (hs *HTTPServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) (map[string]string, error) {
+	return func(ds *models.DataSource) (map[string]string, error) {
+		return hs.DataSourcesService.DecryptedValues(ctx, ds)
 	}
 }
 

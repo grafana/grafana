@@ -30,6 +30,7 @@ Read more about the available dimensions in the [CloudWatch Metrics and Dimensio
 | `EC2 Instance Attributes` | Returns a list of attributes matching the specified `region`, `attribute_name`, and `filters`.                                                                                |
 | `Resource ARNs`           | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                           |
 | `Statistics`              | Returns a list of all the standard statistics.                                                                                                                                |
+| `LogGroups`               | Returns a list of all log groups matching the specified `region`.                                                                                                             |
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
