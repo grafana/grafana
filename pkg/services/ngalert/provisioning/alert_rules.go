@@ -87,15 +87,8 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 			return errors.New("couldn't find newly created id")
 		}
 
-		limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{
-			OrgID:  rule.OrgID,
-			UserID: userID,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to check alert rule quota: %w", err)
-		}
-		if limitReached {
-			return models.ErrQuotaReached
+		if err = service.checkLimitsTransactionCtx(ctx, rule.OrgID, userID); err != nil {
+			return err
 		}
 
 		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
@@ -193,18 +186,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		RuleGroup:    group.Title,
 	}
 	rules := make([]*models.AlertRule, len(group.Rules))
-	for i := range group.Rules {
-		// Some fields are actually stored on every single affected rule. Copy this value across all of them. The diff-checking later will see whether it changed.
-		group.Rules[i].For = (time.Duration(group.Interval) * time.Second)
-		group.Rules[i].IntervalSeconds = group.Interval
-		group.Rules[i].RuleGroup = group.Title
-		group.Rules[i].NamespaceUID = group.FolderUID
-		group.Rules[i].OrgID = orgID
-		if group.Rules[i].UID == "" {
-			group.Rules[i].UID = util.GenerateShortUID()
-		}
-		rules[i] = &group.Rules[i]
-	}
+	group = *syncGroupRuleFields(&group, orgID)
 	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
 	if err != nil {
 		return fmt.Errorf("failed to calculate diff for alert rules: %w", err)
@@ -249,7 +231,6 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			return fmt.Errorf("failed to update alert rules: %w", err)
 		}
 
-		deletes := make([]string, 0, len(delta.Delete))
 		for _, delete := range delta.Delete {
 			if delete != nil {
 				// check that provenance is not changed in a invalid way
@@ -260,31 +241,17 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 				if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 				}
-				deletes = append(deletes, delete.UID)
 			}
 		}
-		if err = service.ruleStore.DeleteAlertRulesByUID(ctx, orgID, deletes...); err != nil {
-			return fmt.Errorf("failed to delete alert rules: %w", err)
+		if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
+			return err
 		}
 
-		limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{
-			OrgID:  orgID,
-			UserID: userID,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to check alert rule quota: %w", err)
-		}
-		if limitReached {
-			return models.ErrQuotaReached
+		if err = service.checkLimitsTransactionCtx(ctx, orgID, userID); err != nil {
+			return err
 		}
 
 		// Set provenances for all affected rules.
-		for _, delete := range delta.Delete {
-			if err := service.provenanceStore.DeleteProvenance(ctx, delete, orgID); err != nil {
-				// We failed to clean up the record, but this doesn't break things. Log it and move on.
-				service.log.Warn("failed to delete provenance record for rule: %w", err)
-			}
-		}
 		for _, update := range delta.Update {
 			if err := service.provenanceStore.SetProvenance(ctx, update.New, orgID, provenance); err != nil {
 				return err
@@ -349,10 +316,56 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := service.ruleStore.DeleteAlertRulesByUID(ctx, orgID, ruleUID)
-		if err != nil {
-			return err
-		}
-		return service.provenanceStore.DeleteProvenance(ctx, rule, rule.OrgID)
+		return service.deleteRules(ctx, orgID, rule)
 	})
+}
+
+// checkLimitsTransactionCtx checks whether the current transaction (as identified by the ctx) breaches configured alert rule limits.
+func (service *AlertRuleService) checkLimitsTransactionCtx(ctx context.Context, orgID, userID int64) error {
+	limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{
+		OrgID:  orgID,
+		UserID: userID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to check alert rule quota: %w", err)
+	}
+	if limitReached {
+		return models.ErrQuotaReached
+	}
+	return nil
+}
+
+// deleteRules deletes a set of target rules and associated data, while checking for database consistency.
+func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, targets ...*models.AlertRule) error {
+	uids := make([]string, 0, len(targets))
+	for _, tgt := range targets {
+		if tgt != nil {
+			uids = append(uids, tgt.UID)
+		}
+	}
+	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
+		return err
+	}
+	for _, uid := range uids {
+		if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, orgID); err != nil {
+			// We failed to clean up the record, but this doesn't break things. Log it and move on.
+			service.log.Warn("failed to delete provenance record for rule: %w", err)
+		}
+	}
+	return nil
+}
+
+// syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.
+func syncGroupRuleFields(group *definitions.AlertRuleGroup, orgID int64) *definitions.AlertRuleGroup {
+	for i := range group.Rules {
+		group.Rules[i].For = (time.Duration(group.Interval) * time.Second)
+		group.Rules[i].IntervalSeconds = group.Interval
+		group.Rules[i].RuleGroup = group.Title
+		group.Rules[i].NamespaceUID = group.FolderUID
+		group.Rules[i].OrgID = orgID
+		if group.Rules[i].UID == "" {
+			group.Rules[i].UID = util.GenerateShortUID()
+		}
+	}
+	return group
 }
