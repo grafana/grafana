@@ -269,7 +269,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 		Overwrite: false,
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
@@ -297,7 +297,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	ac := acmock.New()
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 
 	d := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, nil,
@@ -401,7 +401,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		features := featuremgmt.WithFeatures()
 		cfg := setting.NewCfg()
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
