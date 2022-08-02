@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
 
@@ -17,8 +19,8 @@ const createDefaultProps = () => {
     {
       url: '',
       jsonData: {},
-      meta: {} as any,
-    } as any,
+      meta: {} as DataSourcePluginMeta,
+    } as DataSourceInstanceSettings,
     undefined,
     undefined
   );
