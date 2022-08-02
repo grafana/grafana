@@ -35,7 +35,6 @@ interface Props {
   //Internationalization
   timeRangeListTitleMessage?: string;
   timeRangeListRoleDescriptionMessage?: string;
-  // timeRangeListEmptyListMessage?: ReactNode;
   timeRangeListEmptyFirstMessage?: string;
   timeRangeListEmptySecondMessage?: (linkClassName: string | undefined, hrefEmptyList: string | undefined) => ReactNode;
 }
@@ -258,7 +257,7 @@ const EmptyRecentList: React.FC<EmptyRecentListProps> = memo((props) => {
       <div>
         <span>
           {timeRangeListEmptyFirstMessage ||
-            "It looks like you haven't used this time picker before. As soon as you enter some time intervals,recently used intervals will appear here."}
+            "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here."}
         </span>
       </div>
       <div>
