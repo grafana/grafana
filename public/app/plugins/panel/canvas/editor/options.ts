@@ -1,19 +1,31 @@
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import { BackgroundImageSize, CanvasElementOptions } from 'app/features/canvas';
+import { CanvasElementOptions } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
+
+import { BackgroundSizeEditor } from '../../../../features/dimensions/editors/BackgroundSizeEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
 }
 
+const getCategoryName = (str: string, type: string | undefined) => {
+  if (type !== 'frame' && type !== undefined) {
+    return [str + ` (${type})`];
+  }
+
+  return [str];
+};
+
+const uid = Math.floor(Math.random() * 21);
+
 export const optionBuilder: OptionSuppliers = {
   addBackground: (builder, context) => {
-    const category = ['Background'];
+    const category = getCategoryName('Background', context.options?.type);
     builder
       .addCustomEditor({
         category,
-        id: 'background.color',
+        id: `background.color${uid}`,
         path: 'background.color',
         name: 'Color',
         editor: ColorDimensionEditor,
@@ -25,7 +37,7 @@ export const optionBuilder: OptionSuppliers = {
       })
       .addCustomEditor({
         category,
-        id: 'background.image',
+        id: `background.image${uid}`,
         path: 'background.image',
         name: 'Image',
         editor: ResourceDimensionEditor,
@@ -33,25 +45,20 @@ export const optionBuilder: OptionSuppliers = {
           resourceType: 'image',
         },
       })
-      .addRadio({
+      .addCustomEditor({
         category,
+        id: `background.size${uid}`,
         path: 'background.size',
         name: 'Image size',
+        editor: BackgroundSizeEditor,
         settings: {
-          options: [
-            { value: BackgroundImageSize.Original, label: 'Original' },
-            { value: BackgroundImageSize.Contain, label: 'Contain' },
-            { value: BackgroundImageSize.Cover, label: 'Cover' },
-            { value: BackgroundImageSize.Fill, label: 'Fill' },
-            { value: BackgroundImageSize.Tile, label: 'Tile' },
-          ],
+          resourceType: 'image',
         },
-        defaultValue: BackgroundImageSize.Cover,
       });
   },
 
   addBorder: (builder, context) => {
-    const category = ['Border'];
+    const category = getCategoryName('Border', context.options?.type);
     builder.addSliderInput({
       category,
       path: 'border.width',
@@ -66,7 +73,7 @@ export const optionBuilder: OptionSuppliers = {
     if (context.options?.border?.width) {
       builder.addCustomEditor({
         category,
-        id: 'border.color',
+        id: `border.color${uid}`,
         path: 'border.color',
         name: 'Color',
         editor: ColorDimensionEditor,
