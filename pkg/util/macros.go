@@ -23,5 +23,5 @@ func CalculateMacroTimezoneOffset(args []string) (string, error) {
 		offset = "-"
 	}
 
-	return fmt.Sprintf(" %v %d", offset, int(timeParsed.Seconds())), nil
+	return fmt.Sprintf("%v %d", offset, int(timeParsed.Seconds())), nil
 }

@@ -104,8 +104,22 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			}
 		}
 
+		var timezoneOffset string
+		if len(args) == 4 {
+			timezoneOffset, err = util.CalculateMacroTimezoneOffset(args)
+			if err != nil {
+				return "", err
+			}
+		}
+
 		if m.timescaledb {
-			return fmt.Sprintf("time_bucket('%.3fs',%s)", interval.Seconds(), args[0]), nil
+			timescaleResult := fmt.Sprintf("time_bucket('%.3fs',%s)", interval.Seconds(), args[0])
+
+			if timezoneOffset != "" {
+				timescaleResult = fmt.Sprintf("%s + '%ss'", timescaleResult, timezoneOffset)
+			}
+
+			return timescaleResult, nil
 		}
 
 		result := fmt.Sprintf(
@@ -114,12 +128,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			interval.Seconds(),
 		)
 
-		if len(args) == 4 {
-			timezoneOffset, err := util.CalculateMacroTimezoneOffset(args)
-			if err != nil {
-				return "", err
-			}
-
+		if timezoneOffset != "" {
 			result = fmt.Sprintf("%s %s", result, timezoneOffset)
 		}
 
