@@ -2,12 +2,13 @@ import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
 import { LokiDatasource } from '../../datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const defaultQuery: LokiVisualQuery = {
   labels: [{ op: '=', label: 'baz', value: 'bar' }],
@@ -66,6 +67,32 @@ describe('LokiQueryBuilder', () => {
       expect(
         screen.queryByText('You need to specify at least 1 label filter (stream selector)')
       ).not.toBeInTheDocument();
+    });
+  });
+  it('shows explain section when showExplain is true', async () => {
+    const query = {
+      labels: [{ label: 'foo', op: '=', value: 'bar' }],
+      operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
+    };
+    const props = createDefaultProps();
+    props.showExplain = true;
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+
+    render(<LokiQueryBuilder {...props} query={query} />);
+    expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
+  });
+
+  it('does not shows explain section when showExplain is false', async () => {
+    const query = {
+      labels: [{ label: 'foo', op: '=', value: 'bar' }],
+      operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
+    };
+    const props = createDefaultProps();
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+
+    render(<LokiQueryBuilder {...props} query={query} />);
+    await waitFor(() => {
+      expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
     });
   });
 });
