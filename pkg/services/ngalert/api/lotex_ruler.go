@@ -7,9 +7,10 @@ import (
 	"net/url"
 	"strconv"
 
+	"gopkg.in/yaml.v3"
+
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
-	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -178,7 +179,7 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error) {
 	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
 	if err != nil {
-		return "", fmt.Errorf("recipient is invalid")
+		return "", errInvalidRecipientFormat
 	}
 
 	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
