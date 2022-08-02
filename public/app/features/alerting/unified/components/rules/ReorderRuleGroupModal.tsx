@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { compact } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 import {
   DragDropContext,
@@ -32,12 +33,14 @@ type CombinedRuleWithUID = { uid: string } & CombinedRule;
 
 export const ReorderCloudGroupModal: FC<ModalProps> = (props) => {
   const { group, namespace, onClose } = props;
+  const [pending, setPending] = useState<boolean>(false);
   const [rulesList, setRulesList] = useState<CombinedRule[]>(group.rules);
 
   const styles = useStyles2(getStyles);
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
+      // check for no-ops so we don't update the group unless we have changes
       if (!result.destination) {
         return;
       }
@@ -48,19 +51,27 @@ export const ReorderCloudGroupModal: FC<ModalProps> = (props) => {
       }
 
       const newOrderedRules = reorder(rulesList, result.source.index, result.destination.index);
-      setRulesList(newOrderedRules);
+      setRulesList(newOrderedRules); // optimistically update the new rules list
 
+      // the rulesSource is sometimes a string (for Grafana managed) or a rulesSource object
       const rulesSourceName =
         typeof namespace.rulesSource === 'string' ? namespace.rulesSource : namespace.rulesSource.name;
 
+      const rulerRules = compact(newOrderedRules.map((rule) => rule.rulerRule));
+
+      setPending(true);
       dispatch(
         updateRulesOrder({
           namespaceName: namespace.name,
           groupName: group.name,
           rulesSourceName: rulesSourceName,
-          newRules: newOrderedRules.map((rule) => rule.rulerRule),
+          newRules: rulerRules,
         })
-      );
+      )
+        .unwrap()
+        .finally(() => {
+          setPending(false);
+        });
     },
     [group.name, namespace.name, namespace.rulesSource, rulesList]
   );
@@ -90,11 +101,11 @@ export const ReorderCloudGroupModal: FC<ModalProps> = (props) => {
           {(droppableProvided: DroppableProvided) => (
             <div
               ref={droppableProvided.innerRef}
-              className={styles.listContainer}
+              className={cx(styles.listContainer, pending && styles.disabled)}
               {...droppableProvided.droppableProps}
             >
               {rulesWithUID.map((rule, index) => (
-                <Draggable key={rule.uid} draggableId={rule.uid} index={index}>
+                <Draggable key={rule.uid} draggableId={rule.uid} index={index} isDragDisabled={pending}>
                   {(provided: DraggableProvided) => <ListItem key={rule.uid} provided={provided} rule={rule} />}
                 </Draggable>
               ))}
@@ -187,7 +198,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   listContainer: css`
+    user-select: none;
     border: solid 1px ${theme.colors.border.medium};
+  `,
+  disabled: css`
+    opacity: 0.5;
+    pointer-events: none;
   `,
   listItemName: css`
     flex: 1;
@@ -208,7 +224,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-function reorder<T>(rules: T[], startIndex: number, endIndex: number): T[] {
+export function reorder<T>(rules: T[], startIndex: number, endIndex: number): T[] {
   const result = Array.from(rules);
   const [removed] = result.splice(startIndex, 1);
   result.splice(endIndex, 0, removed);
