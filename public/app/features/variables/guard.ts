@@ -28,14 +28,17 @@ import {
   DataSourceVariableModel,
 } from './types';
 
+/** @deprecated use a if (model.type === "query") type narrowing check instead */
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
   return model.type === 'query';
 };
 
+/** @deprecated use a if (model.type === "adhoc") type narrowing check instead */
 export const isAdHoc = (model: VariableModel): model is AdHocVariableModel => {
   return model.type === 'adhoc';
 };
 
+/** @deprecated use a if (model.type === "constant") type narrowing check instead */
 export const isConstant = (model: VariableModel): model is ConstantVariableModel => {
   return model.type === 'constant';
 };

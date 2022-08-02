@@ -51,7 +51,7 @@ import {
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
 } from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
-import { VariableHide } from '../../variables/types';
+import { ConstantVariableModel, TextBoxVariableModel, VariableHide } from '../../variables/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -621,18 +621,27 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 27) {
-      for (const variable of this.dashboard.templating.list) {
+      this.dashboard.templating.list = this.dashboard.templating.list.map((variable) => {
         if (!isConstant(variable)) {
-          continue;
+          return variable;
         }
 
-        if (variable.hide === VariableHide.dontHide || variable.hide === VariableHide.hideLabel) {
-          variable.type = 'textbox';
+        const newVariable: ConstantVariableModel | TextBoxVariableModel = {
+          ...variable,
+        };
+
+        newVariable.current = { selected: true, text: newVariable.query ?? '', value: newVariable.query ?? '' };
+        newVariable.options = [newVariable.current];
+
+        if (newVariable.hide === VariableHide.dontHide || newVariable.hide === VariableHide.hideLabel) {
+          return {
+            ...newVariable,
+            type: 'textbox',
+          };
         }
 
-        variable.current = { selected: true, text: variable.query ?? '', value: variable.query ?? '' };
-        variable.options = [variable.current];
-      }
+        return newVariable;
+      });
     }
 
     if (oldVersion < 28) {
