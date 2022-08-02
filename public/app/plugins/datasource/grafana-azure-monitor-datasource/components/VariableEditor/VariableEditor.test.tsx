@@ -104,7 +104,6 @@ describe('VariableEditor:', () => {
       render(<VariableEditor {...ARGqueryProps()} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       expect(screen.queryByLabelText('Subscriptions')).toBeInTheDocument();
-      expect(screen.queryByText('Azure Resource Graph')).toBeInTheDocument();
       expect(screen.queryByLabelText('Select subscription')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Select query type')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Select resource group')).not.toBeInTheDocument();
