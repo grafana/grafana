@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -82,7 +81,7 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 					loadedRulesByUID[rule.UID] = rule
 				}
 				if existing == nil {
-					return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, ngmodels.ErrAlertRuleNotFound)
+					return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, models.ErrAlertRuleNotFound)
 				}
 				affectedGroups[existing.GetGroupKey()] = q.Result
 			}
