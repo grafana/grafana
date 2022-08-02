@@ -200,47 +200,47 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	}
 
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		inserts := make([]models.AlertRule, 0, len(delta.New))
-		for _, insert := range delta.New {
-			if insert != nil {
-				inserts = append(inserts, *insert)
-			}
-		}
-		if _, err := service.ruleStore.InsertAlertRules(ctx, inserts); err != nil {
+		if _, err := service.ruleStore.InsertAlertRules(ctx, dropNilAlertRules(delta.New)); err != nil {
 			return fmt.Errorf("failed to insert alert rules: %w", err)
+		}
+		for _, create := range delta.New {
+			if err := service.provenanceStore.SetProvenance(ctx, create, orgID, provenance); err != nil {
+				return err
+			}
 		}
 
 		updates := make([]store.UpdateRule, 0, len(delta.Update))
 		for _, update := range delta.Update {
-			if update.New != nil {
-				// check that provenance is not changed in a invalid way
-				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, orgID)
-				if err != nil {
-					return err
-				}
-				if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
-				}
-				updates = append(updates, store.UpdateRule{
-					Existing: update.Existing,
-					New:      *update.New,
-				})
+			// check that provenance is not changed in a invalid way
+			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, orgID)
+			if err != nil {
+				return err
 			}
+			if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+			}
+			updates = append(updates, store.UpdateRule{
+				Existing: update.Existing,
+				New:      *update.New,
+			})
 		}
 		if err = service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
 			return fmt.Errorf("failed to update alert rules: %w", err)
 		}
+		for _, update := range delta.Update {
+			if err := service.provenanceStore.SetProvenance(ctx, update.New, orgID, provenance); err != nil {
+				return err
+			}
+		}
 
 		for _, delete := range delta.Delete {
-			if delete != nil {
-				// check that provenance is not changed in a invalid way
-				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, delete, orgID)
-				if err != nil {
-					return err
-				}
-				if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
-				}
+			// check that provenance is not changed in a invalid way
+			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, delete, orgID)
+			if err != nil {
+				return err
+			}
+			if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 			}
 		}
 		if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
@@ -249,18 +249,6 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 
 		if err = service.checkLimitsTransactionCtx(ctx, orgID, userID); err != nil {
 			return err
-		}
-
-		// Set provenances for all affected rules.
-		for _, update := range delta.Update {
-			if err := service.provenanceStore.SetProvenance(ctx, update.New, orgID, provenance); err != nil {
-				return err
-			}
-		}
-		for _, create := range delta.New {
-			if err := service.provenanceStore.SetProvenance(ctx, create, orgID, provenance); err != nil {
-				return err
-			}
 		}
 
 		return nil
@@ -368,4 +356,12 @@ func syncGroupRuleFields(group *definitions.AlertRuleGroup, orgID int64) *defini
 		}
 	}
 	return group
+}
+
+func dropNilAlertRules(ptrs []*models.AlertRule) []models.AlertRule {
+	result := make([]models.AlertRule, 0, len(ptrs))
+	for _, ptr := range ptrs {
+		result = append(result, *ptr)
+	}
+	return result
 }
