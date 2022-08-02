@@ -26,7 +26,9 @@ export interface TimeRangeInputProps {
   hideTimeZone?: boolean;
   placeholder?: string;
   clearable?: boolean;
+  /** Controls horizontal alignment of the picker menu */
   isReversed?: boolean;
+  /** Controls visibility of the preset time ranges (e.g. **Last 5 minutes**) in the picker menu */
   hideQuickRanges?: boolean;
   disabled?: boolean;
 }
@@ -83,7 +85,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
         onClick={onOpen}
       >
         {isValidTimeRange(value) ? (
-          <TimePickerButtonLabel value={value as TimeRange} timeZone={timeZone} />
+          <TimePickerButtonLabel value={value} timeZone={timeZone} />
         ) : (
           <span className={styles.placeholder}>{placeholder}</span>
         )}
@@ -101,7 +103,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <TimePickerContent
             timeZone={timeZone}
-            value={isValidTimeRange(value) ? (value as TimeRange) : getDefaultTimeRange()}
+            value={isValidTimeRange(value) ? value : getDefaultTimeRange()}
             onChange={onRangeChange}
             quickOptions={quickOptions}
             onChangeTimeZone={onChangeTimeZone}
