@@ -74,6 +74,7 @@ interface Props extends Themeable2 {
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickSearchSelected?: (value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
@@ -289,6 +290,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
+      onClickSearchSelected,
       timeZone,
       scanning,
       scanRange,
@@ -441,6 +443,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               getRowContext={this.props.getRowContext}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
+              onClickSearchSelected={onClickSearchSelected}
               showContextToggle={showContextToggle}
               showLabels={showLabels}
               showTime={showTime}

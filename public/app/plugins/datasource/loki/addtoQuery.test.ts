@@ -1,4 +1,10 @@
-import { addLabelFormatToQuery, addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
+import {
+  addLabelFormatToQuery,
+  addLabelToQuery,
+  addNoPipelineErrorToQuery,
+  addParserToQuery,
+  replaceLineFiltersInQuery,
+} from './addToQuery';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {
@@ -230,6 +236,30 @@ describe('addLabelFormatToQuery', () => {
       )
     ).toBe(
       'rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m]) + rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m])'
+    );
+  });
+});
+
+describe('replaceLineFiltersInQuery', () => {
+  it('should add line filter after labels if no existing line filter', () => {
+    expect(replaceLineFiltersInQuery('{job="grafana"}', 'replacement')).toBe('{job="grafana"} |= `replacement`');
+  });
+
+  it('should replace existing line filters', () => {
+    expect(replaceLineFiltersInQuery('{job="grafana"} |= "foo" |= "bar"', 'replacement')).toBe(
+      '{job="grafana"} |= `replacement`'
+    );
+  });
+
+  it('should not change pipeline if no existing line filter', () => {
+    expect(replaceLineFiltersInQuery('{job="grafana"} | logfmt', 'replacement')).toBe(
+      '{job="grafana"} |= `replacement` | logfmt'
+    );
+  });
+
+  it('should not change pipeline if line filters exists', () => {
+    expect(replaceLineFiltersInQuery('{job="grafana"} |="no parser" | logfmt', 'replacement')).toBe(
+      '{job="grafana"} |= `replacement` | logfmt'
     );
   });
 });

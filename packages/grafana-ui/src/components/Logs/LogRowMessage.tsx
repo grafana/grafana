@@ -33,6 +33,7 @@ interface Props extends Themeable2 {
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
   updateLimit?: () => void;
+  onClickSearchSelected?: (value: string) => void;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -102,6 +103,21 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     this.props.onToggleContext();
   };
 
+  onSearchSelected = (e: React.SyntheticEvent<HTMLElement>) => {
+    const text = window.getSelection()?.toString() || '';
+    if (!text.length) {
+      return;
+    }
+    const { onClickSearchSelected, contextIsOpen, onToggleContext } = this.props;
+    if (!onClickSearchSelected) {
+      return;
+    }
+    if (contextIsOpen) {
+      onToggleContext();
+    }
+    onClickSearchSelected(text);
+  };
+
   render() {
     const {
       row,
@@ -115,12 +131,14 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       wrapLogMessage,
       prettifyLogMessage,
       onToggleContext,
+      onClickSearchSelected,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const styles = getStyles(theme);
+    const hasSearchSelectedSupport = window.getSelection !== undefined && onClickSearchSelected !== undefined;
 
     return (
       // When context is open, the position has to be NOT relative.
@@ -153,6 +171,15 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
               className={cx('log-row-context', style.context, { [styles.contextNewline]: !wrapLogMessage })}
             >
               {contextIsOpen ? 'Hide' : 'Show'} context
+            </span>
+          )}
+          {hasSearchSelectedSupport && (
+            <span
+              onMouseDown={this.onSearchSelected}
+              onClick={(e) => e.stopPropagation()}
+              className={cx('log-row-context', style.context, { [styles.contextNewline]: !wrapLogMessage })}
+            >
+              Search selected
             </span>
           )}
         </div>

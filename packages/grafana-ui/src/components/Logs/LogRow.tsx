@@ -49,6 +49,7 @@ interface Props extends Themeable2 {
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickSearchSelected?: (value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
@@ -129,6 +130,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getRows,
       onClickFilterLabel,
       onClickFilterOutLabel,
+      onClickSearchSelected,
       onClickShowDetectedField,
       onClickHideDetectedField,
       enableLogDetails,
@@ -213,6 +215,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
+              onClickSearchSelected={onClickSearchSelected}
             />
           )}
         </tr>

@@ -157,6 +157,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
   };
 
+  onClickSearchSelected = (value: string) => {
+    this.onModifyQueries({ type: 'REPLACE_LINE_FILTERS', options: { key: '', value } });
+  };
+
   onClickAddQueryRowButton = () => {
     const { exploreId, queryKeys, datasourceInstance } = this.props;
     this.props.addQueryRow(exploreId, queryKeys.length, datasourceInstance);
@@ -263,7 +267,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsPanel(width: number) {
-    const { exploreId, syncedTimes, theme, queryResponse } = this.props;
+    const { exploreId, syncedTimes, theme, queryResponse, datasourceInstance } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <LogsContainer
@@ -273,6 +277,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         width={width - spacing}
         onClickFilterLabel={this.onClickFilterLabel}
         onClickFilterOutLabel={this.onClickFilterOutLabel}
+        onClickSearchSelected={
+          datasourceInstance && datasourceInstance?.type === 'loki' ? this.onClickSearchSelected : undefined
+        }
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
       />

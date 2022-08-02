@@ -79,6 +79,26 @@ export function addNoPipelineErrorToQuery(query: string): string {
 }
 
 /**
+ * Replace all line filters in existing query.
+ *
+ * @param query
+ */
+export function replaceLineFiltersInQuery(query: string, replacement: string): string {
+  const newLineFilter = `|= \`${replacement}\``;
+  const lineFiltersPositions = getLineFiltersPositions(query);
+  if (lineFiltersPositions.length > 0) {
+    return `${query.substring(0, lineFiltersPositions[0].from)}${newLineFilter}${query.substring(
+      lineFiltersPositions[lineFiltersPositions.length - 1].to
+    )}`;
+  }
+  const pipePositions = getPipePositions(query);
+  if (!pipePositions.length) {
+    return `${query} ${newLineFilter}`;
+  }
+  return `${query.substring(0, pipePositions[0].from)}${newLineFilter} ${query.substring(pipePositions[0].from)}`;
+}
+
+/**
  * Adds label format to existing query. Useful for query modification for hints.
  * It uses LogQL parser to find log query and add label format at the end.
  *
@@ -88,6 +108,25 @@ export function addNoPipelineErrorToQuery(query: string): string {
 export function addLabelFormatToQuery(query: string, labelFormat: { originalLabel: string; renameTo: string }): string {
   const logQueryPositions = getLogQueryPositions(query);
   return addLabelFormat(query, logQueryPositions, labelFormat);
+}
+
+/**
+ * Parse the string and get all Pipe positions in the query together with parsed representation of the
+ * selector.
+ * @param query
+ */
+function getPipePositions(query: string): Position[] {
+  const tree = parser.parse(query);
+  const positions: Position[] = [];
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'Pipe') {
+        positions.push({ from, to });
+        return false;
+      }
+    },
+  });
+  return positions;
 }
 
 /**

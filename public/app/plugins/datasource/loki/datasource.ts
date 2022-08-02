@@ -44,7 +44,13 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
-import { addLabelFormatToQuery, addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
+import {
+  addLabelFormatToQuery,
+  addLabelToQuery,
+  addNoPipelineErrorToQuery,
+  addParserToQuery,
+  replaceLineFiltersInQuery,
+} from './addToQuery';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import LanguageProvider from './language_provider';
@@ -410,6 +416,12 @@ export class LokiDatasource
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
           expression = this.addLabelToQuery(expression, action.options.key, '!=', action.options.value);
+        }
+        break;
+      }
+      case 'REPLACE_LINE_FILTERS': {
+        if (action.options?.value) {
+          expression = replaceLineFiltersInQuery(expression, action.options?.value);
         }
         break;
       }

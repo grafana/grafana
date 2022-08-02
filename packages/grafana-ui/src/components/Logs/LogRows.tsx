@@ -30,6 +30,7 @@ export interface Props extends Themeable2 {
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickSearchSelected?: (value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   onClickShowDetectedField?: (key: string) => void;
@@ -92,6 +93,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       timeZone,
       onClickFilterLabel,
       onClickFilterOutLabel,
+      onClickSearchSelected,
       theme,
       enableLogDetails,
       previewLimit,
@@ -142,6 +144,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickSearchSelected={onClickSearchSelected}
                 onClickShowDetectedField={onClickShowDetectedField}
                 onClickHideDetectedField={onClickHideDetectedField}
                 getFieldLinks={getFieldLinks}
@@ -169,6 +172,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickSearchSelected={onClickSearchSelected}
                 onClickShowDetectedField={onClickShowDetectedField}
                 onClickHideDetectedField={onClickHideDetectedField}
                 getFieldLinks={getFieldLinks}

@@ -33,6 +33,7 @@ interface LogsContainerProps extends PropsFromRedux {
   loadingState: LoadingState;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickSearchSelected?: (value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
 }
@@ -85,6 +86,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       loadLogsVolumeData,
       onClickFilterLabel,
       onClickFilterOutLabel,
+      onClickSearchSelected,
       onStartScanning,
       onStopScanning,
       absoluteRange,
@@ -150,6 +152,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
               onChangeTime={this.onChangeTime}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
+              onClickSearchSelected={onClickSearchSelected}
               onStartScanning={onStartScanning}
               onStopScanning={onStopScanning}
               absoluteRange={absoluteRange}
