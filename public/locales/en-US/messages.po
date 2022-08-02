@@ -669,8 +669,12 @@ msgid "time-range.list.aria-role-description"
 msgstr "Time range selection"
 
 #: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
-msgid "time-range.list.empty-recent"
-msgstr "<0><1>It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.</1></0>        <2><3>Read the documentation</3><4> to find out more about how to enter custom time ranges.</4></2>"
+msgid "time-range.list.empty-first-message"
+msgstr "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here."
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "time-range.list.empty-second-message"
+msgstr "<0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1>"
 
 #: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
 msgid "time-range.list.title"

@@ -667,7 +667,11 @@ msgid "time-range.list.aria-role-description"
 msgstr ""
 
 #: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
-msgid "time-range.list.empty-recent"
+msgid "time-range.list.empty-first-message"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "time-range.list.empty-second-message"
 msgstr ""
 
 #: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
