@@ -37,7 +37,7 @@ describe('sharedReducer', () => {
     it('then state should be correct', () => {
       const model: any = {
         name: 'name from model',
-        type: 'type from model',
+        type: 'query',
         current: undefined,
       };
 
@@ -47,7 +47,7 @@ describe('sharedReducer', () => {
         global: true,
         index: 0,
         name: 'name from model',
-        type: 'type from model' as unknown as VariableType,
+        type: 'query',
         current: {} as unknown as VariableOption,
       };
 
