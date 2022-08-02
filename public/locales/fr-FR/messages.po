@@ -5,13 +5,14 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
-"Language: fr\n"
+"Language: fr-FR\n"
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Plural-Forms: \n"
+"X-Crowdin-SourceKey: msgstr\n"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "common.locale.default"
@@ -707,7 +708,7 @@ msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "user-profile.title"
-msgstr "Editer le profil"
+msgstr ""
 
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-session.browser-column"
