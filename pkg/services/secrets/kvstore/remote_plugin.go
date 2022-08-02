@@ -2,13 +2,18 @@ package kvstore
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	smp "github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -162,4 +167,46 @@ func updateFatalFlag(ctx context.Context, skv secretsKVStorePlugin) {
 
 func wrapUserFriendlySecretError(ufe string) datasources.ErrDatasourceSecretsPluginUserFriendly {
 	return datasources.ErrDatasourceSecretsPluginUserFriendly{Err: ufe}
+}
+
+func GetNamespacedKVStore(kv kvstore.KVStore) *kvstore.NamespacedKVStore {
+	return kvstore.WithNamespace(kv, kvstore.AllOrganizations, PluginNamespace)
+}
+
+func isPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
+	_, exists, err := kvstore.Get(ctx, QuitOnPluginStartupFailureKey)
+	if err != nil {
+		return false, errors.New(fmt.Sprint("error retrieving key ", QuitOnPluginStartupFailureKey, " from kvstore. error: ", err.Error()))
+	}
+	return exists, nil
+}
+
+func setPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore, isFatal bool) error {
+	if !isFatal {
+		return kvstore.Del(ctx, QuitOnPluginStartupFailureKey)
+	}
+	return kvstore.Set(ctx, QuitOnPluginStartupFailureKey, "true")
+}
+
+func shouldUseRemoteSecretsPlugin(mg plugins.SecretsPluginManager, cfg *setting.Cfg) bool {
+	usePlugin := cfg.SectionWithEnvOverrides("secrets").Key("use_plugin").MustBool()
+	if !usePlugin {
+		logger.Debug("remote secret managements plugin disabled because the property `secrets.use_plugin` is not set to `true`")
+		return false
+	}
+	pluginInstalled := mg.SecretsManager() != nil
+	if !pluginInstalled {
+		logger.Debug("remote secret managements plugin disabled because there is no installed plugin of type `secretsmanager`")
+		return false
+	}
+	return true
+}
+
+func startAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) (secretsmanagerplugin.SecretsManagerPlugin, error) {
+	err := mg.SecretsManager().Start(ctx)
+	if err != nil {
+		logger.Error("failed to start remote secrets management plugin", "msg", err.Error())
+		return nil, err
+	}
+	return mg.SecretsManager().SecretsManager, nil
 }

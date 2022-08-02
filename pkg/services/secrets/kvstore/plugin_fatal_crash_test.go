@@ -80,25 +80,21 @@ func TestFatalPluginErr_MigrationTestWithErrorDeletingUnifiedSecrets(t *testing.
 
 func setupFatalCrashTest(
 	t *testing.T,
-	shouldRemoteCheckError bool,
+	shouldFailOnStart bool,
 	isPluginErrorFatal bool,
 	isBackwardsCompatDisabled bool,
 ) (SecretsKVStore, kvstore.KVStore, *sqlstore.SQLStore, error) {
 	t.Helper()
+	cfg := setupTestConfig(t)
 	sqlStore := sqlstore.InitTestDB(t)
 	secretService := fakes.FakeSecretsService{}
-	var remoteCheck *mockRemoteSecretsPluginCheck
-	if shouldRemoteCheckError {
-		remoteCheck = provideMockRemotePluginCheckWithErr()
-	} else {
-		remoteCheck = provideMockRemotePluginCheck()
-	}
 	kvstore := kvstore.ProvideService(sqlStore)
 	if isPluginErrorFatal {
 		_ = setPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(kvstore), true)
 	}
 	features := NewFakeFeatureToggles(t, isBackwardsCompatDisabled)
-	svc, err := ProvideService(sqlStore, secretService, remoteCheck, kvstore, features)
+	manager := NewFakeSecretsPluginManager(t, shouldFailOnStart)
+	svc, err := ProvideService(sqlStore, secretService, manager, kvstore, features, cfg)
 	t.Cleanup(func() {
 		fatalFlagOnce = sync.Once{}
 	})
@@ -112,15 +108,7 @@ func setupTestMigratorServiceWithDeletionError(
 	kvstore kvstore.KVStore,
 ) *PluginSecretMigrationService {
 	t.Helper()
-	rawCfg := `
-		[secrets]
-		use_plugin = true
-		migrate_to_plugin = true
-		`
-	raw, err := ini.Load([]byte(rawCfg))
-	require.NoError(t, err)
-	cfg := &setting.Cfg{Raw: raw}
-	remoteCheck := provideMockRemotePluginCheck()
+	cfg := setupTestConfig(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	getAllFuncOverride := func(ctx context.Context) ([]Item, error) {
 		items := make([]Item, 0)
@@ -140,10 +128,21 @@ func setupTestMigratorServiceWithDeletionError(
 		cfg,
 		sqlStore,
 		secretsService,
-		remoteCheck,
 		kvstore,
 	)
 	// TODO refactor Migrator to allow us to override the entire sqlstore with a mock instead
 	migratorService.overrideGetAllFunc(getAllFuncOverride)
 	return migratorService
+}
+
+func setupTestConfig(t *testing.T) *setting.Cfg {
+	t.Helper()
+	rawCfg := `
+		[secrets]
+		use_plugin = true
+		migrate_to_plugin = true
+		`
+	raw, err := ini.Load([]byte(rawCfg))
+	require.NoError(t, err)
+	return &setting.Cfg{Raw: raw}
 }

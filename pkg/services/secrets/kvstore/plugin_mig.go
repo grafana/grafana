@@ -18,7 +18,6 @@ type PluginSecretMigrationService struct {
 	logger         log.Logger
 	sqlStore       sqlstore.Store
 	secretsService secrets.Service
-	remoteCheck    UseRemoteSecretsPluginCheck
 	kvstore        kvstore.KVStore
 	getAllFunc     func(ctx context.Context) ([]Item, error)
 }
@@ -28,7 +27,6 @@ func ProvidePluginSecretMigrationService(
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
-	remoteCheck UseRemoteSecretsPluginCheck,
 	kvstore kvstore.KVStore,
 ) *PluginSecretMigrationService {
 	return &PluginSecretMigrationService{
@@ -37,14 +35,13 @@ func ProvidePluginSecretMigrationService(
 		logger:         log.New("sec-plugin-mig"),
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
-		remoteCheck:    remoteCheck,
 		kvstore:        kvstore,
 	}
 }
 
 func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 	// Check if we should migrate to plugin - default false
-	if s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_to_plugin").MustBool(false) && s.remoteCheck.ShouldUseRemoteSecretsPlugin() {
+	if s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_to_plugin").MustBool(false) {
 		s.logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
 		// the secrets store would be the plugin.

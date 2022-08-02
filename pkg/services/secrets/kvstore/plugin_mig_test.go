@@ -77,8 +77,6 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 	cfg := &setting.Cfg{Raw: raw}
 	// this would be the plugin - mocked at the moment
 	secretsStoreForPlugin := NewFakeSecretsKVStore()
-	// Mocked remote plugin check, always return true
-	remoteCheck := provideMockRemotePluginCheck()
 
 	// this is to init the sql secret store inside the migration
 	sqlStore := sqlstore.InitTestDB(t)
@@ -88,7 +86,6 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 		cfg,
 		sqlStore,
 		secretsService,
-		remoteCheck,
 		kvstore.ProvideService(sqlStore),
 	)
 

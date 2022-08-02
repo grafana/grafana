@@ -2,15 +2,15 @@ package kvstore
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -18,15 +18,17 @@ const (
 	AllOrganizations = -1
 )
 
+var logger = log.New("secrets.kvstore")
+
 func ProvideService(
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
-	remoteCheck UseRemoteSecretsPluginCheck,
+	pluginsManager plugins.SecretsPluginManager,
 	kvstore kvstore.KVStore,
 	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 ) (SecretsKVStore, error) {
 	var store SecretsKVStore
-	logger := log.New("secrets.kvstore")
 	store = &secretsKVStoreSQL{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
@@ -35,9 +37,9 @@ func ProvideService(
 			cache: make(map[int64]cachedDecrypted),
 		},
 	}
-	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
+	if shouldUseRemoteSecretsPlugin(pluginsManager, cfg) {
 		// Attempt to start the plugin
-		secretsPlugin, err := remoteCheck.StartAndReturnPlugin(context.Background())
+		secretsPlugin, err := startAndReturnPlugin(pluginsManager, context.Background())
 		namespacedKVStore := GetNamespacedKVStore(kvstore)
 		if err != nil || secretsPlugin == nil {
 			if isFatal, err2 := isPluginStartupErrorFatal(context.Background(), namespacedKVStore); isFatal || err2 != nil {
@@ -116,24 +118,4 @@ func (kv *FixedKVStore) Rename(ctx context.Context, newNamespace string) error {
 	}
 	kv.Namespace = newNamespace
 	return nil
-}
-
-// Helpers to determine whether plugin startup failures are fatal to the app
-func GetNamespacedKVStore(kv kvstore.KVStore) *kvstore.NamespacedKVStore {
-	return kvstore.WithNamespace(kv, kvstore.AllOrganizations, PluginNamespace)
-}
-
-func isPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
-	_, exists, err := kvstore.Get(ctx, QuitOnPluginStartupFailureKey)
-	if err != nil {
-		return false, errors.New(fmt.Sprint("error retrieving key ", QuitOnPluginStartupFailureKey, " from kvstore. error: ", err.Error()))
-	}
-	return exists, nil
-}
-
-func setPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore, isFatal bool) error {
-	if !isFatal {
-		return kvstore.Del(ctx, QuitOnPluginStartupFailureKey)
-	}
-	return kvstore.Set(ctx, QuitOnPluginStartupFailureKey, "true")
 }
