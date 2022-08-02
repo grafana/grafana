@@ -25,6 +25,7 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,7 +57,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		)
 		hs.authInfoService = srv
 
-		createUserCmd := models.CreateUserCommand{
+		createUserCmd := user.CreateUserCommand{
 			Email:   fmt.Sprint("user", "@test.com"),
 			Name:    "user",
 			Login:   "loginuser",
@@ -75,9 +76,10 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		idToken := "testidtoken"
 		token = token.WithExtra(map[string]interface{}{"id_token": idToken})
-		query := &models.GetUserByAuthInfoQuery{Login: "loginuser", AuthModule: "test", AuthId: "test"}
+		login := "loginuser"
+		query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: models.UserLookupParams{Login: &login}}
 		cmd := &models.UpdateAuthInfoCommand{
-			UserId:     user.Id,
+			UserId:     user.ID,
 			AuthId:     query.AuthId,
 			AuthModule: query.AuthModule,
 			OAuthToken: token,
@@ -85,7 +87,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		err = srv.UpdateAuthInfo(context.Background(), cmd)
 		require.NoError(t, err)
 		avatarUrl := dtos.GetGravatarUrl("@test.com")
-		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", user.Id)}).exec()
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", user.ID)}).exec()
 
 		expected := models.UserProfileDTO{
 			Id:             1,
@@ -111,7 +113,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
-		createUserCmd := models.CreateUserCommand{
+		createUserCmd := user.CreateUserCommand{
 			Email:   fmt.Sprint("admin", "@test.com"),
 			Name:    "admin",
 			Login:   "admin",

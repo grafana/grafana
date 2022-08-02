@@ -1,3 +1,4 @@
+import { ComponentMeta } from '@storybook/react';
 import { merge } from 'lodash';
 import React, { CSSProperties, useState } from 'react';
 import { useInterval } from 'react-use';
@@ -8,7 +9,7 @@ import { PanelChrome, useTheme, PanelChromeProps } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-export default {
+const meta: ComponentMeta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
   component: PanelChrome,
   decorators: [withCenteredStory],
@@ -103,3 +104,5 @@ export const Examples = () => {
     </div>
   );
 };
+
+export default meta;

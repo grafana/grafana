@@ -70,6 +70,8 @@ func TestRoundInterval(t *testing.T) {
 		interval time.Duration
 		expected time.Duration
 	}{
+		{"10ms", time.Millisecond * 10, time.Millisecond * 1},
+		{"15ms", time.Millisecond * 15, time.Millisecond * 10},
 		{"30ms", time.Millisecond * 30, time.Millisecond * 20},
 		{"45ms", time.Millisecond * 45, time.Millisecond * 50},
 	}

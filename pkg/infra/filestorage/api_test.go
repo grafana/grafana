@@ -100,6 +100,9 @@ func TestFilestorageApi_ValidatePath(t *testing.T) {
 		{
 			path: "/myFile/file.jpg",
 		},
+		{
+			path: "/file.jpg",
+		},
 	}
 	for _, tt := range tests {
 		if tt.expectedError == nil {

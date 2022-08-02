@@ -316,7 +316,12 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     xSorted: true,
     xTime: xField.type === FieldType.time,
     xMode: xBucketsCfg.mode,
-    xSize: durationToMilliseconds(parseDuration(xBucketsCfg.value ?? '')),
+    xSize:
+      xBucketsCfg.mode === HeatmapCalculationMode.Size
+        ? durationToMilliseconds(parseDuration(xBucketsCfg.value ?? ''))
+        : xBucketsCfg.value
+        ? +xBucketsCfg.value
+        : undefined,
     yMode: yBucketsCfg.mode,
     ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
     yLog: scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as any) : undefined,

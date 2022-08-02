@@ -58,7 +58,7 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 					"time_ms", int64(timeTaken),
 					"duration", duration,
 					"size", rw.Size(),
-					"referer", sanitizeURL(ctx, r.Referer()),
+					"referer", SanitizeURL(ctx, r.Referer()),
 				}
 
 				traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
@@ -76,7 +76,11 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 	}
 }
 
-func sanitizeURL(ctx *models.ReqContext, s string) string {
+var sensitiveQueryStrings = [...]string{
+	"auth_token",
+}
+
+func SanitizeURL(ctx *models.ReqContext, s string) string {
 	if s == "" {
 		return s
 	}
@@ -86,5 +90,13 @@ func sanitizeURL(ctx *models.ReqContext, s string) string {
 		ctx.Logger.Warn("Received invalid referer in request headers, removed for log forgery prevention")
 		return ""
 	}
+
+	// strip out sensitive query strings
+	values := u.Query()
+	for _, query := range sensitiveQueryStrings {
+		values.Del(query)
+	}
+	u.RawQuery = values.Encode()
+
 	return u.String()
 }

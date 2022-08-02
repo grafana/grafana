@@ -31,6 +31,7 @@ export enum PluginIconName {
   datasource = 'database',
   panel = 'credit-card',
   renderer = 'capture',
+  secretsmanager = 'key-skeleton-alt',
 }
 
 export interface CatalogPlugin {

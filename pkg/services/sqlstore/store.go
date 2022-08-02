@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Store interface {
@@ -26,7 +27,7 @@ type Store interface {
 	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
 	GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
-	CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error)
+	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error
 	GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error
 	GetUserByEmail(ctx context.Context, query *models.GetUserByEmailQuery) error
@@ -71,11 +72,17 @@ type Store interface {
 	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+	// deprecated
 	CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error
+	// deprecated
 	UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error
+	// deprecated
 	GetPlaylist(ctx context.Context, query *models.GetPlaylistByUidQuery) error
+	// deprecated
 	DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error
+	// deprecated
 	SearchPlaylists(ctx context.Context, query *models.GetPlaylistsQuery) error
+	// deprecated
 	GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error
 	GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error
 	GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error
@@ -120,6 +127,7 @@ type Store interface {
 	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
 	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
 	GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error)
+	UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error
 	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
 	CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error
 	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error

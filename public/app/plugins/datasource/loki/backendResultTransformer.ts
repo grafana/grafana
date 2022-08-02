@@ -28,7 +28,7 @@ function processStreamFrame(
 ): DataFrame {
   const custom: Record<string, string> = {
     ...frame.meta?.custom, // keep the original meta.custom
-    // used by logs_model
+    // used by logsModel
     lokiQueryStatKey: 'Summary: total bytes processed',
   };
 

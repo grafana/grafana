@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -94,7 +93,7 @@ func (f *FolderServiceImpl) GetFolderByID(ctx context.Context, user *models.Sign
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, models.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	return dashFolder, nil
@@ -111,7 +110,7 @@ func (f *FolderServiceImpl) GetFolderByUID(ctx context.Context, user *models.Sig
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, models.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	return dashFolder, nil
@@ -128,7 +127,7 @@ func (f *FolderServiceImpl) GetFolderByTitle(ctx context.Context, user *models.S
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, models.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	return dashFolder, nil
@@ -140,7 +139,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 
 	trimmedUID := strings.TrimSpace(uid)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
-		return nil, models.ErrFolderInvalidUID
+		return nil, dashboards.ErrFolderInvalidUID
 	}
 
 	dashFolder.SetUid(trimmedUID)
@@ -176,12 +175,20 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 
 	var permissionErr error
 	if !accesscontrol.IsDisabled(f.cfg) {
-		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, folder.Uid, []accesscontrol.SetResourcePermissionCommand{
-			{UserID: userID, Permission: models.PERMISSION_ADMIN.String()},
+		var permissions []accesscontrol.SetResourcePermissionCommand
+		if user.IsRealUser() && !user.IsAnonymous {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+				UserID: userID, Permission: models.PERMISSION_ADMIN.String(),
+			})
+		}
+
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
 		}...)
-	} else if f.cfg.EditorsCanAdmin {
+
+		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, folder.Uid, permissions...)
+	} else if f.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
 		permissionErr = f.MakeUserAdmin(ctx, orgID, userID, folder.Id, true)
 	}
 
@@ -199,9 +206,10 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 	}
 
 	dashFolder := query.Result
+	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
-		return models.ErrFolderNotFound
+		return dashboards.ErrFolderNotFound
 	}
 
 	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserId)
@@ -230,14 +238,16 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 	}
 	cmd.Result = folder
 
-	if err := f.bus.Publish(ctx, &events.FolderUpdated{
-		Timestamp: time.Now(),
-		Title:     folder.Title,
-		ID:        dash.Id,
-		UID:       dash.Uid,
-		OrgID:     orgID,
-	}); err != nil {
-		f.log.Error("failed to publish FolderUpdated event", "folder", folder.Title, "user", user.UserId, "error", err)
+	if currentTitle != folder.Title {
+		if err := f.bus.Publish(ctx, &events.FolderTitleUpdated{
+			Timestamp: folder.Updated,
+			Title:     folder.Title,
+			ID:        dash.Id,
+			UID:       dash.Uid,
+			OrgID:     orgID,
+		}); err != nil {
+			f.log.Error("failed to publish FolderTitleUpdated event", "folder", folder.Title, "user", user.UserId, "error", err)
+		}
 	}
 
 	return nil
@@ -254,7 +264,7 @@ func (f *FolderServiceImpl) DeleteFolder(ctx context.Context, user *models.Signe
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, models.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
@@ -271,32 +281,32 @@ func (f *FolderServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, user
 }
 
 func toFolderError(err error) error {
-	if errors.Is(err, models.ErrDashboardTitleEmpty) {
-		return models.ErrFolderTitleEmpty
+	if errors.Is(err, dashboards.ErrDashboardTitleEmpty) {
+		return dashboards.ErrFolderTitleEmpty
 	}
 
-	if errors.Is(err, models.ErrDashboardUpdateAccessDenied) {
-		return models.ErrFolderAccessDenied
+	if errors.Is(err, dashboards.ErrDashboardUpdateAccessDenied) {
+		return dashboards.ErrFolderAccessDenied
 	}
 
-	if errors.Is(err, models.ErrDashboardWithSameNameInFolderExists) {
-		return models.ErrFolderSameNameExists
+	if errors.Is(err, dashboards.ErrDashboardWithSameNameInFolderExists) {
+		return dashboards.ErrFolderSameNameExists
 	}
 
-	if errors.Is(err, models.ErrDashboardWithSameUIDExists) {
-		return models.ErrFolderWithSameUIDExists
+	if errors.Is(err, dashboards.ErrDashboardWithSameUIDExists) {
+		return dashboards.ErrFolderWithSameUIDExists
 	}
 
-	if errors.Is(err, models.ErrDashboardVersionMismatch) {
-		return models.ErrFolderVersionMismatch
+	if errors.Is(err, dashboards.ErrDashboardVersionMismatch) {
+		return dashboards.ErrFolderVersionMismatch
 	}
 
-	if errors.Is(err, models.ErrDashboardNotFound) {
-		return models.ErrFolderNotFound
+	if errors.Is(err, dashboards.ErrDashboardNotFound) {
+		return dashboards.ErrFolderNotFound
 	}
 
-	if errors.Is(err, models.ErrDashboardFailedGenerateUniqueUid) {
-		err = models.ErrFolderFailedGenerateUniqueUid
+	if errors.Is(err, dashboards.ErrDashboardFailedGenerateUniqueUid) {
+		err = dashboards.ErrFolderFailedGenerateUniqueUid
 	}
 
 	return err

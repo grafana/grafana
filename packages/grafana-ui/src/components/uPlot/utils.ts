@@ -286,7 +286,7 @@ export function preparePlotData2(
 
         if (v != null) {
           // v / accum will always be pos, so properly (re)sign by group stacking dir
-          stacked[i] = group.dir * (v / accum[i]);
+          stacked[i] = accum[i] === 0 ? 0 : group.dir * (v / accum[i]);
         }
       }
     }

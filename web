@@ -1,0 +1,20 @@
+# routing
+
+1. fill RouteRegister in registerRoutes()
+2. applyRoutes():
+    1. Middlewares & Static routes
+    2. register what is in RouteRegister
+    3. App plugin routes
+    4. 404 handler
+
+
+
+# qs
+
+- why auth -> index. spa?
+- kill / hide web.Context?
+- url parameters? get from http.Request?
+
+type Handler interface{
+    ServeHTTP(w http.ResponseWriter, r *http.Request) error
+}

@@ -52,6 +52,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   helpEnabled = false;
   profileEnabled = false;
   ldapEnabled = false;
+  jwtHeaderName = '';
+  jwtUrlLogin = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
   samlName = '';
@@ -83,6 +85,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     thumbnailsExist: boolean;
   } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
+  secretsManagerPluginEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
@@ -116,6 +119,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
+  unifiedAlerting = { minInterval: '' };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {
@@ -168,6 +172,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     }
 
     overrideFeatureTogglesFromUrl(this);
+
+    // Special feature toggle that impact theme/component looks
+    this.theme2.flags.topnav = this.featureToggles.topnav;
   }
 }
 

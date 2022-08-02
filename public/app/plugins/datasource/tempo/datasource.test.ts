@@ -25,6 +25,7 @@ import {
   getRateAlignedValues,
   makeApmRequest,
   makeTempoLink,
+  getFieldConfig,
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
@@ -77,9 +78,11 @@ describe('Tempo data source', () => {
       const queries = ds.interpolateVariablesInQueries([getQuery()], {
         interpolationVar: { text: text, value: text },
       });
-      expect(templateSrv.replace).toBeCalledTimes(5);
+      expect(templateSrv.replace).toBeCalledTimes(7);
       expect(queries[0].linkedQuery?.expr).toBe(text);
       expect(queries[0].query).toBe(text);
+      expect(queries[0].serviceName).toBe(text);
+      expect(queries[0].spanName).toBe(text);
       expect(queries[0].search).toBe(text);
       expect(queries[0].minDuration).toBe(text);
       expect(queries[0].maxDuration).toBe(text);
@@ -94,9 +97,11 @@ describe('Tempo data source', () => {
       const resp = ds.applyTemplateVariables(getQuery(), {
         interpolationVar: { text: text, value: text },
       });
-      expect(templateSrv.replace).toBeCalledTimes(5);
+      expect(templateSrv.replace).toBeCalledTimes(7);
       expect(resp.linkedQuery?.expr).toBe(text);
       expect(resp.query).toBe(text);
+      expect(resp.serviceName).toBe(text);
+      expect(resp.spanName).toBe(text);
       expect(resp.search).toBe(text);
       expect(resp.minDuration).toBe(text);
       expect(resp.maxDuration).toBe(text);
@@ -113,9 +118,9 @@ describe('Tempo data source', () => {
           { name: 'operationName', values: ['store.validateQueryTimeRange'] },
           { name: 'startTime', values: [1619712655875.4539] },
           { name: 'duration', values: [14.984] },
-          { name: 'serviceTags', values: ['{"key":"servicetag1","value":"service"}'] },
-          { name: 'logs', values: ['{"timestamp":12345,"fields":[{"key":"count","value":1}]}'] },
-          { name: 'tags', values: ['{"key":"tag1","value":"val1"}'] },
+          { name: 'serviceTags', values: [{ key: 'servicetag1', value: 'service' }] },
+          { name: 'logs', values: [{ timestamp: 12345, fields: [{ key: 'count', value: 1 }] }] },
+          { name: 'tags', values: [{ key: 'tag1', value: 'val1' }] },
           { name: 'serviceName', values: ['service'] },
         ],
       })
@@ -482,6 +487,76 @@ describe('Tempo apm table', () => {
     expect(builtQuery).toBe('sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval]))');
   });
 
+  it('should get field config correctly', () => {
+    let datasourceUid = 's4Jvz8Qnk';
+    let tempoDatasourceUid = 'EbPO1fYnz';
+    let targetField = '__data.fields.target';
+    let tempoField = '__data.fields.target';
+    let sourceField = '__data.fields.source';
+
+    let fieldConfig = getFieldConfig(datasourceUid, tempoDatasourceUid, targetField, tempoField, sourceField);
+
+    let resultObj = {
+      links: [
+        {
+          url: '',
+          title: 'Request rate',
+          internal: {
+            query: {
+              expr: 'sum by (client, server)(rate(traces_service_graph_request_total{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval]))',
+              range: true,
+              exemplar: true,
+              instant: false,
+            },
+            datasourceUid: 's4Jvz8Qnk',
+            datasourceName: '',
+          },
+        },
+        {
+          url: '',
+          title: 'Request histogram',
+          internal: {
+            query: {
+              expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))',
+              range: true,
+              exemplar: true,
+              instant: false,
+            },
+            datasourceUid: 's4Jvz8Qnk',
+            datasourceName: '',
+          },
+        },
+        {
+          url: '',
+          title: 'Failed request rate',
+          internal: {
+            query: {
+              expr: 'sum by (client, server)(rate(traces_service_graph_request_failed_total{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval]))',
+              range: true,
+              exemplar: true,
+              instant: false,
+            },
+            datasourceUid: 's4Jvz8Qnk',
+            datasourceName: '',
+          },
+        },
+        {
+          url: '',
+          title: 'View traces',
+          internal: {
+            query: {
+              queryType: 'nativeSearch',
+              serviceName: '${__data.fields.target}',
+            },
+            datasourceUid: 'EbPO1fYnz',
+            datasourceName: '',
+          },
+        },
+      ],
+    };
+    expect(fieldConfig).toStrictEqual(resultObj);
+  });
+
   it('should get rate aligned values correctly', () => {
     const resp = [
       {
@@ -507,21 +582,18 @@ describe('Tempo apm table', () => {
     ];
     const objToAlign = {
       'HTTP GET - root': {
-        name: 'HTTP GET - root',
-        value: 0.2724936652307618,
+        value: 0.1234,
       },
       'HTTP GET': {
-        name: 'HTTP GET',
-        value: 0.2724936652307618,
+        value: 0.6789,
       },
       'HTTP POST - post': {
-        name: 'HTTP POST - post',
-        value: 0.03697421858453128,
+        value: 0.4321,
       },
     };
 
     let value = getRateAlignedValues(resp, objToAlign as any);
-    expect(value.toString()).toBe('0,0.2724936652307618,0.2724936652307618,0,0.03697421858453128');
+    expect(value.toString()).toBe('0,0.6789,0.1234,0,0.4321');
   });
 
   it('should make apm request correctly', () => {
@@ -574,6 +646,14 @@ const backendSrvWithPrometheus = {
     }
     throw new Error('unexpected uid');
   },
+  getDataSourceSettingsByUid(uid: string) {
+    if (uid === 'prom') {
+      return { name: 'Prometheus' };
+    } else if (uid === 'gdev-tempo') {
+      return { name: 'Tempo' };
+    }
+    return '';
+  },
 };
 
 function setupBackendSrv(frame: DataFrame) {
@@ -594,7 +674,7 @@ function setupBackendSrv(frame: DataFrame) {
 
 const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
-  uid: '0',
+  uid: 'gdev-tempo',
   type: 'tracing',
   name: 'tempo',
   access: 'proxy',
@@ -614,12 +694,12 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
 };
 
 const rateMetric = new MutableDataFrame({
-  refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
   fields: [
     { name: 'Time', values: [1653725618609, 1653725618609] },
     { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
     {
-      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
       values: [12.75164671814457, 12.121331111401608],
     },
   ],
@@ -773,7 +853,7 @@ const serviceGraphLinks = [
         queryType: 'nativeSearch',
         serviceName: '${__data.fields[0]}',
       } as TempoQuery,
-      datasourceUid: 'tempo',
+      datasourceUid: 'gdev-tempo',
       datasourceName: 'Tempo',
     },
   },

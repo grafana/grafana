@@ -10,12 +10,6 @@ weight: 30
 
 You can override a field when you want to change the display of the value in the visualization.
 
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
-
-**To add a field override**:
-
 1. Edit the panel to which you want to add an override.
 1. In the panel display options, in the **Overrides** section, click **Add field override**.
 

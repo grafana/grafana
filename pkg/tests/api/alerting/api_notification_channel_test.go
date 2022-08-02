@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -41,7 +42,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -75,7 +76,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -157,7 +158,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -234,7 +235,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -321,7 +322,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -434,7 +435,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -527,7 +528,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -615,7 +616,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -738,7 +739,7 @@ func TestNotificationChannels(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, models.CreateUserCommand{
+	createUser(t, env.SQLStore, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -2098,6 +2099,7 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recv1/slack_test_without_token": {
 		`{
 		  "channel": "#test-channel",
+          "text": "Integration Test [FIRING:1] SlackAlert1 (default)",
 		  "username": "Integration Test",
 		  "icon_emoji": "🚀",
 		  "icon_url": "https://awesomeemoji.com/rocket",
@@ -2127,6 +2129,7 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recvX/slack_testX": {
 		`{
 		  "channel": "#test-channel",
+          "text": "[FIRING:1] SlackAlert2 (default)",
 		  "username": "Integration Test",
 		  "attachments": [
 			{

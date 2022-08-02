@@ -7,7 +7,7 @@ import (
 
 // Typed errors
 var (
-	ErrTeamMemberAlreadyAdded = errors.New("User is already added to this team")
+	ErrTeamMemberAlreadyAdded = errors.New("user is already added to this team")
 )
 
 // TeamMember model
