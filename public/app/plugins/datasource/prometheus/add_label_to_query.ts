@@ -1,6 +1,6 @@
 import { parser } from 'lezer-promql';
 
-import { NodeTypeNameValue } from './components/monaco-query-field/monaco-completion-provider/situations/situation';
+import { NodeTypeNameValue } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PromQueryModeller } from './querybuilder/PromQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
