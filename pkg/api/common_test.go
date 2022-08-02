@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -168,6 +169,7 @@ type scenarioContext struct {
 	sqlStore                sqlstore.Store
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
+	userService             user.Service
 }
 
 func (sc *scenarioContext) exec() {
