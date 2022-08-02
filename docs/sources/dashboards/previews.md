@@ -17,7 +17,7 @@ weight: 9
 
 Dashboard previews provide an overview of all available dashboards. They help you quickly find the right dashboard when the dashboard names aren't enough on their own.
 
-> **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Data source permissions are not yet taken into the account when displaying the dashboard previews - refer to the [permissions]({{< relref "#preview-visibility">}}) to learn more before enabling the feature.
+> **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Data source permissions are taken into account from version 9.1+ - refer to the [permissions]({{< relref "#preview-visibility">}}) to learn more before enabling the feature.
 
 The dashboard previews feature is an opt-in feature that is disabled by default. You can view dashboard previews after an administrator enables the feature, and after you select the new grid layout. The feature-enablement procedure is outlined in the following section.
 
@@ -36,7 +36,7 @@ The dashboard previews feature is an opt-in feature that is disabled by default.
 enable = dashboardPreviews
 ```
 
-3. If running Grafana Enterprise with RBAC, enable [service accounts]({{< relref "../administration/service-accounts/" >}}).
+3. If running Grafana Enterprise, enable `panelTitleSearch` - TODO: rephrase, but SearchV2 feature is required for dashboard previews if running enterprise
 
 4. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
 
@@ -88,8 +88,9 @@ The crawler saves previews and their metadata in Grafana's DB. Preview's metadat
 
 The crawler is set up with the required permissions to display all dashboards and query all data sources. The way the permissions are set up depends on the version of Grafana.
 
-In OSS and Enterprise Grafana instances without RBAC enabled, the crawler uses a special user with an `Admin` role.
-In an Enterprise Grafana instance with RBAC enabled, the crawler uses [service accounts]({{< relref "../administration/service-accounts/" >}}) with three fixed roles:
+In OSS Grafana, the crawler uses a [service account]({{< relref "../administration/service-accounts/" >}}) with a `Admin` basic role.
+
+In Enterprise Grafana, the crawler uses a service account with a `Viewer` basic role, and three fixed roles:
 
 - `fixed:dashboards:reader`
 - `fixed:datasources:reader`
@@ -101,6 +102,9 @@ Service accounts are created per organization. They are visible in the service a
 
 ### Preview visibility
 
-Currently, users can see the previews of all dashboards they have access to. Data source permissions are not yet taken into account - users can see previews of dashboards with data sources they can't see or query.
+In OSS Grafana, users can see the previews of all dashboards they have access to.
 
-Data source permission check work is still ongoing - we will add it before moving the feature out of beta and announcing general availability.
+In Enterprise Grafana, users can see the dashboard's preview only when they have both the view permission to that dashboard, and the query permissions to all the data sources used in that dashboard.
+
+TODO: query variables
+TODO: datasource permissions === beta
