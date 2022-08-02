@@ -1,4 +1,4 @@
-import { startsWith, get, set } from 'lodash';
+import { get, set } from 'lodash';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -32,6 +32,50 @@ describe('AzureMonitorDatasource', () => {
       jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor' },
     } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+  });
+
+  describe('filterQuery', () => {
+    [
+      {
+        description: 'filter query all props',
+        query: createMockQuery(),
+        filtered: true,
+      },
+      {
+        description: 'filter query with no resourceGroup',
+        query: createMockQuery({ azureMonitor: { resourceGroup: undefined } }),
+        filtered: false,
+      },
+      {
+        description: 'filter query with no resourceName',
+        query: createMockQuery({ azureMonitor: { resourceName: undefined } }),
+        filtered: false,
+      },
+      {
+        description: 'filter query with no metricNamespace',
+        query: createMockQuery({ azureMonitor: { metricNamespace: undefined } }),
+        filtered: false,
+      },
+      {
+        description: 'filter query with no metricName',
+        query: createMockQuery({ azureMonitor: { metricName: undefined } }),
+        filtered: false,
+      },
+      {
+        description: 'filter query with no aggregation',
+        query: createMockQuery({ azureMonitor: { aggregation: undefined } }),
+        filtered: false,
+      },
+      {
+        description: 'filter hidden query',
+        query: createMockQuery({ hide: true }),
+        filtered: false,
+      },
+    ].forEach((t) => {
+      it(t.description, () => {
+        expect(ctx.ds.filterQuery(t.query)).toEqual(t.filtered);
+      });
+    });
   });
 
   describe('applyTemplateVariables', () => {
@@ -245,7 +289,6 @@ describe('AzureMonitorDatasource', () => {
 
     it('should return a query with any template variables replaced', () => {
       const templateableProps = [
-        'resourceUri',
         'resourceGroup',
         'resourceName',
         'metricNamespace',
@@ -399,16 +442,14 @@ describe('AzureMonitorDatasource', () => {
             },
             {
               name: 'storagetest',
-              type: 'Microsoft.Storage/storageAccounts',
+              type: 'microsoft.storage/storageaccounts',
             },
           ],
         };
 
         it('should return list of Resource Names', () => {
-          metricNamespace = 'Microsoft.Storage/storageAccounts/blobServices';
-          const validMetricNamespace = startsWith(metricNamespace, 'Microsoft.Storage/storageAccounts/')
-            ? 'Microsoft.Storage/storageAccounts'
-            : metricNamespace;
+          metricNamespace = 'microsoft.storage/storageaccounts/blobservices';
+          const validMetricNamespace = 'microsoft.storage/storageaccounts';
           ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
             const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
             expect(path).toBe(

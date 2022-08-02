@@ -29,8 +29,6 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
 
     azureMonitor: {
       // aggOptions: [],
-      resourceUri:
-        '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana',
       aggregation: 'Average',
       allowedTimeGrainsMs: [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
       // dimensionFilter: '*',

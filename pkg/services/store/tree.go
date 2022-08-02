@@ -89,15 +89,40 @@ func (t *nestedTree) GetFile(ctx context.Context, orgId int64, path string) (*fi
 	return store.Get(ctx, path)
 }
 
+func (t *nestedTree) getStorages(orgId int64) []storageRuntime {
+	globalStorages := make([]storageRuntime, 0)
+	globalStorages = append(globalStorages, t.rootsByOrgId[ac.GlobalOrgID]...)
+
+	if orgId == ac.GlobalOrgID {
+		return globalStorages
+	}
+
+	orgPrefixes := make(map[string]bool)
+	storages := make([]storageRuntime, 0)
+
+	for _, s := range t.rootsByOrgId[orgId] {
+		storages = append(storages, s)
+		orgPrefixes[s.Meta().Config.Prefix] = true
+	}
+
+	for _, s := range globalStorages {
+		// prefer org-specific storage over global with the same prefix
+		if ok := orgPrefixes[s.Meta().Config.Prefix]; !ok {
+			storages = append(storages, s)
+		}
+	}
+
+	return storages
+}
+
 func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter) (*StorageListFrame, error) {
 	if path == "" || path == "/" {
 		t.assureOrgIsInitialized(orgId)
 
 		idx := 0
-		count := len(t.rootsByOrgId[ac.GlobalOrgID])
-		if orgId != ac.GlobalOrgID {
-			count += len(t.rootsByOrgId[orgId])
-		}
+
+		storages := t.getStorages(orgId)
+		count := len(storages)
 
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		title := data.NewFieldFromFieldType(data.FieldTypeString, count)
@@ -107,23 +132,13 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		names.Name = nameListFrameField
 		descr.Name = descriptionListFrameField
 		mtype.Name = mediaTypeListFrameField
-		for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
+		for _, f := range storages {
 			meta := f.Meta()
 			names.Set(idx, meta.Config.Prefix)
 			title.Set(idx, meta.Config.Name)
 			descr.Set(idx, meta.Config.Description)
 			mtype.Set(idx, "directory")
 			idx++
-		}
-		if orgId != ac.GlobalOrgID {
-			for _, f := range t.rootsByOrgId[orgId] {
-				meta := f.Meta()
-				names.Set(idx, meta.Config.Prefix)
-				title.Set(idx, meta.Config.Name)
-				descr.Set(idx, meta.Config.Description)
-				mtype.Set(idx, "directory")
-				idx++
-			}
 		}
 
 		frame := data.NewFrame("", names, title, descr, mtype)
