@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
@@ -117,6 +118,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
+	store.quotaService = quotatest.NewQuotaServiceFake()
 
 	return store, mockStorage, storageName
 }
