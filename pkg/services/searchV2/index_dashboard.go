@@ -42,15 +42,16 @@ type dashboard struct {
 	info     *extract.DashboardInfo
 }
 
-func createDashboardIndex(ctx context.Context, orgID int64, writer *bluge.Writer, dashLoader dashboardLoader, extender DocumentExtender, folderIDs folderUIDLookup, batchSize int) (*dashboardIndex, error) {
+func createDashboardIndex(ctx context.Context, orgID int64, writer *bluge.Writer, dashLoader dashboardLoader, extender DocumentExtender, folderIDs folderUIDLookup, initialBatchSize int, reindexBatchSize int) (*dashboardIndex, error) {
 	i := &dashboardIndex{
-		orgID:          orgID,
-		loader:         dashLoader,
-		logger:         log.New("dashboardIndex"),
-		extender:       extender,
-		folderIdLookup: folderIDs,
-		writer:         writer,
-		batchSize:      batchSize,
+		orgID:            orgID,
+		loader:           dashLoader,
+		logger:           log.New("dashboardIndex"),
+		extender:         extender,
+		folderIdLookup:   folderIDs,
+		writer:           writer,
+		initialBatchSize: initialBatchSize,
+		reindexBatchSize: reindexBatchSize,
 	}
 	if i.writer == nil {
 		debugCtx, debugCtxCancel := context.WithCancel(ctx)
@@ -59,7 +60,7 @@ func createDashboardIndex(ctx context.Context, orgID int64, writer *bluge.Writer
 		}
 
 		started := time.Now()
-		err := i.ReIndex(ctx, true)
+		err := i.reIndex(ctx, true, true)
 		if err != nil {
 			debugCtxCancel()
 			return nil, err
@@ -78,14 +79,15 @@ func createDashboardIndex(ctx context.Context, orgID int64, writer *bluge.Writer
 }
 
 type dashboardIndex struct {
-	mu             sync.RWMutex
-	orgID          int64
-	writer         *bluge.Writer
-	loader         dashboardLoader
-	logger         log.Logger
-	extender       DocumentExtender
-	folderIdLookup folderUIDLookup
-	batchSize      int
+	mu               sync.RWMutex
+	orgID            int64
+	writer           *bluge.Writer
+	loader           dashboardLoader
+	logger           log.Logger
+	extender         DocumentExtender
+	folderIdLookup   folderUIDLookup
+	initialBatchSize int
+	reindexBatchSize int
 }
 
 func (i *dashboardIndex) Reader() (*bluge.Reader, func(), error) {
@@ -97,6 +99,10 @@ func (i *dashboardIndex) Reader() (*bluge.Reader, func(), error) {
 }
 
 func (i *dashboardIndex) ReIndex(ctx context.Context, force bool) error {
+	return i.reIndex(ctx, force, false)
+}
+
+func (i *dashboardIndex) reIndex(ctx context.Context, force bool, initial bool) error {
 	started := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
@@ -125,7 +131,11 @@ func (i *dashboardIndex) ReIndex(ctx context.Context, force bool) error {
 	}
 
 	dashboardExtender := i.extender.GetDashboardExtender(i.orgID)
-	writer, err := initDashboardWriter(dashboards, i.logger, dashboardExtender, i.batchSize)
+	batchSize := i.reindexBatchSize
+	if initial {
+		batchSize = i.initialBatchSize
+	}
+	writer, err := initDashboardWriter(dashboards, i.logger, dashboardExtender, batchSize)
 	if err != nil {
 		return fmt.Errorf("error initializing dashboard writer: %w", err)
 	}
