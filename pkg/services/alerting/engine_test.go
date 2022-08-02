@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -16,8 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 type FakeEvalHandler struct {
@@ -115,13 +115,20 @@ func (a *AlertStoreMock) PauseAllAlerts(context.Context, *models.PauseAllAlertCo
 
 func TestEngineProcessJob(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
+
+	encProvider := encryptionprovider.ProvideEncryptionProvider()
+	cfg := setting.NewCfg()
+	settings := &setting.OSSImpl{Cfg: cfg}
+
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, settings)
+	require.NoError(t, err)
 	tracer := tracing.InitializeTracerForTest()
 
 	store := &AlertStoreMock{}
 	dsMock := &fd.FakeDataSourceService{
 		DataSources: []*datasources.DataSource{{Id: 1, Type: datasources.DS_PROMETHEUS}},
 	}
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock)
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, encService, nil, tracer, store, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3

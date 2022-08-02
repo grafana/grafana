@@ -168,7 +168,6 @@ export interface GraphThresholdsStyleConfig {
 export type LegendPlacement = ('bottom' | 'right');
 
 export enum LegendDisplayMode {
-  Hidden = 'hidden',
   List = 'list',
   Table = 'table',
 }
@@ -289,6 +288,7 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
   placement: LegendPlacement;
+  showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
   width?: number;

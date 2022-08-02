@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/require"
@@ -28,6 +28,8 @@ func presenceComparer(a, b string) bool {
 }
 
 func TestPagerdutyNotifier(t *testing.T) {
+	encryptionService := encryptionservice.SetupTestService(t)
+
 	t.Run("empty settings should return error", func(t *testing.T) {
 		json := `{ }`
 
@@ -40,7 +42,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		_, err = NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 
@@ -56,7 +58,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 		require.Nil(t, err)
@@ -79,7 +81,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 		require.Nil(t, err)
@@ -106,7 +108,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 		require.Nil(t, err)
@@ -131,7 +133,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		require.Nil(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -188,7 +190,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		require.Nil(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -245,7 +247,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		require.Nil(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -315,7 +317,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		require.NoError(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -395,7 +397,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		require.NoError(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -474,7 +476,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewPagerdutyNotifier(model, encryptionService.GetDecryptedValue, nil)
 		require.NoError(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)

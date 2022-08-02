@@ -188,8 +188,13 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 
 // AlertRuleKey is the alert definition identifier
 type AlertRuleKey struct {
-	OrgID int64
-	UID   string
+	OrgID int64  `xorm:"org_id"`
+	UID   string `xorm:"uid"`
+}
+
+type AlertRuleKeyWithVersion struct {
+	Version      int64
+	AlertRuleKey `xorm:"extends"`
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts

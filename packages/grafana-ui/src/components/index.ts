@@ -21,6 +21,7 @@ export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
+export { InlineToast } from './InlineToast/InlineToast';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';

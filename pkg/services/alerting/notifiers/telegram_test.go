@@ -7,13 +7,15 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestTelegramNotifier(t *testing.T) {
+	encryptionService := encryptionservice.SetupTestService(t)
+
 	t.Run("Parsing alert notification from settings", func(t *testing.T) {
 		t.Run("empty settings should return error", func(t *testing.T) {
 			json := `{ }`
@@ -25,7 +27,7 @@ func TestTelegramNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewTelegramNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			_, err := NewTelegramNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -43,7 +45,7 @@ func TestTelegramNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewTelegramNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			not, err := NewTelegramNotifier(model, encryptionService.GetDecryptedValue, nil)
 			telegramNotifier := not.(*TelegramNotifier)
 
 			require.Nil(t, err)

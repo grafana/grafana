@@ -487,7 +487,7 @@ describe('Tempo apm table', () => {
     expect(builtQuery).toBe('sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval]))');
   });
 
-  it('should build link expr correctly', () => {
+  it('should get field config correctly', () => {
     let datasourceUid = 's4Jvz8Qnk';
     let tempoDatasourceUid = 'EbPO1fYnz';
     let targetField = '__data.fields.target';
@@ -694,12 +694,12 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
 };
 
 const rateMetric = new MutableDataFrame({
-  refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
   fields: [
     { name: 'Time', values: [1653725618609, 1653725618609] },
     { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
     {
-      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
       values: [12.75164671814457, 12.121331111401608],
     },
   ],

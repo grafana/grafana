@@ -15,7 +15,7 @@ import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
 import { getTreeData, onNodeDrop, TreeElement } from '../tree';
 import { DragNode, DropNode } from '../types';
-import { doSelect } from '../utils';
+import { doSelect, getElementTypes } from '../utils';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
 import { TreeViewEditorProps } from './elementEditor';
@@ -133,6 +133,8 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     }
   };
 
+  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes);
+
   return (
     <>
       <Global styles={globalCSS} />
@@ -156,11 +158,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
       <HorizontalGroup>
         <div style={{ marginLeft: '18px' }}>
-          <AddLayerButton
-            onChange={onAddItem}
-            options={canvasElementRegistry.selectOptions().options}
-            label={'Add item'}
-          />
+          <AddLayerButton onChange={onAddItem} options={typeOptions} label={'Add item'} />
         </div>
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>

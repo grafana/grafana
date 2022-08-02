@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -527,7 +526,7 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 		AlertSender:   senderMock,
 	}
 	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock)
-	return NewScheduler(schedCfg, appUrl, st, busmock.New())
+	return NewScheduler(schedCfg, appUrl, st)
 }
 
 func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMutator {

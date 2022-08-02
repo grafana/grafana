@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,10 +23,19 @@ func TestIntegrationEngineTimeouts(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
 	usMock := &usagestats.UsageStatsMock{T: t}
+
+	encProvider := encryptionprovider.ProvideEncryptionProvider()
+	cfg := setting.NewCfg()
+	settings := &setting.OSSImpl{Cfg: cfg}
+
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, settings)
+	require.NoError(t, err)
+
 	tracer := tracing.InitializeTracerForTest()
 	dsMock := &datasources.FakeDataSourceService{}
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, nil, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock)
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, encService, nil, tracer, nil, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock)
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
 	engine.resultHandler = &FakeResultHandler{}
