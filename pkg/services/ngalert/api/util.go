@@ -25,7 +25,7 @@ import (
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
-
+var errInvalidRecipientFormat = errors.New("invalid recipient (datasource) identifier format. Only integer is expected")
 var NotImplementedResp = ErrResp(http.StatusNotImplemented, errors.New("endpoint not implemented"), "")
 
 func toMacaronPath(path string) string {
@@ -49,7 +49,7 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 			}
 		}
 	}
-	return 0, fmt.Errorf("unexpected backend type (%v)", recipient)
+	return 0, errInvalidRecipientFormat
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
@@ -100,7 +100,7 @@ func (p *AlertingProxy) withReq(
 
 	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
 	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Recipient is invalid")
+		return ErrResp(http.StatusBadRequest, errInvalidRecipientFormat, "")
 	}
 
 	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)
