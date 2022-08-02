@@ -48,7 +48,7 @@ func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (a
 			return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
 		}
 	}
-	return 0, errors.New("cannot retrieve data source by its UID")
+	return 0, errors.New("no datasource was found matching the given UID")
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
