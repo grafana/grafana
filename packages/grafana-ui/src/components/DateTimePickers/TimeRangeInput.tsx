@@ -14,7 +14,7 @@ import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { quickOptions } from './options';
 
-const isValidTimeRange = (range: any) => {
+const isValidTimeRange = (range: TimeRange) => {
   return dateMath.isValid(range.from) && dateMath.isValid(range.to);
 };
 
