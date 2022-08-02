@@ -128,7 +128,6 @@ func TestLoader_Load(t *testing.T) {
 							Plugins:        []plugins.Dependency{},
 						},
 						Executable: "test",
-						Backend:    true,
 						State:      "alpha",
 					},
 					Module:        "plugins/test/module",
@@ -247,8 +246,7 @@ func TestLoader_Load(t *testing.T) {
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
 						},
-						Backend: true,
-						State:   plugins.AlphaRelease,
+						State: plugins.AlphaRelease,
 					},
 					Class:     plugins.External,
 					Module:    "plugins/test/module",
@@ -301,8 +299,7 @@ func TestLoader_Load(t *testing.T) {
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
 						},
-						Backend: true,
-						State:   plugins.AlphaRelease,
+						State: plugins.AlphaRelease,
 					},
 					Class:     plugins.External,
 					Module:    "plugins/test/module",
@@ -446,56 +443,80 @@ func TestLoader_Load(t *testing.T) {
 
 func TestLoader_setDefaultNavURL(t *testing.T) {
 	t.Run("When including a dashboard with DefaultNav: true", func(t *testing.T) {
-		pluginWithDashboard := &plugins.Plugin{
-			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
-				{
-					Type:       "dashboard",
-					DefaultNav: true,
-					UID:        "",
-				},
-			}},
+		appPluginWithDashboard := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				Type: plugins.App,
+				Includes: []*plugins.Includes{
+					{
+						Type:       "dashboard",
+						DefaultNav: true,
+						UID:        "",
+					},
+				}},
 		}
 		logger := &logtest.Fake{}
-		pluginWithDashboard.SetLogger(logger)
+		appPluginWithDashboard.SetLogger(logger)
 
 		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
-			setDefaultNavURL(pluginWithDashboard)
-			require.Equal(t, "", pluginWithDashboard.DefaultNavURL)
+			setDefaultNavURL(appPluginWithDashboard)
+			require.Equal(t, "", appPluginWithDashboard.DefaultNavURL)
 			require.NotZero(t, logger.WarnLogs.Calls)
 			require.Equal(t, "Included dashboard is missing a UID field", logger.WarnLogs.Message)
 		})
 
 		t.Run("Default nav URL is set if dashboard UID field is set", func(t *testing.T) {
-			pluginWithDashboard.Includes[0].UID = "a1b2c3"
+			appPluginWithDashboard.Includes[0].UID = "a1b2c3"
 
-			setDefaultNavURL(pluginWithDashboard)
-			require.Equal(t, "/d/a1b2c3", pluginWithDashboard.DefaultNavURL)
+			setDefaultNavURL(appPluginWithDashboard)
+			require.Equal(t, "/d/a1b2c3", appPluginWithDashboard.DefaultNavURL)
 		})
 	})
 
 	t.Run("When including a page with DefaultNav: true", func(t *testing.T) {
-		pluginWithPage := &plugins.Plugin{
-			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
-				{
-					Type:       "page",
-					DefaultNav: true,
-					Slug:       "testPage",
-				},
-			}},
+		appPluginWithPage := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				Type: plugins.App,
+				Includes: []*plugins.Includes{
+					{
+						Type:       "page",
+						DefaultNav: true,
+						Slug:       "testPage",
+					},
+				}},
 		}
 
 		t.Run("Default nav URL is set using slug", func(t *testing.T) {
-			setDefaultNavURL(pluginWithPage)
-			require.Equal(t, "/plugins/page/testPage", pluginWithPage.DefaultNavURL)
+			setDefaultNavURL(appPluginWithPage)
+			require.Equal(t, "/plugins/page/testPage", appPluginWithPage.DefaultNavURL)
 		})
 
 		t.Run("Default nav URL is set using slugified Name field if Slug field is empty", func(t *testing.T) {
-			pluginWithPage.Includes[0].Slug = ""
-			pluginWithPage.Includes[0].Name = "My Test Page"
+			appPluginWithPage.Includes[0].Slug = ""
+			appPluginWithPage.Includes[0].Name = "My Test Page"
 
-			setDefaultNavURL(pluginWithPage)
-			require.Equal(t, "/plugins/page/my-test-page", pluginWithPage.DefaultNavURL)
+			setDefaultNavURL(appPluginWithPage)
+			require.Equal(t, "/plugins/page/my-test-page", appPluginWithPage.DefaultNavURL)
 		})
+	})
+
+	t.Run("Default nav URL is not set for non App plugin", func(t *testing.T) {
+		nonAppPlugin := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				Type: plugins.DataSource,
+				Includes: []*plugins.Includes{
+					{
+						Type:       "dashboard",
+						DefaultNav: true,
+						UID:        "a1b2c3",
+					},
+				}},
+		}
+		logger := &logtest.Fake{}
+		nonAppPlugin.SetLogger(logger)
+
+		setDefaultNavURL(nonAppPlugin)
+		require.Equal(t, "", nonAppPlugin.DefaultNavURL)
+		require.Zero(t, logger.WarnLogs.Calls)
 	})
 }
 
@@ -549,7 +570,6 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 								GrafanaVersion: "*",
 								Plugins:        []plugins.Dependency{},
 							},
-							Backend:    true,
 							Executable: "test",
 							State:      plugins.AlphaRelease,
 						},
@@ -635,7 +655,6 @@ func TestLoader_Signature_RootURL(t *testing.T) {
 					},
 					State:        plugins.AlphaRelease,
 					Dependencies: plugins.Dependencies{GrafanaVersion: "*", Plugins: []plugins.Dependency{}},
-					Backend:      true,
 					Executable:   "test",
 				},
 				PluginDir:     filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"),
@@ -758,7 +777,6 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 				GrafanaVersion: "*",
 				Plugins:        []plugins.Dependency{},
 			},
-			Backend: true,
 		},
 		Module:        "plugins/test-ds/module",
 		BaseURL:       "public/plugins/test-ds",

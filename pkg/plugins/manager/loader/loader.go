@@ -240,7 +240,6 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDi
 			return nil, err
 		} else if !exists {
 			plugin.Logger().Warn("Plugin missing module.js, If you loaded this plugin from git, make sure to compile it", "path", module)
-			return nil, ErrRequiredPluginFileNotFound
 		}
 	}
 

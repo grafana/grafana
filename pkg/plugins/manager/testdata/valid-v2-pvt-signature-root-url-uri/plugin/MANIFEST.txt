@@ -12,19 +12,20 @@ Hash: SHA512
   ],
   "plugin": "test",
   "version": "1.0.0",
-  "time": 1623165794939,
+  "time": 1659445333310,
   "keyId": "7e4d0c6a708866e7",
   "files": {
-    "plugin.json": "2bb467c0bfd6c454551419efe475b8bf8573734e73c7bab52b14842adb62886f"
+    "plugin.json": "6420328338d5f934f0fff0119a5673793c0261093912967be878eca502ede92b"
   }
 }
 -----BEGIN PGP SIGNATURE-----
-Version: OpenPGP.js v4.10.1
+Version: OpenPGP.js v4.10.10
 Comment: https://openpgpjs.org
 
-wqEEARMKAAYFAmC/i2MACgkQfk0ManCIZudCEgII80waYmySwVuB2cdeU3Vy
-FvYrhViYYimvTy5EQbDfC955UpHphcr4V5S+09se7D2bK8XZ/MYufnUp9QIU
-gOxCDrkCCQHTQ/aWxt8JAHGG/eoydKQEeAc9aFJyphdX57qXHVkAjvLzY5aO
-y9UltPQKOAN/soDra2m39VUf6DBi9K/sXfjwaA==
-=cd6n
+wrgEARMKAAYFAmLpIFUAIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm5zqXAgdxKgfutQebjkYP/EFBezaDwAUR1OzQ9YMPrmlpNhVcwwAuNDSm
+HyfCuEOfWmtmEt0/GROCKCgTte2Ss1mVx5RESAIJAdX02O6Ri20lq0jva5Zm
+eE2BkE2dyVUmuXGaQEJ1vBtggCEdTFbeIdjCNQqJ0gtYMWL2M9CGh7ew2piK
+c/SXoUK6
+=9GVp
 -----END PGP SIGNATURE-----

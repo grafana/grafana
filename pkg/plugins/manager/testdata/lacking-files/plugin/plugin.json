@@ -2,7 +2,7 @@
   "type": "datasource",
   "name": "Test",
   "id": "test",
-  "backend": true,
+  "backend": false,
   "info": {
     "description": "Test",
     "version": "1.0.0",

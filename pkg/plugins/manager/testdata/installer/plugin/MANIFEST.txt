@@ -9,19 +9,20 @@ Hash: SHA512
   "signedByOrgName": "Grafana Labs",
   "plugin": "test",
   "version": "1.0.0",
-  "time": 1605807330546,
+  "time": 1659444798776,
   "keyId": "7e4d0c6a708866e7",
   "files": {
-    "plugin.json": "2bb467c0bfd6c454551419efe475b8bf8573734e73c7bab52b14842adb62886f"
+    "plugin.json": "d3cdae220c29833d38f4f226d5324ab665d2bfe18ceee91914f0a063a72685f1"
   }
 }
 -----BEGIN PGP SIGNATURE-----
-Version: OpenPGP.js v4.10.1
+Version: OpenPGP.js v4.10.10
 Comment: https://openpgpjs.org
 
-wqEEARMKAAYFAl+2rOIACgkQfk0ManCIZudNOwIJAT8FTzwnRFCSLTOaR3F3
-2Fh96eRbghokXcQG9WqpQAg8ZiVfGXeWWRNtV+nuQ9VOZOTO0BovWLuMkym2
-ci8ABpWOAgd46LkGn3Dd8XVnGmLI6UPqHAXflItOrCMRiGcYJn5PxP1aCz8h
-D0JoNI9TIKrhMtM4voU3Qhf3mIOTHueuDNS48w==
-=mu2j
+wrkEARMKAAYFAmLpHj8AIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm59AFAgkBwctXpbTcqmnGY85Y7rKXl2RD5AIdPf+Coz1wO/HTbLn7EtPL
+80nWJTcY8tjbdu1ZvV8MRnF0XoA6ttHvc7fBqnYCCQHjy9NRN6zD9piBN+Os
+JZ9c6wplwpIVZZF0+cPVDsDv81Dur/XndnL0vVGblUcfh7/SStDLZ0WXfCWB
+a/kWtbEQVA==
+=afEZ
 -----END PGP SIGNATURE-----
