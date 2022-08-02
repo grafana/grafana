@@ -120,6 +120,8 @@ func (i *dashboardIndex) reIndex(ctx context.Context, force bool, initial bool) 
 		// This is the best effort check, in the bad scenario when database state does
 		// not match index state due to missed events or race condition between loaded
 		// dashboards and index state we will do full re-index now or eventually.
+		// TODO: currently we use LoadDashboards which also parses dashboards, we can
+		// add more lightweight function like LoadDashboardsNoParsing to use in needsReIndex.
 		needsReindex, err := i.needsReIndex(dashboards)
 		if err != nil {
 			return err

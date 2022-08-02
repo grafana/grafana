@@ -32,7 +32,7 @@ func (s *stubSearchService) DoDashboardQuery(ctx context.Context, user *backend.
 	fid.Append(int64(2))
 	uid.Append("hello")
 
-	rsp.Frames = append(rsp.Frames, data.NewFrame("dasboards", fid, uid))
+	rsp.Frames = append(rsp.Frames, data.NewFrame("dashboards", fid, uid))
 
 	return rsp
 }

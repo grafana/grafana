@@ -65,6 +65,6 @@ func (_m *MockSearchService) Run(ctx context.Context) error {
 }
 
 // TriggerReIndex provides a mock function with given fields:
-func (_m *MockSearchService) TriggerReIndex() {
+func (_m *MockSearchService) TriggerDashboardReIndex(_ bool) {
 	_m.Called()
 }

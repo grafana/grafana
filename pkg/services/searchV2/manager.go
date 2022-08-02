@@ -615,5 +615,5 @@ func (m *orgIndexManager) decompressBackup(_ context.Context, content []byte) (s
 }
 
 func (m *orgIndexManager) getSQLBackupFilePath() string {
-	return "system/search/backup_" + m.config.Name + ".tar.gz"
+	return store.SystemSearchServiceStorage + "/backup_" + m.config.Name + ".tar.gz"
 }

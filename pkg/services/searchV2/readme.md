@@ -25,9 +25,9 @@ func (*orgIndexManager) run(ctx) error {
 }
 
 type Index interface {
+  Reader() (*bluge.Reader, func(), error)
   ReIndex(ctx) error
   ApplyUpdates(ctx, []EntityEvent) (newEventID, error)
-  BackupTo(ctx, directory) error
 }
 
 type dashboardIndex struct {
