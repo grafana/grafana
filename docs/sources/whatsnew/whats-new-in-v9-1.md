@@ -72,7 +72,7 @@ To learn more about search in Grafana, see the [documentation]({{< relref "../da
 
 #### Starred dashboards in the navigation bar
 
-As part of the upcoming improvements to Grafana's navigation, you can now directly access your [starred dashboards]({{< relref "../dashboards/use-dashboards/" }}) from the navigation bar.
+As part of the upcoming improvements to Grafana's navigation, you can now directly access your [starred dashboards]({{< relref "../dashboards/use-dashboards/" >}}) from the navigation bar.
 
 {{< figure src="/static/img/docs/dashboards/starred-dashboards-9-1.png" max-width="750px" caption="Accessing your starred dashboards" >}}
 
@@ -81,7 +81,7 @@ As part of the upcoming improvements to Grafana's navigation, you can now direct
 #### Heatmap improvements
 
 The beta heatmap announced in version 9.0 is now used throughout Grafana.
-Its performance is improved, and it now supports [exemplars]({{< relref "../basics/exemplars/" }}).
+Its performance is improved, and it now supports [exemplars]({{< relref "../basics/exemplars/" >}}).
 To learn more about the heatmap panel, see the [documentation]({{< relref "../visualizations/heatmap/" >}}).
 
 {{< figure src="/static/img/docs/panels/heatmap-panel-9-1.png" max-width="750px" caption="A heatmap panel" >}}
