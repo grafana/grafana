@@ -60,9 +60,7 @@ You may allow users to sign-up via GitHub authentication by setting the
 user successfully authenticating via GitHub authentication will be
 automatically signed up.
 
-You may also reference environment variables and local files in your GitHub auth configuration.
-The syntax for this is `$__<provider>{<argument>}` or `${<environment variable>}`.
-For more details refer to [Variable expansion](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion)
+You can also use [variable expansion]({{< relref "../../configure-grafana/#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
 
 ### team_ids
 
