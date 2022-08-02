@@ -1,8 +1,7 @@
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { CanvasElementOptions } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
-
-import { BackgroundSizeEditor } from '../../../../features/dimensions/editors/BackgroundSizeEditor';
+import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
@@ -17,15 +16,13 @@ const getCategoryName = (str: string, type: string | undefined) => {
   return [str];
 };
 
-const uid = Math.floor(Math.random() * 21);
-
 export const optionBuilder: OptionSuppliers = {
   addBackground: (builder, context) => {
     const category = getCategoryName('Background', context.options?.type);
     builder
       .addCustomEditor({
         category,
-        id: `background.color${uid}`,
+        id: `background.color`,
         path: 'background.color',
         name: 'Color',
         editor: ColorDimensionEditor,
@@ -37,7 +34,7 @@ export const optionBuilder: OptionSuppliers = {
       })
       .addCustomEditor({
         category,
-        id: `background.image${uid}`,
+        id: `background.image`,
         path: 'background.image',
         name: 'Image',
         editor: ResourceDimensionEditor,
@@ -47,7 +44,7 @@ export const optionBuilder: OptionSuppliers = {
       })
       .addCustomEditor({
         category,
-        id: `background.size${uid}`,
+        id: `background.size`,
         path: 'background.size',
         name: 'Image size',
         editor: BackgroundSizeEditor,
@@ -73,7 +70,7 @@ export const optionBuilder: OptionSuppliers = {
     if (context.options?.border?.width) {
       builder.addCustomEditor({
         category,
-        id: `border.color${uid}`,
+        id: `border.color`,
         path: 'border.color',
         name: 'Color',
         editor: ColorDimensionEditor,
