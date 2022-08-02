@@ -12,7 +12,6 @@ const getCategoryName = (str: string, type: string | undefined) => {
   if (type !== 'frame' && type !== undefined) {
     return [str + ` (${type})`];
   }
-
   return [str];
 };
 
@@ -22,7 +21,7 @@ export const optionBuilder: OptionSuppliers = {
     builder
       .addCustomEditor({
         category,
-        id: `background.color`,
+        id: 'background.color',
         path: 'background.color',
         name: 'Color',
         editor: ColorDimensionEditor,
@@ -34,7 +33,7 @@ export const optionBuilder: OptionSuppliers = {
       })
       .addCustomEditor({
         category,
-        id: `background.image`,
+        id: 'background.image',
         path: 'background.image',
         name: 'Image',
         editor: ResourceDimensionEditor,
@@ -44,7 +43,7 @@ export const optionBuilder: OptionSuppliers = {
       })
       .addCustomEditor({
         category,
-        id: `background.size`,
+        id: 'background.size',
         path: 'background.size',
         name: 'Image size',
         editor: BackgroundSizeEditor,
@@ -70,7 +69,7 @@ export const optionBuilder: OptionSuppliers = {
     if (context.options?.border?.width) {
       builder.addCustomEditor({
         category,
-        id: `border.color`,
+        id: 'border.color',
         path: 'border.color',
         name: 'Color',
         editor: ColorDimensionEditor,
