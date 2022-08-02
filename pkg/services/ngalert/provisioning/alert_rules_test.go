@@ -227,6 +227,68 @@ func TestAlertRuleService(t *testing.T) {
 		}
 	})
 
+	t.Run("alert rule provenace should be correctly checked when writing groups", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			from   models.Provenance
+			to     models.Provenance
+			errNil bool
+		}{
+			{
+				name:   "should be able to update from provenance none to api",
+				from:   models.ProvenanceNone,
+				to:     models.ProvenanceAPI,
+				errNil: true,
+			},
+			{
+				name:   "should be able to update from provenance none to file",
+				from:   models.ProvenanceNone,
+				to:     models.ProvenanceFile,
+				errNil: true,
+			},
+			{
+				name:   "should not be able to update from provenance api to file",
+				from:   models.ProvenanceAPI,
+				to:     models.ProvenanceFile,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance api to none",
+				from:   models.ProvenanceAPI,
+				to:     models.ProvenanceNone,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance file to api",
+				from:   models.ProvenanceFile,
+				to:     models.ProvenanceAPI,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance file to none",
+				from:   models.ProvenanceFile,
+				to:     models.ProvenanceNone,
+				errNil: false,
+			},
+		}
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				var orgID int64 = 1
+				group := createDummyGroup(t.Name(), orgID)
+				err := ruleService.ReplaceRuleGroup(context.Background(), 1, group, 0, test.from)
+				require.NoError(t, err)
+
+				group.Rules[0].Title = t.Name()
+				err = ruleService.ReplaceRuleGroup(context.Background(), 1, group, 0, test.to)
+				if test.errNil {
+					require.NoError(t, err)
+				} else {
+					require.Error(t, err)
+				}
+			})
+		}
+	})
+
 	t.Run("quota met causes create to be rejected", func(t *testing.T) {
 		ruleService := createAlertRuleService(t)
 		checker := &MockQuotaChecker{}
@@ -234,6 +296,18 @@ func TestAlertRuleService(t *testing.T) {
 		ruleService.quotas = checker
 
 		_, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", 1), models.ProvenanceNone, 0)
+
+		require.ErrorIs(t, err, models.ErrQuotaReached)
+	})
+
+	t.Run("quota met causes group write to be rejected", func(t *testing.T) {
+		ruleService := createAlertRuleService(t)
+		checker := &MockQuotaChecker{}
+		checker.EXPECT().LimitExceeded()
+		ruleService.quotas = checker
+
+		group := createDummyGroup("quota-reached", 1)
+		err := ruleService.ReplaceRuleGroup(context.Background(), 1, group, 0, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, models.ErrQuotaReached)
 	})

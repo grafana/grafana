@@ -231,6 +231,14 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		updates := make([]store.UpdateRule, 0, len(delta.Update))
 		for _, update := range delta.Update {
 			if update.New != nil {
+				// check that provenance is not changed in a invalid way
+				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, orgID)
+				if err != nil {
+					return err
+				}
+				if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+				}
 				updates = append(updates, store.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
@@ -244,6 +252,14 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		deletes := make([]string, 0, len(delta.Delete))
 		for _, delete := range delta.Delete {
 			if delete != nil {
+				// check that provenance is not changed in a invalid way
+				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, delete, orgID)
+				if err != nil {
+					return err
+				}
+				if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+				}
 				deletes = append(deletes, delete.UID)
 			}
 		}
@@ -319,7 +335,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	return rule, err
 }
 
-func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance models.Provenance) error {
+func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int64, provenance models.Provenance, ruleUID string) error {
 	rule := &models.AlertRule{
 		OrgID: orgID,
 		UID:   ruleUID,
