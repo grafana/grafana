@@ -376,14 +376,14 @@ def build_backend_step(edition, ver_mode, variants=None):
     # TODO: Convert number of jobs to percentage
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} ${{DRONE_TAG}}'.format(
+            './bin/build build-backend --jobs 8 --edition {} ${{DRONE_TAG}}'.format(
                 edition,
             ),
         ]
     else:
         build_no = '${DRONE_BUILD_NUMBER}'
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{}'.format(
+            './bin/build build-backend --jobs 8 --edition {} --build-id {}{}'.format(
                 edition, build_no, variants_str,
             ),
         ]
@@ -394,6 +394,7 @@ def build_backend_step(edition, ver_mode, variants=None):
         'depends_on': [
             'gen-version',
             'wire-install',
+            'compile-build-cmd',
         ],
         'commands': cmds,
     }
@@ -597,7 +598,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'grafana/docker-puppeteer:1.0.0',
+        'image': 'grafana/docker-puppeteer:1.1.0',
         'depends_on': [
             'grafana-server' + enterprise2_suffix(edition),
         ],
@@ -1211,3 +1212,19 @@ def end_to_end_tests_deps(edition):
         'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
         'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
     ]
+
+def compile_build_cmd(edition='oss'):
+    dependencies = []
+    if edition == 'enterprise':
+          dependencies = ['init-enterprise',]
+    return {
+        'name': 'compile-build-cmd',
+        'image': 'golang:1.17',
+        'commands': [
+            "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd",
+        ],
+        'depends_on': dependencies,
+        'environment': {
+            'CGO_ENABLED': 0,
+    },
+}

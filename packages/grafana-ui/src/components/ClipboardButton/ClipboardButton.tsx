@@ -1,6 +1,12 @@
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { Button, ButtonProps } from '../Button';
+import { Icon } from '../Icon/Icon';
+import { InlineToast } from '../InlineToast/InlineToast';
 
 export interface Props extends ButtonProps {
   /** A function that returns text to be copied */
@@ -22,6 +28,7 @@ export function ClipboardButton({
   variant,
   ...buttonProps
 }: Props) {
+  const styles = useStyles2(getStyles);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   useEffect(() => {
@@ -52,16 +59,31 @@ export function ClipboardButton({
   }, [getText, onClipboardCopy, onClipboardError]);
 
   return (
-    <Button
-      onClick={copyTextCallback}
-      icon={showCopySuccess ? 'check' : icon}
-      variant={showCopySuccess ? 'success' : variant}
-      aria-label={showCopySuccess ? 'Copied' : undefined}
-      {...buttonProps}
-      ref={buttonRef}
-    >
-      {children}
-    </Button>
+    <>
+      {showCopySuccess && (
+        <InlineToast placement="top" referenceElement={buttonRef.current}>
+          Copied
+        </InlineToast>
+      )}
+
+      <Button
+        onClick={copyTextCallback}
+        icon={icon}
+        variant={showCopySuccess ? 'success' : variant}
+        aria-label={showCopySuccess ? 'Copied' : undefined}
+        {...buttonProps}
+        className={cx(styles.button, showCopySuccess && styles.successButton)}
+        ref={buttonRef}
+      >
+        {children}
+
+        {showCopySuccess && (
+          <div className={styles.successOverlay}>
+            <Icon name="check" />
+          </div>
+        )}
+      </Button>
+    </>
   );
 }
 
@@ -82,4 +104,25 @@ const copyText = async (text: string, buttonRef: React.MutableRefObject<HTMLButt
     document.execCommand('copy');
     input.remove();
   }
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    button: css({
+      position: 'relative',
+    }),
+    successButton: css({
+      '> *': css({
+        visibility: 'hidden',
+      }),
+    }),
+    successOverlay: css({
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      right: 0,
+      left: 0,
+      visibility: 'visible', // re-visible the overlay
+    }),
+  };
 };

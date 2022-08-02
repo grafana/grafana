@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow, RadioButtonGroup } from '@grafana/ui';
+import { EditorField, RadioButtonGroup } from '@grafana/ui';
 
 import { getAlignmentPickerData } from '../../functions';
 import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType, ValueTypes } from '../../types';
@@ -17,22 +17,20 @@ export interface Props {
 export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor, onChange }) => {
   const options = useOptions(metricDescriptor);
   return (
-    <EditorRow>
-      <EditorField
-        label="Pre-processing"
-        tooltip="Preprocessing options are displayed when the selected metric has a metric kind of delta or cumulative. The specific options available are determined by the metic's value type. If you select 'Rate', data points are aligned and converted to a rate per time series. If you select 'Delta', data points are aligned by their delta (difference) per time series"
-      >
-        <RadioButtonGroup
-          onChange={(value: PreprocessorType) => {
-            const { valueType, metricKind, perSeriesAligner: psa } = query;
-            const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, psa, value);
-            onChange({ ...query, preprocessor: value, perSeriesAligner });
-          }}
-          value={query.preprocessor ?? PreprocessorType.None}
-          options={options}
-        />
-      </EditorField>
-    </EditorRow>
+    <EditorField
+      label="Pre-processing"
+      tooltip="Preprocessing options are displayed when the selected metric has a metric kind of delta or cumulative. The specific options available are determined by the metic's value type. If you select 'Rate', data points are aligned and converted to a rate per time series. If you select 'Delta', data points are aligned by their delta (difference) per time series"
+    >
+      <RadioButtonGroup
+        onChange={(value: PreprocessorType) => {
+          const { valueType, metricKind, perSeriesAligner: psa } = query;
+          const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, psa, value);
+          onChange({ ...query, preprocessor: value, perSeriesAligner });
+        }}
+        value={query.preprocessor ?? PreprocessorType.None}
+        options={options}
+      />
+    </EditorField>
   );
 };
 

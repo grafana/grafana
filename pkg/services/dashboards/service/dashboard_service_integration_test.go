@@ -814,7 +814,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 
 	t.Run(desc, func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		service := ProvideDashboardService(
 			&setting.Cfg{}, dashboardStore, &dummyDashAlertExtractor{},
 			featuremgmt.WithFeatures(),
@@ -868,7 +868,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
@@ -886,7 +886,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
@@ -922,7 +922,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		},
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
@@ -959,7 +959,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		},
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
