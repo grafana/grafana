@@ -40,6 +40,20 @@ const defaultProps = {
   }),
 };
 
+const ARGqueryProps = {
+  ...defaultProps,
+  query: {
+    refId: 'A',
+    queryType: AzureQueryType.AzureResourceGraph,
+    azureResourceGraph: {
+      query: 'Resources | distinct type',
+      resultFormat: 'table',
+    },
+    subscriptions: ['Subscription1', 'Subscription2'],
+    subscription: 'id',
+  },
+};
+
 describe('VariableEditor:', () => {
   it('can view a legacy Grafana query function', async () => {
     const onChange = jest.fn();
@@ -57,6 +71,7 @@ describe('VariableEditor:', () => {
       })
     );
   });
+
   describe('log queries:', () => {
     it('should render', async () => {
       render(<VariableEditor {...defaultProps} />);
@@ -83,17 +98,8 @@ describe('VariableEditor:', () => {
   });
 
   describe('Azure Resource Graph queries:', () => {
-    const ARGquery = {
-      refId: 'A',
-      queryType: AzureQueryType.AzureResourceGraph,
-      azureResourceGraph: {
-        query: 'Resources | distinct type',
-      },
-      subscriptions: ['Subscription1', 'Subscription2'],
-    };
-
     it('should render', async () => {
-      render(<VariableEditor {...defaultProps} query={ARGquery} />);
+      render(<VariableEditor {...ARGqueryProps} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       expect(screen.queryByLabelText('Subscriptions')).toBeInTheDocument();
       expect(screen.queryByLabelText('Select subscription')).not.toBeInTheDocument();
@@ -106,13 +112,14 @@ describe('VariableEditor:', () => {
 
     it('should call on change if the query changes', async () => {
       const onChange = jest.fn();
-      render(<VariableEditor {...defaultProps} query={ARGquery} onChange={onChange} />);
+      render(<VariableEditor {...ARGqueryProps} onChange={onChange} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
       await userEvent.type(screen.getByTestId('mockeditor'), '{backspace}');
       expect(onChange).toHaveBeenCalledWith({
-        ...ARGquery,
+        ...ARGqueryProps.query,
         azureResourceGraph: {
+          ...ARGqueryProps.query.azureResourceGraph,
           query: 'Resources | distinct typ',
         },
       });
