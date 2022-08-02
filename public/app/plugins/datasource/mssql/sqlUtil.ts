@@ -79,8 +79,6 @@ export function getRAQBType(type: string): RAQBFieldTypes {
   }
 }
 
-export const SCHEMA_NAME = 'dbo';
-
 export function toRawSql({ sql, dataset, table }: SQLQuery): string {
   let rawQuery = '';
 
@@ -92,7 +90,7 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
   rawQuery += createSelectClause(sql.columns, sql.limit);
 
   if (dataset && table) {
-    rawQuery += `FROM ${dataset}.${SCHEMA_NAME}.${table} `;
+    rawQuery += `FROM ${dataset}.${table} `;
   }
 
   if (sql.whereString) {
