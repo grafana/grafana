@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -26,6 +26,6 @@ var wireExtsSet = wire.NewSet(
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
-	ossencryption.ProvideService,
-	wire.Bind(new(encryption.Internal), new(*ossencryption.Service)),
+	encryptionprovider.ProvideEncryptionProvider,
+	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 )
