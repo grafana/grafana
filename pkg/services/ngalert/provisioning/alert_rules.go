@@ -187,6 +187,9 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	}
 	rules := make([]*models.AlertRule, len(group.Rules))
 	group = *syncGroupRuleFields(&group, orgID)
+	for i := range group.Rules {
+		rules = append(rules, &group.Rules[i])
+	}
 	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
 	if err != nil {
 		return fmt.Errorf("failed to calculate diff for alert rules: %w", err)
@@ -352,9 +355,6 @@ func syncGroupRuleFields(group *definitions.AlertRuleGroup, orgID int64) *defini
 		group.Rules[i].RuleGroup = group.Title
 		group.Rules[i].NamespaceUID = group.FolderUID
 		group.Rules[i].OrgID = orgID
-		if group.Rules[i].UID == "" {
-			group.Rules[i].UID = util.GenerateShortUID()
-		}
 	}
 	return group
 }

@@ -153,9 +153,11 @@ func TestAlertRuleService(t *testing.T) {
 		group := createDummyGroup("group-test-5", orgID)
 		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
 		require.NoError(t, err)
+		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "group-test-5")
+		require.NoError(t, err)
 
-		group.Rules[0].Title = "some-other-title-asdf"
-		err = ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		updatedGroup.Rules[0].Title = "some-other-title-asdf"
+		err = ruleService.ReplaceRuleGroup(context.Background(), orgID, updatedGroup, 0, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "group-test-5")
