@@ -41,7 +41,7 @@ type EvalContext struct {
 
 	Store             AlertStore
 	dashboardService  dashboards.DashboardService
-	datasourceService datasources.DataSourceService
+	DatasourceService datasources.DataSourceService
 }
 
 // NewEvalContext is the EvalContext constructor.
@@ -59,7 +59,7 @@ func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator model
 		RequestValidator:  requestValidator,
 		Store:             sqlStore,
 		dashboardService:  dashboardService,
-		datasourceService: dsService,
+		DatasourceService: dsService,
 	}
 }
 
@@ -224,7 +224,7 @@ func (c *EvalContext) evaluateNotificationTemplateFields() error {
 }
 
 func (c *EvalContext) GetDataSource(ctx context.Context, q *datasources.GetDataSourceQuery) error {
-	return c.datasourceService.GetDataSource(ctx, q)
+	return c.DatasourceService.GetDataSource(ctx, q)
 }
 
 // getTemplateMatches returns the values we should use to parse the templates
