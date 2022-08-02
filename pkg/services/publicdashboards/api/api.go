@@ -98,7 +98,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		IsFolder:                   false,
 		FolderId:                   dash.FolderId,
 		PublicDashboardAccessToken: accessToken,
-		PublicDashboardUid:         pubDash.Uid,
+		PublicDashboardUID:         pubDash.Uid,
 	}
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
