@@ -79,11 +79,9 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
-		if len(args) >= 3 {
-			err := sqleng.SetupFillmode(query, interval, args[2])
-			if err != nil {
-				return "", err
-			}
+		err = applySetupFillmode(args, query, interval)
+		if err != nil {
+			return "", err
 		}
 
 		result := fmt.Sprintf("FLOOR(DATEDIFF(second, '1970-01-01', %s)/%.0f)*%.0f", args[0], interval.Seconds(), interval.Seconds())
@@ -126,12 +124,12 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
-		if len(args) == 3 {
-			err := sqleng.SetupFillmode(query, interval, args[2])
-			if err != nil {
-				return "", err
-			}
+
+		err = applySetupFillmode(args, query, interval)
+		if err != nil {
+			return "", err
 		}
+
 		return fmt.Sprintf("FLOOR(%s/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochGroupAlias":
 		tg, err := m.evaluateMacro(timeRange, query, "__unixEpochGroup", args)
@@ -142,4 +140,12 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 	default:
 		return "", fmt.Errorf("unknown macro %q", name)
 	}
+}
+
+func applySetupFillmode(args []string, query *backend.DataQuery, interval time.Duration) error {
+	if len(args) < 3 {
+		return nil
+	}
+
+	return sqleng.SetupFillmode(query, interval, args[2])
 }
