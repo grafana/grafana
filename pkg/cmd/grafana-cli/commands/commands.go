@@ -202,7 +202,7 @@ var adminCommands = []*cli.Command{
 				Usage: "runs a conflict resolution to find users with multiple entries",
 				Subcommands: []*cli.Command{
 					{
-						Name:   "ls",
+						Name:   "list",
 						Usage:  "returns a list of users with more than one entry in the database",
 						Action: runListConflictUsers(),
 					},
