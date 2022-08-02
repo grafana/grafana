@@ -36,6 +36,22 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, models.ProvenanceAPI, provenance)
 	})
 
+	t.Run("group creation should set the right provenance", func(t *testing.T) {
+		var orgID int64 = 1
+		group := createDummyGroup("group-test-1", orgID)
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "group-test-1")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		for _, rule := range readGroup.Rules {
+			_, provenance, err := ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
+			require.NoError(t, err)
+			require.Equal(t, models.ProvenanceAPI, provenance)
+		}
+	})
+
 	t.Run("alert rule group should be updated correctly", func(t *testing.T) {
 		var orgID int64 = 1
 		rule := dummyRule("test#3", orgID)
@@ -181,6 +197,7 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
+		Logger: log.NewNopLogger(),
 	}
 	quotas := MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -196,6 +213,10 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 }
 
 func dummyRule(title string, orgID int64) models.AlertRule {
+	return createTestRule(title, "my-cool-group", orgID)
+}
+
+func createTestRule(title string, groupTitle string, orgID int64) models.AlertRule {
 	return models.AlertRule{
 		OrgID:           orgID,
 		Title:           title,
@@ -213,7 +234,8 @@ func dummyRule(title string, orgID int64) models.AlertRule {
 				},
 			},
 		},
-		RuleGroup:    "my-cool-group",
+		NamespaceUID: "my-namespace",
+		RuleGroup:    groupTitle,
 		For:          time.Second * 60,
 		NoDataState:  models.OK,
 		ExecErrState: models.OkErrState,
@@ -222,8 +244,9 @@ func dummyRule(title string, orgID int64) models.AlertRule {
 
 func createDummyGroup(title string, orgID int64) definitions.AlertRuleGroup {
 	return definitions.AlertRuleGroup{
-		Title:    title,
-		Interval: 60,
+		Title:     title,
+		Interval:  60,
+		FolderUID: "my-namespace",
 		Rules: []models.AlertRule{
 			dummyRule("rule-1", orgID),
 		},
