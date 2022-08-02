@@ -98,6 +98,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":                    setting.AuthProxyEnabled,
 		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
+		"jwtHeaderName":                       hs.Cfg.JWTAuthHeaderName,
+		"jwtUrlLogin":                         hs.Cfg.JWTAuthURLLogin,
 		"alertingEnabled":                     setting.AlertingEnabled,
 		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,
@@ -177,6 +179,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+		"unifiedAlerting": map[string]interface{}{
+			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
+		},
 	}
 
 	if hs.ThumbService != nil {

@@ -126,6 +126,7 @@ RUN apt-get update && \
         gcc             \
         g++             \
         git             \
+	jq		\
         make            \
         rpm             \
         xz-utils        \

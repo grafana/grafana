@@ -18,5 +18,4 @@ type Index interface {
 	Reader() (*bluge.Reader, func(), error)
 	ReIndex(ctx context.Context, force bool) error
 	ApplyEvent(ctx context.Context, event store.ResourceEvent) error
-	BackupTo(ctx context.Context, directory string) error
 }

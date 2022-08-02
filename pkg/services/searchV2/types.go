@@ -31,7 +31,9 @@ type DashboardQuery struct {
 	From               int          `json:"from,omitempty"`       // for paging
 }
 
+//go:generate mockery --name SearchService --structname MockSearchService --inpackage --filename search_service_mock.go
 type SearchService interface {
+	registry.CanBeDisabled
 	registry.BackgroundService
 	DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse
 	RegisterDashboardIndexExtender(ext DashboardIndexExtender)

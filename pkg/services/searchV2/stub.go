@@ -10,6 +10,10 @@ import (
 type stubSearchService struct {
 }
 
+func (s *stubSearchService) IsDisabled() bool {
+	return true
+}
+
 func (s *stubSearchService) TriggerDashboardReIndex(_ bool) {
 	// noop.
 }

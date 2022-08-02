@@ -3,7 +3,6 @@ package searchV2
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -170,10 +170,6 @@ func (i *dashboardIndex) reIndex(ctx context.Context, force bool, initial bool) 
 func (i *dashboardIndex) ApplyEvent(ctx context.Context, e store.ResourceEvent) error {
 	i.logger.Debug("processing event", "event", e)
 	return i.applyEvent(ctx, e)
-}
-
-func (i *dashboardIndex) BackupTo(ctx context.Context, dir string) error {
-	return errors.New("not implemented")
 }
 
 func (i *dashboardIndex) applyEvent(ctx context.Context, resourceEvent store.ResourceEvent) error {
@@ -464,7 +460,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	}
 
 	// key will allow name or uid
-	lookup, err := LoadDatasourceLookup(ctx, orgID, l.sql)
+	lookup, err := dslookup.LoadDatasourceLookup(ctx, orgID, l.sql)
 	if err != nil {
 		return dashboards, err
 	}
@@ -551,110 +547,4 @@ type dashboardQueryResult struct {
 	Data     []byte
 	Created  time.Time
 	Updated  time.Time
-}
-
-type datasourceQueryResult struct {
-	UID       string `xorm:"uid"`
-	Type      string `xorm:"type"`
-	Name      string `xorm:"name"`
-	IsDefault bool   `xorm:"is_default"`
-}
-
-func createDatasourceLookup(rows []*datasourceQueryResult) extract.DatasourceLookup {
-	byUID := make(map[string]*extract.DataSourceRef, 50)
-	byName := make(map[string]*extract.DataSourceRef, 50)
-	byType := make(map[string][]extract.DataSourceRef, 50)
-	var defaultDS *extract.DataSourceRef
-
-	for _, row := range rows {
-		ref := &extract.DataSourceRef{
-			UID:  row.UID,
-			Type: row.Type,
-		}
-		byUID[row.UID] = ref
-		byName[row.Name] = ref
-		if row.IsDefault {
-			defaultDS = ref
-		}
-
-		if _, ok := byType[row.Type]; !ok {
-			byType[row.Type] = make([]extract.DataSourceRef, 5)
-		}
-		byType[row.Type] = append(byType[row.Type], *ref)
-	}
-
-	if defaultDS == nil {
-		// fallback replicated from /pkg/api/frontendsettings.go
-		// https://github.com/grafana/grafana/blob/7ef21662f9ad74b80d832b9f2aa9db2fb4192741/pkg/api/frontendsettings.go#L51-L56
-		defaultDS = &extract.DataSourceRef{
-			UID:  "grafana",
-			Type: "datasource",
-		}
-	}
-
-	return &dsLookup{
-		byName:    byName,
-		byUID:     byUID,
-		byType:    byType,
-		defaultDS: defaultDS,
-	}
-}
-
-type dsLookup struct {
-	byName    map[string]*extract.DataSourceRef
-	byUID     map[string]*extract.DataSourceRef
-	byType    map[string][]extract.DataSourceRef
-	defaultDS *extract.DataSourceRef
-}
-
-func (d *dsLookup) ByRef(ref *extract.DataSourceRef) *extract.DataSourceRef {
-	if ref == nil {
-		return d.defaultDS
-	}
-	key := ""
-	if ref.UID != "" {
-		ds, ok := d.byUID[ref.UID]
-		if ok {
-			return ds
-		}
-		key = ref.UID
-	}
-	if key == "" {
-		return d.defaultDS
-	}
-	ds, ok := d.byUID[key]
-	if ok {
-		return ds
-	}
-	return d.byName[key]
-}
-
-func (d *dsLookup) ByType(dsType string) []extract.DataSourceRef {
-	ds, ok := d.byType[dsType]
-	if !ok {
-		return make([]extract.DataSourceRef, 0)
-	}
-
-	return ds
-}
-
-func LoadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (extract.DatasourceLookup, error) {
-	rows := make([]*datasourceQueryResult, 0)
-
-	if err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		sess.Table("data_source").
-			Where("org_id = ?", orgID).
-			Cols("uid", "name", "type", "is_default")
-
-		err := sess.Find(&rows)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return createDatasourceLookup(rows), nil
 }
