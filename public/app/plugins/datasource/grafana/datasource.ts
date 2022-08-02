@@ -170,11 +170,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     if (target.type === GrafanaAnnotationType.Dashboard) {
       // if no dashboard id yet return
-      if (!options.dashboard.id) {
+      if (!options.dashboard.uid) {
         return Promise.resolve({ data: [] });
       }
       // filter by dashboard id
-      params.dashboardId = options.dashboard.id;
+      params.dashboardUID = options.dashboard.uid;
       // remove tags filter if any
       delete params.tags;
     } else {
@@ -202,7 +202,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     const annotations = await getBackendSrv().get(
       '/api/annotations',
       params,
-      `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.id}`
+      `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.uid}`
     );
     return { data: [toDataFrame(annotations)] };
   }

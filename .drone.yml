@@ -76,6 +76,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -146,6 +147,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -252,6 +254,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -516,6 +519,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -576,9 +580,16 @@ trigger:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - '*.md'
+    include:
+    - pkg/**
+    - packaging/**
+    - .drone.yml
+    - conf/**
+    - go.sum
+    - go.mod
+    - public/app/plugins/**/plugin.json
 type: docker
 volumes:
 - host:
@@ -668,6 +679,7 @@ steps:
   name: build-docs-website
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -764,6 +776,7 @@ steps:
   name: build-docs-website
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -812,6 +825,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -874,6 +888,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -975,6 +990,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1400,6 +1416,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1590,6 +1607,7 @@ steps:
   name: gen-version
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1708,6 +1726,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -2012,6 +2031,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -2308,6 +2328,8 @@ steps:
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -2662,6 +2684,8 @@ steps:
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -3619,6 +3643,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -3894,6 +3919,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -4164,6 +4190,8 @@ steps:
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -4508,6 +4536,8 @@ steps:
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -4986,6 +5016,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d97f2ec8017ba6e3f16913e08ee1d53c4e653f87b6113fd3763e1ad557306810
+hmac: 968320e69b8531451dec23ac2d586296616533986c9e9a767410975109220072
 
 ...

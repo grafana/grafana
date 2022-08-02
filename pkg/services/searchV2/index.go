@@ -33,7 +33,6 @@ type dashboardLoader interface {
 }
 
 type eventStore interface {
-	OnEvent(handler store.EventHandler)
 	GetLastEvent(ctx context.Context) (*store.EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
