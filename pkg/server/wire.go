@@ -61,6 +61,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/entity"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -306,6 +307,8 @@ var wireBasicSet = wire.NewSet(
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
+	grpcserver.ProvideService,
+	grpcserver.ProvideHealthService,
 )
 
 var wireSet = wire.NewSet(
