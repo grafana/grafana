@@ -528,22 +528,6 @@ msgid "share-modal.link.shorten-url"
 msgstr "Shorten URL"
 
 #: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme"
-msgstr "Theme"
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme-current"
-msgstr "Current"
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme-dark"
-msgstr "Dark"
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme-light"
-msgstr "Light"
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
 msgid "share-modal.link.time-range-description"
 msgstr "Transforms the current relative time range to an absolute time range"
 
@@ -616,6 +600,22 @@ msgid "share-modal.snapshot.timeout-description"
 msgstr ""
 "You might need to configure the timeout value if it takes a long time to collect your dashboard\n"
 "metrics."
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.current"
+msgstr "Current"
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.dark"
+msgstr "Dark"
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.field-name"
+msgstr "Theme"
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.light"
+msgstr "Light"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"

@@ -1,17 +1,11 @@
 import React, { FormEvent, PureComponent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { ClipboardButton, Field, Modal, RadioButtonGroup, Switch, TextArea } from '@grafana/ui';
+import { ClipboardButton, Field, Modal, Switch, TextArea } from '@grafana/ui';
 
+import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
 import { buildIframeHtml } from './utils';
-
-const themeOptions: Array<SelectableValue<string>> = [
-  { label: 'Current', value: 'current' },
-  { label: 'Dark', value: 'dark' },
-  { label: 'Light', value: 'light' },
-];
 
 interface Props extends ShareModalTabProps {}
 
@@ -82,9 +76,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
             onChange={this.onUseCurrentTimeRangeChange}
           />
         </Field>
-        <Field label="Theme">
-          <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-        </Field>
+        <ThemePicker selectedTheme={selectedTheme} onChange={this.onThemeChange} />
         <Field
           label="Embed HTML"
           description="The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled,
