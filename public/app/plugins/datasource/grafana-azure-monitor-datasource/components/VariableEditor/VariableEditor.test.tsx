@@ -40,20 +40,6 @@ const defaultProps = {
   }),
 };
 
-const ARGqueryProps = {
-  ...defaultProps,
-  query: {
-    refId: 'A',
-    queryType: AzureQueryType.AzureResourceGraph,
-    azureResourceGraph: {
-      query: 'Resources | distinct type',
-      resultFormat: 'table',
-    },
-    subscriptions: ['Subscription1', 'Subscription2'],
-    subscription: 'id',
-  },
-};
-
 describe('VariableEditor:', () => {
   it('can view a legacy Grafana query function', async () => {
     const onChange = jest.fn();
@@ -98,8 +84,24 @@ describe('VariableEditor:', () => {
   });
 
   describe('Azure Resource Graph queries:', () => {
+    const ARGqueryProps = (onChange?: (query: AzureMonitorQuery) => void) => ({
+      query: {
+        refId: 'A',
+        queryType: AzureQueryType.AzureResourceGraph,
+        azureResourceGraph: {
+          query: 'Resources | distinct type',
+          resultFormat: 'table',
+        },
+        subscriptions: ['sub'],
+      },
+      onChange: onChange || jest.fn(),
+      datasource: createMockDatasource({
+        getSubscriptions: jest.fn().mockResolvedValue([{ text: 'Primary Subscription', value: 'sub' }]),
+      }),
+    });
+
     it('should render', async () => {
-      render(<VariableEditor {...ARGqueryProps} />);
+      render(<VariableEditor {...ARGqueryProps()} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       expect(screen.queryByLabelText('Subscriptions')).toBeInTheDocument();
       expect(screen.queryByLabelText('Select subscription')).not.toBeInTheDocument();
@@ -112,16 +114,18 @@ describe('VariableEditor:', () => {
 
     it('should call on change if the query changes', async () => {
       const onChange = jest.fn();
-      render(<VariableEditor {...ARGqueryProps} onChange={onChange} />);
+      render(<VariableEditor {...ARGqueryProps(onChange)} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
       await userEvent.type(screen.getByTestId('mockeditor'), '{backspace}');
       expect(onChange).toHaveBeenCalledWith({
-        ...ARGqueryProps.query,
+        refId: 'A',
+        queryType: AzureQueryType.AzureResourceGraph,
         azureResourceGraph: {
-          ...ARGqueryProps.query.azureResourceGraph,
           query: 'Resources | distinct typ',
+          resultFormat: 'table',
         },
+        subscriptions: ['sub'],
       });
     });
   });
