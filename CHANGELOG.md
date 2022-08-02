@@ -1,3 +1,18 @@
+<!-- 9.0.6 START -->
+
+# 9.0.6 (2022-08-01)
+
+### Features and enhancements
+
+- **Access Control:** Allow org admins to invite new users to their organization. [#52904](https://github.com/grafana/grafana/pull/52904), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+### Bug fixes
+
+- **Grafana/toolkit:** Fix incorrect image and font generation for plugin builds. [#52927](https://github.com/grafana/grafana/pull/52927), [@academo](https://github.com/academo)
+- **Prometheus:** Fix adding of multiple values for regex operator. [#52978](https://github.com/grafana/grafana/pull/52978), [@ivanahuckova](https://github.com/ivanahuckova)
+- **UI/Card:** Fix card items always having pointer cursor. [#52809](https://github.com/grafana/grafana/pull/52809), [@gillesdemey](https://github.com/gillesdemey)
+
+<!-- 9.0.6 END -->
 <!-- 9.0.5 START -->
 
 # 9.0.5 (2022-07-26)
