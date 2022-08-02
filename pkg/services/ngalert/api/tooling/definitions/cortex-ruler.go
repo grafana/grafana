@@ -30,6 +30,7 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       404: NotFound
 
 // swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
 //
@@ -53,6 +54,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       404: NotFound
 
 // swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
 //
@@ -73,6 +75,7 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       404: NotFound
 
 // swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
 //
@@ -87,6 +90,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       404: NotFound
 
 // swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
 //
@@ -107,6 +111,7 @@ import (
 //
 //     Responses:
 //       202: RuleGroupConfigResponse
+//       404: NotFound
 
 // swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
 //
@@ -121,6 +126,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       404: NotFound
 
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
 type NamespaceConfig struct {

@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -25,31 +23,19 @@ func NewForkedProm(datasourceCache datasources.CacheService, proxy *LotexProm, g
 }
 
 func (f *ForkedPrometheusApi) forkRouteGetAlertStatuses(ctx *models.ReqContext, dsUID string) response.Response {
-	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	t, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
-
-	switch t {
-	case apimodels.LoTexRulerBackend:
-		return f.ProxySvc.RouteGetAlertStatuses(ctx)
-	default:
-		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
-	}
+	return t.RouteGetAlertStatuses(ctx)
 }
 
 func (f *ForkedPrometheusApi) forkRouteGetRuleStatuses(ctx *models.ReqContext, dsUID string) response.Response {
-	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	t, err := f.getService(ctx)
 	if err != nil {
-		return ErrResp(400, err, "")
+		return errorToResponse(err)
 	}
-
-	switch t {
-	case apimodels.LoTexRulerBackend:
-		return f.ProxySvc.RouteGetRuleStatuses(ctx)
-	default:
-		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
-	}
+	return t.RouteGetRuleStatuses(ctx)
 }
 
 func (f *ForkedPrometheusApi) forkRouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
@@ -58,4 +44,12 @@ func (f *ForkedPrometheusApi) forkRouteGetGrafanaAlertStatuses(ctx *models.ReqCo
 
 func (f *ForkedPrometheusApi) forkRouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
 	return f.GrafanaSvc.RouteGetRuleStatuses(ctx)
+}
+
+func (f *ForkedPrometheusApi) getService(ctx *models.ReqContext) (*LotexProm, error) {
+	_, err := getDatasourceByUID(ctx, f.DatasourceCache, apimodels.LoTexRulerBackend)
+	if err != nil {
+		return nil, err
+	}
+	return f.ProxySvc, nil
 }
