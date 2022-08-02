@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import Map from 'ol/Map';
 import React, { useMemo, useRef, useState } from 'react';
-import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, IconButton, RadioButtonGroup, Select, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
@@ -18,7 +17,7 @@ type Props = {
 
 export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   const vector = useRef(new MeasureVectorLayer());
-  const measureStyle = getStyles(config.theme);
+  const measureStyle = getStyles(config.theme2);
 
   // Menu State Management
   const [firstLoad, setFirstLoad] = useState<boolean>(true);
@@ -65,13 +64,10 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   }
 
   return (
-    <div
-      className={`${measureStyle.infoWrap} ${!menuActive ? measureStyle.infoWrapClosed : null}`}
-      style={{ backgroundColor: '#22252b' }}
-    >
+    <div className={`${measureStyle.infoWrap} ${!menuActive ? measureStyle.infoWrapClosed : null}`}>
       {menuActive ? (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div className={measureStyle.rowGroup}>
             <RadioButtonGroup
               value={options.action}
               options={measures}
@@ -85,7 +81,7 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
                 vector.current.addInteraction(map, m.geometry, showSegments, clearPrevious);
               }}
             />
-            <Button style={{ marginLeft: 'auto' }} icon="times" variant="secondary" size="sm" onClick={toggleMenu} />
+            <Button className={measureStyle.button} icon="times" variant="secondary" size="sm" onClick={toggleMenu} />
           </div>
           <Select
             className={measureStyle.unitSelect}
@@ -112,9 +108,12 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+  button: css`
+    margin-left: auto;
+  `,
   icon: css`
-    background-color: rgba(204, 204, 220, 0.16);
+    background-color: ${theme.colors.secondary.main};
     display: inline-block;
     height: 19.25px;
     margin: 1px;
@@ -122,13 +121,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   infoWrap: css`
     color: ${theme.colors.text};
-    background: ${tinycolor(theme.colors.panelBg).setAlpha(0.7).toString()};
+    background-color: ${theme.colors.background.secondary};
     border-radius: 4px;
     padding: 2px;
   `,
   infoWrapClosed: css`
     height: 25.25px;
     width: 25.25px;
+  `,
+  rowGroup: css`
+    display: flex;
+    justify-content: flex-end;
   `,
   unitSelect: css`
     min-width: 200px;
