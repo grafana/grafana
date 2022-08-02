@@ -1,32 +1,48 @@
 package util
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestCalculateMacroTimezoneOffset(t *testing.T) {
-	// tests := []struct {
-	// 	input       string
-	// 	defaultHost string
-	// 	defaultPort string
+func TestCalculateMacroTimezoneOffset_Valid(t *testing.T) {
+	tests := []struct {
+		rawTimezoneOffset string
+		expected          string
+	}{
+		{rawTimezoneOffset: "-05:00", expected: "+ 18000"},
+		{rawTimezoneOffset: "-04:00", expected: "+ 14400"},
+		{rawTimezoneOffset: "+02:00", expected: "- 7200"},
+		{rawTimezoneOffset: "+05:20", expected: "- 19200"},
+		{rawTimezoneOffset: "-02:30", expected: "+ 9000"},
+		{rawTimezoneOffset: "-12:00", expected: "+ 43200"},
+		{rawTimezoneOffset: "-00:33", expected: "+ 1980"},
+		{rawTimezoneOffset: "-00:00", expected: "+ 0"},
+		{rawTimezoneOffset: "+00:00", expected: "- 0"},
+	}
 
-	// 	host string
-	// 	port string
-	// }{
-	// 	{input: "192.168.0.140:456", defaultHost: "", defaultPort: "", host: "192.168.0.140", port: "456"},
-	// 	{input: "192.168.0.140", defaultHost: "", defaultPort: "123", host: "192.168.0.140", port: "123"},
-	// 	{input: "[::1]:456", defaultHost: "", defaultPort: "", host: "::1", port: "456"},
-	// 	{input: "[::1]", defaultHost: "", defaultPort: "123", host: "::1", port: "123"},
-	// 	{input: ":456", defaultHost: "1.2.3.4", defaultPort: "", host: "1.2.3.4", port: "456"},
-	// 	{input: "xyz.rds.amazonaws.com", defaultHost: "", defaultPort: "123", host: "xyz.rds.amazonaws.com", port: "123"},
-	// 	{input: "xyz.rds.amazonaws.com:123", defaultHost: "", defaultPort: "", host: "xyz.rds.amazonaws.com", port: "123"},
-	// 	{input: "", defaultHost: "localhost", defaultPort: "1433", host: "localhost", port: "1433"},
-	// }
+	for _, testcase := range tests {
+		timezoneOffset, err := CalculateMacroTimezoneOffset(testcase.rawTimezoneOffset)
+		assert.NoError(t, err)
+		assert.Equal(t, testcase.expected, timezoneOffset)
+	}
+}
 
-	// for _, testcase := range tests {
-	// 	addr, err := SplitHostPortDefault(testcase.input, testcase.defaultHost, testcase.defaultPort)
-	// 	assert.NoError(t, err)
-	// 	assert.Equal(t, testcase.host, addr.Host)
-	// 	assert.Equal(t, testcase.port, addr.Port)
-	// }
+func TestCalculateMacroTimezoneOffset_Error(t *testing.T) {
+	tests := []struct {
+		rawTimezoneOffset string
+	}{
+		{rawTimezoneOffset: "UTC"},
+		{rawTimezoneOffset: "UTC-04:00"},
+		{rawTimezoneOffset: "Europe/London"},
+	}
+
+	for _, testcase := range tests {
+		_, err := CalculateMacroTimezoneOffset(testcase.rawTimezoneOffset)
+		if assert.Error(t, err) {
+			assert.Equal(t, fmt.Sprintf("timezone argument error %v", testcase.rawTimezoneOffset), err.Error())
+		}
+	}
 }

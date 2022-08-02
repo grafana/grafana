@@ -106,7 +106,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 
 		var timezoneOffset string
 		if len(args) == 4 {
-			timezoneOffset, err = util.CalculateMacroTimezoneOffset(args)
+			timezoneOffset, err = util.CalculateMacroTimezoneOffset(args[3])
 			if err != nil {
 				return "", err
 			}

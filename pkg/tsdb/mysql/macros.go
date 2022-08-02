@@ -95,7 +95,7 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		result := fmt.Sprintf("UNIX_TIMESTAMP(%s) DIV %.0f * %.0f", args[0], interval.Seconds(), interval.Seconds())
 
 		if len(args) == 4 {
-			timezoneOffset, err := util.CalculateMacroTimezoneOffset(args)
+			timezoneOffset, err := util.CalculateMacroTimezoneOffset(args[3])
 			if err != nil {
 				return "", err
 			}
