@@ -27,6 +27,8 @@ type APIKey struct {
 	ServiceAccountId *int64
 }
 
+func (k APIKey) TableName() string { return "api_key" }
+
 // swagger:model
 type AddCommand struct {
 	Name          string          `json:"name" binding:"Required"`

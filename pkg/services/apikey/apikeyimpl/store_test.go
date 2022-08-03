@@ -147,7 +147,7 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 					1: {accesscontrol.ActionAPIKeyRead: []string{accesscontrol.ScopeAPIKeysAll}},
 				},
 			}
-			query := models.GetApiKeysQuery{OrgId: 1, IncludeExpired: false, User: testUser}
+			query := apikey.GetApiKeysQuery{OrgId: 1, IncludeExpired: false, User: testUser}
 			err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -246,7 +246,7 @@ func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
 			store := &sqlStore{db: db, cfg: db.Cfg}
 			seedApiKeys(t, store, 10)
 
-			query := &models.GetApiKeysQuery{OrgId: 1, User: tt.user}
+			query := &apikey.GetApiKeysQuery{OrgId: 1, User: tt.user}
 			err := store.GetAPIKeys(context.Background(), query)
 			require.NoError(t, err)
 			assert.Len(t, query.Result, tt.expectedNumKeys)
