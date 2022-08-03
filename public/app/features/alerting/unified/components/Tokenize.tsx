@@ -28,26 +28,31 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
    *  Some text {{ $labels.foo }}
    */
   const regex = new RegExp(`(?<before>.*?)(${open}(?<token>.*?)${close}|$)`, 'gm');
-
-  const matches = Array.from(normalizedIput.matchAll(regex));
+  const lines = normalizedIput.split('\n');
 
   const output: React.ReactElement[] = [];
 
-  matches.forEach((match, index) => {
-    const before = match.groups?.before;
-    const token = match.groups?.token?.trim();
+  lines.forEach((line) => {
+    const matches = Array.from(line.matchAll(regex));
 
-    if (before) {
-      output.push(<span key={`${index}-before`}>{before}</span>);
-    }
+    matches.forEach((match, index) => {
+      const before = match.groups?.before;
+      const token = match.groups?.token?.trim();
 
-    if (token) {
-      const type = tokenType(token);
-      const description = type === TokenType.Variable ? token : '';
-      const tokenContent = `${open} ${token} ${close}`;
+      if (before) {
+        output.push(<span key={`${index}-before`}>{before}</span>);
+      }
 
-      output.push(<Token key={`${index}-token`} content={tokenContent} type={type} description={description} />);
-    }
+      if (token) {
+        const type = tokenType(token);
+        const description = type === TokenType.Variable ? token : '';
+        const tokenContent = `${open} ${token} ${close}`;
+
+        output.push(<Token key={`${index}-token`} content={tokenContent} type={type} description={description} />);
+      }
+    });
+
+    output.push(<br />);
   });
 
   return <span className={styles.wrapper}>{output}</span>;
@@ -68,7 +73,8 @@ interface TokenProps {
 
 function Token({ content, description, type }: TokenProps) {
   const styles = useStyles2(getStyles);
-  const varName = content.trim();
+  // const varName = content.trim();
+  const varName = content;
 
   const disableCard = Boolean(type) === false;
 
@@ -90,7 +96,7 @@ function Token({ content, description, type }: TokenProps) {
 }
 
 function normalizeInput(input: string) {
-  return input.replace(/\s+/g, ' ').trim();
+  return input.replace(/[^\S\r\n]+/g, ' ').trim();
 }
 
 function isVariable(input: string) {
@@ -122,9 +128,7 @@ function tokenType(input: string) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    display: inline-flex;
-    align-items: center;
-    white-space: pre;
+    white-space: pre-wrap;
   `,
   token: css`
     cursor: default;
