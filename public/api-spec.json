@@ -3799,6 +3799,56 @@
         }
       }
     },
+    "/datasources/uid/{sourceUID}/correlations/{correlationUID}": {
+      "patch": {
+        "tags": [
+          "correlations"
+        ],
+        "summary": "Updates a correlation.",
+        "operationId": "updateCorrelation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "correlationUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateCorrelationCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updateCorrelationResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
@@ -14095,6 +14145,34 @@
         }
       }
     },
+    "UpdateCorrelationCommand": {
+      "description": "UpdateCorrelationCommand is the command for updating a correlation",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Optional description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Optional label identifying the correlation",
+          "type": "string",
+          "example": "My label"
+        }
+      }
+    },
+    "UpdateCorrelationResponseBody": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation updated"
+        },
+        "result": {
+          "$ref": "#/definitions/Correlation"
+        }
+      }
+    },
     "UpdateDashboardACLCommand": {
       "type": "object",
       "properties": {
@@ -15770,6 +15848,12 @@
       "description": "UnprocessableEntityError",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "updateCorrelationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/UpdateCorrelationResponseBody"
       }
     },
     "updatePlaylistResponse": {
