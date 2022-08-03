@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-
-import { SelectableValue } from '../../../../../packages/grafana-data/src';
 
 import { RuleSettingsEditor } from './RuleSettingsEditor';
 import { RuleType, RuleSetting, PipeLineEntitiesInfo } from './types';
