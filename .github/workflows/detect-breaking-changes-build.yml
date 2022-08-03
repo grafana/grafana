@@ -35,7 +35,7 @@ jobs:
         run: yarn build:nominify
 
       - name: Build packages
-        run: yarn packages:build --stream --scope=@grafana/ui
+        run: yarn packages:build
 
       - name: Zip built packages
         run: zip -r ./pr_built_packages.zip ./packages/**/dist
