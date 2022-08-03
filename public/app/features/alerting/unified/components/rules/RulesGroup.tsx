@@ -4,9 +4,7 @@ import React, { FC, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import kbn from 'app/core/utils/kbn';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
@@ -14,6 +12,7 @@ import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { makeDashboardLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
@@ -62,6 +61,10 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
     return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
 
+  // check what view mode we are in
+  const isListView = viewMode === 'list';
+  const isGroupView = viewMode === 'grouped';
+
   const deleteGroup = () => {
     dispatch(deleteRulesGroupAction(namespace, group));
     setIsDeletingGroup(false);
@@ -79,9 +82,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
-      const baseUrl = `${config.appSubUrl}/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
+      const baseUrl = makeDashboardLink(folderUID);
       if (folder?.canSave) {
-        if (viewMode === 'grouped' && !isProvisioned) {
+        if (isGroupView && !isProvisioned) {
           actionIcons.push(
             <ActionIcon
               aria-label="edit rule group"
@@ -93,20 +96,20 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
             />
           );
         }
-        if (viewMode === 'list') {
+        if (isListView) {
           actionIcons.push(
             <ActionIcon
-              aria-label="edit folder"
-              key="edit"
-              icon="pen"
-              tooltip="edit folder"
-              to={baseUrl + '/settings'}
+              aria-label="go to folder"
+              key="goto"
+              icon="folder-open"
+              tooltip="go to folder"
+              to={baseUrl}
               target="__blank"
             />
           );
         }
       }
-      if (folder?.canAdmin && viewMode === 'list') {
+      if (folder?.canAdmin && isListView) {
         actionIcons.push(
           <ActionIcon
             aria-label="manage permissions"
@@ -146,12 +149,11 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
   }
 
   // ungrouped rules are rules that are in the "default" group name
-  const groupName =
-    viewMode === 'list' ? (
-      <RuleLocation namespace={namespace.name} />
-    ) : (
-      <RuleLocation namespace={namespace.name} group={group.name} />
-    );
+  const groupName = isListView ? (
+    <RuleLocation namespace={namespace.name} />
+  ) : (
+    <RuleLocation namespace={namespace.name} group={group.name} />
+  );
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">
