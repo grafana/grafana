@@ -2,6 +2,7 @@ import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
 import { Coordinate } from 'ol/coordinate';
 import { Geometry, LineString, Point, Polygon } from 'ol/geom';
+import { Type } from 'ol/geom/Geometry';
 import { Draw, Modify } from 'ol/interaction';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -21,7 +22,7 @@ export class MeasureVectorLayer extends VectorLayer<VectorSource> {
     super({
       source: new VectorSource(),
     });
-    this.setStyle((feature: any) => {
+    this.setStyle((feature) => {
       return this.styleFunction(feature, false);
     });
     this.setVisible(true);
@@ -208,7 +209,7 @@ export class MeasureVectorLayer extends VectorLayer<VectorSource> {
     return styles;
   }
 
-  addInteraction(map: Map, typeSelect: string, showSegments: boolean, clearPrevious: boolean) {
+  addInteraction(map: Map, typeSelect: Type, showSegments: boolean, clearPrevious: boolean) {
     const drawType = typeSelect;
     const activeTip =
       ' Click to continue ' + (drawType === 'Polygon' ? 'polygon' : 'line') + ' \n (double-click to end) ';
