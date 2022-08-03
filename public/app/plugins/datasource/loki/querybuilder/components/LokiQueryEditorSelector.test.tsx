@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
+import { DataSourcePluginMeta } from '@grafana/data';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { LokiDatasource } from '../../datasource';
@@ -44,7 +45,7 @@ const datasource = new LokiDatasource(
     access: 'proxy',
     url: '',
     jsonData: {},
-    meta: {} as any,
+    meta: {} as DataSourcePluginMeta,
   },
   undefined,
   undefined

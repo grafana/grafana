@@ -40,6 +40,9 @@ def pipeline(
         'trigger': trigger,
         'services': services,
         'steps': steps,
+        'clone': {
+            'retries': 3,
+        },
         'volumes': [{
             'name': 'docker',
             'host': {
@@ -79,6 +82,9 @@ def notify_pipeline(name, slack_channel, trigger, depends_on=[], template=None, 
         'steps': [
             slack_step(slack_channel, template, secret),
         ],
+        'clone': {
+            'retries': 3,
+        },
         'depends_on': depends_on,
     }
 
