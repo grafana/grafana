@@ -112,7 +112,7 @@ describe('SearchView', () => {
     });
     render(<SearchView {...baseProps} queryText={'asdfasdfasdf'} />);
     await waitFor(() => expect(screen.queryByText('No results found for your query.')).toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Remove search constraints' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear search and filters' })).toBeInTheDocument();
   });
 
   describe('include panels', () => {
