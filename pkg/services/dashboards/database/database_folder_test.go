@@ -9,9 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 
 func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	if testing.Short() {
@@ -26,7 +29,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		setup := func() {
 			sqlStore = sqlstore.InitTestDB(t)
 			sqlStore.Cfg.RBACEnabled = false
-			dashboardStore = ProvideDashboardStore(sqlStore)
+			dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles)
 			folder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod", "webapp")
 			childDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, folder.Id, false, "prod", "webapp")
@@ -54,7 +57,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("and acl is set for dashboard folder", func(t *testing.T) {
 				var otherUser int64 = 999
-				err := updateDashboardAcl(t, dashboardStore, folder.Id, models.DashboardAcl{
+				err := updateDashboardACL(t, dashboardStore, folder.Id, models.DashboardACL{
 					DashboardID: folder.Id,
 					OrgID:       1,
 					UserID:      otherUser,
@@ -75,7 +78,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("when the user is given permission", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder.Id, models.DashboardACL{
 						DashboardID: folder.Id, OrgID: 1, UserID: currentUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -116,9 +119,9 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("and acl is set for dashboard child and folder has all permissions removed", func(t *testing.T) {
 				var otherUser int64 = 999
-				err := updateDashboardAcl(t, dashboardStore, folder.Id)
+				err := updateDashboardACL(t, dashboardStore, folder.Id)
 				require.NoError(t, err)
-				err = updateDashboardAcl(t, dashboardStore, childDash.Id, models.DashboardAcl{
+				err = updateDashboardACL(t, dashboardStore, childDash.Id, models.DashboardACL{
 					DashboardID: folder.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 				})
 				require.NoError(t, err)
@@ -134,7 +137,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("when the user is given permission to child", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, childDash.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, childDash.Id, models.DashboardACL{
 						DashboardID: childDash.Id, OrgID: 1, UserID: currentUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -179,7 +182,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			setup2 := func() {
 				sqlStore = sqlstore.InitTestDB(t)
-				dashboardStore := ProvideDashboardStore(sqlStore)
+				dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod")
 				dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod")
@@ -211,7 +214,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("and acl is set for one dashboard folder", func(t *testing.T) {
 				const otherUser int64 = 999
-				err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+				err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 					DashboardID: folder1.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 				})
 				require.NoError(t, err)
@@ -252,7 +255,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("and a dashboard with an acl is moved to the folder without an acl", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, childDash1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, childDash1.Id, models.DashboardACL{
 						DashboardID: childDash1.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -284,7 +287,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			setup3 := func() {
 				sqlStore = sqlstore.InitTestDB(t)
-				dashboardStore := ProvideDashboardStore(sqlStore)
+				dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod")
 				insertTestDashboard(t, dashboardStore, "folder in another org", 2, 0, true, "prod")
@@ -348,7 +351,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("Should have write access to one dashboard folder if default role changed to view for one folder", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 						DashboardID: folder1.Id, OrgID: 1, UserID: editorUser.ID, Permission: models.PERMISSION_VIEW,
 					})
 					require.NoError(t, err)
@@ -394,7 +397,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("Should be able to get one dashboard folder if default role changed to edit for one folder", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -427,7 +430,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("and admin permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_ADMIN,
 					})
 					require.NoError(t, err)
@@ -443,7 +446,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("and edit permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {
-					err := updateDashboardAcl(t, dashboardStore, folder1.Id, models.DashboardAcl{
+					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
 						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -466,7 +469,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var sqlStore *sqlstore.SQLStore
 			var folder1, folder2 *models.Dashboard
 			sqlStore = sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore)
+			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 			folder2 = insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.Id, false, "prod")
 			folder1 = insertTestDashboard(t, dashboardStore, title, orgId, 0, true, "prod")
@@ -481,7 +484,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		t.Run("GetFolderByUID", func(t *testing.T) {
 			var orgId int64 = 1
 			sqlStore := sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore)
+			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
 
@@ -505,7 +508,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		t.Run("GetFolderByID", func(t *testing.T) {
 			var orgId int64 = 1
 			sqlStore := sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore)
+			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
 

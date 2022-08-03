@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 
-import { AppEvents, SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
-import { Checkbox, ClipboardButton, Field, FieldSet, Icon, Input, Modal, RadioButtonGroup } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 
 import { buildBaseUrl } from '../dashboard/components/ShareModal/utils';
 
@@ -22,10 +21,6 @@ export const ShareModal = ({ playlistUid, onDismiss }: ShareModalProps) => {
     { label: 'TV', value: 'tv' },
     { label: 'Kiosk', value: true },
   ];
-
-  const onShareUrlCopy = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-  };
 
   const params: UrlQueryMap = {};
   if (mode) {
@@ -59,8 +54,8 @@ export const ShareModal = ({ playlistUid, onDismiss }: ShareModalProps) => {
             value={shareUrl}
             readOnly
             addonAfter={
-              <ClipboardButton variant="primary" getText={() => shareUrl} onClipboardCopy={onShareUrlCopy}>
-                <Icon name="copy" /> Copy
+              <ClipboardButton icon="copy" variant="primary" getText={() => shareUrl}>
+                Copy
               </ClipboardButton>
             }
           />

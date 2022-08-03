@@ -80,6 +80,32 @@ func Test_union(t *testing.T) {
 			unions:    []*Union{},
 		},
 		{
+			name: "empty result and data result will result in no unions",
+			aResults: Results{
+				Values: Values{
+					makeSeries("a", data.Labels{"id": "1"}),
+				},
+			},
+			bResults:  Results{},
+			unionsAre: assert.EqualValues,
+			unions:    []*Union{},
+		},
+		{
+			name: "no data result and data result will result in no unions",
+			aResults: Results{
+				Values: Values{
+					makeSeries("a", data.Labels{"id": "1"}),
+				},
+			},
+			bResults: Results{
+				Values: Values{
+					NoData{}.New(),
+				},
+			},
+			unionsAre: assert.EqualValues,
+			unions:    []*Union{},
+		},
+		{
 			name: "incompatible tags of different length with will result in no unions when len(A) != 1 && len(B) != 1",
 			aResults: Results{
 				Values: Values{

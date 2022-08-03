@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -15,8 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acDatabase "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
@@ -34,8 +39,9 @@ var (
 
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.NewServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 
 	autoAssignOrg := store.Cfg.AutoAssignOrg
@@ -58,8 +64,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	}
 	testCases := []testCreateSATestCase{
 		{
-			desc:   "should be ok to create serviceaccount with permissions",
-			body:   map[string]interface{}{"name": "New SA"},
+			desc:   "should be ok to create service account with permissions",
+			body:   map[string]interface{}{"name": "New SA", "role": "Viewer", "is_disabled": "false"},
 			wantID: "sa-new-sa",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
@@ -69,6 +75,33 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 				false,
 			),
 			expectedCode: http.StatusCreated,
+		},
+		{
+			desc:   "should fail to create a service account with higher privilege",
+			body:   map[string]interface{}{"name": "New SA HP", "role": "Admin"},
+			wantID: "sa-new-sa-hp",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:      "should fail to create a service account with invalid role",
+			body:      map[string]interface{}{"name": "New SA", "role": "Random"},
+			wantID:    "sa-new-sa",
+			wantError: "invalid role value: Random",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:      "not ok - duplicate name",
@@ -97,7 +130,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			expectedCode: http.StatusBadRequest,
 		},
 		{
-			desc: "should be forbidden to create serviceaccount if no permissions",
+			desc: "should be forbidden to create service account if no permissions",
 			body: map[string]interface{}{},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
@@ -123,7 +156,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, user *tests.TestUser) {
-				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
+				server, api := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 				marshalled, err := json.Marshal(tc.body)
 				require.NoError(t, err)
 
@@ -139,9 +172,27 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 				require.Equal(t, tc.expectedCode, actualCode, actualBody)
 
 				if actualCode == http.StatusCreated {
-					assert.NotEmpty(t, actualBody["id"])
-					assert.Equal(t, tc.body["name"], actualBody["name"].(string))
-					assert.Equal(t, tc.wantID, actualBody["login"].(string))
+					sa := serviceaccounts.ServiceAccountDTO{}
+					err = json.Unmarshal(actual.Body.Bytes(), &sa)
+					require.NoError(t, err)
+					assert.NotZero(t, sa.Id)
+					assert.Equal(t, tc.body["name"], sa.Name)
+					assert.Equal(t, tc.wantID, sa.Login)
+					tempUser := &models.SignedInUser{
+						OrgId:  1,
+						UserId: 1,
+						Permissions: map[int64]map[string][]string{
+							1: {
+								serviceaccounts.ActionRead:       []string{serviceaccounts.ScopeAll},
+								accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll},
+							},
+						},
+					}
+					perms, err := api.permissionService.GetPermissions(context.Background(), tempUser, strconv.FormatInt(sa.Id, 10))
+					assert.NoError(t, err)
+					assert.Equal(t, 1, len(perms), "should have added managed permissions for SA creator")
+					assert.Equal(t, int64(1), perms[0].ID)
+					assert.Equal(t, int64(1), perms[0].UserId)
 				} else if actualCode == http.StatusBadRequest {
 					assert.Contains(t, tc.wantError, actualBody["error"].(string))
 				}
@@ -155,7 +206,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.NewServiceAccountsStore(store, kvStore)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string) *httptest.ResponseRecorder {
@@ -224,7 +276,11 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	routerRegister routing.RouteRegister,
 	acmock *accesscontrolmock.Mock,
 	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
-	a := NewServiceAccountsAPI(setting.NewCfg(), svc, acmock, routerRegister, saStore)
+	cfg := setting.NewCfg()
+	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, routing.NewRouteRegister(), sqlStore, acmock, acDatabase.ProvideService(sqlStore), &licensing.OSSLicensingService{}, saStore)
+	require.NoError(t, err)
+
+	a := NewServiceAccountsAPI(cfg, svc, acmock, routerRegister, saStore, saPermissionService)
 	a.RegisterAPIEndpoints()
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration
@@ -232,6 +288,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	m := web.New()
 	signedUser := &models.SignedInUser{
 		OrgId:   1,
+		UserId:  1,
 		OrgRole: models.ROLE_VIEWER,
 	}
 
@@ -250,8 +307,9 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.NewServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 	type testRetrieveSATestCase struct {
 		desc         string
@@ -341,8 +399,9 @@ func newString(s string) *string {
 
 func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.NewServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 	type testUpdateSATestCase struct {
 		desc         string

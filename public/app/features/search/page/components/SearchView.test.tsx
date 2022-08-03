@@ -6,16 +6,37 @@ import configureMockStore from 'redux-mock-store';
 import { Observable } from 'rxjs';
 
 import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
+import { defaultQuery } from '../../reducers/searchQueryReducer';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
-import { DashboardSearchItemType } from '../../types';
+import { DashboardSearchItemType, SearchLayout } from '../../types';
 
 import { SearchView, SearchViewProps } from './SearchView';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: jest.fn(),
-}));
+jest.mock('@grafana/runtime', () => {
+  const originalModule = jest.requireActual('@grafana/runtime');
+  return {
+    ...originalModule,
+    reportInteraction: jest.fn(),
+    config: {
+      ...originalModule.config,
+      featureToggles: {
+        panelTitleSearch: false,
+      },
+    },
+  };
+});
+
+jest.mock('../../reducers/searchQueryReducer', () => {
+  const originalModule = jest.requireActual('../../reducers/searchQueryReducer');
+  return {
+    ...originalModule,
+    defaultQuery: {
+      ...originalModule.defaultQuery,
+    },
+  };
+});
 
 describe('SearchView', () => {
   const folderData: DataFrame = {
@@ -52,6 +73,11 @@ describe('SearchView', () => {
     jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
   });
 
+  beforeEach(() => {
+    config.featureToggles.panelTitleSearch = false;
+    defaultQuery.layout = SearchLayout.Folders;
+  });
+
   it('does not show checkboxes or manage actions if showManage is false', async () => {
     render(<SearchView {...baseProps} />);
     await waitFor(() => expect(screen.queryAllByRole('checkbox')).toHaveLength(0));
@@ -86,6 +112,24 @@ describe('SearchView', () => {
     });
     render(<SearchView {...baseProps} queryText={'asdfasdfasdf'} />);
     await waitFor(() => expect(screen.queryByText('No results found for your query.')).toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Remove search constraints' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear search and filters' })).toBeInTheDocument();
+  });
+
+  describe('include panels', () => {
+    it('should be enabled when layout is list', async () => {
+      config.featureToggles.panelTitleSearch = true;
+      defaultQuery.layout = SearchLayout.List;
+      render(<SearchView {...baseProps} />);
+
+      await waitFor(() => expect(screen.getByLabelText(/include panels/i)).toBeInTheDocument());
+      expect(screen.getByTestId('include-panels')).toBeEnabled();
+    });
+    it('should be disabled when layout is folder', async () => {
+      config.featureToggles.panelTitleSearch = true;
+      render(<SearchView {...baseProps} />);
+
+      await waitFor(() => expect(screen.getByLabelText(/include panels/i)).toBeInTheDocument());
+      expect(screen.getByTestId('include-panels')).toBeDisabled();
+    });
   });
 });

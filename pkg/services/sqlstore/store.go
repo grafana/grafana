@@ -72,11 +72,17 @@ type Store interface {
 	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+	// deprecated
 	CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error
+	// deprecated
 	UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error
+	// deprecated
 	GetPlaylist(ctx context.Context, query *models.GetPlaylistByUidQuery) error
+	// deprecated
 	DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error
+	// deprecated
 	SearchPlaylists(ctx context.Context, query *models.GetPlaylistsQuery) error
+	// deprecated
 	GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error
 	GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error
 	GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error
@@ -114,14 +120,6 @@ type Store interface {
 	SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error
 	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
 	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
-	GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error
-	GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey
-	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
-	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
-	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
-	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
-	GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error)
-	UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error
 	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
 	CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error
 	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error

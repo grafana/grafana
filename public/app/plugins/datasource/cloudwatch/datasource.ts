@@ -69,8 +69,8 @@ import { CloudWatchVariableSupport } from './variables';
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
 // Constants also defined in tsdb/cloudwatch/cloudwatch.go
-const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
-const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
+export const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
+export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
@@ -89,7 +89,7 @@ const displayCustomError = (title: string, message: string) =>
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport
+  implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
 {
   proxyUrl: any;
   defaultRegion: any;
@@ -101,6 +101,7 @@ export class CloudWatchDatasource
 
   tracingDataSourceUid?: string;
   logsTimeout: string;
+  defaultLogGroups: string[];
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
@@ -127,6 +128,7 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
+    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups || [];
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
     this.variables = new CloudWatchVariableSupport(this);
@@ -176,7 +178,14 @@ export class CloudWatchDatasource
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validLogQueries = logQueries.filter((item) => item.logGroupNames?.length);
+    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
+      queryString: target.expression || '',
+      refId: target.refId,
+      logGroupNames: target.logGroupNames || this.defaultLogGroups,
+      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
+    }));
+
+    const validLogQueries = queryParams.filter((item) => item.logGroupNames?.length);
     if (logQueries.length > validLogQueries.length) {
       return of({ data: [], error: { message: 'Log group is required' } });
     }
@@ -185,13 +194,6 @@ export class CloudWatchDatasource
     if (isEmpty(validLogQueries)) {
       return of({ data: [], state: LoadingState.Done });
     }
-
-    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression || '',
-      refId: target.refId,
-      logGroupNames: target.logGroupNames,
-      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
-    }));
 
     const startTime = new Date();
     const timeoutFunc = () => {
@@ -486,7 +488,8 @@ export class CloudWatchDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {}
+    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {},
+    query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
     let logStreamField = null;
     let logField = null;
@@ -508,6 +511,7 @@ export class CloudWatchDatasource
     const requestParams: GetLogEventsRequest = {
       limit,
       startFromHead: direction !== 'BACKWARD',
+      region: query?.region,
       logGroupName: parseLogGroupName(logField!.values.get(row.rowIndex)),
       logStreamName: logStreamField!.values.get(row.rowIndex),
     };

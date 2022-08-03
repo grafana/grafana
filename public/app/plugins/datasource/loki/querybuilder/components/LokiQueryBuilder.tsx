@@ -1,27 +1,41 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
-import { DataSourceApi, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
+import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue } from '@grafana/data';
+import { EditorRow } from '@grafana/ui';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
+import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
+import { OperationListExplained } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationListExplained';
 import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
-import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+import { QueryBuilderHints } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryBuilderHints';
+import { RawQuery } from 'app/plugins/datasource/prometheus/querybuilder/shared/RawQuery';
+import {
+  QueryBuilderLabelFilter,
+  QueryBuilderOperation,
+} from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { LokiDatasource } from '../../datasource';
 import { escapeLabelValueInSelector } from '../../language_utils';
+import logqlGrammar from '../../syntax';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
   query: LokiVisualQuery;
   datasource: LokiDatasource;
+  showExplain: boolean;
   onChange: (update: LokiVisualQuery) => void;
   onRunQuery: () => void;
 }
 
-export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery }) => {
+export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, showExplain }) => {
+  const [sampleData, setSampleData] = useState<PanelData>();
+  const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
+
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -74,6 +88,18 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     return undefined;
   }, [query]);
 
+  useEffect(() => {
+    const onGetSampleData = async () => {
+      const lokiQuery = { expr: lokiQueryModeller.renderQuery(query), refId: 'data-samples' };
+      const series = await datasource.getDataSamples(lokiQuery);
+      const sampleData = { series, state: LoadingState.Done, timeRange: getDefaultTimeRange() };
+      setSampleData(sampleData);
+    };
+
+    onGetSampleData().catch(console.error);
+  }, [datasource, query]);
+
+  const lang = { grammar: logqlGrammar, name: 'logql' };
   return (
     <>
       <EditorRow>
@@ -89,6 +115,14 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           error={labelFilterError}
         />
       </EditorRow>
+      {showExplain && (
+        <OperationExplainedBox
+          stepNumber={1}
+          title={<RawQuery query={`${lokiQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
+        >
+          {EXPLAIN_LABEL_FILTER_CONTENT}
+        </OperationExplainedBox>
+      )}
       <OperationsEditorRow>
         <OperationList
           queryModeller={lokiQueryModeller}
@@ -96,10 +130,39 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onChange={onChange}
           onRunQuery={onRunQuery}
           datasource={datasource as DataSourceApi}
+          highlightedOp={highlightedOp}
+        />
+        <QueryBuilderHints<LokiVisualQuery>
+          datasource={datasource}
+          query={query}
+          onChange={onChange}
+          data={sampleData}
+          queryModeller={lokiQueryModeller}
+          buildVisualQueryFromString={buildVisualQueryFromString}
         />
       </OperationsEditorRow>
+      {showExplain && (
+        <OperationListExplained<LokiVisualQuery>
+          stepNumber={2}
+          queryModeller={lokiQueryModeller}
+          query={query}
+          lang={lang}
+          onMouseEnter={(op) => {
+            setHighlightedOp(op);
+          }}
+          onMouseLeave={() => {
+            setHighlightedOp(undefined);
+          }}
+        />
+      )}
       {query.binaryQueries && query.binaryQueries.length > 0 && (
-        <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
+        <NestedQueryList
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
+          showExplain={showExplain}
+        />
       )}
     </>
   );

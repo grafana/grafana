@@ -30,26 +30,9 @@ jest.mock('../../core/components/TagFilter/TagFilter', () => ({
 function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
   const playlist = { name, items, interval } as unknown as Playlist;
-  const queryParams = {};
-  const route: any = {};
-  const match: any = {};
-  const location: any = {};
-  const history: any = {};
-  const navModel: any = {
-    node: {},
-    main: {},
-  };
   const backendSrvMock = jest.spyOn(backendSrv, 'post');
-  const { rerender } = render(
-    <PlaylistNewPage
-      queryParams={queryParams}
-      route={route}
-      match={match}
-      location={location}
-      history={history}
-      navModel={navModel}
-    />
-  );
+
+  const { rerender } = render(<PlaylistNewPage />);
 
   return { playlist, rerender, backendSrvMock };
 }

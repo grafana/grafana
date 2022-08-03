@@ -25,6 +25,7 @@ export const defaultPanelOptions: PanelOptions = {
   bucketOffset: 0,
   legend: {
     displayMode: LegendDisplayMode.List,
+    showLegend: true,
     placement: 'bottom',
     calcs: [],
   },

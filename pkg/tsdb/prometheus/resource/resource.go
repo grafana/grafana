@@ -1,9 +1,9 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -83,14 +83,17 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 		}
 	}()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	var buf bytes.Buffer
+	// Should be more efficient than ReadAll. See https://github.com/prometheus/client_golang/pull/976
+	_, err = buf.ReadFrom(resp.Body)
+	body := buf.Bytes()
 	if err != nil {
 		return nil, err
 	}
 	callResponse := &backend.CallResourceResponse{
 		Status:  resp.StatusCode,
 		Headers: resp.Header,
-		Body:    data,
+		Body:    body,
 	}
 
 	return callResponse, err

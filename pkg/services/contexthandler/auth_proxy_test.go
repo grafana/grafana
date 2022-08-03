@@ -86,7 +86,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &FakeGetSignUserStore{})
 	authenticator := &fakeAuthenticator{}
 
-	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, authenticator)
+	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator)
 }
 
 type FakeGetSignUserStore struct {
@@ -95,7 +95,7 @@ type FakeGetSignUserStore struct {
 
 func (f *FakeGetSignUserStore) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	if query.UserId != userID {
-		return models.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
 
 	query.Result = &models.SignedInUser{
