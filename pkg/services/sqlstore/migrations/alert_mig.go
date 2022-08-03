@@ -55,13 +55,20 @@ func addAlertMigrations(mg *Migrator) {
 		},
 	}
 
-	mg.AddMigration("Create alert_rule_tag table v1", NewAddTableMigration(alertRuleTagTable))
-	mg.AddMigration("Add unique index alert_rule_tag.alert_id_tag_id", NewAddIndexMigration(alertRuleTagTable, alertRuleTagTable.Indices[0]))
+	alertRuleTableDoesNotExist := &IfNotTableExistsWithoutPrimaryKey{TableName: alertRuleTagTable.Name, ColumnName: "id"}
+
+	addAlertRuleTagTableMigration := NewAddTableMigration(alertRuleTagTable)
+	addAlertRuleTagTableMigration.SkipCondition = alertRuleTableDoesNotExist
+	mg.AddMigration("Create alert_rule_tag table v1", addAlertRuleTagTableMigration)
+
+	addAlertRuleTagIndexMigration := NewAddIndexMigration(alertRuleTagTable, alertRuleTagTable.Indices[0])
+	addAlertRuleTagIndexMigration.SkipCondition = alertRuleTableDoesNotExist
+	mg.AddMigration("Add unique index alert_rule_tag.alert_id_tag_id", addAlertRuleTagIndexMigration)
 
 	// drop alert_rule_tag indexes
-	addDropAllIndicesMigrations(mg, "v1", alertRuleTagTable)
+	addDropAllIndicesMigrationsWithSkipCondition(mg, "v1", alertRuleTagTable, alertRuleTableDoesNotExist)
 	// rename table
-	addTableRenameMigration(mg, "alert_rule_tag", "alert_rule_tag_v1", "v1")
+	addTableRenameMigrationWithSkipCondition(mg, "alert_rule_tag", "alert_rule_tag_v1", "v1", alertRuleTableDoesNotExist)
 
 	// alert_rule_tag V2
 	alertRuleTagTableV2 := Table{
@@ -79,13 +86,20 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("Create alert_rule_tag table v2", NewAddTableMigration(alertRuleTagTableV2))
 	// recreate indices
 	addTableIndicesMigrations(mg, "Add unique index alert_rule_tag.alert_id_tag_id V2", alertRuleTagTableV2)
+
+	alertRuleV1TableDoesNotExist := &IfTableNotExistsCondition{TableName: "alert_rule_tag_v1"}
+
 	// copy data
-	mg.AddMigration("copy alert_rule_tag v1 to v2", NewCopyTableDataMigration("alert_rule_tag", "alert_rule_tag_v1", map[string]string{
+	copyTableDataMigration := NewCopyTableDataMigration("alert_rule_tag", "alert_rule_tag_v1", map[string]string{
 		"alert_id": "alert_id",
 		"tag_id":   "tag_id",
-	}))
+	})
+	copyTableDataMigration.SkipCondition = alertRuleV1TableDoesNotExist
+	mg.AddMigration("copy alert_rule_tag v1 to v2", copyTableDataMigration)
 
-	mg.AddMigration("drop table alert_rule_tag_v1", NewDropTableMigration("alert_rule_tag_v1"))
+	dropTableMigration := NewDropTableMigration("alert_rule_tag_v1")
+	dropTableMigration.SkipCondition = alertRuleV1TableDoesNotExist
+	mg.AddMigration("drop table alert_rule_tag_v1", dropTableMigration)
 
 	alert_notification := Table{
 		Name: "alert_notification",

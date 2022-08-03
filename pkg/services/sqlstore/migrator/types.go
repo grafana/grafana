@@ -23,6 +23,7 @@ type Migration interface {
 	// for skipping recording it in the migration_log so that it can run several times.
 	// For all the other migrations it should be false.
 	SkipMigrationLog() bool
+	GetSkipCondition() MigrationCondition
 }
 
 type CodeMigration interface {

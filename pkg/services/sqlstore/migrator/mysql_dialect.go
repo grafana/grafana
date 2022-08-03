@@ -105,6 +105,18 @@ func (db *MySQLDialect) UpdateTableSQL(tableName string, columns []*Column) stri
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }
 
+func (db *MySQLDialect) TableCheckSQL(tableName string) (string, []interface{}) {
+	args := []interface{}{tableName}
+	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("TABLES") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=?"
+	return sql, args
+}
+
+func (db *MySQLDialect) TableExistsWithoutPrimaryKeyCheckSQL(tableName, columnName string) (string, []interface{}) {
+	args := []interface{}{tableName, tableName, columnName}
+	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("TABLES") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND NOT EXISTS (SELECT 2 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("COLUMNS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("COLUMN_KEY") + " = 'PRI' AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("COLUMN_NAME") + "=?)"
+	return sql, args
+}
+
 func (db *MySQLDialect) IndexCheckSQL(tableName, indexName string) (string, []interface{}) {
 	args := []interface{}{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("STATISTICS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("INDEX_NAME") + "=?"

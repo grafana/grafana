@@ -13,6 +13,15 @@ func addDropAllIndicesMigrations(mg *Migrator, versionSuffix string, table Table
 	}
 }
 
+func addDropAllIndicesMigrationsWithSkipCondition(mg *Migrator, versionSuffix string, table Table, skipCondition MigrationCondition) {
+	for _, index := range table.Indices {
+		migrationId := fmt.Sprintf("drop index %s - %s", index.XName(table.Name), versionSuffix)
+		migration := NewDropIndexMigration(table, index)
+		migration.SkipCondition = skipCondition
+		mg.AddMigration(migrationId, migration)
+	}
+}
+
 func addTableIndicesMigrations(mg *Migrator, versionSuffix string, table Table) {
 	for _, index := range table.Indices {
 		migrationId := fmt.Sprintf("create index %s - %s", index.XName(table.Name), versionSuffix)
@@ -25,6 +34,13 @@ func addTableIndicesMigrations(mg *Migrator, versionSuffix string, table Table) 
 func addTableRenameMigration(mg *Migrator, oldName string, newName string, versionSuffix string) {
 	migrationId := fmt.Sprintf("Rename table %s to %s - %s", oldName, newName, versionSuffix)
 	mg.AddMigration(migrationId, NewRenameTableMigration(oldName, newName))
+}
+
+func addTableRenameMigrationWithSkipCondition(mg *Migrator, oldName string, newName string, versionSuffix string, skipCondition MigrationCondition) {
+	migrationId := fmt.Sprintf("Rename table %s to %s - %s", oldName, newName, versionSuffix)
+	migration := NewRenameTableMigration(oldName, newName)
+	migration.SkipCondition = skipCondition
+	mg.AddMigration(migrationId, migration)
 }
 
 func addTableReplaceMigrations(mg *Migrator, from Table, to Table, migrationVersion int64, tableDataMigration map[string]string) {

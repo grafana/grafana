@@ -7,6 +7,7 @@ import (
 type MigrationBase struct {
 	id        string
 	Condition MigrationCondition
+	SkipCondition MigrationCondition
 }
 
 func (m *MigrationBase) Id() string {
@@ -23,6 +24,10 @@ func (m *MigrationBase) GetCondition() MigrationCondition {
 
 func (m *MigrationBase) SkipMigrationLog() bool {
 	return false
+}
+
+func (m *MigrationBase) GetSkipCondition() MigrationCondition {
+	return m.SkipCondition
 }
 
 type RawSQLMigration struct {

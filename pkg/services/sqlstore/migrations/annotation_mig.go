@@ -79,13 +79,20 @@ func addAnnotationMig(mg *Migrator) {
 		},
 	}
 
-	mg.AddMigration("Create annotation_tag table v2", NewAddTableMigration(annotationTagTable))
-	mg.AddMigration("Add unique index annotation_tag.annotation_id_tag_id", NewAddIndexMigration(annotationTagTable, annotationTagTable.Indices[0]))
+	annotationTagTableDoesNotExist := &IfNotTableExistsWithoutPrimaryKey{TableName: annotationTagTable.Name, ColumnName: "id"}
+
+	addAnnotationTagTable := NewAddTableMigration(annotationTagTable)
+	addAnnotationTagTable.SkipCondition = annotationTagTableDoesNotExist
+	mg.AddMigration("Create annotation_tag table v2", addAnnotationTagTable)
+
+	addAnnotationTagIndex := NewAddIndexMigration(annotationTagTable, annotationTagTable.Indices[0])
+	addAnnotationTagIndex.SkipCondition = annotationTagTableDoesNotExist
+	mg.AddMigration("Add unique index annotation_tag.annotation_id_tag_id", addAnnotationTagIndex)
 
 	// drop dashboard indexes
-	addDropAllIndicesMigrations(mg, "v2", annotationTagTable)
+	addDropAllIndicesMigrationsWithSkipCondition(mg, "v2", annotationTagTable, annotationTagTableDoesNotExist)
 	// rename table
-	addTableRenameMigration(mg, "annotation_tag", "annotation_tag_v2", "v2")
+	addTableRenameMigrationWithSkipCondition(mg, "annotation_tag", "annotation_tag_v2", "v2", annotationTagTableDoesNotExist)
 
 	// annotation_tag v3
 	annotationTagTableV3 := Table{
@@ -104,13 +111,20 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Create annotation_tag table v3", NewAddTableMigration(annotationTagTableV3))
 	// recreate indices
 	addTableIndicesMigrations(mg, "Add unique index annotation_tag.annotation_id_tag_id V3", annotationTagTableV3)
+
+	annotationTagV2TableDoesNotExist := &IfTableNotExistsCondition{TableName: "annotation_tag_v2"}
+
 	// copy data
-	mg.AddMigration("copy annotation_tag v2 to v3", NewCopyTableDataMigration("annotation_tag", "annotation_tag_v2", map[string]string{
+	copyTableDataMigration := NewCopyTableDataMigration("annotation_tag", "annotation_tag_v2", map[string]string{
 		"annotation_id": "annotation_id",
 		"tag_id":        "tag_id",
-	}))
+	})
+	copyTableDataMigration.SkipCondition = annotationTagV2TableDoesNotExist
+	mg.AddMigration("copy annotation_tag v2 to v3", copyTableDataMigration)
 
-	mg.AddMigration("drop table annotation_tag_v2", NewDropTableMigration("annotation_tag_v2"))
+	dropTableMigration := NewDropTableMigration("annotation_tag_v2")
+	dropTableMigration.SkipCondition = annotationTagV2TableDoesNotExist
+	mg.AddMigration("drop table annotation_tag_v2", dropTableMigration)
 
 	//
 	// clear alert text

@@ -45,6 +45,8 @@ type Dialect interface {
 
 	UpdateTableSQL(tableName string, columns []*Column) string
 
+	TableCheckSQL(tableName string) (string, []interface{})
+	TableExistsWithoutPrimaryKeyCheckSQL(tableName, columnName string) (string, []interface{})
 	IndexCheckSQL(tableName, indexName string) (string, []interface{})
 	ColumnCheckSQL(tableName, columnName string) (string, []interface{})
 	// UpsertSQL returns the upsert sql statement for a dialect
@@ -222,6 +224,14 @@ func (b *BaseDialect) RenameColumn(table Table, column *Column, newName string) 
 		"ALTER TABLE %s RENAME COLUMN %s TO %s",
 		quote(table.Name), quote(column.Name), quote(newName),
 	)
+}
+
+func (b *BaseDialect) TableCheckSQL(tableName string) (string, []interface{}) {
+	return "", nil
+}
+
+func (b *BaseDialect) TableExistsWithoutPrimaryKeyCheckSQL(tableName, columnName string) (string, []interface{}) {
+	return "", nil
 }
 
 func (b *BaseDialect) ColumnCheckSQL(tableName, columnName string) (string, []interface{}) {
