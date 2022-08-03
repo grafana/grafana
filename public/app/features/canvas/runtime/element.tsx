@@ -201,7 +201,9 @@ export class ElementState implements LayerElement {
     let parentBorderWidth = 0;
     if (!parentContainer) {
       parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
-      parentBorderWidth = parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
+      parentBorderWidth = this.parent?.isRoot()
+        ? 0
+        : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
     const relativeTop =
