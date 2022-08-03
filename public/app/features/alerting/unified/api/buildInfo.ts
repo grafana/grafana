@@ -48,7 +48,6 @@ export async function discoverDataSourceFeatures(dsSettings: {
       application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: rulerSupported,
-        lazyAmConfigEnabled: false,
       },
     };
   }
@@ -60,7 +59,6 @@ export async function discoverDataSourceFeatures(dsSettings: {
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: false,
-        lazyAmConfigEnabled: false,
       },
     };
   }
@@ -70,7 +68,6 @@ export async function discoverDataSourceFeatures(dsSettings: {
     application: PromApplication.Mimir,
     features: {
       rulerApiEnabled: features?.ruler_config_api === 'true',
-      lazyAmConfigEnabled: features.alertmanager_config_api === 'true',
     },
   };
 }
@@ -83,7 +80,6 @@ export async function discoverFeatures(dataSourceName: string): Promise<PromApiF
     return {
       features: {
         rulerApiEnabled: true,
-        lazyAmConfigEnabled: false,
       },
     };
   }
@@ -203,3 +199,11 @@ export const alertingApi = createApi({
     }),
   }),
 });
+
+const { useDiscoverAmFeaturesQuery } = alertingApi;
+const { discoverAmFeatures } = alertingApi.endpoints;
+
+export const featureDiscoveryApi = {
+  discoverAmFeatures,
+  useDiscoverAmFeaturesQuery,
+};

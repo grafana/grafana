@@ -75,7 +75,6 @@ export interface PromApiFeatures {
   application?: PromApplication;
   features: {
     rulerApiEnabled: boolean;
-    lazyAmConfigEnabled: boolean;
   };
 }
 
