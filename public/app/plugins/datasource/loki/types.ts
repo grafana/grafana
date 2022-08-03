@@ -49,7 +49,6 @@ export interface LokiQuery extends DataQuery {
   /* @deprecated now use queryType */
   instant?: boolean;
   editorMode?: QueryEditorMode;
-  refId: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
