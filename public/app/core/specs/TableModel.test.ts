@@ -1,4 +1,4 @@
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import TableModel, { mergeTablesIntoModel } from 'app/core/TableModel';
 
 describe('when sorting table desc', () => {
   let table: TableModel;
