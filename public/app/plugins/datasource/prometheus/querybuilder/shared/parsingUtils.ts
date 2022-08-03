@@ -115,8 +115,8 @@ export function makeBinOp(
  * @param cur
  * @param type
  */
-export function getAllByType(expr: string, cur: SyntaxNode, type: number): string[] {
-  if (cur.type.id === type) {
+export function getAllByType(expr: string, cur: SyntaxNode, type: number | string): string[] {
+  if (cur.type.id === type || cur.name === type) {
     return [getString(expr, cur)];
   }
   const values: string[] = [];
