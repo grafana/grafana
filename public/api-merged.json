@@ -7655,6 +7655,29 @@
       }
     },
     "/saml/slo": {
+      "get": {
+        "description": "There might be two possible requests:\n1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.\n2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,\nor in case of IdP-initiated logout.",
+        "tags": [
+          "saml",
+          "enterprise"
+        ],
+        "summary": "It performs Single Logout (SLO) callback.",
+        "operationId": "getSLO",
+        "responses": {
+          "302": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "description": "There might be two possible requests:\n1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.\n2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,\nor in case of IdP-initiated logout.",
         "tags": ["saml", "enterprise"],
@@ -14150,6 +14173,7 @@
     },
     "PostAnnotationsCmd": {
       "type": "object",
+      "required": ["text"],
       "properties": {
         "dashboardId": {
           "type": "integer",
