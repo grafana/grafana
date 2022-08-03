@@ -39,7 +39,7 @@ export const FolderView = ({
         }
       }
 
-      const itemsUIDs = impressionSrv.getDashboardOpened();
+      const itemsUIDs = await impressionSrv.getDashboardOpened();
       if (itemsUIDs.length) {
         folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'query-recent', uid: '__recent', itemsUIDs });
       }

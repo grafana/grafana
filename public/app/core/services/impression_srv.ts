@@ -1,5 +1,6 @@
-import { filter, isArray, isString } from 'lodash';
+import { filter, isArray, isNumber, isString } from 'lodash';
 
+import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import store from 'app/core/store';
 
@@ -28,17 +29,32 @@ export class ImpressionSrv {
     store.set(impressionsKey, JSON.stringify(impressions));
   }
 
+  private async convertToUIDs() {
+    let impressions = this.getImpressions();
+    const ids = filter(impressions, (el) => isNumber(el));
+    if (!ids.length) {
+      return;
+    }
+
+    const convertedUIDs = await getBackendSrv().get<string[]>(`/api/dashboards/ids/${ids.join(',')}`);
+    store.set(this.impressionKey(), JSON.stringify([...filter(impressions, (el) => isString(el)), ...convertedUIDs]));
+  }
+
+  private getImpressions() {
+    const impressions = store.get(this.impressionKey()) || '[]';
+
+    return JSON.parse(impressions);
+  }
+
   /** Returns an array of internal (string) dashboard UIDs */
-  getDashboardOpened(): string[] {
-    let impressions = store.get(this.impressionKey()) || '[]';
+  async getDashboardOpened(): Promise<string[]> {
+    // TODO should be removed after UID migration
+    try {
+      await this.convertToUIDs();
+    } catch (_) {}
 
-    impressions = JSON.parse(impressions);
-
-    impressions = filter(impressions, (el) => {
-      return isString(el);
-    });
-
-    return impressions;
+    const result = filter(this.getImpressions(), (el) => isString(el));
+    return result;
   }
 
   impressionKey() {

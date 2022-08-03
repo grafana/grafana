@@ -35,7 +35,8 @@ async function fetchDashboards(options: PanelOptions, replaceVars: InterpolateFu
   let recentDashboards: Promise<Dashboard[]> = Promise.resolve([]);
   let dashUIDs: string[] = [];
   if (options.showRecentlyViewed) {
-    dashUIDs = take<string>(impressionSrv.getDashboardOpened(), options.maxItems);
+    let uids = await impressionSrv.getDashboardOpened();
+    dashUIDs = take<string>(uids, options.maxItems);
     recentDashboards = getBackendSrv().search({ dashboardUIDs: dashUIDs, limit: options.maxItems });
   }
 

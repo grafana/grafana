@@ -31,15 +31,21 @@ export class SearchSrv {
   }
 
   private queryForRecentDashboards(): Promise<DashboardSearchHit[]> {
-    const dashUIDs: string[] = take(impressionSrv.getDashboardOpened(), 30);
-    if (dashUIDs.length === 0) {
-      return Promise.resolve([]);
-    }
+    return new Promise((resolve) => {
+      impressionSrv.getDashboardOpened().then((uids) => {
+        const dashUIDs: string[] = take(uids, 30);
+        if (dashUIDs.length === 0) {
+          return resolve([]);
+        }
 
-    return backendSrv.search({ dashboardUIDs: dashUIDs }).then((result) => {
-      return dashUIDs
-        .map((orderId) => result.find((result) => result.uid === orderId))
-        .filter((hit) => hit && !hit.isStarred) as DashboardSearchHit[];
+        backendSrv.search({ dashboardUIDs: dashUIDs }).then((result) => {
+          return resolve(
+            dashUIDs
+              .map((orderId) => result.find((result) => result.uid === orderId))
+              .filter((hit) => hit && !hit.isStarred) as DashboardSearchHit[]
+          );
+        });
+      });
     });
   }
 
