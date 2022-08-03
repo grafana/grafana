@@ -281,8 +281,8 @@ func (m modelReplacer) replacePrefix(str string) string {
 	return str
 }
 
-// GenerateCoremodelRegistry produces Go files that define a static registry
-// with references to all the Go code that is expected to be generated from the
+// GenerateCoremodelRegistry produces Go files that define a registry with
+// references to all the Go code that is expected to be generated from the
 // provided lineages.
 func GenerateCoremodelRegistry(path string, ecl []*ExtractedLineage) (WriteDiffer, error) {
 	var cml []tplVars
