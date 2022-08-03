@@ -467,6 +467,10 @@ msgstr "Share"
 msgid "panel.header-menu.view"
 msgstr "View"
 
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.dashboard.title"
+msgstr "Share"
+
 #: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
 msgid "share-modal.export.cancel-button"
 msgstr "Cancel"
@@ -535,6 +539,10 @@ msgstr "Transforms the current relative time range to an absolute time range"
 msgid "share-modal.link.time-range-label"
 msgstr "Lock time range"
 
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.panel.title"
+msgstr "Share Panel"
+
 #: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
 msgid "share-modal.snapshot.cancel-button"
 msgstr "Cancel"
@@ -600,6 +608,26 @@ msgid "share-modal.snapshot.timeout-description"
 msgstr ""
 "You might need to configure the timeout value if it takes a long time to collect your dashboard\n"
 "metrics."
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.embed"
+msgstr "Embed"
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.export"
+msgstr "Export"
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.library-panel"
+msgstr "Library panel"
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.link"
+msgstr "Link"
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.snapshot"
+msgstr "Snapshot"
 
 #: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
 msgid "share-modal.theme-picker.current"

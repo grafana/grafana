@@ -466,6 +466,10 @@ msgstr ""
 msgid "panel.header-menu.view"
 msgstr ""
 
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.dashboard.title"
+msgstr ""
+
 #: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
 msgid "share-modal.export.cancel-button"
 msgstr ""
@@ -534,6 +538,10 @@ msgstr ""
 msgid "share-modal.link.time-range-label"
 msgstr ""
 
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.panel.title"
+msgstr ""
+
 #: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
 msgid "share-modal.snapshot.cancel-button"
 msgstr ""
@@ -596,6 +604,26 @@ msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
 msgid "share-modal.snapshot.timeout-description"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.embed"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.export"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.library-panel"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.link"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.snapshot"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
