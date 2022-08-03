@@ -18,16 +18,13 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 	authorize := ac.Middleware(s.AccessControl)
 
-	// FIXME: This does not seem to work properly with tests, but should be correct.
 	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(ac.ReqViewer, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
-		// FIXME: This does not seem to work properly with tests, but should be correct.
 		entities.Get("/", middleware.ReqSignedIn, authorize(ac.ReqViewer, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
 		entities.Post("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
 
 		entities.Group("/:correlationUID", func(entities routing.RouteRegister) {
-			// FIXME: This does not seem to work properly with tests, but should be correct.
 			entities.Get("/", middleware.ReqSignedIn, authorize(ac.ReqViewer, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
 			entities.Delete("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
 			entities.Patch("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))

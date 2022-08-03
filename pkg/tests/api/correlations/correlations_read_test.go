@@ -103,8 +103,6 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		})
 
 		t.Run("Authenticated users shouldn't get unauthorized or forbidden errors", func(t *testing.T) {
-			// FIXME: don't skip this test
-			t.Skip("this test should pass but somehow testing with accesscontrol works different than live grafana")
 			res := ctx.Get(GetParams{
 				url:  "/api/datasources/correlations",
 				user: viewerUser,
@@ -156,8 +154,6 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		})
 
 		t.Run("Authenticated users shouldn't get unauthorized or forbidden errors", func(t *testing.T) {
-			// FIXME: don't skip this test
-			t.Skip("this test should pass but somehow testing with accesscontrol works different than live grafana")
 			res := ctx.Get(GetParams{
 				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", "some-uid"),
 				user: viewerUser,
