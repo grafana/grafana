@@ -46,7 +46,7 @@ type EvalContext struct {
 
 // NewEvalContext is the EvalContext constructor.
 func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator,
-	sqlStore AlertStore, dashboardService dashboards.DashboardService, dsService datasources.DataSourceService) *EvalContext {
+	alertStore AlertStore, dashboardService dashboards.DashboardService, dsService datasources.DataSourceService) *EvalContext {
 	return &EvalContext{
 		Ctx:               alertCtx,
 		StartTime:         time.Now(),
@@ -57,7 +57,7 @@ func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator model
 		Log:               log.New("alerting.evalContext"),
 		PrevAlertState:    rule.State,
 		RequestValidator:  requestValidator,
-		Store:             sqlStore,
+		Store:             alertStore,
 		dashboardService:  dashboardService,
 		DatasourceService: dsService,
 	}
