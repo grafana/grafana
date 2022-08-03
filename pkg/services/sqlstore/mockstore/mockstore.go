@@ -137,11 +137,6 @@ func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserComman
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
-	query.Result = m.ExpectedUser
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error {
 	query.Result = m.ExpectedUser
 	return m.ExpectedError
