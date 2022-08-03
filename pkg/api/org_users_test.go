@@ -462,8 +462,6 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		targetOrg           int64
 		input               string
 		expectedCode        int
-		expectedMessage     util.DynMap
-		expectedUserCount   int
 	}
 
 	tests := []testCase{
