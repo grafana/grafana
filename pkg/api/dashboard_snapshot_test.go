@@ -240,7 +240,7 @@ func TestGetDashboardSnapshotNotFound(t *testing.T) {
 
 		return dashSnapSvc
 	}
-	
+
 	loggedInUserScenarioWithRole(t,
 		"GET /snapshots/{key} should return 404 when the snapshot does not exist", "GET",
 		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
@@ -290,7 +290,7 @@ func TestGetDashboardSnapshotFailure(t *testing.T) {
 
 		return dashSnapSvc
 	}
-	
+
 	loggedInUserScenarioWithRole(t,
 		"GET /snapshots/{key} should return 404 when the snapshot does not exist", "GET",
 		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
