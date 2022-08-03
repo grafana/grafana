@@ -8,7 +8,6 @@ import {
   logsSupportedLocationsKusto,
   logsResourceTypes,
   resourceTypeDisplayNames,
-  supportedMetricNamespaces,
 } from '../azureMetadata';
 import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
@@ -29,7 +28,6 @@ import { routeNames } from '../utils/common';
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 
 const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
-const supportedMetricNamespacesKusto = supportedMetricNamespaces.map((v) => `"${v.toLocaleLowerCase()}"`).join(',');
 
 export type ResourcePickerQueryType = 'logs' | 'metrics';
 
