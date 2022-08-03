@@ -11,24 +11,20 @@ import {
 } from '@grafana/data';
 import { MenuItem, SeriesTableRow, useTheme2 } from '@grafana/ui';
 
-import { findNextStateIndex, fmtDuration } from './utils';
-
-interface StateTimelineTooltipProps {
+interface StatusHistoryTooltipProps {
   data: DataFrame[];
   alignedData: DataFrame;
   seriesIdx: number;
   datapointIdx: number;
   timeZone: TimeZone;
-  onAnnotationAdd?: () => void;
 }
 
-export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
+export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
   data,
   alignedData,
   seriesIdx,
   datapointIdx,
   timeZone,
-  onAnnotationAdd,
 }) => {
   const theme = useTheme2();
 
@@ -53,9 +49,6 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
     });
   }
 
-  const xField = alignedData.fields[0];
-  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
-
   const dataFrameFieldIndex = field.state?.origin;
   const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
   const value = field.values.get(datapointIdx!);
@@ -68,51 +61,21 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
       )
     : null;
 
-  const nextStateIdx = findNextStateIndex(field, datapointIdx!);
-  let nextStateTs;
-  if (nextStateIdx) {
-    nextStateTs = xField.values.get(nextStateIdx!);
-  }
-
-  const stateTs = xField.values.get(datapointIdx!);
-
-  let toFragment = null;
-  let durationFragment = null;
-
-  if (nextStateTs) {
-    const duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-    durationFragment = (
-      <>
-        <br />
-        <strong>Duration:</strong> {duration}
-      </>
-    );
-    toFragment = (
-      <>
-        {' to'} <strong>{xFieldFmt(xField.values.get(nextStateIdx!)).text}</strong>
-      </>
-    );
-  }
-
   return (
     <div>
       <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
         {fieldDisplayName}
         <br />
         <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
-        From <strong>{xFieldFmt(xField.values.get(datapointIdx!)).text}</strong>
-        {toFragment}
-        {durationFragment}
       </div>
-      <div
-        style={{
-          margin: theme.spacing(1, -1, -1, -1),
-          borderTop: `1px solid ${theme.colors.border.weak}`,
-        }}
-      >
-        {onAnnotationAdd && <MenuItem label={'Add annotation'} icon={'comment-alt'} onClick={onAnnotationAdd} />}
-        {links.length > 0 &&
-          links.map((link, i) => (
+      {links.length > 0 && (
+        <div
+          style={{
+            margin: theme.spacing(1, -1, -1, -1),
+            borderTop: `1px solid ${theme.colors.border.weak}`,
+          }}
+        >
+          {links.map((link, i) => (
             <MenuItem
               key={i}
               icon={'external-link-alt'}
@@ -122,9 +85,10 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
               onClick={link.onClick}
             />
           ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
 
-StateTimelineTooltip.displayName = 'StateTimelineTooltip';
+StatusHistoryTooltip.displayName = 'StatusHistoryTooltip';

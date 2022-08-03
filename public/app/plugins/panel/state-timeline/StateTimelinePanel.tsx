@@ -1,12 +1,13 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrame, FieldType, PanelProps } from '@grafana/data';
-import { TooltipPlugin, useTheme2, ZoomPlugin, usePanelContext } from '@grafana/ui';
+import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import { Portal, UPlotConfigBuilder, usePanelContext, useTheme2, VizTooltipContainer, ZoomPlugin } from '@grafana/ui';
+import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
 
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
-import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
@@ -14,6 +15,8 @@ import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { TimelineChart } from './TimelineChart';
 import { TimelineMode, TimelineOptions } from './types';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
+
+const TOOLTIP_OFFSET = 10;
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
@@ -31,7 +34,28 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   onChangeTimeRange,
 }) => {
   const theme = useTheme2();
-  const { sync, canAddAnnotations } = usePanelContext();
+
+  const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
+  const isToolTipOpen = useRef<boolean>(false);
+
+  const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
+  const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
+  const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
+  const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+  const { canAddAnnotations } = usePanelContext();
+
+  const onCloseToolTip = () => {
+    isToolTipOpen.current = false;
+    setCoords(null);
+    setShouldDisplayCloseButton(false);
+  };
+
+  const onUPlotClick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+    // Linking into useState required to re-render tooltip
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  };
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data?.series, options.mergeValues ?? true, timeRange, theme),
@@ -46,7 +70,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
 
   const renderCustomTooltip = useCallback(
-    (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
+    (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null, onAnnotationAdd?: () => void) => {
       const data = frames ?? [];
       // Count value fields in the state-timeline-ready frame
       const valueFieldsCount = data.reduce(
@@ -73,16 +97,38 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       }
 
       return (
-        <StateTimelineTooltip
-          data={data}
-          alignedData={alignedData}
-          seriesIdx={seriesIdx}
-          datapointIdx={datapointIdx}
-          timeZone={timeZone}
-        />
+        <>
+          {shouldDisplayCloseButton && (
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <CloseButton
+                onClick={onCloseToolTip}
+                style={{
+                  position: 'relative',
+                  top: 'auto',
+                  right: 'auto',
+                  marginRight: 0,
+                }}
+              />
+            </div>
+          )}
+          <StateTimelineTooltip
+            data={data}
+            alignedData={alignedData}
+            seriesIdx={seriesIdx}
+            datapointIdx={datapointIdx}
+            timeZone={timeZone}
+            onAnnotationAdd={onAnnotationAdd}
+          />
+        </>
       );
     },
-    [timeZone, frames]
+    [timeZone, frames, shouldDisplayCloseButton]
   );
 
   if (!frames || warn) {
@@ -115,53 +161,60 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       mode={TimelineMode.Changes}
     >
       {(config, alignedFrame) => {
+        if (oldConfig.current !== config) {
+          oldConfig.current = addTooltipSupport({
+            config,
+            onUPlotClick,
+            setFocusedSeriesIdx,
+            setFocusedPointIdx,
+            setCoords,
+            setHover,
+            isToolTipOpen,
+          });
+        }
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            <TooltipPlugin
-              data={alignedFrame}
-              sync={sync}
-              config={config}
-              mode={options.tooltip.mode}
-              timeZone={timeZone}
-              renderTooltip={renderCustomTooltip}
-            />
+
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
 
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
 
-            {enableAnnotationCreation && (
+            {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={config}>
                 {({ startAnnotating }) => {
                   return (
-                    <ContextMenuPlugin
-                      data={alignedFrame}
-                      config={config}
-                      timeZone={timeZone}
-                      replaceVariables={replaceVariables}
-                      defaultItems={[
-                        {
-                          items: [
-                            {
-                              label: 'Add annotation',
-                              ariaLabel: 'Add annotation',
-                              icon: 'comment-alt',
-                              onClick: (e, p) => {
-                                if (!p) {
-                                  return;
-                                }
-                                startAnnotating({ coords: p.coords });
-                              },
-                            },
-                          ],
-                        },
-                      ]}
-                    />
+                    <Portal>
+                      {hover && coords && (
+                        <VizTooltipContainer
+                          position={{ x: coords.viewport.x, y: coords.viewport.y }}
+                          offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                          allowPointerEvents={isToolTipOpen.current}
+                        >
+                          {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx, () => {
+                            startAnnotating({ coords: { plotCanvas: coords.canvas, viewport: coords.viewport } });
+                            onCloseToolTip();
+                          })}
+                        </VizTooltipContainer>
+                      )}
+                    </Portal>
                   );
                 }}
               </AnnotationEditorPlugin>
+            ) : (
+              <Portal>
+                {hover && coords && (
+                  <VizTooltipContainer
+                    position={{ x: coords.viewport.x, y: coords.viewport.y }}
+                    offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                    allowPointerEvents={isToolTipOpen.current}
+                  >
+                    {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
+                  </VizTooltipContainer>
+                )}
+              </Portal>
             )}
           </>
         );
