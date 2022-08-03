@@ -270,6 +270,42 @@ msgstr ""
 msgid "dashboard.toolbar.unmark-favorite"
 msgstr ""
 
+#: public/app/core/components/Select/FolderPicker.tsx
+msgid "folder-picker.loading"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.cancel"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.create"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.error"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.folder"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.folder-description"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.name"
+msgstr ""
+
+#: public/app/features/library-panels/utils/usePanelSave.ts
+msgid "library-panels.save.error"
+msgstr ""
+
+#: public/app/features/library-panels/utils/usePanelSave.ts
+msgid "library-panels.save.success"
+msgstr ""
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr ""
@@ -516,6 +552,10 @@ msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
 msgid "share-modal.export.view-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLibraryPanel.tsx
+msgid "share-modal.library.info"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
