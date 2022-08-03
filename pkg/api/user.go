@@ -387,17 +387,18 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 		return response.Error(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
 	}
 
-	userQuery := models.GetUserByIdQuery{Id: c.UserId}
+	userQuery := user.GetUserByIDQuery{ID: c.UserId}
 
-	if err := hs.SQLStore.GetUserById(c.Req.Context(), &userQuery); err != nil {
+	user, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	if err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
 
-	passwordHashed, err := util.EncodePassword(cmd.OldPassword, userQuery.Result.Salt)
+	passwordHashed, err := util.EncodePassword(cmd.OldPassword, user.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}
-	if passwordHashed != userQuery.Result.Password {
+	if passwordHashed != user.Password {
 		return response.Error(401, "Invalid old password", nil)
 	}
 
@@ -407,7 +408,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 	}
 
 	cmd.UserId = c.UserId
-	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, userQuery.Result.Salt)
+	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, user.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}
