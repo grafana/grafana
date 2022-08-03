@@ -2,12 +2,15 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { Modal, Button, Form, Field, Input, useStyles2 } from '@grafana/ui';
+import { isValidGoDuration } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Modal, Button, Form, Field, Input, useStyles2, Alert } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateLotexNamespaceAndGroupAction } from '../../state/actions';
+import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { durationValidationPattern } from '../../utils/time';
@@ -71,7 +74,7 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
       onClickBackdrop={onClose}
     >
       <Form defaultValues={defaultValues} onSubmit={onSubmit} key={JSON.stringify(defaultValues)}>
-        {({ register, errors, formState: { isDirty } }) => (
+        {({ register, errors, formState: { isDirty }, watch }) => (
           <>
             <Field label="Namespace" invalid={!!errors.namespaceName} error={errors.namespaceName?.message}>
               <Input
@@ -99,9 +102,30 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
                 placeholder="1m"
                 {...register('groupInterval', {
                   pattern: durationValidationPattern,
+                  validate: (input) => {
+                    const validDuration = isValidGoDuration(input);
+                    if (!validDuration) {
+                      return 'Invalid duration. Valid example: 1m (Available units: h, m, s)';
+                    }
+
+                    const limitExceeded = !checkEvaluationIntervalGlobalLimit(input).exceedsLimit;
+                    if (limitExceeded) {
+                      return true;
+                    }
+
+                    return false;
+                  },
                 })}
               />
             </Field>
+            {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
+              <Alert severity="warning" title="Global evalutation interval limit exceeded">
+                A minimum evaluation interval of <strong>{config.unifiedAlerting.minInterval}</strong> has been
+                configured in Grafana.
+                <br />
+                Please contact the administrator to configure a lower interval.
+              </Alert>
+            )}
 
             <Modal.ButtonRow>
               <Button variant="secondary" type="button" disabled={loading} onClick={onClose} fill="outline">
