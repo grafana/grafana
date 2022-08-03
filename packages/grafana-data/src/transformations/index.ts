@@ -5,12 +5,16 @@ export { standardTransformers } from './transformers';
 export * from './fieldReducer';
 export { transformDataFrame } from './transformDataFrame';
 export {
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   standardTransformersRegistry,
 } from './standardTransformersRegistry';
-export { RegexpOrNamesMatcherOptions, ByNamesMatcherOptions, ByNamesMatcherMode } from './matchers/nameMatcher';
-export { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
+export {
+  type RegexpOrNamesMatcherOptions,
+  type ByNamesMatcherOptions,
+  ByNamesMatcherMode,
+} from './matchers/nameMatcher';
+export type { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
 export { outerJoinDataFrames } from './transformers/joinDataFrames';
 export * from './transformers/histogram';
 export { ensureTimeField } from './transformers/convertFieldType';
