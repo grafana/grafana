@@ -38,6 +38,8 @@ func Unzip(fpath, tgtDir string) error {
 		if err := os.MkdirAll(filepath.Dir(dstPath), f.Mode()); err != nil {
 			return err
 		}
+
+		//nolint:gosec
 		fd, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
 			return err
