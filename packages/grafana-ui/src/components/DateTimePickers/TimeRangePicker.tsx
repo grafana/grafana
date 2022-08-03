@@ -47,11 +47,7 @@ export interface TimeRangePickerProps extends Themeable {
   timeRangeListTitleMessage?: string;
   timeRangeListRoleDescriptionMessage?: string;
   timeRangeListEmptyFirstMessage?: string;
-  timeRangeListEmptyLinkMessage?: string;
-  timeRangeListEmptySecondMessage?: (
-    stylesEmptyList: string | undefined,
-    hrefEmptyList: string | undefined
-  ) => ReactNode;
+  timeRangeListEmptySecondMessage?: (linkClassName: string | undefined, hrefEmptyList: string | undefined) => ReactNode;
 }
 
 export interface State {
