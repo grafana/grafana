@@ -34,9 +34,6 @@ export const Basic: ComponentStory<typeof TimeZonePicker> = (args) => {
     <TimeZonePicker
       {...args}
       onChange={(newValue) => {
-        if (!newValue) {
-          return;
-        }
         action('on selected')(newValue);
         updateArgs({ value: newValue });
       }}
