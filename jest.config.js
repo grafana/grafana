@@ -10,7 +10,7 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': require.resolve('ts-jest'),
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(ol)|(monaco-promql)/)', // <- exclude the open layers library
+    'node_modules/(?!(ol)/)', // <- exclude the open layers library
   ],
   moduleDirectories: ['public'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],

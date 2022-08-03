@@ -10,6 +10,11 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
+jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
+  const fakeQueryField = () => <div>prometheus query field</div>;
+  return { MonacoQueryFieldWrapper: fakeQueryField };
+});
+
 function createDatasource() {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
