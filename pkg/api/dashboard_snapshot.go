@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -152,14 +153,17 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Response {
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
-		return response.Error(404, "Snapshot not found", nil)
+		return response.Error(http.StatusBadRequest, "Empty snapshot key", nil)
 	}
 
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
 	err := hs.DashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		if errors.Is(err, models.ErrDashboardSnapshotNotFound) {
+			return response.Error(http.StatusNotFound, "Failed to find dashboard snapshot", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboard snapshot", err)
 	}
 
 	snapshot := query.Result
@@ -226,7 +230,10 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 	query := &models.GetDashboardSnapshotQuery{DeleteKey: key}
 	err := hs.DashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		if errors.Is(err, models.ErrDashboardSnapshotNotFound) {
+			return response.Error(http.StatusNotFound, "Failed to find dashboard snapshot", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboard snapshot", err)
 	}
 
 	if query.Result.External {
@@ -259,7 +266,10 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 
 	err := hs.DashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		if errors.Is(err, models.ErrDashboardSnapshotNotFound) {
+			return response.Error(http.StatusNotFound, "Failed to find dashboard snapshot", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboard snapshot", err)
 	}
 	if query.Result == nil {
 		return response.Error(404, "Failed to get dashboard snapshot", nil)

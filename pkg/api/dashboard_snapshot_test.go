@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -232,4 +233,72 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				assert.Equal(t, int64(100), id.MustInt64())
 			}, sqlmock)
 	})
+}
+
+func TestGetDashboardSnapshotNotFound(t *testing.T) {
+	sqlmock := mockstore.NewSQLStoreMock()
+	sqlmock.ExpectedTeamsByUser = []*models.TeamDTO{}
+	sqlmock.ExpectedError = models.ErrDashboardSnapshotNotFound
+	hs := &HTTPServer{DashboardsnapshotsService: &dashboardsnapshots.Service{SQLStore: sqlmock}}
+
+	loggedInUserScenarioWithRole(t,
+		"GET /snapshots/{key} should return 404 when the snapshot does not exist", "GET",
+		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			sc.handlerFunc = hs.GetDashboardSnapshot
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+
+			assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+		}, sqlmock)
+
+	loggedInUserScenarioWithRole(t,
+		"DELETE /snapshots/{key} should return 404 when the snapshot does not exist", "DELETE",
+		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			sc.handlerFunc = hs.DeleteDashboardSnapshot
+			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+			assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+		}, sqlmock)
+
+	loggedInUserScenarioWithRole(t,
+		"GET /snapshots-delete/{deleteKey} should return 404 when the snapshot does not exist", "DELETE",
+		"/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			sc.handlerFunc = hs.DeleteDashboardSnapshotByDeleteKey
+			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"deleteKey": "12345"}).exec()
+
+			assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+		}, sqlmock)
+}
+
+func TestGetDashboardSnapshotFailure(t *testing.T) {
+	sqlmock := mockstore.NewSQLStoreMock()
+	sqlmock.ExpectedTeamsByUser = []*models.TeamDTO{}
+	sqlmock.ExpectedError = errors.New("something went wrong")
+	hs := &HTTPServer{DashboardsnapshotsService: &dashboardsnapshots.Service{SQLStore: sqlmock}}
+
+	loggedInUserScenarioWithRole(t,
+		"GET /snapshots/{key} should return 404 when the snapshot does not exist", "GET",
+		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			sc.handlerFunc = hs.GetDashboardSnapshot
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+
+			assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
+		}, sqlmock)
+
+	loggedInUserScenarioWithRole(t,
+		"DELETE /snapshots/{key} should return 404 when the snapshot does not exist", "DELETE",
+		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			sc.handlerFunc = hs.DeleteDashboardSnapshot
+			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+			assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
+		}, sqlmock)
+
+	loggedInUserScenarioWithRole(t,
+		"GET /snapshots-delete/{deleteKey} should return 404 when the snapshot does not exist", "DELETE",
+		"/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			sc.handlerFunc = hs.DeleteDashboardSnapshotByDeleteKey
+			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"deleteKey": "12345"}).exec()
+
+			assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
+		}, sqlmock)
 }
