@@ -24,11 +24,6 @@ var (
 		Name:  "no-install-deps",
 		Usage: "Don't install dependencies",
 	}
-	triesFlag = cli.IntFlag{
-		Name:  "tries",
-		Usage: "Specify number of tries before failing",
-		Value: 1,
-	}
 	signingAdminFlag = cli.BoolFlag{
 		Name:  "signing-admin",
 		Usage: "Use manifest signing admin API endpoint?",

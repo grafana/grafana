@@ -98,7 +98,7 @@ func BuildManifest(ctx context.Context, dpath string, signingAdmin bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to get signed manifest from Grafana API: %w", err)
 	}
-	defer resp.Body.Close()
+	defer logCloseError(resp.Body.Close)
 	if resp.StatusCode != 200 {
 		msg, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -113,7 +113,7 @@ func BuildManifest(ctx context.Context, dpath string, signingAdmin bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", manifestPath, err)
 	}
-	defer f.Close()
+	defer logCloseError(f.Close)
 	if _, err := io.Copy(f, resp.Body); err != nil {
 		return fmt.Errorf("failed to write %s: %w", manifestPath, err)
 	}
@@ -174,7 +174,7 @@ func getChksums(dpath, manifestPath string) (map[string]string, error) {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer logCloseError(f.Close)
 		if _, err := io.Copy(h, f); err != nil {
 			return err
 		}

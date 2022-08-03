@@ -17,6 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/build/syncutil"
 )
 
+// logCloseError executes the closeFunc; if it returns an error, it is logged by the log package.
+func logCloseError(closeFunc func() error) {
+	if err := closeFunc(); err != nil {
+		log.Println(err)
+	}
+}
+
 // pluginManifest has details of an external plugin package.
 type pluginManifest struct {
 	Name     string `json:"name"`
@@ -39,6 +46,7 @@ func Download(ctx context.Context, grafanaDir string, p syncutil.WorkerPool) err
 
 	var m pluginsManifest
 	manifestPath := filepath.Join(grafanaDir, "plugins-bundled", "external.json")
+	//nolint:gosec
 	manifestB, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
 		return fmt.Errorf("failed to open plugins manifest %q: %w", manifestPath, err)
@@ -55,7 +63,7 @@ func Download(ctx context.Context, grafanaDir string, p syncutil.WorkerPool) err
 			if err != nil {
 				return err
 			}
-			defer out.Close()
+			defer logCloseError(out.Close)
 
 			u := fmt.Sprintf("http://storage.googleapis.com/plugins-ci/plugins/%s/%s-%s.zip", pm.Name, pm.Name,
 				pm.Version)
@@ -65,7 +73,7 @@ func Download(ctx context.Context, grafanaDir string, p syncutil.WorkerPool) err
 			if err != nil {
 				return fmt.Errorf("downloading %q failed: %w", u, err)
 			}
-			defer resp.Body.Close()
+			defer logCloseError(resp.Body.Close)
 
 			if resp.StatusCode != http.StatusOK {
 				return fmt.Errorf("failed to download %q, status code %d", u, resp.StatusCode)
@@ -82,7 +90,7 @@ func Download(ctx context.Context, grafanaDir string, p syncutil.WorkerPool) err
 			if err != nil {
 				return err
 			}
-			defer fd.Close()
+			defer logCloseError(fd.Close)
 
 			h := sha256.New()
 			if _, err := io.Copy(h, fd); err != nil {

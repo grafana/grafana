@@ -87,7 +87,7 @@ func GetVersion(mode VersionMode) (*Version, error) {
 		return &v, nil
 	}
 
-	return nil, fmt.Errorf("mode not found in version list")
+	return nil, fmt.Errorf("mode '%s' not found in version list", mode)
 }
 
 func shortenBuildID(buildID string) string {
@@ -102,6 +102,7 @@ func shortenBuildID(buildID string) string {
 // GetGrafanaVersion gets the Grafana version from the package.json
 func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 	pkgJSONPath := filepath.Join(grafanaDir, "package.json")
+	//nolint:gosec
 	pkgJSONB, err := ioutil.ReadFile(pkgJSONPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read %q: %w", pkgJSONPath, err)

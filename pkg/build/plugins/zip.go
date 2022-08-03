@@ -16,7 +16,7 @@ func Unzip(fpath, tgtDir string) error {
 	if err != nil {
 		return err
 	}
-	defer r.Close()
+	defer logCloseError(r.Close)
 
 	// Closure to address file descriptors issue with all the deferred .Close() methods
 	extractAndWriteFile := func(f *zip.File) error {
@@ -26,9 +26,7 @@ func Unzip(fpath, tgtDir string) error {
 		if err != nil {
 			return err
 		}
-		defer func() {
-			_ = rc.Close()
-		}()
+		defer logCloseError(rc.Close)
 
 		dstPath := filepath.Join(tgtDir, f.Name)
 
@@ -43,9 +41,7 @@ func Unzip(fpath, tgtDir string) error {
 		if err != nil {
 			return err
 		}
-		defer func() {
-			_ = fd.Close()
-		}()
+		defer logCloseError(fd.Close)
 
 		// nolint:gosec
 		if _, err := io.Copy(fd, rc); err != nil {
