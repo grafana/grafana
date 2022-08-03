@@ -1,4 +1,4 @@
-import { createAction, PayloadAction } from '@reduxjs/toolkit';
+import { createAction } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
@@ -115,8 +115,10 @@ export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore
 export function changeSize(
   exploreId: ExploreId,
   { height, width }: { height: number; width: number }
-): PayloadAction<ChangeSizePayload> {
-  return changeSizeAction({ exploreId, height, width });
+): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    dispatch(changeSizeAction({ exploreId, height, width }));
+  };
 }
 
 interface ChangeGraphStylePayload {

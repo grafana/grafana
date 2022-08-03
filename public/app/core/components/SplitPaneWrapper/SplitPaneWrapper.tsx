@@ -117,17 +117,15 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       }
     }
 
-    const rightSize =
-      minVerticalPaneWidth && rightPaneSize < minVerticalPaneWidth ? minVerticalPaneWidth : rightPaneSize;
-
     return (
       <SplitPane
         split="vertical"
         maxSize={-300}
         minSize={minVerticalPaneWidth}
-        size={rightSize}
+        size={rightPaneSize}
         primary="second"
         resizerClassName={styles.resizerV}
+        paneStyle={{ overflow: 'scroll' }}
         onDragStarted={() => (document.body.style.cursor = 'col-resize')}
         onDragFinished={(size) => this.onDragFinished(Pane.Right, size)}
       >

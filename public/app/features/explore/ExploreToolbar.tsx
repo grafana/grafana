@@ -1,3 +1,4 @@
+import { inRange } from 'lodash';
 import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -25,6 +26,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { changeDatasource } from './state/datasource';
+import { changeSize } from './state/explorePane';
 import { splitClose, splitOpen } from './state/main';
 import { cancelQueries, runQueries } from './state/query';
 import { isSplit } from './state/selectors';
@@ -65,6 +67,19 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeTimeSync = () => {
     const { syncTimes, exploreId } = this.props;
     syncTimes(exploreId);
+  };
+
+  onResizeClick = (isEvenlySplit: boolean) => {
+    const { changeSize, exploreId } = this.props;
+    const smallPaneOffset = 100;
+    // if it's even, make the clicked panel bigger
+    // if it's not even, make the clicked panel even
+    const newWidth = isEvenlySplit ? window.innerWidth - smallPaneOffset : window.innerWidth / 2;
+    changeSize(exploreId, { height: window.innerHeight, width: newWidth });
+    changeSize(exploreId === ExploreId.left ? ExploreId.right : ExploreId.left, {
+      height: window.innerHeight,
+      width: window.innerWidth - newWidth,
+    });
   };
 
   renderRefreshPicker = (showSmallTimePicker: boolean) => {
@@ -121,6 +136,9 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
+    const paneMidSize = window.innerWidth / 2;
+    const isEvenlySplit = splitted && inRange(containerWidth, paneMidSize - 100, paneMidSize + 100);
+    const isSmallerPanel = !isEvenlySplit && containerWidth < window.innerWidth / 2;
 
     const showExploreToDashboard =
       contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
@@ -159,9 +177,19 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 Split
               </ToolbarButton>
             ) : (
-              <ToolbarButton title="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
-                Close
-              </ToolbarButton>
+              <>
+                <ToolbarButton
+                  title="Resize pane"
+                  onClick={() => this.onResizeClick(isEvenlySplit)}
+                  icon="columns"
+                  disabled={isLive}
+                >
+                  {isEvenlySplit || isSmallerPanel ? '+' : '-'}
+                </ToolbarButton>
+                <ToolbarButton title="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
+                  Close
+                </ToolbarButton>
+              </>
             )}
 
             {config.featureToggles.explore2Dashboard && showExploreToDashboard && (
@@ -256,6 +284,7 @@ const mapDispatchToProps = {
   runQueries,
   closeSplit: splitClose,
   split: splitOpen,
+  changeSize,
   syncTimes,
   onChangeTimeZone: updateTimeZoneForSession,
   onChangeFiscalYearStartMonth: updateFiscalYearStartMonthForSession,

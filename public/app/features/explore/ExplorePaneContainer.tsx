@@ -27,6 +27,7 @@ import { lastSavedUrl } from './state/main';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     explore: css`
+      overflow: scroll;
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
@@ -34,16 +35,12 @@ const getStyles = (theme: GrafanaTheme2) => {
         border-left: 1px dotted ${theme.colors.border.medium};
       }
     `,
-    exploreSplit: css`
-      width: 50%;
-    `,
   };
 };
 
 interface OwnProps extends Themeable2 {
   exploreId: ExploreId;
   urlQuery: string;
-  minWidth: number;
 }
 
 interface Props extends OwnProps, ConnectedProps<typeof connector> {}
@@ -108,7 +105,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
     const exploreClass = cx(styles.explore);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
-        {initialized && <Explore exploreId={exploreId} minWidth={this.props.minWidth} />}
+        {initialized && <Explore exploreId={exploreId} />}
       </div>
     );
   }

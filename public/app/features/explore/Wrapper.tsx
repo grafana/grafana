@@ -14,6 +14,7 @@ import { getNavModel } from '../../core/selectors/navModel';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
+import { changeSize } from './state/explorePane';
 import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction, cleanupPaneAction } from './state/main';
 
 const styles = {
@@ -23,6 +24,7 @@ const styles = {
     min-height: 0;
   `,
   exploreWrapper: css`
+    overflow: scroll;
     display: flex;
     height: 100%;
   `,
@@ -79,6 +81,18 @@ class WrapperUnconnected extends PureComponent<Props> {
     if (searchParams.from || searchParams.to) {
       locationService.partial({ from: undefined, to: undefined }, true);
     }
+
+    if (this.props.exploreState[ExploreId.right]?.containerWidth === undefined) {
+      const { left, right } = this.props.queryParams;
+      const hasSplit = Boolean(left) && Boolean(right);
+      changeSize(ExploreId.left, {
+        height: window.innerHeight,
+        width: hasSplit ? window.innerWidth / 2 : window.innerWidth,
+      });
+      if (hasSplit) {
+        changeSize(ExploreId.right, { height: window.innerHeight, width: window.innerWidth / 2 });
+      }
+    }
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -94,7 +108,8 @@ class WrapperUnconnected extends PureComponent<Props> {
   render() {
     const { left, right } = this.props.queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
-    const rightContainerWidth = this.props.exploreState[ExploreId.right]?.containerWidth;
+    const rightContainerWidth = this.props.exploreState[ExploreId.right]?.containerWidth || window.innerWidth / 2;
+    const minPaneSize = 100;
 
     return (
       <div className={styles.pageScrollbarWrapper}>
@@ -102,23 +117,18 @@ class WrapperUnconnected extends PureComponent<Props> {
         <div className={styles.exploreWrapper}>
           <SplitPaneWrapper
             topPaneVisible={false}
-            minVerticalPaneWidth={400}
+            minVerticalPaneWidth={minPaneSize}
             leftPaneComponents={
               <ErrorBoundaryAlert style="page" key="left">
-                <ExplorePaneContainer key="leftContainer" exploreId={ExploreId.left} urlQuery={left} minWidth={200} />
+                <ExplorePaneContainer key="leftContainer" exploreId={ExploreId.left} urlQuery={left} />
               </ErrorBoundaryAlert>
             }
             rightPaneComponents={
               <ErrorBoundaryAlert style="page" key="right">
-                <ExplorePaneContainer
-                  key="rightContainer"
-                  exploreId={ExploreId.right}
-                  urlQuery={right}
-                  minWidth={200}
-                />
+                <ExplorePaneContainer key="rightContainer" exploreId={ExploreId.right} urlQuery={right} />
               </ErrorBoundaryAlert>
             }
-            uiState={{ topPaneSize: 0, rightPaneSize: rightContainerWidth || 0 }}
+            uiState={{ topPaneSize: 0, rightPaneSize: rightContainerWidth }}
             rightPaneVisible={hasSplit}
             updateUiState={() => {
               /* handled by changeSizeAction */

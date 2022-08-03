@@ -71,7 +71,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
   theme: GrafanaTheme2;
-  minWidth: number;
 }
 
 enum ExploreDrawer {
@@ -178,10 +177,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onResize = (size: { height: number; width: number }) => {
-    console.log('resize', this.props.exploreId, this.props.minWidth, size.width);
-    if (size.width > this.props.minWidth) {
-      this.props.changeSize(this.props.exploreId, size);
-    }
+    this.props.changeSize(this.props.exploreId, size);
   };
 
   onStartScanning = () => {
@@ -351,6 +347,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.traceFrames,
       ].every((e) => e.length === 0);
 
+    const minContentSize = 400;
+
     return (
       <CustomScrollbar
         testId={selectors.pages.Explore.General.scrollView}
@@ -378,13 +376,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               <ResponseErrorContainer exploreId={exploreId} />
             </PanelContainer>
             <AutoSizer onResize={this.onResize} disableHeight defaultWidth={containerWidth}>
-              {({ width: inputWidth }) => {
-                if (inputWidth === 0) {
+              {({ width: widthResponse }) => {
+                if (widthResponse === 0) {
                   return null;
                 }
-                let width = this.props.minWidth;
-                if (inputWidth > this.props.minWidth) {
-                  width = inputWidth;
+                let width = widthResponse;
+                if (width < minContentSize) {
+                  width = minContentSize;
                 }
 
                 return (
@@ -492,5 +490,4 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export default compose(connector, withTheme2)(Explore) as React.ComponentType<{
   exploreId: ExploreId;
-  minWidth: number;
 }>;
