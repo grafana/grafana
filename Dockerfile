@@ -27,7 +27,6 @@ RUN apk add --no-cache gcc g++ make
 WORKDIR /grafana
 
 COPY go.mod go.sum embed.go Makefile build.go package.json ./
-COPY cue cue
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
 COPY public/api-spec.json public/api-spec.json

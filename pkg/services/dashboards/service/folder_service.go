@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -207,6 +206,7 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 	}
 
 	dashFolder := query.Result
+	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
 		return dashboards.ErrFolderNotFound
@@ -238,14 +238,16 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 	}
 	cmd.Result = folder
 
-	if err := f.bus.Publish(ctx, &events.FolderUpdated{
-		Timestamp: time.Now(),
-		Title:     folder.Title,
-		ID:        dash.Id,
-		UID:       dash.Uid,
-		OrgID:     orgID,
-	}); err != nil {
-		f.log.Error("failed to publish FolderUpdated event", "folder", folder.Title, "user", user.UserId, "error", err)
+	if currentTitle != folder.Title {
+		if err := f.bus.Publish(ctx, &events.FolderTitleUpdated{
+			Timestamp: folder.Updated,
+			Title:     folder.Title,
+			ID:        dash.Id,
+			UID:       dash.Uid,
+			OrgID:     orgID,
+		}); err != nil {
+			f.log.Error("failed to publish FolderTitleUpdated event", "folder", folder.Title, "user", user.UserId, "error", err)
+		}
 	}
 
 	return nil

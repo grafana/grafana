@@ -153,7 +153,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			},
 			url: "/api/admin/provisioning/alerting/reload",
 			checkCall: func(mock provisioning.ProvisioningServiceMock) {
-				assert.Len(t, mock.Calls.ProvisionAlertRules, 1)
+				assert.Len(t, mock.Calls.ProvisionAlerting, 1)
 			},
 		},
 		{

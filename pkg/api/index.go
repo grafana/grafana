@@ -169,35 +169,37 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
-	starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
-	if err != nil {
-		return nil, err
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
+		starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
+		if err != nil {
+			return nil, err
+		}
+
+		navTree = append(navTree, &dtos.NavLink{
+			Text:           "Starred",
+			Id:             "starred",
+			Icon:           "star",
+			SortWeight:     dtos.WeightSavedItems,
+			Section:        dtos.NavSectionCore,
+			Children:       starredItemsLinks,
+			EmptyMessageId: "starred-empty",
+		})
+
+		dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
+
+		dashboardsUrl := "/dashboards"
+
+		navTree = append(navTree, &dtos.NavLink{
+			Text:       "Dashboards",
+			Id:         "dashboards",
+			SubTitle:   "Manage dashboards and folders",
+			Icon:       "apps",
+			Url:        hs.Cfg.AppSubURL + dashboardsUrl,
+			SortWeight: dtos.WeightDashboard,
+			Section:    dtos.NavSectionCore,
+			Children:   dashboardChildLinks,
+		})
 	}
-
-	navTree = append(navTree, &dtos.NavLink{
-		Text:           "Starred",
-		Id:             "starred",
-		Icon:           "star",
-		SortWeight:     dtos.WeightSavedItems,
-		Section:        dtos.NavSectionCore,
-		Children:       starredItemsLinks,
-		EmptyMessageId: "starred-empty",
-	})
-
-	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
-
-	dashboardsUrl := "/dashboards"
-
-	navTree = append(navTree, &dtos.NavLink{
-		Text:       "Dashboards",
-		Id:         "dashboards",
-		SubTitle:   "Manage dashboards and folders",
-		Icon:       "apps",
-		Url:        hs.Cfg.AppSubURL + dashboardsUrl,
-		SortWeight: dtos.WeightDashboard,
-		Section:    dtos.NavSectionCore,
-		Children:   dashboardChildLinks,
-	})
 
 	canExplore := func(context *models.ReqContext) bool {
 		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
@@ -303,7 +305,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	hideApiKeys, _, _ := hs.kvStore.Get(c.Req.Context(), c.OrgId, "serviceaccounts", "hideApiKeys")
-	apiKeys := hs.SQLStore.GetAllAPIKeys(c.Req.Context(), c.OrgId)
+	apiKeys := hs.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgId)
 	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
 	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && !apiKeysHidden {
 		configNodes = append(configNodes, &dtos.NavLink{
