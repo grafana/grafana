@@ -8,10 +8,7 @@ import (
 )
 
 func TestSchemaAssignability(t *testing.T) {
-	reg, err := registry.NewBase()
-	if err != nil {
-		t.Fatal(err)
-	}
+	reg := registry.NewBase()
 
 	for _, cm := range reg.All() {
 		tcm := cm
