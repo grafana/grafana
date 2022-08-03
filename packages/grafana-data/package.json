@@ -2,41 +2,53 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "9.1.0-pre",
+  "version": "9.2.0-pre",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
   ],
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-data"
   },
   "main": "src/index.ts",
+  "types": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
   "scripts": {
-    "build": "grafana-toolkit package:build --scope=data",
-    "bundle": "rollup -c rollup.config.ts",
-    "clean": "rimraf ./dist ./compiled",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.0",
-    "@grafana/schema": "9.1.0-pre",
+    "@grafana/schema": "9.2.0-pre",
     "@types/d3-interpolate": "^1.4.0",
     "d3-interpolate": "1.4.0",
     "date-fns": "2.29.1",
     "eventemitter3": "4.0.7",
+    "history": "4.10.1",
     "lodash": "4.17.21",
     "marked": "4.0.18",
     "moment": "2.29.4",
     "moment-timezone": "0.5.34",
     "ol": "6.15.1",
     "papaparse": "5.3.2",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
     "regenerator-runtime": "0.13.9",
     "rxjs": "7.5.6",
+    "tinycolor2": "1.4.2",
     "tslib": "2.4.0",
     "uplot": "1.6.22",
     "xss": "1.0.13"
@@ -65,14 +77,20 @@
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.3",
-    "history": "4.10.1",
+    "esbuild": "^0.14.47",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
     "react-test-renderer": "17.0.2",
     "rimraf": "3.0.2",
     "rollup": "2.77.2",
-    "rollup-plugin-sourcemaps": "0.6.3",
-    "rollup-plugin-terser": "7.0.2",
+    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-esbuild": "^4.9.1",
+    "rollup-plugin-node-externals": "^4.1.0",
     "sinon": "14.0.0",
-    "tinycolor2": "1.4.2",
     "typescript": "4.7.4"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0"
   }
 }
