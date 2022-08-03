@@ -8,7 +8,7 @@ msgstr ""
 "Language: fr\n"
 "Project-Id-Version: 2f9cf052fe5ab6c086476d0003c2f658\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2022-08-03 13:09\n"
+"PO-Revision-Date: 2022-08-03 13:38\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
@@ -54,7 +54,7 @@ msgstr ""
 
 #: public/app/features/inspector/InspectDataTab.tsx
 msgid "dashboard.inspect-data.download-csv"
-msgstr "Télécharger CSV"
+msgstr ""
 
 #: public/app/features/inspector/InspectDataOptions.tsx
 msgid "dashboard.inspect-data.download-excel-description"
