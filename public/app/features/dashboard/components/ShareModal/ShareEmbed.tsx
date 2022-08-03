@@ -1,3 +1,4 @@
+import { t, Trans } from '@lingui/macro';
 import React, { FormEvent, PureComponent } from 'react';
 
 import { reportInteraction } from '@grafana/runtime/src';
@@ -63,12 +64,21 @@ export class ShareEmbed extends PureComponent<Props, State> {
     const { useCurrentTimeRange, selectedTheme, iframeHtml } = this.state;
     const isRelativeTime = this.props.dashboard ? this.props.dashboard.time.to === 'now' : false;
 
+    const timeRangeDescription = isRelativeTime
+      ? t({
+          id: 'share-modal.embed.time-range-description',
+          message: 'Transforms the current relative time range to an absolute time range',
+        })
+      : '';
+
     return (
       <>
-        <p className="share-modal-info-text">Generate HTML for embedding an iframe with this panel.</p>
+        <p className="share-modal-info-text">
+          <Trans id="share-modal.embed.info">Generate HTML for embedding an iframe with this panel.</Trans>
+        </p>
         <Field
-          label="Current time range"
-          description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}
+          label={t({ id: 'share-modal.embed.time-range', message: 'Current time range' })}
+          description={timeRangeDescription}
         >
           <Switch
             id="share-current-time-range"
@@ -78,9 +88,13 @@ export class ShareEmbed extends PureComponent<Props, State> {
         </Field>
         <ThemePicker selectedTheme={selectedTheme} onChange={this.onThemeChange} />
         <Field
-          label="Embed HTML"
-          description="The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled,
-                the user viewing that page need to be signed into Grafana for the graph to load."
+          label={t({ id: 'share-modal.embed.html', message: 'Embed HTML' })}
+          description={
+            <Trans id="share-modal.embed.html-description">
+              The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled,
+              the user viewing that page need to be signed into Grafana for the graph to load.
+            </Trans>
+          }
         >
           <TextArea
             data-testid="share-embed-html"
@@ -92,7 +106,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
         </Field>
         <Modal.ButtonRow>
           <ClipboardButton icon="copy" variant="primary" getText={this.getIframeHtml}>
-            Copy to clipboard
+            <Trans id="share-modal.embed.copy">Copy to clipboard</Trans>
           </ClipboardButton>
         </Modal.ButtonRow>
       </>
