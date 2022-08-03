@@ -29,7 +29,7 @@ type PluginInstaller struct {
 	log            log.Logger
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginInstaller, error) {
+func ProvideInstaller(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginInstaller, error) {
 	return New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginLoader), nil
 }
 
@@ -79,7 +79,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string) err
 		return err
 	}
 
-	err = m.loadPlugins(context.Background(), plugins.External, m.cfg.PluginsPath)
+	err = m.loadPlugins(context.Background(), m.cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
@@ -124,25 +124,15 @@ func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins
 	return p, true
 }
 
-func (m *PluginInstaller) loadPlugins(ctx context.Context, class plugins.Class, paths ...string) error {
-	if len(paths) == 0 {
-		return nil
-	}
-
-	var pluginPaths []string
-	for _, p := range paths {
-		if p != "" {
-			pluginPaths = append(pluginPaths, p)
-		}
-	}
-
+func (m *PluginInstaller) loadPlugins(ctx context.Context, path string) error {
 	// get all registered plugins
 	registeredPlugins := make(map[string]struct{})
 	for _, p := range m.pluginRegistry.Plugins(ctx) {
 		registeredPlugins[p.ID] = struct{}{}
 	}
 
-	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, registeredPlugins)
+	pluginPaths := []string{path}
+	loadedPlugins, err := m.pluginLoader.Load(ctx, plugins.External, pluginPaths, registeredPlugins)
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
 		return err
