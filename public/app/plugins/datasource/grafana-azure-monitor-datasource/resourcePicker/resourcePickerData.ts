@@ -1,3 +1,5 @@
+import { uniq } from 'lodash';
+
 import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { DataSourceInstanceSettings } from '../../../../../../packages/grafana-data/src';
@@ -8,6 +10,7 @@ import {
   resourceTypeDisplayNames,
   supportedMetricNamespaces,
 } from '../azureMetadata';
+import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import { addResources, parseResourceDetails, parseResourceURI } from '../components/ResourcePicker/utils';
 import {
@@ -33,10 +36,16 @@ export type ResourcePickerQueryType = 'logs' | 'metrics';
 export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   private resourcePath: string;
   resultLimit = 200;
+  azureMonitorDatasource;
+  supportedMetricNamespaces = '';
 
-  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    azureMonitorDatasource: AzureMonitorDatasource
+  ) {
     super(instanceSettings);
     this.resourcePath = `${routeNames.resourceGraph}`;
+    this.azureMonitorDatasource = azureMonitorDatasource;
   }
 
   async fetchInitialRows(
@@ -86,7 +95,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     }
     searchQuery += `
         | where id contains "${searchPhrase}"
-        ${this.filterByType(searchType)}
+        ${await this.filterByType(searchType)}
         | order by tolower(name) asc
         | limit ${this.resultLimit}
       `;
@@ -173,7 +182,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
        | project resourceGroupURI=id, resourceGroupName=name, resourceGroup, subscriptionId
      ) on resourceGroup, subscriptionId
 
-     ${this.filterByType(type)}
+     ${await this.filterByType(type)}
      | where subscriptionId == '${subscriptionId}'
      | summarize count() by resourceGroupName, resourceGroupURI
      | order by resourceGroupURI asc`;
@@ -218,7 +227,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where id hasprefix "${resourceGroupId}"
-      ${this.filterByType(type)} and location in (${logsSupportedLocationsKusto})
+      ${await this.filterByType(type)} and location in (${logsSupportedLocationsKusto})
     `);
 
     return response.map((item) => {
@@ -326,9 +335,27 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     }
   }
 
-  private filterByType = (t: ResourcePickerQueryType) => {
+  private filterByType = async (t: ResourcePickerQueryType) => {
+    if (this.supportedMetricNamespaces === '' && t !== 'logs') {
+      await this.fetchAllNamespaces();
+    }
     return t === 'logs'
       ? `| where type in (${logsSupportedResourceTypesKusto})`
-      : `| where type in (${supportedMetricNamespacesKusto})`;
+      : `| where type in (${this.supportedMetricNamespaces})`;
   };
+
+  private async fetchAllNamespaces() {
+    const subscriptions = await this.getSubscriptions();
+    let supportedMetricNamespaces: string[] = [];
+    for await (const subscription of subscriptions) {
+      const namespaces = await this.azureMonitorDatasource.getMetricNamespaces({
+        resourceUri: `/subscriptions/${subscription.id}`,
+      });
+      if (namespaces) {
+        const namespaceVals = namespaces.map((namespace) => `"${namespace.value.toLocaleLowerCase()}"`);
+        supportedMetricNamespaces = supportedMetricNamespaces.concat(namespaceVals);
+      }
+    }
+    this.supportedMetricNamespaces = uniq(supportedMetricNamespaces).join(',');
+  }
 }
