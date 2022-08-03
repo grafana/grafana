@@ -72,8 +72,6 @@ interface TokenProps {
 
 function Token({ content, description, type }: TokenProps) {
   const styles = useStyles2(getStyles);
-  // const varName = content.trim();
-  const varName = content;
 
   const disableCard = Boolean(type) === false;
 
@@ -88,7 +86,7 @@ function Token({ content, description, type }: TokenProps) {
       }
     >
       <span>
-        <Badge className={styles.token} text={varName} color={'blue'} />
+        <Badge className={styles.token} text={content} color={'blue'} />
       </span>
     </HoverCard>
   );
