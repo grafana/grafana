@@ -103,14 +103,6 @@ type Store interface {
 	Sync() error
 	Reset() error
 	Quote(value string) string
-	GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error
-	GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey
-	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
-	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
-	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
-	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
-	GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error)
-	UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error
 	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
 	CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error
 	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error

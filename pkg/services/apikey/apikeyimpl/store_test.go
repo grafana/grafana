@@ -1,4 +1,4 @@
-package sqlstore
+package apikeyimpl
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func mockTimeNow() {
@@ -35,7 +36,8 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 	defer resetTimeNow()
 
 	t.Run("Testing API Key data access", func(t *testing.T) {
-		ss := InitTestDB(t)
+		db := sqlstore.InitTestDB(t)
+		ss := &sqlStore{db: db, cfg: db.Cfg}
 
 		t.Run("Given saved api key", func(t *testing.T) {
 			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "hello", Key: "asd"}
@@ -177,7 +179,8 @@ func TestIntegrationApiKeyErrors(t *testing.T) {
 	defer resetTimeNow()
 
 	t.Run("Testing API Key errors", func(t *testing.T) {
-		ss := InitTestDB(t)
+		db := sqlstore.InitTestDB(t)
+		ss := &sqlStore{db: db, cfg: db.Cfg}
 
 		t.Run("Delete non-existing key should return error", func(t *testing.T) {
 			cmd := models.DeleteApiKeyCommand{Id: 1}
@@ -238,7 +241,8 @@ func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := InitTestDB(t, InitTestDBOpt{})
+			db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
+			store := &sqlStore{db: db, cfg: db.Cfg}
 			seedApiKeys(t, store, 10)
 
 			query := &models.GetApiKeysQuery{OrgId: 1, User: tt.user}
@@ -249,7 +253,7 @@ func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
 	}
 }
 
-func seedApiKeys(t *testing.T, store *SQLStore, num int) {
+func seedApiKeys(t *testing.T, store store, num int) {
 	t.Helper()
 
 	for i := 0; i < num; i++ {

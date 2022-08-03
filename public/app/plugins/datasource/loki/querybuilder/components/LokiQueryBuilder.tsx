@@ -21,6 +21,7 @@ import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
@@ -119,7 +120,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           stepNumber={1}
           title={<RawQuery query={`${lokiQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
         >
-          Fetch all log lines matching label filters.
+          {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>
       )}
       <OperationsEditorRow>

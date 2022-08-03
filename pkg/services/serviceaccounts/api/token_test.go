@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
@@ -51,8 +52,9 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 
 func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
@@ -147,7 +149,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				assert.Equal(t, tc.body["name"], actualBody["name"])
 
 				query := models.GetApiKeyByNameQuery{KeyName: tc.body["name"].(string), OrgId: sa.OrgID}
-				err = store.GetApiKeyByName(context.Background(), &query)
+				err = apiKeyService.GetApiKeyByName(context.Background(), &query)
 				require.NoError(t, err)
 
 				assert.Equal(t, sa.ID, *query.Result.ServiceAccountId)
@@ -167,9 +169,10 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 
 func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	svcMock := &tests.ServiceAccountMock{}
-	saStore := database.ProvideServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
 	type testCreateSAToken struct {
@@ -243,7 +246,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
 
 			query := models.GetApiKeyByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgID}
-			err := store.GetApiKeyByName(context.Background(), &query)
+			err := apiKeyService.GetApiKeyByName(context.Background(), &query)
 			if actualCode == http.StatusOK {
 				require.Error(t, err)
 			} else {
