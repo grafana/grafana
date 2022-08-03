@@ -9,6 +9,7 @@ import { getLastStreamingDataFramePacket } from 'app/features/live/data/Streamin
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { TimelineChart } from './TimelineChart';
@@ -65,6 +66,8 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
     () => prepareTimelineLegendItems(frames, options.legend, theme),
     [frames, options.legend, theme]
   );
+
+  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
 
   const renderCustomTooltip = useCallback(
     (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null, onAnnotationAdd?: () => void) => {
@@ -150,7 +153,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZone={timeZone}
+      timeZones={timezones}
       width={width}
       height={height}
       legendItems={legendItems}

@@ -5,25 +5,62 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/userauth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
-	store      store
-	orgService org.Service
+	store              store
+	orgService         org.Service
+	starService        star.Service
+	dashboardService   dashboards.DashboardService
+	preferenceService  pref.Service
+	teamMemberService  teamguardian.TeamGuardian
+	userAuthService    userauth.Service
+	quotaService       quota.Service
+	accessControlStore accesscontrol.AccessControl
+
+	cfg *setting.Cfg
 }
 
-func ProvideService(db db.DB, orgService org.Service) user.Service {
+func ProvideService(
+	db db.DB,
+	orgService org.Service,
+	starService star.Service,
+	dashboardService dashboards.DashboardService,
+	preferenceService pref.Service,
+	teamMemberService teamguardian.TeamGuardian,
+	userAuthService userauth.Service,
+	quotaService quota.Service,
+	accessControlStore accesscontrol.AccessControl,
+	cfg *setting.Cfg,
+) user.Service {
 	return &Service{
 		store: &sqlStore{
-			db: db,
+			db:      db,
+			dialect: db.GetDialect(),
 		},
-		orgService: orgService,
+		orgService:         orgService,
+		starService:        starService,
+		dashboardService:   dashboardService,
+		preferenceService:  preferenceService,
+		teamMemberService:  teamMemberService,
+		userAuthService:    userAuthService,
+		quotaService:       quotaService,
+		accessControlStore: accessControlStore,
+		cfg:                cfg,
 	}
 }
 
@@ -49,7 +86,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		Email: cmd.Email,
 	}
 	usr, err = s.store.Get(ctx, usr)
-	if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		return usr, err
 	}
 
@@ -88,7 +125,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		usr.Password = encodedPassword
 	}
 
-	_, err = s.store.Insert(ctx, usr)
+	userID, err := s.store.Insert(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
@@ -110,12 +147,97 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 				orgUser.Role = org.RoleType(setting.AutoAssignOrgRole)
 			}
 		}
-		_, err = s.orgService.InsertUser(ctx, &orgUser)
+		_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
 		if err != nil {
-			//  HERE ADD DELETE USER
+			err := s.store.Delete(ctx, userID)
 			return usr, err
 		}
 	}
 
 	return usr, nil
+}
+
+func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
+	_, err := s.store.GetNotServiceAccount(ctx, cmd.UserID)
+	if err != nil {
+		return err
+	}
+	// delete from all the stores
+	if err := s.store.Delete(ctx, cmd.UserID); err != nil {
+		return err
+	}
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		if err := s.starService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.orgService.DeleteUserFromAll(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.dashboardService.DeleteACLByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.teamMemberService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.userAuthService.Delete(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.userAuthService.DeleteToken(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.quotaService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := s.accessControlStore.DeleteUserPermissions(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+	user, err := s.store.GetByID(ctx, query.ID)
+	if err != nil {
+		return nil, err
+	}
+	if s.cfg.CaseInsensitiveLogin {
+		if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
+			return nil, err
+		}
+	}
+	return user, nil
 }

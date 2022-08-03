@@ -54,13 +54,14 @@ type DatasourceInfo struct {
 // AzureMonitorQuery is the query for all the services as they have similar queries
 // with a url, a querystring and an alias field
 type AzureMonitorQuery struct {
-	URL           string
-	UrlComponents map[string]string
-	Target        string
-	Params        url.Values
-	RefID         string
-	Alias         string
-	TimeRange     backend.TimeRange
+	ResourceName string
+	ResourceURI  string
+	URL          string
+	Target       string
+	Params       url.Values
+	RefID        string
+	Alias        string
+	TimeRange    backend.TimeRange
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API
@@ -111,9 +112,12 @@ type AzureResponseTable struct {
 // AzureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type AzureMonitorJSONQuery struct {
 	AzureMonitor struct {
-		ResourceURI     string `json:"resourceUri"`
+		ResourceURI string `json:"resourceUri"`
+		// These are used to reconstruct a resource URI
 		MetricNamespace string `json:"metricNamespace"`
 		MetricName      string `json:"metricName"`
+		ResourceGroup   string `json:"resourceGroup"`
+		ResourceName    string `json:"resourceName"`
 
 		Aggregation      string                        `json:"aggregation"`
 		Alias            string                        `json:"alias"`
@@ -121,19 +125,13 @@ type AzureMonitorJSONQuery struct {
 		TimeGrain        string                        `json:"timeGrain"`
 		Top              string                        `json:"top"`
 
-		// Legecy "resource" fields from before the resource picker provided just a single ResourceURI
-		// These are used for pre-resource picker queries to reconstruct a resource URI
-		// Deprecated
-		MetricDefinition string `json:"metricDefinition"`
-		// Deprecated
-		ResourceGroup string `json:"resourceGroup"`
-		// Deprecated
-		ResourceName string `json:"resourceName"`
-
 		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
 		Dimension           string  `json:"dimension"`       // old model
 		DimensionFilter     string  `json:"dimensionFilter"` // old model
 		Format              string  `json:"format"`
+
+		// Deprecated, MetricNamespace should be used instead
+		MetricDefinition string `json:"metricDefinition"`
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
 }

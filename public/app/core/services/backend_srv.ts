@@ -14,10 +14,12 @@ import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, th
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
+import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardSearchHit } from 'app/features/search/types';
+import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
@@ -126,6 +128,17 @@ export class BackendSrv implements BackendService {
     }
 
     options = this.parseRequestOptions(options);
+
+    const token = loadUrlToken();
+    if (token !== null && token !== '') {
+      if (!options.headers) {
+        options.headers = {};
+      }
+
+      if (config.jwtUrlLogin && config.jwtHeaderName) {
+        options.headers[config.jwtHeaderName] = `${token}`;
+      }
+    }
 
     const fromFetchStream = this.getFromFetchStream<T>(options);
     const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
@@ -430,7 +443,10 @@ export class BackendSrv implements BackendService {
     return this.get('/api/search', query);
   }
 
-  getDashboardByUid(uid: string) {
+  getDashboardByUid(uid: string): Promise<DashboardDTO> {
+    if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
+      return getGrafanaStorage().getDashboard(uid);
+    }
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 

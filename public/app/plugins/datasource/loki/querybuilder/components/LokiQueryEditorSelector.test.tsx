@@ -8,6 +8,7 @@ import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery, LokiQueryType } from '../../types';
 
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 
 jest.mock('@grafana/runtime', () => {
@@ -50,6 +51,7 @@ const datasource = new LokiDatasource(
 );
 
 datasource.languageProvider.fetchLabels = jest.fn().mockResolvedValue([]);
+datasource.getDataSamples = jest.fn().mockResolvedValue([]);
 
 const defaultProps = {
   datasource,
@@ -75,7 +77,7 @@ describe('LokiQueryEditorSelector', () => {
         }}
       />
     );
-    expectBuilder();
+    await expectBuilder();
   });
 
   it('shows code editor when code mode is set', async () => {
@@ -85,12 +87,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('shows builder when builder mode is set', async () => {
     renderWithMode(QueryEditorMode.Builder);
-    expectBuilder();
-  });
-
-  it('shows explain when explain mode is set', async () => {
-    renderWithMode(QueryEditorMode.Explain);
-    expectExplain();
+    await expectBuilder();
   });
 
   it('changes to builder mode', async () => {
@@ -106,7 +103,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('Can enable raw query', async () => {
     renderWithMode(QueryEditorMode.Builder);
-    expect(screen.queryByLabelText('selector')).toBeInTheDocument();
+    expect(await screen.findByLabelText('selector')).toBeInTheDocument();
     screen.getByLabelText('Raw query').click();
     expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
   });
@@ -116,7 +113,16 @@ describe('LokiQueryEditorSelector', () => {
       editorMode: QueryEditorMode.Builder,
       expr: '{job="grafana"}',
     });
-    expect(screen.getByLabelText('selector').textContent).toBe('{job="grafana"}');
+    const selector = await screen.findByLabelText('selector');
+    expect(selector).toBeInTheDocument();
+    expect(selector.textContent).toBe('{job="grafana"}');
+  });
+
+  it('Can enable explain', async () => {
+    renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+    screen.getByLabelText('Explain').click();
+    expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 
   it('changes to code mode', async () => {
@@ -127,17 +133,6 @@ describe('LokiQueryEditorSelector', () => {
       expr: defaultQuery.expr,
       queryType: LokiQueryType.Range,
       editorMode: QueryEditorMode.Code,
-    });
-  });
-
-  it('changes to explain mode', async () => {
-    const { onChange } = renderWithMode(QueryEditorMode.Code);
-    await switchToMode(QueryEditorMode.Explain);
-    expect(onChange).toBeCalledWith({
-      refId: 'A',
-      expr: defaultQuery.expr,
-      queryType: LokiQueryType.Range,
-      editorMode: QueryEditorMode.Explain,
     });
   });
 
@@ -182,19 +177,13 @@ function expectCodeEditor() {
   expect(screen.getByText('Loading labels...')).toBeInTheDocument();
 }
 
-function expectBuilder() {
-  expect(screen.getByText('Labels')).toBeInTheDocument();
-}
-
-function expectExplain() {
-  // Base message when there is no query
-  expect(screen.getByText(/Fetch all log/)).toBeInTheDocument();
+async function expectBuilder() {
+  expect(await screen.findByText('Labels')).toBeInTheDocument();
 }
 
 async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,
-    [QueryEditorMode.Explain]: /Explain/,
     [QueryEditorMode.Builder]: /Builder/,
   }[mode];
 

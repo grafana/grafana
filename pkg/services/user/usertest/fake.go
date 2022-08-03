@@ -18,3 +18,11 @@ func NewUserServiceFake() *FakeUserService {
 func (f *FakeUserService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
+
+func (f *FakeUserService) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}

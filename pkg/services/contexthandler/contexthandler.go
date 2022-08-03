@@ -19,11 +19,13 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -39,7 +41,8 @@ const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
-	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service, authenticator loginpkg.Authenticator) *ContextHandler {
+	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
+	apiKeyService apikey.Service, authenticator loginpkg.Authenticator) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -51,6 +54,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		authProxy:        authProxy,
 		authenticator:    authenticator,
 		loginService:     loginService,
+		apiKeyService:    apiKeyService,
 	}
 }
 
@@ -66,6 +70,7 @@ type ContextHandler struct {
 	authProxy        *authproxy.AuthProxy
 	authenticator    loginpkg.Authenticator
 	loginService     login.Service
+	apiKeyService    apikey.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -196,7 +201,7 @@ func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string
 		return nil, err
 	}
 
-	return h.SQLStore.GetAPIKeyByHash(ctx, hash)
+	return h.apiKeyService.GetAPIKeyByHash(ctx, hash)
 }
 
 func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*models.ApiKey, error) {
@@ -207,7 +212,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*mode
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := h.SQLStore.GetApiKeyByName(ctx, &keyQuery); err != nil {
+	if err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
 		return nil, err
 	}
 
@@ -273,7 +278,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	}
 
 	// update api_key last used date
-	if err := h.SQLStore.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
+	if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
 		reqContext.JsonApiErr(http.StatusInternalServerError, InvalidAPIKey, errKey)
 		return true
 	}
@@ -346,7 +351,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 			"err", err,
 		)
 
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			err = login.ErrInvalidCredentials
 		}
 		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
@@ -449,7 +454,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		return false
 	}
 
-	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithRenderAuth")
+	ctx, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithRenderAuth")
 	defer span.End()
 
 	renderUser, exists := h.RenderService.GetRenderUser(reqContext.Req.Context(), key)
@@ -458,12 +463,21 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		return true
 	}
 
-	reqContext.IsSignedIn = true
 	reqContext.SignedInUser = &models.SignedInUser{
 		OrgId:   renderUser.OrgID,
 		UserId:  renderUser.UserID,
 		OrgRole: models.RoleType(renderUser.OrgRole),
 	}
+
+	// UserID can be 0 for background tasks and, in this case, there is no user info to retrieve
+	if renderUser.UserID != 0 {
+		query := models.GetSignedInUserQuery{UserId: renderUser.UserID, OrgId: renderUser.OrgID}
+		if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err == nil {
+			reqContext.SignedInUser = query.Result
+		}
+	}
+
+	reqContext.IsSignedIn = true
 	reqContext.IsRenderCall = true
 	reqContext.LastSeenAt = time.Now()
 	return true

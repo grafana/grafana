@@ -10,13 +10,13 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { LegendDisplayMode } from '@grafana/schema';
 import {
   GraphNG,
   GraphNGProps,
   measureText,
   PlotLegend,
   Portal,
+  TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
   usePanelContext,
@@ -186,6 +186,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           rowIndex={datapointIdx}
           columnIndex={seriesIdx}
           sortOrder={options.tooltip.sort}
+          mode={options.tooltip.mode}
         />
       </>
     );
@@ -193,7 +194,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
   const renderLegend = (config: UPlotConfigBuilder) => {
     const { legend } = options;
-    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
+    if (!config || legend.showLegend === false) {
       return null;
     }
 
@@ -216,7 +217,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   };
 
   // Color by value
-  let getColor: ((seriesIdx: number, valueIdx: number) => string) | undefined = undefined;
+  let getColor: ((seriesIdx: number, valueIdx: number, value: any) => string) | undefined = undefined;
 
   let fillOpacity = 1;
 
@@ -225,7 +226,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     const disp = colorByField.display!;
     fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
-    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByField.values.get(valueIdx)).color!;
+    getColor = (seriesIdx: number, valueIdx: number, value: any) => disp(value).color!;
   }
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
@@ -246,7 +247,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       frame: alignedFrame,
       getTimeRange,
       theme,
-      timeZone,
+      timeZones: [timeZone],
       eventBus,
       orientation,
       barWidth,
@@ -276,7 +277,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       preparePlotFrame={(f) => f[0]} // already processed in by the panel above!
       renderLegend={renderLegend}
       legend={options.legend}
-      timeZone={timeZone}
+      timeZones={timeZone}
       timeRange={{ from: 1, to: 1 } as unknown as TimeRange} // HACK
       structureRev={structureRev}
       width={width}
@@ -293,6 +294,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
             setHover,
             isToolTipOpen,
           });
+        }
+
+        if (options.tooltip.mode === TooltipDisplayMode.None) {
+          return null;
         }
 
         return (

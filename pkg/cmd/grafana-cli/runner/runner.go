@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -17,11 +18,13 @@ type Runner struct {
 	EncryptionService encryption.Internal
 	SecretsService    *manager.SecretsService
 	SecretsMigrator   secrets.Migrator
+	UserService       user.Service
 }
 
 func New(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, settingsProvider setting.Provider,
 	encryptionService encryption.Internal, features featuremgmt.FeatureToggles,
 	secretsService *manager.SecretsService, secretsMigrator secrets.Migrator,
+	userService user.Service,
 ) Runner {
 	return Runner{
 		Cfg:               cfg,
@@ -31,5 +34,6 @@ func New(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, settingsProvider setting
 		SecretsService:    secretsService,
 		SecretsMigrator:   secretsMigrator,
 		Features:          features,
+		UserService:       userService,
 	}
 }
