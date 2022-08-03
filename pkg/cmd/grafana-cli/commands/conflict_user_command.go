@@ -178,7 +178,7 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 	id := strings.Split(values[0], ":")
 	email := strings.Split(values[1], ":")
 	login := strings.Split(values[2], ":")
-	lastSeenAt := strings.TrimLeft(values[3], "last_seen_at:")
+	lastSeenAt := strings.TrimPrefix(values[3], "last_seen_at:")
 	authModule := strings.Split(values[4], ":")
 	// optional field
 	if len(authModule) < 2 {
