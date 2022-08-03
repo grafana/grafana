@@ -61,7 +61,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 
 func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
 	q := `
-	WHERE role.id IN (
+	INNER JOIN (
 		SELECT ur.role_id
 		FROM user_role AS ur
 		WHERE ur.user_id = ?
@@ -87,7 +87,7 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 		params = append(params, orgID, globalOrgID)
 	}
 
-	q += `)`
+	q += `) as o_role ON role.id = o_role.role_id`
 
 	return q, params
 }
