@@ -183,7 +183,8 @@ func (api *API) authorize(method, path string) web.Handler {
 	// Grafana-only Provisioning Read Paths
 	case http.MethodGet + "/api/v1/provisioning/policies",
 		http.MethodGet + "/api/v1/provisioning/contact-points",
-		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}":
+		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
+		http.MethodGet + "/api/v1/provisioning/alert-rules": // LOGZ.IO GRAFANA CHANGE :: DEV-33330 - API to return all alert rules
 		return middleware.ReqSignedIn
 
 	case http.MethodPost + "/api/v1/provisioning/policies",

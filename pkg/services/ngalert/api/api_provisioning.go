@@ -39,6 +39,7 @@ type NotificationPolicyService interface {
 }
 
 type AlertRuleService interface {
+	GetAlertRules(ctx context.Context, orgID int64, dashboardUid string, panelId int64) ([]alerting_models.AlertRule, error) // LOGZ.IO GRAFANA CHANGE :: DEV-33330 - API to return all alert rules
 	GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (alerting_models.AlertRule, alerting_models.Provenance, error)
 	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
@@ -172,6 +173,26 @@ func (srv *ProvisioningSrv) RouteInternalDeleteContactPoint(c *models.ReqContext
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint deleted"})
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-33330 - API to return all alert rules
+func (srv *ProvisioningSrv) RouteRouteGetAlertRules(c *models.ReqContext) response.Response {
+	dashboardUid := c.Query("dashboardUid")
+	panelId := c.QueryInt64("panelId")
+
+	rules, err := srv.alertRules.GetAlertRules(c.Req.Context(), c.OrgId, dashboardUid, panelId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
+	alertRuleModels := []definitions.AlertRule{}
+	for _, rule := range rules {
+		alertRuleModels = append(alertRuleModels, definitions.NewAlertRule(rule, alerting_models.ProvenanceNone))
+	}
+
+	return response.JSON(http.StatusOK, alertRuleModels)
 }
 
 // LOGZ.IO GRAFANA CHANGE :: end
