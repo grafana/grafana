@@ -149,7 +149,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				assert.Equal(t, tc.body["name"], actualBody["name"])
 
 				query := models.GetApiKeyByNameQuery{KeyName: tc.body["name"].(string), OrgId: sa.OrgID}
-				err = store.GetApiKeyByName(context.Background(), &query)
+				err = apiKeyService.GetApiKeyByName(context.Background(), &query)
 				require.NoError(t, err)
 
 				assert.Equal(t, sa.ID, *query.Result.ServiceAccountId)
@@ -246,7 +246,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
 
 			query := models.GetApiKeyByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgID}
-			err := store.GetApiKeyByName(context.Background(), &query)
+			err := apiKeyService.GetApiKeyByName(context.Background(), &query)
 			if actualCode == http.StatusOK {
 				require.Error(t, err)
 			} else {
