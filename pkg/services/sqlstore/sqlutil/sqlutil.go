@@ -30,7 +30,7 @@ func MySQLTestDB() TestDB {
 	}
 	return TestDB{
 		DriverName: "mysql",
-		ConnStr:    fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_tests?collation=utf8mb4_unicode_ci", host, port),
+		ConnStr:    fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_tests?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'", host, port),
 	}
 }
 
