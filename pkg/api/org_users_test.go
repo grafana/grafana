@@ -472,8 +472,6 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			targetOrg:           testServerAdminViewer.OrgId,
 			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
 			expectedCode:        http.StatusOK,
-			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testAdminOrg2.UserId)},
-			expectedUserCount:   3,
 		},
 		{
 			name:                "server admin can add users to another org (legacy)",
@@ -482,8 +480,6 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			targetOrg:           2,
 			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
 			expectedCode:        http.StatusOK,
-			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testEditorOrg1.UserId)},
-			expectedUserCount:   3,
 		},
 		{
 			name:                "org admin cannot add users to his org (legacy)",
@@ -508,8 +504,6 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			targetOrg:           testServerAdminViewer.OrgId,
 			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
 			expectedCode:        http.StatusOK,
-			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testAdminOrg2.UserId)},
-			expectedUserCount:   3,
 		},
 		{
 			name:                "server admin can add users to another org",
@@ -518,8 +512,6 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			targetOrg:           2,
 			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
 			expectedCode:        http.StatusOK,
-			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testEditorOrg1.UserId)},
-			expectedUserCount:   3,
 		},
 		{
 			name:                "org admin can add users to his org",
@@ -528,8 +520,6 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			targetOrg:           testAdminOrg2.OrgId,
 			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
 			expectedCode:        http.StatusOK,
-			expectedMessage:     util.DynMap{"message": "User added to organization", "userId": float64(testEditorOrg1.UserId)},
-			expectedUserCount:   3,
 		},
 		{
 			name:                "org admin cannot add users to another org",
