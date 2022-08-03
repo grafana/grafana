@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi2"
@@ -42,13 +41,7 @@ func main() {
 		panic(err)
 	}
 
-	var out bytes.Buffer
-	err = json.Indent(&out, j3, "", "\t")
-	if err != nil {
-		panic(err)
-	}
-
-	if err = ioutil.WriteFile(outFile, out.Bytes(), 0644); err != nil {
+	if err = ioutil.WriteFile(outFile, j3, 0644); err != nil {
 		panic(err)
 	}
 	fmt.Printf("OpenAPI specs generated in file %s\n", outFile)
