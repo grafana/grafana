@@ -1,5 +1,5 @@
-import { regexp } from '@betterer/regexp';
 import { BettererFileTest } from '@betterer/betterer';
+import { regexp } from '@betterer/regexp';
 import { ESLint, Linter } from 'eslint';
 import { existsSync } from 'fs';
 

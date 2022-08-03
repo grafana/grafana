@@ -5,5 +5,7 @@ export declare global {
     __grafana_load_failed: () => void;
     public_cdn_path: string;
     nonce: string | undefined;
+    __POWERED_BY_QIANKUN__: boolean;
+    __INJECTED_PUBLIC_PATH_BY_QIANKUN__: string;
   }
 }

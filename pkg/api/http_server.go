@@ -212,7 +212,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck,
-	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service) (*HTTPServer, error) {
+	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service,
+) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -414,7 +415,7 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 
 		// Make socket writable by group
 		// nolint:gosec
-		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
+		if err := os.Chmod(hs.Cfg.SocketPath, 0o660); err != nil {
 			return nil, fmt.Errorf("failed to change socket permissions: %w", err)
 		}
 
@@ -531,6 +532,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/fn_dashboard.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 
 	if hs.Cfg.ImageUploadProvider == "local" {
