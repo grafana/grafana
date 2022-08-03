@@ -37,7 +37,7 @@ export const addTooltipSupport = ({
   // Ensure tooltip is closed on config changes
   isToolTipOpen.current = false;
 
-  var onMouseLeave = () => {
+  const onMouseLeave = () => {
     if (!isToolTipOpen.current) {
       setCoords(null);
     }
@@ -52,7 +52,7 @@ export const addTooltipSupport = ({
     ref_over.addEventListener('mouseleave', onMouseLeave);
   });
 
-  var clearPopupIfOpened = () => {
+  const clearPopupIfOpened = () => {
     if (isToolTipOpen.current) {
       setCoords(null);
       onUPlotClick();
