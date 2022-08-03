@@ -76,6 +76,9 @@ func (ss *SQLStore) GetDataSourcesByType(ctx context.Context, query *datasources
 
 	query.Result = make([]*datasources.DataSource, 0)
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if query.OrgId > 0 {
+			return sess.Where("type=? AND org_id=?", query.Type, query.OrgId).Asc("id").Find(&query.Result)
+		}
 		return sess.Where("type=?", query.Type).Asc("id").Find(&query.Result)
 	})
 }
@@ -131,13 +134,15 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 		}
 
 		// Publish data source deletion event
-		sess.publishAfterCommit(&events.DataSourceDeleted{
-			Timestamp: time.Now(),
-			Name:      cmd.Name,
-			ID:        cmd.ID,
-			UID:       cmd.UID,
-			OrgID:     cmd.OrgID,
-		})
+		if cmd.DeletedDatasourcesCount > 0 {
+			sess.publishAfterCommit(&events.DataSourceDeleted{
+				Timestamp: time.Now(),
+				Name:      ds.Name,
+				ID:        ds.Id,
+				UID:       ds.Uid,
+				OrgID:     ds.OrgId,
+			})
+		}
 
 		return nil
 	})

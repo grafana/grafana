@@ -72,17 +72,3 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 
 	return nil
 }
-
-func (l *LibraryElementService) requireEditPermissionsOnDashboard(ctx context.Context, user *models.SignedInUser, dashboardID int64) error {
-	g := guardian.New(ctx, dashboardID, user.OrgId, user)
-
-	canEdit, err := g.CanEdit()
-	if err != nil {
-		return err
-	}
-	if !canEdit {
-		return dashboards.ErrDashboardUpdateAccessDenied
-	}
-
-	return nil
-}

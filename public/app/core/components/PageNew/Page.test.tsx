@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { configureStore } from 'app/store/configureStore';
 
 import { PageProps } from '../Page/types';
@@ -31,15 +33,20 @@ const setup = (props: Partial<PageProps>) => {
     },
   ];
 
+  const context = getGrafanaContextMock();
   const store = configureStore();
 
-  return render(
+  const renderResult = render(
     <Provider store={store}>
-      <Page {...props}>
-        <div data-testid="page-children">Children</div>
-      </Page>
+      <GrafanaContext.Provider value={context}>
+        <Page {...props}>
+          <div data-testid="page-children">Children</div>
+        </Page>
+      </GrafanaContext.Provider>
     </Provider>
   );
+
+  return { renderResult, context };
 };
 
 describe('Render', () => {
@@ -66,6 +73,12 @@ describe('Render', () => {
     expect(screen.getByRole('heading', { name: 'Child1' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
     expect(screen.getAllByRole('tab').length).toBe(2);
+  });
+
+  it('should update chrome with section and pageNav', async () => {
+    const { context } = setup({ navId: 'child1', pageNav });
+    expect(context.chrome.state.getValue().sectionNav.id).toBe('child1');
+    expect(context.chrome.state.getValue().pageNav).toBe(pageNav);
   });
 
   it('should render section nav model based on navId and item page nav', async () => {

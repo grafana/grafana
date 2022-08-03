@@ -7,15 +7,19 @@ title: Deploy Grafana on Kubernetes
 weight: 300
 ---
 
-## Deploy Grafana on Kubernetes
+# Deploy Grafana on Kubernetes
 
 This page explains how to install and run Grafana on Kubernetes (K8S). It uses Kubernetes manifests for the setup. If you prefer Helm, refer to the [Grafana Helm community charts](https://github.com/grafana/helm-charts).
 
-If you are interested in Grafana Enterprise (not Grafana OS), jump to [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes) section.
+## Deploy Grafana OS on Kubernetes
 
-### Create Grafana Kubernetes manifest
+This section explains how to install Grafana using Kubernetes.
+If you are interested in the Grafana Enterprise version of this information, see [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes).
 
-1. Create a file called `grafana.yaml`, then paste the contents below.
+### Create a Grafana Kubernetes manifest
+
+1. Create a file called `grafana.yaml`.
+1. Copy and paste the following contents and save the file.
 
 ```yaml
 ---
@@ -102,7 +106,7 @@ spec:
   type: LoadBalancer
 ```
 
-### Send manifest to Kubernetes API server
+### Send the manifest to the Kubernetes API server
 
 1. Run the following command:
    `kubectl apply -f grafana.yaml`
@@ -116,13 +120,16 @@ spec:
 
 ## Deploy Grafana Enterprise on Kubernetes
 
-The process for deploying Grafana Enterprise is almost identical to the process above, except for some extra steps required to add in your license file. They are described in the following sections.
+The process for deploying Grafana Enterprise is almost identical to the preceding process, except for additional steps that are required for adding your license file.
 
 ### Obtain Grafana Enterprise license
 
-To run Grafana Enterprise, you need a valid license. [Contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise) to obtain the license. This topic assumes that you already have done this and have a `license.jwt` file. Your license should also be associated with a URL, which we will use later in the topic.
+To run Grafana Enterprise, you need a valid license.
+To obtain a license, [contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise).
+This topic assumes that you have a valid license in a `license.jwt` file.
+Associate your license with a URL that you can use later in the topic.
 
-### Create License Secret
+### Create license secret
 
 Create a Kubernetes secret from your license file using the following command:
 
@@ -144,31 +151,31 @@ root_url =/your/license/root/url
 
 ```
 
-### Create Configmap for Grafana Enterprise Config
+### Create Configmap for Grafana Enterprise configuration
 
 Create a Kubernetes Configmap from your `grafana.ini` file with the following command:
 
 ```bash
-kubectl create configmap ge-config --from-file=/path/to/your/config.ini
+kubectl create configmap ge-config --from-file=/path/to/your/grafana.ini
 ```
 
 ### Create Grafana Enterprise Kubernetes manifest
 
-Create a `grafana.yaml` file, then paste the content below. This YAML is identical to the one for Grafana OS install except for the additional references to the Configmap which has your Grafana configuration file and the Secret that has your license.
+Create a `grafana.yaml` file, and copy-and-paste the following content into it.
+The YAML that follows is identical to the one for a Grafana installation, except for the additional references to the Configmap that contains your Grafana configuration file and the secret that has your license.
 
 ```yaml
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: grafana
+  name: grafana-pvc
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
-  storageClassName: local-path
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -185,6 +192,10 @@ spec:
       labels:
         app: grafana
     spec:
+      securityContext:
+        fsGroup: 472
+        supplementalGroups:
+          - 0
       containers:
         - image: grafana/grafana-enterprise:latest
           imagePullPolicy: IfNotPresent
@@ -211,15 +222,15 @@ spec:
               memory: 2Gi
           volumeMounts:
             - mountPath: /var/lib/grafana
-              name: grafana
+              name: grafana-pv
             - mountPath: /etc/grafana
               name: ge-config
             - mountPath: /etc/grafana/license
               name: ge-license
       volumes:
-        - name: grafana
+        - name: grafana-pv
           persistentVolumeClaim:
-            claimName: grafana
+            claimName: grafana-pvc
         - name: ge-config
           configMap:
             name: ge-config
@@ -241,6 +252,8 @@ spec:
   sessionAffinity: None
   type: LoadBalancer
 ```
+
+> **Caution:** If you use `LoadBalancer` in the Service and depending on your cloud platform and network configuration, doing so might expose your Grafana instance to the Internet. To eliminate this risk, use `ClusterIP` to restrict access from within the cluster Grafana is deployed to.
 
 1. Send manifest to Kubernetes API Server
    `kubectl apply -f grafana.yaml`

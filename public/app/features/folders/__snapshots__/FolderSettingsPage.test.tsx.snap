@@ -2,7 +2,7 @@
 
 exports[`Render should enable save button 1`] = `
 <OldPage
-  navModel={Object {}}
+  navId="dashboards/browse"
 >
   <PageContents
     isLoading={false}
@@ -59,7 +59,7 @@ exports[`Render should enable save button 1`] = `
 
 exports[`Render should render component 1`] = `
 <OldPage
-  navModel={Object {}}
+  navId="dashboards/browse"
 >
   <PageContents
     isLoading={false}

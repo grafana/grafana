@@ -63,6 +63,7 @@ func (s ExecutionErrorOption) ToAlertState() AlertStateType {
 	return AlertStateType(s)
 }
 
+// swagger:model LegacyAlert
 type Alert struct {
 	Id             int64
 	Version        int64

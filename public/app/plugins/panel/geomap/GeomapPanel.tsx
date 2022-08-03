@@ -375,8 +375,8 @@ export class GeomapPanel extends Component<Props, State> {
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
 
     const { hoverPayload } = this;
-    hoverPayload.pageX = mouse.pageX;
-    hoverPayload.pageY = mouse.pageY;
+    hoverPayload.pageX = mouse.offsetX;
+    hoverPayload.pageY = mouse.offsetY;
     hoverPayload.point = {
       lat: hover[1],
       lon: hover[0],

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
 import {
   Alert,
@@ -16,7 +16,6 @@ import {
 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { appEvents } from 'app/core/core';
 import { dispatch } from 'app/store/store';
 
 import {
@@ -39,6 +38,8 @@ interface Acknowledgements {
 
 export const SharePublicDashboard = (props: Props) => {
   const dashboardVariables = props.dashboard.getVariables();
+  const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+
   const [publicDashboard, setPublicDashboardConfig] = useState<PublicDashboard>({
     isEnabled: false,
     uid: '',
@@ -79,10 +80,6 @@ export const SharePublicDashboard = (props: Props) => {
     savePublicDashboardConfig(props.dashboard.uid, publicDashboard, setPublicDashboardConfig).catch();
   };
 
-  const onShareUrlCopy = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-  };
-
   const onAcknowledge = useCallback(
     (field: string, checked: boolean) => {
       setAcknowledgements({ ...acknowledgements, [field]: checked });
@@ -99,7 +96,11 @@ export const SharePublicDashboard = (props: Props) => {
     <>
       <p>Welcome to Grafana public dashboards alpha!</p>
       {dashboardHasTemplateVariables(dashboardVariables) ? (
-        <Alert severity="warning" title="dashboard cannot be public">
+        <Alert
+          severity="warning"
+          title="dashboard cannot be public"
+          data-testid={selectors.TemplateVariablesWarningAlert}
+        >
           This dashboard cannot be made public because it has template variables
         </Alert>
       ) : (
@@ -127,6 +128,7 @@ export const SharePublicDashboard = (props: Props) => {
                   label="Your entire dashboard will be public"
                   value={acknowledgements.public}
                   disabled={publicDashboardPersisted(publicDashboard)}
+                  data-testid={selectors.WillBePublicCheckbox}
                   onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
                 />
               </div>
@@ -136,6 +138,7 @@ export const SharePublicDashboard = (props: Props) => {
                   label="Publishing currently only works with a subset of datasources"
                   value={acknowledgements.datasources}
                   disabled={publicDashboardPersisted(publicDashboard)}
+                  data-testid={selectors.LimitedDSCheckbox}
                   onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
                 />
                 <LinkButton
@@ -153,6 +156,7 @@ export const SharePublicDashboard = (props: Props) => {
                 label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
                 value={acknowledgements.usage}
                 disabled={publicDashboardPersisted(publicDashboard)}
+                data-testid={selectors.CostIncreaseCheckbox}
                 onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
               />
               <LinkButton
@@ -194,6 +198,7 @@ export const SharePublicDashboard = (props: Props) => {
               <Field label="Enabled" description="Configures whether current dashboard can be available publicly">
                 <Switch
                   disabled={dashboardHasTemplateVariables(dashboardVariables)}
+                  data-testid={selectors.EnableSwitch}
                   value={publicDashboard?.isEnabled}
                   onChange={() => {
                     reportInteraction('grafana_dashboards_public_enable_clicked', {
@@ -212,14 +217,15 @@ export const SharePublicDashboard = (props: Props) => {
                   <Input
                     value={generatePublicDashboardUrl(publicDashboard)}
                     readOnly
+                    data-testid={selectors.CopyUrlInput}
                     addonAfter={
                       <ClipboardButton
+                        data-testid={selectors.CopyUrlButton}
                         variant="primary"
                         icon="copy"
                         getText={() => {
                           return generatePublicDashboardUrl(publicDashboard);
                         }}
-                        onClipboardCopy={onShareUrlCopy}
                       >
                         Copy
                       </ClipboardButton>
@@ -228,7 +234,18 @@ export const SharePublicDashboard = (props: Props) => {
                 </Field>
               )}
             </FieldSet>
-            <Button disabled={!acknowledged()} onClick={onSavePublicConfig}>
+
+            {props.dashboard.hasUnsavedChanges() && (
+              <Alert
+                title="Please save your dashboard changes before updating the public configuration"
+                severity="warning"
+              />
+            )}
+            <Button
+              disabled={!acknowledged() || props.dashboard.hasUnsavedChanges()}
+              onClick={onSavePublicConfig}
+              data-testid={selectors.SaveConfigButton}
+            >
               Save Sharing Configuration
             </Button>
           </div>

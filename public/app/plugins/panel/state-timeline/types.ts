@@ -1,10 +1,16 @@
 import { DashboardCursorSync } from '@grafana/data';
-import { HideableFieldConfig, OptionsWithLegend, OptionsWithTooltip, VisibilityMode } from '@grafana/schema';
+import {
+  HideableFieldConfig,
+  OptionsWithLegend,
+  OptionsWithTimezones,
+  OptionsWithTooltip,
+  VisibilityMode,
+} from '@grafana/schema';
 
 /**
  * @alpha
  */
-export interface TimelineOptions extends OptionsWithLegend, OptionsWithTooltip {
+export interface TimelineOptions extends OptionsWithLegend, OptionsWithTooltip, OptionsWithTimezones {
   mode: TimelineMode; // not in the saved model!
 
   showValue: VisibilityMode;
