@@ -209,7 +209,7 @@ describe('PromQueryBuilder', () => {
     expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 
-  it('shows explain section when showExplain is false', async () => {
+  it('does not show explain section when showExplain is false', async () => {
     const { datasource } = createDatasource();
     const props = createProps(datasource);
     render(
