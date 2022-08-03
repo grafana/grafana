@@ -3,11 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
+import { DataSourcePluginMeta } from '@grafana/data';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery, LokiQueryType } from '../../types';
 
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 
 jest.mock('@grafana/runtime', () => {
@@ -43,7 +45,7 @@ const datasource = new LokiDatasource(
     access: 'proxy',
     url: '',
     jsonData: {},
-    meta: {} as any,
+    meta: {} as DataSourcePluginMeta,
   },
   undefined,
   undefined
@@ -115,6 +117,13 @@ describe('LokiQueryEditorSelector', () => {
     const selector = await screen.findByLabelText('selector');
     expect(selector).toBeInTheDocument();
     expect(selector.textContent).toBe('{job="grafana"}');
+  });
+
+  it('Can enable explain', async () => {
+    renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+    screen.getByLabelText('Explain').click();
+    expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 
   it('changes to code mode', async () => {

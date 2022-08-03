@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -250,12 +251,12 @@ func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, acti
 }
 
 func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
-	query := models.GetUserByIdQuery{Id: userID}
-	err := hs.SQLStore.GetUserById(ctx, &query)
+	query := user.GetUserByIDQuery{ID: userID}
+	user, err := hs.userService.GetByID(ctx, &query)
 	if err != nil {
 		return anonString
 	}
-	return query.Result.Login
+	return user.Login
 }
 
 func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*models.Dashboard, response.Response) {

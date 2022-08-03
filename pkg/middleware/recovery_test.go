@@ -67,7 +67,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		sc.userAuthTokenService = auth.NewFakeUserAuthTokenService()
 		sc.remoteCacheService = remotecache.NewFakeStore(t)
 
-		contextHandler := getContextHandler(t, nil, nil, nil)
+		contextHandler := getContextHandler(t, nil, nil, nil, nil)
 		sc.m.Use(contextHandler.Middleware)
 		// mock out gc goroutine
 		sc.m.Use(OrgRedirect(cfg, sc.mockSQLStore))

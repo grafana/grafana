@@ -3,7 +3,6 @@ package userimpl
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -32,6 +31,8 @@ type Service struct {
 	userAuthService    userauth.Service
 	quotaService       quota.Service
 	accessControlStore accesscontrol.AccessControl
+
+	cfg *setting.Cfg
 }
 
 func ProvideService(
@@ -44,6 +45,7 @@ func ProvideService(
 	userAuthService userauth.Service,
 	quotaService quota.Service,
 	accessControlStore accesscontrol.AccessControl,
+	cfg *setting.Cfg,
 ) user.Service {
 	return &Service{
 		store: &sqlStore{
@@ -58,6 +60,7 @@ func ProvideService(
 		userAuthService:    userAuthService,
 		quotaService:       quotaService,
 		accessControlStore: accessControlStore,
+		cfg:                cfg,
 	}
 }
 
@@ -157,7 +160,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
 	_, err := s.store.GetNotServiceAccount(ctx, cmd.UserID)
 	if err != nil {
-		return fmt.Errorf("failed to get user with not service account: %w", err)
+		return err
 	}
 	// delete from all the stores
 	if err := s.store.Delete(ctx, cmd.UserID); err != nil {
@@ -224,4 +227,17 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 	}
 
 	return nil
+}
+
+func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+	user, err := s.store.GetByID(ctx, query.ID)
+	if err != nil {
+		return nil, err
+	}
+	if s.cfg.CaseInsensitiveLogin {
+		if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
+			return nil, err
+		}
+	}
+	return user, nil
 }
