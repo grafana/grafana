@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -249,4 +250,84 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				assert.Equal(t, int64(100), id.MustInt64())
 			})
 	})
+}
+
+func TestGetDashboardSnapshotNotFound(t *testing.T) {
+	setUpSnapshotTest := func(t *testing.T) {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
+			return models.ErrDashboardSnapshotNotFound
+		})
+
+		bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
+			return nil
+		})
+	}
+
+	loggedInUserScenarioWithRole(t,
+		"GET /snapshots/{key} should return 404 when the snapshot does not exist", "GET",
+		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			setUpSnapshotTest(t)
+
+			sc.handlerFunc = GetDashboardSnapshot
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+
+			assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+		})
+
+	loggedInUserScenarioWithRole(t,
+		"DELETE /snapshots/{key} should return 404 when the snapshot does not exist", "DELETE",
+		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			setUpSnapshotTest(t)
+			sc.handlerFunc = DeleteDashboardSnapshot
+			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+			assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+		})
+
+	loggedInUserScenarioWithRole(t,
+		"GET /snapshots-delete/{deleteKey} should return 404 when the snapshot does not exist", "DELETE",
+		"/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			setUpSnapshotTest(t)
+			sc.handlerFunc = DeleteDashboardSnapshotByDeleteKey
+			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"deleteKey": "12345"}).exec()
+
+			assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+		})
+}
+
+func TestGetDashboardSnapshotFailure(t *testing.T) {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
+		return errors.New("something went wrong")
+	})
+
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
+		return nil
+	})
+
+	loggedInUserScenarioWithRole(t,
+		"GET /snapshots/{key} should return 404 when the snapshot does not exist", "GET",
+		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			sc.handlerFunc = GetDashboardSnapshot
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+
+			assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
+		})
+
+	loggedInUserScenarioWithRole(t,
+		"DELETE /snapshots/{key} should return 404 when the snapshot does not exist", "DELETE",
+		"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			sc.handlerFunc = DeleteDashboardSnapshot
+			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+			assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
+		})
+
+	loggedInUserScenarioWithRole(t,
+		"GET /snapshots-delete/{deleteKey} should return 404 when the snapshot does not exist", "DELETE",
+		"/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			sc.handlerFunc = DeleteDashboardSnapshotByDeleteKey
+			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"deleteKey": "12345"}).exec()
+
+			assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
+		})
 }
