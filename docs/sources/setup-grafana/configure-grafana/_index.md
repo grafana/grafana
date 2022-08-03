@@ -1236,7 +1236,7 @@ Listen IP address and port to receive unified alerting messages for other Grafan
 
 ### ha_advertise_address
 
-Explicit IP address and port to advertize other Grafana instances. The port is used for both TCP and UDP.
+Explicit IP address and port to advertise other Grafana instances. The port is used for both TCP and UDP.
 
 ### ha_peers
 
