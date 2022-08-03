@@ -1,10 +1,10 @@
 import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 
-import { alertingApi } from 'app/features/alerting/unified/api/buildInfo';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
+import { alertingApi } from '../features/alerting/unified/api/alertingApi';
 
 import { setStore } from './store';
 

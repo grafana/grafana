@@ -1,8 +1,7 @@
-import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { PromApplication, PromApiFeatures, PromBuildInfoResponse } from 'app/types/unified-alerting-dto';
+import { PromApiFeatures, PromApplication, PromBuildInfoResponse } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -158,52 +157,3 @@ function errorIndicatesMissingRulerSupport(error: any) {
     error.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
   );
 }
-
-const backendSrvBaseQuery =
-  (): BaseQueryFn<{ url: string }, unknown, unknown> =>
-  async ({ url }) => {
-    try {
-      const response = await lastValueFrom(
-        getBackendSrv().fetch<PromBuildInfoResponse>({
-          url,
-          showErrorAlert: false,
-          showSuccessAlert: false,
-        })
-      );
-
-      return { data: response.data };
-    } catch (error) {
-      return {
-        error: {
-          data: error,
-        },
-      };
-    }
-  };
-
-export const alertingApi = createApi({
-  reducerPath: 'alertingApi',
-  baseQuery: backendSrvBaseQuery(),
-  endpoints: (build) => ({
-    discoverAmFeatures: build.query({
-      // query: (amUrl) => ({ url: `${amUrl}/api/v1/status/buildinfo` }),
-      queryFn: async ({ dataSourceName }: { dataSourceName: string }) => {
-        try {
-          const result = await discoverFeatures(dataSourceName);
-          return { data: result };
-        } catch (error) {
-          console.error(error);
-          return { error: error };
-        }
-      },
-    }),
-  }),
-});
-
-const { useDiscoverAmFeaturesQuery } = alertingApi;
-const { discoverAmFeatures } = alertingApi.endpoints;
-
-export const featureDiscoveryApi = {
-  discoverAmFeatures,
-  useDiscoverAmFeaturesQuery,
-};
