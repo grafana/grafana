@@ -58,6 +58,10 @@ type CreateUserCommand struct {
 	IsServiceAccount bool
 }
 
+type GetUserByLoginQuery struct {
+	LoginOrEmail string
+}
+
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
