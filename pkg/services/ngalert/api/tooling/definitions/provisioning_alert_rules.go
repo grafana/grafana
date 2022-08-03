@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/common/model"
 )
 
 // swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
@@ -87,7 +88,7 @@ type ProvisionedAlertRule struct {
 	// required: true
 	ExecErrState models.ExecutionErrorState `json:"execErrState"`
 	// required: true
-	For time.Duration `json:"for"`
+	For model.Duration `json:"for"`
 	// example: {"runbook_url": "https://supercoolrunbook.com/page/13"}
 	Annotations map[string]string `json:"annotations,omitempty"`
 	// example: {"team": "sre-team-1"}
@@ -96,7 +97,11 @@ type ProvisionedAlertRule struct {
 	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
-func (a *ProvisionedAlertRule) UpstreamModel() models.AlertRule {
+func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
+	forDur, err := time.ParseDuration(a.For.String())
+	if err != nil {
+		return models.AlertRule{}, err
+	}
 	return models.AlertRule{
 		ID:           a.ID,
 		UID:          a.UID,
@@ -109,10 +114,10 @@ func (a *ProvisionedAlertRule) UpstreamModel() models.AlertRule {
 		Updated:      a.Updated,
 		NoDataState:  a.NoDataState,
 		ExecErrState: a.ExecErrState,
-		For:          a.For,
+		For:          forDur,
 		Annotations:  a.Annotations,
 		Labels:       a.Labels,
-	}
+	}, nil
 }
 
 func NewAlertRule(rule models.AlertRule, provenance models.Provenance) ProvisionedAlertRule {
@@ -123,7 +128,7 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) Provision
 		FolderUID:    rule.NamespaceUID,
 		RuleGroup:    rule.RuleGroup,
 		Title:        rule.Title,
-		For:          rule.For,
+		For:          model.Duration(rule.For.Seconds()),
 		Condition:    rule.Condition,
 		Data:         rule.Data,
 		Updated:      rule.Updated,

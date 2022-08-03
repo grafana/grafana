@@ -493,7 +493,7 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		},
 		RuleGroup:    "my-cool-group",
 		FolderUID:    "folder-uid",
-		For:          time.Second * 60,
+		For:          models.Duration(60),
 		NoDataState:  models.OK,
 		ExecErrState: models.OkErrState,
 	}
