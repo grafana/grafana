@@ -332,7 +332,7 @@ export class ElementState implements LayerElement {
       }
     }
 
-    if (border && border.color && border.width) {
+    if (border && border.color && border.width !== undefined) {
       const color = ctx.getColor(border.color);
       css.borderWidth = `${border.width}px`;
       css.borderStyle = 'solid';
