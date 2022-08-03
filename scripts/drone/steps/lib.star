@@ -598,7 +598,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'grafana/docker-puppeteer:1.0.0',
+        'image': 'grafana/docker-puppeteer:1.1.0',
         'depends_on': [
             'grafana-server' + enterprise2_suffix(edition),
         ],
@@ -1213,14 +1213,18 @@ def end_to_end_tests_deps(edition):
         'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
     ]
 
-def compile_build_cmd():
-  return {
+def compile_build_cmd(edition='oss'):
+    dependencies = []
+    if edition == 'enterprise':
+          dependencies = ['init-enterprise',]
+    return {
         'name': 'compile-build-cmd',
         'image': 'golang:1.17',
         'commands': [
             "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd",
         ],
+        'depends_on': dependencies,
         'environment': {
             'CGO_ENABLED': 0,
-        },
-  }
+    },
+}

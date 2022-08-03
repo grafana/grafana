@@ -136,9 +136,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "dashboardsFromStorage",
-			Description: "Load dashboards from the generic storage interface",
-			State:       FeatureStateAlpha,
+			Name:            "dashboardsFromStorage",
+			Description:     "Load dashboards from the generic storage interface",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
 		},
 		{
 			Name:            "export",

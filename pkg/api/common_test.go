@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -33,6 +34,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
@@ -40,9 +42,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -168,6 +173,7 @@ type scenarioContext struct {
 	sqlStore                sqlstore.Store
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
+	userService             user.Service
 }
 
 func (sc *scenarioContext) exec() {
@@ -196,7 +202,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
 	loginService := &logintest.LoginServiceFake{}
 	authenticator := &logintest.AuthenticatorFake{}
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, authenticator)
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator)
 
 	return ctxHdlr
 }
@@ -353,7 +359,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
-	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, featuremgmt.WithFeatures())
 
 	var acmock *accesscontrolmock.Mock
 	var ac accesscontrol.AccessControl
@@ -465,4 +471,43 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	hs.registerRoutes()
 	s := webtest.NewServer(t, hs.RouteRegister)
 	return s
+}
+
+var (
+	viewerRole = models.ROLE_VIEWER
+	editorRole = models.ROLE_EDITOR
+)
+
+type setUpConf struct {
+	aclMockResp []*models.DashboardACLInfoDTO
+}
+
+type mockSearchService struct{ ExpectedResult models.HitList }
+
+func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) error {
+	q.Result = mss.ExpectedResult
+	return nil
+}
+func (mss *mockSearchService) SortOptions() []models.SortOption { return nil }
+
+func setUp(confs ...setUpConf) *HTTPServer {
+	singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
+	store := mockstore.NewSQLStoreMock()
+	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
+	store.ExpectedAlert = singleAlert
+
+	aclMockResp := []*models.DashboardACLInfoDTO{}
+	for _, c := range confs {
+		if c.aclMockResp != nil {
+			aclMockResp = c.aclMockResp
+		}
+	}
+	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
+		q.Result = aclMockResp
+	}).Return(nil)
+	guardian.InitLegacyGuardian(store, dashSvc)
+	return hs
 }
