@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"xorm.io/xorm"
 
@@ -56,64 +55,6 @@ func (ss *SQLStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.Ap
 		ss.log.Warn("API key not loaded", "err", err)
 	}
 	return result
-}
-
-func (ss *SQLStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		return deleteAPIKey(sess, cmd.Id, cmd.OrgId)
-	})
-}
-
-func deleteAPIKey(sess *DBSession, id, orgID int64) error {
-	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
-	result, err := sess.Exec(rawSQL, id, orgID)
-	if err != nil {
-		return err
-	}
-	n, err := result.RowsAffected()
-	if err != nil {
-		return err
-	} else if n == 0 {
-		return models.ErrApiKeyNotFound
-	}
-	return nil
-}
-
-// AddAPIKey adds the API key to the database.
-func (ss *SQLStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
-		exists, _ := sess.Get(&key)
-		if exists {
-			return models.ErrDuplicateApiKey
-		}
-
-		updated := timeNow()
-		var expires *int64 = nil
-		if cmd.SecondsToLive > 0 {
-			v := updated.Add(time.Second * time.Duration(cmd.SecondsToLive)).Unix()
-			expires = &v
-		} else if cmd.SecondsToLive < 0 {
-			return models.ErrInvalidApiKeyExpiration
-		}
-
-		t := models.ApiKey{
-			OrgId:            cmd.OrgId,
-			Name:             cmd.Name,
-			Role:             cmd.Role,
-			Key:              cmd.Key,
-			Created:          updated,
-			Updated:          updated,
-			Expires:          expires,
-			ServiceAccountId: nil,
-		}
-
-		if _, err := sess.Insert(&t); err != nil {
-			return err
-		}
-		cmd.Result = &t
-		return nil
-	})
 }
 
 func (ss *SQLStore) GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error {

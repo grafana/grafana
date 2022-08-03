@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -61,7 +62,9 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	} else {
 		addKeyCmd.Key = "secret"
 	}
-	err := sqlStore.AddAPIKey(context.Background(), addKeyCmd)
+
+	apiKeyService := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	err := apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
 
 	if testKey.IsExpired {
