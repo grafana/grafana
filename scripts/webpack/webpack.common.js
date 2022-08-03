@@ -2,7 +2,6 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
 
-const CopyUniconsPlugin = require('./plugins/CopyUniconsPlugin');
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
 module.exports = {
@@ -45,7 +44,6 @@ module.exports = {
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
-    new CopyUniconsPlugin(),
     new CopyWebpackPlugin({
       patterns: [
         {
