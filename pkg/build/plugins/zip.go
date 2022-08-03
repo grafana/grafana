@@ -28,6 +28,7 @@ func Unzip(fpath, tgtDir string) error {
 		}
 		defer logCloseError(rc.Close)
 
+		//nolint:gosec
 		dstPath := filepath.Join(tgtDir, f.Name)
 
 		if f.FileInfo().IsDir() {

@@ -24,6 +24,13 @@ func logCloseError(closeFunc func() error) {
 	}
 }
 
+// logCloseError executes the closeFunc; if it returns an error, it is logged by the log package.
+func logError(err error) {
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 // pluginManifest has details of an external plugin package.
 type pluginManifest struct {
 	Name     string `json:"name"`
@@ -73,7 +80,7 @@ func Download(ctx context.Context, grafanaDir string, p syncutil.WorkerPool) err
 			if err != nil {
 				return fmt.Errorf("downloading %q failed: %w", u, err)
 			}
-			defer logCloseError(resp.Body.Close)
+			defer logError(resp.Body.Close())
 
 			if resp.StatusCode != http.StatusOK {
 				return fmt.Errorf("failed to download %q, status code %d", u, resp.StatusCode)
@@ -86,6 +93,7 @@ func Download(ctx context.Context, grafanaDir string, p syncutil.WorkerPool) err
 				return fmt.Errorf("downloading %q failed: %w", u, err)
 			}
 
+			//nolint:gosec
 			fd, err := os.Open(tgt)
 			if err != nil {
 				return err

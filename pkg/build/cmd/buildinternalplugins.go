@@ -18,7 +18,7 @@ func BuildInternalPlugins(c *cli.Context) error {
 	}
 
 	const grafanaDir = "."
-	metadata, err := config.GetMetadata(filepath.Join("dist", "config.json"))
+	metadata, err := config.GetMetadata(filepath.Join("dist", "version.json"))
 	if err != nil {
 		return err
 	}

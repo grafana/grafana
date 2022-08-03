@@ -32,6 +32,7 @@ func getManifest(dpath string, chksums map[string]string) (manifest, error) {
 		Info pluginInfo `json:"info"`
 	}
 
+	//nolint:gosec
 	f, err := os.Open(filepath.Join(dpath, "plugin.json"))
 	if err != nil {
 		return m, err
@@ -98,7 +99,7 @@ func BuildManifest(ctx context.Context, dpath string, signingAdmin bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to get signed manifest from Grafana API: %w", err)
 	}
-	defer logCloseError(resp.Body.Close)
+	defer logError(resp.Body.Close())
 	if resp.StatusCode != 200 {
 		msg, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -170,6 +171,7 @@ func getChksums(dpath, manifestPath string) (map[string]string, error) {
 		}
 
 		h := sha256.New()
+		//nolint:gosec
 		f, err := os.Open(path)
 		if err != nil {
 			return err
