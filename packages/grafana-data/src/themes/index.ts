@@ -7,6 +7,7 @@ export { ThemeShape } from './createShape';
 export { ThemeTypography, ThemeTypographyVariant } from './createTypography';
 export { ThemeTransitions } from './createTransitions';
 export { ThemeSpacing } from './createSpacing';
+export { basicColors } from './createV1Theme';
 export { ThemeZIndices } from './zIndex';
 export { ThemeVisualizationColors, ThemeVizColor, ThemeVizHue } from './createVisualizationColors';
 

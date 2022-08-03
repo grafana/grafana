@@ -7,18 +7,17 @@ import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react
 import {
   isDateTime,
   rangeUtil,
-  GrafanaTheme,
+  GrafanaTheme2,
   dateTimeFormat,
   timeZoneFormatUserFriendly,
   TimeRange,
   TimeZone,
   dateMath,
+  basicColors,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { withTheme, useTheme } from '../../themes/ThemeContext';
-import { stylesFactory } from '../../themes/stylesFactory';
-import { Themeable } from '../../types';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { ButtonGroup } from '../Button';
 import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -27,7 +26,7 @@ import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { quickOptions } from './options';
 
 /** @public */
-export interface TimeRangePickerProps extends Themeable {
+export interface TimeRangePickerProps {
   hideText?: boolean;
   value: TimeRange;
   timeZone?: TimeZone;
@@ -49,7 +48,7 @@ export interface State {
   isOpen: boolean;
 }
 
-export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactElement {
+export function TimeRangePicker(props: TimeRangePickerProps): ReactElement {
   const [isOpen, setOpen] = useState(false);
 
   const {
@@ -61,7 +60,6 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
     fiscalYearStartMonth,
     timeSyncButton,
     isSynced,
-    theme,
     history,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
@@ -88,7 +86,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
   const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen }, ref);
   const { dialogProps } = useDialog({}, ref);
 
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
   const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const variant = isSynced ? 'active' : 'default';
 
@@ -163,8 +161,7 @@ const ZoomOutTooltip = () => (
 );
 
 const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
-  const theme = useTheme();
-  const styles = getLabelStyles(theme);
+  const styles = useStyles2(getLabelStyles);
 
   return (
     <>
@@ -181,8 +178,7 @@ const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; time
 type LabelProps = Pick<TimeRangePickerProps, 'hideText' | 'value' | 'timeZone'>;
 
 export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZone }) => {
-  const theme = useTheme();
-  const styles = getLabelStyles(theme);
+  const styles = useStyles2(getLabelStyles);
 
   if (hideText) {
     return null;
@@ -206,10 +202,7 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone) => {
   return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone);
 };
 
-/** @public */
-export const TimeRangePicker = withTheme(UnthemedTimeRangePicker);
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = () => {
   return {
     container: css`
       position: relative;
@@ -217,9 +210,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       vertical-align: middle;
     `,
   };
-});
+};
 
-const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
+const getLabelStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;
@@ -227,12 +220,12 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       white-space: nowrap;
     `,
     utc: css`
-      color: ${theme.palette.orange};
+      color: ${basicColors.orange};
       font-size: ${theme.typography.size.sm};
       padding-left: 6px;
       line-height: 28px;
       vertical-align: bottom;
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.typography.fontWeightMedium};
     `,
   };
-});
+};

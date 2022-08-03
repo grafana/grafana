@@ -133,7 +133,7 @@ export class TablePanel extends Component<Props> {
     }
 
     if (count > 1) {
-      const inputHeight = config.theme.spacing.formInputHeight;
+      const inputHeight = config.theme2.v1.spacing.formInputHeight;
       const padding = 8 * 2;
       const currentIndex = this.getCurrentFrameIndex(frames, options);
       const names = frames.map((frame, index) => {

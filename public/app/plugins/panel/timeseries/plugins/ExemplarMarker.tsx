@@ -3,18 +3,19 @@ import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import {
+  basicColors,
   DataFrame,
   DataFrameFieldIndex,
   dateTimeFormat,
   Field,
   FieldType,
-  GrafanaTheme,
+  GrafanaTheme2,
   LinkModel,
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles } from '@grafana/ui';
+import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
@@ -31,7 +32,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   config,
   getFieldLinks,
 }) => {
-  const styles = useStyles(getExemplarMarkerStyles);
+  const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
@@ -158,11 +159,11 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   );
 };
 
-const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
-  const bg = theme.isDark ? theme.palette.dark2 : theme.palette.white;
-  const headerBg = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
-  const shadowColor = theme.isDark ? theme.palette.black : theme.palette.white;
-  const tableBgOdd = theme.isDark ? theme.palette.dark3 : theme.palette.gray6;
+const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
+  const bg = theme.isDark ? basicColors.dark2 : basicColors.white;
+  const headerBg = theme.isDark ? basicColors.dark9 : basicColors.gray5;
+  const shadowColor = theme.isDark ? basicColors.black : basicColors.white;
+  const tableBgOdd = theme.isDark ? basicColors.dark3 : basicColors.gray6;
 
   return {
     markerWrapper: css`
@@ -185,13 +186,13 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       height: 0;
       border-left: 4px solid transparent;
       border-right: 4px solid transparent;
-      border-bottom: 4px solid ${theme.palette.red};
+      border-bottom: 4px solid ${basicColors.red};
       pointer-events: none;
     `,
     wrapper: css`
       background: ${bg};
       border: 1px solid ${headerBg};
-      border-radius: ${theme.border.radius.md};
+      border-radius: ${theme.shape.borderRadius(2)};
       box-shadow: 0 0 20px ${shadowColor};
     `,
     exemplarsTable: css`
@@ -200,11 +201,11 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       tr td {
         padding: 5px 10px;
         white-space: nowrap;
-        border-bottom: 4px solid ${theme.colors.panelBg};
+        border-bottom: 4px solid ${theme.components.panel.background};
       }
 
       tr {
-        background-color: ${theme.colors.bg1};
+        background-color: ${theme.colors.background.primary};
         &:nth-child(even) {
           background-color: ${tableBgOdd};
         }
@@ -214,7 +215,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
-      column-gap: ${theme.spacing.sm};
+      column-gap: ${theme.spacing(1)};
 
       > span {
         flex-grow: 0;
@@ -235,8 +236,8 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       display: flex;
     `,
     title: css`
-      font-weight: ${theme.typography.weight.semibold};
-      padding-right: ${theme.spacing.md};
+      font-weight: ${theme.typography.fontWeightMedium};
+      padding-right: ${theme.spacing(2)};
       overflow: hidden;
       display: inline-block;
       white-space: nowrap;
@@ -244,8 +245,8 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       flex-grow: 1;
     `,
     body: css`
-      padding: ${theme.spacing.sm};
-      font-weight: ${theme.typography.weight.semibold};
+      padding: ${theme.spacing(1)};
+      font-weight: ${theme.typography.fontWeightMedium};
     `,
     marble: css`
       display: block;

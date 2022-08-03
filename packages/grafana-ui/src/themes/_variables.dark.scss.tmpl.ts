@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { basicColors, GrafanaTheme2 } from '@grafana/data';
 
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
@@ -23,40 +23,40 @@ $red-base: ${theme.colors.error.main};
 $red-shade: ${theme.colors.error.shade};
 $green-base: ${theme.colors.success.main};
 $green-shade: ${theme.colors.success.shade};
-$orange-dark: ${theme.v1.palette.orangeDark};
+$orange-dark: ${basicColors.orangeDark};
 
-$gray98: ${theme.v1.palette.gray98};
-$gray95: ${theme.v1.palette.gray95};
-$gray85: ${theme.v1.palette.gray85};
-$gray70: ${theme.v1.palette.gray70};
-$gray60: ${theme.v1.palette.gray60};
-$gray33: ${theme.v1.palette.gray33};
-$gray25: ${theme.v1.palette.gray25};
-$gray15: ${theme.v1.palette.gray15};
-$gray10: ${theme.v1.palette.gray10};
-$gray05: ${theme.v1.palette.gray05};
+$gray98: ${basicColors.gray98};
+$gray95: ${basicColors.gray95};
+$gray85: ${basicColors.gray85};
+$gray70: ${basicColors.gray70};
+$gray60: ${basicColors.gray60};
+$gray33: ${basicColors.gray33};
+$gray25: ${basicColors.gray25};
+$gray15: ${basicColors.gray15};
+$gray10: ${basicColors.gray10};
+$gray05: ${basicColors.gray05};
 
 // Grays
 // -------------------------
-$black: ${theme.v1.palette.black};
-$dark-1: ${theme.v1.palette.dark1};
-$dark-2: ${theme.v1.palette.dark2};
-$dark-3: ${theme.v1.palette.dark3};
-$dark-4: ${theme.v1.palette.dark4};
-$dark-5: ${theme.v1.palette.dark5};
-$dark-6: ${theme.v1.palette.dark6};
-$dark-7: ${theme.v1.palette.dark7};
-$dark-8: ${theme.v1.palette.dark8};
-$dark-9: ${theme.v1.palette.dark9};
-$dark-10: ${theme.v1.palette.dark10};
-$gray-1: ${theme.v1.palette.gray1};
-$gray-2: ${theme.v1.palette.gray2};
-$gray-3: ${theme.v1.palette.gray3};
-$gray-4: ${theme.v1.palette.gray4};
-$gray-5: ${theme.v1.palette.gray5};
-$gray-6: ${theme.v1.palette.gray6};
+$black: ${basicColors.black};
+$dark-1: ${basicColors.dark1};
+$dark-2: ${basicColors.dark2};
+$dark-3: ${basicColors.dark3};
+$dark-4: ${basicColors.dark4};
+$dark-5: ${basicColors.dark5};
+$dark-6: ${basicColors.dark6};
+$dark-7: ${basicColors.dark7};
+$dark-8: ${basicColors.dark8};
+$dark-9: ${basicColors.dark9};
+$dark-10: ${basicColors.dark10};
+$gray-1: ${basicColors.gray1};
+$gray-2: ${basicColors.gray2};
+$gray-3: ${basicColors.gray3};
+$gray-4: ${basicColors.gray4};
+$gray-5: ${basicColors.gray5};
+$gray-6: ${basicColors.gray6};
 
-$white: ${theme.v1.palette.white};
+$white: ${basicColors.white};
 
 $layer0: ${theme.colors.background.canvas};
 $layer1: ${theme.colors.background.primary};
@@ -69,22 +69,22 @@ $border1: ${theme.colors.border.medium};
 
 // Accent colors
 // -------------------------
-$blue: ${theme.v1.palette.blue85};
+$blue: ${basicColors.blue85};
 $red: $red-base;
-$yellow: ${theme.v1.palette.yellow};
-$orange: ${theme.v1.palette.orange};
-$purple: ${theme.v1.palette.purple};
-$variable: ${theme.v1.colors.textBlue};
+$yellow: ${basicColors.yellow};
+$orange: ${basicColors.orange};
+$purple: ${basicColors.purple};
+$variable: ${theme.colors.primary.text};
 
-$brand-primary: ${theme.v1.palette.brandPrimary};
-$brand-success: ${theme.v1.palette.brandSuccess};
-$brand-warning: ${theme.v1.palette.brandWarning};
-$brand-danger: ${theme.v1.palette.brandDanger};
+$brand-primary: ${basicColors.orange};
+$brand-success: ${theme.colors.success.main};
+$brand-warning: ${theme.colors.warning.main};
+$brand-danger: ${theme.colors.error.main};
 
-$query-red: ${theme.v1.palette.queryRed};
-$query-green: ${theme.v1.palette.queryGreen};
-$query-purple: ${theme.v1.palette.queryPurple};
-$query-orange: ${theme.v1.palette.orange};
+$query-red: ${theme.colors.error.text};
+$query-green: ${theme.colors.success.text};
+$query-purple: #fe85fc;
+$query-orange: ${basicColors.orange};
 
 // Status colors
 // -------------------------¨
@@ -94,17 +94,17 @@ $critical: ${theme.colors.error.text};
 
 // Scaffolding
 // -------------------------
-$body-bg: ${theme.v1.colors.bodyBg};
-$page-bg: ${theme.v1.colors.bodyBg};
-$dashboard-bg: ${theme.v1.colors.dashboardBg};
+$body-bg: ${theme.colors.background.canvas};
+$page-bg: ${theme.colors.background.canvas};
+$dashboard-bg: ${theme.colors.background.canvas};
 
-$text-color-strong: ${theme.v1.colors.textStrong};
-$text-color: ${theme.v1.colors.text};
-$text-color-semi-weak: ${theme.v1.colors.textSemiWeak};
-$text-color-weak: ${theme.v1.colors.textWeak};
-$text-color-faint: ${theme.v1.colors.textFaint};
-$text-color-emphasis: ${theme.v1.colors.textStrong};
-$text-blue: ${theme.v1.colors.textBlue};
+$text-color-strong: ${theme.colors.text.maxContrast};
+$text-color: ${theme.colors.text.primary};
+$text-color-semi-weak: ${theme.colors.text.secondary};
+$text-color-weak: ${theme.colors.text.secondary};
+$text-color-faint: ${theme.colors.text.disabled};
+$text-color-emphasis: ${theme.colors.text.maxContrast};
+$text-blue: ${theme.colors.primary.text};
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -115,14 +115,14 @@ $brand-gradient-vertical: ${theme.colors.gradients.brandVertical};
 
 // Links
 // -------------------------
-$link-color: ${theme.v1.colors.link};
-$link-color-disabled: ${theme.v1.colors.linkDisabled};
-$link-hover-color: ${theme.v1.colors.linkHover};
-$external-link-color: ${theme.v1.colors.linkExternal};
+$link-color: ${theme.colors.text.primary};
+$link-color-disabled: ${theme.colors.text.disabled};
+$link-hover-color: ${theme.colors.text.maxContrast};
+$external-link-color: ${theme.colors.text.link};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.v1.colors.textHeading};
+$headings-color: ${theme.colors.text.primary};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -137,9 +137,9 @@ $panel-box-shadow: ${theme.components.panel.boxShadow};
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: ${theme.v1.colors.pageHeaderBg};
+$page-header-bg: ${theme.colors.background.canvas};
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: ${theme.v1.colors.pageHeaderBorder};
+$page-header-border-color: ${theme.colors.background.canvas};
 
 $divider-border-color: $gray-1;
 
@@ -147,7 +147,7 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: ${theme.colors.background.secondary};
 $tight-form-func-highlight-bg: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
 
-$modal-backdrop-bg: ${theme.v1.colors.bg3};
+$modal-backdrop-bg: ${theme.colors.action.hover};
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
@@ -161,7 +161,7 @@ $list-item-bg: $card-background;
 $list-item-hover-bg: $card-background-hover;
 $list-item-shadow: $card-shadow;
 
-$empty-list-cta-bg: ${theme.v1.colors.bg2};
+$empty-list-cta-bg: ${theme.colors.background.secondary};
 
 // Scrollbars
 $scrollbarBackground: #404357;
@@ -256,10 +256,10 @@ $navbarBorder: 1px solid $dark-6;
 $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
-$side-menu-item-hover-bg: ${theme.v1.colors.bg2};
+$side-menu-item-hover-bg: ${theme.colors.background.secondary};
 $side-menu-shadow: 0 0 30px #111;
-$side-menu-icon-color: ${theme.v1.palette.gray70};
-$side-menu-header-color: ${theme.v1.colors.text};
+$side-menu-icon-color: ${basicColors.gray70};
+$side-menu-header-color: ${theme.colors.text.primary};
 
 // Menu dropdowns
 // -------------------------
@@ -334,14 +334,14 @@ $json-explorer-url-color: #027bff;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: ${theme.v1.colors.bg3};
+$diff-label-bg: ${theme.colors.action.hover};
 $diff-label-fg: $white;
 
-$diff-group-bg: ${theme.v1.colors.bg2};
+$diff-group-bg: ${theme.colors.background.secondary};
 $diff-arrow-color: $white;
 
-$diff-json-bg: ${theme.v1.colors.bg2};
-$diff-json-fg: ${theme.v1.colors.text};
+$diff-json-bg: ${theme.colors.background.secondary};
+$diff-json-fg: ${theme.colors.text.primary};
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;
@@ -362,7 +362,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $input-bg;
 $switch-slider-color: $dark-3;
 $switch-slider-off-bg: $gray-1;
-$switch-slider-on-bg: ${theme.v1.palette.blue95};
+$switch-slider-on-bg: ${basicColors.blue95};
 $switch-slider-shadow: 0 0 3px black;
 
 //Checkbox
@@ -385,8 +385,8 @@ $panel-editor-tabs-line-color: #e3e3e3;
 
 $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 
-$panel-grid-placeholder-bg: darken(${theme.v1.palette.blue77}, 30%);
-$panel-grid-placeholder-shadow: 0 0 4px ${theme.v1.palette.blue80};
+$panel-grid-placeholder-bg: darken(${basicColors.blue77}, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px ${basicColors.blue80};
 
 // logs
 $logs-color-unknown: $gray-2;

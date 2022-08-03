@@ -1,7 +1,7 @@
 import { CSSObject } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export function cardChrome(theme: GrafanaTheme2): string {
   return `
@@ -40,16 +40,16 @@ export function mediaUp(breakpoint: string) {
   return `only screen and (min-width: ${breakpoint})`;
 }
 
-export const focusCss = (theme: GrafanaTheme) => `
+export const focusCss = (theme: GrafanaTheme2) => `
   outline: 2px dotted transparent;
   outline-offset: 2px;
-  box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
+  box-shadow: 0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main};
   transition-property: outline, outline-offset, box-shadow;
   transition-duration: 0.2s;
   transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
-export function getMouseFocusStyles(theme: GrafanaTheme2): CSSObject {
+export function getMouseFocusStyles(): CSSObject {
   return {
     outline: 'none',
     boxShadow: `none`,
