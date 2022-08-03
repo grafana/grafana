@@ -7,22 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// GetAllAPIKeys queries the database for valid non SA APIKeys across all orgs
-func (ss *SQLStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
-	result := make([]*models.ApiKey, 0)
-	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		sess := dbSession.Where("service_account_id IS NULL").Asc("name")
-		if orgID != -1 {
-			sess = sess.Where("org_id=?", orgID)
-		}
-		return sess.Find(&result)
-	})
-	if err != nil {
-		ss.log.Warn("API key not loaded", "err", err)
-	}
-	return result
-}
-
 func (ss *SQLStore) GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var apikey models.ApiKey
