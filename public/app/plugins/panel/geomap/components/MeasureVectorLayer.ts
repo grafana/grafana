@@ -72,25 +72,37 @@ export class MeasureVectorLayer extends VectorLayer<VectorSource> {
   segmentStyles = [this.segmentStyle];
 
   // Open Layer styles
-  styleX = new Style({
-    fill: new Fill({
-      color: 'rgba(255, 255, 255, 0.2)',
-    }),
-    stroke: new Stroke({
-      color: 'rgba(0, 0, 0, 0.5)',
-      lineDash: [10, 10],
-      width: 2,
-    }),
-    image: new CircleStyle({
-      radius: 5,
-      stroke: new Stroke({
-        color: 'rgba(0, 0, 0, 0.7)',
-      }),
+  shapeStyle = [
+    new Style({
       fill: new Fill({
         color: 'rgba(255, 255, 255, 0.2)',
       }),
+      image: new CircleStyle({
+        radius: 5,
+        stroke: new Stroke({
+          color: 'rgba(0, 0, 0, 0.7)',
+        }),
+        fill: new Fill({
+          color: 'rgba(255, 255, 255, 0.2)',
+        }),
+      }),
     }),
-  });
+    new Style({
+      stroke: new Stroke({
+        color: [0, 0, 0, 1],
+        width: 2,
+        lineDash: [4, 8],
+        lineDashOffset: 6,
+      }),
+    }),
+    new Style({
+      stroke: new Stroke({
+        color: [255, 255, 255, 1],
+        width: 2,
+        lineDash: [4, 8],
+      }),
+    }),
+  ];
 
   labelStyle = new Style({
     text: new Text({
@@ -161,7 +173,7 @@ export class MeasureVectorLayer extends VectorLayer<VectorSource> {
   draw!: Draw; // global so we can remove it later
 
   styleFunction(feature: FeatureLike, segments: boolean, drawType?: string, tip?: string): Style[] {
-    const styles = [this.styleX];
+    const styles = [...this.shapeStyle];
     const geometry = feature.getGeometry() as Geometry;
     if (geometry) {
       const type = geometry.getType();
