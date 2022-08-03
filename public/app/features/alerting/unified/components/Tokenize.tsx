@@ -18,7 +18,6 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
   const styles = useStyles2(getStyles);
 
   const [open, close] = delimiter;
-  const normalizedIput = normalizeInput(input);
 
   /**
    * This RegExp uses 2 named capture groups, text that comes before the token and the token itself
@@ -28,7 +27,7 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
    *  Some text {{ $labels.foo }}
    */
   const regex = new RegExp(`(?<before>.*?)(${open}(?<token>.*?)${close}|$)`, 'gm');
-  const lines = normalizedIput.split('\n');
+  const lines = input.split('\n');
 
   const output: React.ReactElement[] = [];
 
@@ -93,10 +92,6 @@ function Token({ content, description, type }: TokenProps) {
       </span>
     </HoverCard>
   );
-}
-
-function normalizeInput(input: string) {
-  return input.replace(/[^\S\r\n]+/g, ' ').trim();
 }
 
 function isVariable(input: string) {
