@@ -4,42 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"xorm.io/xorm"
-
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
-
-// GetAPIKeys queries the database based
-// on input on GetApiKeysQuery
-func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var sess *xorm.Session
-
-		if query.IncludeExpired {
-			sess = dbSession.Limit(100, 0).
-				Where("org_id=?", query.OrgId).
-				Asc("name")
-		} else {
-			sess = dbSession.Limit(100, 0).
-				Where("org_id=? and ( expires IS NULL or expires >= ?)", query.OrgId, timeNow().Unix()).
-				Asc("name")
-		}
-
-		sess = sess.Where("service_account_id IS NULL")
-
-		if !accesscontrol.IsDisabled(ss.Cfg) {
-			filter, err := accesscontrol.Filter(query.User, "id", "apikeys:id:", accesscontrol.ActionAPIKeyRead)
-			if err != nil {
-				return err
-			}
-			sess.And(filter.Where, filter.Args...)
-		}
-
-		query.Result = make([]*models.ApiKey, 0)
-		return sess.Find(&query.Result)
-	})
-}
 
 // GetAllAPIKeys queries the database for valid non SA APIKeys across all orgs
 func (ss *SQLStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
