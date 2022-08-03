@@ -147,7 +147,6 @@ export const getAvailableIcons = () =>
     'record-audio',
     'repeat',
     'rocket',
-    'ruler',
     'ruler-combined',
     'save',
     'search',

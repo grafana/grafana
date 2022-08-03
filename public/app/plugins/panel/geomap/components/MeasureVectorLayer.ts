@@ -30,11 +30,6 @@ export class MeasureVectorLayer extends VectorLayer<VectorSource> {
   setOptions(options: MapMeasureOptions) {
     this.opts = options;
     this.getSource()?.refresh();
-    // const fn = action.value === 'area' ? getArea : getLength;
-    // const measure = (geo: Geometry) => {
-    //   const v = fn(geo);
-    //   return formattedValueToString(current.format(v));
-    // };
   }
 
   getMapMeasurement(geo: Geometry): string {
