@@ -332,7 +332,6 @@ export class ElementState implements LayerElement {
       }
     }
 
-    console.log(border);
     if (border && border.color && border.width) {
       const color = ctx.getColor(border.color);
       css.borderWidth = `${border.width}px`;
