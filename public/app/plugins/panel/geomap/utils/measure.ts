@@ -41,12 +41,12 @@ export const measures: MapMeasure[] = [
         format: (m: number) => getValueFormat('lengthft')(m * 3.28084),
       },
       {
-        label: 'Mile (mi)',
+        label: 'Miles (mi)',
         value: 'mi',
         format: (m: number) => getValueFormat('lengthmi')(m / 1609.0),
       },
       {
-        label: 'Nautical mile (mi)',
+        label: 'Nautical miles (nmi)',
         value: 'nmi',
         format: (m: number) => getValueFormat('nmi')(m / 1852.0),
       },
@@ -70,6 +70,11 @@ export const measures: MapMeasure[] = [
         format: (m2: number) => getValueFormat('areaM2')(m2),
       },
       {
+        label: 'Square Kilometers (km²)',
+        value: 'km2',
+        format: (m2: number) => toFixedUnit('km²')(m2 * 1e-6),
+      },
+      {
         label: 'Square Feet (ft²)',
         value: 'ft2',
         format: (m2: number) => getValueFormat('areaF2')(m2 * 10.76391),
@@ -82,12 +87,12 @@ export const measures: MapMeasure[] = [
       {
         label: 'Acres',
         value: 'acre2',
-        format: (m2: number) => toFixedUnit('acre')(m2 * 0.000247105),
+        format: (m2: number) => toFixedUnit('acre')(m2 * 2.47105e-4),
       },
       {
         label: 'Hectare',
         value: 'hectare2',
-        format: (m2: number) => toFixedUnit('acre')(m2 * 1e-4),
+        format: (m2: number) => toFixedUnit('ha')(m2 * 1e-4),
       },
     ],
     getUnit: (v?: string) => {
