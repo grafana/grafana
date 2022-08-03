@@ -21,6 +21,8 @@ type PublicDashboardStoreImpl struct {
 	dialect  migrator.Dialect
 }
 
+var LogPrefix = "publicdashboards.store"
+
 // Gives us a compile time error if our database does not adhere to contract of
 // the interface
 var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
@@ -29,7 +31,7 @@ var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
 func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 	return &PublicDashboardStoreImpl{
 		sqlStore: sqlStore,
-		log:      log.New("publicdashboards.store"),
+		log:      log.New(LogPrefix),
 		dialect:  sqlStore.Dialect,
 	}
 }

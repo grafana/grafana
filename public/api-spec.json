@@ -12058,6 +12058,7 @@
     },
     "PostAnnotationsCmd": {
       "type": "object",
+      "required": ["text"],
       "properties": {
         "dashboardId": {
           "type": "integer",

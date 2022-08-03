@@ -44,13 +44,13 @@ export interface FeatureToggles {
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
-  exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
+  prometheusStreamingJSONParserTest?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;

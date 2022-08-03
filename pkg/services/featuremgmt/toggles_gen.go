@@ -119,10 +119,6 @@ const (
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
 
-	// FlagExploreMixedDatasource
-	// Enable mixed datasource in Explore
-	FlagExploreMixedDatasource = "exploreMixedDatasource"
-
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
@@ -146,6 +142,10 @@ const (
 	// FlagPrometheusStreamingJSONParser
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagPrometheusStreamingJSONParserTest
+	// Run both old and streaming requests and log differences
+	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
 
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db

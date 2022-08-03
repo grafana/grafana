@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
@@ -42,20 +43,24 @@ var (
 		}
 	})
 	publicRoot, _            = filepath.Abs("../../../public")
-	publicStaticFilesStorage = newDiskStorage(RootStorageConfig{
-		Prefix: "public",
-		Name:   "Public static files",
-		Disk: &StorageLocalDiskConfig{
-			Path: publicRoot,
-			Roots: []string{
-				"/testdata/",
-				"/img/icons/",
-				"/img/bg/",
-				"/gazetteer/",
-				"/maps/",
-				"/upload/",
-			},
-		}}).setReadOnly(true).setBuiltin(true)
+	publicStaticFilesStorage = newDiskStorage(
+		RootStorageMeta{
+			Builtin:  true,
+			ReadOnly: true,
+		}, RootStorageConfig{
+			Prefix: "public",
+			Name:   "Public static files",
+			Disk: &StorageLocalDiskConfig{
+				Path: publicRoot,
+				Roots: []string{
+					"/testdata/",
+					"/img/icons/",
+					"/img/bg/",
+					"/gazetteer/",
+					"/maps/",
+					"/upload/",
+				},
+			}})
 )
 
 func TestListFiles(t *testing.T) {
@@ -96,6 +101,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	storageName := "resources"
 	mockStorage := &filestorage.MockFileStorage{}
 	sqlStorage := newSQLStorage(
+		RootStorageMeta{},
 		storageName, "Testing upload", "dummy descr",
 		&StorageSQLConfig{},
 		sqlstore.InitTestDB(t),
@@ -109,6 +115,10 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
 	}, authService, cfg)
+	store.cfg = &GlobalStorageConfig{
+		AllowUnsanitizedSvgUpload: true,
+	}
+	store.quotaService = quotatest.NewQuotaServiceFake()
 
 	return store, mockStorage, storageName
 }
@@ -176,14 +186,26 @@ func TestShouldDelegateFolderCreation(t *testing.T) {
 
 func TestShouldDelegateFolderDeletion(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
+	cmds := []*DeleteFolderCmd{
+		{
+			Path:  storageName,
+			Force: false,
+		},
+		{
+			Path:  storageName,
+			Force: true,
+		}}
 
-	mockStorage.On("DeleteFolder", mock.Anything, "/", mock.Anything).Return(nil)
+	ctx := context.Background()
 
-	err := service.DeleteFolder(context.Background(), dummyUser, &DeleteFolderCmd{
-		Path:  storageName,
-		Force: true,
-	})
-	require.NoError(t, err)
+	for _, cmd := range cmds {
+		mockStorage.On("DeleteFolder", ctx, "/", &filestorage.DeleteFolderOptions{
+			Force:        cmd.Force,
+			AccessFilter: allowAllPathFilter,
+		}).Once().Return(nil)
+		err := service.DeleteFolder(ctx, dummyUser, cmd)
+		require.NoError(t, err)
+	}
 }
 
 func TestShouldUploadSvg(t *testing.T) {

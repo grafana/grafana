@@ -74,6 +74,7 @@ public/css/*.min.css
 # devenv
 /devenv/docker-compose.yaml
 /devenv/.env
+/devenv/docker/blocks/tempo/tempo-data/
 
 conf/custom.ini
 /conf/provisioning/**/custom.yaml

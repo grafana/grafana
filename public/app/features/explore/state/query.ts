@@ -1,11 +1,11 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { flatten, groupBy } from 'lodash';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
   AbsoluteTimeRange,
+  CoreApp,
   DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
@@ -20,7 +20,7 @@ import {
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -33,7 +33,6 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
 import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
 
@@ -215,10 +214,17 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
-  return async (dispatch, getState) => {
+export function addQueryRow(
+  exploreId: ExploreId,
+  index: number,
+  datasource: DataSourceApi | undefined | null
+): ThunkResult<void> {
+  return (dispatch, getState) => {
     const queries = getState().explore[exploreId]!.queries;
-    const query = await generateEmptyQuery(queries, index);
+    const query = {
+      ...datasource?.getDefaultQuery?.(CoreApp.Explore),
+      ...generateEmptyQuery(queries, index),
+    };
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };
@@ -245,32 +251,6 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
-const addDatasourceToQueries = (datasource: DataSourceApi, queries: DataQuery[]) => {
-  const dataSourceRef = datasource.getRef();
-  return queries.map((query: DataQuery) => {
-    return { ...query, datasource: dataSourceRef };
-  });
-};
-
-const getImportableQueries = async (
-  targetDataSource: DataSourceApi,
-  sourceDataSource: DataSourceApi,
-  queries: DataQuery[]
-): Promise<DataQuery[]> => {
-  let queriesOut: DataQuery[] = [];
-  if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
-    queriesOut = queries;
-  } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
-    const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
-    queriesOut = await targetDataSource.importFromAbstractQueries(abstractQueries);
-  } else if (targetDataSource.importQueries) {
-    // Datasource-specific importers
-    queriesOut = await targetDataSource.importQueries(queries, sourceDataSource);
-  }
-  // add new datasource to queries before returning
-  return addDatasourceToQueries(targetDataSource, queriesOut);
-};
-
 /**
  * Import queries from previous datasource if possible eg Loki and Prometheus have similar query language so the
  * labels part can be reused to get similar data.
@@ -293,27 +273,23 @@ export const importQueries = (
     }
 
     let importedQueries = queries;
-    // If going to mixed, keep queries with source datasource
-    if (targetDataSource.name === MIXED_DATASOURCE_NAME) {
-      importedQueries = queries.map((query) => {
-        return { ...query, datasource: sourceDataSource.getRef() };
-      });
-    }
-    // If going from mixed, see what queries you keep by their individual datasources
-    else if (sourceDataSource.name === MIXED_DATASOURCE_NAME) {
-      const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
-      const groupedImportableQueries = await Promise.all(
-        Object.keys(groupedQueries).map(async (key: string) => {
-          const queryDatasource = await getDataSourceSrv().get({ uid: key });
-          return await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
-        })
-      );
-      importedQueries = flatten(groupedImportableQueries.filter((arr) => arr.length > 0));
+    // Check if queries can be imported from previously selected datasource
+    if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
+      // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
+      importedQueries = queries.map(({ datasource, ...query }) => query);
+    } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
+      const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
+      importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
+    } else if (targetDataSource.importQueries) {
+      // Datasource-specific importers
+      importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);
     } else {
-      importedQueries = await getImportableQueries(targetDataSource, sourceDataSource, queries);
+      // Default is blank queries
+      importedQueries = ensureQueries();
     }
 
-    const nextQueries = await ensureQueries(importedQueries, targetDataSource.getRef());
+    const nextQueries = ensureQueries(importedQueries);
+
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
   };
 };
@@ -663,7 +639,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries),
+      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 
@@ -709,7 +685,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries),
+      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 
@@ -718,7 +694,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: queries.slice(),
-      queryKeys: getQueryKeys(queries),
+      queryKeys: getQueryKeys(queries, state.datasourceInstance),
     };
   }
 
@@ -727,7 +703,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries,
-      queryKeys: getQueryKeys(queries),
+      queryKeys: getQueryKeys(queries, state.datasourceInstance),
     };
   }
 
@@ -784,7 +760,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries,
-      queryKeys: getQueryKeys(queries),
+      queryKeys: getQueryKeys(queries, state.datasourceInstance),
     };
   }
 
