@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { isAlertingRulerRule, isGrafanaRulerRule } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 
@@ -36,6 +37,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
       <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
+          {<EvaluationBehaviorSummary rule={rule} />}
           {!!rule.labels && !!Object.keys(rule.labels).length && (
             <DetailsField label="Labels" horizontal={true}>
               <AlertLabels labels={rule.labels} />
@@ -50,6 +52,38 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
       </div>
       <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
     </div>
+  );
+};
+
+interface EvaluationBehaviorSummaryProps {
+  rule: CombinedRule;
+}
+
+const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
+  let forDuration: string | undefined;
+  let every: string | undefined;
+
+  if (isGrafanaRulerRule(rule.rulerRule)) {
+    forDuration = rule.rulerRule.for;
+    every = rule.group.interval;
+  } else if (isAlertingRulerRule(rule.rulerRule) && rule.rulerRule.for) {
+    forDuration = rule.rulerRule.for;
+    every = rule.group.interval;
+  }
+
+  return (
+    <>
+      {every && (
+        <DetailsField label="Evaluate" horizontal={true}>
+          Every {every}
+        </DetailsField>
+      )}
+      {forDuration && (
+        <DetailsField label="For" horizontal={true}>
+          {forDuration}
+        </DetailsField>
+      )}
+    </>
   );
 };
 
