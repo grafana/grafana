@@ -61,7 +61,23 @@ def lint_docs():
     }
 
 
-def trigger_docs():
+def trigger_docs_main():
+    return {
+        'branch': 'main',
+        'event': [
+            'push',
+        ],
+        'paths': {
+            'include': [
+                '*.md',
+                'docs/**',
+                'packages/**',
+                'latest.json',
+            ],
+        },
+    }
+
+def trigger_docs_pr():
     return {
         'event': [
             'pull_request',
