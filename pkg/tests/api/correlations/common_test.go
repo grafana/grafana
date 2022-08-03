@@ -43,6 +43,20 @@ type User struct {
 	password string
 }
 
+type GetParams struct {
+	url  string
+	user User
+}
+
+func (c TestContext) Get(params GetParams) *http.Response {
+	c.t.Helper()
+
+	resp, err := http.Get(c.getURL(params.url, params.user))
+	require.NoError(c.t, err)
+
+	return resp
+}
+
 type PostParams struct {
 	url  string
 	body string
