@@ -506,6 +506,9 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
+    // TODO: Optimize for panels without query runner
+    if ()
+
     const alertState = data.alertState?.state;
 
     const containerClassNames = classNames({
