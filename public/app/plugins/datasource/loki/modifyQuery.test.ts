@@ -248,11 +248,29 @@ describe('removeCommentsFromQuery', () => {
       removeCommentsFromQuery('{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello')
     ).toBe('{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl ');
   });
+
+  it('returns original query if no comments in log queries', () => {
+    expect(removeCommentsFromQuery('{job="grafana"}')).toBe('{job="grafana"}');
+    expect(removeCommentsFromQuery('{job="grafana"} | logfmt')).toBe('{job="grafana"} | logfmt');
+    expect(removeCommentsFromQuery('{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl')).toBe(
+      '{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl'
+    );
+  });
+
   it('strips comments in metrics queries', () => {
     expect(removeCommentsFromQuery('count_over_time({job="grafana"}[10m])#hello')).toBe(
       'count_over_time({job="grafana"}[10m])'
     );
     expect(removeCommentsFromQuery('count_over_time({job="grafana"} | logfmt[10m])#hello')).toBe(
+      'count_over_time({job="grafana"} | logfmt[10m])'
+    );
+  });
+
+  it('returns original query if no comments in metrics query', () => {
+    expect(removeCommentsFromQuery('count_over_time({job="grafana"}[10m])')).toBe(
+      'count_over_time({job="grafana"}[10m])'
+    );
+    expect(removeCommentsFromQuery('count_over_time({job="grafana"} | logfmt[10m])')).toBe(
       'count_over_time({job="grafana"} | logfmt[10m])'
     );
   });

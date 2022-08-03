@@ -98,6 +98,11 @@ export function addLabelFormatToQuery(query: string, labelFormat: { originalLabe
  */
 export function removeCommentsFromQuery(query: string): string {
   const lineCommentPositions = getLineCommentPositions(query);
+
+  if (!lineCommentPositions.length) {
+    return query;
+  }
+
   let newQuery = '';
   let prev = 0;
 
