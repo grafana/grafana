@@ -40,9 +40,7 @@ Panel: thema.#Lineage & {
             displayLabels: [...PieChartLabels]
             legend: PieChartLegendOptions
 					} @cuetsy(kind="interface")
-					PanelFieldConfig: {
-						// ui.HideableFieldConfig
-					} @cuetsy(kind="interface")
+					PanelFieldConfig: ui.HideableFieldConfig @cuetsy(kind="interface")
 				},
 			]
 		},
