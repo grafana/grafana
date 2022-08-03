@@ -47,6 +47,7 @@ export class ElementState implements LayerElement {
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
     options.background = options.background ?? { color: { fixed: 'transparent' } };
+    options.border = options.border ?? { color: { fixed: 'dark-green' } };
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -331,6 +332,7 @@ export class ElementState implements LayerElement {
       }
     }
 
+    console.log(border);
     if (border && border.color && border.width) {
       const color = ctx.getColor(border.color);
       css.borderWidth = `${border.width}px`;
