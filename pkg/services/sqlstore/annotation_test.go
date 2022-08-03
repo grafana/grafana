@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -47,7 +49,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboardStore := dashboardstore.ProvideDashboardStore(sql)
+		dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 
 		testDashboard1 := models.SaveDashboardCommand{
 			UserId: 1,
@@ -388,7 +390,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
-	dashboardStore := dashboardstore.ProvideDashboardStore(sql)
+	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 
 	testDashboard1 := models.SaveDashboardCommand{
 		UserId: 1,
