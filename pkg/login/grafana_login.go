@@ -5,7 +5,7 @@ import (
 	"crypto/subtle"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -21,23 +21,21 @@ var validatePassword = func(providedPassword string, userPassword string, userSa
 	return nil
 }
 
-var loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, store sqlstore.Store) error {
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.Username}
+var loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, userService user.Service) (*user.User, error) {
+	userQuery := user.GetUserByLoginQuery{LoginOrEmail: query.Username}
 
-	if err := store.GetUserByLogin(ctx, &userQuery); err != nil {
-		return err
+	user, err := userService.GetByLogin(ctx, &userQuery)
+	if err != nil {
+		return nil, err
 	}
 
-	user := userQuery.Result
-
 	if user.IsDisabled {
-		return ErrUserDisabled
+		return nil, ErrUserDisabled
 	}
 
 	if err := validatePassword(query.Password, user.Password, user.Salt); err != nil {
-		return err
+		return nil, err
 	}
 
-	query.User = user
-	return nil
+	return user, nil
 }
