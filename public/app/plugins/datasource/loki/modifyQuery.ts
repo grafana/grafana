@@ -1,6 +1,6 @@
 import { sortBy } from 'lodash';
 
-import { parser } from '@grafana/lezer-logql';
+import { LineComment, parser } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
@@ -88,6 +88,28 @@ export function addNoPipelineErrorToQuery(query: string): string {
 export function addLabelFormatToQuery(query: string, labelFormat: { originalLabel: string; renameTo: string }): string {
   const logQueryPositions = getLogQueryPositions(query);
   return addLabelFormat(query, logQueryPositions, labelFormat);
+}
+
+/**
+ * Removes all comments from query.
+ * It uses  LogQL parser to find all LineComments and removes them.
+ *
+ * @param query
+ */
+export function removeCommentsFromQuery(query: string): string {
+  const lineCommentPositions = getLineCommentPositions(query);
+  let newQuery = '';
+  let prev = 0;
+
+  for (let i = 0; i < lineCommentPositions.length; i++) {
+    const match = lineCommentPositions[i];
+    const beforeComment = query.substring(prev, match.from);
+    const afterComment = query.substring(match.to);
+
+    newQuery += beforeComment + afterComment;
+    prev = match.to;
+  }
+  return newQuery;
 }
 
 /**
@@ -329,6 +351,20 @@ function addLabelFormat(
     prev = match.to;
   }
   return newQuery;
+}
+
+function getLineCommentPositions(query: string): Position[] {
+  const tree = parser.parse(query);
+  const positions: Position[] = [];
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.id === LineComment) {
+        positions.push({ from, to });
+        return false;
+      }
+    },
+  });
+  return positions;
 }
 
 /**

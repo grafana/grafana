@@ -1,4 +1,10 @@
-import { addLabelFormatToQuery, addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
+import {
+  addLabelFormatToQuery,
+  addLabelToQuery,
+  addNoPipelineErrorToQuery,
+  addParserToQuery,
+  removeCommentsFromQuery,
+} from './modifyQuery';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {
@@ -230,6 +236,24 @@ describe('addLabelFormatToQuery', () => {
       )
     ).toBe(
       'rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m]) + rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m])'
+    );
+  });
+});
+
+describe('removeCommentsFromQuery', () => {
+  it('strips comments in log queries', () => {
+    expect(removeCommentsFromQuery('{job="grafana"}#hello')).toBe('{job="grafana"}');
+    expect(removeCommentsFromQuery('{job="grafana"} | logfmt #hello')).toBe('{job="grafana"} | logfmt ');
+    expect(
+      removeCommentsFromQuery('{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello')
+    ).toBe('{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl ');
+  });
+  it('strips comments in metrics queries', () => {
+    expect(removeCommentsFromQuery('count_over_time({job="grafana"}[10m])#hello')).toBe(
+      'count_over_time({job="grafana"}[10m])'
+    );
+    expect(removeCommentsFromQuery('count_over_time({job="grafana"} | logfmt[10m])#hello')).toBe(
+      'count_over_time({job="grafana"} | logfmt[10m])'
     );
   });
 });
