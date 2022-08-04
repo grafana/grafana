@@ -42,10 +42,10 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, orgName: 'TestOrg' },
   },
 }));
-const mockQueriesOnInitDashboard = jest.fn();
-const mockGetDS = jest.fn().mockImplementation((uid: string): Promise<{ trackQueries?: Function }> => {
+const mockOnTrackQuery = jest.fn();
+const mockGetDS = jest.fn().mockImplementation((uid: string): Promise<{ onTrackQuery?: Function }> => {
   if (uid === 'DSwithQueriesOnInitDashboard') {
-    return Promise.resolve({ trackQueries: mockQueriesOnInitDashboard });
+    return Promise.resolve({ onTrackQuery: mockOnTrackQuery });
   } else {
     return Promise.resolve({});
   }
@@ -328,9 +328,9 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   it('should log dashboard_loaded event', () => {
     expect(mockGetDS).toBeCalledTimes(3);
-    expect(mockQueriesOnInitDashboard).toBeCalledTimes(1);
-    expect(mockQueriesOnInitDashboard).toHaveBeenCalledWith(
-      [
+    expect(mockOnTrackQuery).toBeCalledTimes(1);
+    expect(mockOnTrackQuery).toHaveBeenCalledWith({
+      queries: [
         {
           datasource: {
             name: 'azMonitor',
@@ -351,11 +351,11 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
           refId: 'B',
         },
       ],
-      'DGmvKKxZz',
-      12,
-      34,
-      '1.0'
-    );
+      dashboardId: 'DGmvKKxZz',
+      orgId: 12,
+      userId: 34,
+      grafanaVersion: '1.0',
+    });
   });
 
   it('Should send action dashboardInitFetching', () => {

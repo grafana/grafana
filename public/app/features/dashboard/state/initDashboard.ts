@@ -107,32 +107,32 @@ async function fetchDashboard(
   }
 }
 
-const trackQueriesOnInitDashboard = (
+const trackQueriesForPanels = (
   panels: PanelModel[],
   dashboardId: string,
   orgId?: number,
   userId?: number,
   grafanaVersion?: string
 ): void => {
-  const queries = getQueriesFromDashboardPerDS(panels);
+  const queries = getQueriesForPanelsPerDS(panels);
   const datasourceSrv = getDataSourceSrv();
 
   Object.keys(queries).forEach((datasourceId) => {
     datasourceSrv.get(datasourceId).then((ds) => {
-      if (ds.trackQueries) {
-        ds.trackQueries(queries[datasourceId], dashboardId, orgId, userId, grafanaVersion);
+      if (ds.onTrackQuery) {
+        ds.onTrackQuery({ queries: queries[datasourceId], dashboardId, orgId, userId, grafanaVersion });
       }
     });
   });
 };
 
-const getQueriesFromDashboardPerDS = (
+const getQueriesForPanelsPerDS = (
   panels: PanelModel[],
   queries: { [datasourceId: string]: DataQuery[] } = {}
 ): { [datasourceId: string]: DataQuery[] } => {
   panels.forEach((panel) => {
     if (panel.panels) {
-      getQueriesFromDashboardPerDS(panel.panels, queries);
+      getQueriesForPanelsPerDS(panel.panels, queries);
     } else {
       panel.targets.forEach((target) => {
         if (target.datasource?.uid) {
@@ -256,7 +256,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // call trackQueries from data sources
-    trackQueriesOnInitDashboard(
+    trackQueriesForPanels(
       dashboard.panels,
       dashboard.uid,
       storeState.user.orgId,

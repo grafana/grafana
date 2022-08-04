@@ -215,7 +215,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     userId?: number,
     grafanaVersion?: string
   ) {
-    reportInteraction('grafana_azuremonitor_dashboard_loaded', {
+    reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', {
       grafana_version: grafanaVersion,
       dashboard_id: dashboardId,
       org_id: orgId,

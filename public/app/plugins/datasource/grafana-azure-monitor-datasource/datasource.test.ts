@@ -46,7 +46,7 @@ describe('Azure Monitor Datasource', () => {
   });
 
   describe('queriesOnInitDashboard', () => {
-    it('should report a `grafana_azuremonitor_dashboard_loaded` interaction ', () => {
+    it('should report a `grafana_ds_azuremonitor_dashboard_loaded` interaction ', () => {
       const ds = new Datasource(createMockInstanceSetttings());
       const queries = [
         createMockQuery({ queryType: AzureQueryType.AzureMonitor, hide: true }),
@@ -56,7 +56,7 @@ describe('Azure Monitor Datasource', () => {
       ds.trackQueries(queries, 'dashboard123', 1, 2, 'v9.0.0');
 
       expect(reportInteraction).toBeCalledTimes(1);
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_azuremonitor_dashboard_loaded', {
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_ds_azuremonitor_dashboard_loaded', {
         dashboard_id: 'dashboard123',
         grafana_version: 'v9.0.0',
         org_id: 1,

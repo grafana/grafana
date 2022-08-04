@@ -357,13 +357,13 @@ abstract class DataSourceApi<
    * Only executed once, during the dashboard initialization.
    * @alpha -- experimental
    */
-  trackQueries?(
-    queries: TQuery[],
-    dashboardId?: string,
-    orgId?: number,
-    userId?: number,
-    grafanaVersion?: string
-  ): void;
+  onTrackQuery?(options: {
+    queries: TQuery[];
+    dashboardId?: string;
+    orgId?: number;
+    userId?: number;
+    grafanaVersion?: string;
+  }): void;
 }
 
 export interface MetadataInspectorProps<
