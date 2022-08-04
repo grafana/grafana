@@ -41,7 +41,7 @@ export interface HistogramProps extends Themeable2 {
   height: number;
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
-  series?: DataFrame[];
+  rawSeries?: DataFrame[];
   children?: (builder: UPlotConfigBuilder, frame: DataFrame) => React.ReactNode;
 }
 
@@ -211,7 +211,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: {
         fieldIndex: 1,
-        frameIndex: 0,
+        frameIndex: i - 2,
       },
     });
   }
@@ -272,11 +272,11 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
-    if (!config || legend.showLegend === false || !this.props.series) {
+    if (!config || legend.showLegend === false || !this.props.rawSeries) {
       return null;
     }
 
-    return <PlotLegend data={this.props.series} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    return <PlotLegend data={this.props.rawSeries} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
