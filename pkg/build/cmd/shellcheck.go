@@ -31,6 +31,7 @@ func Shellcheck(c *cli.Context) error {
 
 	log.Printf("Running shellcheck on %s", strings.Join(fpaths, ","))
 	args := append([]string{"-e", "SC1071", "-e", "SC2162"}, fpaths...)
+	//nolint:gosec
 	cmd := exec.Command("shellcheck", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("shellcheck failed: %s", output)
