@@ -3,6 +3,7 @@ package playlistimpl
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -19,12 +20,15 @@ type sqlxStore struct {
 func (s *sqlxStore) WithTransaction(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error {
 	// In the same transaction is quaranteed in the same session
 	tx, err := db.Beginx()
-	// Here when I try to set the session sql_mode, other integration test is failed
-	// if s.dialect.DriverName() == "mysql" {
-	// 	tx.ExecContext(ctx, "SET SESSION sql_mode = 'ANSI_QUOTES'")
-	// }
 	if err != nil {
 		return err
+	}
+	// Here when I try to set the session sql_mode, other integration test is failed
+	if s.dialect.DriverName() == "mysql" {
+		_, err = tx.ExecContext(ctx, "SET SESSION sql_mode = 'ANSI_QUOTES'")
+		if err != nil {
+			return err
+		}
 	}
 	err = fn(tx)
 	if err != nil {
@@ -73,6 +77,9 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 			OrgId:    cmd.OrgId,
 			UID:      uid,
 		}
+
+		// Here we don't have much choise but have this helper function, since get would not work it is in the transaction. and we need
+		// playlist id to insert into playlist item table
 		err = s.insertWithReturningId(ctx, tx, &p)
 		if err != nil {
 			return err
@@ -119,7 +126,7 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 	}
 
 	err = s.WithTransaction(ctx, s.sqlxdb, func(tx *sqlx.Tx) error {
-		query := fmt.Sprintf("UPDATE playlist SET uid=:uid, org_id=:org_id, name=:name, %s=:interval WHERE id=:id", s.dialect.Quote("interval"))
+		query := "UPDATE playlist SET uid=:uid, org_id=:org_id, name=:name, \"interval\"=:interval WHERE id=:id"
 		_, err = tx.NamedExecContext(ctx, query, p)
 		if err != nil {
 			return err
@@ -140,7 +147,7 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 				Title:      item.Title,
 			})
 		}
-		query = fmt.Sprintf("INSERT INTO playlist_item (playlist_id, type, value, title, %s) VALUES (:playlist_id, :type, :value, :title, :order)", s.dialect.Quote("order"))
+		query = "INSERT INTO playlist_item (playlist_id, type, value, title, \"order\") VALUES (:playlist_id, :type, :value, :title, :order)"
 		_, err = tx.NamedExecContext(ctx, query, playlistItems)
 		return err
 	})
@@ -156,7 +163,7 @@ func (s *sqlxStore) Get(ctx context.Context, query *playlist.GetPlaylistByUidQue
 	p := playlist.Playlist{}
 	err := s.sqlxdb.GetContext(ctx, &p, s.sqlxdb.Rebind("SELECT * FROM playlist WHERE uid=? AND org_id=?"), query.UID, query.OrgId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, playlist.ErrPlaylistNotFound
 		}
 		return nil, err
@@ -171,7 +178,7 @@ func (s *sqlxStore) Delete(ctx context.Context, cmd *playlist.DeletePlaylistComm
 
 	p := playlist.Playlist{}
 	if err := s.sqlxdb.GetContext(ctx, &p, s.sqlxdb.Rebind("SELECT * FROM playlist WHERE uid=? AND org_id=?"), cmd.UID, cmd.OrgId); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil
 		}
 		return err
@@ -230,7 +237,7 @@ func newGenerateAndValidateNewPlaylistUid(ctx context.Context, db *sqlx.DB, orgI
 		p := playlist.Playlist{}
 		err := db.GetContext(ctx, &p, db.Rebind("SELECT * FROM playlist WHERE uid=? AND org_id=?"), uid, orgId)
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				return uid, nil
 			}
 			return "", err

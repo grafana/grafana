@@ -13,7 +13,7 @@ var (
 
 // Playlist model
 type Playlist struct {
-	Id       int64  `json:"id" db:"id"`
+	Id       int64  `json:"id,omitempty" db:"id"`
 	UID      string `json:"uid" xorm:"uid" db:"uid"`
 	Name     string `json:"name" db:"name"`
 	Interval string `json:"interval" db:"interval"`

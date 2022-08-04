@@ -71,9 +71,12 @@ func TestIntegrationSQLxPlaylistDataAccess(t *testing.T) {
 		pl1 := playlist.CreatePlaylistCommand{Name: "NYC office", Interval: "10m", OrgId: 1, Items: items}
 		pl2 := playlist.CreatePlaylistCommand{Name: "NICE office", Interval: "10m", OrgId: 1, Items: items}
 		pl3 := playlist.CreatePlaylistCommand{Name: "NICE office", Interval: "10m", OrgId: 2, Items: items}
-		playlistStore.Insert(context.Background(), &pl1)
-		playlistStore.Insert(context.Background(), &pl2)
-		playlistStore.Insert(context.Background(), &pl3)
+		_, err := playlistStore.Insert(context.Background(), &pl1)
+		require.NoError(t, err)
+		_, err = playlistStore.Insert(context.Background(), &pl2)
+		require.NoError(t, err)
+		_, err = playlistStore.Insert(context.Background(), &pl3)
+		require.NoError(t, err)
 		t.Run("With Org ID", func(t *testing.T) {
 			qr := playlist.GetPlaylistsQuery{Limit: 100, OrgId: 1}
 			res, err := playlistStore.List(context.Background(), &qr)
