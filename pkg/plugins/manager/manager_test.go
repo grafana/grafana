@@ -174,18 +174,18 @@ func TestPluginManager_Installer(t *testing.T) {
 		}
 		fsm := &fakeFsManager{}
 
-		repo := &fakePluginRepo{}
+		repository := &fakePluginRepo{}
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.cfg.PluginsPath = testDir
 			pm.pluginLoader = l
 			pm.pluginStorage = fsm
-			pm.pluginRepo = repo
+			pm.pluginRepo = repository
 		})
 
 		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, repo.downloadCount)
+		assert.Equal(t, 1, repository.downloadCount)
 
 		verifyNoPluginErrors(t, pm)
 
@@ -193,7 +193,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Equal(t, p.ID, pm.Routes()[0].PluginID)
 		assert.Equal(t, p.PluginDir, pm.Routes()[0].Directory)
 
-		assert.Equal(t, 1, repo.downloadCount)
+		assert.Equal(t, 1, repository.downloadCount)
 		assert.Equal(t, 0, fsm.removed)
 		assert.Equal(t, 1, fsm.added)
 
@@ -226,17 +226,17 @@ func TestPluginManager_Installer(t *testing.T) {
 			}
 			pm.pluginLoader = l
 
-			repo.downloadOptionsHandler = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+			repository.downloadOptionsHandler = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
 				return &repo.PluginDownloadOptions{
 					Version: "1.2.0",
 				}, nil
 			}
-			//pm.pluginRepo = repo
+			//pm.pluginRepo = repository
 
 			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.CompatOpts{})
 			assert.NoError(t, err)
 
-			assert.Equal(t, 2, repo.downloadCount)
+			assert.Equal(t, 2, repository.downloadCount)
 			assert.Equal(t, 1, fsm.removed)
 			assert.Equal(t, 2, fsm.added)
 			assert.Equal(t, 1, pc.startCount)
@@ -254,7 +254,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			err := pm.Remove(context.Background(), p.ID)
 			require.NoError(t, err)
 
-			assert.Equal(t, 2, repo.downloadCount)
+			assert.Equal(t, 2, repository.downloadCount)
 
 			p, exists := pm.Plugin(context.Background(), p.ID)
 			assert.False(t, exists)
