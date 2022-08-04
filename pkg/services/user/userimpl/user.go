@@ -34,7 +34,7 @@ type Service struct {
 	quotaService       quota.Service
 	accessControlStore accesscontrol.AccessControl
 	// TODO remove sqlstore
-	sqlStore sqlstore.Store
+	sqlStore *sqlstore.SQLStore
 
 	cfg *setting.Cfg
 }
@@ -50,7 +50,7 @@ func ProvideService(
 	quotaService quota.Service,
 	accessControlStore accesscontrol.AccessControl,
 	cfg *setting.Cfg,
-	ss sqlstore.Store,
+	ss *sqlstore.SQLStore,
 ) user.Service {
 	return &Service{
 		store: &sqlStore{
