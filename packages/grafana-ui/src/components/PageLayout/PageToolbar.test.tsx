@@ -5,17 +5,9 @@ import { PageToolbar } from '..';
 
 describe('PageToolbar', () => {
   it('renders left items when title is not set', () => {
-    const testId = 'left-item';
-    render(
-      <PageToolbar
-        leftItems={[
-          <div key="left-item" data-testid={testId}>
-            Left Item!
-          </div>,
-        ]}
-      />
-    );
+    const leftItemContent = 'Left Item!';
+    render(<PageToolbar leftItems={[<div key="left-item">{leftItemContent}</div>]} />);
 
-    expect(screen.getByTestId(testId)).toBeInTheDocument();
+    expect(screen.getByText(leftItemContent)).toBeInTheDocument();
   });
 });
