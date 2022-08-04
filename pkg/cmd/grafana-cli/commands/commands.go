@@ -151,7 +151,7 @@ var adminCommands = []*cli.Command{
 	{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
-		Action: runDbCommand(resetPasswordCommand),
+		Action: runRunnerCommand(resetPasswordCommand),
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "password-from-stdin",

@@ -1,6 +1,6 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
-import { LoadingState } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 
 import { DashboardState, StoreState } from '../../../types';
@@ -15,6 +15,7 @@ import {
   VariableModel,
 } from '../types';
 
+import { createQueryVariable } from './__tests__/fixtures';
 import { keyedVariablesReducer, KeyedVariablesState } from './keyedVariablesReducer';
 import { getInitialTemplatingState, TemplatingState } from './reducers';
 import { VariablesState } from './types';
@@ -24,8 +25,8 @@ export const getVariableState = (
   inEditorIndex = -1,
   includeEmpty = false,
   includeSystem = false
-): Record<string, VariableModel> => {
-  const variables: Record<string, VariableModel> = {};
+): VariablesState => {
+  const variables: Record<string, TypedVariableModel> = {};
 
   if (includeSystem) {
     const dashboardModel: DashboardVariableModel = {
@@ -86,43 +87,27 @@ export const getVariableState = (
   }
 
   for (let index = 0; index < noOfVariables; index++) {
-    variables[index] = {
+    variables[index] = createQueryVariable({
       id: index.toString(),
-      rootStateKey: 'key',
-      type: 'query',
       name: `Name-${index}`,
-      hide: VariableHide.dontHide,
-      index,
       label: `Label-${index}`,
-      skipUrlSync: false,
-      global: false,
-      state: LoadingState.NotStarted,
-      error: null,
-      description: null,
-    };
+      index,
+    });
   }
 
   if (includeEmpty) {
-    variables[NEW_VARIABLE_ID] = {
+    variables[NEW_VARIABLE_ID] = createQueryVariable({
       id: NEW_VARIABLE_ID,
-      rootStateKey: 'key',
-      type: 'query',
       name: `Name-${NEW_VARIABLE_ID}`,
-      hide: VariableHide.dontHide,
-      index: noOfVariables,
       label: `Label-${NEW_VARIABLE_ID}`,
-      skipUrlSync: false,
-      global: false,
-      state: LoadingState.NotStarted,
-      error: null,
-      description: null,
-    };
+      index: noOfVariables,
+    });
   }
 
   return variables;
 };
 
-export const getVariableTestContext = <Model extends VariableModel>(
+export const getVariableTestContext = <Model extends TypedVariableModel>(
   adapter: VariableAdapter<Model>,
   variableOverrides: Partial<Model> = {}
 ) => {
@@ -132,6 +117,7 @@ export const getVariableTestContext = <Model extends VariableModel>(
     index: 0,
     name: '0',
   };
+
   const defaultVariable = {
     ...adapter.initialState,
     ...defaults,

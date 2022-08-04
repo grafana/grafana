@@ -305,7 +305,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	hideApiKeys, _, _ := hs.kvStore.Get(c.Req.Context(), c.OrgId, "serviceaccounts", "hideApiKeys")
-	apiKeys := hs.SQLStore.GetAllAPIKeys(c.Req.Context(), c.OrgId)
+	apiKeys := hs.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgId)
 	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
 	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && !apiKeysHidden {
 		configNodes = append(configNodes, &dtos.NavLink{
@@ -645,14 +645,6 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 		Icon:        "bolt",
 		Description: "Manage your cloud integrations",
 		Url:         baseUrl + "/cloud-integrations",
-	})
-
-	children = append(children, &dtos.NavLink{
-		Id:          baseId + "-recorded-queries",
-		Text:        "Recorded queries",
-		Icon:        "record-audio",
-		Description: "Manage your recorded queries",
-		Url:         baseUrl + "/recorded-queries",
 	})
 
 	navLink = &dtos.NavLink{

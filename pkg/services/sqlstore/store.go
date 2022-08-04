@@ -2,12 +2,15 @@ package sqlstore
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+var timeNow = time.Now
 
 type Store interface {
 	GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error
@@ -84,13 +87,6 @@ type Store interface {
 	SearchPlaylists(ctx context.Context, query *models.GetPlaylistsQuery) error
 	// deprecated
 	GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error
-	GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error
-	GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error
-	HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error
-	SetAlertState(ctx context.Context, cmd *models.SetAlertStateCommand) error
-	PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error
-	PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error
-	GetAlertStatesForDashboard(ctx context.Context, query *models.GetAlertStatesForDashboardQuery) error
 	AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error
 	UpdateOrgUser(ctx context.Context, cmd *models.UpdateOrgUserCommand) error
 	GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error
@@ -107,27 +103,6 @@ type Store interface {
 	Sync() error
 	Reset() error
 	Quote(value string) string
-	DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error
-	DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error
-	GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error
-	GetAlertNotificationUidWithId(ctx context.Context, query *models.GetAlertNotificationUidQuery) error
-	GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error
-	GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error
-	GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
-	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error
-	UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error
-	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error
-	SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error
-	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
-	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
-	GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error
-	GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey
-	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
-	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
-	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
-	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
-	GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error)
-	UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error
 	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
 	CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error
 	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error
