@@ -187,6 +187,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
 		r.Get("/swagger-ui", swaggerUI)
+		r.Get("/openapi3", openapi3)
 	}
 
 	// authed api
