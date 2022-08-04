@@ -208,13 +208,14 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 
-  trackQueries(
-    queries: AzureMonitorQuery[],
-    dashboardId?: string,
-    orgId?: number,
-    userId?: number,
-    grafanaVersion?: string
-  ) {
+  onTrackQuery(options: {
+    queries: AzureMonitorQuery[];
+    dashboardId?: string;
+    orgId?: number;
+    userId?: number;
+    grafanaVersion?: string;
+  }) {
+    const { queries, dashboardId, orgId, userId, grafanaVersion } = options;
     reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', {
       grafana_version: grafanaVersion,
       dashboard_id: dashboardId,
