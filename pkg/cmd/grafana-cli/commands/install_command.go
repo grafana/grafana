@@ -80,7 +80,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 	}
 
 	for _, dep := range extractedArchive.Dependencies {
-		services.Logger.Info("Fetching %s dependency...", dep.ID)
+		services.Logger.Infof("Fetching %s dependency...", dep.ID)
 		d, err := repository.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
 		if err != nil {
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
