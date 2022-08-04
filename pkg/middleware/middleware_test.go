@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -151,7 +152,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		sc.apiKeyService.ExpectedAPIKey = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -164,7 +165,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"
-		sc.apiKeyService.ExpectedAPIKey = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -179,7 +180,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 
 		expires := sc.contextHandler.GetTime().Add(-1 * time.Second).Unix()
-		sc.apiKeyService.ExpectedAPIKey = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash, Expires: &expires}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash, Expires: &expires}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 

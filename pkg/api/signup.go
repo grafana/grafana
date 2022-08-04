@@ -34,8 +34,9 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 		return response.Error(401, "User signup is disabled", nil)
 	}
 
-	existing := models.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &existing); err == nil {
+	existing := user.GetUserByLoginQuery{LoginOrEmail: form.Email}
+	_, err := hs.userService.GetByLogin(c.Req.Context(), &existing)
+	if err == nil {
 		return response.Error(422, "User with same email address already exists", nil)
 	}
 
@@ -44,7 +45,6 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	cmd.Email = form.Email
 	cmd.Status = models.TmpUserSignUpStarted
 	cmd.InvitedByUserId = c.UserId
-	var err error
 	cmd.Code, err = util.GetRandomString(20)
 	if err != nil {
 		return response.Error(500, "Failed to generate random string", err)

@@ -26,3 +26,15 @@ func (f *FakeUserService) Delete(ctx context.Context, cmd *user.DeleteUserComman
 func (f *FakeUserService) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
+
+func (f *FakeUserService) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserService) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserService) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	return f.ExpectedError
+}

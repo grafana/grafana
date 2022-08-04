@@ -189,7 +189,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	return true
 }
 
-func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string) (*models.ApiKey, error) {
+func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string) (*apikey.APIKey, error) {
 	// prefixed decode key
 	decoded, err := apikeygenprefix.Decode(keyString)
 	if err != nil {
@@ -204,14 +204,14 @@ func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string
 	return h.apiKeyService.GetAPIKeyByHash(ctx, hash)
 }
 
-func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*models.ApiKey, error) {
+func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apikey.APIKey, error) {
 	decoded, err := apikeygen.Decode(keyString)
 	if err != nil {
 		return nil, err
 	}
 
 	// fetch key
-	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
 	if err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	defer span.End()
 
 	var (
-		apikey *models.ApiKey
+		apikey *apikey.APIKey
 		errKey error
 	)
 	if strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {

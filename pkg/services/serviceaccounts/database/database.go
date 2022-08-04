@@ -438,7 +438,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *models.ApiKey) error {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
 		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgId, key.Name),
@@ -467,7 +467,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 
 // RevertApiKey converts service account token to old API key
 func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
-	query := models.GetApiKeyByIdQuery{ApiKeyId: keyId}
+	query := apikey.GetByIDQuery{ApiKeyId: keyId}
 	if err := s.apiKeyService.GetApiKeyById(ctx, &query); err != nil {
 		return err
 	}

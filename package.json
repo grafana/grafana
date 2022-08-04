@@ -53,7 +53,7 @@
     "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check",
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
-    "postinstall": "husky install",
+    "postinstall": "husky install && node ./scripts/copy-unicons.js",
     "betterer": "betterer",
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
