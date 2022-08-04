@@ -10,9 +10,11 @@ import { GrafanaApp } from './app';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { I18nProvider } from './core/internationalization';
 import { ThemeProvider } from './core/utils/ConfigProvider';
+import PublicDashboardPage, { Props } from './features/dashboard/containers/PublicDashboardPage';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import fn_app from './fn_app';
-fn_app.init();
+import fn_dashboard_app from './fn_dashboard_app';
+import { DashboardRoutes } from './types';
+fn_dashboard_app.init();
 
 interface DefaultProps {}
 
@@ -33,13 +35,40 @@ export class FNDashboard extends React.Component<DefaultProps> {
   constructor(props: DefaultProps) {
     super(props);
     this.state = {};
-    this.app = fn_app;
+    this.app = fn_dashboard_app;
   }
 
   async componentDidMount() {
     await loadAndInitAngularIfEnabled();
     this.setState({ ready: true });
     $('.preloader').remove();
+  }
+
+  // accessToken: 'c6cf7faf01cc434f9d13af3a9f9e1664',
+
+  renderFNDashboard() {
+    const props: Props = {
+      match: {
+        params: {
+          accessToken: 'c6cf7faf01cc434f9d13af3a9f9e1664',
+        },
+        isExact: true,
+        path: 'public-dashboard/:accessToken',
+        url: 'http://localhost:3000/public-dashboard/c6cf7faf01cc434f9d13af3a9f9e1664',
+      },
+      // eslint-disable-next-line
+      history: {} as any,
+      // eslint-disable-next-line
+      location: {} as any,
+      queryParams: {},
+      route: {
+        routeName: DashboardRoutes.Public,
+        path: '/public-dashboard/:accessToken',
+        pageClass: 'page-dashboard',
+        component: PublicDashboardPage,
+      },
+    };
+    return <PublicDashboardPage {...props} />;
   }
 
   render() {
@@ -53,6 +82,7 @@ export class FNDashboard extends React.Component<DefaultProps> {
               <ThemeProvider value={config.theme2}>
                 <ModalsProvider>
                   <GlobalStyles />
+                  {this.renderFNDashboard()}
                   <LiveConnectionWarning />
                   <ModalRoot />
                   <PortalContainer />

@@ -84,6 +84,10 @@ export class BackendSrv implements BackendService {
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
+    // prefix "/grafana" to options.url
+    if (options.url.indexOf('/grafana') !== 0) {
+      options.url = '/grafana' + options.url;
+    }
     return await lastValueFrom(this.fetch<T>(options).pipe(map((response: FetchResponse<T>) => response.data)));
   }
 

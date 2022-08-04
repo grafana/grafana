@@ -108,7 +108,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.initDashboard();
-    this.forceRouteReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter || 0;
+    const { isPublic } = this.props;
+    if (!isPublic) {
+      this.forceRouteReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter || 0;
+    }
   }
 
   componentWillUnmount() {
@@ -143,22 +146,25 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { dashboard, match, templateVarsChangedInUrl } = this.props;
-    const routeReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter;
-
+    const { dashboard, match, templateVarsChangedInUrl, isPublic } = this.props;
     if (!dashboard) {
       return;
     }
 
-    this.updatePageNav(dashboard);
+    if (!isPublic) {
+      this.updatePageNav(dashboard);
+    }
 
-    if (
-      prevProps.match.params.uid !== match.params.uid ||
-      (routeReloadCounter !== undefined && this.forceRouteReloadCounter !== routeReloadCounter)
-    ) {
-      this.initDashboard();
-      this.forceRouteReloadCounter = routeReloadCounter;
-      return;
+    if (!isPublic) {
+      const routeReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter;
+      if (
+        prevProps.match.params.uid !== match.params.uid ||
+        (routeReloadCounter !== undefined && this.forceRouteReloadCounter !== routeReloadCounter)
+      ) {
+        this.initDashboard();
+        this.forceRouteReloadCounter = routeReloadCounter;
+        return;
+      }
     }
 
     if (prevProps.location.search !== this.props.location.search) {
@@ -394,8 +400,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         scrollRef={this.setScrollRef}
         scrollTop={updateScrollTop}
       >
-        <DashboardPrompt dashboard={dashboard} />
-
         {initError && <DashboardFailed />}
         {showSubMenu && (
           <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
