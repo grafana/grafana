@@ -12,7 +12,7 @@ import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
-import { makeDashboardLink } from '../../utils/misc';
+import { makeFolderLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
@@ -82,7 +82,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
-      const baseUrl = makeDashboardLink(folderUID);
+      const baseUrl = makeFolderLink(folderUID);
       if (folder?.canSave) {
         if (isGroupView && !isProvisioned) {
           actionIcons.push(

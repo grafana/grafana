@@ -102,7 +102,7 @@ export function makeDataSourceLink<T>(dataSource: DataSourceInstanceSettings<T>)
   return `${config.appSubUrl}/datasources/edit/${dataSource.uid}`;
 }
 
-export function makeDashboardLink(folderUID: string): string {
+export function makeFolderLink(folderUID: string): string {
   return `${config.appSubUrl}/dashboards/f/${folderUID}`;
 }
 
