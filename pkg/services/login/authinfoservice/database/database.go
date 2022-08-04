@@ -244,12 +244,13 @@ func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user
 }
 
 func (s *AuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
-	query := models.GetUserByEmailQuery{Email: email}
-	if err := s.sqlStore.GetUserByEmail(ctx, &query); err != nil {
+	query := user.GetUserByEmailQuery{Email: email}
+	usr, err := s.userService.GetByEmail(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return usr, nil
 }
 
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it

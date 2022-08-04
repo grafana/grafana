@@ -62,6 +62,10 @@ type GetUserByLoginQuery struct {
 	LoginOrEmail string
 }
 
+type GetUserByEmailQuery struct {
+	Email string
+}
+
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name

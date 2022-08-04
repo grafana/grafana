@@ -257,3 +257,13 @@ func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuer
 	}
 	return q.Result, nil
 }
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	q := models.GetUserByEmailQuery{Email: query.Email}
+	err := s.sqlStore.GetUserByEmail(ctx, &q)
+	if err != nil {
+		return nil, err
+	}
+	return q.Result, nil
+}
