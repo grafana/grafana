@@ -207,7 +207,7 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
         cursor: pointer;
         padding-right: 0;
         padding-left: 0;
-        line-height: ${theme.spacing.gridSize * 4 - 2}px;
+        line-height: ${theme.spacing.gridSize * theme.components.height.md - 2}px;
       `
     ),
     caretIcon: cx(

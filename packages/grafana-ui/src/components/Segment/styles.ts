@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { basicColors, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export const getSegmentStyles = (theme: GrafanaTheme2) => {
   return {
@@ -10,7 +10,7 @@ export const getSegmentStyles = (theme: GrafanaTheme2) => {
     `,
 
     queryPlaceholder: css`
-      color: ${basicColors.gray2};
+      color: ${theme.v1.palette.gray2};
     `,
 
     disabled: css`

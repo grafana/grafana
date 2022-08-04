@@ -166,7 +166,7 @@ export const getButtonStyles = (props: StyleProps) => {
       borderRadius: theme.shape.borderRadius(1),
       '&:focus': focusStyle,
       '&:focus-visible': focusStyle,
-      '&:focus:not(:focus-visible)': getMouseFocusStyles(),
+      '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
       ...(fullWidth && {
         flexGrow: 1,
         justifyContent: 'center',

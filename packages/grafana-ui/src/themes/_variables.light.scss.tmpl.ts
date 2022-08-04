@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-import { basicColors, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
@@ -25,36 +25,36 @@ $red-base: ${theme.colors.error.main};
 $red-shade: ${theme.colors.error.shade};
 $green-base: ${theme.colors.success.main};
 $green-shade: ${theme.colors.success.shade};
-$orange-dark: ${basicColors.orangeDark};
+$orange-dark: ${theme.v1.palette.orangeDark};
 
-$gray98: ${basicColors.gray98};
-$gray95: ${basicColors.gray95};
-$gray85: ${basicColors.gray85};
-$gray70: ${basicColors.gray70};
-$gray60: ${basicColors.gray60};
-$gray33: ${basicColors.gray33};
-$gray25: ${basicColors.gray25};
-$gray15: ${basicColors.gray15};
-$gray10: ${basicColors.gray10};
-$gray05: ${basicColors.gray05};
+$gray98: ${theme.v1.palette.gray98};
+$gray95: ${theme.v1.palette.gray95};
+$gray85: ${theme.v1.palette.gray85};
+$gray70: ${theme.v1.palette.gray70};
+$gray60: ${theme.v1.palette.gray60};
+$gray33: ${theme.v1.palette.gray33};
+$gray25: ${theme.v1.palette.gray25};
+$gray15: ${theme.v1.palette.gray15};
+$gray10: ${theme.v1.palette.gray10};
+$gray05: ${theme.v1.palette.gray05};
 
 // Grays
 // -------------------------
-$black: ${basicColors.black};
+$black: ${theme.v1.palette.black};
 
-$dark-1: ${basicColors.dark1};
-$dark-2: ${basicColors.dark2};
-$dark-4: ${basicColors.dark4};
-$dark-10: ${basicColors.dark10};
-$gray-1: ${basicColors.gray1};
-$gray-2: ${basicColors.gray2};
-$gray-3: ${basicColors.gray3};
-$gray-4: ${basicColors.gray4};
-$gray-5: ${basicColors.gray5};
-$gray-6: ${basicColors.gray6};
-$gray-7: ${basicColors.gray7};
+$dark-1: ${theme.v1.palette.dark1};
+$dark-2: ${theme.v1.palette.dark2};
+$dark-4: ${theme.v1.palette.dark4};
+$dark-10: ${theme.v1.palette.dark10};
+$gray-1: ${theme.v1.palette.gray1};
+$gray-2: ${theme.v1.palette.gray2};
+$gray-3: ${theme.v1.palette.gray3};
+$gray-4: ${theme.v1.palette.gray4};
+$gray-5: ${theme.v1.palette.gray5};
+$gray-6: ${theme.v1.palette.gray6};
+$gray-7: ${theme.v1.palette.gray7};
 
-$white: ${basicColors.white};
+$white: ${theme.v1.palette.white};
 
 $layer0: ${theme.colors.background.canvas};
 $layer1: ${theme.colors.background.primary};
@@ -68,12 +68,12 @@ $border1: ${theme.colors.border.medium};
 // -------------------------
 $blue: ${theme.colors.primary.text};
 $red: $red-base;
-$yellow: ${basicColors.yellow};
-$orange: ${basicColors.orange};
-$purple: ${basicColors.purple};
+$yellow: ${theme.v1.palette.yellow};
+$orange: ${theme.v1.palette.orange};
+$purple: ${theme.v1.palette.purple};
 $variable: ${theme.colors.primary.text};
 
-$brand-primary: ${basicColors.orange};
+$brand-primary: ${theme.v1.palette.orange};
 $brand-success: ${theme.colors.success.main};
 $brand-warning: ${theme.colors.warning.main};
 $brand-danger: ${theme.colors.error.main};
@@ -81,7 +81,7 @@ $brand-danger: ${theme.colors.error.main};
 $query-red: ${theme.colors.error.text};
 $query-green: ${theme.colors.success.text};
 $query-purple: #fe85fc;
-$query-orange: ${basicColors.orange};
+$query-orange: ${theme.v1.palette.orange};
 
 // Status colors
 // -------------------------
@@ -212,11 +212,11 @@ $input-bg-disabled: ${theme.colors.action.disabledBackground};
 $input-color: ${theme.components.input.text};
 $input-border-color: ${theme.components.input.borderColor};
 $input-box-shadow: none;
-$input-border-focus: ${basicColors.blue95};
-$input-box-shadow-focus: ${basicColors.blue95};
+$input-border-focus: ${theme.v1.palette.blue95};
+$input-box-shadow-focus: ${theme.v1.palette.blue95};
 $input-color-placeholder: ${theme.colors.text.disabled};
 $input-label-bg: ${theme.colors.background.secondary};
-$input-color-select-arrow: ${basicColors.gray60};
+$input-color-select-arrow: ${theme.v1.palette.gray60};
 
 // search
 $search-shadow: 0 1px 5px 0 $gray-5;
@@ -251,14 +251,14 @@ $navbarBorder: 1px solid $gray-5;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg: ${basicColors.gray15};
-$side-menu-border: 1px solid ${basicColors.gray25};
+$side-menu-bg: ${theme.v1.palette.gray15};
+$side-menu-border: 1px solid ${theme.v1.palette.gray25};
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
-$side-menu-item-hover-bg: ${basicColors.gray25};
+$side-menu-item-hover-bg: ${theme.v1.palette.gray25};
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
 $side-menu-link-color: $gray-4;
-$side-menu-icon-color: ${basicColors.gray70};
-$side-menu-header-color: ${basicColors.gray95};
+$side-menu-icon-color: ${theme.v1.palette.gray70};
+$side-menu-header-color: ${theme.v1.palette.gray95};
 
 // Menu dropdowns
 // -------------------------
@@ -361,7 +361,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
-$switch-slider-on-bg: ${basicColors.blue77};
+$switch-slider-on-bg: ${theme.v1.palette.blue77};
 $switch-slider-shadow: 0 0 3px $dark-2;
 
 //Checkbox
@@ -384,8 +384,8 @@ $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
 
-$panel-grid-placeholder-bg: lighten(${basicColors.blue95}, 30%);
-$panel-grid-placeholder-shadow: 0 0 4px ${basicColors.blue95};
+$panel-grid-placeholder-bg: lighten(${theme.v1.palette.blue95}, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px ${theme.v1.palette.blue95};
 
 // logs
 $logs-color-unknown: $gray-5;

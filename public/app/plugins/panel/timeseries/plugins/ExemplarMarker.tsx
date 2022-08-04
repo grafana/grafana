@@ -3,7 +3,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import {
-  basicColors,
   DataFrame,
   DataFrameFieldIndex,
   dateTimeFormat,
@@ -160,10 +159,10 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
 };
 
 const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
-  const bg = theme.isDark ? basicColors.dark2 : basicColors.white;
-  const headerBg = theme.isDark ? basicColors.dark9 : basicColors.gray5;
-  const shadowColor = theme.isDark ? basicColors.black : basicColors.white;
-  const tableBgOdd = theme.isDark ? basicColors.dark3 : basicColors.gray6;
+  const bg = theme.isDark ? theme.v1.palette.dark2 : theme.v1.palette.white;
+  const headerBg = theme.isDark ? theme.v1.palette.dark9 : theme.v1.palette.gray5;
+  const shadowColor = theme.isDark ? theme.v1.palette.black : theme.v1.palette.white;
+  const tableBgOdd = theme.isDark ? theme.v1.palette.dark3 : theme.v1.palette.gray6;
 
   return {
     markerWrapper: css`
@@ -186,7 +185,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
       height: 0;
       border-left: 4px solid transparent;
       border-right: 4px solid transparent;
-      border-bottom: 4px solid ${basicColors.red};
+      border-bottom: 4px solid ${theme.v1.palette.red};
       pointer-events: none;
     `,
     wrapper: css`

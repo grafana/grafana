@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import RcTimePicker from 'rc-time-picker';
 import React, { FC } from 'react';
 
-import { basicColors, dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2 } from '@grafana/data';
+import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2 } from '@grafana/data';
 
 import { Icon, useStyles2 } from '../../index';
 import { focusCss } from '../../themes/mixins';
@@ -61,7 +61,7 @@ const Caret: FC<CaretProps> = ({ wrapperStyle = '' }) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   const bgColor = theme.components.input.background;
-  const menuShadowColor = basicColors.black;
+  const menuShadowColor = theme.v1.palette.black;
   const optionBgHover = theme.colors.background.secondary;
   const borderRadius = theme.shape.borderRadius(1);
   const borderColor = theme.components.input.borderColor;
@@ -84,7 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => {
           outline-width: 2px;
           &.rc-time-picker-panel-select-option-selected {
             background-color: inherit;
-            border: 1px solid ${basicColors.orange};
+            border: 1px solid ${theme.v1.palette.orange};
             border-radius: ${borderRadius};
           }
 

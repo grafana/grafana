@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, useCallback } from 'react';
 
-import { basicColors, DataSourceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { useTheme2 } from '../../themes';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
@@ -73,6 +74,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
+  const theme = useTheme2();
 
   const onSettingsChange = useCallback(
     (change: Partial<DataSourceSettings<any, any>>) => {
@@ -119,7 +121,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   );
 
   const notValidStyle = css`
-    box-shadow: inset 0 0px 5px ${basicColors.red};
+    box-shadow: inset 0 0px 5px ${theme.v1.palette.red};
   `;
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });

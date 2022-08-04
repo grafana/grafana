@@ -13,7 +13,6 @@ import {
   TimeRange,
   TimeZone,
   dateMath,
-  basicColors,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -220,7 +219,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
     `,
     utc: css`
-      color: ${basicColors.orange};
+      color: ${theme.v1.palette.orange};
       font-size: ${theme.typography.size.sm};
       padding-left: 6px;
       line-height: 28px;
