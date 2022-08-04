@@ -45,14 +45,21 @@ func TestAdd(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	i := &FS{log: &fakeLogger{}}
-
 	pluginDir := t.TempDir()
 	pluginJSON := filepath.Join(pluginDir, "plugin.json")
 	_, err := os.Create(pluginJSON)
 	require.NoError(t, err)
 
-	err = i.Remove(context.Background(), pluginDir)
+	pluginID := "test-datasource"
+	i := &FS{
+		pluginsDir: filepath.Dir(pluginDir),
+		store: map[string]string{
+			pluginID: pluginDir,
+		},
+		log: &fakeLogger{},
+	}
+
+	err = i.Remove(context.Background(), pluginID)
 	require.NoError(t, err)
 
 	_, err = os.Stat(pluginDir)
@@ -68,7 +75,15 @@ func TestRemove(t *testing.T) {
 
 		pluginDir = filepath.Dir(pluginDistDir)
 
-		err = i.Remove(context.Background(), pluginDir)
+		i = &FS{
+			pluginsDir: filepath.Dir(pluginDir),
+			store: map[string]string{
+				pluginID: pluginDir,
+			},
+			log: &fakeLogger{},
+		}
+
+		err = i.Remove(context.Background(), pluginID)
 		require.NoError(t, err)
 
 		_, err = os.Stat(pluginDir)
@@ -77,8 +92,33 @@ func TestRemove(t *testing.T) {
 
 	t.Run("Uninstall will not delete folder if cannot recognize plugin structure", func(t *testing.T) {
 		pluginDir = t.TempDir()
-		err = i.Remove(context.Background(), pluginDir)
-		require.EqualError(t, err, fmt.Sprintf("tried to remove %s, but it doesn't seem to be a plugin", pluginDir))
+		i = &FS{
+			pluginsDir: filepath.Dir(pluginDir),
+			store: map[string]string{
+				pluginID: pluginDir,
+			},
+			log: &fakeLogger{},
+		}
+
+		err = i.Remove(context.Background(), pluginID)
+		require.EqualError(t, err, "cannot recognize as plugin folder")
+
+		_, err = os.Stat(pluginDir)
+		require.False(t, os.IsNotExist(err))
+	})
+
+	t.Run("Uninstall will not delete folder if plugin's directory is not a subdirectory of specified plugins directory", func(t *testing.T) {
+		pluginDir = t.TempDir()
+		i = &FS{
+			pluginsDir: "/some/other/path",
+			store: map[string]string{
+				pluginID: pluginDir,
+			},
+			log: &fakeLogger{},
+		}
+
+		err = i.Remove(context.Background(), pluginID)
+		require.EqualError(t, err, "cannot uninstall a plugin outside of the plugins directory")
 
 		_, err = os.Stat(pluginDir)
 		require.False(t, os.IsNotExist(err))

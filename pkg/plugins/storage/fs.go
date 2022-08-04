@@ -22,6 +22,7 @@ var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 
 var (
 	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside of the plugins directory")
+	ErrUninstallInvalidPluginDir   = errors.New("cannot recognize as plugin folder")
 )
 
 type FS struct {
@@ -85,6 +86,12 @@ func (fs *FS) Remove(_ context.Context, pluginID string) error {
 	path, err := filepath.Rel(fs.pluginsDir, pluginDir)
 	if err != nil || strings.HasPrefix(path, ".."+string(filepath.Separator)) {
 		return ErrUninstallOutsideOfPluginDir
+	}
+
+	if _, err = os.Stat(filepath.Join(pluginDir, "plugin.json")); os.IsNotExist(err) {
+		if _, err = os.Stat(filepath.Join(pluginDir, "dist/plugin.json")); os.IsNotExist(err) {
+			return ErrUninstallInvalidPluginDir
+		}
 	}
 
 	fs.log.Infof("Uninstalling plugin %v", pluginDir)
