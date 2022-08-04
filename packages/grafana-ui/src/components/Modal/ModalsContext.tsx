@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 
 interface ModalsContextState {
   component: React.ComponentType<any> | null;
@@ -22,7 +22,7 @@ interface ModalsProviderProps {
   props?: any;
 }
 
-export class ModalsProvider extends React.Component<ModalsProviderProps, ModalsContextState> {
+export class ModalsProvider extends Component<ModalsProviderProps, ModalsContextState> {
   constructor(props: ModalsProviderProps) {
     super(props);
     this.state = {

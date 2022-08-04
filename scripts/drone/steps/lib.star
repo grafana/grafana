@@ -488,7 +488,7 @@ def build_plugins_step(edition, ver_mode):
         ],
         'commands': [
             # TODO: Use percentage for num jobs
-            './bin/grabpl build-plugins --jobs 8 --edition {}'.format(edition),
+            './bin/build  build-plugins --jobs 8 --edition {}'.format(edition),
         ],
     }
 

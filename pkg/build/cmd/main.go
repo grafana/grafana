@@ -27,6 +27,17 @@ func main() {
 			Name:   "shellcheck",
 			Usage:  "Run shellcheck on shell scripts",
 			Action: Shellcheck,
+		}, {
+			Name:   "build-plugins",
+			Usage:  "Build internal plug-ins",
+			Action: ArgCountWrapper(1, BuildInternalPlugins),
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+				&signingAdminFlag,
+				&signFlag,
+				&noInstallDepsFlag,
+			},
 		},
 	}
 

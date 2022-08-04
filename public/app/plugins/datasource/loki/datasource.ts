@@ -44,12 +44,18 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
-import { addLabelFormatToQuery, addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
+import {
+  addLabelFormatToQuery,
+  addLabelToQuery,
+  addNoPipelineErrorToQuery,
+  addParserToQuery,
+  removeCommentsFromQuery,
+} from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils';
 import { sortDataFrameByTime } from './sortDataFrame';
@@ -119,11 +125,12 @@ export class LokiDatasource
 
     const logsVolumeRequest = cloneDeep(request);
     logsVolumeRequest.targets = logsVolumeRequest.targets.filter(isQuerySuitable).map((target) => {
+      const query = removeCommentsFromQuery(target.expr);
       return {
         ...target,
         instant: false,
         volumeQuery: true,
-        expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+        expr: `sum by (level) (count_over_time(${query}[$__interval]))`,
       };
     });
 

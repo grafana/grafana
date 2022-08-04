@@ -175,19 +175,20 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 //
 // Responses:
 // 200: getDashboardSnapshotResponse
+// 400: badRequestError
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Response {
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
-		return response.Error(404, "Snapshot not found", nil)
+		return response.Error(http.StatusBadRequest, "Empty snapshot key", nil)
 	}
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
 
 	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		return response.Err(err)
 	}
 
 	snapshot := query.Result
@@ -265,7 +266,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{DeleteKey: key}
 	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		return response.Err(err)
 	}
 
 	if query.Result.External {
@@ -306,7 +307,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 
 	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		return response.Err(err)
 	}
 	if query.Result == nil {
 		return response.Error(404, "Failed to get dashboard snapshot", nil)
