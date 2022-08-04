@@ -14,3 +14,30 @@ type AuthInfoService interface {
 	SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error
 }
+
+const (
+	SAMLAuthModule = "auth.saml"
+)
+
+func GetAuthProviderLabel(authModule string) string {
+	switch authModule {
+	case "oauth_github":
+		return "GitHub"
+	case "oauth_google":
+		return "Google"
+	case "oauth_azuread":
+		return "AzureAD"
+	case "oauth_gitlab":
+		return "GitLab"
+	case "oauth_grafana_com", "oauth_grafananet":
+		return "grafana.com"
+	case SAMLAuthModule:
+		return "SAML"
+	case "ldap", "":
+		return "LDAP"
+	case "jwt":
+		return "JWT"
+	default:
+		return "OAuth"
+	}
+}
