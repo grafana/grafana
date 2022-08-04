@@ -15,9 +15,12 @@ import { FNDashboard } from './FNDashboard';
 // set featureToggles
 config.featureToggles = {
   ...config.featureToggles,
-  isPublicDashboardView: true,
+  publicDashboards: true,
 };
 config.isPublicDashboardView = true;
+
+// eslint-disable-next-line
+config.bootData.themePaths = (window as any).fnData?.themePaths;
 
 /**
  * The bootstrap will only be called once when the child application is initialized.

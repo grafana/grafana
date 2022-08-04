@@ -7,6 +7,16 @@
 
   <body class="theme-dark app-grafana">
     <div id="reactRoot"></div>
+
+    <script nonce="">
+      window.fnData = {
+        themePaths: {
+          light: 'public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>',
+          dark: 'public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>'
+        }
+      };
+    </script>
+
     <% for (index in htmlWebpackPlugin.files.js) { %> <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
     <script
       nonce=""
