@@ -1,4 +1,3 @@
-// import { shallow } from 'enzyme';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -43,7 +42,7 @@ describe('FolderSettingsPage', () => {
     expect(() => setup()).not.toThrow();
   });
 
-  it('should enable save button when canSave is true', () => {
+  it('should enable save button when canSave is true and hasChanged is true', () => {
     setup({
       folder: {
         id: 1,
@@ -59,7 +58,39 @@ describe('FolderSettingsPage', () => {
     expect(saveButton).not.toBeDisabled();
   });
 
-  it('should disable save button when canSave is false', () => {
+  it('should disable save button when canSave is false and hasChanged is false', () => {
+    setup({
+      folder: {
+        id: 1,
+        uid: '1234',
+        title: 'loading',
+        canSave: false,
+        canDelete: true,
+        hasChanged: false,
+        version: 1,
+      },
+    });
+    const saveButton = screen.getByRole('button', { name: 'Save' });
+    expect(saveButton).toBeDisabled();
+  });
+
+  it('should disable save button when canSave is true and hasChanged is false', () => {
+    setup({
+      folder: {
+        id: 1,
+        uid: '1234',
+        title: 'loading',
+        canSave: true,
+        canDelete: true,
+        hasChanged: false,
+        version: 1,
+      },
+    });
+    const saveButton = screen.getByRole('button', { name: 'Save' });
+    expect(saveButton).toBeDisabled();
+  });
+
+  it('should disable save button when canSave is false and hasChanged is true', () => {
     setup({
       folder: {
         id: 1,
@@ -93,5 +124,37 @@ describe('FolderSettingsPage', () => {
     const saveButton = screen.getByRole('button', { name: 'Save' });
     await userEvent.click(saveButton);
     expect(mockSaveFolder).toHaveBeenCalledWith(mockFolder);
+  });
+
+  it('should disable delete button when canDelete is false', () => {
+    setup({
+      folder: {
+        id: 1,
+        uid: '1234',
+        title: 'loading',
+        canSave: true,
+        canDelete: false,
+        hasChanged: true,
+        version: 1,
+      },
+    });
+    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    expect(deleteButton).toBeDisabled();
+  });
+
+  it('should enable delete button when canDelete is true', () => {
+    setup({
+      folder: {
+        id: 1,
+        uid: '1234',
+        title: 'loading',
+        canSave: true,
+        canDelete: true,
+        hasChanged: true,
+        version: 1,
+      },
+    });
+    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    expect(deleteButton).not.toBeDisabled();
   });
 });
