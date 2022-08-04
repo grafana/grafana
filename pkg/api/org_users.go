@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -73,13 +74,11 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
 
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
-	err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery)
+	userQuery := user.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
+	userToAdd, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
 	if err != nil {
 		return response.Error(404, "User not found", nil)
 	}
-
-	userToAdd := userQuery.Result
 
 	cmd.UserId = userToAdd.ID
 

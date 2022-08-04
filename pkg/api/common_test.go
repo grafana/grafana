@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -61,6 +62,7 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
+		sc.userService = usertest.NewUserServiceFake()
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
@@ -381,6 +383,8 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	require.NoError(t, err)
 
 	// Create minimal HTTP Server
+	userMock := usertest.NewUserServiceFake()
+	userMock.ExpectedUser = &user.User{ID: 1}
 	hs := &HTTPServer{
 		Cfg:                    cfg,
 		Features:               features,
@@ -397,6 +401,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
+		userService:       userMock,
 	}
 
 	require.NoError(t, hs.declareFixedRoles())

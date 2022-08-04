@@ -31,7 +31,6 @@ type Store interface {
 	GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
-	GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error
 	GetUserByEmail(ctx context.Context, query *models.GetUserByEmailQuery) error
 	UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error
 	ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error

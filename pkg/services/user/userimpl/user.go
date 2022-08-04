@@ -5,11 +5,13 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
@@ -31,6 +33,8 @@ type Service struct {
 	userAuthService    userauth.Service
 	quotaService       quota.Service
 	accessControlStore accesscontrol.AccessControl
+	// TODO remove sqlstore
+	sqlStore *sqlstore.SQLStore
 
 	cfg *setting.Cfg
 }
@@ -46,6 +50,7 @@ func ProvideService(
 	quotaService quota.Service,
 	accessControlStore accesscontrol.AccessControl,
 	cfg *setting.Cfg,
+	ss *sqlstore.SQLStore,
 ) user.Service {
 	return &Service{
 		store: &sqlStore{
@@ -61,6 +66,7 @@ func ProvideService(
 		quotaService:       quotaService,
 		accessControlStore: accessControlStore,
 		cfg:                cfg,
+		sqlStore:           ss,
 	}
 }
 
@@ -240,4 +246,14 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 		}
 	}
 	return user, nil
+}
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	q := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
+	err := s.sqlStore.GetUserByLogin(ctx, &q)
+	if err != nil {
+		return nil, err
+	}
+	return q.Result, nil
 }
