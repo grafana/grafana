@@ -3,6 +3,7 @@
   <head>
     <title>FluxNinja Microfrontend</title>
     <base href="/" />
+    <link rel="stylesheet" href="../../../public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
   </head>
 
   <body class="theme-dark app-grafana">
@@ -11,8 +12,8 @@
     <script nonce="">
       window.fnData = {
         themePaths: {
-          light: 'public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>',
-          dark: 'public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>'
+          light: '../../../public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>',
+          dark: '../../../public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>'
         }
       };
     </script>

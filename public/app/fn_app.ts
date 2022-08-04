@@ -9,7 +9,7 @@ import './polyfills/old-mediaquerylist'; // Safari < 14 does not have mql.addEve
 
 import 'app/features/all';
 
-import _ from 'lodash'; // eslint-disable-line lodash/import-scope
+import _, { merge } from 'lodash'; // eslint-disable-line lodash/import-scope
 
 import {
   locationUtil,
@@ -97,7 +97,7 @@ export class GrafanaApp {
       backendSrv.setGrafanaPrefix(true);
       setBackendSrv(backendSrv);
       backendSrv.get('/api/frontend/settings').then((settings: Settings) => {
-        config.panels = settings.panels;
+        merge(config, settings, config);
       });
 
       initEchoSrv();
