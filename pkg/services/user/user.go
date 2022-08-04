@@ -10,4 +10,5 @@ type Service interface {
 	GetByID(context.Context, *GetUserByIDQuery) (*User, error)
 	GetByLogin(context.Context, *GetUserByLoginQuery) (*User, error)
 	GetByEmail(context.Context, *GetUserByEmailQuery) (*User, error)
+	Update(context.Context, *UpdateUserCommand) error
 }

@@ -114,7 +114,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Respo
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response {
-	cmd := models.UpdateUserCommand{}
+	cmd := user.UpdateUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -126,7 +126,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response
 			return response.Error(400, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}
-	cmd.UserId = c.UserId
+	cmd.UserID = c.UserId
 	return hs.handleUpdateUser(c.Req.Context(), cmd)
 }
 
@@ -143,12 +143,12 @@ func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateUser(c *models.ReqContext) response.Response {
-	cmd := models.UpdateUserCommand{}
+	cmd := user.UpdateUserCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
@@ -179,7 +179,7 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *models.ReqContext) response.Respons
 	return response.Success("Active organization changed")
 }
 
-func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd models.UpdateUserCommand) response.Response {
+func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserCommand) response.Response {
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {
@@ -187,7 +187,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd models.UpdateUse
 		}
 	}
 
-	if err := hs.SQLStore.UpdateUser(ctx, &cmd); err != nil {
+	if err := hs.userService.Update(ctx, &cmd); err != nil {
 		if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
 		}

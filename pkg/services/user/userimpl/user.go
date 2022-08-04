@@ -267,3 +267,15 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 	}
 	return q.Result, nil
 }
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	q := &models.UpdateUserCommand{
+		Name:   cmd.Name,
+		Email:  cmd.Email,
+		Login:  cmd.Login,
+		Theme:  cmd.Theme,
+		UserId: cmd.UserID,
+	}
+	return s.sqlStore.UpdateUser(ctx, q)
+}

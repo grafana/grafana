@@ -137,10 +137,6 @@ func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserComman
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error {
 	return m.ExpectedError
 }
