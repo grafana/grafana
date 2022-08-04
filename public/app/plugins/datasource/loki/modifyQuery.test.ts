@@ -241,37 +241,39 @@ describe('addLabelFormatToQuery', () => {
 });
 
 describe('removeCommentsFromQuery', () => {
-  it('strips comments in log queries', () => {
-    expect(removeCommentsFromQuery('{job="grafana"}#hello')).toBe('{job="grafana"}');
-    expect(removeCommentsFromQuery('{job="grafana"} | logfmt #hello')).toBe('{job="grafana"} | logfmt ');
-    expect(
-      removeCommentsFromQuery('{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello')
-    ).toBe('{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl ');
+  it.each`
+    query                                                                             | expectedResult
+    ${'{job="grafana"}#hello'}                                                        | ${'{job="grafana"}'}
+    ${'{job="grafana"} | logfmt #hello'}                                              | ${'{job="grafana"} | logfmt '}
+    ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello'} | ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl '}
+  `('strips comments in log query:  {$query}', ({ query, expectedResult }) => {
+    expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });
 
-  it('returns original query if no comments in log queries', () => {
-    expect(removeCommentsFromQuery('{job="grafana"}')).toBe('{job="grafana"}');
-    expect(removeCommentsFromQuery('{job="grafana"} | logfmt')).toBe('{job="grafana"} | logfmt');
-    expect(removeCommentsFromQuery('{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl')).toBe(
-      '{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl'
-    );
+  it.each`
+    query                                                                      | expectedResult
+    ${'{job="grafana"}'}                                                       | ${'{job="grafana"}'}
+    ${'{job="grafana"} | logfmt'}                                              | ${'{job="grafana"} | logfmt'}
+    ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl'} | ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl'}
+  `('returns original query if no comments in log query:  {$query}', ({ query, expectedResult }) => {
+    expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });
 
-  it('strips comments in metrics queries', () => {
-    expect(removeCommentsFromQuery('count_over_time({job="grafana"}[10m])#hello')).toBe(
-      'count_over_time({job="grafana"}[10m])'
-    );
-    expect(removeCommentsFromQuery('count_over_time({job="grafana"} | logfmt[10m])#hello')).toBe(
-      'count_over_time({job="grafana"} | logfmt[10m])'
-    );
+  it.each`
+    query                                                       | expectedResult
+    ${'count_over_time({job="grafana"}[10m])#hello'}            | ${'count_over_time({job="grafana"}[10m])'}
+    ${'count_over_time({job="grafana"} | logfmt[10m])#hello'}   | ${'count_over_time({job="grafana"} | logfmt[10m])'}
+    ${'rate({job="grafana"} | logfmt | foo="bar" [10m])#hello'} | ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}
+  `('strips comments in metrics query:  {$query}', ({ query, expectedResult }) => {
+    expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });
 
-  it('returns original query if no comments in metrics query', () => {
-    expect(removeCommentsFromQuery('count_over_time({job="grafana"}[10m])')).toBe(
-      'count_over_time({job="grafana"}[10m])'
-    );
-    expect(removeCommentsFromQuery('count_over_time({job="grafana"} | logfmt[10m])')).toBe(
-      'count_over_time({job="grafana"} | logfmt[10m])'
-    );
+  it.each`
+    query                                                     | expectedResult
+    ${'count_over_time({job="grafana"}[10m])#hello'}          | ${'count_over_time({job="grafana"}[10m])'}
+    ${'count_over_time({job="grafana"} | logfmt[10m])#hello'} | ${'count_over_time({job="grafana"} | logfmt[10m])'}
+    ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}     | ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}
+  `('returns original query if no comments in metrics query:  {$query}', ({ query, expectedResult }) => {
+    expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });
 });
