@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,7 +50,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, secretsService)
+		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, secretsService, usertest.NewUserServiceFake())
 		srv := authinfoservice.ProvideAuthInfoService(
 			&authinfoservice.OSSUserProtectionImpl{},
 			authInfoStore,
@@ -123,15 +124,17 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.Nil(t, err)
 
 		sc.handlerFunc = hs.GetUserByLoginOrEmail
+
+		userMock := usertest.NewUserServiceFake()
+		userMock.ExpectedUser = &user.User{ID: 2}
+		sc.userService = userMock
+		hs.userService = userMock
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
 		var resp models.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
-		require.Equal(t, "admin", resp.Login)
-		require.Equal(t, "admin@test.com", resp.Email)
-		require.True(t, resp.IsGrafanaAdmin)
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {

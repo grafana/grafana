@@ -6,6 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 
@@ -41,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
@@ -59,6 +61,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/encryption"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -136,6 +140,7 @@ import (
 var wireBasicSet = wire.NewSet(
 	legacydataservice.ProvideService,
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
+	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
 	setting.NewCfgFromArgs,
@@ -196,14 +201,12 @@ var wireBasicSet = wire.NewSet(
 	authinfoservice.ProvideAuthInfoService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
 	authinfodatabase.ProvideAuthInfoStore,
-	wire.Bind(new(login.Store), new(*authinfodatabase.AuthInfoStore)),
 	loginpkg.ProvideService,
 	wire.Bind(new(loginpkg.Authenticator), new(*loginpkg.AuthenticatorService)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
 	store.ProvideService,
-	store.ProvideHTTPService,
 	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
@@ -226,12 +229,16 @@ var wireBasicSet = wire.NewSet(
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
 	oauthtoken.ProvideService,
+	auth.ProvideActiveAuthTokenService,
+	wire.Bind(new(models.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	tempo.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	encryptionservice.ProvideEncryptionService,
+	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
 	secretsDatabase.ProvideSecretsStore,
@@ -294,6 +301,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
 	playlistimpl.ProvideService,
+	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,
 	publicdashboardsService.ProvideService,
 	wire.Bind(new(publicdashboards.Service), new(*publicdashboardsService.PublicDashboardServiceImpl)),
@@ -312,7 +320,6 @@ var wireBasicSet = wire.NewSet(
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
-	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.TempUserStore), new(*sqlstore.SQLStore)),
@@ -329,7 +336,6 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,

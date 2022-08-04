@@ -61,12 +61,6 @@ export const PageToolbar: FC<Props> = React.memo(
       className
     );
 
-    const leftItemChildren = leftItems?.map((child, index) => (
-      <div className={styles.leftActionItem} key={index}>
-        {child}
-      </div>
-    ));
-
     const titleEl = (
       <>
         <span className={styles.noLinkTitle}>{title}</span>
@@ -112,22 +106,29 @@ export const PageToolbar: FC<Props> = React.memo(
               </>
             )}
 
-            {title && (
+            {(title || leftItems?.length) && (
               <div className={styles.titleWrapper}>
-                <h1 className={styles.h1Styles}>
-                  {titleHref ? (
-                    <Link
-                      aria-label="Search dashboard by name"
-                      className={cx(styles.titleText, styles.titleLink)}
-                      href={titleHref}
-                    >
-                      {titleEl}
-                    </Link>
-                  ) : (
-                    <div className={styles.titleText}>{titleEl}</div>
-                  )}
-                </h1>
-                {leftItemChildren}
+                {title && (
+                  <h1 className={styles.h1Styles}>
+                    {titleHref ? (
+                      <Link
+                        aria-label="Search dashboard by name"
+                        className={cx(styles.titleText, styles.titleLink)}
+                        href={titleHref}
+                      >
+                        {titleEl}
+                      </Link>
+                    ) : (
+                      <div className={styles.titleText}>{titleEl}</div>
+                    )}
+                  </h1>
+                )}
+
+                {leftItems?.map((child, index) => (
+                  <div className={styles.leftActionItem} key={index}>
+                    {child}
+                  </div>
+                ))}
               </div>
             )}
           </nav>
