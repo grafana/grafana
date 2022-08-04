@@ -30,9 +30,9 @@ type PluginManager struct {
 	pluginRegistry registry.Service
 	pluginLoader   loader.Service
 	pluginRepo     repo.Service
-	pluginsMu      sync.RWMutex
 	pluginSources  []PluginSource
 	pluginStorage  storage.Manager
+	pluginsMu      sync.RWMutex
 	log            log.Logger
 }
 
