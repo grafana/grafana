@@ -5,7 +5,7 @@ import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 
 import { PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 
-import { discoverFeatures } from './buildInfo';
+import { discoverAlertmanagerFeatures } from './buildInfo';
 
 const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (requestOptions) => {
   try {
@@ -26,10 +26,10 @@ export const alertingApi = createApi({
   baseQuery: backendSrvBaseQuery(),
   endpoints: (build) => ({
     discoverAmFeatures: build.query({
-      queryFn: async ({ dataSourceName }: { dataSourceName: string }) => {
+      queryFn: async ({ amSourceName }: { amSourceName: string }) => {
         try {
-          const result = await discoverFeatures(dataSourceName);
-          return { data: result };
+          const amFeatures = await discoverAlertmanagerFeatures(amSourceName);
+          return { data: amFeatures };
         } catch (error) {
           return { error: error };
         }

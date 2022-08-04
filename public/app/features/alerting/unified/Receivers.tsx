@@ -4,7 +4,7 @@ import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-
 
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 
-import { featureDiscoveryApi } from './api/buildInfo';
+import { featureDiscoveryApi } from './api/alertingApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
@@ -42,7 +42,7 @@ const Receivers: FC = () => {
 
   useEffect(() => {
     alertManagers.forEach((am) => {
-      dispatch(featureDiscoveryApi.discoverAmFeatures.initiate({ dataSourceName: am.name }));
+      dispatch(featureDiscoveryApi.discoverAmFeatures.initiate({ amSourceName: am.name }));
     });
   }, [alertManagers, dispatch]);
 

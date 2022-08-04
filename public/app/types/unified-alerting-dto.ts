@@ -78,6 +78,11 @@ export interface PromApiFeatures {
   };
 }
 
+export interface AlertmanagerApiFeatures {
+  // Currently, only supported by Mimir AM
+  lazyConfigInit: boolean;
+}
+
 interface PromRuleDTOBase {
   health: string;
   name: string;

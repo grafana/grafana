@@ -28,6 +28,7 @@ import {
 import { PromApplication, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
+import { featureDiscoveryApi } from '../api/alertingApi';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -44,7 +45,7 @@ import {
   updateAlertManagerConfig,
 } from '../api/alertmanager';
 import { fetchAnnotations } from '../api/annotations';
-import { discoverFeatures, featureDiscoveryApi } from '../api/buildInfo';
+import { discoverFeatures } from '../api/buildInfo';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
@@ -114,23 +115,19 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
           }));
         }
 
-        const { data: amStatus } = await thunkAPI.dispatch(
+        const { data: amFeatures } = await thunkAPI.dispatch(
           featureDiscoveryApi.discoverAmFeatures.initiate({
-            dataSourceName: alertManagerSourceName,
+            amSourceName: alertManagerSourceName,
           })
         );
 
-        if (!amStatus) {
-          throw new Error(`Unable to fetch features of ${alertManagerSourceName} Alertmanager`);
-        }
-
-        const isMimirAM = amStatus.application === PromApplication.Mimir;
+        const lazyConfigInitSupported = amFeatures?.lazyConfigInit ?? false;
 
         return retryWhile(
           () => fetchAlertManagerConfig(alertManagerSourceName),
           // if config has been recently deleted, it takes a while for cortex start returning the default one.
           // retry for a short while instead of failing
-          (e) => !!messageFromError(e)?.includes('alertmanager storage object not found') && !isMimirAM,
+          (e) => !!messageFromError(e)?.includes('alertmanager storage object not found') && !lazyConfigInitSupported,
           FETCH_CONFIG_RETRY_TIMEOUT
         )
           .then((result) => {
@@ -151,7 +148,7 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
           .catch((e) => {
             // When mimir doesn't have fallback AM url configured the default response will be as above
             // However it's fine, and it's possible to create AM configuration
-            if (isMimirAM && messageFromError(e)?.includes('alertmanager storage object not found')) {
+            if (lazyConfigInitSupported && messageFromError(e)?.includes('alertmanager storage object not found')) {
               return Promise.resolve<AlertManagerCortexConfig>({
                 alertmanager_config: {},
                 template_files: {},

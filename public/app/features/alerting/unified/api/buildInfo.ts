@@ -1,13 +1,47 @@
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { PromApiFeatures, PromApplication, PromBuildInfoResponse } from 'app/types/unified-alerting-dto';
+import {
+  AlertmanagerApiFeatures,
+  PromApiFeatures,
+  PromApplication,
+  PromBuildInfoResponse,
+} from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
+
+/**
+ * Attempt to fetch buildinfo from our component
+ */
+export async function discoverFeatures(dataSourceName: string): Promise<PromApiFeatures> {
+  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return {
+      features: {
+        rulerApiEnabled: true,
+      },
+    };
+  }
+
+  const dsConfig = getDataSourceByName(dataSourceName);
+  if (!dsConfig) {
+    throw new Error(`Cannot find data source configuration for ${dataSourceName}`);
+  }
+
+  const { url, name, type } = dsConfig;
+  if (!url) {
+    throw new Error(`The data source url cannot be empty.`);
+  }
+
+  if (type !== 'prometheus' && type !== 'loki') {
+    throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
+  }
+
+  return discoverDataSourceFeatures({ name, url, type });
+}
 
 /**
  * This function will attempt to detect what type of system we are talking to; this could be
@@ -20,7 +54,7 @@ import { fetchTestRulerRulesGroup } from './ruler';
 export async function discoverDataSourceFeatures(dsSettings: {
   url: string;
   name: string;
-  type: 'prometheus' | 'loki' | 'alertmanager';
+  type: 'prometheus' | 'loki';
 }): Promise<PromApiFeatures> {
   const { url, name, type } = dsSettings;
 
@@ -51,7 +85,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
     };
   }
 
-  // if no features are reported but buildinfo was return we're talking to Prometheus
+  // if no features are reported but buildinfo was returned we're talking to Prometheus
   const { features } = buildInfoResponse.data;
   if (!features) {
     return {
@@ -71,37 +105,42 @@ export async function discoverDataSourceFeatures(dsSettings: {
   };
 }
 
-/**
- * Attempt to fetch buildinfo from our component
- */
-export async function discoverFeatures(dataSourceName: string): Promise<PromApiFeatures> {
-  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return {
-      features: {
-        rulerApiEnabled: true,
-      },
-    };
+export async function discoverAlertmanagerFeatures(amSourceName: string): Promise<AlertmanagerApiFeatures> {
+  if (amSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return { lazyConfigInit: false };
   }
 
-  const dsConfig = getDataSourceByName(dataSourceName);
-  if (!dsConfig) {
-    throw new Error(`Cannot find data source configuration for ${dataSourceName}`);
-  }
-  const { url, name, type } = dsConfig;
+  const dsConfig = getDataSourceConfig(amSourceName);
+
+  const { url, type } = dsConfig;
   if (!url) {
-    throw new Error(`The data souce url cannot be empty.`);
+    throw new Error(`The data source url cannot be empty.`);
   }
 
-  if (type !== 'prometheus' && type !== 'loki' && type !== 'alertmanager') {
+  if (type !== 'alertmanager') {
     throw new Error(
-      `The build info request is not available for ${type}. Only 'prometheus', 'loki' and 'alertmanager' are supported`
+      `Alertmanager feature discovery is not available for ${type}. Only 'alertmanager' type is supported`
     );
   }
 
-  return discoverDataSourceFeatures({ name, url, type });
+  try {
+    const buildInfo = await fetchPromBuildInfo(url);
+    return { lazyConfigInit: buildInfo?.data?.application === 'Grafana Mimir' };
+  } catch (e) {
+    // If we cannot access the build info then we assume the lazy config is not available
+    return { lazyConfigInit: false };
+  }
 }
 
-async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResponse | undefined> {
+function getDataSourceConfig(amSourceName: string) {
+  const dsConfig = getDataSourceByName(amSourceName);
+  if (!dsConfig) {
+    throw new Error(`Cannot find data source configuration for ${amSourceName}`);
+  }
+  return dsConfig;
+}
+
+export async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResponse | undefined> {
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromBuildInfoResponse>({
       url: `${url}/api/v1/status/buildinfo`,
@@ -146,7 +185,6 @@ async function hasRulerSupport(dataSourceName: string) {
     throw e;
   }
 }
-
 // there errors indicate that the ruler API might be disabled or not supported for Cortex
 function errorIndicatesMissingRulerSupport(error: any) {
   return (
