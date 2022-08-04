@@ -12,4 +12,5 @@ type Service interface {
 	GetByEmail(context.Context, *GetUserByEmailQuery) (*User, error)
 	Update(context.Context, *UpdateUserCommand) error
 	ChangePassword(context.Context, *ChangeUserPasswordCommand) error
+	UpdateLastSeenAt(context.Context, *UpdateUserLastSeenAtCommand) error
 }

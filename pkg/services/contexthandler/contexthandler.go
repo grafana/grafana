@@ -42,7 +42,8 @@ const ServiceName = "ContextHandler"
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
-	apiKeyService apikey.Service, authenticator loginpkg.Authenticator) *ContextHandler {
+	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
+) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -55,6 +56,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		authenticator:    authenticator,
 		loginService:     loginService,
 		apiKeyService:    apiKeyService,
+		userService:      userService,
 	}
 }
 
@@ -71,6 +73,7 @@ type ContextHandler struct {
 	authenticator    loginpkg.Authenticator
 	loginService     login.Service
 	apiKeyService    apikey.Service
+	userService      user.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -160,7 +163,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
 		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := h.SQLStore.UpdateUserLastSeenAt(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+		if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserId}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
@@ -358,13 +361,13 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return true
 	}
 
-	user := authQuery.User
+	usr := authQuery.User
 
-	query := models.GetSignedInUserQuery{UserId: user.ID, OrgId: orgID}
+	query := models.GetSignedInUserQuery{UserId: usr.ID, OrgId: orgID}
 	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
-			"id", user.ID,
+			"id", usr.ID,
 			"org", orgID,
 		)
 		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)

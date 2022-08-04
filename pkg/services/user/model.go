@@ -82,6 +82,10 @@ type ChangeUserPasswordCommand struct {
 	UserID int64 `json:"-"`
 }
 
+type UpdateUserLastSeenAtCommand struct {
+	UserID int64
+}
+
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
