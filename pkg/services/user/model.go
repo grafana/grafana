@@ -66,6 +66,15 @@ type GetUserByEmailQuery struct {
 	Email string
 }
 
+type UpdateUserCommand struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Login string `json:"login"`
+	Theme string `json:"theme"`
+
+	UserID int64 `json:"-"`
+}
+
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
