@@ -86,16 +86,16 @@ export class BackendSrv implements BackendService {
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
+    return await lastValueFrom(this.fetch<T>(options).pipe(map((response: FetchResponse<T>) => response.data)));
+  }
+
+  fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     // prefix "/grafana" to options.url
     if (this.grafanaPrefix) {
       if (options.url.indexOf('/grafana') !== 0) {
         options.url = '/grafana' + options.url;
       }
     }
-    return await lastValueFrom(this.fetch<T>(options).pipe(map((response: FetchResponse<T>) => response.data)));
-  }
-
-  fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
     const id = uuidv4();
     const fetchQueue = this.fetchQueue;
