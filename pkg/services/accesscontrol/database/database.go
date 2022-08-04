@@ -87,7 +87,7 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 		params = append(params, orgID, globalOrgID)
 	}
 
-	q += `) as o_role ON role.id = o_role.role_id`
+	q += `) as all_role ON role.id = all_role.role_id`
 
 	return q, params
 }
