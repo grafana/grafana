@@ -27,7 +27,7 @@ import { NeverCaseError } from './util';
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 
 type NodeTypeId =
-  | 0 // this is used as error-name
+  | 0 // this is used as error-id
   | typeof AggregateExpr
   | typeof AggregateModifier
   | typeof FunctionCallBody
@@ -164,7 +164,7 @@ function isPathMatch(resolverPath: NodeTypeId[], cursorPath: number[]): boolean 
   return resolverPath.every((item, index) => item === cursorPath[index]);
 }
 
-const ERROR_NODE_NAME: NodeTypeId = 0; // this is used as error-name
+const ERROR_NODE_NAME: NodeTypeId = 0; // this is used as error-id
 
 const RESOLVERS: Resolver[] = [
   {
