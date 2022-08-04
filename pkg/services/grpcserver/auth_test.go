@@ -6,14 +6,14 @@ import (
 
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
 
 func TestAuthenticator_Authenticate(t *testing.T) {
 	t.Run("accepts service api key with admin role", func(t *testing.T) {
-		s := newFakeSQLStore(&models.ApiKey{
+		s := newFakeSQLStore(&apikey.APIKey{
 			Id:    1,
 			OrgId: 1,
 			Role:  models.ROLE_ADMIN,
@@ -28,7 +28,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 	})
 
 	t.Run("rejects non-admin role", func(t *testing.T) {
-		s := newFakeSQLStore(&models.ApiKey{
+		s := newFakeSQLStore(&apikey.APIKey{
 			Id:    1,
 			OrgId: 1,
 			Role:  models.ROLE_EDITOR,
@@ -43,20 +43,20 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 	})
 }
 
-type fakeSQLStore struct {
-	sqlstore.Store
-	key *models.ApiKey
+type fakeAPIKey struct {
+	apikey.Service
+	key *apikey.APIKey
 	err error
 }
 
-func newFakeSQLStore(key *models.ApiKey, err error) *fakeSQLStore {
-	return &fakeSQLStore{
+func newFakeSQLStore(key *apikey.APIKey, err error) *fakeAPIKey {
+	return &fakeAPIKey{
 		key: key,
 		err: err,
 	}
 }
 
-func (f *fakeSQLStore) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+func (f *fakeAPIKey) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.APIKey, error) {
 	return f.key, f.err
 }
 

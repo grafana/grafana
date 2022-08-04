@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -44,13 +46,13 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 	return u1
 }
 
-func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *models.ApiKey {
+func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *apikey.APIKey {
 	role := models.ROLE_VIEWER
 	if testKey.Role != "" {
 		role = testKey.Role
 	}
 
-	addKeyCmd := &models.AddApiKeyCommand{
+	addKeyCmd := &apikey.AddCommand{
 		Name:  testKey.Name,
 		Role:  role,
 		OrgId: testKey.OrgId,
@@ -61,14 +63,16 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	} else {
 		addKeyCmd.Key = "secret"
 	}
-	err := sqlStore.AddAPIKey(context.Background(), addKeyCmd)
+
+	apiKeyService := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	err := apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
 
 	if testKey.IsExpired {
 		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
-			key := models.ApiKey{Expires: &expires}
+			key := apikey.APIKey{Expires: &expires}
 			rowsAffected, err := sess.ID(addKeyCmd.Result.Id).Update(&key)
 			require.Equal(t, int64(1), rowsAffected)
 			return err
@@ -86,7 +90,7 @@ func (s *ServiceAccountMock) RetrieveServiceAccountIdByName(ctx context.Context,
 	return 0, nil
 }
 
-func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, orgID int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {
+func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	return nil, nil
 }
 
@@ -133,6 +137,7 @@ type Calls struct {
 }
 
 type ServiceAccountsStoreMock struct {
+	serviceaccounts.Store
 	Calls Calls
 }
 
@@ -141,9 +146,9 @@ func (s *ServiceAccountsStoreMock) RetrieveServiceAccountIdByName(ctx context.Co
 	return 0, nil
 }
 
-func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, orgID int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {
+func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	// now we can test that the mock has these calls when we call the function
-	s.Calls.CreateServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, orgID, name})
+	s.Calls.CreateServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, orgID, saForm})
 	return nil, nil
 }
 
@@ -173,12 +178,12 @@ func (s *ServiceAccountsStoreMock) MigrateApiKey(ctx context.Context, orgID int6
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, keyId int64) error {
+func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
 	s.Calls.RevertApiKey = append(s.Calls.RevertApiKey, []interface{}{ctx})
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
+func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*apikey.APIKey, error) {
 	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
 	return nil, nil
 }

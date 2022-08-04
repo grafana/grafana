@@ -23,6 +23,7 @@ import {
   ThresholdsMode,
   TimeRange,
 } from '@grafana/data';
+import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   FIXED_UNIT,
@@ -34,8 +35,7 @@ import {
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
-
-import { preparePlotData2, getStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
 import { getConfig, TimelineCoreOptions } from './timeline';
 import { TimelineFieldConfig, TimelineOptions } from './types';
@@ -55,7 +55,7 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   frame,
   theme,
-  timeZone,
+  timeZones,
   getTimeRange,
   mode,
   eventBus,
@@ -67,7 +67,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   mergeValues,
   getValueColor,
 }) => {
-  const builder = new UPlotConfigBuilder(timeZone);
+  const builder = new UPlotConfigBuilder(timeZones[0]);
 
   const xScaleUnit = 'time';
   const xScaleKey = 'x';
@@ -184,7 +184,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
-    timeZone,
+    timeZone: timeZones[0],
     theme,
     grid: { show: true },
   });
@@ -394,9 +394,13 @@ export function prepareTimelineFields(
   for (let frame of series) {
     let isTimeseries = false;
     let changed = false;
+    let maybeSortedFrame = maybeSortFrame(
+      frame,
+      frame.fields.findIndex((f) => f.type === FieldType.time)
+    );
 
     let nulledFrame = applyNullInsertThreshold({
-      frame,
+      frame: maybeSortedFrame,
       refFieldPseudoMin: timeRange.from.valueOf(),
       refFieldPseudoMax: timeRange.to.valueOf(),
     });
@@ -445,11 +449,11 @@ export function prepareTimelineFields(
       hasTimeseries = true;
       if (changed) {
         frames.push({
-          ...frame,
+          ...maybeSortedFrame,
           fields,
         });
       } else {
-        frames.push(frame);
+        frames.push(maybeSortedFrame);
       }
     }
   }
@@ -492,7 +496,7 @@ export function prepareTimelineLegendItems(
   options: VizLegendOptions,
   theme: GrafanaTheme2
 ): VizLegendItem[] | undefined {
-  if (!frames || options.displayMode === 'hidden') {
+  if (!frames || options.showLegend === false) {
     return undefined;
   }
 

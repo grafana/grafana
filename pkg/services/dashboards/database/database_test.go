@@ -33,7 +33,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
 		starService = starimpl.ProvideService(sqlStore)
-		dashboardStore = ProvideDashboardStore(sqlStore)
+		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
@@ -124,7 +124,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		}
 
 		_, err := dashboardStore.GetDashboard(context.Background(), &query)
-		require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
+		require.Equal(t, err, dashboards.ErrDashboardIdentifierNotSet)
 	})
 
 	t.Run("Should be able to get dashboards by IDs & UIDs", func(t *testing.T) {
@@ -227,7 +227,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: false}
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
-		require.True(t, errors.Is(err, models.ErrFolderContainsAlertRules))
+		require.True(t, errors.Is(err, dashboards.ErrFolderContainsAlertRules))
 	})
 
 	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
@@ -274,7 +274,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		}
 
 		_, err := dashboardStore.SaveDashboard(cmd)
-		require.Equal(t, err, models.ErrDashboardNotFound)
+		require.Equal(t, err, dashboards.ErrDashboardNotFound)
 	})
 
 	t.Run("Should not return error if no dashboard is found for update when dashboard id is zero", func(t *testing.T) {
@@ -484,7 +484,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 	pluginId := "test-app"
 
 	appFolder := insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, 0, true, pluginId)
@@ -506,7 +506,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
@@ -555,7 +555,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{
@@ -723,11 +723,11 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore *DashboardStore, 
 	return dash
 }
 
-func updateDashboardAcl(t *testing.T, dashboardStore *DashboardStore, dashboardID int64,
-	items ...models.DashboardAcl) error {
+func updateDashboardACL(t *testing.T, dashboardStore *DashboardStore, dashboardID int64,
+	items ...models.DashboardACL) error {
 	t.Helper()
 
-	var itemPtrs []*models.DashboardAcl
+	var itemPtrs []*models.DashboardACL
 	for _, it := range items {
 		item := it
 		item.Created = time.Now()

@@ -25,7 +25,8 @@ const defaultAlertmanagerConfigJSON = `
 	"template_files": null,
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email"
+			"receiver": "grafana-default-email",
+			"group_by": ["grafana_folder", "alertname"]
 		},
 		"templates": null,
 		"receivers": [{
@@ -87,9 +88,10 @@ func getBody(t *testing.T, body io.ReadCloser) string {
 
 func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
 	return func() apimodels.PostableExtendedRuleNode {
+		forDuration := model.Duration(10 * time.Second)
 		return apimodels.PostableExtendedRuleNode{
 			ApiRuleNode: &apimodels.ApiRuleNode{
-				For:         model.Duration(10 * time.Second),
+				For:         &forDuration,
 				Labels:      map[string]string{"label1": "val1"},
 				Annotations: map[string]string{"annotation1": "val1"},
 			},

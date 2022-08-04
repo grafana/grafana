@@ -206,8 +206,8 @@ func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, alerts [
 	}
 
 	_ = withStoredImages(ctx, gcn.log, gcn.images,
-		func(index int, image *ngmodels.Image) error {
-			if image == nil || len(image.URL) == 0 {
+		func(index int, image ngmodels.Image) error {
+			if len(image.URL) == 0 {
 				return nil
 			}
 

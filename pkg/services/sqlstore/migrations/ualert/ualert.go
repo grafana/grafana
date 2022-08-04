@@ -292,7 +292,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 		var folder *dashboard
 		switch {
-		case dash.HasAcl:
+		case dash.HasACL:
 			folderName := getAlertFolderNameFromDashboard(&dash)
 			f, ok := folderCache[folderName]
 			if !ok {
@@ -315,7 +315,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				err = folderHelper.setACL(f.OrgId, f.Id, permissions)
 				if err != nil {
 					return MigrationError{
-						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", folder.Id, folder.OrgId, err),
+						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", f.Id, f.OrgId, err),
 						AlertId: da.Id,
 					}
 				}

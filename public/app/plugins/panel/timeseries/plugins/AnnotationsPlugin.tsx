@@ -113,7 +113,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
 
   const renderMarker = useCallback(
     (frame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
-      let markerStyle;
+      let width = 0;
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
       const annotation = view.get(dataFrameFieldIndex.fieldIndex);
       const isRegionAnnotation = Boolean(annotation.isRegion);
@@ -130,10 +130,10 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
         if (x1 > plotInstance.current.bbox.width / window.devicePixelRatio) {
           x1 = plotInstance.current.bbox.width / window.devicePixelRatio;
         }
-        markerStyle = { width: `${x1 - x0}px` };
+        width = x1 - x0;
       }
 
-      return <AnnotationMarker annotation={annotation} timeZone={timeZone} style={markerStyle} />;
+      return <AnnotationMarker annotation={annotation} timeZone={timeZone} width={width} />;
     },
     [timeZone]
   );

@@ -9,7 +9,7 @@ import (
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/apikey"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -18,14 +18,14 @@ import (
 
 // Authenticator can authenticate GRPC requests.
 type Authenticator struct {
-	logger   log.Logger
-	SQLStore sqlstore.Store
+	logger log.Logger
+	APIKey apikey.Service
 }
 
-func NewAuthenticator(sqlStore sqlstore.Store) *Authenticator {
+func NewAuthenticator(apiKey apikey.Service) *Authenticator {
 	return &Authenticator{
-		logger:   log.New("grpc-server-authenticator"),
-		SQLStore: sqlStore,
+		logger: log.New("grpc-server-authenticator"),
+		APIKey: apiKey,
 	}
 }
 
@@ -74,7 +74,7 @@ func (a *Authenticator) validateToken(ctx context.Context, keyString string) err
 		return err
 	}
 
-	key, err := a.SQLStore.GetAPIKeyByHash(ctx, hash)
+	key, err := a.APIKey.GetAPIKeyByHash(ctx, hash)
 	if err != nil {
 		return err
 	}

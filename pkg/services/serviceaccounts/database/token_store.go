@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/xorm"
 )
 
-func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgId int64, serviceAccountId int64) ([]*models.ApiKey, error) {
-	result := make([]*models.ApiKey, 0)
+func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgId int64, serviceAccountId int64) ([]*apikey.APIKey, error) {
+	result := make([]*apikey.APIKey, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var sess *xorm.Session
 
@@ -32,7 +33,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			return err
 		}
 
-		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
+		key := apikey.APIKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
 		if exists {
 			return ErrDuplicateToken
@@ -47,7 +48,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			return ErrInvalidTokenExpiration
 		}
 
-		token := models.ApiKey{
+		token := apikey.APIKey{
 			OrgId:            cmd.OrgId,
 			Name:             cmd.Name,
 			Role:             models.ROLE_VIEWER,
@@ -86,7 +87,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 
 // assignApiKeyToServiceAccount sets the API key service account ID
 func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *sqlstore.DBSession, apiKeyId int64, serviceAccountId int64) error {
-	key := models.ApiKey{Id: apiKeyId}
+	key := apikey.APIKey{Id: apiKeyId}
 	exists, err := sess.Get(&key)
 	if err != nil {
 		s.log.Warn("API key not loaded", "err", err)
@@ -94,7 +95,7 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *sqlstore.D
 	}
 	if !exists {
 		s.log.Warn("API key not found", "err", err)
-		return models.ErrApiKeyNotFound
+		return apikey.ErrNotFound
 	}
 	key.ServiceAccountId = &serviceAccountId
 
@@ -108,7 +109,7 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *sqlstore.D
 
 // detachApiKeyFromServiceAccount converts service account token to old API key
 func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *sqlstore.DBSession, apiKeyId int64) error {
-	key := models.ApiKey{Id: apiKeyId}
+	key := apikey.APIKey{Id: apiKeyId}
 	exists, err := sess.Get(&key)
 	if err != nil {
 		s.log.Warn("Cannot get API key", "err", err)
@@ -116,7 +117,7 @@ func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *sqlstore
 	}
 	if !exists {
 		s.log.Warn("API key not found", "err", err)
-		return models.ErrApiKeyNotFound
+		return apikey.ErrNotFound
 	}
 	key.ServiceAccountId = nil
 

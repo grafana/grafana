@@ -98,6 +98,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":                    setting.AuthProxyEnabled,
 		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
+		"jwtHeaderName":                       hs.Cfg.JWTAuthHeaderName,
+		"jwtUrlLogin":                         hs.Cfg.JWTAuthURLLogin,
 		"alertingEnabled":                     setting.AlertingEnabled,
 		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,
@@ -152,6 +154,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
 		"rendererVersion":                  hs.RenderService.Version(),
+		"secretsManagerPluginEnabled":      hs.remoteSecretsCheck.ShouldUseRemoteSecretsPlugin(),
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                           hs.Cfg.Sentry,
 		"grafanaJavascriptAgent":           hs.Cfg.GrafanaJavascriptAgent,
@@ -176,6 +179,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+		"unifiedAlerting": map[string]interface{}{
+			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
+		},
 	}
 
 	if hs.ThumbService != nil {

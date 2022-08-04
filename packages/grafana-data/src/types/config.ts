@@ -73,6 +73,10 @@ export interface GrafanaJavascriptAgentConfig {
   apiKey: string;
 }
 
+export interface UnifiedAlertingConfig {
+  minInterval: string;
+}
+
 /**
  * Describes the plugins that should be preloaded prior to start Grafana.
  *
@@ -201,8 +205,10 @@ export interface GrafanaConfig {
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
+  unifiedAlerting: UnifiedAlertingConfig;
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
+  secretsManagerPluginEnabled: boolean;
   googleAnalyticsId: string | undefined;
   rudderstackWriteKey: string | undefined;
   rudderstackDataPlaneUrl: string | undefined;

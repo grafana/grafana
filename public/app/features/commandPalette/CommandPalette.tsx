@@ -47,13 +47,11 @@ export const CommandPalette = () => {
   });
 
   useEffect(() => {
-    (async () => {
-      if (isNotLogin) {
-        setStaticActions(getGlobalActions(navBarTree));
-        setActions(staticActions);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (isNotLogin) {
+      const staticActionsResp = getGlobalActions(navBarTree);
+      setStaticActions(staticActionsResp);
+      setActions([...staticActionsResp]);
+    }
   }, [isNotLogin, navBarTree]);
 
   useEffect(() => {

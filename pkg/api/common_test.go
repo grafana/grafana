@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -33,17 +34,21 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -57,6 +62,7 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
+		sc.userService = usertest.NewUserServiceFake()
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
@@ -169,6 +175,7 @@ type scenarioContext struct {
 	sqlStore                sqlstore.Store
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
+	userService             user.Service
 }
 
 func (sc *scenarioContext) exec() {
@@ -197,7 +204,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
 	loginService := &logintest.LoginServiceFake{}
 	authenticator := &logintest.AuthenticatorFake{}
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, authenticator)
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator, usertest.NewUserServiceFake())
 
 	return ctxHdlr
 }
@@ -239,7 +246,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		Live:               newTestLive(t, store),
 		License:            &licensing.OSSLicensingService{},
 		Features:           featuremgmt.WithFeatures(),
-		QuotaService:       &quota.QuotaService{Cfg: cfg},
+		QuotaService:       &quotaimpl.Service{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
 		searchUsersService: searchusers.ProvideUsersService(store, filters.ProvideOSSSearchUserFilter()),
@@ -341,15 +348,6 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db, featuremgmt.WithFeatures())
 }
 
-func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, features *featuremgmt.FeatureManager) accessControlScenarioContext {
-	// Use a new conf
-	cfg := setting.NewCfg()
-	db := sqlstore.InitTestDB(t)
-	db.Cfg = setting.NewCfg()
-
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock(), features)
-}
-
 func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, features *featuremgmt.FeatureManager) accessControlScenarioContext {
 	t.Helper()
 
@@ -363,7 +361,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
-	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, featuremgmt.WithFeatures())
 
 	var acmock *accesscontrolmock.Mock
 	var ac accesscontrol.AccessControl
@@ -385,22 +383,25 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	require.NoError(t, err)
 
 	// Create minimal HTTP Server
+	userMock := usertest.NewUserServiceFake()
+	userMock.ExpectedUser = &user.User{ID: 1}
 	hs := &HTTPServer{
 		Cfg:                    cfg,
 		Features:               features,
 		Live:                   newTestLive(t, db),
-		QuotaService:           &quota.QuotaService{Cfg: cfg},
+		QuotaService:           &quotaimpl.Service{Cfg: cfg},
 		RouteRegister:          routeRegister,
 		SQLStore:               store,
 		License:                &licensing.OSSLicensingService{},
 		AccessControl:          ac,
 		teamPermissionsService: teamPermissionService,
 		searchUsersService:     searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
-		dashboardService: dashboardservice.ProvideDashboardService(
+		DashboardService: dashboardservice.ProvideDashboardService(
 			cfg, dashboardsStore, nil, features,
 			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
+		userService:       userMock,
 	}
 
 	require.NoError(t, hs.declareFixedRoles())
@@ -475,4 +476,43 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	hs.registerRoutes()
 	s := webtest.NewServer(t, hs.RouteRegister)
 	return s
+}
+
+var (
+	viewerRole = models.ROLE_VIEWER
+	editorRole = models.ROLE_EDITOR
+)
+
+type setUpConf struct {
+	aclMockResp []*models.DashboardACLInfoDTO
+}
+
+type mockSearchService struct{ ExpectedResult models.HitList }
+
+func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) error {
+	q.Result = mss.ExpectedResult
+	return nil
+}
+func (mss *mockSearchService) SortOptions() []models.SortOption { return nil }
+
+func setUp(confs ...setUpConf) *HTTPServer {
+	singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
+	store := mockstore.NewSQLStoreMock()
+	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
+	store.ExpectedAlert = singleAlert
+
+	aclMockResp := []*models.DashboardACLInfoDTO{}
+	for _, c := range confs {
+		if c.aclMockResp != nil {
+			aclMockResp = c.aclMockResp
+		}
+	}
+	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
+		q.Result = aclMockResp
+	}).Return(nil)
+	guardian.InitLegacyGuardian(store, dashSvc)
+	return hs
 }

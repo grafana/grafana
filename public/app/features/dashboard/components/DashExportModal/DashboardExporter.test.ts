@@ -337,13 +337,10 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add library panels as elements', () => {
-    const element: LibraryElementExport = exported.__elements.find(
-      (element: LibraryElementExport) => element.uid === 'ah8NqyDPs'
-    );
+    const element: LibraryElementExport = exported.__elements['ah8NqyDPs'];
     expect(element.name).toBe('Library Panel 2');
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
-      id: 17,
       datasource: { type: 'other2', uid: '$ds' },
       targets: [{ refId: 'A', datasource: { type: 'other2', uid: '$ds' } }],
       type: 'graph',
@@ -351,13 +348,10 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add library panels in collapsed rows as elements', () => {
-    const element: LibraryElementExport = exported.__elements.find(
-      (element: LibraryElementExport) => element.uid === 'jL6MrxCMz'
-    );
+    const element: LibraryElementExport = exported.__elements['jL6MrxCMz'];
     expect(element.name).toBe('Library Panel');
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
-      id: 16,
       type: 'graph',
       datasource: {
         type: 'testdb',

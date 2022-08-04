@@ -19,7 +19,7 @@ var (
 func ProvideService(
 	sqlStore sqlstore.Store,
 	userService user.Service,
-	quotaService *quota.QuotaService,
+	quotaService quota.Service,
 	authInfoService login.AuthInfoService,
 ) *Implementation {
 	s := &Implementation{
@@ -35,7 +35,7 @@ type Implementation struct {
 	SQLStore        sqlstore.Store
 	userService     user.Service
 	AuthInfoService login.AuthInfoService
-	QuotaService    *quota.QuotaService
+	QuotaService    quota.Service
 	TeamSync        login.TeamSyncFunc
 }
 
@@ -49,14 +49,12 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 	extUser := cmd.ExternalUser
 
 	usr, err := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
-		AuthModule: extUser.AuthModule,
-		AuthId:     extUser.AuthId,
-		UserId:     extUser.UserId,
-		Email:      extUser.Email,
-		Login:      extUser.Login,
+		AuthModule:       extUser.AuthModule,
+		AuthId:           extUser.AuthId,
+		UserLookupParams: cmd.UserLookupParams,
 	})
 	if err != nil {
-		if !errors.Is(err, models.ErrUserNotFound) {
+		if !errors.Is(err, user.ErrUserNotFound) {
 			return err
 		}
 		if !cmd.SignupAllowed {
@@ -211,28 +209,28 @@ func (ls *Implementation) createUser(extUser *models.ExternalUserInfo) (*user.Us
 	return ls.CreateUser(cmd)
 }
 
-func (ls *Implementation) updateUser(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {
+func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {
 	// sync user info
-	updateCmd := &models.UpdateUserCommand{
-		UserId: user.ID,
+	updateCmd := &user.UpdateUserCommand{
+		UserID: usr.ID,
 	}
 
 	needsUpdate := false
-	if extUser.Login != "" && extUser.Login != user.Login {
+	if extUser.Login != "" && extUser.Login != usr.Login {
 		updateCmd.Login = extUser.Login
-		user.Login = extUser.Login
+		usr.Login = extUser.Login
 		needsUpdate = true
 	}
 
-	if extUser.Email != "" && extUser.Email != user.Email {
+	if extUser.Email != "" && extUser.Email != usr.Email {
 		updateCmd.Email = extUser.Email
-		user.Email = extUser.Email
+		usr.Email = extUser.Email
 		needsUpdate = true
 	}
 
-	if extUser.Name != "" && extUser.Name != user.Name {
+	if extUser.Name != "" && extUser.Name != usr.Name {
 		updateCmd.Name = extUser.Name
-		user.Name = extUser.Name
+		usr.Name = extUser.Name
 		needsUpdate = true
 	}
 
@@ -240,8 +238,8 @@ func (ls *Implementation) updateUser(ctx context.Context, user *user.User, extUs
 		return nil
 	}
 
-	logger.Debug("Syncing user info", "id", user.ID, "update", updateCmd)
-	return ls.SQLStore.UpdateUser(ctx, updateCmd)
+	logger.Debug("Syncing user info", "id", usr.ID, "update", updateCmd)
+	return ls.userService.Update(ctx, updateCmd)
 }
 
 func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {

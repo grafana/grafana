@@ -27,6 +27,7 @@ import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
+  showLegend: true,
   placement: 'right',
   calcs: [],
   values: [PieChartLegendValues.Percent],
@@ -77,7 +78,7 @@ export function PieChartPanel(props: Props) {
 function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const legendOptions = props.options.legend ?? defaultLegendOptions;
 
-  if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
+  if (legendOptions.showLegend === false) {
     return undefined;
   }
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);

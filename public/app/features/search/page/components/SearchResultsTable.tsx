@@ -26,6 +26,7 @@ export type SearchResultsProps = {
   clearSelection: () => void;
   onTagSelected: (tag: string) => void;
   onDatasourceChange?: (datasource?: string) => void;
+  onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
@@ -45,9 +46,11 @@ export const SearchResultsTable = React.memo(
     clearSelection,
     onTagSelected,
     onDatasourceChange,
+    onClickItem,
     keyboardEvents,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
+    const columnStyles = useStyles2(getColumnStyles);
     const tableStyles = useStyles2(getTableStyles);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const [listEl, setListEl] = useState<FixedSizeList | null>(null);
@@ -82,12 +85,12 @@ export const SearchResultsTable = React.memo(
         selection,
         selectionToggle,
         clearSelection,
-        styles,
+        columnStyles,
         onTagSelected,
         onDatasourceChange,
         response.view?.length >= response.totalRows
       );
-    }, [response, width, styles, selection, selectionToggle, clearSelection, onTagSelected, onDatasourceChange]);
+    }, [response, width, columnStyles, selection, selectionToggle, clearSelection, onTagSelected, onDatasourceChange]);
 
     const options: TableOptions<{}> = useMemo(
       () => ({
@@ -120,14 +123,14 @@ export const SearchResultsTable = React.memo(
                   cell={cell}
                   columnIndex={index}
                   columnCount={row.cells.length}
-                  userProps={{ href: url }}
+                  userProps={{ href: url, onClick: onClickItem }}
                 />
               );
             })}
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles, onClickItem]
     );
 
     if (!rows.length) {
@@ -220,6 +223,88 @@ const getStyles = (theme: GrafanaTheme2) => {
         overflow: hidden;
         text-overflow: ellipsis;
       }
+    `,
+  };
+};
+
+// CSS for columns from react table
+const getColumnStyles = (theme: GrafanaTheme2) => {
+  return {
+    nameCellStyle: css`
+      border-right: none;
+      padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(2)};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      white-space: nowrap;
+      &:hover {
+        box-shadow: none;
+      }
+    `,
+    headerNameStyle: css`
+      padding-left: ${theme.spacing(1)};
+    `,
+
+    typeIcon: css`
+      margin-left: 5px;
+      margin-right: 9.5px;
+      vertical-align: middle;
+      display: inline-block;
+      margin-bottom: ${theme.v1.spacing.xxs};
+      fill: ${theme.colors.text.secondary};
+    `,
+    datasourceItem: css`
+      span {
+        &:hover {
+          color: ${theme.colors.text.link};
+        }
+      }
+    `,
+    missingTitleText: css`
+      color: ${theme.colors.text.disabled};
+      font-style: italic;
+    `,
+    invalidDatasourceItem: css`
+      color: ${theme.colors.error.main};
+      text-decoration: line-through;
+    `,
+    typeText: css`
+      color: ${theme.colors.text.secondary};
+      padding-top: ${theme.spacing(1)};
+    `,
+    locationItem: css`
+      color: ${theme.colors.text.secondary};
+      margin-right: 12px;
+    `,
+    sortedHeader: css`
+      text-align: right;
+      padding-right: ${theme.spacing(2)};
+    `,
+    sortedItems: css`
+      text-align: right;
+      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
+    `,
+    explainItem: css`
+      text-align: right;
+      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
+      cursor: pointer;
+    `,
+    locationCellStyle: css`
+      padding-top: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(1)};
+    `,
+    checkboxHeader: css`
+      margin-left: 2px;
+    `,
+    checkbox: css`
+      margin-left: 10px;
+      margin-right: 10px;
+      margin-top: 5px;
+    `,
+    tagList: css`
+      padding-top: ${theme.spacing(0.5)};
+      justify-content: flex-start;
+      flex-wrap: nowrap;
     `,
   };
 };
