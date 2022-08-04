@@ -30,3 +30,7 @@ func (f *FakeUserService) GetByID(ctx context.Context, query *user.GetUserByIDQu
 func (f *FakeUserService) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
+
+func (f *FakeUserService) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
