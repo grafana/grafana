@@ -6,99 +6,38 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/process"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type PluginManager struct {
-	cfg            *plugins.Cfg
-	processManager process.Service
-	pluginRegistry registry.Service
-	pluginLoader   loader.Service
-	pluginSources  []PluginSource
-	log            log.Logger
+	pluginInstaller plugins.Installer
+	pluginSources   []plugins.PluginSource
+	log             log.Logger
 }
 
-type PluginSource struct {
-	Class plugins.Class
-	Paths []string
+func ProvideService(cfg *setting.Cfg, pluginInstaller plugins.Installer) *PluginManager {
+	return NewManager(pluginInstaller, pluginSources(cfg))
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginManager, error) {
-	return NewManager(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader), nil
-}
-
-func NewManager(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource,
-	pluginLoader loader.Service) *PluginManager {
+func NewManager(pluginInstaller plugins.Installer, pluginSources []plugins.PluginSource) *PluginManager {
 	return &PluginManager{
-		cfg:            cfg,
-		pluginLoader:   pluginLoader,
-		pluginSources:  pluginSources,
-		pluginRegistry: pluginRegistry,
-		processManager: process.NewManager(pluginRegistry),
-		log:            log.New("plugin.manager"),
+		pluginInstaller: pluginInstaller,
+		pluginSources:   pluginSources,
+		log:             log.New("plugin.manager"),
 	}
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
-	return m.sync(ctx, m.pluginSources...)
-}
-
-func (m *PluginManager) sync(ctx context.Context, pluginSources ...PluginSource) error {
-	for _, ps := range pluginSources {
-		err := m.loadPlugins(ctx, ps.Class, ps.Paths...)
-		if err != nil {
+	for _, ps := range m.pluginSources {
+		if err := m.pluginInstaller.AddFromSource(ctx, ps); err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
-func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, paths ...string) error {
-	if len(paths) == 0 {
-		return nil
-	}
-
-	var pluginPaths []string
-	for _, p := range paths {
-		if p != "" {
-			pluginPaths = append(pluginPaths, p)
-		}
-	}
-
-	// get all registered plugins
-	registeredPlugins := make(map[string]struct{})
-	for _, p := range m.pluginRegistry.Plugins(ctx) {
-		registeredPlugins[p.ID] = struct{}{}
-	}
-
-	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, registeredPlugins)
-	if err != nil {
-		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
-		return err
-	}
-
-	for _, p := range loadedPlugins {
-		if err = m.registerAndStart(context.Background(), p); err != nil {
-			m.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
-		}
-	}
-
-	return nil
-}
-
-func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin) error {
-	if err := m.pluginRegistry.Add(ctx, p); err != nil {
-		return err
-	}
-	return m.processManager.Start(ctx, p.ID)
-}
-
-func pluginSources(cfg *setting.Cfg) []PluginSource {
-	return []PluginSource{
+func pluginSources(cfg *setting.Cfg) []plugins.PluginSource {
+	return []plugins.PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(cfg)},
 		{Class: plugins.Bundled, Paths: []string{cfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg)...)},
@@ -109,7 +48,6 @@ func pluginSources(cfg *setting.Cfg) []PluginSource {
 func corePluginPaths(cfg *setting.Cfg) []string {
 	datasourcePaths := filepath.Join(cfg.StaticRootPath, "app/plugins/datasource")
 	panelsPath := filepath.Join(cfg.StaticRootPath, "app/plugins/panel")
-
 	return []string{datasourcePaths, panelsPath}
 }
 
@@ -123,6 +61,5 @@ func pluginSettingPaths(cfg *setting.Cfg) []string {
 		}
 		pluginSettingDirs = append(pluginSettingDirs, path)
 	}
-
 	return pluginSettingDirs
 }

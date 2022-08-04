@@ -79,12 +79,16 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string) err
 		return err
 	}
 
-	err = m.loadPlugins(context.Background(), m.cfg.PluginsPath)
+	err = m.loadPlugins(context.Background(), plugins.External, []string{m.cfg.PluginsPath})
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (m *PluginInstaller) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
+	return m.loadPlugins(ctx, source.Class, source.Paths)
 }
 
 func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
@@ -124,15 +128,14 @@ func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins
 	return p, true
 }
 
-func (m *PluginInstaller) loadPlugins(ctx context.Context, path string) error {
+func (m *PluginInstaller) loadPlugins(ctx context.Context, class plugins.Class, pluginPaths []string) error {
 	// get all registered plugins
 	registeredPlugins := make(map[string]struct{})
 	for _, p := range m.pluginRegistry.Plugins(ctx) {
 		registeredPlugins[p.ID] = struct{}{}
 	}
 
-	pluginPaths := []string{path}
-	loadedPlugins, err := m.pluginLoader.Load(ctx, plugins.External, pluginPaths, registeredPlugins)
+	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, registeredPlugins)
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
 		return err

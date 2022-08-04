@@ -21,6 +21,13 @@ type Installer interface {
 	Add(ctx context.Context, pluginID, version string) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
+	// AddFromSource adds a plugin to the store.
+	AddFromSource(ctx context.Context, source PluginSource) error
+}
+
+type PluginSource struct {
+	Class Class
+	Paths []string
 }
 
 type UpdateInfo struct {
