@@ -6294,6 +6294,9 @@
           "200": {
             "$ref": "#/responses/snapshotResponse"
           },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },
