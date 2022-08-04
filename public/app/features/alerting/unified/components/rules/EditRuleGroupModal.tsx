@@ -3,8 +3,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { isValidGoDuration } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Modal, Button, Form, Field, Input, useStyles2, Alert } from '@grafana/ui';
+import { Modal, Button, Form, Field, Input, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -14,6 +13,7 @@ import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { durationValidationPattern } from '../../utils/time';
+import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 
 interface Props {
   namespace: CombinedRuleNamespace;
@@ -119,12 +119,7 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
               />
             </Field>
             {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
-              <Alert severity="warning" title="Global evalutation interval limit exceeded">
-                A minimum evaluation interval of <strong>{config.unifiedAlerting.minInterval}</strong> has been
-                configured in Grafana.
-                <br />
-                Please contact the administrator to configure a lower interval.
-              </Alert>
+              <EvaluationIntervalLimitExceeded />
             )}
 
             <Modal.ButtonRow>
