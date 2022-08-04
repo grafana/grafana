@@ -24,12 +24,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 )
 
 type Installer struct {
-	pluginLoader loader.Service
-	retryCount   int
+	retryCount int
 
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
