@@ -743,10 +743,6 @@ func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserComman
 	})
 }
 
-func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cmd *models.DeleteUserCommand) error {
-	return deleteUserInTransaction(ss, sess, cmd)
-}
-
 func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
 	// Check if user exists
 	usr := user.User{ID: cmd.UserId}
