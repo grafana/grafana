@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -62,7 +63,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 		sc.mockSQLStore.ExpectedUser = &user.User{Password: encoded, ID: id, Salt: salt}
 		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id}
-		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{})
+		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{}, usertest.NewUserServiceFake())
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()

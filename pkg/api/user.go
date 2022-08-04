@@ -82,24 +82,24 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Response {
-	query := models.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
-	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &query); err != nil {
+	query := user.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
+	usr, err := hs.userService.GetByLogin(c.Req.Context(), &query)
+	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to get user", err)
 	}
-	user := query.Result
 	result := models.UserProfileDTO{
-		Id:             user.ID,
-		Name:           user.Name,
-		Email:          user.Email,
-		Login:          user.Login,
-		Theme:          user.Theme,
-		IsGrafanaAdmin: user.IsAdmin,
-		OrgId:          user.OrgID,
-		UpdatedAt:      user.Updated,
-		CreatedAt:      user.Created,
+		Id:             usr.ID,
+		Name:           usr.Name,
+		Email:          usr.Email,
+		Login:          usr.Login,
+		Theme:          usr.Theme,
+		IsGrafanaAdmin: usr.IsAdmin,
+		OrgId:          usr.OrgID,
+		UpdatedAt:      usr.Updated,
+		CreatedAt:      usr.Created,
 	}
 	return response.JSON(http.StatusOK, &result)
 }

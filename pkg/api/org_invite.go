@@ -66,14 +66,15 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	}
 
 	// first try get existing user
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
-	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery); err != nil {
+	userQuery := user.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
+	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
+	if err != nil {
 		if !errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(500, "Failed to query db for existing user check", err)
 		}
 	} else {
 		// Evaluate permissions for adding an existing user to the organization
-		userIDScope := ac.Scope("users", "id", strconv.Itoa(int(userQuery.Result.ID)))
+		userIDScope := ac.Scope("users", "id", strconv.Itoa(int(usr.ID)))
 		hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionOrgUsersAdd, userIDScope))
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
@@ -81,7 +82,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		if !hasAccess {
 			return response.Error(http.StatusForbidden, "Permission denied: not permitted to add an existing user to this organisation", err)
 		}
-		return hs.inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
+		return hs.inviteExistingUserToOrg(c, usr, &inviteDto)
 	}
 
 	if setting.DisableLoginForm {
@@ -94,7 +95,6 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	cmd.Name = inviteDto.Name
 	cmd.Status = models.TmpUserInvitePending
 	cmd.InvitedByUserId = c.UserId
-	var err error
 	cmd.Code, err = util.GetRandomString(30)
 	if err != nil {
 		return response.Error(500, "Could not generate random string", err)
