@@ -7680,6 +7680,9 @@
           "200": {
             "$ref": "#/responses/snapshotResponse"
           },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },
@@ -8061,9 +8064,6 @@
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
