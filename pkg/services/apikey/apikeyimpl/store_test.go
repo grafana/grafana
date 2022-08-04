@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -40,12 +41,12 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 		ss := &sqlStore{db: db, cfg: db.Cfg}
 
 		t.Run("Given saved api key", func(t *testing.T) {
-			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "hello", Key: "asd"}
+			cmd := apikey.AddCommand{OrgId: 1, Name: "hello", Key: "asd"}
 			err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
 			t.Run("Should be able to get key by name", func(t *testing.T) {
-				query := models.GetApiKeyByNameQuery{KeyName: "hello", OrgId: 1}
+				query := apikey.GetByNameQuery{KeyName: "hello", OrgId: 1}
 				err = ss.GetApiKeyByName(context.Background(), &query)
 
 				assert.Nil(t, err)
@@ -61,11 +62,11 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 		})
 
 		t.Run("Add non expiring key", func(t *testing.T) {
-			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "non-expiring", Key: "asd1", SecondsToLive: 0}
+			cmd := apikey.AddCommand{OrgId: 1, Name: "non-expiring", Key: "asd1", SecondsToLive: 0}
 			err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
-			query := models.GetApiKeyByNameQuery{KeyName: "non-expiring", OrgId: 1}
+			query := apikey.GetByNameQuery{KeyName: "non-expiring", OrgId: 1}
 			err = ss.GetApiKeyByName(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -74,11 +75,11 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 
 		t.Run("Add an expiring key", func(t *testing.T) {
 			// expires in one hour
-			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "expiring-in-an-hour", Key: "asd2", SecondsToLive: 3600}
+			cmd := apikey.AddCommand{OrgId: 1, Name: "expiring-in-an-hour", Key: "asd2", SecondsToLive: 3600}
 			err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
-			query := models.GetApiKeyByNameQuery{KeyName: "expiring-in-an-hour", OrgId: 1}
+			query := apikey.GetByNameQuery{KeyName: "expiring-in-an-hour", OrgId: 1}
 			err = ss.GetApiKeyByName(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -94,7 +95,7 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 
 		t.Run("Last Used At datetime update", func(t *testing.T) {
 			// expires in one hour
-			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "last-update-at", Key: "asd3", SecondsToLive: 3600}
+			cmd := apikey.AddCommand{OrgId: 1, Name: "last-update-at", Key: "asd3", SecondsToLive: 3600}
 			err := ss.AddAPIKey(context.Background(), &cmd)
 			require.NoError(t, err)
 
@@ -103,7 +104,7 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 			err = ss.UpdateAPIKeyLastUsedDate(context.Background(), cmd.Result.Id)
 			require.NoError(t, err)
 
-			query := models.GetApiKeyByNameQuery{KeyName: "last-update-at", OrgId: 1}
+			query := apikey.GetByNameQuery{KeyName: "last-update-at", OrgId: 1}
 			err = ss.GetApiKeyByName(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -112,28 +113,28 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 
 		t.Run("Add a key with negative lifespan", func(t *testing.T) {
 			// expires in one day
-			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
+			cmd := apikey.AddCommand{OrgId: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
 			err := ss.AddAPIKey(context.Background(), &cmd)
-			assert.EqualError(t, err, models.ErrInvalidApiKeyExpiration.Error())
+			assert.EqualError(t, err, apikey.ErrInvalidExpiration.Error())
 
-			query := models.GetApiKeyByNameQuery{KeyName: "key-with-negative-lifespan", OrgId: 1}
+			query := apikey.GetByNameQuery{KeyName: "key-with-negative-lifespan", OrgId: 1}
 			err = ss.GetApiKeyByName(context.Background(), &query)
 			assert.EqualError(t, err, "invalid API key")
 		})
 
 		t.Run("Add keys", func(t *testing.T) {
 			// never expires
-			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "key1", Key: "key1", SecondsToLive: 0}
+			cmd := apikey.AddCommand{OrgId: 1, Name: "key1", Key: "key1", SecondsToLive: 0}
 			err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
 			// expires in 1s
-			cmd = models.AddApiKeyCommand{OrgId: 1, Name: "key2", Key: "key2", SecondsToLive: 1}
+			cmd = apikey.AddCommand{OrgId: 1, Name: "key2", Key: "key2", SecondsToLive: 1}
 			err = ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
 			// expires in one hour
-			cmd = models.AddApiKeyCommand{OrgId: 1, Name: "key3", Key: "key3", SecondsToLive: 3600}
+			cmd = apikey.AddCommand{OrgId: 1, Name: "key3", Key: "key3", SecondsToLive: 3600}
 			err = ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
@@ -146,7 +147,7 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 					1: {accesscontrol.ActionAPIKeyRead: []string{accesscontrol.ScopeAPIKeysAll}},
 				},
 			}
-			query := models.GetApiKeysQuery{OrgId: 1, IncludeExpired: false, User: testUser}
+			query := apikey.GetApiKeysQuery{OrgId: 1, IncludeExpired: false, User: testUser}
 			err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -156,7 +157,7 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 				}
 			}
 
-			query = models.GetApiKeysQuery{OrgId: 1, IncludeExpired: true, User: testUser}
+			query = apikey.GetApiKeysQuery{OrgId: 1, IncludeExpired: true, User: testUser}
 			err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -183,22 +184,22 @@ func TestIntegrationApiKeyErrors(t *testing.T) {
 		ss := &sqlStore{db: db, cfg: db.Cfg}
 
 		t.Run("Delete non-existing key should return error", func(t *testing.T) {
-			cmd := models.DeleteApiKeyCommand{Id: 1}
+			cmd := apikey.DeleteCommand{Id: 1}
 			err := ss.DeleteApiKey(context.Background(), &cmd)
 
-			assert.EqualError(t, err, models.ErrApiKeyNotFound.Error())
+			assert.EqualError(t, err, apikey.ErrNotFound.Error())
 		})
 
 		t.Run("Testing API Duplicate Key Errors", func(t *testing.T) {
 			t.Run("Given saved api key", func(t *testing.T) {
-				cmd := models.AddApiKeyCommand{OrgId: 0, Name: "duplicate", Key: "asd"}
+				cmd := apikey.AddCommand{OrgId: 0, Name: "duplicate", Key: "asd"}
 				err := ss.AddAPIKey(context.Background(), &cmd)
 				assert.Nil(t, err)
 
 				t.Run("Add API Key with existing Org ID and Name", func(t *testing.T) {
-					cmd := models.AddApiKeyCommand{OrgId: 0, Name: "duplicate", Key: "asd"}
+					cmd := apikey.AddCommand{OrgId: 0, Name: "duplicate", Key: "asd"}
 					err = ss.AddAPIKey(context.Background(), &cmd)
-					assert.EqualError(t, err, models.ErrDuplicateApiKey.Error())
+					assert.EqualError(t, err, apikey.ErrDuplicate.Error())
 				})
 			})
 		})
@@ -245,7 +246,7 @@ func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
 			store := &sqlStore{db: db, cfg: db.Cfg}
 			seedApiKeys(t, store, 10)
 
-			query := &models.GetApiKeysQuery{OrgId: 1, User: tt.user}
+			query := &apikey.GetApiKeysQuery{OrgId: 1, User: tt.user}
 			err := store.GetAPIKeys(context.Background(), query)
 			require.NoError(t, err)
 			assert.Len(t, query.Result, tt.expectedNumKeys)
@@ -257,7 +258,7 @@ func seedApiKeys(t *testing.T, store store, num int) {
 	t.Helper()
 
 	for i := 0; i < num; i++ {
-		err := store.AddAPIKey(context.Background(), &models.AddApiKeyCommand{
+		err := store.AddAPIKey(context.Background(), &apikey.AddCommand{
 			Name:  fmt.Sprintf("key:%d", i),
 			Key:   fmt.Sprintf("key:%d", i),
 			OrgId: 1,
