@@ -37,7 +37,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
+	resp, err := hs.queryDataService.QueryData(context.WithValue(c.Req.Context(), models.LogzioHeadersCtxKey, c.Req.Header), c.SignedInUser, c.SkipCache, reqDTO, true) // LOGZ.IO CHANGE :: DEV-33325 Open expressions for Grafana 8.5.1
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
