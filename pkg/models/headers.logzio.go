@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const LogzioHeadersCtxKey string = "logzioHeaders"
+
 type LogzIoHeaders struct {
 	RequestHeaders http.Header
 }

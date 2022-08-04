@@ -87,7 +87,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUs
 	exprReq := expr.Request{
 		OrgId:   user.OrgId,
 		Queries: []expr.Query{},
-		Headers: h.GetDatasourceQueryHeader(ctx.Value("logzioHeaders").(http.Header)), // LOGZ.IO CHANGE :: DEV-33325 Open expressions for Grafana 8.5.1
+		Headers: h.GetDatasourceQueryHeader(ctx.Value(models.LogzioHeadersCtxKey).(http.Header)), // LOGZ.IO CHANGE :: DEV-33325 Open expressions for Grafana 8.5.1
 	}
 
 	for _, pq := range parsedReq.parsedQueries {
