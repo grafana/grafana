@@ -379,7 +379,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response {
-	cmd := models.ChangeUserPasswordCommand{}
+	cmd := user.ChangeUserPasswordCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -407,13 +407,13 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 		return response.Error(400, "New password is too short", nil)
 	}
 
-	cmd.UserId = c.UserId
+	cmd.UserID = c.UserId
 	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, user.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}
 
-	if err := hs.SQLStore.ChangeUserPassword(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
 	}
 

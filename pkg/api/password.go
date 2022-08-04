@@ -71,15 +71,15 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 		return response.Error(400, "New password is too short", nil)
 	}
 
-	cmd := models.ChangeUserPasswordCommand{}
-	cmd.UserId = query.Result.ID
+	cmd := user.ChangeUserPasswordCommand{}
+	cmd.UserID = query.Result.ID
 	var err error
 	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, query.Result.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}
 
-	if err := hs.SQLStore.ChangeUserPassword(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
 	}
 
