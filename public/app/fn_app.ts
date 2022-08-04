@@ -33,7 +33,7 @@ import {
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { getScrollbarWidth } from '@grafana/ui';
-import config from 'app/core/config';
+import config, { Settings } from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -96,6 +96,10 @@ export class GrafanaApp {
     try {
       backendSrv.setGrafanaPrefix(true);
       setBackendSrv(backendSrv);
+      backendSrv.get('/api/frontend/settings').then((settings: Settings) => {
+        config.panels = settings.panels;
+      });
+
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
       setLocale(config.bootData.user.locale);

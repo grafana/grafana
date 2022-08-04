@@ -8,7 +8,16 @@ if (window.__POWERED_BY_QIANKUN__) {
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import { config } from '@grafana/runtime';
+
 import { FNDashboard } from './FNDashboard';
+
+// set featureToggles
+config.featureToggles = {
+  ...config.featureToggles,
+  isPublicDashboardView: true,
+};
+config.isPublicDashboardView = true;
 
 /**
  * The bootstrap will only be called once when the child application is initialized.

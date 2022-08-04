@@ -12,9 +12,9 @@ import { I18nProvider } from './core/internationalization';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import PublicDashboardPage, { Props } from './features/dashboard/containers/PublicDashboardPage';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import fn_dashboard_app from './fn_dashboard_app';
+import fn_app from './fn_app';
 import { DashboardRoutes } from './types';
-fn_dashboard_app.init();
+fn_app.init();
 
 interface DefaultProps {}
 
@@ -35,7 +35,7 @@ export class FNDashboard extends React.Component<DefaultProps> {
   constructor(props: DefaultProps) {
     super(props);
     this.state = {};
-    this.app = fn_dashboard_app;
+    this.app = fn_app;
   }
 
   async componentDidMount() {
