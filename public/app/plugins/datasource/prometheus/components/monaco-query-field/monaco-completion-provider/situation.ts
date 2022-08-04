@@ -214,7 +214,7 @@ function getLabelOp(opNode: SyntaxNode): LabelOperator | null {
 }
 
 function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
-  if (labelMatcherNode.type.name !== 'LabelMatcher') {
+  if (labelMatcherNode.type.id !== LabelMatcher) {
     return null;
   }
 
@@ -247,7 +247,7 @@ function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
 }
 
 function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
-  if (labelMatchersNode.type.name !== 'LabelMatchers') {
+  if (labelMatchersNode.type.id !== LabelMatchers) {
     return [];
   }
 
