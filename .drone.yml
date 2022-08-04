@@ -1,4 +1,6 @@
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: pr-verify-drone
@@ -42,6 +44,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: pr-test-frontend
@@ -76,6 +80,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -124,6 +129,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: pr-test-backend
@@ -146,6 +153,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -230,6 +238,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: pr-build-e2e
@@ -252,6 +262,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -478,6 +489,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: pr-integration-tests
@@ -516,6 +529,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -576,9 +590,16 @@ trigger:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - '*.md'
+    include:
+    - pkg/**
+    - packaging/**
+    - .drone.yml
+    - conf/**
+    - go.sum
+    - go.mod
+    - public/app/plugins/**/plugin.json
 type: docker
 volumes:
 - host:
@@ -591,6 +612,8 @@ volumes:
   temp:
     medium: memory
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: pr-docs
@@ -668,6 +691,7 @@ steps:
   name: build-docs-website
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -687,6 +711,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: main-docs
@@ -764,6 +790,7 @@ steps:
   name: build-docs-website
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -772,12 +799,20 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    include:
+    - '*.md'
+    - docs/**
+    - packages/**
+    - latest.json
 type: docker
 volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: main-test-frontend
@@ -812,6 +847,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -846,12 +882,19 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: main-test-backend
@@ -874,6 +917,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -947,12 +991,19 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: main-build-e2e-publish
@@ -975,6 +1026,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1356,12 +1408,19 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: main-integration-tests
@@ -1400,6 +1459,7 @@ steps:
   name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1459,6 +1519,11 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -1471,6 +1536,8 @@ volumes:
   temp:
     medium: memory
 ---
+clone:
+  retries: 3
 depends_on:
 - main-test-frontend
 - main-test-backend
@@ -1523,6 +1590,11 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -1531,6 +1603,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: notify-drone-changes
@@ -1561,6 +1635,8 @@ trigger:
   - grafana/grafana
 type: docker
 ---
+clone:
+  retries: 3
 depends_on:
 - main-test-frontend
 - main-test-backend
@@ -1590,6 +1666,7 @@ steps:
   name: gen-version
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1620,6 +1697,11 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -1628,6 +1710,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on:
 - main-test-frontend
 - main-test-backend
@@ -1655,10 +1739,17 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
   status:
   - failure
 type: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: release-oss-build-e2e-publish
@@ -1708,6 +1799,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -1963,6 +2055,8 @@ volumes:
   temp:
     medium: memory
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: release-oss-test
@@ -2012,6 +2106,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -2088,6 +2183,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: release-oss-integration-tests
@@ -2196,6 +2293,8 @@ volumes:
   temp:
     medium: memory
 ---
+clone:
+  retries: 3
 depends_on:
 - release-oss-build-e2e-publish
 - release-oss-test
@@ -2308,6 +2407,8 @@ steps:
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -2662,6 +2763,8 @@ steps:
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -3021,6 +3124,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: publish-docker-oss-public
@@ -3099,6 +3204,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: publish-docker-enterprise-public
@@ -3160,6 +3267,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: publish-docker-oss-security
@@ -3239,6 +3348,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: publish-docker-enterprise-security
@@ -3301,6 +3412,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: publish-artifacts-security
@@ -3339,6 +3452,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: publish-artifacts-public
@@ -3377,6 +3492,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: publish-npm-packages-public
@@ -3408,6 +3525,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
+  failure: ignore
   image: grafana/grafana-ci-deploy:1.3.3
   name: retrieve-npm-packages
 - commands:
@@ -3417,6 +3535,7 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
+  failure: ignore
   image: grafana/build-container:1.5.9
   name: release-npm-packages
 trigger:
@@ -3430,6 +3549,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
@@ -3484,6 +3605,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
@@ -3538,6 +3661,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: publish-artifacts-page
@@ -3570,6 +3695,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: release-branch-oss-build-e2e-publish
@@ -3619,6 +3746,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -3845,6 +3973,8 @@ volumes:
   temp:
     medium: memory
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: release-branch-oss-test
@@ -3894,6 +4024,7 @@ steps:
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -3964,6 +4095,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 depends_on: []
 kind: pipeline
 name: release-branch-oss-integration-tests
@@ -4066,6 +4199,8 @@ volumes:
   temp:
     medium: memory
 ---
+clone:
+  retries: 3
 depends_on:
 - release-branch-oss-build-e2e-publish
 - release-branch-oss-test
@@ -4164,6 +4299,8 @@ steps:
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -4508,6 +4645,8 @@ steps:
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.17
@@ -4841,6 +4980,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+clone:
+  retries: 3
 kind: pipeline
 name: scan-grafana/grafana:latest-image
 platform:
@@ -4869,6 +5010,8 @@ trigger:
   event: cron
 type: docker
 ---
+clone:
+  retries: 3
 kind: pipeline
 name: scan-grafana/grafana:main-image
 platform:
@@ -4897,6 +5040,8 @@ trigger:
   event: cron
 type: docker
 ---
+clone:
+  retries: 3
 kind: pipeline
 name: scan-grafana/grafana:latest-ubuntu-image
 platform:
@@ -4926,6 +5071,8 @@ trigger:
   event: cron
 type: docker
 ---
+clone:
+  retries: 3
 kind: pipeline
 name: scan-grafana/grafana:main-ubuntu-image
 platform:
@@ -4986,6 +5133,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d97f2ec8017ba6e3f16913e08ee1d53c4e653f87b6113fd3763e1ad557306810
+hmac: cf7b07bd7aa1c46665d485693553ff98e7dacf0e4853c5d640437d0218c91db7
 
 ...

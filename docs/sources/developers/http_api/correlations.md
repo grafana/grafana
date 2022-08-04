@@ -101,3 +101,52 @@ Status codes:
 - **403** – Forbidden, data source is read-only
 - **404** – Correlation not found
 - **500** – Internal error
+
+## Update correlations
+
+`PATCH /api/datasources/uid/:sourceUID/correlations/:correlationUID`
+
+Updates a correlation.
+
+**Example request:**
+
+```http
+POST /api/datasources/uid/uyBf2637k/correlations/J6gn7d31L HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+{
+	"label": "My Label",
+	"description": "Logs to Traces",
+}
+```
+
+JSON body schema:
+
+- **label** – A label for the correlation.
+- **description** – A description for the correlation.
+
+**Example response:**
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "message": "Correlation updated",
+  "result": {
+    "description": "Logs to Traces",
+    "label": "My Label",
+    "sourceUID": "uyBf2637k",
+    "targetUID": "PDDA8E780A17E7EF1",
+    "uid": "J6gn7d31L"
+  }
+}
+```
+
+Status codes:
+
+- **200** – OK
+- **401** – Unauthorized
+- **403** – Forbidden, source data source is read-only
+- **404** – Not found, either source or target data source could not be found
+- **500** – Internal error

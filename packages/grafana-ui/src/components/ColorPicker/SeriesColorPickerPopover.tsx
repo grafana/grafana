@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, PureComponent } from 'react';
 
 import { withTheme2, useStyles } from '../../themes';
 import { Button } from '../Button';
@@ -52,7 +52,7 @@ interface AxisSelectorState {
   yaxis: number;
 }
 
-export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSelectorState> {
+export class AxisSelector extends PureComponent<AxisSelectorProps, AxisSelectorState> {
   constructor(props: AxisSelectorProps) {
     super(props);
     this.state = {

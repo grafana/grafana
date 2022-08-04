@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -186,10 +187,40 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 	return reporter.Diffs
 }
 
+// SetDashboardAndPanel will set the DashboardUID and PanlID
+// field be doing a lookup in the annotations. Errors when
+// the found annotations are not valid.
+func (alertRule *AlertRule) SetDashboardAndPanel() error {
+	if alertRule.Annotations == nil {
+		return nil
+	}
+	dashUID := alertRule.Annotations[DashboardUIDAnnotation]
+	panelID := alertRule.Annotations[PanelIDAnnotation]
+	if dashUID != "" && panelID == "" || dashUID == "" && panelID != "" {
+		return fmt.Errorf("both annotations %s and %s must be specified",
+			DashboardUIDAnnotation, PanelIDAnnotation)
+	}
+	if dashUID != "" {
+		panelIDValue, err := strconv.ParseInt(panelID, 10, 64)
+		if err != nil {
+			return fmt.Errorf("annotation %s must be a valid integer Panel ID",
+				PanelIDAnnotation)
+		}
+		alertRule.DashboardUID = &dashUID
+		alertRule.PanelID = &panelIDValue
+	}
+	return nil
+}
+
 // AlertRuleKey is the alert definition identifier
 type AlertRuleKey struct {
-	OrgID int64
-	UID   string
+	OrgID int64  `xorm:"org_id"`
+	UID   string `xorm:"uid"`
+}
+
+type AlertRuleKeyWithVersion struct {
+	Version      int64
+	AlertRuleKey `xorm:"extends"`
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts

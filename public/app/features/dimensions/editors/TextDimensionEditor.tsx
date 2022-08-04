@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 
 import {
   FieldNamePickerConfigSettings,
@@ -30,6 +30,9 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
   const { value, context, onChange } = props;
   const labelWidth = 9;
 
+  // force re-render on clear fixed text
+  const [refresh, setRefresh] = useState(0);
+
   const onModeChange = useCallback(
     (mode) => {
       onChange({
@@ -60,10 +63,9 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
     [onChange, value]
   );
 
-  const onClearFixedText = () => {
-    // Need to first change to field in order to clear fixed value in editor
-    onChange({ mode: TextDimensionMode.Field, fixed: '', field: '' });
-    onChange({ mode: TextDimensionMode.Fixed, fixed: '', field: '' });
+  const onClearFixed = () => {
+    onFixedChange('');
+    setRefresh(refresh + 1);
   };
 
   const mode = value?.mode ?? TextDimensionMode.Fixed;
@@ -88,19 +90,17 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
         </InlineFieldRow>
       )}
       {mode === TextDimensionMode.Fixed && (
-        <InlineFieldRow>
+        <InlineFieldRow key={refresh}>
           <InlineField label={'Value'} labelWidth={labelWidth} grow={true}>
-            <>
-              <StringValueEditor
-                context={context}
-                value={value?.fixed}
-                onChange={onFixedChange}
-                item={dummyStringSettings}
-              />
-              {value?.fixed && (
-                <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixedText} />
-              )}
-            </>
+            <StringValueEditor
+              context={context}
+              value={value?.fixed}
+              onChange={onFixedChange}
+              item={dummyStringSettings}
+              suffix={
+                value?.fixed && <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixed} />
+              }
+            />
           </InlineField>
         </InlineFieldRow>
       )}
