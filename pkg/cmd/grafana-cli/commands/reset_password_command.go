@@ -57,7 +57,7 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 		NewPassword: passwordHashed,
 	}
 
-	if err := runner.UserService.ChangeUserPassword(context.Background(), &cmd); err != nil {
+	if err := runner.UserService.ChangePassword(context.Background(), &cmd); err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
 
