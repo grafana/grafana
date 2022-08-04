@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -86,13 +85,17 @@ func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
 				return fmt.Errorf("failed to insert image: %w", err)
 			}
 		} else {
-			// Do not reset the expiration time as it can be extended with ExtendDuration
-			affected, err := sess.ID(img.ID).Update(img)
-			if err != nil {
-				return fmt.Errorf("failed to update image: %v", err)
+			// Check if the image exists as some databases return 0 rows affected if
+			// no changes were made
+			if ok, err := sess.Where("id = ?", img.ID).ForUpdate().Exist(&models.Image{}); err != nil {
+				return fmt.Errorf("failed to check if image exists: %v", err)
+			} else if !ok {
+				return models.ErrImageNotFound
 			}
-			if affected == 0 {
-				return errors.New("no rows updated")
+
+			// Do not reset the expiration time as it can be extended with ExtendDuration
+			if _, err := sess.ID(img.ID).Update(img); err != nil {
+				return fmt.Errorf("failed to update image: %v", err)
 			}
 		}
 		return nil

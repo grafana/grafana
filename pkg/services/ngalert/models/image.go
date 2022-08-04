@@ -26,17 +26,17 @@ func (i *Image) ExtendDuration(d time.Duration) {
 }
 
 // HasExpired returns true if the image has expired.
-func (i Image) HasExpired() bool {
+func (i *Image) HasExpired() bool {
 	return time.Now().After(i.ExpiresAt)
 }
 
 // HasPath returns true if the image has a path on disk.
-func (i Image) HasPath() bool {
+func (i *Image) HasPath() bool {
 	return i.Path != ""
 }
 
 // HasURL returns true if the image has a URL.
-func (i Image) HasURL() bool {
+func (i *Image) HasURL() bool {
 	return i.URL != ""
 }
 
