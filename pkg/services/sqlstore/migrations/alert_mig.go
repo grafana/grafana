@@ -55,20 +55,20 @@ func addAlertMigrations(mg *Migrator) {
 		},
 	}
 
-	alertRuleTableDoesNotExist := &IfNotTableExistsWithoutPrimaryKey{TableName: alertRuleTagTable.Name, ColumnName: "id"}
+	alertRuleTableContainsPrimaryKeyOrDoesNotExist := &IfTableContainsPrimaryKeyOrDoesNotExist{TableName: alertRuleTagTable.Name, ColumnName: "id"}
 
 	addAlertRuleTagTableMigration := NewAddTableMigration(alertRuleTagTable)
-	addAlertRuleTagTableMigration.SkipCondition = alertRuleTableDoesNotExist
+	addAlertRuleTagTableMigration.SkipCondition = alertRuleTableContainsPrimaryKeyOrDoesNotExist
 	mg.AddMigration("Create alert_rule_tag table v1", addAlertRuleTagTableMigration)
 
 	addAlertRuleTagIndexMigration := NewAddIndexMigration(alertRuleTagTable, alertRuleTagTable.Indices[0])
-	addAlertRuleTagIndexMigration.SkipCondition = alertRuleTableDoesNotExist
+	addAlertRuleTagIndexMigration.SkipCondition = alertRuleTableContainsPrimaryKeyOrDoesNotExist
 	mg.AddMigration("Add unique index alert_rule_tag.alert_id_tag_id", addAlertRuleTagIndexMigration)
 
 	// drop alert_rule_tag indexes
-	addDropAllIndicesMigrationsWithSkipCondition(mg, "v1", alertRuleTagTable, alertRuleTableDoesNotExist)
+	addDropAllIndicesMigrationsWithSkipCondition(mg, "v1", alertRuleTagTable, alertRuleTableContainsPrimaryKeyOrDoesNotExist)
 	// rename table
-	addTableRenameMigrationWithSkipCondition(mg, "alert_rule_tag", "alert_rule_tag_v1", "v1", alertRuleTableDoesNotExist)
+	addTableRenameMigrationWithSkipCondition(mg, "alert_rule_tag", "alert_rule_tag_v1", "v1", alertRuleTableContainsPrimaryKeyOrDoesNotExist)
 
 	// alert_rule_tag V2
 	alertRuleTagTableV2 := Table{

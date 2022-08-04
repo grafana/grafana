@@ -154,7 +154,7 @@ func (mg *Migrator) run() (err error) {
 		}
 
 		err := mg.InTransaction(func(sess *xorm.Session) error {
-			err, skipLog := mg.exec(m, sess)
+			skipLog, err := mg.exec(m, sess)
 			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
@@ -185,7 +185,7 @@ func (mg *Migrator) run() (err error) {
 	return mg.DBEngine.Sync2()
 }
 
-func (mg *Migrator) exec(m Migration, sess *xorm.Session) (error, bool) {
+func (mg *Migrator) exec(m Migration, sess *xorm.Session) (bool, error) {
 	mg.Logger.Info("Executing migration", "id", m.Id())
 
 	skipCondition := m.GetSkipCondition()
@@ -197,12 +197,12 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) (error, bool) {
 			results, err := sess.SQL(sql, args...).Query()
 			if err != nil {
 				mg.Logger.Error("Executing migration skip condition failed", "id", m.Id(), "error", err)
-				return err, true
+				return true, err
 			}
-		
+
 			if skipCondition.IsFulfilled(results) {
 				mg.Logger.Warn("Skipping migration: skip condition for migration met")
-				return nil, true
+				return true, nil
 			}
 		}
 	}
@@ -216,12 +216,12 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) (error, bool) {
 			results, err := sess.SQL(sql, args...).Query()
 			if err != nil {
 				mg.Logger.Error("Executing migration condition failed", "id", m.Id(), "error", err)
-				return err, false
+				return false, err
 			}
 
 			if !condition.IsFulfilled(results) {
 				mg.Logger.Warn("Skipping migration: Already executed, but not recorded in migration log", "id", m.Id())
-				return nil, false
+				return false, nil
 			}
 		}
 	}
@@ -238,10 +238,10 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) (error, bool) {
 
 	if err != nil {
 		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
-		return err, false
+		return false, err
 	}
 
-	return nil, false
+	return false, nil
 }
 
 type dbTransactionFunc func(sess *xorm.Session) error

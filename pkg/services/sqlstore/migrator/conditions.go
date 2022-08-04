@@ -56,12 +56,12 @@ func (c *IfTableNotExistsCondition) SQL(dialect Dialect) (string, []interface{})
 	return dialect.TableCheckSQL(c.TableName)
 }
 
-type IfNotTableExistsWithoutPrimaryKey struct {
+type IfTableContainsPrimaryKeyOrDoesNotExist struct {
 	NotExistsMigrationCondition
-	TableName string
+	TableName  string
 	ColumnName string
 }
 
-func (c *IfNotTableExistsWithoutPrimaryKey) SQL(dialect Dialect) (string, []interface{}) {
+func (c *IfTableContainsPrimaryKeyOrDoesNotExist) SQL(dialect Dialect) (string, []interface{}) {
 	return dialect.TableExistsWithoutPrimaryKeyCheckSQL(c.TableName, c.ColumnName)
 }

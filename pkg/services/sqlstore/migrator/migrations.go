@@ -5,8 +5,8 @@ import (
 )
 
 type MigrationBase struct {
-	id        string
-	Condition MigrationCondition
+	id            string
+	Condition     MigrationCondition
 	SkipCondition MigrationCondition
 }
 

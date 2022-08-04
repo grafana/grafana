@@ -79,20 +79,20 @@ func addAnnotationMig(mg *Migrator) {
 		},
 	}
 
-	annotationTagTableDoesNotExist := &IfNotTableExistsWithoutPrimaryKey{TableName: annotationTagTable.Name, ColumnName: "id"}
+	annotationTagTableContainsPrimaryKeyOrDoesNotExist := &IfTableContainsPrimaryKeyOrDoesNotExist{TableName: annotationTagTable.Name, ColumnName: "id"}
 
 	addAnnotationTagTable := NewAddTableMigration(annotationTagTable)
-	addAnnotationTagTable.SkipCondition = annotationTagTableDoesNotExist
+	addAnnotationTagTable.SkipCondition = annotationTagTableContainsPrimaryKeyOrDoesNotExist
 	mg.AddMigration("Create annotation_tag table v2", addAnnotationTagTable)
 
 	addAnnotationTagIndex := NewAddIndexMigration(annotationTagTable, annotationTagTable.Indices[0])
-	addAnnotationTagIndex.SkipCondition = annotationTagTableDoesNotExist
+	addAnnotationTagIndex.SkipCondition = annotationTagTableContainsPrimaryKeyOrDoesNotExist
 	mg.AddMigration("Add unique index annotation_tag.annotation_id_tag_id", addAnnotationTagIndex)
 
 	// drop dashboard indexes
-	addDropAllIndicesMigrationsWithSkipCondition(mg, "v2", annotationTagTable, annotationTagTableDoesNotExist)
+	addDropAllIndicesMigrationsWithSkipCondition(mg, "v2", annotationTagTable, annotationTagTableContainsPrimaryKeyOrDoesNotExist)
 	// rename table
-	addTableRenameMigrationWithSkipCondition(mg, "annotation_tag", "annotation_tag_v2", "v2", annotationTagTableDoesNotExist)
+	addTableRenameMigrationWithSkipCondition(mg, "annotation_tag", "annotation_tag_v2", "v2", annotationTagTableContainsPrimaryKeyOrDoesNotExist)
 
 	// annotation_tag v3
 	annotationTagTableV3 := Table{
