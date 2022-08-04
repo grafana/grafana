@@ -231,7 +231,6 @@ func TestPluginManager_Installer(t *testing.T) {
 					Version: "1.2.0",
 				}, nil
 			}
-			//pm.pluginRepo = repository
 
 			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.CompatOpts{})
 			assert.NoError(t, err)
