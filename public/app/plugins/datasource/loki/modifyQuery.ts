@@ -93,8 +93,6 @@ export function addLabelFormatToQuery(query: string, labelFormat: { originalLabe
 /**
  * Removes all comments from query.
  * It uses  LogQL parser to find all LineComments and removes them.
- *
- * @param query
  */
 export function removeCommentsFromQuery(query: string): string {
   const lineCommentPositions = getLineCommentPositions(query);
@@ -106,13 +104,12 @@ export function removeCommentsFromQuery(query: string): string {
   let newQuery = '';
   let prev = 0;
 
-  for (let i = 0; i < lineCommentPositions.length; i++) {
-    const match = lineCommentPositions[i];
-    const beforeComment = query.substring(prev, match.from);
-    const afterComment = query.substring(match.to);
+  for (const lineCommentPosition of lineCommentPositions) {
+    const beforeComment = query.substring(prev, lineCommentPosition.from);
+    const afterComment = query.substring(lineCommentPosition.to);
 
     newQuery += beforeComment + afterComment;
-    prev = match.to;
+    prev = lineCommentPosition.to;
   }
   return newQuery;
 }
