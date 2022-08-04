@@ -52,6 +52,10 @@ func (s CorrelationsService) DeleteCorrelation(ctx context.Context, cmd DeleteCo
 	return s.deleteCorrelation(ctx, cmd)
 }
 
+func (s CorrelationsService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
+	return s.updateCorrelation(ctx, cmd)
+}
+
 func (s CorrelationsService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.deleteCorrelationsBySourceUID(ctx, cmd)
 }

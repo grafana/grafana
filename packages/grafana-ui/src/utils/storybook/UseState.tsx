@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import React from 'react';
+import React, { Component } from 'react';
 
 interface StateHolderProps<T> {
   logState?: boolean;
@@ -7,7 +7,7 @@ interface StateHolderProps<T> {
   children: (currentState: T, updateState: (nextState: T) => void) => React.ReactNode;
 }
 
-export class UseState<T> extends React.Component<StateHolderProps<T>, { value: T; initialState: T }> {
+export class UseState<T> extends Component<StateHolderProps<T>, { value: T; initialState: T }> {
   constructor(props: StateHolderProps<T>) {
     super(props);
     this.state = {
