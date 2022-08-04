@@ -27,5 +27,9 @@ export interface CounterProps {
 export const Counter: FC<CounterProps> = ({ value }) => {
   const styles = useStyles2(getStyles);
 
-  return <span className={styles.counter}>{locale(value, 0).text}</span>;
+  return (
+    <div>
+      <span className={styles.counter}>{locale(value, 0).text}</span>
+    </div>
+  );
 };

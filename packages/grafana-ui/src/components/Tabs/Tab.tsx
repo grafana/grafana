@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
+import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
 
 import { Counter } from './Counter';
@@ -37,22 +38,37 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
       </>
     );
 
-    const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
+    const tabClass = cx(tabsStyles.tab, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     return (
-      <div className={tabsStyles.item}>
-        <a
-          href={href}
-          className={linkClass}
-          {...otherProps}
-          onClick={onChangeTab}
-          aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
-          role="tab"
-          aria-selected={active}
-          ref={ref}
-        >
-          {content()}
-        </a>
+      <div className={tabsStyles.tabContainer}>
+        {href ? (
+          <a
+            href={href}
+            className={tabClass}
+            {...otherProps}
+            onClick={onChangeTab}
+            aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
+            role="tab"
+            aria-selected={active}
+            ref={ref}
+          >
+            {content()}
+          </a>
+        ) : (
+          <Button
+            className={tabClass}
+            variant="secondary"
+            fill="text"
+            onClick={onChangeTab}
+            aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
+            role="tab"
+            aria-selected={active}
+            {...otherProps}
+          >
+            {content()}
+          </Button>
+        )}
       </div>
     );
   }
@@ -62,12 +78,12 @@ Tab.displayName = 'Tab';
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    item: css`
+    tabContainer: css`
       list-style: none;
       position: relative;
       display: flex;
     `,
-    link: css`
+    tab: css`
       color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1.5, 2, 1)};
       display: block;
@@ -94,7 +110,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
           right: 0;
           height: 4px;
           border-radius: 2px;
-          bottom: 0px;
+          bottom: 0;
           background: ${theme.colors.action.hover};
         }
       }
