@@ -279,3 +279,13 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 	}
 	return s.sqlStore.UpdateUser(ctx, q)
 }
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
+	q := &models.ChangeUserPasswordCommand{
+		UserId:      cmd.UserID,
+		NewPassword: cmd.NewPassword,
+		OldPassword: cmd.OldPassword,
+	}
+	return s.sqlStore.ChangeUserPassword(ctx, q)
+}

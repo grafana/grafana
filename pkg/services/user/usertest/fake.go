@@ -38,3 +38,7 @@ func (f *FakeUserService) GetByEmail(ctx context.Context, query *user.GetUserByE
 func (f *FakeUserService) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	return f.ExpectedError
 }
+
+func (f *FakeUserService) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
+	return f.ExpectedError
+}
