@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -18,14 +19,16 @@ import (
 
 // Authenticator can authenticate GRPC requests.
 type Authenticator struct {
-	logger log.Logger
-	APIKey apikey.Service
+	logger   log.Logger
+	APIKey   apikey.Service
+	SQLStore sqlstore.Store
 }
 
-func NewAuthenticator(apiKey apikey.Service) *Authenticator {
+func NewAuthenticator(apiKey apikey.Service, sqlStore sqlstore.Store) *Authenticator {
 	return &Authenticator{
-		logger: log.New("grpc-server-authenticator"),
-		APIKey: apiKey,
+		logger:   log.New("grpc-server-authenticator"),
+		APIKey:   apiKey,
+		SQLStore: sqlStore,
 	}
 }
 
@@ -63,7 +66,6 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 }
 
 func (a *Authenticator) validateToken(ctx context.Context, keyString string) error {
-	// prefixed decode key
 	decoded, err := apikeygenprefix.Decode(keyString)
 	if err != nil {
 		return err
@@ -74,13 +76,27 @@ func (a *Authenticator) validateToken(ctx context.Context, keyString string) err
 		return err
 	}
 
-	key, err := a.APIKey.GetAPIKeyByHash(ctx, hash)
+	apikey, err := a.APIKey.GetAPIKeyByHash(ctx, hash)
 	if err != nil {
 		return err
 	}
 
-	if key.Role != models.ROLE_ADMIN {
+	if apikey == nil || apikey.ServiceAccountId == nil {
+		return status.Error(codes.Unauthenticated, "api key does not have a service account")
+	}
+
+	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := a.SQLStore.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser); err != nil {
+		return err
+	}
+
+	if !querySignedInUser.Result.HasRole(models.ROLE_ADMIN) {
 		return fmt.Errorf("api key does not have admin role")
+	}
+
+	// disabled service accounts are not allowed to access the API
+	if querySignedInUser.Result.IsDisabled {
+		return fmt.Errorf("service account is disabled")
 	}
 
 	return nil

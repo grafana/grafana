@@ -7,20 +7,22 @@ import (
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
 
 func TestAuthenticator_Authenticate(t *testing.T) {
+	serviceAccountId := int64(1)
 	t.Run("accepts service api key with admin role", func(t *testing.T) {
-		s := newFakeSQLStore(&apikey.APIKey{
-			Id:    1,
-			OrgId: 1,
-			Role:  models.ROLE_ADMIN,
-			Key:   "admin-api-key",
-			Name:  "Admin API Key",
+		s := newFakeAPIKey(&apikey.APIKey{
+			Id:               1,
+			OrgId:            1,
+			Key:              "admin-api-key",
+			Name:             "Admin API Key",
+			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s)
+		a := NewAuthenticator(s, &fakeSQLStore{OrgRole: models.ROLE_ADMIN})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		ctx, err = a.Authenticate(ctx)
@@ -28,14 +30,14 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 	})
 
 	t.Run("rejects non-admin role", func(t *testing.T) {
-		s := newFakeSQLStore(&apikey.APIKey{
-			Id:    1,
-			OrgId: 1,
-			Role:  models.ROLE_EDITOR,
-			Key:   "admin-api-key",
-			Name:  "Admin API Key",
+		s := newFakeAPIKey(&apikey.APIKey{
+			Id:               1,
+			OrgId:            1,
+			Key:              "admin-api-key",
+			Name:             "Admin API Key",
+			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s)
+		a := NewAuthenticator(s, &fakeSQLStore{OrgRole: models.ROLE_EDITOR})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		ctx, err = a.Authenticate(ctx)
@@ -49,7 +51,7 @@ type fakeAPIKey struct {
 	err error
 }
 
-func newFakeSQLStore(key *apikey.APIKey, err error) *fakeAPIKey {
+func newFakeAPIKey(key *apikey.APIKey, err error) *fakeAPIKey {
 	return &fakeAPIKey{
 		key: key,
 		err: err,
@@ -58,6 +60,20 @@ func newFakeSQLStore(key *apikey.APIKey, err error) *fakeAPIKey {
 
 func (f *fakeAPIKey) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.APIKey, error) {
 	return f.key, f.err
+}
+
+type fakeSQLStore struct {
+	sqlstore.Store
+	OrgRole models.RoleType
+}
+
+func (f *fakeSQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
+	query.Result = &models.SignedInUser{
+		UserId:  1,
+		OrgId:   1,
+		OrgRole: f.OrgRole,
+	}
+	return nil
 }
 
 func setupContext() (context.Context, error) {
