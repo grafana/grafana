@@ -1,14 +1,10 @@
 package models
 
 import (
-	"fmt"
-	"os"
-	"path"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestImage_ExtendDuration(t *testing.T) {
@@ -31,30 +27,6 @@ func TestImage_HasExpired(t *testing.T) {
 	assert.True(t, i.HasExpired())
 	i.ExpiresAt = time.Now().Add(-time.Minute)
 	assert.True(t, i.HasExpired())
-}
-
-func TestImage_HasFileOnDisk(t *testing.T) {
-	var i Image
-
-	// the file should not exist
-	i.Path = path.Join(t.TempDir(), "image.png")
-	exists, err := i.HasFileOnDisk()
-	assert.NoError(t, err)
-	assert.False(t, exists)
-
-	// create the file
-	_, err = os.Create(i.Path)
-	require.NoError(t, err)
-	exists, err = i.HasFileOnDisk()
-	assert.NoError(t, err)
-	assert.True(t, exists)
-
-	// create a dir
-	i.Path = path.Join(t.TempDir(), "dir")
-	require.NoError(t, os.Mkdir(i.Path, 0750))
-	exists, err = i.HasFileOnDisk()
-	assert.EqualError(t, err, fmt.Sprintf("%s is a dir", i.Path))
-	assert.False(t, exists)
 }
 
 func TestImage_HasPath(t *testing.T) {

@@ -2,8 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
-	"os"
 	"time"
 )
 
@@ -30,25 +28,6 @@ func (i *Image) ExtendDuration(d time.Duration) {
 // HasExpired returns true if the image has expired.
 func (i Image) HasExpired() bool {
 	return time.Now().After(i.ExpiresAt)
-}
-
-// HasFileOnDisk returns true if the image has a path on disk and a file
-// exists at this path. It returns an error if os.Stat returns an error
-// other than os.ErrNotExists.
-func (i Image) HasFileOnDisk() (bool, error) {
-	if !i.HasPath() {
-		return false, nil
-	}
-	if info, err := os.Stat(i.Path); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return false, nil
-		}
-		return false, err
-	} else if info.IsDir() {
-		return false, fmt.Errorf("%s is a dir", i.Path)
-	} else {
-		return true, nil
-	}
 }
 
 // HasPath returns true if the image has a path on disk.
