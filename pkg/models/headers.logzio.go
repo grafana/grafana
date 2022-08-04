@@ -1,7 +1,10 @@
 // LOGZ.IO GRAFANA CHANGE :: DEV-17927 use LogzIoHeaders obj to pass on headers
 package models
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 type LogzIoHeaders struct {
 	RequestHeaders http.Header
@@ -29,4 +32,20 @@ func (logzioHeaders *LogzIoHeaders) GetDatasourceQueryHeaders(grafanaGeneratedHe
 
 	return datasourceRequestHeaders
 }
+
+// LOGZ.IO CHANGE :: DEV-33325 Open expressions for Grafana 8.5.1
+func (logzioHeaders *LogzIoHeaders) GetDatasourceQueryHeader(grafanaGeneratedHeaders http.Header) map[string]string {
+	headers := map[string]string{}
+
+	for k, v := range grafanaGeneratedHeaders {
+		for _, whitelistedHeader := range logzioHeadersWhitelist {
+			if strings.EqualFold(k, whitelistedHeader) {
+				headers[k] = v[0]
+			}
+		}
+	}
+
+	return headers
+}
+
 // LOGZ.IO GRAFANA CHANGE :: end

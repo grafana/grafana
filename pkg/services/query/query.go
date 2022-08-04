@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -82,9 +83,11 @@ func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skip
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+	h := models.LogzIoHeaders{} // LOGZ.IO CHANGE :: DEV-33325 Open expressions for Grafana 8.5.1
 	exprReq := expr.Request{
 		OrgId:   user.OrgId,
 		Queries: []expr.Query{},
+		Headers: h.GetDatasourceQueryHeader(ctx.Value("logzioHeaders").(http.Header)), // LOGZ.IO CHANGE :: DEV-33325 Open expressions for Grafana 8.5.1
 	}
 
 	for _, pq := range parsedReq.parsedQueries {
