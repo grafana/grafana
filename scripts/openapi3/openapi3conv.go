@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi2conv"
+	"github.com/getkin/kin-openapi/openapi3"
 	"io/ioutil"
 	"os"
 )
@@ -43,6 +44,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// this is a workaround. In the swagger2 specs there ir no definition of the host, so the converter can not create
+	// a URL. Adding this will ensure that all the api calls start with "/api".
+	doc3.AddServer(&openapi3.Server{URL: "/api"})
 
 	j3, err := doc3.MarshalJSON()
 	if err != nil {
