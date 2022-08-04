@@ -1,14 +1,19 @@
 import memoizeOne from 'memoize-one';
 
+import { TypedVariableModel, VariableWithMultiSupport, VariableWithOptions } from '@grafana/data';
+
 import { getState } from '../../../store/store';
 import { StoreState } from '../../../types';
-import { VariableModel } from '../types';
 import { toStateKey } from '../utils';
 
 import { getInitialTemplatingState, TemplatingState } from './reducers';
 import { KeyedVariableIdentifier, VariablesState } from './types';
 
-export const getVariable = <T extends VariableModel = VariableModel>(
+// TODO: this is just a temporary type until we remove generics from getVariable and getInstanceState in a later PR
+// we need to it satisfy the constraint of callers who specify VariableWithOptions or VariableWithMultiSupport
+type GenericVariableModel = TypedVariableModel | VariableWithOptions | VariableWithMultiSupport;
+
+export const getVariable = <T extends GenericVariableModel = GenericVariableModel>(
   identifier: KeyedVariableIdentifier,
   state: StoreState = getState(),
   throwWhenMissing = true
@@ -26,7 +31,7 @@ export const getVariable = <T extends VariableModel = VariableModel>(
 };
 
 function getFilteredVariablesByKey(
-  filter: (model: VariableModel) => boolean,
+  filter: (model: TypedVariableModel) => boolean,
   key: string,
   state: StoreState = getState()
 ) {
@@ -39,21 +44,21 @@ export function getVariablesState(key: string, state: StoreState = getState()): 
   return state.templating.keys[toStateKey(key)] ?? getInitialTemplatingState();
 }
 
-export function getVariablesByKey(key: string, state: StoreState = getState()): VariableModel[] {
+export function getVariablesByKey(key: string, state: StoreState = getState()): TypedVariableModel[] {
   return getFilteredVariablesByKey(defaultVariablesFilter, key, state);
 }
 
-function defaultVariablesFilter(variable: VariableModel): boolean {
+function defaultVariablesFilter(variable: TypedVariableModel): boolean {
   return variable.type !== 'system';
 }
 
 export const getSubMenuVariables = memoizeOne(
-  (key: string, variables: Record<string, VariableModel>): VariableModel[] => {
+  (key: string, variables: Record<string, TypedVariableModel>): TypedVariableModel[] => {
     return getVariablesByKey(key, getState());
   }
 );
 
-export const getEditorVariables = (key: string, state: StoreState): VariableModel[] => {
+export const getEditorVariables = (key: string, state: StoreState): TypedVariableModel[] => {
   return getVariablesByKey(key, state);
 };
 
@@ -63,7 +68,7 @@ export function getNewVariableIndex(key: string, state: StoreState = getState())
   return getNextVariableIndex(Object.values(getVariablesState(key, state).variables));
 }
 
-export function getNextVariableIndex(variables: VariableModel[]): number {
+export function getNextVariableIndex(variables: TypedVariableModel[]): number {
   const sorted = variables.filter(defaultVariablesFilter).sort((v1, v2) => v1.index - v2.index);
   return sorted.length > 0 ? sorted[sorted.length - 1].index + 1 : 0;
 }
@@ -85,7 +90,7 @@ export function getLastKey(state: StoreState = getState()): string {
 }
 
 // selectors used by template srv, assumes that lastKey is in state. Needs to change when/if dashboard redux state becomes keyed too.
-export function getFilteredVariables(filter: (model: VariableModel) => boolean, state: StoreState = getState()) {
+export function getFilteredVariables(filter: (model: TypedVariableModel) => boolean, state: StoreState = getState()) {
   const lastKey = getIfExistsLastKey(state);
   if (!lastKey) {
     return [];
@@ -109,6 +114,10 @@ export function getVariableWithName(name: string, state: StoreState = getState()
   return getVariable({ id: name, rootStateKey: lastKey, type: 'query' }, state, false);
 }
 
-export function getInstanceState<Model extends VariableModel = VariableModel>(state: VariablesState, id: string) {
+// TODO: remove the generic and type assertion in a later PR
+export function getInstanceState<Model extends GenericVariableModel = GenericVariableModel>(
+  state: VariablesState,
+  id: string
+) {
   return state[id] as Model;
 }

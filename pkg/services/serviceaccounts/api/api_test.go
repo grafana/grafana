@@ -19,6 +19,7 @@ import (
 	acDatabase "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -38,8 +39,9 @@ var (
 
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 
 	autoAssignOrg := store.Cfg.AutoAssignOrg
@@ -204,7 +206,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, kvStore)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string) *httptest.ResponseRecorder {
@@ -304,8 +307,9 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 	type testRetrieveSATestCase struct {
 		desc         string
@@ -395,8 +399,9 @@ func newString(s string) *string {
 
 func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 	type testUpdateSATestCase struct {
 		desc         string

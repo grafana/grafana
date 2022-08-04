@@ -171,10 +171,9 @@ type HTTPServer struct {
 	dashboardVersionService      dashver.Service
 	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
+	Coremodels                   *registry.Base
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
-	CoremodelRegistry            *registry.Generic
-	CoremodelStaticRegistry      *registry.Static
 	kvStore                      kvstore.KVStore
 	secretsMigrator              secrets.Migrator
 	userService                  user.Service
@@ -211,7 +210,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
+	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -294,10 +293,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardPermissionsService:  dashboardPermissionsService,
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
+		Coremodels:                   coremodels,
 		playlistService:              playlistService,
 		apiKeyService:                apiKeyService,
-		CoremodelRegistry:            coremodelRegistry,
-		CoremodelStaticRegistry:      coremodelStaticRegistry,
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
 		secretsMigrator:              secretsMigrator,

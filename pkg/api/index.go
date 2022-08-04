@@ -647,14 +647,6 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 		Url:         baseUrl + "/cloud-integrations",
 	})
 
-	children = append(children, &dtos.NavLink{
-		Id:          baseId + "-recorded-queries",
-		Text:        "Recorded queries",
-		Icon:        "record-audio",
-		Description: "Manage your recorded queries",
-		Url:         baseUrl + "/recorded-queries",
-	})
-
 	navLink = &dtos.NavLink{
 		Text:       "Data Connections",
 		Icon:       "link",
