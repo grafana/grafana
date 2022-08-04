@@ -94,6 +94,7 @@ export class GrafanaApp {
 
   async init() {
     try {
+      backendSrv.setGrafanaPrefix(true);
       setBackendSrv(backendSrv);
       initEchoSrv();
       addClassIfNoOverlayScrollbar();

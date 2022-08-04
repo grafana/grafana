@@ -83,7 +83,7 @@ module.exports = {
       },
       {
         test: /\.html$/,
-        exclude: /(index|error)\-template\.html/,
+        exclude: /(index|error|index-microfrontend)\-template\.html/,
         use: [
           {
             loader: 'ngtemplate-loader?relativeTo=' + path.resolve(__dirname, '../../public') + '&prefix=public',

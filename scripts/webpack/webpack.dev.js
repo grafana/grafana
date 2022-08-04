@@ -110,8 +110,8 @@ module.exports = (env = {}) =>
         excludeChunks: ['dark', 'light', 'fn_dashboard'],
       }),
       new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../public/views/fn_dashboard.html'),
-        template: path.resolve(__dirname, '../../public/views/index-template.html'),
+        filename: path.resolve(__dirname, '../../public/microfrontends/fn_dashboard/index.html'),
+        template: path.resolve(__dirname, '../../public/views/index-microfrontend-template.html'),
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light', 'app'],
