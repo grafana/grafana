@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -370,7 +370,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatabilityOpts{
+	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
 		GrafanaVersion: hs.Cfg.BuildVersion,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
@@ -380,15 +380,15 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
-		var versionUnsupportedErr repository.ErrVersionUnsupported
+		var versionUnsupportedErr repo.ErrVersionUnsupported
 		if errors.As(err, &versionUnsupportedErr) {
 			return response.Error(http.StatusConflict, "Plugin version not supported", err)
 		}
-		var versionNotFoundErr repository.ErrVersionNotFound
+		var versionNotFoundErr repo.ErrVersionNotFound
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		var clientError repository.Response4xxError
+		var clientError repo.Response4xxError
 		if errors.As(err, &clientError) {
 			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}

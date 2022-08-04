@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"context"
@@ -9,31 +9,31 @@ import (
 // Service is responsible for retrieving plugin information from a repository.
 type Service interface {
 	// GetPluginArchive fetches the requested plugin archive.
-	GetPluginArchive(ctx context.Context, pluginID, version string, opts CompatabilityOpts) (*PluginArchive, error)
+	GetPluginArchive(ctx context.Context, pluginID, version string, opts CompatOpts) (*PluginArchive, error)
 	// GetPluginArchiveByURL fetches the requested plugin from the specified URL.
-	GetPluginArchiveByURL(ctx context.Context, archiveURL string, opts CompatabilityOpts) (*PluginArchive, error)
+	GetPluginArchiveByURL(ctx context.Context, archiveURL string, opts CompatOpts) (*PluginArchive, error)
 	// GetPluginDownloadOptions fetches information for downloading the requested plugin.
-	GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts CompatabilityOpts) (*PluginDownloadOptions, error)
+	GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts CompatOpts) (*PluginDownloadOptions, error)
 }
 
-type CompatabilityOpts struct {
+type CompatOpts struct {
 	GrafanaVersion string
 	OS             string
 	Arch           string
 }
 
-func NewCompatabilityOpts(grafanaVersion, os, arch string) CompatabilityOpts {
-	return CompatabilityOpts{
+func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
+	return CompatOpts{
 		GrafanaVersion: grafanaVersion,
 		OS:             os,
 		Arch:           arch,
 	}
 }
 
-func (co CompatabilityOpts) OSAndArch() string {
+func (co CompatOpts) OSAndArch() string {
 	return fmt.Sprintf("%s-%s", strings.ToLower(co.OS), co.Arch)
 }
 
-func (co CompatabilityOpts) String() string {
+func (co CompatOpts) String() string {
 	return fmt.Sprintf("Grafana v%s %s", co.GrafanaVersion, co.OSAndArch())
 }

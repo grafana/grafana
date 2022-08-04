@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +29,7 @@ type PluginManager struct {
 	cfg            *plugins.Cfg
 	pluginRegistry registry.Service
 	pluginLoader   loader.Service
-	pluginRepo     repository.Service
+	pluginRepo     repo.Service
 	pluginsMu      sync.RWMutex
 	pluginSources  []PluginSource
 	pluginStorage  storage.Manager
@@ -42,7 +42,7 @@ type PluginSource struct {
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginRepo repository.Service) (*PluginManager, error) {
+	pluginRepo repo.Service) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
@@ -55,7 +55,7 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 }
 
 func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service,
-	pluginRepo repository.Service, pluginFs storage.Manager) *PluginManager {
+	pluginRepo repo.Service, pluginFs storage.Manager) *PluginManager {
 	return &PluginManager{
 		cfg:            cfg,
 		pluginLoader:   pluginLoader,

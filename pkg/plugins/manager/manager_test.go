@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
@@ -182,7 +182,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			pm.pluginRepo = repo
 		})
 
-		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatabilityOpts{})
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, repo.downloadCount)
@@ -208,7 +208,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatabilityOpts{})
+			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 			assert.Equal(t, plugins.DuplicateError{
 				PluginID:          p.ID,
 				ExistingPluginDir: p.PluginDir,
@@ -226,14 +226,14 @@ func TestPluginManager_Installer(t *testing.T) {
 			}
 			pm.pluginLoader = l
 
-			repo.downloadOptionsHandler = func(_ context.Context, _, _ string, _ repository.CompatabilityOpts) (*repository.PluginDownloadOptions, error) {
-				return &repository.PluginDownloadOptions{
+			repo.downloadOptionsHandler = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+				return &repo.PluginDownloadOptions{
 					Version: "1.2.0",
 				}, nil
 			}
 			//pm.pluginRepo = repo
 
-			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.CompatabilityOpts{})
+			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.CompatOpts{})
 			assert.NoError(t, err)
 
 			assert.Equal(t, 2, repo.downloadCount)
@@ -295,7 +295,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatabilityOpts{})
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall core plugin", func(t *testing.T) {
@@ -331,7 +331,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatabilityOpts{})
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall bundled plugin", func(t *testing.T) {
@@ -649,32 +649,32 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 }
 
 type fakePluginRepo struct {
-	repository.Service
+	repo.Service
 
-	downloadOptionsHandler func(_ context.Context, _, _ string, _ repository.CompatabilityOpts) (*repository.PluginDownloadOptions, error)
+	downloadOptionsHandler func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error)
 
 	downloadOptionsCount int
 	downloadCount        int
 }
 
-func (pr *fakePluginRepo) GetPluginArchive(_ context.Context, _, _ string, _ repository.CompatabilityOpts) (*repository.PluginArchive, error) {
+func (pr *fakePluginRepo) GetPluginArchive(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
 	pr.downloadCount++
-	return &repository.PluginArchive{}, nil
+	return &repo.PluginArchive{}, nil
 }
 
 // DownloadWithURL downloads the requested plugin from the specified URL.
-func (pr *fakePluginRepo) GetPluginArchiveByURL(_ context.Context, _ string, _ repository.CompatabilityOpts) (*repository.PluginArchive, error) {
+func (pr *fakePluginRepo) GetPluginArchiveByURL(_ context.Context, _ string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
 	pr.downloadCount++
-	return &repository.PluginArchive{}, nil
+	return &repo.PluginArchive{}, nil
 }
 
 // GetDownloadOptions provides information for downloading the requested plugin.
-func (pr *fakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts repository.CompatabilityOpts) (*repository.PluginDownloadOptions, error) {
+func (pr *fakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
 	pr.downloadOptionsCount++
 	if pr.downloadOptionsHandler != nil {
 		return pr.downloadOptionsHandler(ctx, pluginID, version, opts)
 	}
-	return &repository.PluginDownloadOptions{}, nil
+	return &repo.PluginDownloadOptions{}, nil
 }
 
 type fakeLoader struct {

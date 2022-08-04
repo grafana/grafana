@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 )
 
 func (m *PluginManager) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -68,10 +68,10 @@ func (m *PluginManager) registeredPlugins(ctx context.Context) map[string]struct
 	return pluginsByID
 }
 
-func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.CompatabilityOpts) error {
-	compatOpts := repository.NewCompatabilityOpts(opts.GrafanaVersion, opts.OS, opts.Arch)
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+	compatOpts := repo.NewCompatOpts(opts.GrafanaVersion, opts.OS, opts.Arch)
 
-	var pluginArchive *repository.PluginArchive
+	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID); exists {
 		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin

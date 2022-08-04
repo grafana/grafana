@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"context"
@@ -32,7 +32,7 @@ func New(skipTLSVerify bool, baseURL string, logger logger.Logger) *Manager {
 }
 
 // GetPluginArchive fetches the requested plugin archive
-func (m *Manager) GetPluginArchive(ctx context.Context, pluginID, version string, compatOpts CompatabilityOpts) (*PluginArchive, error) {
+func (m *Manager) GetPluginArchive(ctx context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginArchive, error) {
 	dlOpts, err := m.GetPluginDownloadOptions(ctx, pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
@@ -42,12 +42,12 @@ func (m *Manager) GetPluginArchive(ctx context.Context, pluginID, version string
 }
 
 // GetPluginArchiveByURL fetches the requested plugin archive from the provided `pluginZipURL`
-func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string, compatOpts CompatabilityOpts) (*PluginArchive, error) {
+func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string, compatOpts CompatOpts) (*PluginArchive, error) {
 	return m.client.download(ctx, pluginZipURL, "", compatOpts)
 }
 
 // GetPluginDownloadOptions returns the options for downloading the requested plugin (with optional `version`)
-func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version string, compatOpts CompatabilityOpts) (*PluginDownloadOptions, error) {
+func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginDownloadOptions, error) {
 	plugin, err := m.pluginMetadata(pluginID, compatOpts)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version 
 	}, nil
 }
 
-func (m *Manager) pluginMetadata(pluginID string, compatOpts CompatabilityOpts) (Plugin, error) {
+func (m *Manager) pluginMetadata(pluginID string, compatOpts CompatOpts) (Plugin, error) {
 	m.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, m.baseURL)
 
 	u, err := url.Parse(m.baseURL)
@@ -105,7 +105,7 @@ func (m *Manager) pluginMetadata(pluginID string, compatOpts CompatabilityOpts) 
 // returns error if the supplied version does not exist.
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts CompatabilityOpts) (*Version, error) {
+func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts CompatOpts) (*Version, error) {
 	version = normalizeVersion(version)
 
 	var ver Version
@@ -151,7 +151,7 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 	return &ver, nil
 }
 
-func supportsCurrentArch(version *Version, compatOpts CompatabilityOpts) bool {
+func supportsCurrentArch(version *Version, compatOpts CompatOpts) bool {
 	if version.Arch == nil {
 		return true
 	}
@@ -163,7 +163,7 @@ func supportsCurrentArch(version *Version, compatOpts CompatabilityOpts) bool {
 	return false
 }
 
-func latestSupportedVersion(plugin *Plugin, compatOpts CompatabilityOpts) *Version {
+func latestSupportedVersion(plugin *Plugin, compatOpts CompatOpts) *Version {
 	for _, v := range plugin.Versions {
 		ver := v
 		if supportsCurrentArch(&ver, compatOpts) {

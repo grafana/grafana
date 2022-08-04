@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"fmt"
@@ -11,12 +11,12 @@ func TestSelectVersion(t *testing.T) {
 	i := &Manager{log: &fakeLogger{}}
 
 	t.Run("Should return error when requested version does not exist", func(t *testing.T) {
-		_, err := i.selectVersion(createPlugin(versionArg{version: "version"}), "1.1.1", CompatabilityOpts{})
+		_, err := i.selectVersion(createPlugin(versionArg{version: "version"}), "1.1.1", CompatOpts{})
 		require.Error(t, err)
 	})
 
 	t.Run("Should return error when no version supports current arch", func(t *testing.T) {
-		_, err := i.selectVersion(createPlugin(versionArg{version: "version", arch: []string{"non-existent"}}), "", CompatabilityOpts{})
+		_, err := i.selectVersion(createPlugin(versionArg{version: "version", arch: []string{"non-existent"}}), "", CompatOpts{})
 		require.Error(t, err)
 	})
 
@@ -24,7 +24,7 @@ func TestSelectVersion(t *testing.T) {
 		_, err := i.selectVersion(createPlugin(
 			versionArg{version: "2.0.0"},
 			versionArg{version: "1.1.1", arch: []string{"non-existent"}},
-		), "1.1.1", CompatabilityOpts{})
+		), "1.1.1", CompatOpts{})
 		require.Error(t, err)
 	})
 
@@ -32,19 +32,19 @@ func TestSelectVersion(t *testing.T) {
 		ver, err := i.selectVersion(createPlugin(
 			versionArg{version: "2.0.0", arch: []string{"non-existent"}},
 			versionArg{version: "1.0.0"},
-		), "", CompatabilityOpts{})
+		), "", CompatOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "1.0.0", ver.Version)
 	})
 
 	t.Run("Should return latest version when no version specified", func(t *testing.T) {
-		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "", CompatabilityOpts{})
+		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "", CompatOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "2.0.0", ver.Version)
 	})
 
 	t.Run("Should return requested version", func(t *testing.T) {
-		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "1.0.0", CompatabilityOpts{})
+		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "1.0.0", CompatOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "1.0.0", ver.Version)
 	})

@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
@@ -56,21 +56,19 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 // and then extracts the zip into the plugin's directory.
 func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
 	skipTLSVerify := c.Bool("insecure")
-	repo := repository.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
+	repository := repo.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
-	compatOpts := repository.NewCompatabilityOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
 
-	pluginZipURL := c.PluginURL()
-	var archive *repository.PluginArchive
+	var archive *repo.PluginArchive
 	var err error
+	pluginZipURL := c.PluginURL()
 	if pluginZipURL != "" {
-		archive, err = repo.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts)
-		if err != nil {
+		if archive, err = repository.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts); err != nil {
 			return err
 		}
 	} else {
-		archive, err = repo.GetPluginArchive(ctx, pluginID, version, compatOpts)
-		if err != nil {
+		if archive, err = repository.GetPluginArchive(ctx, pluginID, version, compatOpts); err != nil {
 			return err
 		}
 	}
@@ -83,7 +81,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 
 	for _, dep := range extractedArchive.Dependencies {
 		services.Logger.Info("Fetching %s dependency...", dep.ID)
-		d, err := repo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
+		d, err := repository.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
 		if err != nil {
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
@@ -93,7 +91,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 			return err
 		}
 	}
-	return err
+	return nil
 }
 
 func osAndArchString() string {

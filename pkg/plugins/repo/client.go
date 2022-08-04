@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"archive/zip"
@@ -35,7 +35,7 @@ func newClient(skipTLSVerify bool, logger logger.Logger) *Client {
 	}
 }
 
-func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatabilityOpts) (*PluginArchive, error) {
+func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
@@ -67,7 +67,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 	}, nil
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatabilityOpts) (err error) {
+func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -149,7 +149,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	return nil
 }
 
-func (c *Client) sendReq(url *url.URL, compatOpts CompatabilityOpts) ([]byte, error) {
+func (c *Client) sendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
 	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
@@ -171,7 +171,7 @@ func (c *Client) sendReq(url *url.URL, compatOpts CompatabilityOpts) ([]byte, er
 	return ioutil.ReadAll(bodyReader)
 }
 
-func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatabilityOpts) (io.ReadCloser, error) {
+func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
 	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatabilityOpts) (i
 	return c.handleResp(res, compatOpts)
 }
 
-func (c *Client) createReq(url *url.URL, compatOpts CompatabilityOpts) (*http.Request, error) {
+func (c *Client) createReq(url *url.URL, compatOpts CompatOpts) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
@@ -198,7 +198,7 @@ func (c *Client) createReq(url *url.URL, compatOpts CompatabilityOpts) (*http.Re
 	return req, err
 }
 
-func (c *Client) handleResp(res *http.Response, compatOpts CompatabilityOpts) (io.ReadCloser, error) {
+func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := ioutil.ReadAll(res.Body)
 		defer func() {
