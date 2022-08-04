@@ -184,9 +184,9 @@ type authScenarioContext struct {
 type authScenarioFunc func(sc *authScenarioContext)
 
 func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
-	loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, _ user.Service) (*user.User, error) {
+	loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, _ user.Service) error {
 		sc.grafanaLoginWasCalled = true
-		return nil, err
+		return err
 	}
 }
 

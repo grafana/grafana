@@ -21,21 +21,21 @@ var validatePassword = func(providedPassword string, userPassword string, userSa
 	return nil
 }
 
-var loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, userService user.Service) (*user.User, error) {
+var loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, userService user.Service) error {
 	userQuery := user.GetUserByLoginQuery{LoginOrEmail: query.Username}
 
 	user, err := userService.GetByLogin(ctx, &userQuery)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if user.IsDisabled {
-		return nil, ErrUserDisabled
+		return ErrUserDisabled
 	}
 
 	if err := validatePassword(query.Password, user.Password, user.Salt); err != nil {
-		return nil, err
+		return err
 	}
-
-	return user, nil
+	query.User = user
+	return nil
 }
