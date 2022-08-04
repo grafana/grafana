@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -192,6 +193,7 @@ func TestMergeUser(t *testing.T) {
 			tmpFile, err := generateConflictUsersFile(&conflictUsers)
 			require.NoError(t, err)
 			// validation to get newConflicts
+			// edited file
 			b, err := ioutil.ReadFile(tmpFile.Name())
 			require.NoError(t, err)
 			newConflicts, validErr := getValidConflictUsers(&cli.Context{Context: context.Background()}, sqlStore, b)
@@ -230,6 +232,87 @@ func TestMergeUser(t *testing.T) {
 			require.Equal(t, 1, len(q1.Result))
 			require.Equal(t, userWithLowerCase.ID, teamMember.UserId)
 			require.Equal(t, userWithLowerCase.Email, teamMember.Email)
+		}
+	})
+
+	permissionCases := struct {
+		name        string
+		permissions []ac.Permission
+		choosenUser user.User
+		otherUsers  []user.User
+	}{}
+	t.Run("merging user should inherit permissions from other users", func(t *testing.T) {
+		// Restore after destructive operation
+		sqlStore := sqlstore.InitTestDB(t)
+		team1, err := sqlStore.CreateTeam("team1 name", "", 1)
+		require.Nil(t, err)
+		const testOrgID int64 = 1
+		for i := 0; i < 5; i++ {
+			cmd := user.CreateUserCommand{
+				Email: fmt.Sprint("user", i, "@test.com"),
+				Name:  fmt.Sprint("user", i),
+				Login: fmt.Sprint("loginuser", i),
+				OrgID: testOrgID,
+			}
+			_, err := sqlStore.CreateUser(context.Background(), cmd)
+			require.Nil(t, err)
+		}
+
+		// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
+		if sqlStore.GetDialect().DriverName() != "mysql" {
+			// add additional user with conflicting login where DOMAIN is upper case
+
+			// the order of adding the conflict matters
+			dupUserLogincmd := user.CreateUserCommand{
+				Email: "userduplicatetest1@test.com",
+				Name:  "user name 1",
+				Login: "user_duplicate_test_1_login",
+				OrgID: testOrgID,
+			}
+			_, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+			require.NoError(t, err)
+			dupUserEmailcmd := user.CreateUserCommand{
+				Email: "USERDUPLICATETEST1@TEST.COM",
+				Name:  "user name 1",
+				Login: "USER_DUPLICATE_TEST_1_LOGIN",
+				OrgID: testOrgID,
+			}
+			userWithUpperCase, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+			require.NoError(t, err)
+
+			// this is the user we want to update to another team
+			err = sqlStore.AddTeamMember(userWithUpperCase.ID, testOrgID, team1.Id, false, 0)
+			require.NoError(t, err)
+
+			// get users
+			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
+			require.NoError(t, err)
+			tmpFile, err := generateConflictUsersFile(&conflictUsers)
+			require.NoError(t, err)
+			// validation to get newConflicts
+			// edited file
+			b, err := ioutil.ReadFile(tmpFile.Name())
+			require.NoError(t, err)
+			newConflicts, validErr := getValidConflictUsers(&cli.Context{Context: context.Background()}, sqlStore, b)
+			require.NoError(t, validErr)
+			require.Equal(t, 2, len(newConflicts))
+
+			// test starts here
+			err = newConflicts.MergeConflictingUsers(context.Background(), sqlStore)
+			require.NoError(t, err)
+
+			t.Logf("testing getting user with uppercase")
+			// user with uppercaseemail should not exist
+			query := &models.GetUserByIdQuery{Id: userWithUpperCase.ID}
+			err = sqlStore.GetUserById(context.Background(), query)
+			require.NoError(t, err)
+
+			query := accesscontrol.GetUserPermissionsQuery{OrgID: testOrgID, UserID: userWithUpperCase.ID}
+			testUser := &models.SignedInUser{OrgId: testOrgID, Permissions: map[int64]map[string][]string{1: {
+				ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
+				ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+			}}}
+
 		}
 	})
 }
