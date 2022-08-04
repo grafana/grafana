@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -129,6 +130,18 @@ func WithSequentialGroupIndex() AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.RuleGroupIndex = idx
 		idx++
+	}
+}
+
+func WithOrgID(orgId int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.OrgID = orgId
+	}
+}
+
+func WithNamespace(namespace *models2.Folder) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NamespaceUID = namespace.Uid
 	}
 }
 

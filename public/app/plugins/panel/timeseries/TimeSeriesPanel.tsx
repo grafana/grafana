@@ -62,6 +62,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      options={options}
     >
       {(config, alignedDataFrame) => {
         return (
@@ -70,6 +71,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
+                frames={frames}
                 data={alignedDataFrame}
                 config={config}
                 mode={options.tooltip.mode}
@@ -116,6 +118,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             ) : (
               <ContextMenuPlugin
                 data={alignedDataFrame}
+                frames={frames}
                 config={config}
                 timeZone={timeZone}
                 replaceVariables={replaceVariables}

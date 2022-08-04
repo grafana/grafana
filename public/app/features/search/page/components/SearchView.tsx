@@ -220,7 +220,7 @@ export const SearchView = ({
               }
             }}
           >
-            Remove search constraints
+            Clear search and filters
           </Button>
         </div>
       );

@@ -351,6 +351,30 @@ func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namesp
 	return nil
 }
 
+func (f *FakeRuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "IncreaseVersionForAllRulesInNamespace",
+		Params: []interface{}{orgID, namespaceUID},
+	})
+
+	var result []models.AlertRuleKeyWithVersion
+
+	for _, rule := range f.Rules[orgID] {
+		if rule.NamespaceUID == namespaceUID && rule.OrgID == orgID {
+			rule.Version++
+			rule.Updated = TimeNow()
+			result = append(result, models.AlertRuleKeyWithVersion{
+				Version:      rule.Version,
+				AlertRuleKey: rule.GetKey(),
+			})
+		}
+	}
+	return result, nil
+}
+
 type FakeInstanceStore struct {
 	mtx         sync.Mutex
 	RecordedOps []interface{}
