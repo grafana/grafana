@@ -31,7 +31,7 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
 
   const output: React.ReactElement[] = [];
 
-  lines.forEach((line) => {
+  lines.forEach((line, index) => {
     const matches = Array.from(line.matchAll(regex));
 
     matches.forEach((match, index) => {
@@ -51,7 +51,7 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
       }
     });
 
-    output.push(<br />);
+    output.push(<br key={`${index}-newline`} />);
   });
 
   return <span className={styles.wrapper}>{output}</span>;
