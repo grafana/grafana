@@ -32,8 +32,8 @@ const VariableEditor = (props: Props) => {
     { label: 'Resource Names', value: AzureQueryType.ResourceNamesQuery },
     { label: 'Metric Names', value: AzureQueryType.MetricNamesQuery },
     { label: 'Workspaces', value: AzureQueryType.WorkspacesQuery },
-    { label: 'Logs', value: AzureQueryType.LogAnalytics },
     { label: 'Resource Graph', value: AzureQueryType.AzureResourceGraph },
+    { label: 'Logs', value: AzureQueryType.LogAnalytics },
   ];
   if (typeof props.query === 'object' && props.query.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
     // Add the option for the GrafanaTemplateVariableFn only if it's already in use
@@ -291,7 +291,7 @@ const VariableEditor = (props: Props) => {
       {query.queryType === AzureQueryType.AzureResourceGraph && (
         <>
           <ArgQueryEditor
-            subscriptionId={query.subscription}
+            subscriptionId={datasource.azureLogAnalyticsDatasource.defaultSubscriptionId}
             query={query}
             datasource={datasource}
             onChange={onQueryChange}
