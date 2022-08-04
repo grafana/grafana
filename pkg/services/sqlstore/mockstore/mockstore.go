@@ -137,10 +137,6 @@ func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserComman
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 	return m.ExpectedSetUsingOrgError
 }
