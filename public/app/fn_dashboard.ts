@@ -1,25 +1,9 @@
 declare let __webpack_public_path__: string;
 declare let __webpack_nonce__: string;
 
-// Check if we are hosting files on cdn and set webpack public path
-if (window.public_cdn_path) {
-  __webpack_public_path__ = window.public_cdn_path;
-}
-
-// This is a path to the public folder without '/build'
-window.__grafana_public_path__ =
-  __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
-
 if (window.__POWERED_BY_QIANKUN__) {
   __webpack_public_path__ = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__;
 }
-
-if (window.nonce) {
-  __webpack_nonce__ = window.nonce;
-}
-
-// This is an indication to the window.onLoad failure check that the app bundle has loaded.
-window.__grafana_app_bundle_loaded = true;
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -55,7 +39,9 @@ export async function mount(props: any) {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function unmount(props: any) {
-  const container = props.container ? props.container.querySelector('reactRoot') : document.getElementById('reactRoot');
+  const container = props.container
+    ? props.container.querySelector('#reactRoot')
+    : document.getElementById('reactRoot');
   if (container) {
     ReactDOM.unmountComponentAtNode(container);
   }

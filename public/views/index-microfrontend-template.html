@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <title>FluxNinja Microfrontend</title>
-    <base href="../../../" />
+    <base href="/" />
   </head>
 
   <body class="theme-dark app-grafana">
@@ -10,15 +10,15 @@
     <% for (index in htmlWebpackPlugin.files.js) { %> <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
     <script
       nonce=""
-      src="<%= htmlWebpackPlugin.files.js[index] %>"
+      src="../../../<%= htmlWebpackPlugin.files.js[index] %>"
       type="text/javascript"
-      integrity="<%= htmlWebpackPlugin.files.jsIntegrity[index] %>"
+      integrity="../../../<%= htmlWebpackPlugin.files.jsIntegrity[index] %>"
       crossorigin="<%= webpackConfig.output.crossOriginLoading %>"
     ></script>
     <% } else { %>
     <script
       nonce=""
-      src="<%= htmlWebpackPlugin.files.js[index] %>"
+      src="../../../<%= htmlWebpackPlugin.files.js[index] %>"
       type="text/javascript"
     ></script>
     <% } %> <% } %>
