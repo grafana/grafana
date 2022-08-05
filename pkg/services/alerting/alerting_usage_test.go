@@ -7,15 +7,27 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
 )
 
 func TestAlertingUsageStats(t *testing.T) {
 	store := &AlertStoreMock{}
+	dsMock := &fd.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{
+			{Id: 1, Type: datasources.DS_INFLUXDB},
+			{Id: 2, Type: datasources.DS_GRAPHITE},
+			{Id: 3, Type: datasources.DS_PROMETHEUS},
+			{Id: 4, Type: datasources.DS_PROMETHEUS},
+		},
+	}
 	ae := &AlertEngine{
-		sqlStore: store,
+		AlertStore:        store,
+		datasourceService: dsMock,
 	}
 
 	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) error {
@@ -36,23 +48,6 @@ func TestAlertingUsageStats(t *testing.T) {
 			{Id: 2, Settings: createFake("testdata/settings/three_conditions.json")},
 			{Id: 3, Settings: createFake("testdata/settings/empty.json")},
 		}
-		return nil
-	}
-
-	store.getDataSource = func(ctx context.Context, query *models.GetDataSourceQuery) error {
-		ds := map[int64]*models.DataSource{
-			1: {Type: "influxdb"},
-			2: {Type: "graphite"},
-			3: {Type: "prometheus"},
-			4: {Type: "prometheus"},
-		}
-
-		r, exist := ds[query.Id]
-		if !exist {
-			return models.ErrDataSourceNotFound
-		}
-
-		query.Result = r
 		return nil
 	}
 

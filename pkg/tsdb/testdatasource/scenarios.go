@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -787,7 +786,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*dat
 			default:
 				f, err := strconv.ParseFloat(rawValue, 64)
 				if err != nil {
-					return nil, errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
+					return nil, fmt.Errorf("failed to parse value '%v' into nullable float: %w", rawValue, err)
 				}
 				val = &f
 			}

@@ -1,5 +1,30 @@
 import { SyntaxNode } from '@lezer/common';
-import { parser } from 'lezer-promql';
+import {
+  AggregateExpr,
+  AggregateModifier,
+  AggregateOp,
+  BinaryExpr,
+  BinModifiers,
+  Expr,
+  FunctionCall,
+  FunctionCallArgs,
+  FunctionCallBody,
+  FunctionIdentifier,
+  GroupingLabel,
+  GroupingLabelList,
+  GroupingLabels,
+  LabelMatcher,
+  LabelName,
+  MatchOp,
+  MetricIdentifier,
+  NumberLiteral,
+  On,
+  OnOrIgnoring,
+  ParenExpr,
+  parser,
+  StringLiteral,
+  Without,
+} from 'lezer-promql';
 
 import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
@@ -43,9 +68,11 @@ export function buildVisualQueryFromString(expr: string): Context {
   } catch (err) {
     // Not ideal to log it here, but otherwise we would lose the stack trace.
     console.error(err);
-    context.errors.push({
-      text: err.message,
-    });
+    if (err instanceof Error) {
+      context.errors.push({
+        text: err.message,
+      });
+    }
   }
 
   // If we have empty query, we want to reset errors
@@ -67,6 +94,9 @@ interface Context {
   errors: ParsingError[];
 }
 
+// Although 0 isn't explicitly provided in the lezer-promql library as the error node ID, it does appear to be the ID of error nodes within lezer.
+const ErrorId = 0;
+
 /**
  * Handler for default state. It will traverse the tree and call the appropriate handler for each node. The node
  * handled here does not necessarily need to be of type == Expr.
@@ -76,14 +106,15 @@ interface Context {
  */
 export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
-  switch (node.name) {
-    case 'MetricIdentifier': {
+
+  switch (node.type.id) {
+    case MetricIdentifier: {
       // Expectation is that there is only one of those per query.
       visQuery.metric = getString(expr, node);
       break;
     }
 
-    case 'LabelMatcher': {
+    case LabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
       visQuery.labels.push(getLabel(expr, node));
       const err = node.getChild(ErrorName);
@@ -93,22 +124,22 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    case 'FunctionCall': {
+    case FunctionCall: {
       handleFunction(expr, node, context);
       break;
     }
 
-    case 'AggregateExpr': {
+    case AggregateExpr: {
       handleAggregation(expr, node, context);
       break;
     }
 
-    case 'BinaryExpr': {
+    case BinaryExpr: {
       handleBinary(expr, node, context);
       break;
     }
 
-    case ErrorName: {
+    case ErrorId: {
       if (isIntervalVariableError(node)) {
         break;
       }
@@ -117,7 +148,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     default: {
-      if (node.name === 'ParenExpr') {
+      if (node.type.id === ParenExpr) {
         // We don't support parenthesis in the query to group expressions. We just report error but go on with the
         // parsing.
         context.errors.push(makeError(expr, node));
@@ -140,9 +171,9 @@ function isIntervalVariableError(node: SyntaxNode) {
 }
 
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
-  const label = getString(expr, node.getChild('LabelName'));
-  const op = getString(expr, node.getChild('MatchOp'));
-  const value = getString(expr, node.getChild('StringLiteral')).replace(/"/g, '');
+  const label = getString(expr, node.getChild(LabelName));
+  const op = getString(expr, node.getChild(MatchOp));
+  const value = getString(expr, node.getChild(StringLiteral)).replace(/"/g, '');
   return {
     label,
     op,
@@ -159,11 +190,11 @@ const rangeFunctions = ['changes', 'rate', 'irate', 'increase', 'delta'];
  */
 function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
-  const nameNode = node.getChild('FunctionIdentifier');
+  const nameNode = node.getChild(FunctionIdentifier);
   const funcName = getString(expr, nameNode);
 
-  const body = node.getChild('FunctionCallBody');
-  const callArgs = body!.getChild('FunctionCallArgs');
+  const body = node.getChild(FunctionCallBody);
+  const callArgs = body!.getChild(FunctionCallArgs);
   const params = [];
   let interval = '';
 
@@ -201,10 +232,10 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
  */
 function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
-  const nameNode = node.getChild('AggregateOp');
+  const nameNode = node.getChild(AggregateOp);
   let funcName = getString(expr, nameNode);
 
-  const modifier = node.getChild('AggregateModifier');
+  const modifier = node.getChild(AggregateModifier);
   const labels = [];
 
   if (modifier) {
@@ -213,16 +244,16 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
       funcName = `__${funcName}_by`;
     }
 
-    const withoutModifier = modifier.getChild(`Without`);
+    const withoutModifier = modifier.getChild(Without);
     if (withoutModifier) {
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, modifier, 'GroupingLabel'));
+    labels.push(...getAllByType(expr, modifier, GroupingLabel));
   }
 
-  const body = node.getChild('FunctionCallBody');
-  const callArgs = body!.getChild('FunctionCallArgs');
+  const body = node.getChild(FunctionCallBody);
+  const callArgs = body!.getChild(FunctionCallArgs);
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
@@ -247,11 +278,11 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
   if (!node) {
     return;
   }
-  switch (node.name) {
+  switch (node.type.id) {
     // In case we have an expression we don't know what kind so we have to look at the child as it can be anything.
-    case 'Expr':
+    case Expr:
     // FunctionCallArgs are nested bit weirdly as mentioned so we have to go one deeper in this case.
-    case 'FunctionCallArgs': {
+    case FunctionCallArgs: {
       let child = node.firstChild;
       while (child) {
         updateFunctionArgs(expr, child, context, op);
@@ -260,12 +291,12 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       break;
     }
 
-    case 'NumberLiteral': {
+    case NumberLiteral: {
       op.params.push(parseFloat(getString(expr, node)));
       break;
     }
 
-    case 'StringLiteral': {
+    case StringLiteral: {
       op.params.push(getString(expr, node).replace(/"/g, ''));
       break;
     }
@@ -289,16 +320,16 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  const binModifier = getBinaryModifier(expr, node.getChild('BinModifiers'));
+  const binModifier = getBinaryModifier(expr, node.getChild(BinModifiers));
 
   const right = node.lastChild!;
 
   const opDef = binaryScalarOperatorToOperatorName[op];
 
-  const leftNumber = left.getChild('NumberLiteral');
-  const rightNumber = right.getChild('NumberLiteral');
+  const leftNumber = left.getChild(NumberLiteral);
+  const rightNumber = right.getChild(NumberLiteral);
 
-  const rightBinary = right.getChild('BinaryExpr');
+  const rightBinary = right.getChild(BinaryExpr);
 
   if (leftNumber) {
     // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
@@ -357,17 +388,17 @@ function getBinaryModifier(
   if (node.getChild('Bool')) {
     return { isBool: true, isMatcher: false };
   } else {
-    const matcher = node.getChild('OnOrIgnoring');
+    const matcher = node.getChild(OnOrIgnoring);
     if (!matcher) {
       // Not sure what this could be, maybe should be an error.
       return undefined;
     }
-    const labels = getString(expr, matcher.getChild('GroupingLabels')?.getChild('GroupingLabelList'));
+    const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
     return {
       isMatcher: true,
       isBool: false,
       matches: labels,
-      matchType: matcher.getChild('On') ? 'on' : 'ignoring',
+      matchType: matcher.getChild(On) ? 'on' : 'ignoring',
     };
   }
 }

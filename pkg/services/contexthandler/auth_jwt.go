@@ -2,9 +2,11 @@ package contexthandler
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const InvalidJWT = "Invalid JWT"
@@ -16,6 +18,10 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	}
 
 	jwtToken := ctx.Req.Header.Get(h.Cfg.JWTAuthHeaderName)
+	if jwtToken == "" && h.Cfg.JWTAuthURLLogin {
+		jwtToken = ctx.Req.URL.Query().Get("auth_token")
+	}
+
 	if jwtToken == "" {
 		return false
 	}
@@ -23,7 +29,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	claims, err := h.JWTAuthService.Verify(ctx.Req.Context(), jwtToken)
 	if err != nil {
 		ctx.Logger.Debug("Failed to verify JWT", "error", err)
-		ctx.JsonApiErr(401, InvalidJWT, err)
+		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
 
@@ -33,7 +39,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 
 	if sub == "" {
 		ctx.Logger.Warn("Got a JWT without the mandatory 'sub' claim", "error", err)
-		ctx.JsonApiErr(401, InvalidJWT, err)
+		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
 	extUser := &models.ExternalUserInfo{
@@ -56,7 +62,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 
 	if query.Login == "" && query.Email == "" {
 		ctx.Logger.Debug("Failed to get an authentication claim from JWT")
-		ctx.JsonApiErr(401, InvalidJWT, err)
+		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
 
@@ -65,6 +71,11 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 			ReqContext:    ctx,
 			SignupAllowed: h.Cfg.JWTAuthAutoSignUp,
 			ExternalUser:  extUser,
+			UserLookupParams: models.UserLookupParams{
+				UserID: nil,
+				Login:  &query.Login,
+				Email:  &query.Email,
+			},
 		}
 		if err := h.loginService.UpsertUser(ctx.Req.Context(), upsert); err != nil {
 			ctx.Logger.Error("Failed to upsert JWT user", "error", err)
@@ -73,17 +84,17 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	}
 
 	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
+		if errors.Is(err, user.ErrUserNotFound) {
 			ctx.Logger.Debug(
 				"Failed to find user using JWT claims",
 				"email_claim", query.Email,
 				"username_claim", query.Login,
 			)
 			err = login.ErrInvalidCredentials
-			ctx.JsonApiErr(401, UserNotFound, err)
+			ctx.JsonApiErr(http.StatusUnauthorized, UserNotFound, err)
 		} else {
 			ctx.Logger.Error("Failed to get signed in user", "error", err)
-			ctx.JsonApiErr(401, InvalidJWT, err)
+			ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		}
 		return true
 	}

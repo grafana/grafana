@@ -129,18 +129,16 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 		return nil, err
 	}
 
-	tracer, err := tracing.InitializeTracerForTest()
-	if err != nil {
-		return nil, err
-	}
+	tracer := tracing.InitializeTracerForTest()
 
 	s := Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		TimeInterval:       "15s",
 		log:                &fakeLogger{},
+		client:             api,
 	}
-	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+	return s.runQueries(context.Background(), []*PrometheusQuery{&query})
 }
 
 type fakeLogger struct {

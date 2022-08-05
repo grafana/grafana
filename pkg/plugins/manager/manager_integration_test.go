@@ -7,6 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -35,12 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
-	"go.opentelemetry.io/otel/trace"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"gopkg.in/ini.v1"
 )
 
 func TestPluginManager_int_init(t *testing.T) {
@@ -79,7 +78,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	es := elasticsearch.ProvideService(hcp)
 	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp)
-	lk := loki.ProvideService(hcp, tracer)
+	lk := loki.ProvideService(hcp, features, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
 	pr := prometheus.ProvideService(hcp, cfg, features, tracer)
 	tmpo := tempo.ProvideService(hcp)
@@ -120,7 +119,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, pm *PluginMana
 		"gettingstarted": {},
 		"graph":          {},
 		"heatmap":        {},
-		"heatmap-new":    {},
+		"heatmap-old":    {},
 		"histogram":      {},
 		"icon":           {},
 		"live":           {},

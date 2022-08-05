@@ -15,7 +15,7 @@ group memberships and Grafana Organization user roles.
 
 > [Enhanced LDAP authentication]({{< relref "enhanced_ldap/" >}}) is available in [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../../../enterprise/" >}}).
 
-> Refer to [Role-based access control]({{< relref "../../../enterprise/access-control/" >}}) in Grafana Enterprise to understand how you can control access with role-based permissions.
+> Refer to [Role-based access control]({{< relref "../../../administration/roles-and-permissions/access-control/" >}}) to understand how you can control access with role-based permissions.
 
 ## Supported LDAP Servers
 
@@ -71,6 +71,9 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
 bind_password = "grafana"
+
+# Timeout in seconds. Applies to each host specified in the 'host' entry (space separated).
+timeout = 10
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
 # Allow login from email or username, example "(|(sAMAccountName=%s)(userPrincipalName=%s))"
@@ -190,6 +193,27 @@ org_role = "Viewer"
 | `org_role`      | Yes      | Assign users of `group_dn` the organization role `"Admin"`, `"Editor"` or `"Viewer"`                                                                                     |
 | `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs                    | `1` (default org id) |
 | `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`              |
+
+Note: Commenting out a group mapping requires also commenting out the header of
+said group or it will fail validation as an empty mapping. Example:
+
+```bash
+[[servers]]
+# other settings omitted for clarity
+
+[[servers.group_mappings]]
+group_dn = "cn=superadmins,dc=grafana,dc=org"
+org_role = "Admin"
+grafana_admin = true # Available in Grafana v5.3 and above
+
+# [[servers.group_mappings]]
+# group_dn = "cn=admins,dc=grafana,dc=org"
+# org_role = "Admin"
+
+[[servers.group_mappings]]
+group_dn = "cn=users,dc=grafana,dc=org"
+org_role = "Editor"
+```
 
 ### Nested/recursive group membership
 

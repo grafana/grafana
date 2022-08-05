@@ -15,6 +15,9 @@ type Store interface {
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
+}
+
+type Manager interface {
 	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string) error
 	// Remove removes a plugin from the store.
@@ -42,6 +45,11 @@ type BackendFactoryProvider interface {
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
 	Renderer() *Plugin
+}
+
+type SecretsPluginManager interface {
+	// SecretsManager returns a secretsmanager plugin
+	SecretsManager() *Plugin
 }
 
 type StaticRouteResolver interface {

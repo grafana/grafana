@@ -10,6 +10,9 @@ import (
 )
 
 func TestIntegrationDeleteQueryFromQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenarioWithQueryInQueryHistory(t, "When users tries to delete query in query history that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.deleteHandler(sc.reqContext)

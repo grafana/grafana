@@ -26,7 +26,8 @@ const (
 	alertmanagerDefaultConfiguration = `{
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email"
+			"receiver": "grafana-default-email",
+			"group_by": ["grafana_folder", "alertname"]
 		},
 		"receivers": [{
 			"name": "grafana-default-email",
@@ -48,7 +49,7 @@ const (
 	schedulereDefaultExecuteAlerts          = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
-	screenshotsDefaultEnabled               = false
+	screenshotsDefaultCapture               = false
 	screenshotsDefaultMaxConcurrent         = 5
 	screenshotsDefaultUploadImageStorage    = false
 	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
@@ -81,18 +82,29 @@ type UnifiedAlertingSettings struct {
 	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
+	ReservedLabels                UnifiedAlertingReservedLabelSettings
 }
 
 type UnifiedAlertingScreenshotSettings struct {
-	Enabled                    bool
+	Capture                    bool
 	MaxConcurrentScreenshots   int64
 	UploadExternalImageStorage bool
+}
+
+type UnifiedAlertingReservedLabelSettings struct {
+	DisabledLabels map[string]struct{}
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
 // It hides the implementation details of the Enabled and simplifies its usage.
 func (u *UnifiedAlertingSettings) IsEnabled() bool {
 	return u.Enabled == nil || *u.Enabled
+}
+
+// IsReservedLabelDisabled returns true if UnifiedAlertingReservedLabelSettings.DisabledLabels contains the given reserved label.
+func (u *UnifiedAlertingReservedLabelSettings) IsReservedLabelDisabled(label string) bool {
+	_, ok := u.DisabledLabels[label]
+	return ok
 }
 
 // readUnifiedAlertingEnabledSettings reads the settings for unified alerting.
@@ -103,29 +115,37 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// At present an invalid value is considered the same as no value. This means that a
 	// spelling mistake in the string "false" could enable unified alerting rather
 	// than disable it. This issue can be found here
-	unifiedAlerting, err := section.Key("enabled").Bool()
-	if err != nil {
+	hasEnabled := section.Key("enabled").Value() != ""
+	if !hasEnabled {
 		// TODO: Remove in Grafana v9
 		if cfg.IsFeatureToggleEnabled("ngalert") {
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 			// feature flag overrides the legacy alerting setting
 			legacyAlerting := false
 			AlertingEnabled = &legacyAlerting
-			unifiedAlerting = true
+			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// if legacy alerting has not been configured then enable unified alerting
 		if AlertingEnabled == nil {
-			unifiedAlerting = true
+			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// enable unified alerting and disable legacy alerting
 		legacyAlerting := false
 		AlertingEnabled = &legacyAlerting
-		unifiedAlerting = true
+		unifiedAlerting := true
 		return &unifiedAlerting, nil
+	}
+
+	unifiedAlerting, err := section.Key("enabled").Bool()
+	if err != nil {
+		// the value for unified alerting is invalid so disable all alerting
+		legacyAlerting := false
+		AlertingEnabled = &legacyAlerting
+		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
 
 	// If both legacy and unified alerting are enabled then return an error
@@ -149,7 +169,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	uaCfg.Enabled, err = cfg.readUnifiedAlertingEnabledSetting(ua)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read unified alerting enabled setting: %w", err)
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
@@ -260,10 +280,19 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots
 
-	uaCfgScreenshots.Enabled = screenshots.Key("enabled").MustBool(screenshotsDefaultEnabled)
+	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
 	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
 	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
 	uaCfg.Screenshots = uaCfgScreenshots
+
+	reservedLabels := iniFile.Section("unified_alerting.reserved_labels")
+	uaCfgReservedLabels := UnifiedAlertingReservedLabelSettings{
+		DisabledLabels: make(map[string]struct{}),
+	}
+	for _, label := range util.SplitString(reservedLabels.Key("disabled_labels").MustString("")) {
+		uaCfgReservedLabels.DisabledLabels[label] = struct{}{}
+	}
+	uaCfg.ReservedLabels = uaCfgReservedLabels
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

@@ -75,6 +75,9 @@ var sqlStoreTestCases = []sqlStoreTest{
 }
 
 func TestIntegrationSQLConnectionString(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	for _, testCase := range sqlStoreTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			sqlstore := &SQLStore{}

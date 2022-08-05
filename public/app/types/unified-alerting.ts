@@ -158,7 +158,7 @@ interface EvalMatch {
 }
 
 export interface StateHistoryItemData {
-  noData: boolean;
+  noData?: boolean;
   evalMatches?: EvalMatch[];
 }
 
@@ -192,4 +192,8 @@ export interface PromBasedDataSource {
   name: string;
   id: string | number;
   rulerConfig?: RulerDataSourceConfig;
+}
+
+export interface PaginationProps {
+  itemsPerPage: number;
 }

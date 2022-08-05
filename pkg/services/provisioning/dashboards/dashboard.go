@@ -9,12 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // DashboardProvisioner is responsible for syncing dashboard from disk to
 // Grafana's database.
 type DashboardProvisioner interface {
+	HasDashboardSources() bool
 	Provision(ctx context.Context) error
 	PollChanges(ctx context.Context)
 	GetProvisionerResolvedPath(name string) string
@@ -32,6 +32,10 @@ type Provisioner struct {
 	configs            []*config
 	duplicateValidator duplicateValidator
 	provisioner        dashboards.DashboardProvisioningService
+}
+
+func (provider *Provisioner) HasDashboardSources() bool {
+	return len(provider.fileReaders) > 0
 }
 
 // New returns a new DashboardProvisioner
@@ -70,7 +74,7 @@ func (provider *Provisioner) Provision(ctx context.Context) error {
 				return nil
 			}
 
-			return errutil.Wrapf(err, "Failed to provision config %v", reader.Cfg.Name)
+			return fmt.Errorf("failed to provision config %v: %w", reader.Cfg.Name, err)
 		}
 	}
 
@@ -132,7 +136,7 @@ func getFileReaders(
 		case "file":
 			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name), service, store)
 			if err != nil {
-				return nil, errutil.Wrapf(err, "Failed to create file reader for config %v", config.Name)
+				return nil, fmt.Errorf("failed to create file reader for config %v: %w", config.Name, err)
 			}
 			readers = append(readers, fileReader)
 		default:

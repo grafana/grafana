@@ -26,11 +26,12 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
 		dashboardStore := &dashboards.FakeDashboardStore{}
-		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(nil)
+		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(nil, nil)
 		defer dashboardStore.AssertExpectations(t)
 
 		features := featuremgmt.WithFeatures()
 		mockSQLStore := mockstore.NewSQLStoreMock()
+		ac := accesscontrolmock.New()
 		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
@@ -38,8 +39,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			Cfg:      settings,
 			SQLStore: mockSQLStore,
 			Features: features,
-			dashboardService: dashboardservice.ProvideDashboardService(
-				settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions,
+			DashboardService: dashboardservice.ProvideDashboardService(
+				settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac,
 			),
 			AccessControl: accesscontrolmock.New().WithDisabled(),
 		}
@@ -57,8 +58,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
@@ -85,7 +86,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,
 				CheckPermissionBeforeUpdateValue: true,
-				GetAclValue: []*models.DashboardAclInfoDTO{
+				GetACLValue: []*models.DashboardACLInfoDTO{
 					{OrgId: 1, DashboardId: 1, UserId: 2, Permission: models.PERMISSION_VIEW},
 					{OrgId: 1, DashboardId: 1, UserId: 3, Permission: models.PERMISSION_EDIT},
 					{OrgId: 1, DashboardId: 1, UserId: 4, Permission: models.PERMISSION_ADMIN},
@@ -99,7 +100,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 200, sc.resp.Code)
 
-					var resp []*models.DashboardAclInfoDTO
+					var resp []*models.DashboardACLInfoDTO
 					err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 					require.NoError(t, err)
 
@@ -108,8 +109,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
 				}, mockSQLStore)
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
@@ -137,8 +138,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				CheckPermissionBeforeUpdateValue: true,
 			})
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, TeamID: 1, Permission: models.PERMISSION_ADMIN},
 				},
 			}
@@ -169,8 +170,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				CheckPermissionBeforeUpdateError: guardian.ErrGuardianPermissionExists,
 			})
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
@@ -189,14 +190,14 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 		t.Run("When trying to update team or user permissions with a role", func(t *testing.T) {
 			role := models.ROLE_EDITOR
-			cmds := []dtos.UpdateDashboardAclCommand{
+			cmds := []dtos.UpdateDashboardACLCommand{
 				{
-					Items: []dtos.DashboardAclUpdateItem{
+					Items: []dtos.DashboardACLUpdateItem{
 						{UserID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
 					},
 				},
 				{
-					Items: []dtos.DashboardAclUpdateItem{
+					Items: []dtos.DashboardACLUpdateItem{
 						{TeamID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
 					},
 				},
@@ -231,8 +232,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverride},
 			)
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
@@ -261,19 +262,19 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			})
 
 			mockSQLStore := mockstore.NewSQLStoreMock()
-			var resp []*models.DashboardAclInfoDTO
+			var resp []*models.DashboardACLInfoDTO
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 					setUp()
 					guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 						CanAdminValue:                    true,
 						CheckPermissionBeforeUpdateValue: true,
-						GetAclValue: []*models.DashboardAclInfoDTO{
+						GetACLValue: []*models.DashboardACLInfoDTO{
 							{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
 							{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
 							{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
 						},
-						GetHiddenAclValue: []*models.DashboardAcl{
+						GetHiddenACLValue: []*models.DashboardACL{
 							{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
 						},
 					})
@@ -291,22 +292,22 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
 				}, mockSQLStore)
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
+			cmd := dtos.UpdateDashboardACLCommand{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
 			for _, acl := range resp {
-				cmd.Items = append(cmd.Items, dtos.DashboardAclUpdateItem{
+				cmd.Items = append(cmd.Items, dtos.DashboardACLUpdateItem{
 					UserID:     acl.UserId,
 					Permission: acl.Permission,
 				})
 			}
 			assert.Len(t, cmd.Items, 3)
 
-			var numOfItems []*models.DashboardAcl
+			var numOfItems []*models.DashboardACL
 			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				items := args.Get(2).([]*models.DashboardAcl)
+				items := args.Get(2).([]*models.DashboardACL)
 				numOfItems = items
 			}).Return(nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
@@ -338,7 +339,7 @@ type updatePermissionContext struct {
 	desc         string
 	url          string
 	routePattern string
-	cmd          dtos.UpdateDashboardAclCommand
+	cmd          dtos.UpdateDashboardACLCommand
 	fn           scenarioFunc
 }
 

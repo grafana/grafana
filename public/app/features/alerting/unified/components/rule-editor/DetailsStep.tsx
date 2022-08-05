@@ -4,8 +4,7 @@ import React, { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { useStyles2, Field, Input, InputControl, Label, Tooltip, Icon } from '@grafana/ui';
+import { useStyles2, Field, Input, InputControl, Label, Tooltip, Icon, Stack } from '@grafana/ui';
 import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -15,7 +14,6 @@ import { RuleForm, RuleFormType, RuleFormValues } from '../../types/rule-form';
 
 import AnnotationsField from './AnnotationsField';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
-import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleFolderPicker, Folder } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
@@ -148,7 +146,6 @@ export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
         </div>
       )}
       {type !== RuleFormType.cloudRecording && <AnnotationsField />}
-      <LabelsField />
     </RuleEditorSection>
   );
 };
@@ -183,9 +180,10 @@ const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   alignBaseline: css`
     align-items: baseline;
+    margin-bottom: ${theme.spacing(3)};
   `,
   formInput: css`
-    width: 330px;
+    width: 275px;
 
     & + & {
       margin-left: ${theme.spacing(3)};

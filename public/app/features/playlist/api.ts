@@ -10,16 +10,16 @@ export async function createPlaylist(playlist: Playlist) {
   await withErrorHandling(() => getBackendSrv().post('/api/playlists', playlist));
 }
 
-export async function updatePlaylist(id: number, playlist: Playlist) {
-  await withErrorHandling(() => getBackendSrv().put(`/api/playlists/${id}`, playlist));
+export async function updatePlaylist(uid: string, playlist: Playlist) {
+  await withErrorHandling(() => getBackendSrv().put(`/api/playlists/${uid}`, playlist));
 }
 
-export async function deletePlaylist(id: number) {
-  await withErrorHandling(() => getBackendSrv().delete(`/api/playlists/${id}`), 'Playlist deleted');
+export async function deletePlaylist(uid: string) {
+  await withErrorHandling(() => getBackendSrv().delete(`/api/playlists/${uid}`), 'Playlist deleted');
 }
 
-export async function getPlaylist(id: number): Promise<Playlist> {
-  const result: Playlist = await getBackendSrv().get(`/api/playlists/${id}`);
+export async function getPlaylist(uid: string): Promise<Playlist> {
+  const result: Playlist = await getBackendSrv().get(`/api/playlists/${uid}`);
   return result;
 }
 
@@ -33,6 +33,8 @@ async function withErrorHandling(apiCall: () => Promise<void>, message = 'Playli
     await apiCall();
     dispatch(notifyApp(createSuccessNotification(message)));
   } catch (e) {
-    dispatch(notifyApp(createErrorNotification('Unable to save playlist', e)));
+    if (e instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Unable to save playlist', e)));
+    }
   }
 }

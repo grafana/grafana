@@ -19,6 +19,13 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
       defaultValue: true,
     });
 
+    builder.addBooleanSwitch({
+      path: 'showAdvancedTypes',
+      name: 'Show advanced element types',
+      description: '',
+      defaultValue: false,
+    });
+
     if (state) {
       builder.addNestedOptions(getLayerEditor(state));
 

@@ -13,7 +13,11 @@ import {
   Icon,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
-import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
+import {
+  CancelablePromise,
+  isCancelablePromiseRejection,
+  makePromiseCancelable,
+} from 'app/core/utils/CancelablePromise';
 
 import { PrometheusDatasource } from '../datasource';
 import { roundMsToMin } from '../language_utils';
@@ -174,7 +178,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       await Promise.all(remainingTasks);
       this.onUpdateLanguage();
     } catch (err) {
-      if (!err.isCanceled) {
+      if (isCancelablePromiseRejection(err) && err.isCanceled) {
+        // do nothing, promise was canceled
+      } else {
         throw err;
       }
     }
@@ -218,8 +224,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   onClickHintFix = () => {
     const { datasource, query, onChange, onRunQuery } = this.props;
     const { hint } = this.state;
-
-    onChange(datasource.modifyQuery(query, hint!.fix!.action));
+    if (hint?.fix?.action) {
+      onChange(datasource.modifyQuery(query, hint.fix.action));
+    }
     onRunQuery();
   };
 

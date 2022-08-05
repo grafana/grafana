@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,8 +21,8 @@ type AccessControlStore struct {
 	sql *sqlstore.SQLStore
 }
 
-func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]*accesscontrol.Permission, error) {
-	result := make([]*accesscontrol.Permission, 0)
+func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	result := make([]accesscontrol.Permission, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		filter, params := userRolesFilter(query.OrgID, query.UserID, query.Roles)
 
@@ -59,8 +60,13 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 }
 
 func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
-	q := `
-	WHERE role.id IN (
+	params := []interface{}{}
+	q := `WHERE role.id IN (`
+
+	// This is an additional security. We should never have permissions granted to userID 0.
+	// Only allow real users to get user/team permissions (anonymous/apikeys)
+	if userID > 0 {
+		q += `
 		SELECT ur.role_id
 		FROM user_role AS ur
 		WHERE ur.user_id = ?
@@ -68,15 +74,18 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 		UNION
 		SELECT tr.role_id FROM team_role as tr
 		INNER JOIN team_member as tm ON tm.team_id = tr.team_id
-		WHERE tm.user_id = ? AND tr.org_id = ?
-	`
-	params := []interface{}{userID, orgID, globalOrgID, userID, orgID}
+		WHERE tm.user_id = ? AND tr.org_id = ?`
+		params = []interface{}{userID, orgID, globalOrgID, userID, orgID}
+	}
 
 	if len(roles) != 0 {
+		if userID > 0 {
+			q += `
+			UNION`
+		}
 		q += `
-			UNION
 			SELECT br.role_id FROM builtin_role AS br
-			WHERE role IN (? ` + strings.Repeat(", ?", len(roles)-1) + `)
+			WHERE br.role IN (? ` + strings.Repeat(", ?", len(roles)-1) + `)
 		`
 		for _, role := range roles {
 			params = append(params, role)
@@ -109,4 +118,47 @@ func deletePermissions(sess *sqlstore.DBSession, ids []int64) error {
 	}
 
 	return nil
+}
+
+func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, userID int64) error {
+	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Delete user role assignments
+		if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
+			return err
+		}
+
+		// Delete permissions that are scoped to user
+		if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", accesscontrol.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
+			return err
+		}
+
+		var roleIDs []int64
+		if err := sess.SQL("SELECT id FROM role WHERE name = ?", accesscontrol.ManagedUserRoleName(userID)).Find(&roleIDs); err != nil {
+			return err
+		}
+
+		if len(roleIDs) == 0 {
+			return nil
+		}
+
+		query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+		args := make([]interface{}, 0, len(roleIDs)+1)
+		args = append(args, query)
+		for _, id := range roleIDs {
+			args = append(args, id)
+		}
+
+		// Delete managed user permissions
+		if _, err := sess.Exec(args...); err != nil {
+			return err
+		}
+
+		// Delete managed user roles
+		if _, err := sess.Exec("DELETE FROM role WHERE name = ?", accesscontrol.ManagedUserRoleName(userID)); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return err
 }

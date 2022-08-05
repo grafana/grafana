@@ -38,13 +38,17 @@ type DashboardServiceImpl struct {
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
+	ac                   accesscontrol.AccessControl
 }
 
 func ProvideDashboardService(
 	cfg *setting.Cfg, store dashboards.Store, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 ) *DashboardServiceImpl {
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(store))
+
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("dashboard-service"),
@@ -53,6 +57,7 @@ func ProvideDashboardService(
 		features:             features,
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
+		ac:                   ac,
 	}
 }
 
@@ -78,21 +83,21 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	dash.SetUid(strings.TrimSpace(dash.Uid))
 
 	if dash.Title == "" {
-		return nil, models.ErrDashboardTitleEmpty
+		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
 	if dash.IsFolder && dash.FolderId > 0 {
-		return nil, models.ErrDashboardFolderCannotHaveParent
+		return nil, dashboards.ErrDashboardFolderCannotHaveParent
 	}
 
 	if dash.IsFolder && strings.EqualFold(dash.Title, models.RootFolderName) {
-		return nil, models.ErrDashboardFolderNameExists
+		return nil, dashboards.ErrDashboardFolderNameExists
 	}
 
 	if !util.IsValidShortUID(dash.Uid) {
-		return nil, models.ErrDashboardInvalidUid
+		return nil, dashboards.ErrDashboardInvalidUid
 	} else if util.IsShortUIDTooLong(dash.Uid) {
-		return nil, models.ErrDashboardUidTooLong
+		return nil, dashboards.ErrDashboardUidTooLong
 	}
 
 	if err := validateDashboardRefreshInterval(dash); err != nil {
@@ -118,7 +123,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 			if err != nil {
 				return nil, err
 			}
-			return nil, models.ErrDashboardUpdateAccessDenied
+			return nil, dashboards.ErrDashboardUpdateAccessDenied
 		}
 	}
 
@@ -129,7 +134,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 
 		if provisionedData != nil {
-			return nil, models.ErrDashboardCannotSaveProvisionedDashboard
+			return nil, dashboards.ErrDashboardCannotSaveProvisionedDashboard
 		}
 	}
 
@@ -139,14 +144,14 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 			if err != nil {
 				return nil, err
 			}
-			return nil, models.ErrDashboardUpdateAccessDenied
+			return nil, dashboards.ErrDashboardUpdateAccessDenied
 		}
 	} else {
 		if canSave, err := guard.CanSave(); err != nil || !canSave {
 			if err != nil {
 				return nil, err
 			}
-			return nil, models.ErrDashboardUpdateAccessDenied
+			return nil, dashboards.ErrDashboardUpdateAccessDenied
 		}
 	}
 
@@ -168,7 +173,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	return cmd, nil
 }
 
-func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error {
+func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error {
 	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
 }
 
@@ -197,7 +202,7 @@ func validateDashboardRefreshInterval(dash *models.Dashboard) error {
 	}
 
 	if d < minRefreshInterval {
-		return models.ErrDashboardRefreshIntervalTooShort
+		return dashboards.ErrDashboardRefreshIntervalTooShort
 	}
 
 	return nil
@@ -220,7 +225,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		},
 	}
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, true, false)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), false)
 	if err != nil {
 		return nil, err
 	}
@@ -238,14 +243,17 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		OrgID: dto.OrgId,
 	}
 
-	alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-	if err != nil {
-		return nil, err
-	}
+	// extract/save legacy alerts only if legacy alerting is enabled
+	if setting.IsLegacyAlertingEnabled() {
+		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
+		if err != nil {
+			return nil, err
+		}
 
-	err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
-	if err != nil {
-		return nil, err
+		err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if dto.Dashboard.Id == 0 {
@@ -279,14 +287,17 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 		OrgID: dto.OrgId,
 	}
 
-	alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-	if err != nil {
-		return nil, err
-	}
+	// extract/save legacy alerts only if legacy alerting is enabled
+	if setting.IsLegacyAlertingEnabled() {
+		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
+		if err != nil {
+			return nil, err
+		}
 
-	err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
-	if err != nil {
-		return nil, err
+		err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if dto.Dashboard.Id == 0 {
@@ -307,7 +318,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, true, !allowUiUpdate)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), !allowUiUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -323,14 +334,17 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		OrgID: dto.OrgId,
 	}
 
-	alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-	if err != nil {
-		return nil, err
-	}
+	// extract/save legacy alerts only if legacy alerting is enabled
+	if setting.IsLegacyAlertingEnabled() {
+		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
+		if err != nil {
+			return nil, err
+		}
 
-	err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
-	if err != nil {
-		return nil, err
+		err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// new dashboard created
@@ -349,11 +363,15 @@ func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId
 	return dr.deleteDashboard(ctx, dashboardId, orgId, true)
 }
 
+func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error) {
+	return nil, nil
+}
+
 func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
 	rtEditor := models.ROLE_EDITOR
 	rtViewer := models.ROLE_VIEWER
 
-	items := []*models.DashboardAcl{
+	items := []*models.DashboardACL{
 		{
 			OrgID:       orgID,
 			DashboardID: dashboardID,
@@ -366,7 +384,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 
 	if setViewAndEditPermissions {
 		items = append(items,
-			&models.DashboardAcl{
+			&models.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtEditor,
@@ -374,7 +392,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
-			&models.DashboardAcl{
+			&models.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtViewer,
@@ -405,7 +423,7 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		}
 
 		if provisionedData != nil {
-			return models.ErrDashboardCannotDeleteProvisionedDashboard
+			return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
 		}
 	}
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
@@ -452,7 +470,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	inFolder := dash.FolderId > 0
 	if !accesscontrol.IsDisabled(dr.cfg) {
 		var permissions []accesscontrol.SetResourcePermissionCommand
-		if !provisioned {
+		if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: dto.User.UserId, Permission: models.PERMISSION_ADMIN.String(),
 			})
@@ -474,7 +492,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		if err != nil {
 			return err
 		}
-	} else if dr.cfg.EditorsCanAdmin && !provisioned {
+	} else if dr.cfg.EditorsCanAdmin && !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
 		if err := dr.MakeUserAdmin(ctx, dto.OrgId, dto.User.UserId, dash.Id, !inFolder); err != nil {
 			return err
 		}
@@ -484,7 +502,8 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return dr.dashboardStore.GetDashboard(ctx, query)
+	_, err := dr.dashboardStore.GetDashboard(ctx, query)
+	return err
 }
 
 func (dr *DashboardServiceImpl) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
@@ -559,12 +578,12 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 	}
 }
 
-func (dr *DashboardServiceImpl) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-	return dr.dashboardStore.GetDashboardAclInfoList(ctx, query)
+func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
+	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
-	return dr.dashboardStore.HasAdminPermissionInFolders(ctx, query)
+func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
+	return dr.dashboardStore.HasAdminPermissionInDashboardsOrFolders(ctx, query)
 }
 
 func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
@@ -573,4 +592,8 @@ func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, 
 
 func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int64) error {
+	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
 }

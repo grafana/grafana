@@ -114,6 +114,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     // Needed due to block formatting context
     tabContent: css`
       overflow: auto;
+      height: 100%;
     `,
   };
 };

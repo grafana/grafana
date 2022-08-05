@@ -216,11 +216,16 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     // make sure our updated alert has the same UID as before
     copyGrafanaUID(existingRule, newRule);
 
-    // create the new array of rules we want to send to the group
-    const newRules = existingRule.group.rules
-      .filter((rule): rule is RulerGrafanaRuleDTO => isGrafanaRulerRule(rule))
-      .filter((rule) => rule.grafana_alert.uid !== existingRule.rule.grafana_alert.uid)
-      .concat(newRule as RulerGrafanaRuleDTO);
+    // create the new array of rules we want to send to the group. Keep the order of alerts in the group.
+    const newRules = existingRule.group.rules.map((rule) => {
+      if (!isGrafanaRulerRule(rule)) {
+        return rule;
+      }
+      if (rule.grafana_alert.uid === existingRule.rule.grafana_alert.uid) {
+        return newRule;
+      }
+      return rule;
+    });
 
     await setRulerRuleGroup(rulerConfig, existingRule.namespace, {
       name: existingRule.group.name,

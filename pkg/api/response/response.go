@@ -3,12 +3,17 @@ package response
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Response is an HTTP response interface.
@@ -82,7 +87,13 @@ func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 				r.body = bytes.NewBuffer(b)
 			}
 		}
-		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
+
+		logger := ctx.Logger.Error
+		var gfErr *errutil.Error
+		if errors.As(r.err, &gfErr) {
+			logger = gfErr.LogLevel.LogFunc(ctx.Logger)
+		}
+		logger(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
 	}
 
 	header := ctx.Resp.Header()
@@ -212,6 +223,36 @@ func Error(status int, message string, err error) *NormalResponse {
 	}
 
 	return resp
+}
+
+// Err creates an error response based on an errutil.Error error.
+func Err(err error) *NormalResponse {
+	grafanaErr := &errutil.Error{}
+	if !errors.As(err, grafanaErr) {
+		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
+	}
+
+	resp := JSON(grafanaErr.Reason.Status().HTTPStatus(), grafanaErr.Public())
+	resp.errMessage = string(grafanaErr.Reason.Status())
+	resp.err = grafanaErr
+
+	return resp
+}
+
+// ErrOrFallback uses the information in an errutil.Error if available
+// and otherwise falls back to the status and message provided as
+// arguments.
+//
+// The signature is equivalent to that of Error which allows us to
+// rename this to Error when we're confident that that would be safe to
+// do.
+func ErrOrFallback(status int, message string, err error) *NormalResponse {
+	grafanaErr := &errutil.Error{}
+	if errors.As(err, grafanaErr) {
+		return Err(err)
+	}
+
+	return Error(status, message, err)
 }
 
 // Empty creates an empty NormalResponse.

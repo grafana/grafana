@@ -139,7 +139,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("User does not have access to any namespaces")
+		srv.log.Debug("user does not have access to any namespaces")
 		return response.JSON(http.StatusOK, ruleResponse)
 	}
 
@@ -191,7 +191,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 		Name: groupName,
 		File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
 	}
-
+	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",

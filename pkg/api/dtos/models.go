@@ -70,7 +70,19 @@ type MetricRequest struct {
 	// required: false
 	Debug bool `json:"debug"`
 
+	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
+
 	HTTPRequest *http.Request `json:"-"`
+}
+
+func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
+	return MetricRequest{
+		From:        mr.From,
+		To:          mr.To,
+		Queries:     queries,
+		Debug:       mr.Debug,
+		HTTPRequest: mr.HTTPRequest,
+	}
 }
 
 func GetGravatarUrl(text string) string {

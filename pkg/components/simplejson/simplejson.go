@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 )
 
@@ -46,6 +47,17 @@ func NewJson(body []byte) (*Json, error) {
 		return nil, err
 	}
 	return j, nil
+}
+
+// MustJson returns a pointer to a new `Json` object, panicking if `body` cannot be parsed.
+func MustJson(body []byte) *Json {
+	j, err := NewJson(body)
+
+	if err != nil {
+		panic(fmt.Sprintf("could not unmarshal JSON: %q", err))
+	}
+
+	return j
 }
 
 // New returns a pointer to a new, empty `Json` object

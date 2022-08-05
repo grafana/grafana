@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -26,6 +27,8 @@ SELECT DISTINCT
 	, u2.email AS updated_by_email
 	, (SELECT COUNT(connection_id) FROM ` + models.LibraryElementConnectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
 )
+
+const deleteInvalidConnections = "DELETE FROM library_element_connection WHERE connection_id IN (SELECT connection_id as id FROM library_element_connection WHERE element_id=? EXCEPT SELECT id from dashboard)"
 
 func getFromLibraryElementDTOWithMeta(dialect migrator.Dialect) string {
 	user := dialect.Quote("user")
@@ -125,7 +128,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
-		if err := l.requirePermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
+		if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 			return err
 		}
 		if _, err := session.Insert(&element); err != nil {
@@ -176,9 +179,15 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		if err != nil {
 			return err
 		}
-		if err := l.requirePermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
+		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 			return err
 		}
+
+		// Delete any hanging/invalid connections
+		if _, err = session.Exec(deleteInvalidConnections, element.ID); err != nil {
+			return err
+		}
+
 		var connectionIDs []struct {
 			ConnectionID int64 `xorm:"connection_id"`
 		}
@@ -422,13 +431,13 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 
 	// FolderID was provided in the PATCH request
 	if toFolderID != -1 && toFolderID != fromFolderID {
-		if err := l.requirePermissionsOnFolder(ctx, user, toFolderID); err != nil {
+		if err := l.requireEditPermissionsOnFolder(ctx, user, toFolderID); err != nil {
 			return err
 		}
 	}
 
 	// Always check permissions for the folder where library element resides
-	if err := l.requirePermissionsOnFolder(ctx, user, fromFolderID); err != nil {
+	if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
 		return err
 	}
 
@@ -548,7 +557,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 		}
 		var libraryElementConnections []libraryElementConnectionWithMeta
 		builder := sqlstore.SQLBuilder{}
-		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
+		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email, dashboard.uid AS connection_uid")
 		builder.Write(" FROM " + models.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.Dialect.Quote("user") + " AS u1 ON lec.created_by = u1.id")
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
@@ -562,11 +571,12 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 
 		for _, connection := range libraryElementConnections {
 			connections = append(connections, LibraryElementConnectionDTO{
-				ID:           connection.ID,
-				Kind:         connection.Kind,
-				ElementID:    connection.ElementID,
-				ConnectionID: connection.ConnectionID,
-				Created:      connection.Created,
+				ID:            connection.ID,
+				Kind:          connection.Kind,
+				ElementID:     connection.ElementID,
+				ConnectionID:  connection.ConnectionID,
+				ConnectionUID: connection.ConnectionUID,
+				Created:       connection.Created,
 				CreatedBy: LibraryElementDTOMetaUser{
 					ID:        connection.CreatedBy,
 					Name:      connection.CreatedByName,
@@ -648,7 +658,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 			if err != nil {
 				return err
 			}
-			if err := l.requirePermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
+			if err := l.requireViewPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 				return err
 			}
 
@@ -695,7 +705,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 
 		if len(folderUIDs) == 0 {
-			return models.ErrFolderNotFound
+			return dashboards.ErrFolderNotFound
 		}
 
 		if len(folderUIDs) != 1 {
@@ -704,7 +714,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 
 		folderID := folderUIDs[0].ID
 
-		if err := l.requirePermissionsOnFolder(c, signedInUser, folderID); err != nil {
+		if err := l.requireEditPermissionsOnFolder(c, signedInUser, folderID); err != nil {
 			return err
 		}
 		var connectionIDs []struct {

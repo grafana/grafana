@@ -7,7 +7,7 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
   if (config.featureToggles.publicDashboards) {
     return [
       {
-        path: '/public-dashboards/:uid',
+        path: '/public-dashboards/:accessToken',
         pageClass: 'page-dashboard',
         routeName: DashboardRoutes.Public,
         component: SafeDynamicImport(

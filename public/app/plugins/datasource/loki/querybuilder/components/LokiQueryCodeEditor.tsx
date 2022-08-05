@@ -8,15 +8,13 @@ import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
 import { LokiQueryEditorProps } from '../../components/types';
 
-export function LokiQueryCodeEditor({
-  query,
-  datasource,
-  range,
-  onRunQuery,
-  onChange,
-  data,
-  app,
-}: LokiQueryEditorProps) {
+import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
+
+type Props = LokiQueryEditorProps & {
+  showExplain: boolean;
+};
+
+export function LokiQueryCodeEditor({ query, datasource, range, onRunQuery, onChange, data, app, showExplain }: Props) {
   const styles = useStyles2(getStyles);
 
   // the inner QueryField works like this when a blur event happens:
@@ -40,18 +38,18 @@ export function LokiQueryCodeEditor({
         history={[]}
         data={data}
         data-testid={testIds.editor}
+        app={app}
       />
+      {showExplain && <LokiQueryBuilderExplained query={query.expr} />}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    // This wrapper styling can be removed after the old PromQueryEditor is removed.
-    // This is removing margin bottom on the old legacy inline form styles
     wrapper: css`
       .gf-form {
-        margin-bottom: 0;
+        margin-bottom: 0.5;
       }
     `,
   };

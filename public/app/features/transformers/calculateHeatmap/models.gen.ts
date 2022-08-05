@@ -5,7 +5,7 @@ export enum HeatmapCalculationMode {
   Count = 'count',
 }
 
-export const enum HeatmapBucketLayout {
+export const enum HeatmapCellLayout {
   le = 'le',
   ge = 'ge',
   unknown = 'unknown', // unknown
