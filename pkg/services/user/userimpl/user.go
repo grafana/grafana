@@ -297,3 +297,12 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 	}
 	return s.sqlStore.UpdateUserLastSeenAt(ctx, q)
 }
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
+	q := &models.SetUsingOrgCommand{
+		UserId: cmd.UserID,
+		OrgId:  cmd.OrgID,
+	}
+	return s.sqlStore.SetUsingOrg(ctx, q)
+}

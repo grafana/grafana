@@ -46,3 +46,7 @@ func (f *FakeUserService) ChangePassword(ctx context.Context, cmd *user.ChangeUs
 func (f *FakeUserService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	return f.ExpectedError
 }
+
+func (f *FakeUserService) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
+	return f.ExpectedError
+}

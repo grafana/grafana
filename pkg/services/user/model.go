@@ -86,6 +86,11 @@ type UpdateUserLastSeenAtCommand struct {
 	UserID int64
 }
 
+type SetUsingOrgCommand struct {
+	UserID int64
+	OrgID  int64
+}
+
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
