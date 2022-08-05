@@ -96,13 +96,12 @@ export class GrafanaApp {
     try {
       backendSrv.setGrafanaPrefix(true);
       setBackendSrv(backendSrv);
-      backendSrv.get('/api/frontend/settings').then((settings: Settings) => {
-        merge(config, settings, config);
-        /*config.panels = settings.panels;
-        config.datasources = settings.datasources;
-        config.defaultDatasource = settings.defaultDatasource;*/
-        console.log('config', config);
-      });
+      let settings: Settings = await backendSrv.get('/api/frontend/settings');
+      merge(config, settings, config);
+      config.panels = settings.panels;
+      config.datasources = settings.datasources;
+      config.defaultDatasource = settings.defaultDatasource;
+      console.log('config', config);
 
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
@@ -147,6 +146,7 @@ export class GrafanaApp {
       // Init DataSourceSrv
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
+      console.log('config.datasources, config.defaultDatasource', config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
@@ -163,6 +163,8 @@ export class GrafanaApp {
         chrome: new AppChromeService(),
         config,
       };
+
+      console.log('this.context', this.context);
 
       // ReactDOM.render(
       //   React.createElement(AppWrapper, {

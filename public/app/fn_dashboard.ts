@@ -11,6 +11,7 @@ import ReactDOM from 'react-dom';
 import { config } from '@grafana/runtime';
 
 import { FNDashboard } from './FNDashboard';
+import fn_app from './fn_app';
 
 // set featureToggles
 config.featureToggles = {
@@ -39,8 +40,11 @@ export async function bootstrap() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function mount(props: any) {
   //toggleTheme(false);
+  console.log('props', props);
+  await fn_app.init();
+
   ReactDOM.render(
-    React.createElement(FNDashboard, { accessToken: props.accessToken }),
+    React.createElement(FNDashboard, { accessToken: props.accessToken, uid: props.uid }),
     props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')
   );
 }
