@@ -16,7 +16,9 @@ import fn_app from './fn_app';
 import { DashboardRoutes } from './types';
 fn_app.init();
 
-interface DefaultProps {}
+interface FNDashboardProps {
+  accessToken: string;
+}
 
 /** Used by enterprise */
 let bodyRenderHooks: ComponentType[] = [];
@@ -30,9 +32,9 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
-export class FNDashboard extends React.Component<DefaultProps> {
+export class FNDashboard extends React.Component<FNDashboardProps> {
   app!: GrafanaApp;
-  constructor(props: DefaultProps) {
+  constructor(props: FNDashboardProps) {
     super(props);
     this.state = {};
     this.app = fn_app;
@@ -44,17 +46,17 @@ export class FNDashboard extends React.Component<DefaultProps> {
     $('.preloader').remove();
   }
 
-  // accessToken: 'c6cf7faf01cc434f9d13af3a9f9e1664',
-
   renderFNDashboard() {
+    const { accessToken } = this.props;
+    console.log('renderFNDashboard with token: ', accessToken);
     const props: Props = {
       match: {
         params: {
-          accessToken: 'c6cf7faf01cc434f9d13af3a9f9e1664',
+          accessToken: accessToken,
         },
         isExact: true,
         path: 'public-dashboard/:accessToken',
-        url: 'http://localhost:3000/public-dashboard/c6cf7faf01cc434f9d13af3a9f9e1664',
+        url: '',
       },
       // eslint-disable-next-line
       history: {} as any,

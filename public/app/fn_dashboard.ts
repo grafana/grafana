@@ -40,7 +40,7 @@ export async function bootstrap() {
 export async function mount(props: any) {
   //toggleTheme(false);
   ReactDOM.render(
-    React.createElement(FNDashboard),
+    React.createElement(FNDashboard, { accessToken: props.accessToken }),
     props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')
   );
 }
