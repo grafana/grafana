@@ -281,8 +281,8 @@ func (m modelReplacer) replacePrefix(str string) string {
 	return str
 }
 
-// GenerateCoremodelRegistry produces Go files that define a static registry
-// with references to all the Go code that is expected to be generated from the
+// GenerateCoremodelRegistry produces Go files that define a registry with
+// references to all the Go code that is expected to be generated from the
 // provided lineages.
 func GenerateCoremodelRegistry(path string, ecl []*ExtractedLineage) (WriteDiffer, error) {
 	var cml []tplVars
@@ -409,6 +409,7 @@ var tmplRegistry = template.Must(template.New("registry").Parse(`
 package registry
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/google/wire"
@@ -419,25 +420,17 @@ import (
 	"github.com/grafana/thema"
 )
 
-// CoremodelSet contains all of the wire-style providers related to coremodels.
-var CoremodelSet = wire.NewSet(
-	ProvideStatic,
-	ProvideGeneric,
-)
-
-var (
-	staticOnce       sync.Once
-	defaultStatic    *Static
-	defaultStaticErr error
-
-	genericOnce       sync.Once
-	defaultGeneric    *Generic
-	defaultGenericErr error
-)
-
-// Static is a registry that provides access to individual coremodels via
-// explicit method calls, to aid with static analysis.
-type Static struct {
+// Base is a registry of coremodel.Interface. It provides two modes for accessing
+// coremodels: individually via literal named methods, or as a slice returned from All().
+//
+// Prefer the individual named methods for use cases where the particular coremodel(s) that
+// are needed are known to the caller. For example, a dashboard linter can know that it
+// specifically wants the dashboard coremodel.
+//
+// Prefer All() when performing operations generically across all coremodels. For example,
+// a validation HTTP middleware for any coremodel-schematized object type.
+type Base struct {
+	all []coremodel.Interface
 	{{- range .Coremodels }}
 	{{ .Name }} *{{ .Name }}.Coremodel{{end}}
 }
@@ -451,51 +444,23 @@ var (
 {{range .Coremodels }}
 // {{ .TitleName }} returns the {{ .Name }} coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
-func (s *Static) {{ .TitleName }}() *{{ .Name }}.Coremodel {
+func (s *Base) {{ .TitleName }}() *{{ .Name }}.Coremodel {
 	return s.{{ .Name }}
 }
 {{end}}
 
-func provideStatic(lib *thema.Library) (*Static, error) {
-	if lib == nil {
-		staticOnce.Do(func() {
-			defaultStatic, defaultStaticErr = doProvideStatic(cuectx.ProvideThemaLibrary())
-		})
-		return defaultStatic, defaultStaticErr
-	}
-
-	return doProvideStatic(*lib)
-}
-
-func doProvideStatic(lib thema.Library) (*Static, error) {
+func doProvideBase(lib thema.Library) *Base {
 	var err error
-	reg := &Static{}
+	reg := &Base{}
 
 {{range .Coremodels }}
 	reg.{{ .Name }}, err = {{ .Name }}.New(lib)
 	if err != nil {
-		return nil, err
+		panic(fmt.Sprintf("error while initializing {{ .Name }} coremodel: %s", err))
 	}
+    reg.all = append(reg.all, reg.{{ .Name }})
 {{end}}
 
-	return reg, nil
-}
-
-func provideGeneric() (*Generic, error) {
-	ereg, err := provideStatic(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	genericOnce.Do(func() {
-		defaultGeneric, defaultGenericErr = doProvideGeneric(ereg)
-	})
-	return defaultGeneric, defaultGenericErr
-}
-
-func doProvideGeneric(ereg *Static) (*Generic, error) {
-	return NewRegistry({{ range .Coremodels }}
-		ereg.{{ .TitleName }}(),{{ end }}
-	)
+	return reg
 }
 `))

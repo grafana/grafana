@@ -62,15 +62,14 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
-    const hasResourceUri = !!item?.azureMonitor?.resourceUri;
-    const hasLegacyQuery =
+    const hasResource =
       hasValue(item?.azureMonitor?.resourceGroup) &&
       hasValue(item?.azureMonitor?.resourceName) &&
       hasValue(item?.azureMonitor?.metricDefinition || item?.azureMonitor?.metricNamespace);
 
     return !!(
       item.hide !== true &&
-      (hasResourceUri || hasLegacyQuery) &&
+      hasResource &&
       hasValue(item?.azureMonitor?.metricName) &&
       hasValue(item?.azureMonitor?.aggregation)
     );
@@ -91,7 +90,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
     const templateSrv = getTemplateSrv();
 
-    const resourceUri = templateSrv.replace(item.resourceUri, scopedVars);
     const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
     const resourceGroup = templateSrv.replace(item.resourceGroup, scopedVars);
     const resourceName = templateSrv.replace(item.resourceName, scopedVars);
@@ -112,7 +110,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
 
     const azMonitorQuery: AzureMetricQuery = {
-      resourceUri,
       resourceGroup,
       metricNamespace,
       resourceName,
@@ -127,16 +124,16 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     if (item.metricDefinition) {
       azMonitorQuery.metricDefinition = templateSrv.replace(item.metricDefinition, scopedVars);
     }
+    if (item.resourceUri) {
+      azMonitorQuery.resourceUri = templateSrv.replace(item.resourceUri, scopedVars);
+    }
 
-    return migrateQuery(
-      {
-        ...target,
-        subscription: subscriptionId,
-        queryType: AzureQueryType.AzureMonitor,
-        azureMonitor: azMonitorQuery,
-      },
-      templateSrv
-    );
+    return migrateQuery({
+      ...target,
+      subscription: subscriptionId,
+      queryType: AzureQueryType.AzureMonitor,
+      azureMonitor: azMonitorQuery,
+    });
   }
 
   async getSubscriptions(): Promise<Array<{ text: string; value: string }>> {
@@ -158,8 +155,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string, skipToken?: string) {
-    const validMetricNamespace = startsWith(metricNamespace, 'Microsoft.Storage/storageAccounts/')
-      ? 'Microsoft.Storage/storageAccounts'
+    const validMetricNamespace = startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')
+      ? 'microsoft.storage/storageaccounts'
       : metricNamespace;
     let url = `${this.resourcePath}/subscriptions/${subscriptionId}`;
     if (resourceGroup) {
@@ -174,8 +171,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     }
     return this.getResource(url).then(async (result: any) => {
       let list: Array<{ text: string; value: string }> = [];
-      if (startsWith(metricNamespace, 'Microsoft.Storage/storageAccounts/')) {
-        list = ResponseParser.parseResourceNames(result, 'Microsoft.Storage/storageAccounts');
+      if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
+        list = ResponseParser.parseResourceNames(result, 'microsoft.storage/storageaccounts');
         for (let i = 0; i < list.length; i++) {
           list[i].text += '/default';
           list[i].value += '/default';
@@ -215,13 +212,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         );
       })
       .then((result) => {
-        if (url.includes('Microsoft.Storage/storageAccounts')) {
+        if (url.toLowerCase().includes('microsoft.storage/storageaccounts')) {
           const storageNamespaces = [
-            'Microsoft.Storage/storageAccounts',
-            'Microsoft.Storage/storageAccounts/blobServices',
-            'Microsoft.Storage/storageAccounts/fileServices',
-            'Microsoft.Storage/storageAccounts/tableServices',
-            'Microsoft.Storage/storageAccounts/queueServices',
+            'microsoft.storage/storageaccounts',
+            'microsoft.storage/storageaccounts/blobservices',
+            'microsoft.storage/storageaccounts/fileservices',
+            'microsoft.storage/storageaccounts/tableservices',
+            'microsoft.storage/storageaccounts/queueservices',
           ];
           for (const namespace of storageNamespaces) {
             if (!find(result, ['value', namespace.toLowerCase()])) {

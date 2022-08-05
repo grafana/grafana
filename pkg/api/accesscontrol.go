@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -8,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // API related actions
@@ -96,6 +99,27 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
+	builtInDatasourceReader := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:datasources.builtin:reader",
+			DisplayName: "Built in data source reader",
+			Description: "Read and query Grafana's built in test data sources.",
+			Group:       "Data sources",
+			Permissions: []ac.Permission{
+				{
+					Action: datasources.ActionRead,
+					Scope:  fmt.Sprintf("%s%s", datasources.ScopePrefix, grafanads.DatasourceUID),
+				},
+				{
+					Action: datasources.ActionQuery,
+					Scope:  fmt.Sprintf("%s%s", datasources.ScopePrefix, grafanads.DatasourceUID),
+				},
+			},
+			Hidden: true,
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
 	// when running oss or enterprise without a license all users should be able to query data sources
@@ -395,7 +419,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	return hs.AccessControl.DeclareFixedRoles(
-		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole,
+		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,

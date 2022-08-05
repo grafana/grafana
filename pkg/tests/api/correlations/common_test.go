@@ -64,6 +64,25 @@ func (c TestContext) Post(params PostParams) *http.Response {
 	return resp
 }
 
+type PatchParams struct {
+	url  string
+	body string
+	user User
+}
+
+func (c TestContext) Patch(params PatchParams) *http.Response {
+	c.t.Helper()
+
+	req, err := http.NewRequest(http.MethodPatch, c.getURL(params.url, params.user), bytes.NewBuffer([]byte(params.body)))
+	req.Header.Set("Content-Type", "application/json")
+	require.NoError(c.t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(c.t, err)
+	require.NoError(c.t, err)
+
+	return resp
+}
+
 type DeleteParams struct {
 	url  string
 	user User

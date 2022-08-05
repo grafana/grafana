@@ -23,6 +23,9 @@ def cron_job_pipeline(name, steps):
             'event': 'cron',
             'cron': 'nightly',
         },
+        'clone': {
+            'retries': 3,
+        },
         'steps': steps,
     }
 
