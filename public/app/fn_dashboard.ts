@@ -38,7 +38,7 @@ export async function bootstrap() {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function mount(props: any) {
-  console.log('react app mount: ', props.container);
+  //toggleTheme(false);
   ReactDOM.render(
     React.createElement(FNDashboard),
     props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')

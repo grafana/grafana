@@ -98,6 +98,10 @@ export class GrafanaApp {
       setBackendSrv(backendSrv);
       backendSrv.get('/api/frontend/settings').then((settings: Settings) => {
         merge(config, settings, config);
+        /*config.panels = settings.panels;
+        config.datasources = settings.datasources;
+        config.defaultDatasource = settings.defaultDatasource;*/
+        console.log('config', config);
       });
 
       initEchoSrv();
