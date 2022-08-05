@@ -53,4 +53,26 @@ describe('KubernetesInventory::', () => {
     await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
     expect(screen.getAllByTestId('table-row')).toHaveLength(2);
   });
+
+  it('shows portal k8s free cluster promoting message when user has no clusters', async () => {
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, dbaasEnabled: true } },
+            kubernetes: {
+              loading: false,
+            },
+            addKubernetes: { loading: false },
+            deleteKubernetes: { loading: false },
+          },
+        } as StoreState)}
+      >
+        <KubernetesInventory />
+      </Provider>
+    );
+
+    expect(screen.getByTestId('pmm-server-promote-portal-k8s-cluster-message')).toBeInTheDocument();
+  });
 });

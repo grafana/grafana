@@ -37,6 +37,7 @@ import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClu
 import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
 import { UpdateOperatorModal } from './OperatorStatusItem/KubernetesOperatorStatus/UpdateOperatorModal/UpdateOperatorModal';
 import { OperatorStatusItem } from './OperatorStatusItem/OperatorStatusItem';
+import { PortalK8sFreeClusterPromotingMessage } from './PortalK8sFreeClusterPromotingMessage/PortalK8sFreeClusterPromotingMessage';
 import { ViewClusterConfigModal } from './ViewClusterConfigModal/ViewClusterConfigModal';
 
 export const KubernetesInventory: FC = () => {
@@ -227,6 +228,7 @@ export const KubernetesInventory: FC = () => {
             <Table columns={columns} data={kubernetes} loading={loading} noData={<AddNewClusterButton />} />
           </div>
         </FeatureLoader>
+        {kubernetes.length === 0 && <PortalK8sFreeClusterPromotingMessage />}
       </Page.Contents>
     </Page>
   );
