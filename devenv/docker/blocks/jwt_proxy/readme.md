@@ -21,14 +21,19 @@ username_claim = login
 email_claim = email
 jwk_set_file = devenv/docker/blocks/oauth/jwks.json
 cache_ttl = 60m
-expected_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
+expected_claims = {"iss": "http://host.docker.internal:8087/auth/realms/grafana", "azp": "grafana-oauth"}
 auto_sign_up = true
+```
+
+Add a new entry to /etc/hosts:
+```ini
+127.0.0.1   host.docker.internal
 ```
 
 Access Grafana through: 
 
 ```sh
-http://127.0.0.1:8088
+http://host.docker.internal:8088
 ```
 
 ## Devenv setup jwt auth iframe embedding

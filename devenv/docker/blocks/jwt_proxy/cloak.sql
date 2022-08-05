@@ -3159,8 +3159,9 @@ eed689c6-49da-4d91-98eb-cd495bcc07a3	/realms/master/account/*
 a5a8fed6-0bca-4646-9946-2fe84175353b	/realms/grafana/account/*
 230081b5-9161-45c3-9e08-9eda5412f7f7	/realms/grafana/account/*
 805aebc8-9d01-42b6-bcce-6ce48ca63ef0	/admin/grafana/console/*
-09b79548-8426-4c0e-8e0b-7488467532c7	http://127.0.0.1:8088/oauth2/callback
 169f1dea-80f0-4a99-8509-9abb70ab0a5c	http://localhost:4200/*
+09b79548-8426-4c0e-8e0b-7488467532c7	http://127.0.0.1:8088/oauth2/callback
+09b79548-8426-4c0e-8e0b-7488467532c7	http://host.docker.internal:8088/oauth2/callback
 \.
 
 
@@ -3435,8 +3436,9 @@ COPY public.username_login_failure (realm_id, username, failed_login_not_before,
 COPY public.web_origins (client_id, value) FROM stdin;
 2f521d09-7304-4b5e-a94b-7cc7300b8b50	+
 805aebc8-9d01-42b6-bcce-6ce48ca63ef0	+
-09b79548-8426-4c0e-8e0b-7488467532c7	http://127.0.0.1:8087
 169f1dea-80f0-4a99-8509-9abb70ab0a5c	http://localhost:4200
+09b79548-8426-4c0e-8e0b-7488467532c7	http://host.docker.internal:8087
+09b79548-8426-4c0e-8e0b-7488467532c7	http://127.0.0.1:8087
 \.
 
 
