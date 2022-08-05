@@ -97,10 +97,12 @@ export const commitChangesToVariable = (key: string, callback?: (updated: any) =
 
     dispatch(toKeyedAction(key, setCurrentVariableValue(toVariablePayload(existing, currentPayload))));
     dispatch(toKeyedAction(key, changeVariableProp(toVariablePayload(existing, searchQueryPayload))));
+
     const updated = getVariable(identifier, getState());
     if (!hasOptions(updated)) {
       return;
     }
+
     dispatch(toKeyedAction(key, hideOptions()));
 
     if (getCurrentValue(existing) === getCurrentValue(updated)) {
@@ -129,6 +131,7 @@ export const openOptions =
     if (!hasOptions(variable)) {
       return;
     }
+
     dispatch(toKeyedAction(uid, showOptions(variable)));
   };
 
@@ -150,6 +153,9 @@ const searchForOptions = async (
     const { id } = getVariablesState(key, getState()).optionsPicker;
     const identifier: KeyedVariableIdentifier = { id, rootStateKey: key, type: 'query' };
     const existing = getVariable(identifier, getState());
+    if (!hasOptions(existing)) {
+      return;
+    }
 
     const adapter = variableAdapters.get(existing.type);
     await adapter.updateOptions(existing, searchQuery); // TODO: this isn't super type safe
@@ -158,6 +164,7 @@ const searchForOptions = async (
     if (!hasOptions(updated)) {
       return;
     }
+
     dispatch(toKeyedAction(key, updateOptionsFromSearch(updated.options)));
   } catch (error) {
     console.error(error);

@@ -17,7 +17,7 @@ export const variablesReducer = (state: VariablesState = initialVariablesState, 
       return initialVariablesState;
     }
 
-    const variables = globalVariables.reduce<Record<string, TypedVariableModel>>((allVariables, state) => {
+    const variables = globalVariables.reduce<typeof state>((allVariables, state) => {
       allVariables[state.id] = state;
       return allVariables;
     }, {});

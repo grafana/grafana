@@ -8,22 +8,22 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type LDAPMock struct {
@@ -363,7 +363,7 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 // PostSyncUserWithLDAP tests
 // ***
 
-func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*testing.T, *scenarioContext), sqlstoremock sqlstore.Store) *scenarioContext {
+func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*testing.T, *scenarioContext), userService user.Service) *scenarioContext {
 	t.Helper()
 
 	sc := setupScenarioContext(t, requestURL)
@@ -378,9 +378,9 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
-		SQLStore:         sqlstoremock,
 		Login:            loginservice.LoginServiceMock{},
 		authInfoService:  sc.authInfoService,
+		userService:      userService,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -403,8 +403,8 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{}
-	sqlstoremock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
+	userServiceMock := usertest.NewUserServiceFake()
+	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -417,7 +417,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 		userSearchResult = &models.ExternalUserInfo{
 			Login: "ldap-daniel",
 		}
-	}, &sqlstoremock)
+	}, userServiceMock)
 
 	assert.Equal(t, http.StatusOK, sc.resp.Code)
 
@@ -431,7 +431,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{ExpectedError: user.ErrUserNotFound}
+	userServiceMock := usertest.NewUserServiceFake()
+	userServiceMock.ExpectedError = user.ErrUserNotFound
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -440,7 +441,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 		newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
 			return &LDAPMock{}
 		}
-	}, &sqlstoremock)
+	}, userServiceMock)
 
 	assert.Equal(t, http.StatusNotFound, sc.resp.Code)
 
@@ -454,7 +455,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 34}}
+	userServiceMock := usertest.NewUserServiceFake()
+	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -467,7 +469,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 		userSearchError = multildap.ErrDidNotFindUser
 
 		sc.cfg.AdminUser = "ldap-daniel"
-	}, &sqlstoremock)
+	}, userServiceMock)
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
 	var res map[string]interface{}
@@ -478,7 +480,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
-	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 34}}
+	userServiceMock := usertest.NewUserServiceFake()
+	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		sc.authInfoService.ExpectedExternalUser = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -491,7 +494,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 
 		userSearchResult = nil
 		userSearchError = multildap.ErrDidNotFindUser
-	}, &sqlstoremock)
+	}, userServiceMock)
 
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
@@ -603,6 +606,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			cfg.LDAPEnabled = true
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 			hs.SQLStore = &mockstore.SQLStoreMock{ExpectedUser: &user.User{}}
+			hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{}}
 			hs.authInfoService = &logintest.AuthInfoServiceFake{}
 			hs.Login = &loginservice.LoginServiceMock{}
 			sc.resp = httptest.NewRecorder()

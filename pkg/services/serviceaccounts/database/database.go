@@ -12,22 +12,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type ServiceAccountsStoreImpl struct {
-	sqlStore *sqlstore.SQLStore
-	kvStore  kvstore.KVStore
-	log      log.Logger
+	sqlStore      *sqlstore.SQLStore
+	apiKeyService apikey.Service
+	kvStore       kvstore.KVStore
+	log           log.Logger
 }
 
-func ProvideServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
+func ProvideServiceAccountsStore(store *sqlstore.SQLStore, apiKeyService apikey.Service, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
-		sqlStore: store,
-		kvStore:  kvStore,
-		log:      log.New("serviceaccounts.store"),
+		sqlStore:      store,
+		apiKeyService: apiKeyService,
+		kvStore:       kvStore,
+		log:           log.New("serviceaccounts.store"),
 	}
 }
 
@@ -401,7 +404,7 @@ func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgId int
 }
 
 func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) error {
-	basicKeys := s.sqlStore.GetAllAPIKeys(ctx, orgId)
+	basicKeys := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
 	if len(basicKeys) > 0 {
 		for _, key := range basicKeys {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
@@ -419,7 +422,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 }
 
 func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int64, keyId int64) error {
-	basicKeys := s.sqlStore.GetAllAPIKeys(ctx, orgId)
+	basicKeys := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
 	if len(basicKeys) == 0 {
 		return fmt.Errorf("no API keys to convert found")
 	}
@@ -435,7 +438,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *models.ApiKey) error {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
 		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgId, key.Name),
@@ -464,8 +467,8 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 
 // RevertApiKey converts service account token to old API key
 func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
-	query := models.GetApiKeyByIdQuery{ApiKeyId: keyId}
-	if err := s.sqlStore.GetApiKeyById(ctx, &query); err != nil {
+	query := apikey.GetByIDQuery{ApiKeyId: keyId}
+	if err := s.apiKeyService.GetApiKeyById(ctx, &query); err != nil {
 		return err
 	}
 	key := query.Result

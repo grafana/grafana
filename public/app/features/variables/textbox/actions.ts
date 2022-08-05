@@ -20,7 +20,6 @@ export const updateTextBoxVariableOptions = (identifier: KeyedVariableIdentifier
     if (variableInState.type !== 'textbox') {
       return;
     }
-
     await variableAdapters.get(type).setValue(variableInState, variableInState.options[0], true);
   };
 };

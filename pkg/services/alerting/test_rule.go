@@ -25,14 +25,14 @@ func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID
 		if alert.PanelId != panelID {
 			continue
 		}
-		rule, err := NewRuleFromDBAlert(context.Background(), e.sqlStore, alert, true)
+		rule, err := NewRuleFromDBAlert(context.Background(), e.AlertStore, alert, true)
 		if err != nil {
 			return nil, err
 		}
 
 		handler := NewEvalHandler(e.DataService)
 
-		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{}, e.sqlStore, nil)
+		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{}, e.AlertStore, nil, e.datasourceService)
 		context.IsTestRun = true
 		context.IsDebug = true
 

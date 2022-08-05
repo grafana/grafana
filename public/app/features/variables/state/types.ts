@@ -1,7 +1,8 @@
-import { TypedVariableModel, VariableType } from '@grafana/data';
+import { VariableType, TypedVariableModel } from '@grafana/data';
 
-// Keyed by variable name
-export interface VariablesState extends Record<string, TypedVariableModel> {}
+import { VariableModel } from '../types';
+
+export type VariablesState = Record<string, TypedVariableModel>;
 
 export const initialVariablesState: VariablesState = {};
 

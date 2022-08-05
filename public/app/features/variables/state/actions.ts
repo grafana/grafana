@@ -257,9 +257,10 @@ export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, mu
   return (dispatch, getState) => {
     const { rootStateKey: key } = identifier;
     const variable = getVariable(identifier, getState());
-    if (!hasOptions(variable)) {
+    if (!isMulti(variable)) {
       return;
     }
+
     const current = alignCurrentWithMulti(variable.current, multi);
 
     dispatch(
@@ -675,6 +676,7 @@ const timeRangeUpdated =
     if (!hasOptions(variableInState)) {
       return;
     }
+
     const previousOptions = variableInState.options.slice();
 
     await dispatch(updateOptions(toKeyedVariableIdentifier(variableInState), true));
@@ -683,6 +685,7 @@ const timeRangeUpdated =
     if (!hasOptions(updatedVariable)) {
       return;
     }
+
     const updatedOptions = updatedVariable.options;
 
     if (JSON.stringify(previousOptions) !== JSON.stringify(updatedOptions)) {
@@ -932,7 +935,6 @@ export function upgradeLegacyQueries(
     }
 
     const variable = getVariable(identifier, getState());
-
     if (variable.type !== 'query') {
       return;
     }

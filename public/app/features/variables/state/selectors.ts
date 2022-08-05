@@ -4,7 +4,6 @@ import { TypedVariableModel } from '@grafana/data';
 
 import { getState } from '../../../store/store';
 import { StoreState } from '../../../types';
-import { VariableModel } from '../types';
 import { toStateKey } from '../utils';
 
 import { getInitialTemplatingState, TemplatingState } from './reducers';
@@ -37,7 +36,7 @@ export function getVariable(
 }
 
 function getFilteredVariablesByKey(
-  filter: (model: VariableModel) => boolean,
+  filter: (model: TypedVariableModel) => boolean,
   key: string,
   state: StoreState = getState()
 ) {
@@ -54,17 +53,17 @@ export function getVariablesByKey(key: string, state: StoreState = getState()): 
   return getFilteredVariablesByKey(defaultVariablesFilter, key, state);
 }
 
-function defaultVariablesFilter(variable: VariableModel): boolean {
+function defaultVariablesFilter(variable: TypedVariableModel): boolean {
   return variable.type !== 'system';
 }
 
 export const getSubMenuVariables = memoizeOne(
-  (key: string, variables: Record<string, VariableModel>): VariableModel[] => {
+  (key: string, variables: Record<string, TypedVariableModel>): TypedVariableModel[] => {
     return getVariablesByKey(key, getState());
   }
 );
 
-export const getEditorVariables = (key: string, state: StoreState): VariableModel[] => {
+export const getEditorVariables = (key: string, state: StoreState): TypedVariableModel[] => {
   return getVariablesByKey(key, state);
 };
 
@@ -74,7 +73,7 @@ export function getNewVariableIndex(key: string, state: StoreState = getState())
   return getNextVariableIndex(Object.values(getVariablesState(key, state).variables));
 }
 
-export function getNextVariableIndex(variables: VariableModel[]): number {
+export function getNextVariableIndex(variables: TypedVariableModel[]): number {
   const sorted = variables.filter(defaultVariablesFilter).sort((v1, v2) => v1.index - v2.index);
   return sorted.length > 0 ? sorted[sorted.length - 1].index + 1 : 0;
 }
@@ -96,7 +95,7 @@ export function getLastKey(state: StoreState = getState()): string {
 }
 
 // selectors used by template srv, assumes that lastKey is in state. Needs to change when/if dashboard redux state becomes keyed too.
-export function getFilteredVariables(filter: (model: VariableModel) => boolean, state: StoreState = getState()) {
+export function getFilteredVariables(filter: (model: TypedVariableModel) => boolean, state: StoreState = getState()) {
   const lastKey = getIfExistsLastKey(state);
   if (!lastKey) {
     return [];

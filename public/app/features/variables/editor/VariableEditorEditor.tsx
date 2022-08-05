@@ -27,16 +27,10 @@ import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
 import { OnPropChangeArguments } from './types';
 
-const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
-  // previously this would return undefined if the variable wasnt found (by passing false as the third param),
-  // but that doesn't seem to happen in practice anymore. If we get problems here (around renaming variables?)
-  // try adding the third param back in
-  const variable = getVariable(ownProps.identifier, state);
-  return {
-    editor: getVariablesState(ownProps.identifier.rootStateKey, state).editor,
-    variable: variable,
-  };
-};
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
+  editor: getVariablesState(ownProps.identifier.rootStateKey, state).editor,
+  variable: getVariable(ownProps.identifier, state),
+});
 
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   return {
