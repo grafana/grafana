@@ -3,7 +3,7 @@ import { debounce, trim } from 'lodash';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { variableAdapters } from '../../adapters';
-import { hasOptions, isMulti } from '../../guard';
+import { hasOptions } from '../../guard';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../../state/selectors';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
