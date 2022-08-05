@@ -45,9 +45,12 @@ export let getVersionLinks = (): FooterLink[] => {
     return links;
   }
 
+  const isPrerelease = buildInfo.version?.includes('-');
   links.push({
     text: `v${buildInfo.version} (${buildInfo.commit})`,
-    url: `https://grafana.com/docs/grafana/latest/release-notes/release-notes-${buildInfo.version}/`
+    url: isPrerelease
+      ? `https://grafana.com/docs/grafana/latest/release-notes/release-notes-${buildInfo.version.replace('.', '-')}/`
+      : undefined,
   });
 
   if (buildInfo.hasUpdate) {
