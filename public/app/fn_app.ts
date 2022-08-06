@@ -288,5 +288,4 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
   }
 }
 
-const grafanaApp = new GrafanaApp();
-export default grafanaApp;
+export default new GrafanaApp();

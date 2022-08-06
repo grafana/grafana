@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom';
 
 import { config } from '@grafana/runtime';
 
-import { FNDashboard } from './FNDashboard';
+import { FNDashboard } from './fn-app';
 import fn_app from './fn_app';
 
 // set featureToggles
