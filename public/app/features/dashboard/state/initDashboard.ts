@@ -151,7 +151,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // init services
-    const timeSrv: TimeSrv = getTimeSrv();
+    const timeSrv: TimeSrv = getTimeSrv(); // FN: We might need to return this to main app so that we can render it elsewhere
     const dashboardSrv: DashboardSrv = getDashboardSrv();
 
     // legacy srv state, we need this value updated for built-in annotations

@@ -13,18 +13,18 @@
 
 $theme-name: light;
 
-$colors-action-hover: rgba(36, 41, 46, 0.12);
-$colors-action-selected: rgba(36, 41, 46, 0.08);
+$colors-action-hover: rgba(219, 217, 215, 0.16);
+$colors-action-selected: rgba(219, 217, 215, 0.12);
 
 // New Colors
 // -------------------------
-$blue-light: #1F62E0;
-$blue-base: #3871DC;
-$blue-shade: rgb(44, 90, 176);
-$red-base: #E0226E;
-$red-shade: rgb(179, 27, 88);
-$green-base: #1B855E;
-$green-shade: rgb(21, 106, 75);
+$blue-light: #F0E4B6;
+$blue-base: #3F8367;
+$blue-shade: rgb(91, 149, 125);
+$red-base: #D10E5C;
+$red-shade: rgb(215, 50, 116);
+$green-base: #4BBF73;
+$green-shade: rgb(102, 200, 136);
 $orange-dark: #ff780a;
 
 $gray98: #f7f8fa;
@@ -56,70 +56,70 @@ $gray-7: #fbfbfb;
 
 $white: #ffffff;
 
-$layer0: #F4F5F5;
-$layer1: #FFFFFF;
-$layer2: #F4F5F5;
+$layer0: #111217;
+$layer1: #181b1f;
+$layer2: #22252b;
 
-$divider: rgba(36, 41, 46, 0.12);
-$border0: rgba(36, 41, 46, 0.12);
-$border1: rgba(36, 41, 46, 0.30);
+$divider: rgba(219, 217, 215, 0.07);
+$border0: rgba(219, 217, 215, 0.07);
+$border1: rgba(219, 217, 215, 0.15);
 
 // Accent colors
 // -------------------------
-$blue: #1F62E0;
+$blue: #F0E4B6;
 $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #1F62E0;
+$variable: #F0E4B6;
 
 $brand-primary: #eb7b18;
-$brand-success: #1B855E;
-$brand-warning: #FAD34A;
-$brand-danger: #E0226E;
+$brand-success: #4BBF73;
+$brand-warning: #CF8E07;
+$brand-danger: #D10E5C;
 
-$query-red: #CF0E5B;
-$query-green: #0A764E;
+$query-red: #FF5286;
+$query-green: #318B50;
 $query-purple: #fe85fc;
 $query-orange: #eb7b18;
 
 // Status colors
 // -------------------------
-$online: #0A764E;
-$warn: #8A6C00;
-$critical: #CF0E5B;
+$online: #318B50;
+$warn: #DBD9D7;
+$critical: #FF5286;
 
 
 // Scaffolding
 // -------------------------
-$body-bg: #F4F5F5;
-$page-bg: #F4F5F5;
-$dashboard-bg: #F4F5F5;
+$body-bg: #111217;
+$page-bg: #111217;
+$dashboard-bg: #111217;
 
-$text-color: rgba(36, 41, 46, 1);
-$text-color-strong: #000000;
-$text-color-semi-weak: rgba(36, 41, 46, 0.75);
-$text-color-weak: rgba(36, 41, 46, 0.75);
-$text-color-faint: rgba(36, 41, 46, 0.50);
-$text-color-emphasis: #000000;
-$text-blue: #1F62E0;
+$text-color: #DBD9D7;
+$text-color-strong: #F0E4B6;
+$text-color-semi-weak: #F0E4B6;
+$text-color-weak: #F0E4B6;
+$text-color-faint: #9DA7B8;
+$text-color-emphasis: #F0E4B6;
+$text-blue: #F0E4B6;
 
 $text-shadow-faint: none;
 
 // gradients
-$brand-gradient-horizontal: linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);
-$brand-gradient-vertical: linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);
+$brand-gradient-horizontal: linear-gradient(270deg, #F55F3E 0%, #FF8833 100%);
+$brand-gradient-vertical: linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);
 
 // Links
 // -------------------------
-$link-color: rgba(36, 41, 46, 1);
-$link-color-disabled: rgba(36, 41, 46, 0.50);
-$link-hover-color: #000000;
-$external-link-color: #1F62E0;
+$link-color: #DBD9D7;
+$link-color-disabled: #9DA7B8;
+$link-hover-color: #F0E4B6;
+$external-link-color: #F0E4B6;
 
 // Typography
 // -------------------------
-$headings-color: rgba(36, 41, 46, 1);
+$headings-color: #DBD9D7;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -127,30 +127,30 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: #FFFFFF;
-$panel-border: 1px solid rgba(36, 41, 46, 0.12);
-$panel-header-hover-bg: rgba(36, 41, 46, 0.12);
+$panel-bg: #181b1f;
+$panel-border: 1px solid rgba(219, 217, 215, 0.07);
+$panel-header-hover-bg: rgba(219, 217, 215, 0.16);
 $panel-box-shadow: none;
 $panel-corner: $panel-bg;
 
 // Page header
-$page-header-bg: #F4F5F5;
+$page-header-bg: #111217;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #F4F5F5;
+$page-header-border-color: #111217;
 
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: #F4F5F5;
-$tight-form-func-highlight-bg: #eff0f0;
+$tight-form-func-bg: #22252b;
+$tight-form-func-highlight-bg: #1d2025;
 
-$modal-backdrop-bg: #FFFFFF;
+$modal-backdrop-bg: #181b1f;
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: #F4F5F5;
-$card-background-hover: #F4F5F5;
+$card-background: #22252b;
+$card-background-hover: #22252b;
 $card-shadow: none;
 
 // Lists
@@ -167,10 +167,10 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: #F4F5F5;
-$table-border: rgba(36, 41, 46, 0.30);
-$table-bg-odd: rgb(249, 249, 249);
-$table-bg-hover: rgb(242, 242, 242);
+$table-bg-accent: #22252b;
+$table-border: rgba(219, 217, 215, 0.15);
+$table-bg-odd: rgb(28, 31, 35);
+$table-bg-hover: rgb(35, 38, 42);
 
 // Buttons
 // -------------------------
@@ -206,16 +206,16 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: #FFFFFF;
-$input-bg-disabled: rgba(36, 41, 46, 0.04);
+$input-bg: #181b1f;
+$input-bg-disabled: rgba(219, 217, 215, 0.04);
 
-$input-color: rgba(36, 41, 46, 1);
-$input-border-color: rgba(36, 41, 46, 0.30);
+$input-color: #DBD9D7;
+$input-border-color: rgba(219, 217, 215, 0.15);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
-$input-color-placeholder: rgba(36, 41, 46, 0.50);
-$input-label-bg: #F4F5F5;
+$input-color-placeholder: #9DA7B8;
+$input-label-bg: #22252b;
 $input-color-select-arrow: #7b8087;
 
 // search
@@ -228,10 +228,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: #FFFFFF;
-$dropdownBorder: rgba(36, 41, 46, 0.12);
-$dropdownDividerTop: rgba(36, 41, 46, 0.12);
-$dropdownDividerBottom: rgba(36, 41, 46, 0.12);
+$dropdownBackground: #181b1f;
+$dropdownBorder: rgba(219, 217, 215, 0.07);
+$dropdownDividerTop: rgba(219, 217, 215, 0.07);
+$dropdownDividerBottom: rgba(219, 217, 215, 0.07);
 $dropdownShadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
 $dropdownLinkColor: $dark-2;
@@ -262,8 +262,8 @@ $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: #FFFFFF;
-$menu-dropdown-hover-bg: rgba(36, 41, 46, 0.12);
+$menu-dropdown-bg: #181b1f;
+$menu-dropdown-hover-bg: rgba(219, 217, 215, 0.16);
 $menu-dropdown-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
 // Tabs
@@ -272,26 +272,26 @@ $tab-border-color: $gray-5;
 
 // Form states and alerts
 // -------------------------
-$warning-text-color: #8A6C00;
-$error-text-color: #CF0E5B;
-$success-text-color: #0A764E;
+$warning-text-color: #DBD9D7;
+$error-text-color: #FF5286;
+$success-text-color: #318B50;
 
-$alert-error-bg: #E0226E;
-$alert-success-bg: #1B855E;
-$alert-warning-bg: #FAD34A;
-$alert-info-bg: #FAD34A;
+$alert-error-bg: #D10E5C;
+$alert-success-bg: #4BBF73;
+$alert-warning-bg: #CF8E07;
+$alert-info-bg: #CF8E07;
 
 // Tooltips and popovers
-$tooltipBackground: #F4F5F5;
-$tooltipColor: rgba(36, 41, 46, 1);
-$tooltipArrowColor: #F4F5F5;
-$tooltipBackgroundError: #E0226E;
+$tooltipBackground: #22252b;
+$tooltipColor: #DBD9D7;
+$tooltipArrowColor: #22252b;
+$tooltipBackgroundError: #D10E5C;
 $tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.2);
 
-$popover-bg: #FFFFFF;
-$popover-color: rgba(36, 41, 46, 1);
-$popover-border-color: rgba(36, 41, 46, 0.12);
-$popover-header-bg: #F4F5F5;
+$popover-bg: #181b1f;
+$popover-color: #DBD9D7;
+$popover-border-color: rgba(219, 217, 215, 0.07);
+$popover-header-bg: #22252b;
 $popover-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
 $graph-tooltip-bg: $gray-5;
@@ -304,7 +304,7 @@ $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
-$popover-code-bg: #FFFFFF;
+$popover-code-bg: #181b1f;
 $popover-code-boxshadow: 0 0 5px $gray60;
 
 // images
@@ -333,14 +333,14 @@ $json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: rgba(36, 41, 46, 0.12);
+$diff-label-bg: rgba(219, 217, 215, 0.16);
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
-$diff-group-bg: #F4F5F5;
+$diff-group-bg: #22252b;
 
-$diff-json-bg: #F4F5F5;
-$diff-json-fg: rgba(36, 41, 46, 1);
+$diff-json-bg: #22252b;
+$diff-json-fg: #DBD9D7;
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;

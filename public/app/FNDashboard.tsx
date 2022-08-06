@@ -5,20 +5,20 @@ import { config, navigationLogger } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
 import { store, setStore } from 'app/store/store';
 
+import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { I18nProvider } from './core/internationalization';
 import { ThemeProvider } from './core/utils/ConfigProvider';
-import DashboardPage from './features/dashboard/containers/DashboardPage';
-import PublicDashboardPage, { Props } from './features/dashboard/containers/PublicDashboardPage';
+import DashboardPage, { Props } from './features/dashboard/containers/DashboardPage';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import fn_app from './fn_app';
 import { DashboardRoutes } from './types';
 
 interface FNDashboardProps {
-  accessToken: string;
   uid: string;
+  slug: string;
 }
 
 /** Used by enterprise */
@@ -33,28 +33,28 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
-export const FNDashboard: React.FunctionComponent<FNDashboardProps> = ({ accessToken, uid }) => {
+export const FNDashboard: React.FunctionComponent<FNDashboardProps> = ({ slug, uid }) => {
   const app = fn_app;
   const [ready, setReady] = React.useState(false);
 
   React.useEffect(() => {
-    //loadAndInitAngularIfEnabled();
+    loadAndInitAngularIfEnabled();
     console.log('store in mount', store);
     setReady(true);
     $('.preloader').remove();
   }, []);
 
   const renderFNDashboard = () => {
-    console.log('renderFNDashboard with token: ', accessToken);
+    console.log('renderFNDashboard with slug: ', slug);
     console.log('dashboard uid', uid);
-    const props: Props = {
+    const props = {
       match: {
         params: {
-          accessToken: accessToken,
+          slug,
           uid,
         },
         isExact: true,
-        path: 'public-dashboard/:accessToken',
+        path: '/d/:uid/:slug?',
         url: '',
       },
       // eslint-disable-next-line
@@ -63,14 +63,14 @@ export const FNDashboard: React.FunctionComponent<FNDashboardProps> = ({ accessT
       location: {} as any,
       queryParams: {},
       route: {
-        routeName: DashboardRoutes.Public,
-        path: '/public-dashboard/:accessToken',
+        routeName: DashboardRoutes.Normal,
+        path: '/d/:uid/:slug?',
         pageClass: 'page-dashboard',
-        component: PublicDashboardPage,
+        component: DashboardPage,
       },
     };
 
-    return <PublicDashboardPage {...props} />;
+    return <DashboardPage isFNDashboard {...props} />;
   };
 
   if (!ready) {
@@ -91,7 +91,10 @@ export const FNDashboard: React.FunctionComponent<FNDashboardProps> = ({ accessT
             <ThemeProvider value={config.theme2}>
               <ModalsProvider>
                 <GlobalStyles />
-                {renderFNDashboard()}
+                <div className="page-dashboard">
+                  <AngularRoot />
+                  {renderFNDashboard()}
+                </div>
                 <LiveConnectionWarning />
                 <ModalRoot />
                 <PortalContainer />
@@ -103,90 +106,3 @@ export const FNDashboard: React.FunctionComponent<FNDashboardProps> = ({ accessT
     </Provider>
   );
 };
-
-/*
-export class FNDashboard extends React.Component<FNDashboardProps> {
-  app!: GrafanaApp;
-  constructor(props: FNDashboardProps) {
-    super(props);
-    this.state = {};
-    this.app = fn_app;
-
-  }
-
-  async componentDidMount() {
-    await loadAndInitAngularIfEnabled();
-    console.log('store in mount', store);
-    this.setState({ ready: true });
-    $('.preloader').remove();
-  }
-
-  renderFNDashboard() {
-    const { accessToken, uid } = this.props;
-    console.log('renderFNDashboard with token: ', accessToken);
-    console.log('dashboard uid', uid);
-    const props: Props = {
-      match: {
-        params: {
-          accessToken: accessToken,
-          uid,
-        },
-        isExact: true,
-        path: 'd/:uid',
-        url: '',
-      },
-      // eslint-disable-next-line
-      history: {
-        location: {
-          state: undefined
-        }
-      } as any,
-      // eslint-disable-next-line
-      location: {
-        hash: "",
-        key: `${uid}`,
-        pathname: '/d/:uid',
-        search: "",
-        state: undefined,
-      } as any,
-      queryParams: {},
-      route: {
-        routeName: DashboardRoutes.Public,
-        path: '/public-dashboard/:accessToken',
-        pageClass: 'page-dashboard',
-        component: PublicDashboardPage,
-      },
-    };
-
-    return <PublicDashboardPage {...props} />;
-  }
-
-  render() {
-    navigationLogger('AppWrapper', false, 'rendering');
-
-    if (!store) {
-      return <h1>Dupa</h1>
-    }
-
-    return (
-      <Provider store={store}>
-        <I18nProvider>
-          <ErrorBoundaryAlert style="page">
-            <GrafanaContext.Provider value={this.app.context}>
-              <ThemeProvider value={config.theme2}>
-                <ModalsProvider>
-                  <GlobalStyles />
-                  {this.renderFNDashboard()}
-                  <LiveConnectionWarning />
-                  <ModalRoot />
-                  <PortalContainer />
-                </ModalsProvider>
-              </ThemeProvider>
-            </GrafanaContext.Provider>
-          </ErrorBoundaryAlert>
-        </I18nProvider>
-      </Provider>
-    );
-  }
-}
-*/

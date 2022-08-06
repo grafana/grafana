@@ -72,6 +72,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type OwnProps = {
   isPublic?: boolean;
+  isFNDashboard?: boolean;
 };
 
 export type Props = OwnProps &
@@ -108,8 +109,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.initDashboard();
-    const { isPublic } = this.props;
-    if (!isPublic) {
+    const { isPublic, isFNDashboard } = this.props;
+    if (!isPublic && !isFNDashboard) {
       this.forceRouteReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter || 0;
     }
   }
@@ -124,7 +125,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, isPublic, match, queryParams } = this.props;
+    const { dashboard, isPublic, isFNDashboard, match, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
@@ -139,7 +140,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlFolderId: queryParams.folderId,
       panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
-      fixUrl: !isPublic,
+      fixUrl: !isPublic && !isFNDashboard,
       accessToken: match.params.accessToken,
     });
 
@@ -148,16 +149,16 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { dashboard, match, templateVarsChangedInUrl, isPublic } = this.props;
+    const { dashboard, match, templateVarsChangedInUrl, isPublic, isFNDashboard } = this.props;
     if (!dashboard) {
       return;
     }
 
-    if (!isPublic) {
+    if (!isPublic && !isFNDashboard) {
       this.updatePageNav(dashboard);
     }
 
-    if (!isPublic) {
+    if (!isPublic && !isFNDashboard) {
       const routeReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter;
       if (
         prevProps.match.params.uid !== match.params.uid ||
@@ -367,9 +368,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, isPublic } = this.props;
+    const { dashboard, initError, queryParams, isPublic, isFNDashboard } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
-    const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
+    const kioskMode = !isPublic && !isFNDashboard ? getKioskMode() : isFNDashboard ? KioskMode.FN : KioskMode.Full;
 
     if (!dashboard) {
       return <DashboardLoading initPhase={this.props.initPhase} />;

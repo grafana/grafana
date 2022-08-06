@@ -100,7 +100,7 @@ module.exports = (env = {}) =>
         template: path.resolve(__dirname, '../../public/views/error-template.html'),
         inject: false,
         chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
+        excludeChunks: ['dark', 'light', 'fn_dashboard'],
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),

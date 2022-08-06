@@ -1,9 +1,8 @@
 declare let __webpack_public_path__: string;
-declare let __webpack_nonce__: string;
 
-if (window.__POWERED_BY_QIANKUN__) {
-  __webpack_public_path__ = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__;
-}
+// This is a path to the public folder without '/build'
+window.__grafana_public_path__ =
+  __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -44,7 +43,7 @@ export async function mount(props: any) {
   await fn_app.init();
 
   ReactDOM.render(
-    React.createElement(FNDashboard, { accessToken: props.accessToken, uid: props.uid }),
+    React.createElement(FNDashboard, { ...props }),
     props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')
   );
 }

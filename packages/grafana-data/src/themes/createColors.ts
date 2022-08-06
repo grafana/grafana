@@ -105,7 +105,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   primary = {
     main: '#3F8367',
     text: '#F0E4B6',
-    border: 'transparent',
+    border: '#ffffff00',
   };
 
   secondary = {
