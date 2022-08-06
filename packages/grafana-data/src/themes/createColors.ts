@@ -86,7 +86,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemeColorsMode = 'dark';
 
   // Used to get more white opacity colors
-  whiteBase = '204, 204, 220';
+  whiteBase = '219, 217, 215';
 
   border = {
     weak: `rgba(${this.whiteBase}, 0.07)`,
@@ -95,22 +95,22 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   text = {
-    primary: `rgb(${this.whiteBase})`,
-    secondary: `rgba(${this.whiteBase}, 0.65)`,
-    disabled: `rgba(${this.whiteBase}, 0.6)`,
-    link: palette.blueDarkText,
-    maxContrast: palette.white,
+    primary: '#DBD9D7',
+    secondary: '#F0E4B6',
+    disabled: '#9DA7B8',
+    link: '#F0E4B6',
+    maxContrast: '#F0E4B6',
   };
 
   primary = {
-    main: palette.blueDarkMain,
-    text: palette.blueDarkText,
-    border: palette.blueDarkText,
+    main: '#3F8367',
+    text: '#F0E4B6',
+    border: 'transparent',
   };
 
   secondary = {
-    main: `rgba(${this.whiteBase}, 0.16)`,
-    shade: `rgba(${this.whiteBase}, 0.20)`,
+    main: '#F06929',
+    shade: '#F0692955',
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
     border: this.border.strong,
@@ -124,13 +124,13 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   success = {
-    main: palette.greenDarkMain,
-    text: palette.greenDarkText,
+    main: '#4BBF73',
+    text: '#318B50',
   };
 
   warning = {
-    main: palette.orangeDarkMain,
-    text: palette.orangeDarkText,
+    main: '#CF8E07',
+    text: this.text.primary,
   };
 
   background = {
@@ -162,18 +162,18 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemeColorsMode = 'light';
 
-  blackBase = '36, 41, 46';
+  blackBase = '45, 51, 62';
 
   primary = {
-    main: palette.blueLightMain,
+    main: '#8EC4AD',
     border: palette.blueLightText,
-    text: palette.blueLightText,
+    text: '#F0E4B6',
   };
 
   text = {
-    primary: `rgba(${this.blackBase}, 1)`,
-    secondary: `rgba(${this.blackBase}, 0.75)`,
-    disabled: `rgba(${this.blackBase}, 0.50)`,
+    primary: '#2D333E',
+    secondary: 'rgba(45, 51, 62, 0.6)',
+    disabled: '#9DA7B8',
     link: this.primary.text,
     maxContrast: palette.black,
   };
@@ -185,15 +185,15 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: `rgba(${this.blackBase}, 0.16)`,
-    shade: `rgba(${this.blackBase}, 0.20)`,
+    main: '#FC9A69',
+    shade: '#FC9A6955',
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
     border: this.border.strong,
   };
 
   info = {
-    main: palette.blueLightMain,
+    main: '#64B6F7',
     text: palette.blueLightText,
   };
 
@@ -204,24 +204,24 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   success = {
-    main: palette.greenLightMain,
+    main: '#83D39E',
     text: palette.greenLightText,
   };
 
   warning = {
-    main: palette.orangeLightMain,
+    main: '#F3D086',
     text: palette.orangeLightText,
   };
 
   background = {
-    canvas: palette.gray90,
-    primary: palette.white,
-    secondary: palette.gray100,
+    canvas: '#FDFDFC',
+    primary: '#F6F5F3',
+    secondary: '#FDFDFC',
   };
 
   action = {
     hover: `rgba(${this.blackBase}, 0.12)`,
-    selected: `rgba(${this.blackBase}, 0.08)`,
+    selected: `#F27A40`,
     hoverOpacity: 0.08,
     focus: `rgba(${this.blackBase}, 0.12)`,
     disabledBackground: `rgba(${this.blackBase}, 0.04)`,
@@ -242,7 +242,10 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 export function createColors(colors: ThemeColorsInput): ThemeColors {
   const dark = new DarkColors();
   const light = new LightColors();
-  const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
+
+  console.log(colors);
+  const base = (colors.mode ?? 'dark') === 'dark' ? dark : dark;
+
   const {
     primary = base.primary,
     secondary = base.secondary,

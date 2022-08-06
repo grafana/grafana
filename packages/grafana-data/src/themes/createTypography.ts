@@ -63,8 +63,8 @@ export interface ThemeTypographyInput {
   htmlFontSize?: number;
 }
 
-const defaultFontFamily = '"Roboto", "Helvetica", "Arial", sans-serif';
-const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
+const defaultFontFamily = 'Nunito, Roboto, Arial'; //'"Roboto", "Helvetica", "Arial", sans-serif';
+const defaultFontFamilyMonospace = "'Nunito Mono', monospace";
 
 export function createTypography(colors: ThemeColors, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
   const {
