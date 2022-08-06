@@ -243,8 +243,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   const dark = new DarkColors();
   const light = new LightColors();
 
-  console.log(colors);
-  const base = (colors.mode ?? 'dark') === 'dark' ? dark : dark;
+  const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
 
   const {
     primary = base.primary,
