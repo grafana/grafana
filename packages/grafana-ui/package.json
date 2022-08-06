@@ -44,7 +44,7 @@
     "immutable": "3.8.2",
     "jquery": "3.5.0",
     "lodash": "4.17.21",
-    "moment": "2.24.0",
+    "moment": "2.29.4",
     "papaparse": "5.2.0",
     "rc-cascader": "0.17.5",
     "rc-drawer": "3.0.2",
