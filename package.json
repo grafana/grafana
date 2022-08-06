@@ -116,7 +116,7 @@
     "monaco-editor": "0.15.6",
     "mutationobserver-shim": "0.3.3",
     "ngtemplate-loader": "2.0.1",
-    "node-sass": "4.13.1",
+    "node-sass": "7.0.0",
     "npm": "6.14.6",
     "optimize-css-assets-webpack-plugin": "5.0.1",
     "phantomjs-prebuilt": "2.1.16",
