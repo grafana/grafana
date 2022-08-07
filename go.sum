@@ -1326,6 +1326,10 @@ github.com/gosimple/unidecode v1.0.1 h1:hZzFTMMqSswvf0LBJZCZgThIZrpDHFXux9KeGmn6
 github.com/gosimple/unidecode v1.0.1/go.mod h1:CP0Cr1Y1kogOtx0bJblKzsVWrqYaqfNOnHzpgWw4Awc=
 github.com/grafana/cuetsy v0.0.3 h1:jQLkHOpfDjZiTXknv35iCOTFFK504lgsUapKuOnnNy4=
 github.com/grafana/cuetsy v0.0.3/go.mod h1:7OoEYb42s7PbSYtNUTy1DoCeJ3LAOTafsZbndvikTj8=
+github.com/grafana/cuetsy v0.0.4-0.20220714163843-964848c9c8dd h1:LuW46dRfUCJsWjNkPq7QokND9NS7Vj+oN4vEbgXQXqY=
+github.com/grafana/cuetsy v0.0.4-0.20220714163843-964848c9c8dd/go.mod h1:7OoEYb42s7PbSYtNUTy1DoCeJ3LAOTafsZbndvikTj8=
+github.com/grafana/cuetsy v0.0.4-0.20220714174355-ebd987fdab27 h1:r0ZSb0gSKEf1hmdYljn7ezOPJyfrC0qcky576U82yEk=
+github.com/grafana/cuetsy v0.0.4-0.20220714174355-ebd987fdab27/go.mod h1:7OoEYb42s7PbSYtNUTy1DoCeJ3LAOTafsZbndvikTj8=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f h1:FvvSVEbnGeM2bUivGmsiXTi8URJyBU7TcFEEoRe5wWI=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f/go.mod h1:uPG2nyK4CtgNDmWv7qyzYcdI+S90kHHRWvHnBtEMBXM=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
