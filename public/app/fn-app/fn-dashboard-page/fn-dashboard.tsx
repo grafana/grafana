@@ -1,11 +1,12 @@
-import * as $ from 'jquery';
 import React, { ComponentType } from 'react';
 
 import { store } from 'app/store/store';
 
-import { AngularRoot } from '../angular/AngularRoot';
-import { loadAndInitAngularIfEnabled } from '../angular/loadAndInitAngularIfEnabled';
+import { AngularRoot } from '../../angular/AngularRoot';
+import { FnAppProvider } from '../fn-app-provider';
+import { FNDashboardProps } from '../types';
 
+import { RenderFNDashboard } from './render-fn-dashboard';
 // import { GrafanaApp } from '../app';
 // import { GrafanaContext } from '../core/context/GrafanaContext';
 // import { I18nProvider } from '../core/internationalization';
@@ -14,9 +15,6 @@ import { loadAndInitAngularIfEnabled } from '../angular/loadAndInitAngularIfEnab
 // import { LiveConnectionWarning } from '../features/live/LiveConnectionWarning';
 // import fn_app from '../fn_app';
 // import { DashboardRoutes } from '../types';
-import { FnAppProvider } from './fn-app-provider';
-import { RenderFNDashboard } from './render-fn-dashboard';
-import { FNDashboardProps } from './types';
 
 /** Used by enterprise */
 let bodyRenderHooks: ComponentType[] = [];
@@ -31,25 +29,6 @@ export function addPageBanner(fn: ComponentType) {
 }
 
 export const FNDashboard: React.Component<FNDashboardProps> = (prop) => {
-  const [ready, setReady] = React.useState(false);
-
-  React.useEffect(() => {
-    loadAndInitAngularIfEnabled();
-    console.log('store in mount', store);
-    setReady(true);
-    $('.preloader').remove();
-  }, []);
-
-  if (!ready) {
-    // FN:TODO add fn loading logo
-    return <h1>App not ready</h1>;
-  }
-
-  if (!store) {
-    // FN:TODO add fn loading store
-    return <h1>No store inited</h1>;
-  }
-
   return (
     <FnAppProvider>
       <div className="page-dashboard">

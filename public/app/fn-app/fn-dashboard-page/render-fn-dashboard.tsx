@@ -3,7 +3,7 @@ import React from 'react';
 import DashboardPage from 'app/features/dashboard/containers/DashboardPage';
 import { DashboardRoutes } from 'app/types';
 
-import { FNDashboardProps } from './types';
+import { FNDashboardProps } from '../types';
 
 export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
   console.log('renderFNDashboard with slug: ', data.slug);

@@ -1,1 +1,2 @@
-export * from './fn-dashboard';
+export * from './fn-dashboard-page';
+export * from './create-mfe';
