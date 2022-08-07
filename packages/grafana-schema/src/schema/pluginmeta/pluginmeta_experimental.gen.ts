@@ -15,19 +15,60 @@ interface Pluginmeta {
   backend?: boolean;
   category?: ('tsdb' | 'logging' | 'cloud' | 'tracing' | 'sql' | 'enterprise' | 'other');
   dependencies: {
+    grafanaVersion?: string;
     grafanaDependency: string;
+    plugins?: {
+      id: string;
+      type: ('app' | 'datasource' | 'panel');
+      name: string;
+      version: string;
+    }[];
   };
-  enterpriseFeatures?: {};
+  enterpriseFeatures?: {
+    healthDiagnosticsErrors?: boolean;
+  };
   executable?: string;
   hiddenQueries?: boolean;
   id: string;
-  includes?: {}[];
+  includes?: {
+    uid?: string;
+    type?: ('dashboard' | 'page' | 'panel' | 'datasource');
+    name?: string;
+    component?: string;
+    role?: ('Admin' | 'Editor' | 'Viewer');
+    path?: string;
+    addToNav?: boolean;
+    defaultNav?: boolean;
+    icon?: string;
+  }[];
   info: {
+    author?: {
+      name?: string;
+      email?: string;
+      url?: string;
+    };
+    build?: {
+      time?: number;
+      repo?: string;
+      branch?: string;
+      hash?: string;
+      number?: number;
+      pr?: number;
+    };
+    description?: string;
     keywords: string[];
+    links?: {
+      name?: string;
+      url?: string;
+    }[];
     logos: {
       small: string;
       large: string;
     };
+    screenshots?: {
+      name?: string;
+      path?: string;
+    }[];
     updated: string;
     version: string;
   };
@@ -35,8 +76,39 @@ interface Pluginmeta {
   metrics?: boolean;
   name: string;
   preload?: boolean;
-  queryOptions?: {};
-  routes?: {}[];
+  queryOptions?: {
+    maxDataPoints?: boolean;
+    minInterval?: boolean;
+    cacheTimeout?: boolean;
+  };
+  routes?: {
+    path?: string;
+    method?: string;
+    url?: string;
+    reqSignedIn?: boolean;
+    reqRole?: string;
+    headers?: any[];
+    body?: {};
+    tokenAuth?: {
+      url?: string;
+      scopes?: string[];
+      params?: {
+        grant_type?: string;
+        client_id?: string;
+        client_secret?: string;
+        resource?: string;
+      };
+    };
+    jwtTokenAuth?: {
+      url?: string;
+      scopes?: string[];
+      params?: {
+        token_uri?: string;
+        client_email?: string;
+        private_key?: string;
+      };
+    };
+  }[];
   skipDataQuery?: boolean;
   state?: ('alpha' | 'beta');
   streaming?: boolean;
