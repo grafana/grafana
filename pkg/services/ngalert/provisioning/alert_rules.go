@@ -203,7 +203,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	}
 
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		uids, err := service.ruleStore.InsertAlertRules(ctx, dropNilAlertRules(delta.New))
+		uids, err := service.ruleStore.InsertAlertRules(ctx, withoutNilAlertRules(delta.New))
 		if err != nil {
 			return fmt.Errorf("failed to insert alert rules: %w", err)
 		}
@@ -350,7 +350,6 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.
 func syncGroupRuleFields(group *definitions.AlertRuleGroup, orgID int64) *definitions.AlertRuleGroup {
 	for i := range group.Rules {
-		group.Rules[i].For = (time.Duration(group.Interval) * time.Second)
 		group.Rules[i].IntervalSeconds = group.Interval
 		group.Rules[i].RuleGroup = group.Title
 		group.Rules[i].NamespaceUID = group.FolderUID
@@ -359,7 +358,7 @@ func syncGroupRuleFields(group *definitions.AlertRuleGroup, orgID int64) *defini
 	return group
 }
 
-func dropNilAlertRules(ptrs []*models.AlertRule) []models.AlertRule {
+func withoutNilAlertRules(ptrs []*models.AlertRule) []models.AlertRule {
 	result := make([]models.AlertRule, 0, len(ptrs))
 	for _, ptr := range ptrs {
 		result = append(result, *ptr)
