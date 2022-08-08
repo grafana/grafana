@@ -23,6 +23,7 @@ import {
   ParenExpr,
   parser,
   StringLiteral,
+  VectorSelector,
   Without,
 } from 'lezer-promql';
 
@@ -167,7 +168,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 }
 
 function isIntervalVariableError(node: SyntaxNode) {
-  return node.prevSibling?.name === 'Expr' && node.prevSibling?.firstChild?.name === 'VectorSelector';
+  return node.prevSibling?.type.id === Expr && node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
 
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
@@ -182,6 +183,7 @@ function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
 }
 
 const rangeFunctions = ['changes', 'rate', 'irate', 'increase', 'delta'];
+
 /**
  * Handle function call which is usually and identifier and its body > arguments.
  * @param expr
@@ -346,7 +348,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.name === 'NumberLiteral') {
+    if (leftMostChild?.type.id === NumberLiteral) {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
