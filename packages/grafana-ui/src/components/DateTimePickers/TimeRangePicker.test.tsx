@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { createTheme, dateTime, TimeRange } from '@grafana/data';
+import { dateTime, TimeRange } from '@grafana/data';
 
 import { TimeRangePicker } from './TimeRangePicker';
 
