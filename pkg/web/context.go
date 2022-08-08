@@ -47,6 +47,10 @@ func (ctx *Context) run() {
 	}
 
 	h.ServeHTTP(ctx.Resp, ctx.Req)
+
+	if !ctx.Resp.Written() {
+		panic("chain did not write HTTP response")
+	}
 }
 
 // RemoteAddr returns more real IP address.
