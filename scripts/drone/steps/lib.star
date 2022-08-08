@@ -654,9 +654,10 @@ def shellcheck_step():
         'image': build_image,
         'depends_on': [
             'grabpl',
+            'compile-build-cmd',
         ],
         'commands': [
-            './bin/grabpl shellcheck',
+            './bin/build shellcheck',
         ],
     }
 

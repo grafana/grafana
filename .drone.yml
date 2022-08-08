@@ -192,9 +192,10 @@ steps:
   image: grafana/build-container:1.5.9
   name: codespell
 - commands:
-  - ./bin/grabpl shellcheck
+  - ./bin/build shellcheck
   depends_on:
   - grabpl
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
@@ -956,9 +957,10 @@ steps:
   image: grafana/build-container:1.5.9
   name: codespell
 - commands:
-  - ./bin/grabpl shellcheck
+  - ./bin/build shellcheck
   depends_on:
   - grabpl
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
@@ -2112,9 +2114,10 @@ steps:
   image: golang:1.17
   name: compile-build-cmd
 - commands:
-  - ./bin/grabpl shellcheck
+  - ./bin/build shellcheck
   depends_on:
   - grabpl
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
@@ -4030,9 +4033,10 @@ steps:
   image: golang:1.17
   name: compile-build-cmd
 - commands:
-  - ./bin/grabpl shellcheck
+  - ./bin/build shellcheck
   depends_on:
   - grabpl
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
@@ -5133,6 +5137,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 7d799b8c9888eeb4b72f6aa1721fe335d4eb74c6fb2db9612970adbb9462d395
+hmac: 0397ad1da4fa12ba9bbe6654866329df4f7854339610f1dc513bd14ac518ce7b
 
 ...
