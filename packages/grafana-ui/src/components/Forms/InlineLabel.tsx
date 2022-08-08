@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -34,7 +34,9 @@ export const InlineLabel: FunctionComponent<Props> = ({
   as: Component = 'label',
   ...rest
 }) => {
-  const styles = useStyles2((theme) => getInlineLabelStyles(theme, transparent, width));
+  const styles = useStyles2(
+    useCallback((theme) => getInlineLabelStyles(theme, transparent, width), [transparent, width])
+  );
 
   return (
     <Component className={cx(styles.label, className)} {...rest}>
