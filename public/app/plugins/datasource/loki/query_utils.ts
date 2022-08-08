@@ -144,9 +144,9 @@ export function isQueryPipelineErrorFiltering(query: string): boolean {
   let isQueryPipelineErrorFiltering = false;
   const tree = parser.parse(query);
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LabelFilter') {
-        const label = get().getChild('Matcher')?.getChild('Identifier');
+    enter: (nodeRef): false | void => {
+      if (nodeRef.name === 'LabelFilter') {
+        const label = nodeRef.node.getChild('Matcher')?.getChild('Identifier');
         if (label) {
           const labelName = query.substring(label.from, label.to);
           if (labelName === '__error__') {
@@ -183,9 +183,9 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   // Log query in metrics query composes of Selector & PipelineExpr
   let selector = '';
   tree.iterate({
-    enter: (type, from, to): false | void => {
-      if (type.name === 'Selector') {
-        selector = query.substring(from, to);
+    enter: (nodeRef): false | void => {
+      if (nodeRef.name === 'Selector') {
+        selector = query.substring(nodeRef.from, nodeRef.to);
         return false;
       }
     },
@@ -193,9 +193,9 @@ export function getLogQueryFromMetricsQuery(query: string): string {
 
   let pipelineExpr = '';
   tree.iterate({
-    enter: (type, from, to): false | void => {
-      if (type.name === 'PipelineExpr') {
-        pipelineExpr = query.substring(from, to);
+    enter: (node): false | void => {
+      if (node.name === 'PipelineExpr') {
+        pipelineExpr = query.substring(node.from, node.to);
         return false;
       }
     },
