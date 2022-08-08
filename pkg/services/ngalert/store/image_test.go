@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +29,7 @@ func addID(img *models.Image, id int64) *models.Image {
 }
 
 func addToken(img *models.Image) *models.Image {
-	token, err := uuid.NewV4()
+	token, err := uuid.NewRandom()
 	if err != nil {
 		panic("wat")
 	}

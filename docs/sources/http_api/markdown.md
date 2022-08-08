@@ -43,12 +43,12 @@ The API does not currently work with an API Token. So in order to use these API 
 | POST   | [/api/access-control/builtin-roles](#add-builtin-role)                                  | Create a built-in role assignment. |
 | POST   | [/api/access-control/teams/{teamId}/roles](#add-team-role)                              | Add team role.                     |
 | POST   | [/api/access-control/users/{userId}/roles](#add-user-role)                              | Add a user role assignment.        |
-| POST   | [/api/access-control/roles](#create-role-with-permissions)                              | Create a new custom role.          |
+| POST   | [/api/access-control/roles](#create-role)                                               | Create a new custom role.          |
 | DELETE | [/api/access-control/roles/{roleUID}](#delete-custom-role)                              | Delete a custom role.              |
 | GET    | [/api/access-control/status](#get-access-control-status)                                | Get status.                        |
-| GET    | [/api/access-control/roles](#get-all-roles)                                             | Get all roles.                     |
 | GET    | [/api/access-control/roles/{roleUID}](#get-role)                                        | Get a role.                        |
 | GET    | [/api/access-control/builtin-roles](#list-builtin-roles)                                | Get all built-in role assignments. |
+| GET    | [/api/access-control/roles](#list-roles)                                                | Get all roles.                     |
 | GET    | [/api/access-control/teams/{teamId}/roles](#list-team-roles)                            | Get team roles.                    |
 | GET    | [/api/access-control/users/{userId}/roles](#list-user-roles)                            | List roles assigned to a user.     |
 | DELETE | [/api/access-control/builtin-roles/{builtinRole}/roles/{roleUID}](#remove-builtin-role) | Remove a built-in role assignment. |
@@ -70,60 +70,59 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 
 | Method | URI                                              | Summary                            |
 | ------ | ------------------------------------------------ | ---------------------------------- |
-| GET    | [/api/admin/settings](#get-settings)             | Fetch settings.                    |
-| GET    | [/api/admin/stats](#get-stats)                   | Fetch Grafana Stats.               |
+| GET    | [/api/admin/settings](#admin-get-settings)       | Fetch settings.                    |
+| GET    | [/api/admin/stats](#admin-get-stats)             | Fetch Grafana Stats.               |
 | POST   | [/api/admin/pause-all-alerts](#pause-all-alerts) | Pause/unpause all (legacy) alerts. |
 
 ### admin_ldap
 
-| Method | URI                                                  | Summary                                                                                                                          |
-| ------ | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | [/api/admin/ldap/status](#get-l-d-a-p-status)        | Attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.             |
-| GET    | [/api/admin/ldap/{user_name}](#get-l-d-a-p-user)     | Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced. |
-| POST   | [/api/admin/ldap/reload](#reload-l-d-a-p)            | Reloads the LDAP configuration.                                                                                                  |
-| POST   | [/api/admin/ldap/sync/{user_id}](#sync-l-d-a-p-user) | Enables a single Grafana user to be synchronized against LDAP.                                                                   |
+| Method | URI                                                            | Summary                                                                                                                          |
+| ------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | [/api/admin/ldap/status](#get-l-d-a-p-status)                  | Attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.             |
+| GET    | [/api/admin/ldap/{user_name}](#get-user-from-l-d-a-p)          | Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced. |
+| POST   | [/api/admin/ldap/sync/{user_id}](#post-sync-user-with-l-d-a-p) | Enables a single Grafana user to be synchronized against LDAP.                                                                   |
+| POST   | [/api/admin/ldap/reload](#reload-l-d-a-p-cfg)                  | Reloads the LDAP configuration.                                                                                                  |
 
 ### admin_provisioning
 
-| Method | URI                                                                                 | Summary                                                   |
-| ------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| POST   | [/api/admin/provisioning/accesscontrol/reload](#reload-provisioned-access-control)  | Reload access control provisioning configurations.        |
-| POST   | [/api/admin/provisioning/notifications/reload](#reload-provisioned-alert-notifiers) | Reload legacy alert notifier provisioning configurations. |
-| POST   | [/api/admin/provisioning/dashboards/reload](#reload-provisioned-dashboards)         | Reload dashboard provisioning configurations.             |
-| POST   | [/api/admin/provisioning/datasources/reload](#reload-provisioned-datasources)       | Reload datasource provisioning configurations.            |
-| POST   | [/api/admin/provisioning/plugins/reload](#reload-provisioned-plugins)               | Reload plugin provisioning configurations.                |
+| Method | URI                                                                                      | Summary                                                   |
+| ------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| POST   | [/api/admin/provisioning/dashboards/reload](#admin-provisioning-reload-dashboards)       | Reload dashboard provisioning configurations.             |
+| POST   | [/api/admin/provisioning/datasources/reload](#admin-provisioning-reload-datasources)     | Reload datasource provisioning configurations.            |
+| POST   | [/api/admin/provisioning/notifications/reload](#admin-provisioning-reload-notifications) | Reload legacy alert notifier provisioning configurations. |
+| POST   | [/api/admin/provisioning/plugins/reload](#admin-provisioning-reload-plugins)             | Reload plugin provisioning configurations.                |
 
 ### admin_users
 
-| Method | URI                                                                    | Summary                                                                                                                                                                                     |
-| ------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | [/api/admin/users](#create-user)                                       | Create new user.                                                                                                                                                                            |
-| DELETE | [/api/admin/users/{user_id}](#delete-user)                             | Delete global User.                                                                                                                                                                         |
-| POST   | [/api/admin/users/{user_id}/disable](#disable-user)                    | Disable user.                                                                                                                                                                               |
-| POST   | [/api/admin/users/{user_id}/enable](#enable-user)                      | Enable user.                                                                                                                                                                                |
-| GET    | [/api/admin/users/{user_id}/auth-tokens](#get-auth-tokens)             | Return a list of all auth tokens (devices) that the user currently have logged in from.                                                                                                     |
-| GET    | [/api/admin/users/{user_id}/quotas](#get-user-quota)                   | Fetch user quota.                                                                                                                                                                           |
-| POST   | [/api/admin/users/{user_id}/logout](#logout-user)                      | Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity. |
-| POST   | [/api/admin/users/{user_id}/revoke-auth-token](#revoke-auth-token)     | Revoke auth token for user.                                                                                                                                                                 |
-| PUT    | [/api/admin/users/{user_id}/password](#set-password)                   | Set password for user.                                                                                                                                                                      |
-| PUT    | [/api/admin/users/{user_id}/permissions](#set-permissions)             | Set permissions for user.                                                                                                                                                                   |
-| PUT    | [/api/admin/users/{user_id}/quotas/{quota_target}](#update-user-quota) | Update user quota.                                                                                                                                                                          |
+| Method | URI                                                                           | Summary                                                                                                                                                                                     |
+| ------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | [/api/admin/users](#admin-create-user)                                        | Create new user.                                                                                                                                                                            |
+| DELETE | [/api/admin/users/{user_id}](#admin-delete-user)                              | Delete global User.                                                                                                                                                                         |
+| POST   | [/api/admin/users/{user_id}/disable](#admin-disable-user)                     | Disable user.                                                                                                                                                                               |
+| POST   | [/api/admin/users/{user_id}/enable](#admin-enable-user)                       | Enable user.                                                                                                                                                                                |
+| GET    | [/api/admin/users/{user_id}/auth-tokens](#admin-get-user-auth-tokens)         | Return a list of all auth tokens (devices) that the user currently have logged in from.                                                                                                     |
+| POST   | [/api/admin/users/{user_id}/logout](#admin-logout-user)                       | Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity. |
+| POST   | [/api/admin/users/{user_id}/revoke-auth-token](#admin-revoke-user-auth-token) | Revoke auth token for user.                                                                                                                                                                 |
+| PUT    | [/api/admin/users/{user_id}/password](#admin-update-user-password)            | Set password for user.                                                                                                                                                                      |
+| PUT    | [/api/admin/users/{user_id}/permissions](#admin-update-user-permissions)      | Set permissions for user.                                                                                                                                                                   |
+| GET    | [/api/admin/users/{user_id}/quotas](#get-user-quota)                          | Fetch user quota.                                                                                                                                                                           |
+| PUT    | [/api/admin/users/{user_id}/quotas/{quota_target}](#update-user-quota)        | Update user quota.                                                                                                                                                                          |
 
 ### annotations
 
 Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
-| Method | URI                                                      | Summary                               |
-| ------ | -------------------------------------------------------- | ------------------------------------- |
-| POST   | [/api/annotations](#create-annotation)                   | Create Annotation.                    |
-| POST   | [/api/annotations/graphite](#create-graphite-annotation) | Create Annotation in Graphite format. |
-| DELETE | [/api/annotations/{annotation_id}](#delete-annotation)   | Delete Annotation By ID.              |
-| GET    | [/api/annotations/{annotation_id}](#get-annotation)      | Get Annotation by Id.                 |
-| GET    | [/api/annotations/tags](#get-annotation-tags)            | Find Annotations Tags.                |
-| GET    | [/api/annotations](#get-annotations)                     | Find Annotations.                     |
-| POST   | [/api/annotations/mass-delete](#mass-delete-annotations) | Delete multiple annotations.          |
-| PATCH  | [/api/annotations/{annotation_id}](#patch-annotation)    | Patch Annotation                      |
-| PUT    | [/api/annotations/{annotation_id}](#update-annotation)   | Update Annotation.                    |
+| Method | URI                                                          | Summary                               |
+| ------ | ------------------------------------------------------------ | ------------------------------------- |
+| DELETE | [/api/annotations/{annotation_id}](#delete-annotation-by-id) | Delete Annotation By ID.              |
+| GET    | [/api/annotations/{annotation_id}](#get-annotation-by-id)    | Get Annotation by Id.                 |
+| GET    | [/api/annotations/tags](#get-annotation-tags)                | Find Annotations Tags.                |
+| GET    | [/api/annotations](#get-annotations)                         | Find Annotations.                     |
+| POST   | [/api/annotations/mass-delete](#mass-delete-annotations)     | Delete multiple annotations.          |
+| PATCH  | [/api/annotations/{annotation_id}](#patch-annotation)        | Patch Annotation                      |
+| POST   | [/api/annotations](#post-annotation)                         | Create Annotation.                    |
+| POST   | [/api/annotations/graphite](#post-graphite-annotation)       | Create Annotation in Graphite format. |
+| PUT    | [/api/annotations/{annotation_id}](#update-annotation)       | Update Annotation.                    |
 
 ### api_keys
 
@@ -133,53 +132,46 @@ Grafana Annotations feature released in Grafana 4.6. Annotations are saved in th
 | DELETE | [/api/auth/keys/{id}](#delete-a-p-ikey) | Delete API key.     |
 | GET    | [/api/auth/keys](#get-a-p-ikeys)        | Get auth keys.      |
 
-### current_org_details
+### correlations
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
-
-| Method | URI                                          | Summary                                                |
-| ------ | -------------------------------------------- | ------------------------------------------------------ |
-| POST   | [/api/org/users](#add-org-user)              | Add a new user to the current organization             |
-| DELETE | [/api/org/users/{user_id}](#delete-org-user) | Delete user in current organization                    |
-| GET    | [/api/org](#get-org)                         |                                                        |
-| GET    | [/api/org/users](#get-org-users)             | Get all users within the current organization.         |
-| GET    | [/api/org/users/lookup](#lookup-org-users)   | Get all users within the current organization (lookup) |
-| PUT    | [/api/org](#update-org)                      | Update current Organization.                           |
-| PUT    | [/api/org/address](#update-org-address)      | Update current Organization's address.                 |
-| PATCH  | [/api/org/users/{user_id}](#update-org-user) | Updates the given user                                 |
+| Method | URI                                                                                   | Summary                |
+| ------ | ------------------------------------------------------------------------------------- | ---------------------- |
+| POST   | [/api/datasources/uid/{sourceUID}/correlations](#create-correlation)                  | Add correlation.       |
+| DELETE | [/api/datasources/uid/{uid}/correlations/{correlationUID}](#delete-correlation)       | Delete a correlation.  |
+| PATCH  | [/api/datasources/uid/{sourceUID}/correlations/{correlationUID}](#update-correlation) | Updates a correlation. |
 
 ### dashboard_permissions
 
-| Method | URI                                                                           | Summary                                                |
-| ------ | ----------------------------------------------------------------------------- | ------------------------------------------------------ |
-| GET    | [/api/dashboards/id/{DashboardID}/permissions](#get-dashboard-permissions)    | Gets all existing permissions for the given dashboard. |
-| GET    | [/api/dashboards/uid/{uid}/permissions](#get-dashboard-permissions-with-uid)  | Gets all existing permissions for the given dashboard. |
-| POST   | [/api/dashboards/id/{DashboardID}/permissions](#post-dashboard-permissions)   | Updates permissions for a dashboard.                   |
-| POST   | [/api/dashboards/uid/{uid}/permissions](#post-dashboard-permissions-with-uid) | Updates permissions for a dashboard.                   |
+| Method | URI                                                                                   | Summary                                                |
+| ------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| GET    | [/api/dashboards/id/{DashboardID}/permissions](#get-dashboard-permissions-list-by-id) | Gets all existing permissions for the given dashboard. |
+| GET    | [/api/dashboards/uid/{uid}/permissions](#get-dashboard-permissions-list-by-uid)       | Gets all existing permissions for the given dashboard. |
+| POST   | [/api/dashboards/id/{DashboardID}/permissions](#update-dashboard-permissions-by-id)   | Updates permissions for a dashboard.                   |
+| POST   | [/api/dashboards/uid/{uid}/permissions](#update-dashboard-permissions-by-uid)         | Updates permissions for a dashboard.                   |
 
 ### dashboard_versions
 
-| Method | URI                                                                                      | Summary                                                     |
-| ------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| GET    | [/api/dashboards/id/{DashboardID}/versions/{DashboardVersionID}](#get-dashboard-version) | Get a specific dashboard version.                           |
-| GET    | [/api/dashboards/uid/{uid}/versions/{DashboardVersionID}](#get-dashboard-version-by-uid) | Get a specific dashboard version using UID.                 |
-| GET    | [/api/dashboards/id/{DashboardID}/versions](#get-dashboard-versions)                     | Gets all existing versions for the dashboard.               |
-| GET    | [/api/dashboards/uid/{uid}/versions](#get-dashboard-versions-by-uid)                     | Gets all existing versions for the dashboard using UID.     |
-| POST   | [/api/dashboards/id/{DashboardID}/restore](#restore-dashboard-version)                   | Restore a dashboard to a given dashboard version.           |
-| POST   | [/api/dashboards/uid/{uid}/restore](#restore-dashboard-version-by-uid)                   | Restore a dashboard to a given dashboard version using UID. |
+| Method | URI                                                                                            | Summary                                                     |
+| ------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| GET    | [/api/dashboards/id/{DashboardID}/versions/{DashboardVersionID}](#get-dashboard-version-by-id) | Get a specific dashboard version.                           |
+| GET    | [/api/dashboards/uid/{uid}/versions/{DashboardVersionID}](#get-dashboard-version-by-uid)       | Get a specific dashboard version using UID.                 |
+| GET    | [/api/dashboards/id/{DashboardID}/versions](#get-dashboard-versions-by-id)                     | Gets all existing versions for the dashboard.               |
+| GET    | [/api/dashboards/uid/{uid}/versions](#get-dashboard-versions-by-uid)                           | Gets all existing versions for the dashboard using UID.     |
+| POST   | [/api/dashboards/id/{DashboardID}/restore](#restore-dashboard-version-by-id)                   | Restore a dashboard to a given dashboard version.           |
+| POST   | [/api/dashboards/uid/{uid}/restore](#restore-dashboard-version-by-uid)                         | Restore a dashboard to a given dashboard version using UID. |
 
 ### dashboards
 
-| Method | URI                                                    | Summary                                     |
-| ------ | ------------------------------------------------------ | ------------------------------------------- |
-| POST   | [/api/dashboards/calculate-diff](#calc-dashboard-diff) | Perform diff on two dashboards.             |
-| DELETE | [/api/dashboards/uid/{uid}](#delete-dashboard-by-uid)  | Delete dashboard by uid.                    |
-| GET    | [/api/dashboards/uid/{uid}](#get-dashboard-by-uid)     | Get dashboard by uid.                       |
-| GET    | [/api/dashboards/tags](#get-dashboard-tags)            | Get all dashboards tags of an organisation. |
-| GET    | [/api/dashboards/home](#get-home-dashboard)            | Get home dashboard.                         |
-| POST   | [/api/dashboards/import](#import-dashboard)            | Import dashboard.                           |
-| POST   | [/api/dashboards/db](#post-dashboard)                  | Create / Update dashboard                   |
-| POST   | [/api/dashboards/trim](#trim-dashboard)                | Trim defaults from dashboard.               |
+| Method | URI                                                         | Summary                                     |
+| ------ | ----------------------------------------------------------- | ------------------------------------------- |
+| POST   | [/api/dashboards/calculate-diff](#calculate-dashboard-diff) | Perform diff on two dashboards.             |
+| DELETE | [/api/dashboards/uid/{uid}](#delete-dashboard-by-uid)       | Delete dashboard by uid.                    |
+| GET    | [/api/dashboards/uid/{uid}](#get-dashboard-by-uid)          | Get dashboard by uid.                       |
+| GET    | [/api/dashboards/tags](#get-dashboard-tags)                 | Get all dashboards tags of an organisation. |
+| GET    | [/api/dashboards/home](#get-home-dashboard)                 | Get home dashboard.                         |
+| POST   | [/api/dashboards/import](#import-dashboard)                 | Import dashboard.                           |
+| POST   | [/api/dashboards/db](#post-dashboard)                       | Create / Update dashboard                   |
+| POST   | [/api/dashboards/trim](#trim-dashboard)                     | Trim defaults from dashboard.               |
 
 ### datasource_permissions
 
@@ -190,53 +182,54 @@ If you are running Grafana Enterprise and have Fine-grained access control enabl
 
 | Method | URI                                                                               | Summary                                |
 | ------ | --------------------------------------------------------------------------------- | -------------------------------------- |
+| POST   | [/api/datasources/{datasourceId}/permissions](#add-permission)                    | Add permissions for a data source.     |
 | DELETE | [/api/datasources/{datasourceId}/permissions/{permissionId}](#delete-permissions) | Remove permission for a data source.   |
 | POST   | [/api/datasources/{datasourceId}/disable-permissions](#disable-permissions)       | Disable permissions for a data source. |
 | POST   | [/api/datasources/{datasourceId}/enable-permissions](#enable-permissions)         | Enable permissions for a data source.  |
-| GET    | [/api/datasources/{datasourceId}/permissions](#get-permissions)                   | Get permissions for a data source.     |
+| GET    | [/api/datasources/{datasourceId}/permissions](#get-all-permissions)               | Get permissions for a data source.     |
 
 ### datasources
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                                                                                                     | Summary                                              |
-| ------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| POST   | [/api/datasources](#add-datasource)                                                                     | Create a data source.                                |
-| GET    | [/api/datasources/uid/{uid}/health](#check-datasource-health)                                           | Check data source health by Id.                      |
-| GET    | [/api/datasources/{id}/health](#check-datasource-health-by-id)                                          | Check data source health by Id.                      |
-| DELETE | [/api/datasources/proxy/uid/{uid}/{datasource_proxy_route}](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls) | Data source proxy DELETE calls.                      |
-| DELETE | [/api/datasources/proxy/{id}/{datasource_proxy_route}](#datasource-proxy-d-e-l-e-t-ecalls)              | Data source proxy DELETE calls.                      |
-| GET    | [/api/datasources/proxy/uid/{uid}/{datasource_proxy_route}](#datasource-proxy-g-e-t-by-ui-dcalls)       | Data source proxy GET calls.                         |
-| GET    | [/api/datasources/proxy/{id}/{datasource_proxy_route}](#datasource-proxy-g-e-tcalls)                    | Data source proxy GET calls.                         |
-| POST   | [/api/datasources/proxy/uid/{uid}/{datasource_proxy_route}](#datasource-proxy-p-o-s-t-by-ui-dcalls)     | Data source proxy POST calls.                        |
-| POST   | [/api/datasources/proxy/{id}/{datasource_proxy_route}](#datasource-proxy-p-o-s-tcalls)                  | Data source proxy POST calls.                        |
-| DELETE | [/api/datasources/{id}](#delete-datasource-by-id)                                                       | Delete an existing data source by id.                |
-| DELETE | [/api/datasources/name/{name}](#delete-datasource-by-name)                                              | Delete an existing data source by name.              |
-| DELETE | [/api/datasources/uid/{uid}](#delete-datasource-by-uid)                                                 | Delete an existing data source by UID.               |
-| GET    | [/api/datasources/uid/{uid}/resources/{datasource_proxy_route}](#fetch-datasource-resources)            | Fetch data source resources.                         |
-| GET    | [/api/datasources/{id}/resources/{datasource_proxy_route}](#fetch-datasource-resources-by-id)           | Fetch data source resources by Id.                   |
-| GET    | [/api/datasources/{id}](#get-datasource-by-id)                                                          | Get a single data source by Id.                      |
-| GET    | [/api/datasources/name/{name}](#get-datasource-by-name)                                                 | Get a single data source by Name.                    |
-| GET    | [/api/datasources/uid/{uid}](#get-datasource-by-uid)                                                    | Get a single data source by UID.                     |
-| GET    | [/api/datasources/id/{name}](#get-datasource-id-by-name)                                                | Get data source Id by Name.                          |
-| GET    | [/api/datasources](#get-datasources)                                                                    | Get all data sources.                                |
-| PUT    | [/api/datasources/{id}](#update-datasource-by-id)                                                       | Update an existing data source by its sequential ID. |
-| PUT    | [/api/datasources/uid/{uid}](#update-datasource-by-uid)                                                 | Update an existing data source.                      |
+| Method | URI                                                                                                     | Summary                                                                      |
+| ------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| POST   | [/api/datasources](#add-data-source)                                                                    | Create a data source.                                                        |
+| GET    | [/api/datasources/{id}/resources/{datasource_proxy_route}](#call-datasource-resource-by-id)             | Fetch data source resources by Id.                                           |
+| GET    | [/api/datasources/uid/{uid}/resources/{datasource_proxy_route}](#call-datasource-resource-with-uid)     | Fetch data source resources.                                                 |
+| GET    | [/api/datasources/{id}/health](#check-datasource-health-by-id)                                          | Sends a health check request to the plugin datasource identified by the ID.  |
+| GET    | [/api/datasources/uid/{uid}/health](#check-datasource-health-with-uid)                                  | Sends a health check request to the plugin datasource identified by the UID. |
+| DELETE | [/api/datasources/proxy/uid/{uid}/{datasource_proxy_route}](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls) | Data source proxy DELETE calls.                                              |
+| DELETE | [/api/datasources/proxy/{id}/{datasource_proxy_route}](#datasource-proxy-d-e-l-e-t-ecalls)              | Data source proxy DELETE calls.                                              |
+| GET    | [/api/datasources/proxy/uid/{uid}/{datasource_proxy_route}](#datasource-proxy-g-e-t-by-ui-dcalls)       | Data source proxy GET calls.                                                 |
+| GET    | [/api/datasources/proxy/{id}/{datasource_proxy_route}](#datasource-proxy-g-e-tcalls)                    | Data source proxy GET calls.                                                 |
+| POST   | [/api/datasources/proxy/uid/{uid}/{datasource_proxy_route}](#datasource-proxy-p-o-s-t-by-ui-dcalls)     | Data source proxy POST calls.                                                |
+| POST   | [/api/datasources/proxy/{id}/{datasource_proxy_route}](#datasource-proxy-p-o-s-tcalls)                  | Data source proxy POST calls.                                                |
+| DELETE | [/api/datasources/{id}](#delete-data-source-by-id)                                                      | Delete an existing data source by id.                                        |
+| DELETE | [/api/datasources/name/{name}](#delete-data-source-by-name)                                             | Delete an existing data source by name.                                      |
+| DELETE | [/api/datasources/uid/{uid}](#delete-data-source-by-uid)                                                | Delete an existing data source by UID.                                       |
+| GET    | [/api/datasources/{id}](#get-data-source-by-id)                                                         | Get a single data source by Id.                                              |
+| GET    | [/api/datasources/name/{name}](#get-data-source-by-name)                                                | Get a single data source by Name.                                            |
+| GET    | [/api/datasources/uid/{uid}](#get-data-source-by-uid)                                                   | Get a single data source by UID.                                             |
+| GET    | [/api/datasources/id/{name}](#get-data-source-id-by-name)                                               | Get data source Id by Name.                                                  |
+| GET    | [/api/datasources](#get-data-sources)                                                                   | Get all data sources.                                                        |
+| PUT    | [/api/datasources/{id}](#update-data-source-by-id)                                                      | Update an existing data source by its sequential ID.                         |
+| PUT    | [/api/datasources/uid/{uid}](#update-data-source-by-uid)                                                | Update an existing data source.                                              |
 
 ### ds
 
-| Method | URI                                              | Summary                        |
-| ------ | ------------------------------------------------ | ------------------------------ |
-| POST   | [/api/ds/query](#query-metrics-with-expressions) | Query metrics with expressions |
+| Method | URI                                              | Summary                                   |
+| ------ | ------------------------------------------------ | ----------------------------------------- |
+| POST   | [/api/ds/query](#query-metrics-with-expressions) | DataSource query metrics with expressions |
 
 ### folder_permissions
 
 Permissions with `folderId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.
 
-| Method | URI                                                                 | Summary                                                                                                                   |
-| ------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| GET    | [/api/folders/{folder_uid}/permissions](#get-folder-permissions)    | Gets all existing permissions for the folder with the given `uid`.                                                        |
-| POST   | [/api/folders/{folder_uid}/permissions](#update-folder-permissions) | Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request. |
+| Method | URI                                                                  | Summary                                                                                                                   |
+| ------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| GET    | [/api/folders/{folder_uid}/permissions](#get-folder-permission-list) | Gets all existing permissions for the folder with the given `uid`.                                                        |
+| POST   | [/api/folders/{folder_uid}/permissions](#update-folder-permissions)  | Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request. |
 
 ### folders
 
@@ -258,9 +251,9 @@ The General folder (id=0) is special and is not part of the Folder API which mea
 
 ### ldap_debug
 
-| Method | URI                                                     | Summary                      |
-| ------ | ------------------------------------------------------- | ---------------------------- |
-| GET    | [/api/admin/ldap-sync-status](#get-l-d-a-p-sync-status) | Available to grafana admins. |
+| Method | URI                                             | Summary                                                           |
+| ------ | ----------------------------------------------- | ----------------------------------------------------------------- |
+| GET    | [/api/admin/ldap-sync-status](#get-sync-status) | Returns the current state of the LDAP background sync integration |
 
 ### legacy_alerts
 
@@ -290,7 +283,7 @@ The uid can have a maximum length of 40 characters.
 | GET    | [/api/alert-notifications/{notification_channel_id}](#get-alert-notification-channel-by-id)          | Get notification channel by ID.        |
 | GET    | [/api/alert-notifications/uid/{notification_channel_uid}](#get-alert-notification-channel-by-uid)    | Get notification channel by UID        |
 | GET    | [/api/alert-notifications](#get-alert-notification-channels)                                         | Get all notification channels.         |
-| GET    | [/api/alert-notifications/lookup](#lookup-alert-notification-channels)                               | Get all notification channels (lookup) |
+| GET    | [/api/alert-notifications/lookup](#get-alert-notification-lookup)                                    | Get all notification channels (lookup) |
 | POST   | [/api/alert-notifications/test](#notification-channel-test)                                          | Test notification channel.             |
 | PUT    | [/api/alert-notifications/{notification_channel_id}](#update-alert-notification-channel)             | Update notification channel by ID.     |
 | PUT    | [/api/alert-notifications/uid/{notification_channel_uid}](#update-alert-notification-channel-by-uid) | Update notification channel by UID.    |
@@ -321,19 +314,34 @@ If you are running Grafana Enterprise and have Fine-grained access control enabl
 | DELETE | [/api/licensing/token](#delete-license-token)                          | Remove license from database.                |
 | GET    | [/api/licensing/custom-permissions-csv](#get-custom-permissions-c-s-v) | Get custom permissions report in CSV format. |
 | GET    | [/api/licensing/custom-permissions](#get-custom-permissions-report)    | Get custom permissions report.               |
-| GET    | [/api/licensing/check](#get-license-status)                            | Check license availability.                  |
 | GET    | [/api/licensing/token](#get-license-token)                             | Get license token.                           |
+| GET    | [/api/licensing/check](#get-status)                                    | Check license availability.                  |
 | POST   | [/api/licensing/token](#post-license-token)                            | Create license token.                        |
 | POST   | [/api/licensing/token/renew](#post-renew-license-token)                | Manually force license refresh.              |
 | GET    | [/api/licensing/refresh-stats](#refresh-license-stats)                 | Refresh license stats.                       |
 
+### org
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
+
+| Method | URI                                                            | Summary                                                |
+| ------ | -------------------------------------------------------------- | ------------------------------------------------------ |
+| POST   | [/api/org/users](#add-org-user-to-current-org)                 | Add a new user to the current organization             |
+| GET    | [/api/org](#get-current-org)                                   |                                                        |
+| GET    | [/api/org/users](#get-org-users-for-current-org)               | Get all users within the current organization.         |
+| GET    | [/api/org/users/lookup](#get-org-users-for-current-org-lookup) | Get all users within the current organization (lookup) |
+| DELETE | [/api/org/users/{user_id}](#remove-org-user-for-current-org)   | Delete user in current organization                    |
+| PUT    | [/api/org](#update-current-org)                                | Update current Organization.                           |
+| PUT    | [/api/org/address](#update-current-org-address)                | Update current Organization's address.                 |
+| PATCH  | [/api/org/users/{user_id}](#update-org-user-for-current-org)   | Updates the given user                                 |
+
 ### org_invites
 
-| Method | URI                                                  | Summary              |
-| ------ | ---------------------------------------------------- | -------------------- |
-| POST   | [/api/org/invites](#add-invite)                      | Add invite.          |
-| GET    | [/api/org/invites](#get-invites)                     | Get pending invites. |
-| DELETE | [/api/org/{invitation_code}/invites](#revoke-invite) | Revoke invite.       |
+| Method | URI                                                         | Summary              |
+| ------ | ----------------------------------------------------------- | -------------------- |
+| POST   | [/api/org/invites](#add-org-invite)                         | Add invite.          |
+| GET    | [/api/org/invites](#get-pending-org-invites)                | Get pending invites. |
+| DELETE | [/api/org/invites/{invitation_code}/revoke](#revoke-invite) | Revoke invite.       |
 
 ### org_preferences
 
@@ -349,44 +357,58 @@ The Admin Organizations HTTP API does not currently work with an API Token. API 
 
 | Method | URI                                                           | Summary                                    |
 | ------ | ------------------------------------------------------------- | ------------------------------------------ |
-| POST   | [/api/orgs/{org_id}/users](#admin-add-org-user)               | Add a new user to the current organization |
-| DELETE | [/api/orgs/{org_id}](#admin-delete-org)                       | Delete Organization.                       |
-| DELETE | [/api/orgs/{org_id}/users/{user_id}](#admin-delete-org-user)  | Delete user in current organization        |
-| GET    | [/api/orgs/{org_id}/users](#admin-get-org-users)              | Get Users in Organization.                 |
-| PUT    | [/api/orgs/{org_id}](#admin-update-org)                       | Update Organization.                       |
-| PUT    | [/api/orgs/{org_id}/address](#admin-update-org-address)       | Update Organization's address.             |
-| PATCH  | [/api/orgs/{org_id}/users/{user_id}](#admin-update-org-user)  | Update Users in Organization.              |
+| POST   | [/api/orgs/{org_id}/users](#add-org-user)                     | Add a new user to the current organization |
 | POST   | [/api/orgs](#create-org)                                      | Create Organization.                       |
+| DELETE | [/api/orgs/{org_id}](#delete-org-by-id)                       | Delete Organization.                       |
 | GET    | [/api/orgs/{org_id}](#get-org-by-id)                          | Get Organization by ID.                    |
 | GET    | [/api/orgs/name/{org_name}](#get-org-by-name)                 | Get Organization by ID.                    |
 | GET    | [/api/orgs/{org_id}/quotas](#get-org-quota)                   | Fetch Organization quota.                  |
-| GET    | [/api/orgs](#search-org)                                      |                                            |
+| GET    | [/api/orgs/{org_id}/users](#get-org-users)                    | Get Users in Organization.                 |
+| DELETE | [/api/orgs/{org_id}/users/{user_id}](#remove-org-user)        | Delete user in current organization        |
+| GET    | [/api/orgs](#search-orgs)                                     |                                            |
+| PUT    | [/api/orgs/{org_id}](#update-org)                             | Update Organization.                       |
+| PUT    | [/api/orgs/{org_id}/address](#update-org-address)             | Update Organization's address.             |
 | PUT    | [/api/orgs/{org_id}/quotas/{quota_target}](#update-org-quota) | Update user quota.                         |
+| PATCH  | [/api/orgs/{org_id}/users/{user_id}](#update-org-user)        | Update Users in Organization.              |
+
+### playlists
+
+| Method | URI                                                         | Summary                  |
+| ------ | ----------------------------------------------------------- | ------------------------ |
+| POST   | [/api/playlists](#create-playlist)                          | Create playlist.         |
+| DELETE | [/api/playlists/{uid}](#delete-playlist)                    | Delete playlist.         |
+| GET    | [/api/playlists/{uid}](#get-playlist)                       | Get playlist.            |
+| GET    | [/api/playlists/{uid}/dashboards](#get-playlist-dashboards) | Get playlist dashboards. |
+| GET    | [/api/playlists/{uid}/items](#get-playlist-items)           | Get playlist items.      |
+| GET    | [/api/playlists](#search-playlists)                         | Get playlists.           |
+| PUT    | [/api/playlists/{uid}](#update-playlist)                    | Update playlist.         |
 
 ### provisioning
 
-| Method | URI                                                                                        | Summary                              |
-| ------ | ------------------------------------------------------------------------------------------ | ------------------------------------ |
-| DELETE | [/api/v1/provisioning/alert-rules/{UID}](#route-delete-alert-rule)                         | Delete a specific alert rule by UID. |
-| DELETE | [/api/v1/provisioning/contact-points/{UID}](#route-delete-contactpoints)                   | Delete a contact point.              |
-| DELETE | [/api/v1/provisioning/mute-timings/{name}](#route-delete-mute-timing)                      | Delete a mute timing.                |
-| DELETE | [/api/v1/provisioning/templates/{name}](#route-delete-template)                            | Delete a template.                   |
-| GET    | [/api/v1/provisioning/alert-rules/{UID}](#route-get-alert-rule)                            | Get a specific alert rule by UID.    |
-| GET    | [/api/v1/provisioning/contact-points](#route-get-contactpoints)                            | Get all the contact points.          |
-| GET    | [/api/v1/provisioning/mute-timings/{name}](#route-get-mute-timing)                         | Get a mute timing.                   |
-| GET    | [/api/v1/provisioning/mute-timings](#route-get-mute-timings)                               | Get all the mute timings.            |
-| GET    | [/api/v1/provisioning/policies](#route-get-policy-tree)                                    | Get the notification policy tree.    |
-| GET    | [/api/v1/provisioning/templates/{name}](#route-get-template)                               | Get a message template.              |
-| GET    | [/api/v1/provisioning/templates](#route-get-templates)                                     | Get all message templates.           |
-| POST   | [/api/v1/provisioning/alert-rules](#route-post-alert-rule)                                 | Create a new alert rule.             |
-| POST   | [/api/v1/provisioning/contact-points](#route-post-contactpoints)                           | Create a contact point.              |
-| POST   | [/api/v1/provisioning/mute-timings](#route-post-mute-timing)                               | Create a new mute timing.            |
-| PUT    | [/api/v1/provisioning/alert-rules/{UID}](#route-put-alert-rule)                            | Update an existing alert rule.       |
-| PUT    | [/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}](#route-put-alert-rule-group) | Update the interval of a rule group. |
-| PUT    | [/api/v1/provisioning/contact-points/{UID}](#route-put-contactpoint)                       | Update an existing contact point.    |
-| PUT    | [/api/v1/provisioning/mute-timings/{name}](#route-put-mute-timing)                         | Replace an existing mute timing.     |
-| PUT    | [/api/v1/provisioning/policies](#route-put-policy-tree)                                    | Sets the notification policy tree.   |
-| PUT    | [/api/v1/provisioning/templates/{name}](#route-put-template)                               | Updates an existing template.        |
+| Method | URI                                                                                            | Summary                              |
+| ------ | ---------------------------------------------------------------------------------------------- | ------------------------------------ |
+| DELETE | [/api/api/v1/provisioning/alert-rules/{UID}](#route-delete-alert-rule)                         | Delete a specific alert rule by UID. |
+| DELETE | [/api/api/v1/provisioning/contact-points/{UID}](#route-delete-contactpoints)                   | Delete a contact point.              |
+| DELETE | [/api/api/v1/provisioning/mute-timings/{name}](#route-delete-mute-timing)                      | Delete a mute timing.                |
+| DELETE | [/api/api/v1/provisioning/templates/{name}](#route-delete-template)                            | Delete a template.                   |
+| GET    | [/api/api/v1/provisioning/alert-rules/{UID}](#route-get-alert-rule)                            | Get a specific alert rule by UID.    |
+| GET    | [/api/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}](#route-get-alert-rule-group) | Get a rule group.                    |
+| GET    | [/api/api/v1/provisioning/contact-points](#route-get-contactpoints)                            | Get all the contact points.          |
+| GET    | [/api/api/v1/provisioning/mute-timings/{name}](#route-get-mute-timing)                         | Get a mute timing.                   |
+| GET    | [/api/api/v1/provisioning/mute-timings](#route-get-mute-timings)                               | Get all the mute timings.            |
+| GET    | [/api/api/v1/provisioning/policies](#route-get-policy-tree)                                    | Get the notification policy tree.    |
+| GET    | [/api/api/v1/provisioning/templates/{name}](#route-get-template)                               | Get a message template.              |
+| GET    | [/api/api/v1/provisioning/templates](#route-get-templates)                                     | Get all message templates.           |
+| POST   | [/api/api/v1/provisioning/alert-rules](#route-post-alert-rule)                                 | Create a new alert rule.             |
+| POST   | [/api/api/v1/provisioning/contact-points](#route-post-contactpoints)                           | Create a contact point.              |
+| POST   | [/api/api/v1/provisioning/mute-timings](#route-post-mute-timing)                               | Create a new mute timing.            |
+| PUT    | [/api/api/v1/provisioning/alert-rules/{UID}](#route-put-alert-rule)                            | Update an existing alert rule.       |
+| PUT    | [/api/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}](#route-put-alert-rule-group) | Update the interval of a rule group. |
+| PUT    | [/api/api/v1/provisioning/contact-points/{UID}](#route-put-contactpoint)                       | Update an existing contact point.    |
+| PUT    | [/api/api/v1/provisioning/mute-timings/{name}](#route-put-mute-timing)                         | Replace an existing mute timing.     |
+| PUT    | [/api/api/v1/provisioning/policies](#route-put-policy-tree)                                    | Sets the notification policy tree.   |
+| PUT    | [/api/api/v1/provisioning/templates/{name}](#route-put-template)                               | Updates an existing template.        |
+| DELETE | [/api/api/v1/provisioning/policies](#route-reset-policy-tree)                                  | Clears the notification policy tree. |
 
 ### query_history
 
@@ -405,16 +427,16 @@ The unique identifier (UID) of a query history uniquely identifies queries in qu
 
 ### recording_rules
 
-| Method | URI                                                                | Summary                      |
-| ------ | ------------------------------------------------------------------ | ---------------------------- |
-| POST   | [/api/recording-rules](#create-recording-rule)                     | Create a new recording rule. |
-| POST   | [/api/recording-rules/writer](#create-recording-rule-write-target) | Create a new write target.   |
-| DELETE | [/api/recording-rules/{recordingRuleID}](#delete-recording-rule)   | Delete a recording rule.     |
-| DELETE | [/api/recording-rules/writer](#delete-recording-rule-write-target) | Delete the write target.     |
-| GET    | [/api/recording-rules/writer](#get-recording-rule-write-target)    | Get the write target.        |
-| GET    | [/api/recording-rules](#list-recording-rules)                      | Get all recording rules.     |
-| POST   | [/api/recording-rules/test](#test-create-recording-rule)           | Test a recording rule.       |
-| PUT    | [/api/recording-rules](#update-recording-rule)                     | Update a recording rule.     |
+| Method | URI                                                                | Summary                                                 |
+| ------ | ------------------------------------------------------------------ | ------------------------------------------------------- |
+| POST   | [/api/recording-rules](#create-recording-rule)                     |                                                         |
+| POST   | [/api/recording-rules/writer](#create-recording-rule-write-target) | Create a remote write target.                           |
+| DELETE | [/api/recording-rules/{recordingRuleID}](#delete-recording-rule)   | Delete removes the rule from the registry and stops it. |
+| DELETE | [/api/recording-rules/writer](#delete-recording-rule-write-target) | Delete the remote write target.                         |
+| GET    | [/api/recording-rules/writer](#get-recording-rule-write-target)    |                                                         |
+| GET    | [/api/recording-rules](#list-recording-rules)                      |                                                         |
+| POST   | [/api/recording-rules/test](#test-create-recording-rule)           | Test a recording rule.                                  |
+| PUT    | [/api/recording-rules](#update-recording-rule)                     |                                                         |
 
 ### reports
 
@@ -425,33 +447,48 @@ If you have Fine-grained access Control enabled, for some endpoints you would ne
 | Method | URI                                                           | Summary                                |
 | ------ | ------------------------------------------------------------- | -------------------------------------- |
 | POST   | [/api/reports](#create-report)                                | Create a report.                       |
-| DELETE | [/api/reports/{reportID}](#delete-report)                     | Delete a report.                       |
-| GET    | [/api/reports/{reportID}](#get-report)                        | Get a report.                          |
+| DELETE | [/api/reports/{id}](#delete-report)                           | Delete a report.                       |
+| GET    | [/api/reports/{id}](#get-report)                              | Get a report.                          |
 | GET    | [/api/reports/settings](#get-report-settings)                 | Get settings.                          |
 | GET    | [/api/reports](#get-reports)                                  | List reports.                          |
-| GET    | [/api/reports/render/pdf/{DashboardID}](#render-report-p-d-f) | Render report for dashboard.           |
+| GET    | [/api/reports/render/pdf/{dashboardID}](#render-report-p-d-f) | Render report for dashboard.           |
 | GET    | [/api/reports/render/pdfs](#render-report-p-d-fs)             | Render report for multiple dashboards. |
 | POST   | [/api/reports/settings](#save-report-settings)                | Save settings.                         |
 | POST   | [/api/reports/email](#send-report)                            | Send a report.                         |
 | POST   | [/api/reports/test-email](#send-test-email)                   | Send test report via email.            |
-| PUT    | [/api/reports/{reportID}](#update-report)                     | Update a report.                       |
+| PUT    | [/api/reports/{id}](#update-report)                           | Update a report.                       |
 
 ### saml
 
-| Method | URI                                         | Summary                                                           |
-| ------ | ------------------------------------------- | ----------------------------------------------------------------- |
-| GET    | [/api/login/saml](#get-s-a-m-l-login)       | It initiates the login flow by redirecting the user to the IdP.   |
-| GET    | [/api/logout/saml](#get-s-a-m-l-logout)     | GetLogout initiates single logout process.                        |
-| GET    | [/api/saml/metadata](#get-s-a-m-l-metadata) | It exposes the SP (Grafana's) metadata for the IdP's consumption. |
-| POST   | [/api/saml/acs](#post-a-c-s)                | It performs assertion Consumer Service (ACS).                     |
-| POST   | [/api/saml/slo](#post-s-l-o)                | It performs Single Logout (SLO) callback.                         |
+| Method | URI                                     | Summary                                                           |
+| ------ | --------------------------------------- | ----------------------------------------------------------------- |
+| GET    | [/api/saml/metadata](#get-metadata)     | It exposes the SP (Grafana's) metadata for the IdP's consumption. |
+| GET    | [/api/logout/saml](#get-s-a-m-l-logout) | GetLogout initiates single logout process.                        |
+| GET    | [/api/saml/slo](#get-s-l-o)             | It performs Single Logout (SLO) callback.                         |
+| POST   | [/api/saml/acs](#post-a-c-s)            | It performs assertion Consumer Service (ACS).                     |
+| POST   | [/api/saml/slo](#post-s-l-o)            | It performs Single Logout (SLO) callback.                         |
 
 ### search
 
-| Method | URI                                    | Summary |
-| ------ | -------------------------------------- | ------- |
-| GET    | [/api/search](#search)                 |         |
-| GET    | [/api/search/sorting](#search-sorting) |         |
+| Method | URI                                       | Summary |
+| ------ | ----------------------------------------- | ------- |
+| GET    | [/api/search/sorting](#list-sort-options) |         |
+| GET    | [/api/search](#search)                    |         |
+
+### service_accounts
+
+If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+
+| Method | URI                                                                       | Summary                                          |
+| ------ | ------------------------------------------------------------------------- | ------------------------------------------------ |
+| POST   | [/api/serviceaccounts](#create-service-account)                           | Create service account                           |
+| POST   | [/api/serviceaccounts/{serviceAccountId}/tokens](#create-token)           | CreateNewToken adds a token to a service account |
+| DELETE | [/api/serviceaccounts/{serviceAccountId}](#delete-service-account)        | Delete service account                           |
+| DELETE | [/api/serviceaccounts/{serviceAccountId}/tokens/{tokenId}](#delete-token) | DeleteToken deletes service account tokens       |
+| GET    | [/api/serviceaccounts/{serviceAccountId}/tokens](#list-tokens)            | Get service account tokens                       |
+| GET    | [/api/serviceaccounts/{serviceAccountId}](#retrieve-service-account)      | Get single serviceaccount by Id                  |
+| GET    | [/api/serviceaccounts/search](#search-org-service-accounts-with-paging)   | Search service accounts with paging              |
+| PATCH  | [/api/serviceaccounts/{serviceAccountId}](#update-service-account)        | Update service account                           |
 
 ### signed_in_user
 
@@ -459,12 +496,12 @@ If you have Fine-grained access Control enabled, for some endpoints you would ne
 | ------ | ------------------------------------------------------------- | ---------------------------------------- |
 | PUT    | [/api/user/password](#change-user-password)                   | Change Password.                         |
 | GET    | [/api/user/helpflags/clear](#clear-help-flags)                | Clear user help flag.                    |
-| GET    | [/api/user](#get-signed-in-user)                              | Get signed in User.                      |
-| GET    | [/api/user/auth-tokens](#get-signed-in-user-auth-tokens)      | Auth tokens of the actual User.          |
+| GET    | [/api/user](#get-signed-in-user)                              |                                          |
 | GET    | [/api/user/orgs](#get-signed-in-user-org-list)                | Organizations of the actual User.        |
 | GET    | [/api/user/teams](#get-signed-in-user-team-list)              | Teams that the actual User is member of. |
+| GET    | [/api/user/auth-tokens](#get-user-auth-tokens)                | Auth tokens of the actual User.          |
 | GET    | [/api/user/quotas](#get-user-quotas)                          | Fetch user quota.                        |
-| POST   | [/api/user/revoke-auth-token](#revoke-signed-in-auth-token)   | Revoke an auth token of the actual User. |
+| POST   | [/api/user/revoke-auth-token](#revoke-user-auth-token)        | Revoke an auth token of the actual User. |
 | PUT    | [/api/user/helpflags/{flag_id}](#set-help-flag)               | Set user help flag.                      |
 | POST   | [/api/user/stars/dashboard/{dashboard_id}](#star-dashboard)   | Star a dashboard.                        |
 | DELETE | [/api/user/stars/dashboard/{dashboard_id}](#unstar-dashboard) | Unstar a dashboard.                      |
@@ -473,14 +510,14 @@ If you have Fine-grained access Control enabled, for some endpoints you would ne
 
 ### snapshots
 
-| Method | URI                                                                 | Summary                                                                                                                                                           |
-| ------ | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | [/api/snapshots](#create-snapshot)                                  | When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI. |
-| GET    | [/api/snapshots-delete/{deleteKey}](#delete-snapshot-by-delete-key) | Delete Snapshot by deleteKey.                                                                                                                                     |
-| DELETE | [/api/snapshots/{key}](#delete-snapshot-by-key)                     | Delete Snapshot by Key.                                                                                                                                           |
-| GET    | [/api/snapshots/{key}](#get-snapshot-by-key)                        | Get Snapshot by Key.                                                                                                                                              |
-| GET    | [/api/snapshot/shared-options](#get-snapshot-sharing-options)       | Get snapshot sharing settings.                                                                                                                                    |
-| GET    | [/api/dashboard/snapshots](#get-snapshots)                          | List snapshots.                                                                                                                                                   |
+| Method | URI                                                                           | Summary                                                                                                                                                           |
+| ------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | [/api/snapshots](#create-dashboard-snapshot)                                  | When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI. |
+| DELETE | [/api/snapshots/{key}](#delete-dashboard-snapshot)                            | Delete Snapshot by Key.                                                                                                                                           |
+| GET    | [/api/snapshots-delete/{deleteKey}](#delete-dashboard-snapshot-by-delete-key) | Delete Snapshot by deleteKey.                                                                                                                                     |
+| GET    | [/api/snapshots/{key}](#get-dashboard-snapshot)                               | Get Snapshot by Key.                                                                                                                                              |
+| GET    | [/api/snapshot/shared-options](#get-sharing-options)                          | Get snapshot sharing settings.                                                                                                                                    |
+| GET    | [/api/dashboard/snapshots](#search-dashboard-snapshots)                       | List snapshots.                                                                                                                                                   |
 
 ### sync_team_groups
 
@@ -499,7 +536,7 @@ This API can be used to create/update/delete Teams and to add/remove users to Te
 | POST   | [/api/teams/{team_id}/members](#add-team-member)              | Add Team Member.         |
 | POST   | [/api/teams](#create-team)                                    | Add Team.                |
 | DELETE | [/api/teams/{team_id}](#delete-team-by-id)                    | Delete Team By ID.       |
-| GET    | [/api/teams/{team_id}](#get-team)                             | Get Team By ID.          |
+| GET    | [/api/teams/{team_id}](#get-team-by-id)                       | Get Team By ID.          |
 | GET    | [/api/teams/{team_id}/members](#get-team-members)             | Get Team Members.        |
 | GET    | [/api/teams/{team_id}/preferences](#get-team-preferences)     | Get Team Preferences.    |
 | DELETE | [/api/teams/{team_id}/members/{user_id}](#remove-team-member) | Remove Member From Team. |
@@ -533,7 +570,7 @@ This API can be used to create/update/delete Teams and to add/remove users to Te
 ### <span id="route-delete-alert-rule"></span> Delete a specific alert rule by UID. (_RouteDeleteAlertRule_)
 
 ```
-DELETE /api/v1/provisioning/alert-rules/{UID}
+DELETE /api/api/v1/provisioning/alert-rules/{UID}
 ```
 
 #### Parameters
@@ -559,7 +596,7 @@ Status: No Content
 ### <span id="route-delete-contactpoints"></span> Delete a contact point. (_RouteDeleteContactpoints_)
 
 ```
-DELETE /api/v1/provisioning/contact-points/{UID}
+DELETE /api/api/v1/provisioning/contact-points/{UID}
 ```
 
 #### Consumes
@@ -589,7 +626,7 @@ Status: No Content
 ### <span id="route-delete-mute-timing"></span> Delete a mute timing. (_RouteDeleteMuteTiming_)
 
 ```
-DELETE /api/v1/provisioning/mute-timings/{name}
+DELETE /api/api/v1/provisioning/mute-timings/{name}
 ```
 
 #### Parameters
@@ -615,7 +652,7 @@ Status: No Content
 ### <span id="route-delete-template"></span> Delete a template. (_RouteDeleteTemplate_)
 
 ```
-DELETE /api/v1/provisioning/templates/{name}
+DELETE /api/api/v1/provisioning/templates/{name}
 ```
 
 #### Parameters
@@ -641,7 +678,7 @@ Status: No Content
 ### <span id="route-get-alert-rule"></span> Get a specific alert rule by UID. (_RouteGetAlertRule_)
 
 ```
-GET /api/v1/provisioning/alert-rules/{UID}
+GET /api/api/v1/provisioning/alert-rules/{UID}
 ```
 
 #### Parameters
@@ -652,20 +689,20 @@ GET /api/v1/provisioning/alert-rules/{UID}
 
 #### All responses
 
-| Code                             | Status    | Description | Has headers | Schema                                     |
-| -------------------------------- | --------- | ----------- | :---------: | ------------------------------------------ |
-| [200](#route-get-alert-rule-200) | OK        | AlertRule   |             | [schema](#route-get-alert-rule-200-schema) |
-| [404](#route-get-alert-rule-404) | Not Found | Not found.  |             | [schema](#route-get-alert-rule-404-schema) |
+| Code                             | Status    | Description          | Has headers | Schema                                     |
+| -------------------------------- | --------- | -------------------- | :---------: | ------------------------------------------ |
+| [200](#route-get-alert-rule-200) | OK        | ProvisionedAlertRule |             | [schema](#route-get-alert-rule-200-schema) |
+| [404](#route-get-alert-rule-404) | Not Found | Not found.           |             | [schema](#route-get-alert-rule-404-schema) |
 
 #### Responses
 
-##### <span id="route-get-alert-rule-200"></span> 200 - AlertRule
+##### <span id="route-get-alert-rule-200"></span> 200 - ProvisionedAlertRule
 
 Status: OK
 
 ###### <span id="route-get-alert-rule-200-schema"></span> Schema
 
-[AlertRule](#alert-rule)
+[ProvisionedAlertRule](#provisioned-alert-rule)
 
 ##### <span id="route-get-alert-rule-404"></span> 404 - Not found.
 
@@ -673,11 +710,53 @@ Status: Not Found
 
 ###### <span id="route-get-alert-rule-404-schema"></span> Schema
 
+### <span id="route-get-alert-rule-group"></span> Get a rule group. (_RouteGetAlertRuleGroup_)
+
+```
+GET /api/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
+```
+
+#### Parameters
+
+| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
+| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| FolderUID | `path` | string | `string` |           |    ✓     |         |             |
+| Group     | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                   | Status    | Description    | Has headers | Schema                                           |
+| -------------------------------------- | --------- | -------------- | :---------: | ------------------------------------------------ |
+| [200](#route-get-alert-rule-group-200) | OK        | AlertRuleGroup |             | [schema](#route-get-alert-rule-group-200-schema) |
+| [404](#route-get-alert-rule-group-404) | Not Found | Not found.     |             | [schema](#route-get-alert-rule-group-404-schema) |
+
+#### Responses
+
+##### <span id="route-get-alert-rule-group-200"></span> 200 - AlertRuleGroup
+
+Status: OK
+
+###### <span id="route-get-alert-rule-group-200-schema"></span> Schema
+
+[AlertRuleGroup](#alert-rule-group)
+
+##### <span id="route-get-alert-rule-group-404"></span> 404 - Not found.
+
+Status: Not Found
+
+###### <span id="route-get-alert-rule-group-404-schema"></span> Schema
+
 ### <span id="route-get-contactpoints"></span> Get all the contact points. (_RouteGetContactpoints_)
 
 ```
-GET /api/v1/provisioning/contact-points
+GET /api/api/v1/provisioning/contact-points
 ```
+
+#### Parameters
+
+| Name | Source  | Type   | Go type  | Separator | Required | Default | Description    |
+| ---- | ------- | ------ | -------- | --------- | :------: | ------- | -------------- |
+| name | `query` | string | `string` |           |          |         | Filter by name |
 
 #### All responses
 
@@ -698,7 +777,7 @@ Status: OK
 ### <span id="route-get-mute-timing"></span> Get a mute timing. (_RouteGetMuteTiming_)
 
 ```
-GET /api/v1/provisioning/mute-timings/{name}
+GET /api/api/v1/provisioning/mute-timings/{name}
 ```
 
 #### Parameters
@@ -733,7 +812,7 @@ Status: Not Found
 ### <span id="route-get-mute-timings"></span> Get all the mute timings. (_RouteGetMuteTimings_)
 
 ```
-GET /api/v1/provisioning/mute-timings
+GET /api/api/v1/provisioning/mute-timings
 ```
 
 #### All responses
@@ -755,7 +834,7 @@ Status: OK
 ### <span id="route-get-policy-tree"></span> Get the notification policy tree. (_RouteGetPolicyTree_)
 
 ```
-GET /api/v1/provisioning/policies
+GET /api/api/v1/provisioning/policies
 ```
 
 #### All responses
@@ -777,7 +856,7 @@ Status: OK
 ### <span id="route-get-template"></span> Get a message template. (_RouteGetTemplate_)
 
 ```
-GET /api/v1/provisioning/templates/{name}
+GET /api/api/v1/provisioning/templates/{name}
 ```
 
 #### Parameters
@@ -812,7 +891,7 @@ Status: Not Found
 ### <span id="route-get-templates"></span> Get all message templates. (_RouteGetTemplates_)
 
 ```
-GET /api/v1/provisioning/templates
+GET /api/api/v1/provisioning/templates
 ```
 
 #### All responses
@@ -841,7 +920,7 @@ Status: Not Found
 ### <span id="route-post-alert-rule"></span> Create a new alert rule. (_RoutePostAlertRule_)
 
 ```
-POST /api/v1/provisioning/alert-rules
+POST /api/api/v1/provisioning/alert-rules
 ```
 
 #### Consumes
@@ -850,26 +929,26 @@ POST /api/v1/provisioning/alert-rules
 
 #### Parameters
 
-| Name | Source | Type                     | Go type            | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------ | ------------------ | --------- | :------: | ------- | ----------- |
-| Body | `body` | [AlertRule](#alert-rule) | `models.AlertRule` |           |          |         |             |
+| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description |
+| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
+| Body | `body` | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |             |
 
 #### All responses
 
-| Code                              | Status      | Description     | Has headers | Schema                                      |
-| --------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------- |
-| [201](#route-post-alert-rule-201) | Created     | AlertRule       |             | [schema](#route-post-alert-rule-201-schema) |
-| [400](#route-post-alert-rule-400) | Bad Request | ValidationError |             | [schema](#route-post-alert-rule-400-schema) |
+| Code                              | Status      | Description          | Has headers | Schema                                      |
+| --------------------------------- | ----------- | -------------------- | :---------: | ------------------------------------------- |
+| [201](#route-post-alert-rule-201) | Created     | ProvisionedAlertRule |             | [schema](#route-post-alert-rule-201-schema) |
+| [400](#route-post-alert-rule-400) | Bad Request | ValidationError      |             | [schema](#route-post-alert-rule-400-schema) |
 
 #### Responses
 
-##### <span id="route-post-alert-rule-201"></span> 201 - AlertRule
+##### <span id="route-post-alert-rule-201"></span> 201 - ProvisionedAlertRule
 
 Status: Created
 
 ###### <span id="route-post-alert-rule-201-schema"></span> Schema
 
-[AlertRule](#alert-rule)
+[ProvisionedAlertRule](#provisioned-alert-rule)
 
 ##### <span id="route-post-alert-rule-400"></span> 400 - ValidationError
 
@@ -882,7 +961,7 @@ Status: Bad Request
 ### <span id="route-post-contactpoints"></span> Create a contact point. (_RoutePostContactpoints_)
 
 ```
-POST /api/v1/provisioning/contact-points
+POST /api/api/v1/provisioning/contact-points
 ```
 
 #### Consumes
@@ -923,7 +1002,7 @@ Status: Bad Request
 ### <span id="route-post-mute-timing"></span> Create a new mute timing. (_RoutePostMuteTiming_)
 
 ```
-POST /api/v1/provisioning/mute-timings
+POST /api/api/v1/provisioning/mute-timings
 ```
 
 #### Consumes
@@ -964,7 +1043,7 @@ Status: Bad Request
 ### <span id="route-put-alert-rule"></span> Update an existing alert rule. (_RoutePutAlertRule_)
 
 ```
-PUT /api/v1/provisioning/alert-rules/{UID}
+PUT /api/api/v1/provisioning/alert-rules/{UID}
 ```
 
 #### Consumes
@@ -973,27 +1052,27 @@ PUT /api/v1/provisioning/alert-rules/{UID}
 
 #### Parameters
 
-| Name | Source | Type                     | Go type            | Separator | Required | Default | Description    |
-| ---- | ------ | ------------------------ | ------------------ | --------- | :------: | ------- | -------------- |
-| UID  | `path` | string                   | `string`           |           |    ✓     |         | Alert rule UID |
-| Body | `body` | [AlertRule](#alert-rule) | `models.AlertRule` |           |          |         |                |
+| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description    |
+| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | -------------- |
+| UID  | `path` | string                                          | `string`                      |           |    ✓     |         | Alert rule UID |
+| Body | `body` | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                |
 
 #### All responses
 
-| Code                             | Status      | Description     | Has headers | Schema                                     |
-| -------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------ |
-| [200](#route-put-alert-rule-200) | OK          | AlertRule       |             | [schema](#route-put-alert-rule-200-schema) |
-| [400](#route-put-alert-rule-400) | Bad Request | ValidationError |             | [schema](#route-put-alert-rule-400-schema) |
+| Code                             | Status      | Description          | Has headers | Schema                                     |
+| -------------------------------- | ----------- | -------------------- | :---------: | ------------------------------------------ |
+| [200](#route-put-alert-rule-200) | OK          | ProvisionedAlertRule |             | [schema](#route-put-alert-rule-200-schema) |
+| [400](#route-put-alert-rule-400) | Bad Request | ValidationError      |             | [schema](#route-put-alert-rule-400-schema) |
 
 #### Responses
 
-##### <span id="route-put-alert-rule-200"></span> 200 - AlertRule
+##### <span id="route-put-alert-rule-200"></span> 200 - ProvisionedAlertRule
 
 Status: OK
 
 ###### <span id="route-put-alert-rule-200-schema"></span> Schema
 
-[AlertRule](#alert-rule)
+[ProvisionedAlertRule](#provisioned-alert-rule)
 
 ##### <span id="route-put-alert-rule-400"></span> 400 - ValidationError
 
@@ -1006,7 +1085,7 @@ Status: Bad Request
 ### <span id="route-put-alert-rule-group"></span> Update the interval of a rule group. (_RoutePutAlertRuleGroup_)
 
 ```
-PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
+PUT /api/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
 ```
 
 #### Consumes
@@ -1015,28 +1094,28 @@ PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
 
 #### Parameters
 
-| Name      | Source | Type                                | Go type                 | Separator | Required | Default | Description |
-| --------- | ------ | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
-| FolderUID | `path` | string                              | `string`                |           |    ✓     |         |             |
-| Group     | `path` | string                              | `string`                |           |    ✓     |         |             |
-| Body      | `body` | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |             |
+| Name      | Source | Type                                                 | Go type                         | Separator | Required | Default | Description |
+| --------- | ------ | ---------------------------------------------------- | ------------------------------- | --------- | :------: | ------- | ----------- |
+| FolderUID | `path` | string                                               | `string`                        |           |    ✓     |         |             |
+| Group     | `path` | string                                               | `string`                        |           |    ✓     |         |             |
+| Body      | `body` | [AlertRuleGroupMetadata](#alert-rule-group-metadata) | `models.AlertRuleGroupMetadata` |           |          |         |             |
 
 #### All responses
 
-| Code                                   | Status      | Description     | Has headers | Schema                                           |
-| -------------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------------ |
-| [200](#route-put-alert-rule-group-200) | OK          | AlertRuleGroup  |             | [schema](#route-put-alert-rule-group-200-schema) |
-| [400](#route-put-alert-rule-group-400) | Bad Request | ValidationError |             | [schema](#route-put-alert-rule-group-400-schema) |
+| Code                                   | Status      | Description            | Has headers | Schema                                           |
+| -------------------------------------- | ----------- | ---------------------- | :---------: | ------------------------------------------------ |
+| [200](#route-put-alert-rule-group-200) | OK          | AlertRuleGroupMetadata |             | [schema](#route-put-alert-rule-group-200-schema) |
+| [400](#route-put-alert-rule-group-400) | Bad Request | ValidationError        |             | [schema](#route-put-alert-rule-group-400-schema) |
 
 #### Responses
 
-##### <span id="route-put-alert-rule-group-200"></span> 200 - AlertRuleGroup
+##### <span id="route-put-alert-rule-group-200"></span> 200 - AlertRuleGroupMetadata
 
 Status: OK
 
 ###### <span id="route-put-alert-rule-group-200-schema"></span> Schema
 
-[AlertRuleGroup](#alert-rule-group)
+[AlertRuleGroupMetadata](#alert-rule-group-metadata)
 
 ##### <span id="route-put-alert-rule-group-400"></span> 400 - ValidationError
 
@@ -1049,7 +1128,7 @@ Status: Bad Request
 ### <span id="route-put-contactpoint"></span> Update an existing contact point. (_RoutePutContactpoint_)
 
 ```
-PUT /api/v1/provisioning/contact-points/{UID}
+PUT /api/api/v1/provisioning/contact-points/{UID}
 ```
 
 #### Consumes
@@ -1091,7 +1170,7 @@ Status: Bad Request
 ### <span id="route-put-mute-timing"></span> Replace an existing mute timing. (_RoutePutMuteTiming_)
 
 ```
-PUT /api/v1/provisioning/mute-timings/{name}
+PUT /api/api/v1/provisioning/mute-timings/{name}
 ```
 
 #### Consumes
@@ -1133,7 +1212,7 @@ Status: Bad Request
 ### <span id="route-put-policy-tree"></span> Sets the notification policy tree. (_RoutePutPolicyTree_)
 
 ```
-PUT /api/v1/provisioning/policies
+PUT /api/api/v1/provisioning/policies
 ```
 
 #### Consumes
@@ -1174,7 +1253,7 @@ Status: Bad Request
 ### <span id="route-put-template"></span> Updates an existing template. (_RoutePutTemplate_)
 
 ```
-PUT /api/v1/provisioning/templates/{name}
+PUT /api/api/v1/provisioning/templates/{name}
 ```
 
 #### Consumes
@@ -1213,6 +1292,32 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
+### <span id="route-reset-policy-tree"></span> Clears the notification policy tree. (_RouteResetPolicyTree_)
+
+```
+DELETE /api/api/v1/provisioning/policies
+```
+
+#### Consumes
+
+- application/json
+
+#### All responses
+
+| Code                                | Status   | Description | Has headers | Schema                                        |
+| ----------------------------------- | -------- | ----------- | :---------: | --------------------------------------------- |
+| [202](#route-reset-policy-tree-202) | Accepted | Ack         |             | [schema](#route-reset-policy-tree-202-schema) |
+
+#### Responses
+
+##### <span id="route-reset-policy-tree-202"></span> 202 - Ack
+
+Status: Accepted
+
+###### <span id="route-reset-policy-tree-202-schema"></span> Schema
+
+[Ack](#ack)
+
 ### <span id="add-a-p-ikey"></span> Creates an API key. (_addAPIkey_)
 
 ```
@@ -1223,15 +1328,15 @@ Will return details of the created API key
 
 #### Parameters
 
-| Name | Source | Type                                     | Go type                   | Separator | Required | Default | Description |
-| ---- | ------ | ---------------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [AddAPIKeyCommand](#add-api-key-command) | `models.AddAPIKeyCommand` |           |    ✓     |         |             |
+| Name | Source | Type                       | Go type             | Separator | Required | Default | Description |
+| ---- | ------ | -------------------------- | ------------------- | --------- | :------: | ------- | ----------- |
+| Body | `body` | [AddCommand](#add-command) | `models.AddCommand` |           |    ✓     |         |             |
 
 #### All responses
 
 | Code                     | Status                | Description                                                                                                 | Has headers | Schema                             |
 | ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
-| [200](#add-a-p-ikey-200) | OK                    |                                                                                                             |             | [schema](#add-a-p-ikey-200-schema) |
+| [200](#add-a-p-ikey-200) | OK                    | (empty)                                                                                                     |             | [schema](#add-a-p-ikey-200-schema) |
 | [400](#add-a-p-ikey-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#add-a-p-ikey-400-schema) |
 | [401](#add-a-p-ikey-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#add-a-p-ikey-401-schema) |
 | [403](#add-a-p-ikey-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#add-a-p-ikey-403-schema) |
@@ -1240,7 +1345,7 @@ Will return details of the created API key
 
 #### Responses
 
-##### <span id="add-a-p-ikey-200"></span> 200
+##### <span id="add-a-p-ikey-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -1345,7 +1450,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="add-datasource"></span> Create a data source. (_addDatasource_)
+### <span id="add-data-source"></span> Create a data source. (_addDataSource_)
 
 ```
 POST /api/datasources
@@ -1366,59 +1471,59 @@ you need to have a permission with action: `datasources:create`
 
 #### All responses
 
-| Code                       | Status                | Description                                                                                                 | Has headers | Schema                               |
-| -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#add-datasource-200) | OK                    |                                                                                                             |             | [schema](#add-datasource-200-schema) |
-| [401](#add-datasource-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#add-datasource-401-schema) |
-| [403](#add-datasource-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#add-datasource-403-schema) |
-| [409](#add-datasource-409) | Conflict              | ConflictError                                                                                               |             | [schema](#add-datasource-409-schema) |
-| [500](#add-datasource-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#add-datasource-500-schema) |
+| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
+| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
+| [200](#add-data-source-200) | OK                    | (empty)                                                                                                     |             | [schema](#add-data-source-200-schema) |
+| [401](#add-data-source-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#add-data-source-401-schema) |
+| [403](#add-data-source-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#add-data-source-403-schema) |
+| [409](#add-data-source-409) | Conflict              | ConflictError                                                                                               |             | [schema](#add-data-source-409-schema) |
+| [500](#add-data-source-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#add-data-source-500-schema) |
 
 #### Responses
 
-##### <span id="add-datasource-200"></span> 200
+##### <span id="add-data-source-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="add-datasource-200-schema"></span> Schema
+###### <span id="add-data-source-200-schema"></span> Schema
 
-[AddDatasourceOKBody](#add-datasource-o-k-body)
+[AddDataSourceOKBody](#add-data-source-o-k-body)
 
-##### <span id="add-datasource-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="add-data-source-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="add-datasource-401-schema"></span> Schema
+###### <span id="add-data-source-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="add-datasource-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="add-data-source-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="add-datasource-403-schema"></span> Schema
+###### <span id="add-data-source-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="add-datasource-409"></span> 409 - ConflictError
+##### <span id="add-data-source-409"></span> 409 - ConflictError
 
 Status: Conflict
 
-###### <span id="add-datasource-409-schema"></span> Schema
+###### <span id="add-data-source-409-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="add-datasource-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="add-data-source-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="add-datasource-500-schema"></span> Schema
+###### <span id="add-data-source-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ###### Inlined models
 
-**<span id="add-datasource-o-k-body"></span> AddDatasourceOKBody**
+**<span id="add-data-source-o-k-body"></span> AddDataSourceOKBody**
 
 **Properties**
 
@@ -1429,7 +1534,7 @@ Status: Internal Server Error
 | message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
 | name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 
-### <span id="add-invite"></span> Add invite. (_addInvite_)
+### <span id="add-org-invite"></span> Add invite. (_addOrgInvite_)
 
 ```
 POST /api/org/invites
@@ -1443,78 +1548,67 @@ POST /api/org/invites
 
 #### All responses
 
-| Code                   | Status                | Description                                                                                                 | Has headers | Schema                           |
-| ---------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------- |
-| [200](#add-invite-200) | OK                    |                                                                                                             |             | [schema](#add-invite-200-schema) |
-| [400](#add-invite-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#add-invite-400-schema) |
-| [401](#add-invite-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#add-invite-401-schema) |
-| [403](#add-invite-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#add-invite-403-schema) |
-| [412](#add-invite-412) | Precondition Failed   |                                                                                                             |             | [schema](#add-invite-412-schema) |
-| [500](#add-invite-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#add-invite-500-schema) |
+| Code                       | Status                | Description                                                                                                 | Has headers | Schema                               |
+| -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
+| [200](#add-org-invite-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#add-org-invite-200-schema) |
+| [400](#add-org-invite-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#add-org-invite-400-schema) |
+| [401](#add-org-invite-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#add-org-invite-401-schema) |
+| [403](#add-org-invite-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#add-org-invite-403-schema) |
+| [412](#add-org-invite-412) | Precondition Failed   | (empty)                                                                                                     |             | [schema](#add-org-invite-412-schema) |
+| [500](#add-org-invite-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#add-org-invite-500-schema) |
 
 #### Responses
 
-##### <span id="add-invite-200"></span> 200
+##### <span id="add-org-invite-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="add-invite-200-schema"></span> Schema
+###### <span id="add-org-invite-200-schema"></span> Schema
 
-[AddInviteOKBody](#add-invite-o-k-body)
+[SuccessResponseBody](#success-response-body)
 
-##### <span id="add-invite-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="add-org-invite-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="add-invite-400-schema"></span> Schema
+###### <span id="add-org-invite-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="add-invite-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="add-org-invite-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="add-invite-401-schema"></span> Schema
+###### <span id="add-org-invite-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="add-invite-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="add-org-invite-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="add-invite-403-schema"></span> Schema
+###### <span id="add-org-invite-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="add-invite-412"></span> 412
+##### <span id="add-org-invite-412"></span> 412 - (empty)
 
 Status: Precondition Failed
 
-###### <span id="add-invite-412-schema"></span> Schema
+###### <span id="add-org-invite-412-schema"></span> Schema
 
-##### <span id="add-invite-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="add-org-invite-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="add-invite-500-schema"></span> Schema
+###### <span id="add-org-invite-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
-
-###### Inlined models
-
-**<span id="add-invite-o-k-body"></span> AddInviteOKBody**
-
-**Properties**
-
-| Name    | Type                      | Go type  | Required | Default | Description                        | Example             |
-| ------- | ------------------------- | -------- | :------: | ------- | ---------------------------------- | ------------------- |
-| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
-| message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
 
 ### <span id="add-org-user"></span> Add a new user to the current organization (_addOrgUser_)
 
 ```
-POST /api/org/users
+POST /api/orgs/{org_id}/users
 ```
 
 Adds a global user to the current organization.
@@ -1524,9 +1618,10 @@ you need to have a permission with action: `org.users:add` with scope `users:*`.
 
 #### Parameters
 
-| Name | Source | Type                                       | Go type                    | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------------------------ | -------------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [AddOrgUserCommand](#add-org-user-command) | `models.AddOrgUserCommand` |           |    ✓     |         |             |
+| Name   | Source | Type                                       | Go type                    | Separator | Required | Default | Description |
+| ------ | ------ | ------------------------------------------ | -------------------------- | --------- | :------: | ------- | ----------- |
+| org_id | `path` | int64 (formatted integer)                  | `int64`                    |           |    ✓     |         |             |
+| body   | `body` | [AddOrgUserCommand](#add-org-user-command) | `models.AddOrgUserCommand` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -1570,6 +1665,147 @@ Status: Internal Server Error
 ###### <span id="add-org-user-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
+
+### <span id="add-org-user-to-current-org"></span> Add a new user to the current organization (_addOrgUserToCurrentOrg_)
+
+```
+POST /api/org/users
+```
+
+Adds a global user to the current organization.
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled
+you need to have a permission with action: `org.users:add` with scope `users:*`.
+
+#### Parameters
+
+| Name | Source | Type                                       | Go type                    | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------ | -------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [AddOrgUserCommand](#add-org-user-command) | `models.AddOrgUserCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                    | Status                | Description                                                                                                 | Has headers | Schema                                            |
+| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------- |
+| [200](#add-org-user-to-current-org-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#add-org-user-to-current-org-200-schema) |
+| [401](#add-org-user-to-current-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#add-org-user-to-current-org-401-schema) |
+| [403](#add-org-user-to-current-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#add-org-user-to-current-org-403-schema) |
+| [500](#add-org-user-to-current-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#add-org-user-to-current-org-500-schema) |
+
+#### Responses
+
+##### <span id="add-org-user-to-current-org-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="add-org-user-to-current-org-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="add-org-user-to-current-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="add-org-user-to-current-org-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="add-org-user-to-current-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="add-org-user-to-current-org-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="add-org-user-to-current-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="add-org-user-to-current-org-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="add-permission"></span> Add permissions for a data source. (_addPermission_)
+
+```
+POST /api/datasources/{datasourceId}/permissions
+```
+
+You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).
+
+#### Parameters
+
+| Name         | Source  | Type                      | Go type  | Separator | Required | Default | Description |
+| ------------ | ------- | ------------------------- | -------- | --------- | :------: | ------- | ----------- |
+| datasourceId | `path`  | string                    | `string` |           |    ✓     |         |             |
+| builtinRole  | `query` | string                    | `string` |           |          |         |             |
+| permission   | `query` | int64 (formatted integer) | `int64`  |           |          |         |             |
+| teamId       | `query` | int64 (formatted integer) | `int64`  |           |          |         |             |
+| userId       | `query` | int64 (formatted integer) | `int64`  |           |          |         |             |
+
+#### All responses
+
+| Code                       | Status                | Description                                                                                                 | Has headers | Schema                               |
+| -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
+| [200](#add-permission-200) | OK                    | (empty)                                                                                                     |             | [schema](#add-permission-200-schema) |
+| [401](#add-permission-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#add-permission-401-schema) |
+| [403](#add-permission-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#add-permission-403-schema) |
+| [404](#add-permission-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#add-permission-404-schema) |
+| [500](#add-permission-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#add-permission-500-schema) |
+
+#### Responses
+
+##### <span id="add-permission-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="add-permission-200-schema"></span> Schema
+
+[AddPermissionOKBody](#add-permission-o-k-body)
+
+##### <span id="add-permission-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="add-permission-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="add-permission-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="add-permission-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="add-permission-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="add-permission-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="add-permission-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="add-permission-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+###### Inlined models
+
+**<span id="add-permission-o-k-body"></span> AddPermissionOKBody**
+
+**Properties**
+
+| Name         | Type                      | Go type  | Required | Default | Description | Example |
+| ------------ | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| message      | string                    | `string` |          |         |             |         |
+| permissionId | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="add-team-group-api"></span> Add External Group. (_addTeamGroupApi_)
 
@@ -1837,72 +2073,14 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="admin-add-org-user"></span> Add a new user to the current organization (_adminAddOrgUser_)
+### <span id="admin-create-user"></span> Create new user. (_adminCreateUser_)
 
 ```
-POST /api/orgs/{org_id}/users
+POST /api/admin/users
 ```
 
-Adds a global user to the current organization.
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `org.users:add` with scope `users:*`.
-
-#### Parameters
-
-| Name   | Source | Type                                       | Go type                    | Separator | Required | Default | Description |
-| ------ | ------ | ------------------------------------------ | -------------------------- | --------- | :------: | ------- | ----------- |
-| org_id | `path` | int64 (formatted integer)                  | `int64`                    |           |    ✓     |         |             |
-| body   | `body` | [AddOrgUserCommand](#add-org-user-command) | `models.AddOrgUserCommand` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
-| ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
-| [200](#admin-add-org-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-add-org-user-200-schema) |
-| [401](#admin-add-org-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-add-org-user-401-schema) |
-| [403](#admin-add-org-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-add-org-user-403-schema) |
-| [500](#admin-add-org-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-add-org-user-500-schema) |
-
-#### Responses
-
-##### <span id="admin-add-org-user-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="admin-add-org-user-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="admin-add-org-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="admin-add-org-user-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="admin-add-org-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="admin-add-org-user-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="admin-add-org-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="admin-add-org-user-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="admin-delete-org"></span> Delete Organization. (_adminDeleteOrg_)
-
-```
-DELETE /api/orgs/{org_id}
-```
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:create`.
+Note that OrgId is an optional parameter that can be used to assign a new user to a different organization when `auto_assign_org` is set to `true`.
 
 #### Security Requirements
 
@@ -1910,147 +2088,148 @@ DELETE /api/orgs/{org_id}
 
 #### Parameters
 
-| Name   | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------ | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| org_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name | Source | Type                                           | Go type                      | Separator | Required | Default | Description |
+| ---- | ------ | ---------------------------------------------- | ---------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [AdminCreateUserForm](#admin-create-user-form) | `models.AdminCreateUserForm` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
-| ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#admin-delete-org-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-delete-org-200-schema) |
-| [400](#admin-delete-org-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-delete-org-400-schema) |
-| [401](#admin-delete-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-delete-org-401-schema) |
-| [403](#admin-delete-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-delete-org-403-schema) |
-| [404](#admin-delete-org-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#admin-delete-org-404-schema) |
-| [500](#admin-delete-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-delete-org-500-schema) |
+| Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
+| ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
+| [200](#admin-create-user-200) | OK                    | (empty)                                                                                                     |             | [schema](#admin-create-user-200-schema) |
+| [400](#admin-create-user-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-create-user-400-schema) |
+| [401](#admin-create-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-create-user-401-schema) |
+| [403](#admin-create-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-create-user-403-schema) |
+| [412](#admin-create-user-412) | Precondition Failed   | PreconditionFailedError                                                                                     |             | [schema](#admin-create-user-412-schema) |
+| [500](#admin-create-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-create-user-500-schema) |
 
 #### Responses
 
-##### <span id="admin-delete-org-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="admin-create-user-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="admin-delete-org-200-schema"></span> Schema
+###### <span id="admin-create-user-200-schema"></span> Schema
 
-[SuccessResponseBody](#success-response-body)
+[UserIDDTO](#user-id-d-t-o)
 
-##### <span id="admin-delete-org-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="admin-create-user-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="admin-delete-org-400-schema"></span> Schema
+###### <span id="admin-create-user-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-delete-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="admin-create-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="admin-delete-org-401-schema"></span> Schema
+###### <span id="admin-create-user-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-delete-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="admin-create-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="admin-delete-org-403-schema"></span> Schema
+###### <span id="admin-create-user-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-delete-org-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="admin-create-user-412"></span> 412 - PreconditionFailedError
 
-Status: Not Found
+Status: Precondition Failed
 
-###### <span id="admin-delete-org-404-schema"></span> Schema
+###### <span id="admin-create-user-412-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-delete-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="admin-create-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="admin-delete-org-500-schema"></span> Schema
+###### <span id="admin-create-user-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="admin-delete-org-user"></span> Delete user in current organization (_adminDeleteOrgUser_)
+### <span id="admin-delete-user"></span> Delete global User. (_adminDeleteUser_)
 
 ```
-DELETE /api/orgs/{org_id}/users/{user_id}
+DELETE /api/admin/users/{user_id}
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `org.users:remove` with scope `users:*`.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global.users:*`.
+
+#### Security Requirements
+
+- basic
 
 #### Parameters
 
 | Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
 | ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| org_id  | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 | user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
-| --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
-| [200](#admin-delete-org-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-delete-org-user-200-schema) |
-| [400](#admin-delete-org-user-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-delete-org-user-400-schema) |
-| [401](#admin-delete-org-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-delete-org-user-401-schema) |
-| [403](#admin-delete-org-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-delete-org-user-403-schema) |
-| [500](#admin-delete-org-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-delete-org-user-500-schema) |
+| Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
+| ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
+| [200](#admin-delete-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-delete-user-200-schema) |
+| [401](#admin-delete-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-delete-user-401-schema) |
+| [403](#admin-delete-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-delete-user-403-schema) |
+| [404](#admin-delete-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#admin-delete-user-404-schema) |
+| [500](#admin-delete-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-delete-user-500-schema) |
 
 #### Responses
 
-##### <span id="admin-delete-org-user-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="admin-delete-user-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="admin-delete-org-user-200-schema"></span> Schema
+###### <span id="admin-delete-user-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="admin-delete-org-user-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="admin-delete-org-user-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="admin-delete-org-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="admin-delete-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="admin-delete-org-user-401-schema"></span> Schema
+###### <span id="admin-delete-user-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-delete-org-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="admin-delete-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="admin-delete-org-user-403-schema"></span> Schema
+###### <span id="admin-delete-user-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-delete-org-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="admin-delete-user-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="admin-delete-user-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-delete-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="admin-delete-org-user-500-schema"></span> Schema
+###### <span id="admin-delete-user-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="admin-get-org-users"></span> Get Users in Organization. (_adminGetOrgUsers_)
+### <span id="admin-disable-user"></span> Disable user. (_adminDisableUser_)
 
 ```
-GET /api/orgs/{org_id}/users
+POST /api/admin/users/{user_id}/disable
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `org.users:read` with scope `users:*`.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global.users:1` (userIDScope).
 
 #### Security Requirements
 
@@ -2058,50 +2237,367 @@ you need to have a permission with action: `org.users:read` with scope `users:*`
 
 #### Parameters
 
-| Name   | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------ | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| org_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                            | Status                | Description                                                                                                 | Has headers | Schema                                    |
-| ------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#admin-get-org-users-200) | OK                    |                                                                                                             |             | [schema](#admin-get-org-users-200-schema) |
-| [401](#admin-get-org-users-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-get-org-users-401-schema) |
-| [403](#admin-get-org-users-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-get-org-users-403-schema) |
-| [500](#admin-get-org-users-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-get-org-users-500-schema) |
+| Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
+| ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
+| [200](#admin-disable-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-disable-user-200-schema) |
+| [401](#admin-disable-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-disable-user-401-schema) |
+| [403](#admin-disable-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-disable-user-403-schema) |
+| [404](#admin-disable-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#admin-disable-user-404-schema) |
+| [500](#admin-disable-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-disable-user-500-schema) |
 
 #### Responses
 
-##### <span id="admin-get-org-users-200"></span> 200
+##### <span id="admin-disable-user-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="admin-get-org-users-200-schema"></span> Schema
+###### <span id="admin-disable-user-200-schema"></span> Schema
 
-[][orguserdto](#org-user-d-t-o)
+[SuccessResponseBody](#success-response-body)
 
-##### <span id="admin-get-org-users-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="admin-disable-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="admin-get-org-users-401-schema"></span> Schema
+###### <span id="admin-disable-user-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-get-org-users-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="admin-disable-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="admin-get-org-users-403-schema"></span> Schema
+###### <span id="admin-disable-user-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-get-org-users-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="admin-disable-user-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="admin-disable-user-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-disable-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="admin-get-org-users-500-schema"></span> Schema
+###### <span id="admin-disable-user-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="admin-enable-user"></span> Enable user. (_adminEnableUser_)
+
+```
+POST /api/admin/users/{user_id}/enable
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global.users:1` (userIDScope).
+
+#### Security Requirements
+
+- basic
+
+#### Parameters
+
+| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
+| ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
+| [200](#admin-enable-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-enable-user-200-schema) |
+| [401](#admin-enable-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-enable-user-401-schema) |
+| [403](#admin-enable-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-enable-user-403-schema) |
+| [404](#admin-enable-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#admin-enable-user-404-schema) |
+| [500](#admin-enable-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-enable-user-500-schema) |
+
+#### Responses
+
+##### <span id="admin-enable-user-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="admin-enable-user-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="admin-enable-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="admin-enable-user-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-enable-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="admin-enable-user-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-enable-user-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="admin-enable-user-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-enable-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="admin-enable-user-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="admin-get-settings"></span> Fetch settings. (_adminGetSettings_)
+
+```
+GET /api/admin/settings
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `settings:read` and scopes: `settings:*`, `settings:auth.saml:` and `settings:auth.saml:enabled` (property level).
+
+#### Security Requirements
+
+- basic
+
+#### All responses
+
+| Code                           | Status       | Description                                                                                                 | Has headers | Schema                                   |
+| ------------------------------ | ------------ | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
+| [200](#admin-get-settings-200) | OK           | (empty)                                                                                                     |             | [schema](#admin-get-settings-200-schema) |
+| [401](#admin-get-settings-401) | Unauthorized | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-get-settings-401-schema) |
+| [403](#admin-get-settings-403) | Forbidden    | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-get-settings-403-schema) |
+
+#### Responses
+
+##### <span id="admin-get-settings-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="admin-get-settings-200-schema"></span> Schema
+
+[SettingsBag](#settings-bag)
+
+##### <span id="admin-get-settings-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="admin-get-settings-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-get-settings-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="admin-get-settings-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="admin-get-stats"></span> Fetch Grafana Stats. (_adminGetStats_)
+
+```
+GET /api/admin/stats
+```
+
+Only works with Basic Authentication (username and password). See introduction for an explanation.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `server:stats:read`.
+
+#### All responses
+
+| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
+| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
+| [200](#admin-get-stats-200) | OK                    | (empty)                                                                                                     |             | [schema](#admin-get-stats-200-schema) |
+| [401](#admin-get-stats-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-get-stats-401-schema) |
+| [403](#admin-get-stats-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-get-stats-403-schema) |
+| [500](#admin-get-stats-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-get-stats-500-schema) |
+
+#### Responses
+
+##### <span id="admin-get-stats-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="admin-get-stats-200-schema"></span> Schema
+
+[AdminStats](#admin-stats)
+
+##### <span id="admin-get-stats-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="admin-get-stats-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-get-stats-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="admin-get-stats-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-get-stats-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="admin-get-stats-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="admin-get-user-auth-tokens"></span> Return a list of all auth tokens (devices) that the user currently have logged in from. (_adminGetUserAuthTokens_)
+
+```
+GET /api/admin/users/{user_id}/auth-tokens
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global.users:*`.
+
+#### Security Requirements
+
+- basic
+
+#### Parameters
+
+| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
+| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
+| [200](#admin-get-user-auth-tokens-200) | OK                    | (empty)                                                                                                     |             | [schema](#admin-get-user-auth-tokens-200-schema) |
+| [401](#admin-get-user-auth-tokens-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-get-user-auth-tokens-401-schema) |
+| [403](#admin-get-user-auth-tokens-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-get-user-auth-tokens-403-schema) |
+| [500](#admin-get-user-auth-tokens-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-get-user-auth-tokens-500-schema) |
+
+#### Responses
+
+##### <span id="admin-get-user-auth-tokens-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="admin-get-user-auth-tokens-200-schema"></span> Schema
+
+[][usertoken](#user-token)
+
+##### <span id="admin-get-user-auth-tokens-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="admin-get-user-auth-tokens-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-get-user-auth-tokens-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="admin-get-user-auth-tokens-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-get-user-auth-tokens-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="admin-get-user-auth-tokens-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="admin-logout-user"></span> Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity. (_adminLogoutUser_)
+
+```
+POST /api/admin/users/{user_id}/logout
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global.users:*`.
+
+#### Security Requirements
+
+- basic
+
+#### Parameters
+
+| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
+| ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
+| [200](#admin-logout-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-logout-user-200-schema) |
+| [400](#admin-logout-user-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-logout-user-400-schema) |
+| [401](#admin-logout-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-logout-user-401-schema) |
+| [403](#admin-logout-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-logout-user-403-schema) |
+| [404](#admin-logout-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#admin-logout-user-404-schema) |
+| [500](#admin-logout-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-logout-user-500-schema) |
+
+#### Responses
+
+##### <span id="admin-logout-user-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="admin-logout-user-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="admin-logout-user-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="admin-logout-user-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-logout-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="admin-logout-user-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-logout-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="admin-logout-user-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-logout-user-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="admin-logout-user-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-logout-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="admin-logout-user-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -2145,11 +2641,238 @@ Status: Forbidden
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="admin-update-org"></span> Update Organization. (_adminUpdateOrg_)
+### <span id="admin-provisioning-reload-dashboards"></span> Reload dashboard provisioning configurations. (_adminProvisioningReloadDashboards_)
 
 ```
-PUT /api/orgs/{org_id}
+POST /api/admin/provisioning/dashboards/reload
 ```
+
+Reloads the provisioning config files for dashboards again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:dashboards`.
+
+#### Security Requirements
+
+- basic
+
+#### All responses
+
+| Code                                             | Status                | Description                                                                                                 | Has headers | Schema                                                     |
+| ------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------------------- |
+| [200](#admin-provisioning-reload-dashboards-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-provisioning-reload-dashboards-200-schema) |
+| [401](#admin-provisioning-reload-dashboards-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-provisioning-reload-dashboards-401-schema) |
+| [403](#admin-provisioning-reload-dashboards-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-provisioning-reload-dashboards-403-schema) |
+| [500](#admin-provisioning-reload-dashboards-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-provisioning-reload-dashboards-500-schema) |
+
+#### Responses
+
+##### <span id="admin-provisioning-reload-dashboards-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="admin-provisioning-reload-dashboards-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="admin-provisioning-reload-dashboards-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="admin-provisioning-reload-dashboards-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-provisioning-reload-dashboards-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="admin-provisioning-reload-dashboards-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-provisioning-reload-dashboards-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="admin-provisioning-reload-dashboards-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="admin-provisioning-reload-datasources"></span> Reload datasource provisioning configurations. (_adminProvisioningReloadDatasources_)
+
+```
+POST /api/admin/provisioning/datasources/reload
+```
+
+Reloads the provisioning config files for datasources again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:datasources`.
+
+#### Security Requirements
+
+- basic
+
+#### All responses
+
+| Code                                              | Status                | Description                                                                                                 | Has headers | Schema                                                      |
+| ------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------------- |
+| [200](#admin-provisioning-reload-datasources-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-provisioning-reload-datasources-200-schema) |
+| [401](#admin-provisioning-reload-datasources-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-provisioning-reload-datasources-401-schema) |
+| [403](#admin-provisioning-reload-datasources-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-provisioning-reload-datasources-403-schema) |
+| [500](#admin-provisioning-reload-datasources-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-provisioning-reload-datasources-500-schema) |
+
+#### Responses
+
+##### <span id="admin-provisioning-reload-datasources-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="admin-provisioning-reload-datasources-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="admin-provisioning-reload-datasources-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="admin-provisioning-reload-datasources-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-provisioning-reload-datasources-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="admin-provisioning-reload-datasources-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-provisioning-reload-datasources-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="admin-provisioning-reload-datasources-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="admin-provisioning-reload-notifications"></span> Reload legacy alert notifier provisioning configurations. (_adminProvisioningReloadNotifications_)
+
+```
+POST /api/admin/provisioning/notifications/reload
+```
+
+Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.
+
+#### Security Requirements
+
+- basic
+
+#### All responses
+
+| Code                                                | Status                | Description                                                                                                 | Has headers | Schema                                                        |
+| --------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------------- |
+| [200](#admin-provisioning-reload-notifications-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-provisioning-reload-notifications-200-schema) |
+| [401](#admin-provisioning-reload-notifications-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-provisioning-reload-notifications-401-schema) |
+| [403](#admin-provisioning-reload-notifications-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-provisioning-reload-notifications-403-schema) |
+| [500](#admin-provisioning-reload-notifications-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-provisioning-reload-notifications-500-schema) |
+
+#### Responses
+
+##### <span id="admin-provisioning-reload-notifications-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="admin-provisioning-reload-notifications-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="admin-provisioning-reload-notifications-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="admin-provisioning-reload-notifications-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-provisioning-reload-notifications-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="admin-provisioning-reload-notifications-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-provisioning-reload-notifications-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="admin-provisioning-reload-notifications-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="admin-provisioning-reload-plugins"></span> Reload plugin provisioning configurations. (_adminProvisioningReloadPlugins_)
+
+```
+POST /api/admin/provisioning/plugins/reload
+```
+
+Reloads the provisioning config files for plugins again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:plugin`.
+
+#### Security Requirements
+
+- basic
+
+#### All responses
+
+| Code                                          | Status                | Description                                                                                                 | Has headers | Schema                                                  |
+| --------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------- |
+| [200](#admin-provisioning-reload-plugins-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-provisioning-reload-plugins-200-schema) |
+| [401](#admin-provisioning-reload-plugins-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-provisioning-reload-plugins-401-schema) |
+| [403](#admin-provisioning-reload-plugins-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-provisioning-reload-plugins-403-schema) |
+| [500](#admin-provisioning-reload-plugins-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-provisioning-reload-plugins-500-schema) |
+
+#### Responses
+
+##### <span id="admin-provisioning-reload-plugins-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="admin-provisioning-reload-plugins-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="admin-provisioning-reload-plugins-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="admin-provisioning-reload-plugins-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-provisioning-reload-plugins-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="admin-provisioning-reload-plugins-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-provisioning-reload-plugins-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="admin-provisioning-reload-plugins-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="admin-revoke-user-auth-token"></span> Revoke auth token for user. (_adminRevokeUserAuthToken_)
+
+```
+POST /api/admin/users/{user_id}/revoke-auth-token
+```
+
+Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global.users:*`.
 
 #### Security Requirements
 
@@ -2157,198 +2880,212 @@ PUT /api/orgs/{org_id}
 
 #### Parameters
 
-| Name   | Source | Type                              | Go type                | Separator | Required | Default | Description |
-| ------ | ------ | --------------------------------- | ---------------------- | --------- | :------: | ------- | ----------- |
-| org_id | `path` | int64 (formatted integer)         | `int64`                |           |    ✓     |         |             |
-| body   | `body` | [UpdateOrgForm](#update-org-form) | `models.UpdateOrgForm` |           |    ✓     |         |             |
+| Name    | Source | Type                                         | Go type                     | Separator | Required | Default | Description |
+| ------- | ------ | -------------------------------------------- | --------------------------- | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer)                    | `int64`                     |           |    ✓     |         |             |
+| body    | `body` | [RevokeAuthTokenCmd](#revoke-auth-token-cmd) | `models.RevokeAuthTokenCmd` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
-| ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#admin-update-org-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-update-org-200-schema) |
-| [400](#admin-update-org-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-update-org-400-schema) |
-| [401](#admin-update-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-update-org-401-schema) |
-| [403](#admin-update-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-update-org-403-schema) |
-| [500](#admin-update-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-update-org-500-schema) |
+| Code                                     | Status                | Description                                                                                                 | Has headers | Schema                                             |
+| ---------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------- |
+| [200](#admin-revoke-user-auth-token-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-revoke-user-auth-token-200-schema) |
+| [400](#admin-revoke-user-auth-token-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-revoke-user-auth-token-400-schema) |
+| [401](#admin-revoke-user-auth-token-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-revoke-user-auth-token-401-schema) |
+| [403](#admin-revoke-user-auth-token-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-revoke-user-auth-token-403-schema) |
+| [404](#admin-revoke-user-auth-token-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#admin-revoke-user-auth-token-404-schema) |
+| [500](#admin-revoke-user-auth-token-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-revoke-user-auth-token-500-schema) |
 
 #### Responses
 
-##### <span id="admin-update-org-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="admin-revoke-user-auth-token-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="admin-update-org-200-schema"></span> Schema
+###### <span id="admin-revoke-user-auth-token-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="admin-update-org-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="admin-revoke-user-auth-token-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="admin-update-org-400-schema"></span> Schema
+###### <span id="admin-revoke-user-auth-token-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-update-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="admin-revoke-user-auth-token-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="admin-update-org-401-schema"></span> Schema
+###### <span id="admin-revoke-user-auth-token-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-update-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="admin-revoke-user-auth-token-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="admin-update-org-403-schema"></span> Schema
+###### <span id="admin-revoke-user-auth-token-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-update-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="admin-revoke-user-auth-token-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="admin-revoke-user-auth-token-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="admin-revoke-user-auth-token-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="admin-update-org-500-schema"></span> Schema
+###### <span id="admin-revoke-user-auth-token-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="admin-update-org-address"></span> Update Organization's address. (_adminUpdateOrgAddress_)
+### <span id="admin-update-user-password"></span> Set password for user. (_adminUpdateUserPassword_)
 
 ```
-PUT /api/orgs/{org_id}/address
+PUT /api/admin/users/{user_id}/password
 ```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global.users:*`.
+
+#### Security Requirements
+
+- basic
 
 #### Parameters
 
-| Name   | Source | Type                                             | Go type                       | Separator | Required | Default | Description |
-| ------ | ------ | ------------------------------------------------ | ----------------------------- | --------- | :------: | ------- | ----------- |
-| org_id | `path` | int64 (formatted integer)                        | `int64`                       |           |    ✓     |         |             |
-| body   | `body` | [UpdateOrgAddressForm](#update-org-address-form) | `models.UpdateOrgAddressForm` |           |    ✓     |         |             |
+| Name    | Source | Type                                                            | Go type                              | Separator | Required | Default | Description |
+| ------- | ------ | --------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer)                                       | `int64`                              |           |    ✓     |         |             |
+| body    | `body` | [AdminUpdateUserPasswordForm](#admin-update-user-password-form) | `models.AdminUpdateUserPasswordForm` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
-| ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
-| [200](#admin-update-org-address-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-update-org-address-200-schema) |
-| [400](#admin-update-org-address-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-update-org-address-400-schema) |
-| [401](#admin-update-org-address-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-update-org-address-401-schema) |
-| [403](#admin-update-org-address-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-update-org-address-403-schema) |
-| [500](#admin-update-org-address-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-update-org-address-500-schema) |
+| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
+| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
+| [200](#admin-update-user-password-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-update-user-password-200-schema) |
+| [400](#admin-update-user-password-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-update-user-password-400-schema) |
+| [401](#admin-update-user-password-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-update-user-password-401-schema) |
+| [403](#admin-update-user-password-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-update-user-password-403-schema) |
+| [500](#admin-update-user-password-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-update-user-password-500-schema) |
 
 #### Responses
 
-##### <span id="admin-update-org-address-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="admin-update-user-password-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="admin-update-org-address-200-schema"></span> Schema
+###### <span id="admin-update-user-password-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="admin-update-org-address-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="admin-update-user-password-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="admin-update-org-address-400-schema"></span> Schema
+###### <span id="admin-update-user-password-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-update-org-address-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="admin-update-user-password-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="admin-update-org-address-401-schema"></span> Schema
+###### <span id="admin-update-user-password-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-update-org-address-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="admin-update-user-password-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="admin-update-org-address-403-schema"></span> Schema
+###### <span id="admin-update-user-password-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-update-org-address-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="admin-update-user-password-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="admin-update-org-address-500-schema"></span> Schema
+###### <span id="admin-update-user-password-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="admin-update-org-user"></span> Update Users in Organization. (_adminUpdateOrgUser_)
+### <span id="admin-update-user-permissions"></span> Set permissions for user. (_adminUpdateUserPermissions_)
 
 ```
-PATCH /api/orgs/{org_id}/users/{user_id}
+PUT /api/admin/users/{user_id}/permissions
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `org.users.role:update` with scope `users:*`.
+Only works with Basic Authentication (username and password). See introduction for an explanation.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global.users:*`.
 
 #### Parameters
 
-| Name    | Source | Type                                             | Go type                       | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------------------------------ | ----------------------------- | --------- | :------: | ------- | ----------- |
-| org_id  | `path` | int64 (formatted integer)                        | `int64`                       |           |    ✓     |         |             |
-| user_id | `path` | int64 (formatted integer)                        | `int64`                       |           |    ✓     |         |             |
-| body    | `body` | [UpdateOrgUserCommand](#update-org-user-command) | `models.UpdateOrgUserCommand` |           |    ✓     |         |             |
+| Name    | Source | Type                                                                  | Go type                                 | Separator | Required | Default | Description |
+| ------- | ------ | --------------------------------------------------------------------- | --------------------------------------- | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer)                                             | `int64`                                 |           |    ✓     |         |             |
+| body    | `body` | [AdminUpdateUserPermissionsForm](#admin-update-user-permissions-form) | `models.AdminUpdateUserPermissionsForm` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
-| --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
-| [200](#admin-update-org-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-update-org-user-200-schema) |
-| [400](#admin-update-org-user-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-update-org-user-400-schema) |
-| [401](#admin-update-org-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-update-org-user-401-schema) |
-| [403](#admin-update-org-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-update-org-user-403-schema) |
-| [500](#admin-update-org-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-update-org-user-500-schema) |
+| Code                                      | Status                | Description                                                                                                 | Has headers | Schema                                              |
+| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
+| [200](#admin-update-user-permissions-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#admin-update-user-permissions-200-schema) |
+| [400](#admin-update-user-permissions-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#admin-update-user-permissions-400-schema) |
+| [401](#admin-update-user-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#admin-update-user-permissions-401-schema) |
+| [403](#admin-update-user-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#admin-update-user-permissions-403-schema) |
+| [500](#admin-update-user-permissions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#admin-update-user-permissions-500-schema) |
 
 #### Responses
 
-##### <span id="admin-update-org-user-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="admin-update-user-permissions-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="admin-update-org-user-200-schema"></span> Schema
+###### <span id="admin-update-user-permissions-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="admin-update-org-user-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="admin-update-user-permissions-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="admin-update-org-user-400-schema"></span> Schema
+###### <span id="admin-update-user-permissions-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-update-org-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="admin-update-user-permissions-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="admin-update-org-user-401-schema"></span> Schema
+###### <span id="admin-update-user-permissions-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-update-org-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="admin-update-user-permissions-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="admin-update-org-user-403-schema"></span> Schema
+###### <span id="admin-update-user-permissions-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="admin-update-org-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="admin-update-user-permissions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="admin-update-org-user-500-schema"></span> Schema
+###### <span id="admin-update-user-permissions-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="calc-dashboard-diff"></span> Perform diff on two dashboards. (_calcDashboardDiff_)
+### <span id="calculate-dashboard-diff"></span> Perform diff on two dashboards. (_calculateDashboardDiff_)
 
 ```
 POST /api/dashboards/calculate-diff
@@ -2361,56 +3098,56 @@ POST /api/dashboards/calculate-diff
 
 #### Parameters
 
-| Name | Source | Type                                               | Go type                 | Separator | Required | Default | Description |
-| ---- | ------ | -------------------------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [CalcDashboardDiffBody](#calc-dashboard-diff-body) | `CalcDashboardDiffBody` |           |    ✓     |         |             |
+| Name | Source | Type                                                         | Go type                      | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------------------------ | ---------------------------- | --------- | :------: | ------- | ----------- |
+| Body | `body` | [CalculateDashboardDiffBody](#calculate-dashboard-diff-body) | `CalculateDashboardDiffBody` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                            | Status                | Description                                                                                                 | Has headers | Schema                                    |
-| ------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#calc-dashboard-diff-200) | OK                    | Calculate dashboard diff response.                                                                          |             | [schema](#calc-dashboard-diff-200-schema) |
-| [401](#calc-dashboard-diff-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#calc-dashboard-diff-401-schema) |
-| [403](#calc-dashboard-diff-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#calc-dashboard-diff-403-schema) |
-| [500](#calc-dashboard-diff-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#calc-dashboard-diff-500-schema) |
+| Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
+| ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
+| [200](#calculate-dashboard-diff-200) | OK                    | (empty)                                                                                                     |             | [schema](#calculate-dashboard-diff-200-schema) |
+| [401](#calculate-dashboard-diff-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#calculate-dashboard-diff-401-schema) |
+| [403](#calculate-dashboard-diff-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#calculate-dashboard-diff-403-schema) |
+| [500](#calculate-dashboard-diff-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#calculate-dashboard-diff-500-schema) |
 
 #### Responses
 
-##### <span id="calc-dashboard-diff-200"></span> 200 - Calculate dashboard diff response.
+##### <span id="calculate-dashboard-diff-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="calc-dashboard-diff-200-schema"></span> Schema
+###### <span id="calculate-dashboard-diff-200-schema"></span> Schema
 
 []uint8 (formatted integer)
 
-##### <span id="calc-dashboard-diff-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="calculate-dashboard-diff-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="calc-dashboard-diff-401-schema"></span> Schema
+###### <span id="calculate-dashboard-diff-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="calc-dashboard-diff-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="calculate-dashboard-diff-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="calc-dashboard-diff-403-schema"></span> Schema
+###### <span id="calculate-dashboard-diff-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="calc-dashboard-diff-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="calculate-dashboard-diff-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="calc-dashboard-diff-500-schema"></span> Schema
+###### <span id="calculate-dashboard-diff-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ###### Inlined models
 
-**<span id="calc-dashboard-diff-body"></span> CalcDashboardDiffBody**
+**<span id="calculate-dashboard-diff-body"></span> CalculateDashboardDiffBody**
 
 **Properties**
 
@@ -2423,6 +3160,156 @@ Description:
 `basic`
 `json` | |
 | new | [CalculateDiffTarget](#calculate-diff-target)| `models.CalculateDiffTarget` | | | | |
+
+### <span id="call-datasource-resource-by-id"></span> Fetch data source resources by Id. (_callDatasourceResourceByID_)
+
+```
+GET /api/datasources/{id}/resources/{datasource_proxy_route}
+```
+
+Please refer to [updated API](#/datasources/callDatasourceResourceWithUID) instead
+
+#### Parameters
+
+| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
+| id                     | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                       | Status                | Description                                                                                                 | Has headers | Schema                                               |
+| ------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------------- |
+| [200](#call-datasource-resource-by-id-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#call-datasource-resource-by-id-200-schema) |
+| [400](#call-datasource-resource-by-id-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#call-datasource-resource-by-id-400-schema) |
+| [401](#call-datasource-resource-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#call-datasource-resource-by-id-401-schema) |
+| [403](#call-datasource-resource-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#call-datasource-resource-by-id-403-schema) |
+| [404](#call-datasource-resource-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#call-datasource-resource-by-id-404-schema) |
+| [500](#call-datasource-resource-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#call-datasource-resource-by-id-500-schema) |
+
+#### Responses
+
+##### <span id="call-datasource-resource-by-id-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="call-datasource-resource-by-id-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="call-datasource-resource-by-id-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="call-datasource-resource-by-id-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="call-datasource-resource-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="call-datasource-resource-by-id-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="call-datasource-resource-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="call-datasource-resource-by-id-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="call-datasource-resource-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="call-datasource-resource-by-id-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="call-datasource-resource-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="call-datasource-resource-by-id-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="call-datasource-resource-with-uid"></span> Fetch data source resources. (_callDatasourceResourceWithUID_)
+
+```
+GET /api/datasources/uid/{uid}/resources/{datasource_proxy_route}
+```
+
+#### Parameters
+
+| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
+| uid                    | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                          | Status                | Description                                                                                                 | Has headers | Schema                                                  |
+| --------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------- |
+| [200](#call-datasource-resource-with-uid-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#call-datasource-resource-with-uid-200-schema) |
+| [400](#call-datasource-resource-with-uid-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#call-datasource-resource-with-uid-400-schema) |
+| [401](#call-datasource-resource-with-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#call-datasource-resource-with-uid-401-schema) |
+| [403](#call-datasource-resource-with-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#call-datasource-resource-with-uid-403-schema) |
+| [404](#call-datasource-resource-with-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#call-datasource-resource-with-uid-404-schema) |
+| [500](#call-datasource-resource-with-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#call-datasource-resource-with-uid-500-schema) |
+
+#### Responses
+
+##### <span id="call-datasource-resource-with-uid-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="call-datasource-resource-with-uid-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="call-datasource-resource-with-uid-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="call-datasource-resource-with-uid-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="call-datasource-resource-with-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="call-datasource-resource-with-uid-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="call-datasource-resource-with-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="call-datasource-resource-with-uid-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="call-datasource-resource-with-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="call-datasource-resource-with-uid-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="call-datasource-resource-with-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="call-datasource-resource-with-uid-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
 
 ### <span id="change-user-password"></span> Change Password. (_changeUserPassword_)
 
@@ -2494,77 +3381,13 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="check-datasource-health"></span> Check data source health by Id. (_checkDatasourceHealth_)
-
-```
-GET /api/datasources/uid/{uid}/health
-```
-
-#### Parameters
-
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| uid  | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
-| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
-| [200](#check-datasource-health-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#check-datasource-health-200-schema) |
-| [400](#check-datasource-health-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#check-datasource-health-400-schema) |
-| [401](#check-datasource-health-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#check-datasource-health-401-schema) |
-| [403](#check-datasource-health-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#check-datasource-health-403-schema) |
-| [500](#check-datasource-health-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#check-datasource-health-500-schema) |
-
-#### Responses
-
-##### <span id="check-datasource-health-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="check-datasource-health-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="check-datasource-health-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="check-datasource-health-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="check-datasource-health-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="check-datasource-health-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="check-datasource-health-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="check-datasource-health-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="check-datasource-health-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="check-datasource-health-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="check-datasource-health-by-id"></span> Check data source health by Id. (_checkDatasourceHealthByID_)
+### <span id="check-datasource-health-by-id"></span> Sends a health check request to the plugin datasource identified by the ID. (_checkDatasourceHealthByID_)
 
 ```
 GET /api/datasources/{id}/health
 ```
 
-Please refer to [updated API](#/datasources/checkDatasourceHealth) instead
+Please refer to [updated API](#/datasources/checkDatasourceHealthWithUID) instead
 
 #### Parameters
 
@@ -2624,6 +3447,70 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="check-datasource-health-with-uid"></span> Sends a health check request to the plugin datasource identified by the UID. (_checkDatasourceHealthWithUID_)
+
+```
+GET /api/datasources/uid/{uid}/health
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                         | Status                | Description                                                                                                 | Has headers | Schema                                                 |
+| -------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------ |
+| [200](#check-datasource-health-with-uid-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#check-datasource-health-with-uid-200-schema) |
+| [400](#check-datasource-health-with-uid-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#check-datasource-health-with-uid-400-schema) |
+| [401](#check-datasource-health-with-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#check-datasource-health-with-uid-401-schema) |
+| [403](#check-datasource-health-with-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#check-datasource-health-with-uid-403-schema) |
+| [500](#check-datasource-health-with-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#check-datasource-health-with-uid-500-schema) |
+
+#### Responses
+
+##### <span id="check-datasource-health-with-uid-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="check-datasource-health-with-uid-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="check-datasource-health-with-uid-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="check-datasource-health-with-uid-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="check-datasource-health-with-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="check-datasource-health-with-uid-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="check-datasource-health-with-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="check-datasource-health-with-uid-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="check-datasource-health-with-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="check-datasource-health-with-uid-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="clear-help-flags"></span> Clear user help flag. (_clearHelpFlags_)
 
 ```
@@ -2634,14 +3521,14 @@ GET /api/user/helpflags/clear
 
 | Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
 | ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#clear-help-flags-200) | OK                    |                                                                                                             |             | [schema](#clear-help-flags-200-schema) |
+| [200](#clear-help-flags-200) | OK                    | (empty)                                                                                                     |             | [schema](#clear-help-flags-200-schema) |
 | [401](#clear-help-flags-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#clear-help-flags-401-schema) |
 | [403](#clear-help-flags-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#clear-help-flags-403-schema) |
 | [500](#clear-help-flags-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#clear-help-flags-500-schema) |
 
 #### Responses
 
-##### <span id="clear-help-flags-200"></span> 200
+##### <span id="clear-help-flags-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -2702,7 +3589,7 @@ You can find the full list of [supported notifiers](https://grafana.com/docs/gra
 
 | Code                                          | Status                | Description                                                                                                 | Has headers | Schema                                                  |
 | --------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------- |
-| [200](#create-alert-notification-channel-200) | OK                    |                                                                                                             |             | [schema](#create-alert-notification-channel-200-schema) |
+| [200](#create-alert-notification-channel-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-alert-notification-channel-200-schema) |
 | [401](#create-alert-notification-channel-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-alert-notification-channel-401-schema) |
 | [403](#create-alert-notification-channel-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-alert-notification-channel-403-schema) |
 | [409](#create-alert-notification-channel-409) | Conflict              | ConflictError                                                                                               |             | [schema](#create-alert-notification-channel-409-schema) |
@@ -2710,7 +3597,7 @@ You can find the full list of [supported notifiers](https://grafana.com/docs/gra
 
 #### Responses
 
-##### <span id="create-alert-notification-channel-200"></span> 200
+##### <span id="create-alert-notification-channel-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -2750,84 +3637,150 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="create-annotation"></span> Create Annotation. (_createAnnotation_)
+### <span id="create-correlation"></span> Add correlation. (_createCorrelation_)
 
 ```
-POST /api/annotations
+POST /api/datasources/uid/{sourceUID}/correlations
 ```
-
-Creates an annotation in the Grafana database. The dashboardId and panelId fields are optional. If they are not specified then an organization annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation include the timeEnd property.
-The format for `time` and `timeEnd` should be epoch numbers in millisecond resolution.
-The response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and timeEnd properties.
 
 #### Parameters
 
-| Name | Source | Type                                        | Go type                     | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------------------------- | --------------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [PostAnnotationsCmd](#post-annotations-cmd) | `models.PostAnnotationsCmd` |           |    ✓     |         |             |
+| Name      | Source | Type                                                    | Go type                           | Separator | Required | Default | Description |
+| --------- | ------ | ------------------------------------------------------- | --------------------------------- | --------- | :------: | ------- | ----------- |
+| sourceUID | `path` | string                                                  | `string`                          |           |    ✓     |         |             |
+| body      | `body` | [CreateCorrelationCommand](#create-correlation-command) | `models.CreateCorrelationCommand` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
-| ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
-| [200](#create-annotation-200) | OK                    |                                                                                                             |             | [schema](#create-annotation-200-schema) |
-| [400](#create-annotation-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-annotation-400-schema) |
-| [401](#create-annotation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-annotation-401-schema) |
-| [403](#create-annotation-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-annotation-403-schema) |
-| [500](#create-annotation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-annotation-500-schema) |
+| Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
+| ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
+| [200](#create-correlation-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-correlation-200-schema) |
+| [400](#create-correlation-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-correlation-400-schema) |
+| [401](#create-correlation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-correlation-401-schema) |
+| [403](#create-correlation-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-correlation-403-schema) |
+| [404](#create-correlation-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#create-correlation-404-schema) |
+| [500](#create-correlation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-correlation-500-schema) |
 
 #### Responses
 
-##### <span id="create-annotation-200"></span> 200
+##### <span id="create-correlation-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="create-annotation-200-schema"></span> Schema
+###### <span id="create-correlation-200-schema"></span> Schema
 
-[CreateAnnotationOKBody](#create-annotation-o-k-body)
+[CreateCorrelationResponseBody](#create-correlation-response-body)
 
-##### <span id="create-annotation-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="create-correlation-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="create-annotation-400-schema"></span> Schema
+###### <span id="create-correlation-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-annotation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="create-correlation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="create-annotation-401-schema"></span> Schema
+###### <span id="create-correlation-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-annotation-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="create-correlation-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="create-annotation-403-schema"></span> Schema
+###### <span id="create-correlation-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-annotation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="create-correlation-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="create-correlation-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-correlation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="create-annotation-500-schema"></span> Schema
+###### <span id="create-correlation-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="create-dashboard-snapshot"></span> When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI. (_createDashboardSnapshot_)
+
+```
+POST /api/snapshots
+```
+
+Snapshot public mode should be enabled or authentication is required.
+
+#### Parameters
+
+| Name | Source | Type                                                                 | Go type                                 | Separator | Required | Default | Description |
+| ---- | ------ | -------------------------------------------------------------------- | --------------------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [CreateDashboardSnapshotCommand](#create-dashboard-snapshot-command) | `models.CreateDashboardSnapshotCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                  | Status                | Description                                                                                                 | Has headers | Schema                                          |
+| ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------- |
+| [200](#create-dashboard-snapshot-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-dashboard-snapshot-200-schema) |
+| [401](#create-dashboard-snapshot-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-dashboard-snapshot-401-schema) |
+| [403](#create-dashboard-snapshot-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-dashboard-snapshot-403-schema) |
+| [500](#create-dashboard-snapshot-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-dashboard-snapshot-500-schema) |
+
+#### Responses
+
+##### <span id="create-dashboard-snapshot-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="create-dashboard-snapshot-200-schema"></span> Schema
+
+[CreateDashboardSnapshotOKBody](#create-dashboard-snapshot-o-k-body)
+
+##### <span id="create-dashboard-snapshot-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="create-dashboard-snapshot-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-dashboard-snapshot-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="create-dashboard-snapshot-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-dashboard-snapshot-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="create-dashboard-snapshot-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ###### Inlined models
 
-**<span id="create-annotation-o-k-body"></span> CreateAnnotationOKBody**
+**<span id="create-dashboard-snapshot-o-k-body"></span> CreateDashboardSnapshotOKBody**
 
 **Properties**
 
-| Name    | Type                      | Go type  | Required | Default | Description                                | Example |
-| ------- | ------------------------- | -------- | :------: | ------- | ------------------------------------------ | ------- |
-| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created annotation.   | `65`    |
-| message | string                    | `string` |    ✓     |         | Message Message of the created annotation. |         |
+| Name      | Type                      | Go type  | Required | Default | Description                                                                                                            | Example |
+| --------- | ------------------------- | -------- | :------: | ------- | ---------------------------------------------------------------------------------------------------------------------- | ------- |
+| deleteKey | string                    | `string` |          |         | Unique key used to delete the snapshot. It is different from the key so that only the creator can delete the snapshot. |         |
+| deleteUrl | string                    | `string` |          |         |                                                                                                                        |         |
+| id        | int64 (formatted integer) | `int64`  |          |         | Snapshot id                                                                                                            |         |
+| key       | string                    | `string` |          |         | Unique key                                                                                                             |         |
+| url       | string                    | `string` |          |         |                                                                                                                        |         |
 
 ### <span id="create-folder"></span> Create folder. (_createFolder_)
 
@@ -2845,7 +3798,7 @@ POST /api/folders
 
 | Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
 | ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#create-folder-200) | OK                    |                                                                                                             |             | [schema](#create-folder-200-schema) |
+| [200](#create-folder-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-folder-200-schema) |
 | [400](#create-folder-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-folder-400-schema) |
 | [401](#create-folder-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-folder-401-schema) |
 | [403](#create-folder-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-folder-403-schema) |
@@ -2854,7 +3807,7 @@ POST /api/folders
 
 #### Responses
 
-##### <span id="create-folder-200"></span> 200
+##### <span id="create-folder-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -2902,83 +3855,6 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="create-graphite-annotation"></span> Create Annotation in Graphite format. (_createGraphiteAnnotation_)
-
-```
-POST /api/annotations/graphite
-```
-
-Creates an annotation by using Graphite-compatible event format. The `when` and `data` fields are optional. If `when` is not specified then the current time will be used as annotation’s timestamp. The `tags` field can also be in prior to Graphite `0.10.0` format (string with multiple tags being separated by a space).
-
-#### Parameters
-
-| Name | Source | Type                                                         | Go type                             | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------------------------------------------ | ----------------------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [PostGraphiteAnnotationsCmd](#post-graphite-annotations-cmd) | `models.PostGraphiteAnnotationsCmd` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
-| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
-| [200](#create-graphite-annotation-200) | OK                    |                                                                                                             |             | [schema](#create-graphite-annotation-200-schema) |
-| [400](#create-graphite-annotation-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-graphite-annotation-400-schema) |
-| [401](#create-graphite-annotation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-graphite-annotation-401-schema) |
-| [403](#create-graphite-annotation-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-graphite-annotation-403-schema) |
-| [500](#create-graphite-annotation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-graphite-annotation-500-schema) |
-
-#### Responses
-
-##### <span id="create-graphite-annotation-200"></span> 200
-
-Status: OK
-
-###### <span id="create-graphite-annotation-200-schema"></span> Schema
-
-[CreateGraphiteAnnotationOKBody](#create-graphite-annotation-o-k-body)
-
-##### <span id="create-graphite-annotation-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="create-graphite-annotation-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="create-graphite-annotation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="create-graphite-annotation-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="create-graphite-annotation-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="create-graphite-annotation-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="create-graphite-annotation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="create-graphite-annotation-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-###### Inlined models
-
-**<span id="create-graphite-annotation-o-k-body"></span> CreateGraphiteAnnotationOKBody**
-
-**Properties**
-
-| Name    | Type                      | Go type  | Required | Default | Description                                | Example |
-| ------- | ------------------------- | -------- | :------: | ------- | ------------------------------------------ | ------- |
-| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created annotation.   | `65`    |
-| message | string                    | `string` |    ✓     |         | Message Message of the created annotation. |         |
-
 ### <span id="create-library-element"></span> Create library element. (_createLibraryElement_)
 
 ```
@@ -2997,7 +3873,7 @@ Creates a new library element.
 
 | Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
 | ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
-| [200](#create-library-element-200) | OK                    |                                                                                                             |             | [schema](#create-library-element-200-schema) |
+| [200](#create-library-element-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-library-element-200-schema) |
 | [400](#create-library-element-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-library-element-400-schema) |
 | [401](#create-library-element-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-library-element-401-schema) |
 | [403](#create-library-element-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-library-element-403-schema) |
@@ -3006,7 +3882,7 @@ Creates a new library element.
 
 #### Responses
 
-##### <span id="create-library-element-200"></span> 200
+##### <span id="create-library-element-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -3072,7 +3948,7 @@ Only works if [users.allow_org_create](https://grafana.com/docs/grafana/latest/a
 
 | Code                   | Status                | Description                                                                                                 | Has headers | Schema                           |
 | ---------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------- |
-| [200](#create-org-200) | OK                    |                                                                                                             |             | [schema](#create-org-200-schema) |
+| [200](#create-org-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-org-200-schema) |
 | [401](#create-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-org-401-schema) |
 | [403](#create-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-org-403-schema) |
 | [409](#create-org-409) | Conflict              | ConflictError                                                                                               |             | [schema](#create-org-409-schema) |
@@ -3080,7 +3956,7 @@ Only works if [users.allow_org_create](https://grafana.com/docs/grafana/latest/a
 
 #### Responses
 
-##### <span id="create-org-200"></span> 200
+##### <span id="create-org-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -3131,6 +4007,70 @@ Status: Internal Server Error
 | message | string                    | `string` |    ✓     |         | Message Message of the created org. | `Data source added` |
 | orgId   | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created org.   | `65`                |
 
+### <span id="create-playlist"></span> Create playlist. (_createPlaylist_)
+
+```
+POST /api/playlists
+```
+
+#### Parameters
+
+| Name | Source | Type                                              | Go type                        | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------------- | ------------------------------ | --------- | :------: | ------- | ----------- |
+| Body | `body` | [CreatePlaylistCommand](#create-playlist-command) | `models.CreatePlaylistCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
+| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
+| [200](#create-playlist-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-playlist-200-schema) |
+| [401](#create-playlist-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-playlist-401-schema) |
+| [403](#create-playlist-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-playlist-403-schema) |
+| [404](#create-playlist-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#create-playlist-404-schema) |
+| [500](#create-playlist-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-playlist-500-schema) |
+
+#### Responses
+
+##### <span id="create-playlist-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="create-playlist-200-schema"></span> Schema
+
+[Playlist](#playlist)
+
+##### <span id="create-playlist-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="create-playlist-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-playlist-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="create-playlist-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-playlist-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="create-playlist-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-playlist-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="create-playlist-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="create-query"></span> Add query to query history. (_createQuery_)
 
 ```
@@ -3149,14 +4089,14 @@ Adds new query to query history.
 
 | Code                     | Status                | Description                                                                         | Has headers | Schema                             |
 | ------------------------ | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
-| [200](#create-query-200) | OK                    |                                                                                     |             | [schema](#create-query-200-schema) |
+| [200](#create-query-200) | OK                    | (empty)                                                                             |             | [schema](#create-query-200-schema) |
 | [400](#create-query-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#create-query-400-schema) |
 | [401](#create-query-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#create-query-401-schema) |
 | [500](#create-query-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#create-query-500-schema) |
 
 #### Responses
 
-##### <span id="create-query-200"></span> 200
+##### <span id="create-query-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -3188,11 +4128,13 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="create-recording-rule"></span> Create a new recording rule. (_createRecordingRule_)
+### <span id="create-recording-rule"></span> createRecordingRule (_createRecordingRule_)
 
 ```
 POST /api/recording-rules
 ```
+
+Create a recording rule that is then registered and started
 
 #### Parameters
 
@@ -3204,7 +4146,7 @@ POST /api/recording-rules
 
 | Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
 | --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
-| [200](#create-recording-rule-200) | OK                    |                                                                                                             |             | [schema](#create-recording-rule-200-schema) |
+| [200](#create-recording-rule-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-recording-rule-200-schema) |
 | [401](#create-recording-rule-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-recording-rule-401-schema) |
 | [403](#create-recording-rule-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-recording-rule-403-schema) |
 | [404](#create-recording-rule-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#create-recording-rule-404-schema) |
@@ -3212,7 +4154,7 @@ POST /api/recording-rules
 
 #### Responses
 
-##### <span id="create-recording-rule-200"></span> 200
+##### <span id="create-recording-rule-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -3252,11 +4194,13 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="create-recording-rule-write-target"></span> Create a new write target. (_createRecordingRuleWriteTarget_)
+### <span id="create-recording-rule-write-target"></span> Create a remote write target. (_createRecordingRuleWriteTarget_)
 
 ```
 POST /api/recording-rules/writer
 ```
+
+It returns a 422 if there is not an existing prometheus data source configured
 
 #### Parameters
 
@@ -3268,7 +4212,7 @@ POST /api/recording-rules/writer
 
 | Code                                           | Status                | Description                                                                                                 | Has headers | Schema                                                   |
 | ---------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------------- |
-| [200](#create-recording-rule-write-target-200) | OK                    |                                                                                                             |             | [schema](#create-recording-rule-write-target-200-schema) |
+| [200](#create-recording-rule-write-target-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-recording-rule-write-target-200-schema) |
 | [401](#create-recording-rule-write-target-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-recording-rule-write-target-401-schema) |
 | [403](#create-recording-rule-write-target-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-recording-rule-write-target-403-schema) |
 | [404](#create-recording-rule-write-target-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#create-recording-rule-write-target-404-schema) |
@@ -3277,7 +4221,7 @@ POST /api/recording-rules/writer
 
 #### Responses
 
-##### <span id="create-recording-rule-write-target-200"></span> 200
+##### <span id="create-recording-rule-write-target-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -3345,7 +4289,7 @@ You need to have a permission with action `reports.admin:create`.
 
 | Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
 | ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#create-report-200) | OK                    |                                                                                                             |             | [schema](#create-report-200-schema) |
+| [200](#create-report-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-report-200-schema) |
 | [400](#create-report-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-report-400-schema) |
 | [401](#create-report-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-report-401-schema) |
 | [403](#create-report-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-report-403-schema) |
@@ -3354,13 +4298,13 @@ You need to have a permission with action `reports.admin:create`.
 
 #### Responses
 
-##### <span id="create-report-200"></span> 200
+##### <span id="create-report-200"></span> 200 - (empty)
 
 Status: OK
 
 ###### <span id="create-report-200-schema"></span> Schema
 
-any
+[CreateReportOKBody](#create-report-o-k-body)
 
 ##### <span id="create-report-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
@@ -3402,7 +4346,18 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="create-role-with-permissions"></span> Create a new custom role. (_createRoleWithPermissions_)
+###### Inlined models
+
+**<span id="create-report-o-k-body"></span> CreateReportOKBody**
+
+**Properties**
+
+| Name    | Type                      | Go type  | Required | Default | Description | Example |
+| ------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| id      | int64 (formatted integer) | `int64`  |          |         |             |         |
+| message | string                    | `string` |          |         |             |         |
+
+### <span id="create-role"></span> Create a new custom role. (_createRole_)
 
 ```
 POST /api/access-control/roles
@@ -3415,123 +4370,121 @@ For example, if a user does not have required permissions for creating users, th
 
 #### Parameters
 
-| Name | Source | Type                                                                      | Go type                                   | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------------------------------------------------------- | ----------------------------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [CreateRoleWithPermissionsCommand](#create-role-with-permissions-command) | `models.CreateRoleWithPermissionsCommand` |           |    ✓     |         |             |
+| Name | Source | Type                                | Go type                 | Separator | Required | Default | Description |
+| ---- | ------ | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [CreateRoleForm](#create-role-form) | `models.CreateRoleForm` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                                     | Status                | Description                                                                                                 | Has headers | Schema                                             |
-| ---------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------- |
-| [200](#create-role-with-permissions-200) | OK                    |                                                                                                             |             | [schema](#create-role-with-permissions-200-schema) |
-| [400](#create-role-with-permissions-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-role-with-permissions-400-schema) |
-| [403](#create-role-with-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-role-with-permissions-403-schema) |
-| [500](#create-role-with-permissions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-role-with-permissions-500-schema) |
+| Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
+| ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
+| [201](#create-role-201) | Created               | (empty)                                                                                                     |             | [schema](#create-role-201-schema) |
+| [400](#create-role-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-role-400-schema) |
+| [403](#create-role-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-role-403-schema) |
+| [500](#create-role-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-role-500-schema) |
 
 #### Responses
 
-##### <span id="create-role-with-permissions-200"></span> 200
+##### <span id="create-role-201"></span> 201 - (empty)
 
-Status: OK
+Status: Created
 
-###### <span id="create-role-with-permissions-200-schema"></span> Schema
+###### <span id="create-role-201-schema"></span> Schema
 
 [RoleDTO](#role-d-t-o)
 
-##### <span id="create-role-with-permissions-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="create-role-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="create-role-with-permissions-400-schema"></span> Schema
+###### <span id="create-role-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-role-with-permissions-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="create-role-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="create-role-with-permissions-403-schema"></span> Schema
+###### <span id="create-role-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-role-with-permissions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="create-role-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="create-role-with-permissions-500-schema"></span> Schema
+###### <span id="create-role-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="create-snapshot"></span> When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI. (_createSnapshot_)
+### <span id="create-service-account"></span> Create service account (_createServiceAccount_)
 
 ```
-POST /api/snapshots
+POST /api/serviceaccounts
 ```
 
-Snapshot public mode should be enabled or authentication is required.
+Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+action: `serviceaccounts:write` scope: `serviceaccounts:*`
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 #### Parameters
 
-| Name | Source | Type                                                                 | Go type                                 | Separator | Required | Default | Description |
-| ---- | ------ | -------------------------------------------------------------------- | --------------------------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [CreateDashboardSnapshotCommand](#create-dashboard-snapshot-command) | `models.CreateDashboardSnapshotCommand` |           |    ✓     |         |             |
+| Name | Source | Type                                                     | Go type                           | Separator | Required | Default | Description |
+| ---- | ------ | -------------------------------------------------------- | --------------------------------- | --------- | :------: | ------- | ----------- |
+| Body | `body` | [CreateServiceAccountForm](#create-service-account-form) | `models.CreateServiceAccountForm` |           |          |         |             |
 
 #### All responses
 
-| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
-| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#create-snapshot-200) | OK                    |                                                                                                             |             | [schema](#create-snapshot-200-schema) |
-| [401](#create-snapshot-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-snapshot-401-schema) |
-| [403](#create-snapshot-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-snapshot-403-schema) |
-| [500](#create-snapshot-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-snapshot-500-schema) |
+| Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
+| ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
+| [201](#create-service-account-201) | Created               | (empty)                                                                                                     |             | [schema](#create-service-account-201-schema) |
+| [400](#create-service-account-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-service-account-400-schema) |
+| [401](#create-service-account-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-service-account-401-schema) |
+| [403](#create-service-account-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-service-account-403-schema) |
+| [500](#create-service-account-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-service-account-500-schema) |
 
 #### Responses
 
-##### <span id="create-snapshot-200"></span> 200
+##### <span id="create-service-account-201"></span> 201 - (empty)
 
-Status: OK
+Status: Created
 
-###### <span id="create-snapshot-200-schema"></span> Schema
+###### <span id="create-service-account-201-schema"></span> Schema
 
-[CreateSnapshotOKBody](#create-snapshot-o-k-body)
+[ServiceAccountDTO](#service-account-d-t-o)
 
-##### <span id="create-snapshot-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="create-service-account-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="create-service-account-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-service-account-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="create-snapshot-401-schema"></span> Schema
+###### <span id="create-service-account-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-snapshot-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="create-service-account-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="create-snapshot-403-schema"></span> Schema
+###### <span id="create-service-account-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-snapshot-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="create-service-account-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="create-snapshot-500-schema"></span> Schema
+###### <span id="create-service-account-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
-
-###### Inlined models
-
-**<span id="create-snapshot-o-k-body"></span> CreateSnapshotOKBody**
-
-**Properties**
-
-| Name      | Type                      | Go type  | Required | Default | Description                                                                                                            | Example |
-| --------- | ------------------------- | -------- | :------: | ------- | ---------------------------------------------------------------------------------------------------------------------- | ------- |
-| deleteKey | string                    | `string` |          |         | Unique key used to delete the snapshot. It is different from the key so that only the creator can delete the snapshot. |         |
-| deleteUrl | string                    | `string` |          |         |                                                                                                                        |         |
-| id        | int64 (formatted integer) | `int64`  |          |         | Snapshot id                                                                                                            |         |
-| key       | string                    | `string` |          |         | Unique key                                                                                                             |         |
-| url       | string                    | `string` |          |         |                                                                                                                        |         |
 
 ### <span id="create-team"></span> Add Team. (_createTeam_)
 
@@ -3549,7 +4502,7 @@ POST /api/teams
 
 | Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
 | ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#create-team-200) | OK                    |                                                                                                             |             | [schema](#create-team-200-schema) |
+| [200](#create-team-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-team-200-schema) |
 | [401](#create-team-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-team-401-schema) |
 | [403](#create-team-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-team-403-schema) |
 | [409](#create-team-409) | Conflict              | ConflictError                                                                                               |             | [schema](#create-team-409-schema) |
@@ -3557,7 +4510,7 @@ POST /api/teams
 
 #### Responses
 
-##### <span id="create-team-200"></span> 200
+##### <span id="create-team-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -3608,83 +4561,89 @@ Status: Internal Server Error
 | message | string                    | `string` |          |         |             |         |
 | teamId  | int64 (formatted integer) | `int64`  |          |         |             |         |
 
-### <span id="create-user"></span> Create new user. (_createUser_)
+### <span id="create-token"></span> CreateNewToken adds a token to a service account (_createToken_)
 
 ```
-POST /api/admin/users
+POST /api/serviceaccounts/{serviceAccountId}/tokens
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:create`.
-Note that OrgId is an optional parameter that can be used to assign a new user to a different organization when `auto_assign_org` is set to `true`.
-
-#### Security Requirements
-
-- basic
+Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
 
 #### Parameters
 
-| Name | Source | Type                                           | Go type                      | Separator | Required | Default | Description |
-| ---- | ------ | ---------------------------------------------- | ---------------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [AdminCreateUserForm](#admin-create-user-form) | `models.AdminCreateUserForm` |           |    ✓     |         |             |
+| Name             | Source | Type                                                                | Go type                                | Separator | Required | Default | Description |
+| ---------------- | ------ | ------------------------------------------------------------------- | -------------------------------------- | --------- | :------: | ------- | ----------- |
+| serviceAccountId | `path` | int64 (formatted integer)                                           | `int64`                                |           |    ✓     |         |             |
+| Body             | `body` | [AddServiceAccountTokenCommand](#add-service-account-token-command) | `models.AddServiceAccountTokenCommand` |           |          |         |             |
 
 #### All responses
 
-| Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
-| ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#create-user-200) | OK                    |                                                                                                             |             | [schema](#create-user-200-schema) |
-| [400](#create-user-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-user-400-schema) |
-| [401](#create-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-user-401-schema) |
-| [403](#create-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-user-403-schema) |
-| [412](#create-user-412) | Precondition Failed   | PreconditionFailedError                                                                                     |             | [schema](#create-user-412-schema) |
-| [500](#create-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-user-500-schema) |
+| Code                     | Status                | Description                                                                                                 | Has headers | Schema                             |
+| ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
+| [200](#create-token-200) | OK                    | (empty)                                                                                                     |             | [schema](#create-token-200-schema) |
+| [400](#create-token-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#create-token-400-schema) |
+| [401](#create-token-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#create-token-401-schema) |
+| [403](#create-token-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#create-token-403-schema) |
+| [404](#create-token-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#create-token-404-schema) |
+| [409](#create-token-409) | Conflict              | ConflictError                                                                                               |             | [schema](#create-token-409-schema) |
+| [500](#create-token-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#create-token-500-schema) |
 
 #### Responses
 
-##### <span id="create-user-200"></span> 200
+##### <span id="create-token-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="create-user-200-schema"></span> Schema
+###### <span id="create-token-200-schema"></span> Schema
 
-[UserIDDTO](#user-id-d-t-o)
+[NewAPIKeyResult](#new-api-key-result)
 
-##### <span id="create-user-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="create-token-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="create-user-400-schema"></span> Schema
+###### <span id="create-token-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="create-token-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="create-user-401-schema"></span> Schema
+###### <span id="create-token-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="create-token-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="create-user-403-schema"></span> Schema
+###### <span id="create-token-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-user-412"></span> 412 - PreconditionFailedError
+##### <span id="create-token-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
-Status: Precondition Failed
+Status: Not Found
 
-###### <span id="create-user-412-schema"></span> Schema
+###### <span id="create-token-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="create-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="create-token-409"></span> 409 - ConflictError
+
+Status: Conflict
+
+###### <span id="create-token-409-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-token-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="create-user-500-schema"></span> Schema
+###### <span id="create-token-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -3707,7 +4666,7 @@ Proxies all calls to the actual data source.
 
 | Code                                                  | Status                | Description                                                                                                 | Has headers | Schema                                                          |
 | ----------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------------------- |
-| [202](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202) | Accepted              |                                                                                                             |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202-schema) |
+| [202](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202) | Accepted              | (empty)                                                                                                     |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202-schema) |
 | [400](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-400-schema) |
 | [401](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-401-schema) |
 | [403](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-403-schema) |
@@ -3716,7 +4675,7 @@ Proxies all calls to the actual data source.
 
 #### Responses
 
-##### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202"></span> 202
+##### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202"></span> 202 - (empty)
 
 Status: Accepted
 
@@ -3783,7 +4742,7 @@ Please refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) ins
 
 | Code                                          | Status                | Description                                                                                                 | Has headers | Schema                                                  |
 | --------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------- |
-| [202](#datasource-proxy-d-e-l-e-t-ecalls-202) | Accepted              |                                                                                                             |             | [schema](#datasource-proxy-d-e-l-e-t-ecalls-202-schema) |
+| [202](#datasource-proxy-d-e-l-e-t-ecalls-202) | Accepted              | (empty)                                                                                                     |             | [schema](#datasource-proxy-d-e-l-e-t-ecalls-202-schema) |
 | [400](#datasource-proxy-d-e-l-e-t-ecalls-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#datasource-proxy-d-e-l-e-t-ecalls-400-schema) |
 | [401](#datasource-proxy-d-e-l-e-t-ecalls-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#datasource-proxy-d-e-l-e-t-ecalls-401-schema) |
 | [403](#datasource-proxy-d-e-l-e-t-ecalls-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#datasource-proxy-d-e-l-e-t-ecalls-403-schema) |
@@ -3792,7 +4751,7 @@ Please refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) ins
 
 #### Responses
 
-##### <span id="datasource-proxy-d-e-l-e-t-ecalls-202"></span> 202
+##### <span id="datasource-proxy-d-e-l-e-t-ecalls-202"></span> 202 - (empty)
 
 Status: Accepted
 
@@ -3857,7 +4816,7 @@ Proxies all calls to the actual data source.
 
 | Code                                            | Status                | Description                                                                                                 | Has headers | Schema                                                    |
 | ----------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------------- |
-| [200](#datasource-proxy-g-e-t-by-ui-dcalls-200) | OK                    |                                                                                                             |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-200-schema) |
+| [200](#datasource-proxy-g-e-t-by-ui-dcalls-200) | OK                    | (empty)                                                                                                     |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-200-schema) |
 | [400](#datasource-proxy-g-e-t-by-ui-dcalls-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-400-schema) |
 | [401](#datasource-proxy-g-e-t-by-ui-dcalls-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-401-schema) |
 | [403](#datasource-proxy-g-e-t-by-ui-dcalls-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-403-schema) |
@@ -3866,7 +4825,7 @@ Proxies all calls to the actual data source.
 
 #### Responses
 
-##### <span id="datasource-proxy-g-e-t-by-ui-dcalls-200"></span> 200
+##### <span id="datasource-proxy-g-e-t-by-ui-dcalls-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -3933,7 +4892,7 @@ Please refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instea
 
 | Code                                    | Status                | Description                                                                                                 | Has headers | Schema                                            |
 | --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------- |
-| [200](#datasource-proxy-g-e-tcalls-200) | OK                    |                                                                                                             |             | [schema](#datasource-proxy-g-e-tcalls-200-schema) |
+| [200](#datasource-proxy-g-e-tcalls-200) | OK                    | (empty)                                                                                                     |             | [schema](#datasource-proxy-g-e-tcalls-200-schema) |
 | [400](#datasource-proxy-g-e-tcalls-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#datasource-proxy-g-e-tcalls-400-schema) |
 | [401](#datasource-proxy-g-e-tcalls-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#datasource-proxy-g-e-tcalls-401-schema) |
 | [403](#datasource-proxy-g-e-tcalls-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#datasource-proxy-g-e-tcalls-403-schema) |
@@ -3942,7 +4901,7 @@ Please refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instea
 
 #### Responses
 
-##### <span id="datasource-proxy-g-e-tcalls-200"></span> 200
+##### <span id="datasource-proxy-g-e-tcalls-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -4008,8 +4967,8 @@ Proxies all calls to the actual data source. The data source should support POST
 
 | Code                                              | Status                | Description                                                                                                 | Has headers | Schema                                                      |
 | ------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------------- |
-| [201](#datasource-proxy-p-o-s-t-by-ui-dcalls-201) | Created               |                                                                                                             |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-201-schema) |
-| [202](#datasource-proxy-p-o-s-t-by-ui-dcalls-202) | Accepted              |                                                                                                             |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-202-schema) |
+| [201](#datasource-proxy-p-o-s-t-by-ui-dcalls-201) | Created               | (empty)                                                                                                     |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-201-schema) |
+| [202](#datasource-proxy-p-o-s-t-by-ui-dcalls-202) | Accepted              | (empty)                                                                                                     |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-202-schema) |
 | [400](#datasource-proxy-p-o-s-t-by-ui-dcalls-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-400-schema) |
 | [401](#datasource-proxy-p-o-s-t-by-ui-dcalls-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-401-schema) |
 | [403](#datasource-proxy-p-o-s-t-by-ui-dcalls-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-403-schema) |
@@ -4018,13 +4977,13 @@ Proxies all calls to the actual data source. The data source should support POST
 
 #### Responses
 
-##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-201"></span> 201
+##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-201"></span> 201 - (empty)
 
 Status: Created
 
 ###### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-201-schema"></span> Schema
 
-##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-202"></span> 202
+##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-202"></span> 202 - (empty)
 
 Status: Accepted
 
@@ -4092,8 +5051,8 @@ Please refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) inste
 
 | Code                                      | Status                | Description                                                                                                 | Has headers | Schema                                              |
 | ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
-| [201](#datasource-proxy-p-o-s-tcalls-201) | Created               |                                                                                                             |             | [schema](#datasource-proxy-p-o-s-tcalls-201-schema) |
-| [202](#datasource-proxy-p-o-s-tcalls-202) | Accepted              |                                                                                                             |             | [schema](#datasource-proxy-p-o-s-tcalls-202-schema) |
+| [201](#datasource-proxy-p-o-s-tcalls-201) | Created               | (empty)                                                                                                     |             | [schema](#datasource-proxy-p-o-s-tcalls-201-schema) |
+| [202](#datasource-proxy-p-o-s-tcalls-202) | Accepted              | (empty)                                                                                                     |             | [schema](#datasource-proxy-p-o-s-tcalls-202-schema) |
 | [400](#datasource-proxy-p-o-s-tcalls-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#datasource-proxy-p-o-s-tcalls-400-schema) |
 | [401](#datasource-proxy-p-o-s-tcalls-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#datasource-proxy-p-o-s-tcalls-401-schema) |
 | [403](#datasource-proxy-p-o-s-tcalls-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#datasource-proxy-p-o-s-tcalls-403-schema) |
@@ -4102,13 +5061,13 @@ Please refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) inste
 
 #### Responses
 
-##### <span id="datasource-proxy-p-o-s-tcalls-201"></span> 201
+##### <span id="datasource-proxy-p-o-s-tcalls-201"></span> 201 - (empty)
 
 Status: Created
 
 ###### <span id="datasource-proxy-p-o-s-tcalls-201-schema"></span> Schema
 
-##### <span id="datasource-proxy-p-o-s-tcalls-202"></span> 202
+##### <span id="datasource-proxy-p-o-s-tcalls-202"></span> 202 - (empty)
 
 Status: Accepted
 
@@ -4302,7 +5261,7 @@ Deletes an existing notification channel identified by UID.
 
 | Code                                                 | Status                | Description                                                                                                 | Has headers | Schema                                                         |
 | ---------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------------------- |
-| [200](#delete-alert-notification-channel-by-uid-200) | OK                    |                                                                                                             |             | [schema](#delete-alert-notification-channel-by-uid-200-schema) |
+| [200](#delete-alert-notification-channel-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#delete-alert-notification-channel-by-uid-200-schema) |
 | [401](#delete-alert-notification-channel-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-alert-notification-channel-by-uid-401-schema) |
 | [403](#delete-alert-notification-channel-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-alert-notification-channel-by-uid-403-schema) |
 | [404](#delete-alert-notification-channel-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-alert-notification-channel-by-uid-404-schema) |
@@ -4310,7 +5269,7 @@ Deletes an existing notification channel identified by UID.
 
 #### Responses
 
-##### <span id="delete-alert-notification-channel-by-uid-200"></span> 200
+##### <span id="delete-alert-notification-channel-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -4361,7 +5320,7 @@ Status: Internal Server Error
 | id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted notification channel.    | `65`    |
 | message | string                    | `string` |    ✓     |         | Message Message of the deleted notificatiton channel. |         |
 
-### <span id="delete-annotation"></span> Delete Annotation By ID. (_deleteAnnotation_)
+### <span id="delete-annotation-by-id"></span> Delete Annotation By ID. (_deleteAnnotationByID_)
 
 ```
 DELETE /api/annotations/{annotation_id}
@@ -4377,44 +5336,109 @@ Deletes the annotation that matches the specified ID.
 
 #### All responses
 
-| Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
-| ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
-| [200](#delete-annotation-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-annotation-200-schema) |
-| [401](#delete-annotation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-annotation-401-schema) |
-| [403](#delete-annotation-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-annotation-403-schema) |
-| [500](#delete-annotation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-annotation-500-schema) |
+| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
+| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
+| [200](#delete-annotation-by-id-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-annotation-by-id-200-schema) |
+| [401](#delete-annotation-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-annotation-by-id-401-schema) |
+| [403](#delete-annotation-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-annotation-by-id-403-schema) |
+| [500](#delete-annotation-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-annotation-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="delete-annotation-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="delete-annotation-by-id-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="delete-annotation-200-schema"></span> Schema
+###### <span id="delete-annotation-by-id-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="delete-annotation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="delete-annotation-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="delete-annotation-401-schema"></span> Schema
+###### <span id="delete-annotation-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-annotation-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="delete-annotation-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="delete-annotation-403-schema"></span> Schema
+###### <span id="delete-annotation-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-annotation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="delete-annotation-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="delete-annotation-500-schema"></span> Schema
+###### <span id="delete-annotation-by-id-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="delete-correlation"></span> Delete a correlation. (_deleteCorrelation_)
+
+```
+DELETE /api/datasources/uid/{uid}/correlations/{correlationUID}
+```
+
+#### Parameters
+
+| Name           | Source | Type   | Go type  | Separator | Required | Default | Description |
+| -------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| correlationUID | `path` | string | `string` |           |    ✓     |         |             |
+| uid            | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
+| ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
+| [200](#delete-correlation-200) | OK                    | (empty)                                                                                                     |             | [schema](#delete-correlation-200-schema) |
+| [401](#delete-correlation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-correlation-401-schema) |
+| [403](#delete-correlation-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-correlation-403-schema) |
+| [404](#delete-correlation-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-correlation-404-schema) |
+| [500](#delete-correlation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-correlation-500-schema) |
+
+#### Responses
+
+##### <span id="delete-correlation-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="delete-correlation-200-schema"></span> Schema
+
+[DeleteCorrelationResponseBody](#delete-correlation-response-body)
+
+##### <span id="delete-correlation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="delete-correlation-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-correlation-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="delete-correlation-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-correlation-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="delete-correlation-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-correlation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="delete-correlation-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -4430,9 +5454,11 @@ You need to have a permission with action `roles:delete` and scope `permissions:
 
 #### Parameters
 
-| Name    | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| roleUID | `path` | string | `string` |           |    ✓     |         |             |
+| Name    | Source  | Type    | Go type  | Separator | Required | Default | Description |
+| ------- | ------- | ------- | -------- | --------- | :------: | ------- | ----------- |
+| roleUID | `path`  | string  | `string` |           |    ✓     |         |             |
+| force   | `query` | boolean | `bool`   |           |          |         |             |
+| global  | `query` | boolean | `bool`   |           |          |         |             |
 
 #### All responses
 
@@ -4495,7 +5521,7 @@ Will delete the dashboard given the specified unique identifier (uid).
 
 | Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
 | ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
-| [200](#delete-dashboard-by-uid-200) | OK                    |                                                                                                             |             | [schema](#delete-dashboard-by-uid-200-schema) |
+| [200](#delete-dashboard-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#delete-dashboard-by-uid-200-schema) |
 | [401](#delete-dashboard-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-dashboard-by-uid-401-schema) |
 | [403](#delete-dashboard-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-dashboard-by-uid-403-schema) |
 | [404](#delete-dashboard-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-dashboard-by-uid-404-schema) |
@@ -4503,7 +5529,7 @@ Will delete the dashboard given the specified unique identifier (uid).
 
 #### Responses
 
-##### <span id="delete-dashboard-by-uid-200"></span> 200
+##### <span id="delete-dashboard-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -4555,7 +5581,128 @@ Status: Internal Server Error
 | message | string                    | `string` |    ✓     |         | Message Message of the deleted dashboard. | `Dashboard My Dashboard deleted` |
 | title   | string                    | `string` |    ✓     |         | Title Title of the deleted dashboard.     | `My Dashboard`                   |
 
-### <span id="delete-datasource-by-id"></span> Delete an existing data source by id. (_deleteDatasourceByID_)
+### <span id="delete-dashboard-snapshot"></span> Delete Snapshot by Key. (_deleteDashboardSnapshot_)
+
+```
+DELETE /api/snapshots/{key}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| key  | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                  | Status                | Description                                                                                                 | Has headers | Schema                                          |
+| ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------- |
+| [200](#delete-dashboard-snapshot-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-dashboard-snapshot-200-schema) |
+| [403](#delete-dashboard-snapshot-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-dashboard-snapshot-403-schema) |
+| [404](#delete-dashboard-snapshot-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-dashboard-snapshot-404-schema) |
+| [500](#delete-dashboard-snapshot-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-dashboard-snapshot-500-schema) |
+
+#### Responses
+
+##### <span id="delete-dashboard-snapshot-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="delete-dashboard-snapshot-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="delete-dashboard-snapshot-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="delete-dashboard-snapshot-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-dashboard-snapshot-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="delete-dashboard-snapshot-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-dashboard-snapshot-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="delete-dashboard-snapshot-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="delete-dashboard-snapshot-by-delete-key"></span> Delete Snapshot by deleteKey. (_deleteDashboardSnapshotByDeleteKey_)
+
+```
+GET /api/snapshots-delete/{deleteKey}
+```
+
+Snapshot public mode should be enabled or authentication is required.
+
+#### Parameters
+
+| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
+| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| deleteKey | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                                | Status                | Description                                                                                                 | Has headers | Schema                                                        |
+| --------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------------- |
+| [200](#delete-dashboard-snapshot-by-delete-key-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-dashboard-snapshot-by-delete-key-200-schema) |
+| [401](#delete-dashboard-snapshot-by-delete-key-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-dashboard-snapshot-by-delete-key-401-schema) |
+| [403](#delete-dashboard-snapshot-by-delete-key-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-dashboard-snapshot-by-delete-key-403-schema) |
+| [404](#delete-dashboard-snapshot-by-delete-key-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-dashboard-snapshot-by-delete-key-404-schema) |
+| [500](#delete-dashboard-snapshot-by-delete-key-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-dashboard-snapshot-by-delete-key-500-schema) |
+
+#### Responses
+
+##### <span id="delete-dashboard-snapshot-by-delete-key-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="delete-dashboard-snapshot-by-delete-key-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="delete-dashboard-snapshot-by-delete-key-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="delete-dashboard-snapshot-by-delete-key-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-dashboard-snapshot-by-delete-key-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="delete-dashboard-snapshot-by-delete-key-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-dashboard-snapshot-by-delete-key-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="delete-dashboard-snapshot-by-delete-key-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-dashboard-snapshot-by-delete-key-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="delete-dashboard-snapshot-by-delete-key-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="delete-data-source-by-id"></span> Delete an existing data source by id. (_deleteDataSourceByID_)
 
 ```
 DELETE /api/datasources/{id}
@@ -4564,7 +5711,7 @@ DELETE /api/datasources/{id}
 If you are running Grafana Enterprise and have Fine-grained access control enabled
 you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
 
-Please refer to [updated API](#/datasources/deleteDatasourceByUID) instead
+Please refer to [updated API](#/datasources/deleteDataSourceByUID) instead
 
 #### Parameters
 
@@ -4574,57 +5721,57 @@ Please refer to [updated API](#/datasources/deleteDatasourceByUID) instead
 
 #### All responses
 
-| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
-| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
-| [200](#delete-datasource-by-id-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-datasource-by-id-200-schema) |
-| [401](#delete-datasource-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-datasource-by-id-401-schema) |
-| [403](#delete-datasource-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-datasource-by-id-403-schema) |
-| [404](#delete-datasource-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-datasource-by-id-404-schema) |
-| [500](#delete-datasource-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-datasource-by-id-500-schema) |
+| Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
+| ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
+| [200](#delete-data-source-by-id-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-data-source-by-id-200-schema) |
+| [401](#delete-data-source-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-data-source-by-id-401-schema) |
+| [403](#delete-data-source-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-data-source-by-id-403-schema) |
+| [404](#delete-data-source-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-data-source-by-id-404-schema) |
+| [500](#delete-data-source-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-data-source-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="delete-datasource-by-id-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="delete-data-source-by-id-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="delete-datasource-by-id-200-schema"></span> Schema
+###### <span id="delete-data-source-by-id-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="delete-datasource-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="delete-data-source-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="delete-datasource-by-id-401-schema"></span> Schema
+###### <span id="delete-data-source-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-datasource-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="delete-data-source-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="delete-datasource-by-id-403-schema"></span> Schema
+###### <span id="delete-data-source-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-datasource-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="delete-data-source-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="delete-datasource-by-id-404-schema"></span> Schema
+###### <span id="delete-data-source-by-id-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-datasource-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="delete-data-source-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="delete-datasource-by-id-500-schema"></span> Schema
+###### <span id="delete-data-source-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="delete-datasource-by-name"></span> Delete an existing data source by name. (_deleteDatasourceByName_)
+### <span id="delete-data-source-by-name"></span> Delete an existing data source by name. (_deleteDataSourceByName_)
 
 ```
 DELETE /api/datasources/name/{name}
@@ -4641,59 +5788,59 @@ you need to have a permission with action: `datasources:delete` and scopes: `dat
 
 #### All responses
 
-| Code                                  | Status                | Description                                                                                                 | Has headers | Schema                                          |
-| ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------- |
-| [200](#delete-datasource-by-name-200) | OK                    |                                                                                                             |             | [schema](#delete-datasource-by-name-200-schema) |
-| [401](#delete-datasource-by-name-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-datasource-by-name-401-schema) |
-| [403](#delete-datasource-by-name-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-datasource-by-name-403-schema) |
-| [404](#delete-datasource-by-name-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-datasource-by-name-404-schema) |
-| [500](#delete-datasource-by-name-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-datasource-by-name-500-schema) |
+| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
+| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
+| [200](#delete-data-source-by-name-200) | OK                    | (empty)                                                                                                     |             | [schema](#delete-data-source-by-name-200-schema) |
+| [401](#delete-data-source-by-name-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-data-source-by-name-401-schema) |
+| [403](#delete-data-source-by-name-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-data-source-by-name-403-schema) |
+| [404](#delete-data-source-by-name-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-data-source-by-name-404-schema) |
+| [500](#delete-data-source-by-name-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-data-source-by-name-500-schema) |
 
 #### Responses
 
-##### <span id="delete-datasource-by-name-200"></span> 200
+##### <span id="delete-data-source-by-name-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="delete-datasource-by-name-200-schema"></span> Schema
+###### <span id="delete-data-source-by-name-200-schema"></span> Schema
 
-[DeleteDatasourceByNameOKBody](#delete-datasource-by-name-o-k-body)
+[DeleteDataSourceByNameOKBody](#delete-data-source-by-name-o-k-body)
 
-##### <span id="delete-datasource-by-name-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="delete-data-source-by-name-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="delete-datasource-by-name-401-schema"></span> Schema
+###### <span id="delete-data-source-by-name-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-datasource-by-name-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="delete-data-source-by-name-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="delete-datasource-by-name-403-schema"></span> Schema
+###### <span id="delete-data-source-by-name-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-datasource-by-name-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="delete-data-source-by-name-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="delete-datasource-by-name-404-schema"></span> Schema
+###### <span id="delete-data-source-by-name-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-datasource-by-name-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="delete-data-source-by-name-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="delete-datasource-by-name-500-schema"></span> Schema
+###### <span id="delete-data-source-by-name-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ###### Inlined models
 
-**<span id="delete-datasource-by-name-o-k-body"></span> DeleteDatasourceByNameOKBody**
+**<span id="delete-data-source-by-name-o-k-body"></span> DeleteDataSourceByNameOKBody**
 
 **Properties**
 
@@ -4702,7 +5849,7 @@ Status: Internal Server Error
 | id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted data source. | `65`                             |
 | message | string                    | `string` |    ✓     |         | Message Message of the deleted dashboard. | `Dashboard My Dashboard deleted` |
 
-### <span id="delete-datasource-by-uid"></span> Delete an existing data source by UID. (_deleteDatasourceByUID_)
+### <span id="delete-data-source-by-uid"></span> Delete an existing data source by UID. (_deleteDataSourceByUID_)
 
 ```
 DELETE /api/datasources/uid/{uid}
@@ -4719,53 +5866,53 @@ you need to have a permission with action: `datasources:delete` and scopes: `dat
 
 #### All responses
 
-| Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
-| ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
-| [200](#delete-datasource-by-uid-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-datasource-by-uid-200-schema) |
-| [401](#delete-datasource-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-datasource-by-uid-401-schema) |
-| [403](#delete-datasource-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-datasource-by-uid-403-schema) |
-| [404](#delete-datasource-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-datasource-by-uid-404-schema) |
-| [500](#delete-datasource-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-datasource-by-uid-500-schema) |
+| Code                                  | Status                | Description                                                                                                 | Has headers | Schema                                          |
+| ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------- |
+| [200](#delete-data-source-by-uid-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-data-source-by-uid-200-schema) |
+| [401](#delete-data-source-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-data-source-by-uid-401-schema) |
+| [403](#delete-data-source-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-data-source-by-uid-403-schema) |
+| [404](#delete-data-source-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-data-source-by-uid-404-schema) |
+| [500](#delete-data-source-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-data-source-by-uid-500-schema) |
 
 #### Responses
 
-##### <span id="delete-datasource-by-uid-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="delete-data-source-by-uid-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="delete-datasource-by-uid-200-schema"></span> Schema
+###### <span id="delete-data-source-by-uid-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="delete-datasource-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="delete-data-source-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="delete-datasource-by-uid-401-schema"></span> Schema
+###### <span id="delete-data-source-by-uid-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-datasource-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="delete-data-source-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="delete-datasource-by-uid-403-schema"></span> Schema
+###### <span id="delete-data-source-by-uid-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-datasource-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="delete-data-source-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="delete-datasource-by-uid-404-schema"></span> Schema
+###### <span id="delete-data-source-by-uid-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-datasource-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="delete-data-source-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="delete-datasource-by-uid-500-schema"></span> Schema
+###### <span id="delete-data-source-by-uid-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -4789,7 +5936,7 @@ Deletes an existing folder identified by UID along with all dashboards (and thei
 
 | Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
 | ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#delete-folder-200) | OK                    |                                                                                                             |             | [schema](#delete-folder-200-schema) |
+| [200](#delete-folder-200) | OK                    | (empty)                                                                                                     |             | [schema](#delete-folder-200-schema) |
 | [400](#delete-folder-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#delete-folder-400-schema) |
 | [401](#delete-folder-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-folder-401-schema) |
 | [403](#delete-folder-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-folder-403-schema) |
@@ -4798,7 +5945,7 @@ Deletes an existing folder identified by UID along with all dashboards (and thei
 
 #### Responses
 
-##### <span id="delete-folder-200"></span> 200
+##### <span id="delete-folder-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -5011,70 +6158,80 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="delete-org-user"></span> Delete user in current organization (_deleteOrgUser_)
+### <span id="delete-org-by-id"></span> Delete Organization. (_deleteOrgByID_)
 
 ```
-DELETE /api/org/users/{user_id}
+DELETE /api/orgs/{org_id}
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `org.users:remove` with scope `users:*`.
+#### Security Requirements
+
+- basic
 
 #### Parameters
 
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name   | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------ | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| org_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
-| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#delete-org-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-org-user-200-schema) |
-| [400](#delete-org-user-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#delete-org-user-400-schema) |
-| [401](#delete-org-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-org-user-401-schema) |
-| [403](#delete-org-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-org-user-403-schema) |
-| [500](#delete-org-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-org-user-500-schema) |
+| Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
+| ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
+| [200](#delete-org-by-id-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-org-by-id-200-schema) |
+| [400](#delete-org-by-id-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#delete-org-by-id-400-schema) |
+| [401](#delete-org-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-org-by-id-401-schema) |
+| [403](#delete-org-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-org-by-id-403-schema) |
+| [404](#delete-org-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-org-by-id-404-schema) |
+| [500](#delete-org-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-org-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="delete-org-user-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="delete-org-by-id-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="delete-org-user-200-schema"></span> Schema
+###### <span id="delete-org-by-id-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="delete-org-user-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="delete-org-by-id-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="delete-org-user-400-schema"></span> Schema
+###### <span id="delete-org-by-id-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-org-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="delete-org-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="delete-org-user-401-schema"></span> Schema
+###### <span id="delete-org-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-org-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="delete-org-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="delete-org-user-403-schema"></span> Schema
+###### <span id="delete-org-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-org-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="delete-org-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="delete-org-by-id-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-org-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="delete-org-user-500-schema"></span> Schema
+###### <span id="delete-org-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -5097,13 +6254,12 @@ You need to have a permission with action `datasources.permissions:delete` and s
 
 #### All responses
 
-| Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
-| ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
-| [200](#delete-permissions-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-permissions-200-schema) |
-| [401](#delete-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-permissions-401-schema) |
-| [403](#delete-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-permissions-403-schema) |
-| [404](#delete-permissions-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-permissions-404-schema) |
-| [500](#delete-permissions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-permissions-500-schema) |
+| Code                           | Status       | Description                                                                                                 | Has headers | Schema                                   |
+| ------------------------------ | ------------ | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
+| [200](#delete-permissions-200) | OK           | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-permissions-200-schema) |
+| [401](#delete-permissions-401) | Unauthorized | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-permissions-401-schema) |
+| [403](#delete-permissions-403) | Forbidden    | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-permissions-403-schema) |
+| [404](#delete-permissions-404) | Not Found    | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-permissions-404-schema) |
 
 #### Responses
 
@@ -5139,11 +6295,67 @@ Status: Not Found
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-permissions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+### <span id="delete-playlist"></span> Delete playlist. (_deletePlaylist_)
+
+```
+DELETE /api/playlists/{uid}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
+| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
+| [200](#delete-playlist-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-playlist-200-schema) |
+| [401](#delete-playlist-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-playlist-401-schema) |
+| [403](#delete-playlist-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-playlist-403-schema) |
+| [404](#delete-playlist-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-playlist-404-schema) |
+| [500](#delete-playlist-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-playlist-500-schema) |
+
+#### Responses
+
+##### <span id="delete-playlist-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="delete-playlist-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="delete-playlist-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="delete-playlist-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-playlist-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="delete-playlist-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-playlist-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="delete-playlist-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-playlist-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="delete-permissions-500-schema"></span> Schema
+###### <span id="delete-playlist-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -5165,13 +6377,13 @@ Deletes an existing query in query history as specified by the UID. This operati
 
 | Code                     | Status                | Description                                                                        | Has headers | Schema                             |
 | ------------------------ | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
-| [200](#delete-query-200) | OK                    |                                                                                    |             | [schema](#delete-query-200-schema) |
+| [200](#delete-query-200) | OK                    | (empty)                                                                            |             | [schema](#delete-query-200-schema) |
 | [401](#delete-query-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#delete-query-401-schema) |
 | [500](#delete-query-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#delete-query-500-schema) |
 
 #### Responses
 
-##### <span id="delete-query-200"></span> 200
+##### <span id="delete-query-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -5195,7 +6407,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="delete-recording-rule"></span> Delete a recording rule. (_deleteRecordingRule_)
+### <span id="delete-recording-rule"></span> Delete removes the rule from the registry and stops it. (_deleteRecordingRule_)
 
 ```
 DELETE /api/recording-rules/{recordingRuleID}
@@ -5259,7 +6471,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="delete-recording-rule-write-target"></span> Delete the write target. (_deleteRecordingRuleWriteTarget_)
+### <span id="delete-recording-rule-write-target"></span> Delete the remote write target. (_deleteRecordingRuleWriteTarget_)
 
 ```
 DELETE /api/recording-rules/writer
@@ -5320,7 +6532,7 @@ Status: Internal Server Error
 ### <span id="delete-report"></span> Delete a report. (_deleteReport_)
 
 ```
-DELETE /api/reports/{reportID}
+DELETE /api/reports/{id}
 ```
 
 Available to org admins only and with a valid or expired license
@@ -5329,9 +6541,9 @@ You need to have a permission with action `reports.delete` with scope `reports:i
 
 #### Parameters
 
-| Name     | Source | Type                      | Go type | Separator | Required | Default | Description |
-| -------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| reportID | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| id   | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -5394,124 +6606,70 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="delete-snapshot-by-delete-key"></span> Delete Snapshot by deleteKey. (_deleteSnapshotByDeleteKey_)
+### <span id="delete-service-account"></span> Delete service account (_deleteServiceAccount_)
 
 ```
-GET /api/snapshots-delete/{deleteKey}
+DELETE /api/serviceaccounts/{serviceAccountId}
 ```
 
-Snapshot public mode should be enabled or authentication is required.
+Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+action: `serviceaccounts:delete` scope: `serviceaccounts:id:1` (single service account)
 
 #### Parameters
 
-| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| deleteKey | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                      | Status                | Description                                                                                                 | Has headers | Schema                                              |
-| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
-| [200](#delete-snapshot-by-delete-key-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-snapshot-by-delete-key-200-schema) |
-| [401](#delete-snapshot-by-delete-key-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-snapshot-by-delete-key-401-schema) |
-| [403](#delete-snapshot-by-delete-key-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-snapshot-by-delete-key-403-schema) |
-| [404](#delete-snapshot-by-delete-key-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-snapshot-by-delete-key-404-schema) |
-| [500](#delete-snapshot-by-delete-key-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-snapshot-by-delete-key-500-schema) |
-
-#### Responses
-
-##### <span id="delete-snapshot-by-delete-key-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="delete-snapshot-by-delete-key-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="delete-snapshot-by-delete-key-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="delete-snapshot-by-delete-key-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="delete-snapshot-by-delete-key-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="delete-snapshot-by-delete-key-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="delete-snapshot-by-delete-key-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="delete-snapshot-by-delete-key-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="delete-snapshot-by-delete-key-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="delete-snapshot-by-delete-key-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="delete-snapshot-by-key"></span> Delete Snapshot by Key. (_deleteSnapshotByKey_)
-
-```
-DELETE /api/snapshots/{key}
-```
-
-#### Parameters
-
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| key  | `path` | string | `string` |           |    ✓     |         |             |
+| Name             | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ---------------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| serviceAccountId | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
 | Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
 | ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
-| [200](#delete-snapshot-by-key-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-snapshot-by-key-200-schema) |
-| [403](#delete-snapshot-by-key-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-snapshot-by-key-403-schema) |
-| [404](#delete-snapshot-by-key-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-snapshot-by-key-404-schema) |
-| [500](#delete-snapshot-by-key-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-snapshot-by-key-500-schema) |
+| [200](#delete-service-account-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-service-account-200-schema) |
+| [400](#delete-service-account-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#delete-service-account-400-schema) |
+| [401](#delete-service-account-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-service-account-401-schema) |
+| [403](#delete-service-account-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-service-account-403-schema) |
+| [500](#delete-service-account-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-service-account-500-schema) |
 
 #### Responses
 
-##### <span id="delete-snapshot-by-key-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="delete-service-account-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="delete-snapshot-by-key-200-schema"></span> Schema
+###### <span id="delete-service-account-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="delete-snapshot-by-key-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="delete-service-account-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="delete-service-account-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-service-account-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="delete-service-account-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-service-account-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="delete-snapshot-by-key-403-schema"></span> Schema
+###### <span id="delete-service-account-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-snapshot-by-key-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="delete-snapshot-by-key-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="delete-snapshot-by-key-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="delete-service-account-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="delete-snapshot-by-key-500-schema"></span> Schema
+###### <span id="delete-service-account-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -5579,73 +6737,82 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="delete-user"></span> Delete global User. (_deleteUser_)
+### <span id="delete-token"></span> DeleteToken deletes service account tokens (_deleteToken_)
 
 ```
-DELETE /api/admin/users/{user_id}
+DELETE /api/serviceaccounts/{serviceAccountId}/tokens/{tokenId}
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global.users:*`.
+Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
 
-#### Security Requirements
-
-- basic
+Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 #### Parameters
 
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name             | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ---------------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| serviceAccountId | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| tokenId          | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
-| ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#delete-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-user-200-schema) |
-| [401](#delete-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-user-401-schema) |
-| [403](#delete-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-user-403-schema) |
-| [404](#delete-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-user-404-schema) |
-| [500](#delete-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-user-500-schema) |
+| Code                     | Status                | Description                                                                                                 | Has headers | Schema                             |
+| ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
+| [200](#delete-token-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#delete-token-200-schema) |
+| [400](#delete-token-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#delete-token-400-schema) |
+| [401](#delete-token-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#delete-token-401-schema) |
+| [403](#delete-token-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#delete-token-403-schema) |
+| [404](#delete-token-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#delete-token-404-schema) |
+| [500](#delete-token-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#delete-token-500-schema) |
 
 #### Responses
 
-##### <span id="delete-user-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="delete-token-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="delete-user-200-schema"></span> Schema
+###### <span id="delete-token-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="delete-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="delete-token-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="delete-token-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-token-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="delete-user-401-schema"></span> Schema
+###### <span id="delete-token-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="delete-token-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="delete-user-403-schema"></span> Schema
+###### <span id="delete-token-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-user-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="delete-token-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="delete-user-404-schema"></span> Schema
+###### <span id="delete-token-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="delete-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="delete-token-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="delete-user-500-schema"></span> Schema
+###### <span id="delete-token-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -5669,7 +6836,7 @@ You need to have a permission with action `datasources.permissions:toggle` and s
 
 | Code                            | Status                | Description                                                                                                 | Has headers | Schema                                    |
 | ------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#disable-permissions-200) | OK                    |                                                                                                             |             | [schema](#disable-permissions-200-schema) |
+| [200](#disable-permissions-200) | OK                    | (empty)                                                                                                     |             | [schema](#disable-permissions-200-schema) |
 | [400](#disable-permissions-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#disable-permissions-400-schema) |
 | [401](#disable-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#disable-permissions-401-schema) |
 | [403](#disable-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#disable-permissions-403-schema) |
@@ -5678,7 +6845,7 @@ You need to have a permission with action `datasources.permissions:toggle` and s
 
 #### Responses
 
-##### <span id="disable-permissions-200"></span> 200
+##### <span id="disable-permissions-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -5739,76 +6906,6 @@ Status: Internal Server Error
 | message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
 | name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 
-### <span id="disable-user"></span> Disable user. (_disableUser_)
-
-```
-POST /api/admin/users/{user_id}/disable
-```
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global.users:1` (userIDScope).
-
-#### Security Requirements
-
-- basic
-
-#### Parameters
-
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                     | Status                | Description                                                                                                 | Has headers | Schema                             |
-| ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
-| [200](#disable-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#disable-user-200-schema) |
-| [401](#disable-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#disable-user-401-schema) |
-| [403](#disable-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#disable-user-403-schema) |
-| [404](#disable-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#disable-user-404-schema) |
-| [500](#disable-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#disable-user-500-schema) |
-
-#### Responses
-
-##### <span id="disable-user-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="disable-user-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="disable-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="disable-user-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="disable-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="disable-user-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="disable-user-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="disable-user-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="disable-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="disable-user-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
 ### <span id="enable-permissions"></span> Enable permissions for a data source. (_enablePermissions_)
 
 ```
@@ -5831,7 +6928,7 @@ You need to have a permission with action `datasources.permissions:toggle` and s
 
 | Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
 | ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
-| [200](#enable-permissions-200) | OK                    |                                                                                                             |             | [schema](#enable-permissions-200-schema) |
+| [200](#enable-permissions-200) | OK                    | (empty)                                                                                                     |             | [schema](#enable-permissions-200-schema) |
 | [400](#enable-permissions-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#enable-permissions-400-schema) |
 | [401](#enable-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#enable-permissions-401-schema) |
 | [403](#enable-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#enable-permissions-403-schema) |
@@ -5840,7 +6937,7 @@ You need to have a permission with action `datasources.permissions:toggle` and s
 
 #### Responses
 
-##### <span id="enable-permissions-200"></span> 200
+##### <span id="enable-permissions-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -5901,226 +6998,6 @@ Status: Internal Server Error
 | message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
 | name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 
-### <span id="enable-user"></span> Enable user. (_enableUser_)
-
-```
-POST /api/admin/users/{user_id}/enable
-```
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global.users:1` (userIDScope).
-
-#### Security Requirements
-
-- basic
-
-#### Parameters
-
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
-| ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#enable-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#enable-user-200-schema) |
-| [401](#enable-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#enable-user-401-schema) |
-| [403](#enable-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#enable-user-403-schema) |
-| [404](#enable-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#enable-user-404-schema) |
-| [500](#enable-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#enable-user-500-schema) |
-
-#### Responses
-
-##### <span id="enable-user-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="enable-user-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="enable-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="enable-user-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="enable-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="enable-user-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="enable-user-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="enable-user-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="enable-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="enable-user-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="fetch-datasource-resources"></span> Fetch data source resources. (_fetchDatasourceResources_)
-
-```
-GET /api/datasources/uid/{uid}/resources/{datasource_proxy_route}
-```
-
-#### Parameters
-
-| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
-| uid                    | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
-| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
-| [200](#fetch-datasource-resources-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#fetch-datasource-resources-200-schema) |
-| [400](#fetch-datasource-resources-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#fetch-datasource-resources-400-schema) |
-| [401](#fetch-datasource-resources-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#fetch-datasource-resources-401-schema) |
-| [403](#fetch-datasource-resources-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#fetch-datasource-resources-403-schema) |
-| [404](#fetch-datasource-resources-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#fetch-datasource-resources-404-schema) |
-| [500](#fetch-datasource-resources-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#fetch-datasource-resources-500-schema) |
-
-#### Responses
-
-##### <span id="fetch-datasource-resources-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="fetch-datasource-resources-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="fetch-datasource-resources-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="fetch-datasource-resources-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="fetch-datasource-resources-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="fetch-datasource-resources-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="fetch-datasource-resources-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="fetch-datasource-resources-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="fetch-datasource-resources-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="fetch-datasource-resources-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="fetch-datasource-resources-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="fetch-datasource-resources-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="fetch-datasource-resources-by-id"></span> Fetch data source resources by Id. (_fetchDatasourceResourcesByID_)
-
-```
-GET /api/datasources/{id}/resources/{datasource_proxy_route}
-```
-
-Please refer to [updated API](#/datasources/fetchDatasourceResources) instead
-
-#### Parameters
-
-| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
-| id                     | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                         | Status                | Description                                                                                                 | Has headers | Schema                                                 |
-| -------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------ |
-| [200](#fetch-datasource-resources-by-id-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#fetch-datasource-resources-by-id-200-schema) |
-| [400](#fetch-datasource-resources-by-id-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#fetch-datasource-resources-by-id-400-schema) |
-| [401](#fetch-datasource-resources-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#fetch-datasource-resources-by-id-401-schema) |
-| [403](#fetch-datasource-resources-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#fetch-datasource-resources-by-id-403-schema) |
-| [404](#fetch-datasource-resources-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#fetch-datasource-resources-by-id-404-schema) |
-| [500](#fetch-datasource-resources-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#fetch-datasource-resources-by-id-500-schema) |
-
-#### Responses
-
-##### <span id="fetch-datasource-resources-by-id-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="fetch-datasource-resources-by-id-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="fetch-datasource-resources-by-id-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="fetch-datasource-resources-by-id-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="fetch-datasource-resources-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="fetch-datasource-resources-by-id-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="fetch-datasource-resources-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="fetch-datasource-resources-by-id-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="fetch-datasource-resources-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="fetch-datasource-resources-by-id-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="fetch-datasource-resources-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="fetch-datasource-resources-by-id-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
 ### <span id="get-a-p-ikeys"></span> Get auth keys. (_getAPIkeys_)
 
 ```
@@ -6139,7 +7016,7 @@ Will return auth keys.
 
 | Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
 | ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#get-a-p-ikeys-200) | OK                    |                                                                                                             |             | [schema](#get-a-p-ikeys-200-schema) |
+| [200](#get-a-p-ikeys-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-a-p-ikeys-200-schema) |
 | [401](#get-a-p-ikeys-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-a-p-ikeys-401-schema) |
 | [403](#get-a-p-ikeys-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-a-p-ikeys-403-schema) |
 | [404](#get-a-p-ikeys-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-a-p-ikeys-404-schema) |
@@ -6147,7 +7024,7 @@ Will return auth keys.
 
 #### Responses
 
-##### <span id="get-a-p-ikeys-200"></span> 200
+##### <span id="get-a-p-ikeys-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6201,14 +7078,14 @@ You need to have a permission with action `status:accesscontrol` and scope `serv
 
 | Code                                  | Status                | Description                                                                                                 | Has headers | Schema                                          |
 | ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------- |
-| [200](#get-access-control-status-200) | OK                    |                                                                                                             |             | [schema](#get-access-control-status-200-schema) |
+| [200](#get-access-control-status-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-access-control-status-200-schema) |
 | [403](#get-access-control-status-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-access-control-status-403-schema) |
 | [404](#get-access-control-status-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-access-control-status-404-schema) |
 | [500](#get-access-control-status-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-access-control-status-500-schema) |
 
 #### Responses
 
-##### <span id="get-access-control-status-200"></span> 200
+##### <span id="get-access-control-status-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6259,19 +7136,19 @@ If data from one server triggers the alert first and, before that server is seen
 
 | Code                        | Status                | Description                                                                        | Has headers | Schema                                |
 | --------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#get-alert-by-id-200) | OK                    |                                                                                    |             | [schema](#get-alert-by-id-200-schema) |
+| [200](#get-alert-by-id-200) | OK                    | (empty)                                                                            |             | [schema](#get-alert-by-id-200-schema) |
 | [401](#get-alert-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-alert-by-id-401-schema) |
 | [500](#get-alert-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-alert-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="get-alert-by-id-200"></span> 200
+##### <span id="get-alert-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
 ###### <span id="get-alert-by-id-200-schema"></span> Schema
 
-[][alert](#alert)
+[LegacyAlert](#legacy-alert)
 
 ##### <span id="get-alert-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
@@ -6307,7 +7184,7 @@ Returns the notification channel given the notification channel ID.
 
 | Code                                             | Status                | Description                                                                                                 | Has headers | Schema                                                     |
 | ------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------------------- |
-| [200](#get-alert-notification-channel-by-id-200) | OK                    |                                                                                                             |             | [schema](#get-alert-notification-channel-by-id-200-schema) |
+| [200](#get-alert-notification-channel-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-alert-notification-channel-by-id-200-schema) |
 | [401](#get-alert-notification-channel-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-alert-notification-channel-by-id-401-schema) |
 | [403](#get-alert-notification-channel-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-alert-notification-channel-by-id-403-schema) |
 | [404](#get-alert-notification-channel-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-alert-notification-channel-by-id-404-schema) |
@@ -6315,7 +7192,7 @@ Returns the notification channel given the notification channel ID.
 
 #### Responses
 
-##### <span id="get-alert-notification-channel-by-id-200"></span> 200
+##### <span id="get-alert-notification-channel-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6373,7 +7250,7 @@ Returns the notification channel given the notification channel UID.
 
 | Code                                              | Status                | Description                                                                                                 | Has headers | Schema                                                      |
 | ------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------------- |
-| [200](#get-alert-notification-channel-by-uid-200) | OK                    |                                                                                                             |             | [schema](#get-alert-notification-channel-by-uid-200-schema) |
+| [200](#get-alert-notification-channel-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-alert-notification-channel-by-uid-200-schema) |
 | [401](#get-alert-notification-channel-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-alert-notification-channel-by-uid-401-schema) |
 | [403](#get-alert-notification-channel-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-alert-notification-channel-by-uid-403-schema) |
 | [404](#get-alert-notification-channel-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-alert-notification-channel-by-uid-404-schema) |
@@ -6381,7 +7258,7 @@ Returns the notification channel given the notification channel UID.
 
 #### Responses
 
-##### <span id="get-alert-notification-channel-by-uid-200"></span> 200
+##### <span id="get-alert-notification-channel-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6433,14 +7310,14 @@ Returns all notification channels that the authenticated user has permission to 
 
 | Code                                        | Status                | Description                                                                                                 | Has headers | Schema                                                |
 | ------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------- |
-| [200](#get-alert-notification-channels-200) | OK                    |                                                                                                             |             | [schema](#get-alert-notification-channels-200-schema) |
+| [200](#get-alert-notification-channels-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-alert-notification-channels-200-schema) |
 | [401](#get-alert-notification-channels-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-alert-notification-channels-401-schema) |
 | [403](#get-alert-notification-channels-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-alert-notification-channels-403-schema) |
 | [500](#get-alert-notification-channels-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-alert-notification-channels-500-schema) |
 
 #### Responses
 
-##### <span id="get-alert-notification-channels-200"></span> 200
+##### <span id="get-alert-notification-channels-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6472,6 +7349,57 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="get-alert-notification-lookup"></span> Get all notification channels (lookup) (_getAlertNotificationLookup_)
+
+```
+GET /api/alert-notifications/lookup
+```
+
+Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.
+
+#### All responses
+
+| Code                                      | Status                | Description                                                                                                 | Has headers | Schema                                              |
+| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
+| [200](#get-alert-notification-lookup-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-alert-notification-lookup-200-schema) |
+| [401](#get-alert-notification-lookup-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-alert-notification-lookup-401-schema) |
+| [403](#get-alert-notification-lookup-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-alert-notification-lookup-403-schema) |
+| [500](#get-alert-notification-lookup-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-alert-notification-lookup-500-schema) |
+
+#### Responses
+
+##### <span id="get-alert-notification-lookup-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-alert-notification-lookup-200-schema"></span> Schema
+
+[][alertnotificationlookup](#alert-notification-lookup)
+
+##### <span id="get-alert-notification-lookup-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-alert-notification-lookup-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-alert-notification-lookup-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-alert-notification-lookup-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-alert-notification-lookup-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-alert-notification-lookup-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="get-alerts"></span> Get legacy alerts. (_getAlerts_)
 
 ```
@@ -6495,13 +7423,13 @@ GET /api/alerts
 
 | Code                   | Status                | Description                                                                        | Has headers | Schema                           |
 | ---------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | -------------------------------- |
-| [200](#get-alerts-200) | OK                    |                                                                                    |             | [schema](#get-alerts-200-schema) |
+| [200](#get-alerts-200) | OK                    | (empty)                                                                            |             | [schema](#get-alerts-200-schema) |
 | [401](#get-alerts-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-alerts-401-schema) |
 | [500](#get-alerts-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-alerts-500-schema) |
 
 #### Responses
 
-##### <span id="get-alerts-200"></span> 200
+##### <span id="get-alerts-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6525,51 +7453,75 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-all-roles"></span> Get all roles. (_getAllRoles_)
+### <span id="get-all-permissions"></span> Get permissions for a data source. (_getAllPermissions_)
 
 ```
-GET /api/access-control/roles
+GET /api/datasources/{datasourceId}/permissions
 ```
 
-Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.
+Gets all existing permissions for the data source with the given id.
 
-You need to have a permission with action `roles:list` and scope `roles:*`.
+You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).
+
+#### Parameters
+
+| Name         | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ------------ | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasourceId | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
-| ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#get-all-roles-200) | OK                    |                                                                                                             |             | [schema](#get-all-roles-200-schema) |
-| [403](#get-all-roles-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-all-roles-403-schema) |
-| [500](#get-all-roles-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-all-roles-500-schema) |
+| Code                            | Status                | Description                                                                                                 | Has headers | Schema                                    |
+| ------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
+| [200](#get-all-permissions-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-all-permissions-200-schema) |
+| [401](#get-all-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-all-permissions-401-schema) |
+| [403](#get-all-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-all-permissions-403-schema) |
+| [404](#get-all-permissions-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-all-permissions-404-schema) |
+| [500](#get-all-permissions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-all-permissions-500-schema) |
 
 #### Responses
 
-##### <span id="get-all-roles-200"></span> 200
+##### <span id="get-all-permissions-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-all-roles-200-schema"></span> Schema
+###### <span id="get-all-permissions-200-schema"></span> Schema
 
-[][roledto](#role-d-t-o)
+[DataSourcePermissionsDTO](#data-source-permissions-d-t-o)
 
-##### <span id="get-all-roles-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-all-permissions-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-all-permissions-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-all-permissions-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-all-roles-403-schema"></span> Schema
+###### <span id="get-all-permissions-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-all-roles-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-all-permissions-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="get-all-permissions-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-all-permissions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-all-roles-500-schema"></span> Schema
+###### <span id="get-all-permissions-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-annotation"></span> Get Annotation by Id. (_getAnnotation_)
+### <span id="get-annotation-by-id"></span> Get Annotation by Id. (_getAnnotationByID_)
 
 ```
 GET /api/annotations/{annotation_id}
@@ -6583,35 +7535,35 @@ GET /api/annotations/{annotation_id}
 
 #### All responses
 
-| Code                       | Status                | Description                                                                        | Has headers | Schema                               |
-| -------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#get-annotation-200) | OK                    |                                                                                    |             | [schema](#get-annotation-200-schema) |
-| [401](#get-annotation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-annotation-401-schema) |
-| [500](#get-annotation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-annotation-500-schema) |
+| Code                             | Status                | Description                                                                        | Has headers | Schema                                     |
+| -------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
+| [200](#get-annotation-by-id-200) | OK                    | (empty)                                                                            |             | [schema](#get-annotation-by-id-200-schema) |
+| [401](#get-annotation-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-annotation-by-id-401-schema) |
+| [500](#get-annotation-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-annotation-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="get-annotation-200"></span> 200
+##### <span id="get-annotation-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-annotation-200-schema"></span> Schema
+###### <span id="get-annotation-by-id-200-schema"></span> Schema
 
 [ItemDTO](#item-d-t-o)
 
-##### <span id="get-annotation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-annotation-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-annotation-401-schema"></span> Schema
+###### <span id="get-annotation-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-annotation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-annotation-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-annotation-500-schema"></span> Schema
+###### <span id="get-annotation-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -6634,13 +7586,13 @@ Find all the event tags created in the annotations.
 
 | Code                            | Status                | Description                                                                        | Has headers | Schema                                    |
 | ------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#get-annotation-tags-200) | OK                    |                                                                                    |             | [schema](#get-annotation-tags-200-schema) |
+| [200](#get-annotation-tags-200) | OK                    | (empty)                                                                            |             | [schema](#get-annotation-tags-200-schema) |
 | [401](#get-annotation-tags-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-annotation-tags-401-schema) |
 | [500](#get-annotation-tags-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-annotation-tags-500-schema) |
 
 #### Responses
 
-##### <span id="get-annotation-tags-200"></span> 200
+##### <span id="get-annotation-tags-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6674,30 +7626,31 @@ Starting in Grafana v6.4 regions annotations are now returned in one entity that
 
 #### Parameters
 
-| Name        | Source  | Type                      | Go type    | Separator | Required | Default | Description                                                                                                                                                                                                        |
-| ----------- | ------- | ------------------------- | ---------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| alertId     | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations for a specified alert.                                                                                                                                                                            |
-| dashboardId | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations that are scoped to a specific dashboard                                                                                                                                                           |
-| from        | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations created after specific epoch datetime in milliseconds.                                                                                                                                            |
-| limit       | `query` | int64 (formatted integer) | `int64`    |           |          |         | Max limit for results returned.                                                                                                                                                                                    |
-| matchAny    | `query` | boolean                   | `bool`     |           |          |         | Match any or all tags                                                                                                                                                                                              |
-| panelId     | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations that are scoped to a specific panel                                                                                                                                                               |
-| tags        | `query` | []string                  | `[]string` | `multi`   |          |         | Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags. |
-| to          | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations created before specific epoch datetime in milliseconds.                                                                                                                                           |
-| type        | `query` | string                    | `string`   |           |          |         | Return alerts or user created annotations                                                                                                                                                                          |
-| userId      | `query` | int64 (formatted integer) | `int64`    |           |          |         | Limit response to annotations created by specific user.                                                                                                                                                            |
+| Name         | Source  | Type                      | Go type    | Separator | Required | Default | Description                                                                                                                                                                                                        |
+| ------------ | ------- | ------------------------- | ---------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| alertId      | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations for a specified alert.                                                                                                                                                                            |
+| dashboardId  | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations that are scoped to a specific dashboard                                                                                                                                                           |
+| dashboardUID | `query` | string                    | `string`   |           |          |         | Find annotations that are scoped to a specific dashboard                                                                                                                                                           |
+| from         | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations created after specific epoch datetime in milliseconds.                                                                                                                                            |
+| limit        | `query` | int64 (formatted integer) | `int64`    |           |          |         | Max limit for results returned.                                                                                                                                                                                    |
+| matchAny     | `query` | boolean                   | `bool`     |           |          |         | Match any or all tags                                                                                                                                                                                              |
+| panelId      | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations that are scoped to a specific panel                                                                                                                                                               |
+| tags         | `query` | []string                  | `[]string` | `multi`   |          |         | Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags. |
+| to           | `query` | int64 (formatted integer) | `int64`    |           |          |         | Find annotations created before specific epoch datetime in milliseconds.                                                                                                                                           |
+| type         | `query` | string                    | `string`   |           |          |         | Return alerts or user created annotations                                                                                                                                                                          |
+| userId       | `query` | int64 (formatted integer) | `int64`    |           |          |         | Limit response to annotations created by specific user.                                                                                                                                                            |
 
 #### All responses
 
 | Code                        | Status                | Description                                                                        | Has headers | Schema                                |
 | --------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#get-annotations-200) | OK                    |                                                                                    |             | [schema](#get-annotations-200-schema) |
+| [200](#get-annotations-200) | OK                    | (empty)                                                                            |             | [schema](#get-annotations-200-schema) |
 | [401](#get-annotations-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-annotations-401-schema) |
 | [500](#get-annotations-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-annotations-500-schema) |
 
 #### Responses
 
-##### <span id="get-annotations-200"></span> 200
+##### <span id="get-annotations-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6721,64 +7674,54 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-auth-tokens"></span> Return a list of all auth tokens (devices) that the user currently have logged in from. (_getAuthTokens_)
+### <span id="get-current-org"></span> getCurrentOrg (_getCurrentOrg_)
 
 ```
-GET /api/admin/users/{user_id}/auth-tokens
+GET /api/org
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global.users:*`.
-
-#### Security Requirements
-
-- basic
-
-#### Parameters
-
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+Get current Organization
 
 #### All responses
 
 | Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
 | --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#get-auth-tokens-200) | OK                    |                                                                                                             |             | [schema](#get-auth-tokens-200-schema) |
-| [401](#get-auth-tokens-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-auth-tokens-401-schema) |
-| [403](#get-auth-tokens-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-auth-tokens-403-schema) |
-| [500](#get-auth-tokens-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-auth-tokens-500-schema) |
+| [200](#get-current-org-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-current-org-200-schema) |
+| [401](#get-current-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-current-org-401-schema) |
+| [403](#get-current-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-current-org-403-schema) |
+| [500](#get-current-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-current-org-500-schema) |
 
 #### Responses
 
-##### <span id="get-auth-tokens-200"></span> 200
+##### <span id="get-current-org-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-auth-tokens-200-schema"></span> Schema
+###### <span id="get-current-org-200-schema"></span> Schema
 
-[][usertoken](#user-token)
+[OrgDetailsDTO](#org-details-d-t-o)
 
-##### <span id="get-auth-tokens-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-current-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-auth-tokens-401-schema"></span> Schema
+###### <span id="get-current-org-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-auth-tokens-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-current-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-auth-tokens-403-schema"></span> Schema
+###### <span id="get-current-org-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-auth-tokens-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-current-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-auth-tokens-500-schema"></span> Schema
+###### <span id="get-current-org-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -6798,12 +7741,12 @@ You need to have a permission with action `licensing.reports:read`.
 
 | Code                                     | Status                | Description                                                                        | Has headers | Schema                                             |
 | ---------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | -------------------------------------------------- |
-| [200](#get-custom-permissions-c-s-v-200) | OK                    |                                                                                    |             | [schema](#get-custom-permissions-c-s-v-200-schema) |
+| [200](#get-custom-permissions-c-s-v-200) | OK                    | (empty)                                                                            |             | [schema](#get-custom-permissions-c-s-v-200-schema) |
 | [500](#get-custom-permissions-c-s-v-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-custom-permissions-c-s-v-500-schema) |
 
 #### Responses
 
-##### <span id="get-custom-permissions-c-s-v-200"></span> 200
+##### <span id="get-custom-permissions-c-s-v-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6831,12 +7774,12 @@ You need to have a permission with action `licensing.reports:read`.
 
 | Code                                      | Status                | Description                                                                        | Has headers | Schema                                              |
 | ----------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
-| [200](#get-custom-permissions-report-200) | OK                    |                                                                                    |             | [schema](#get-custom-permissions-report-200-schema) |
+| [200](#get-custom-permissions-report-200) | OK                    | (empty)                                                                            |             | [schema](#get-custom-permissions-report-200-schema) |
 | [500](#get-custom-permissions-report-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-custom-permissions-report-500-schema) |
 
 #### Responses
 
-##### <span id="get-custom-permissions-report-200"></span> 200
+##### <span id="get-custom-permissions-report-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6870,7 +7813,7 @@ Will return the dashboard given the dashboard unique identifier (uid).
 
 | Code                             | Status                | Description                                                                                                 | Has headers | Schema                                     |
 | -------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
-| [200](#get-dashboard-by-uid-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-by-uid-200-schema) |
+| [200](#get-dashboard-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-dashboard-by-uid-200-schema) |
 | [401](#get-dashboard-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-by-uid-401-schema) |
 | [403](#get-dashboard-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-by-uid-403-schema) |
 | [404](#get-dashboard-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-by-uid-404-schema) |
@@ -6878,7 +7821,7 @@ Will return the dashboard given the dashboard unique identifier (uid).
 
 #### Responses
 
-##### <span id="get-dashboard-by-uid-200"></span> 200
+##### <span id="get-dashboard-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -6918,13 +7861,13 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-dashboard-permissions"></span> Gets all existing permissions for the given dashboard. (_getDashboardPermissions_)
+### <span id="get-dashboard-permissions-list-by-id"></span> Gets all existing permissions for the given dashboard. (_getDashboardPermissionsListByID_)
 
 ```
 GET /api/dashboards/id/{DashboardID}/permissions
 ```
 
-Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWithUid) instead
+Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsListByUID) instead
 
 #### Parameters
 
@@ -6934,57 +7877,57 @@ Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWit
 
 #### All responses
 
-| Code                                  | Status                | Description                                                                                                 | Has headers | Schema                                          |
-| ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------- |
-| [200](#get-dashboard-permissions-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-permissions-200-schema) |
-| [401](#get-dashboard-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-permissions-401-schema) |
-| [403](#get-dashboard-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-permissions-403-schema) |
-| [404](#get-dashboard-permissions-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-permissions-404-schema) |
-| [500](#get-dashboard-permissions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-permissions-500-schema) |
+| Code                                             | Status                | Description                                                                                                 | Has headers | Schema                                                     |
+| ------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------------------- |
+| [200](#get-dashboard-permissions-list-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-dashboard-permissions-list-by-id-200-schema) |
+| [401](#get-dashboard-permissions-list-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-permissions-list-by-id-401-schema) |
+| [403](#get-dashboard-permissions-list-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-permissions-list-by-id-403-schema) |
+| [404](#get-dashboard-permissions-list-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-permissions-list-by-id-404-schema) |
+| [500](#get-dashboard-permissions-list-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-permissions-list-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="get-dashboard-permissions-200"></span> 200
+##### <span id="get-dashboard-permissions-list-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-dashboard-permissions-200-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-id-200-schema"></span> Schema
 
 [][dashboardaclinfodto](#dashboard-acl-info-d-t-o)
 
-##### <span id="get-dashboard-permissions-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-dashboard-permissions-list-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-dashboard-permissions-401-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-permissions-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-dashboard-permissions-list-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-dashboard-permissions-403-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-permissions-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="get-dashboard-permissions-list-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="get-dashboard-permissions-404-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-id-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-permissions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-dashboard-permissions-list-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-dashboard-permissions-500-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-dashboard-permissions-with-uid"></span> Gets all existing permissions for the given dashboard. (_getDashboardPermissionsWithUid_)
+### <span id="get-dashboard-permissions-list-by-uid"></span> Gets all existing permissions for the given dashboard. (_getDashboardPermissionsListByUID_)
 
 ```
 GET /api/dashboards/uid/{uid}/permissions
@@ -6998,53 +7941,106 @@ GET /api/dashboards/uid/{uid}/permissions
 
 #### All responses
 
-| Code                                           | Status                | Description                                                                                                 | Has headers | Schema                                                   |
-| ---------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------------- |
-| [200](#get-dashboard-permissions-with-uid-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-permissions-with-uid-200-schema) |
-| [401](#get-dashboard-permissions-with-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-permissions-with-uid-401-schema) |
-| [403](#get-dashboard-permissions-with-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-permissions-with-uid-403-schema) |
-| [404](#get-dashboard-permissions-with-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-permissions-with-uid-404-schema) |
-| [500](#get-dashboard-permissions-with-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-permissions-with-uid-500-schema) |
+| Code                                              | Status                | Description                                                                                                 | Has headers | Schema                                                      |
+| ------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------------- |
+| [200](#get-dashboard-permissions-list-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-dashboard-permissions-list-by-uid-200-schema) |
+| [401](#get-dashboard-permissions-list-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-permissions-list-by-uid-401-schema) |
+| [403](#get-dashboard-permissions-list-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-permissions-list-by-uid-403-schema) |
+| [404](#get-dashboard-permissions-list-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-permissions-list-by-uid-404-schema) |
+| [500](#get-dashboard-permissions-list-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-permissions-list-by-uid-500-schema) |
 
 #### Responses
 
-##### <span id="get-dashboard-permissions-with-uid-200"></span> 200
+##### <span id="get-dashboard-permissions-list-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-dashboard-permissions-with-uid-200-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-uid-200-schema"></span> Schema
 
 [][dashboardaclinfodto](#dashboard-acl-info-d-t-o)
 
-##### <span id="get-dashboard-permissions-with-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-dashboard-permissions-list-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-dashboard-permissions-with-uid-401-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-uid-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-permissions-with-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-dashboard-permissions-list-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-dashboard-permissions-with-uid-403-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-uid-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-permissions-with-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="get-dashboard-permissions-list-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="get-dashboard-permissions-with-uid-404-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-uid-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-permissions-with-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-dashboard-permissions-list-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-dashboard-permissions-with-uid-500-schema"></span> Schema
+###### <span id="get-dashboard-permissions-list-by-uid-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="get-dashboard-snapshot"></span> Get Snapshot by Key. (_getDashboardSnapshot_)
+
+```
+GET /api/snapshots/{key}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| key  | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                               | Status                | Description                                                                         | Has headers | Schema                                       |
+| ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
+| [200](#get-dashboard-snapshot-200) | OK                    | (empty)                                                                             |             | [schema](#get-dashboard-snapshot-200-schema) |
+| [400](#get-dashboard-snapshot-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#get-dashboard-snapshot-400-schema) |
+| [404](#get-dashboard-snapshot-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                |             | [schema](#get-dashboard-snapshot-404-schema) |
+| [500](#get-dashboard-snapshot-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#get-dashboard-snapshot-500-schema) |
+
+#### Responses
+
+##### <span id="get-dashboard-snapshot-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-dashboard-snapshot-200-schema"></span> Schema
+
+##### <span id="get-dashboard-snapshot-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="get-dashboard-snapshot-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-snapshot-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="get-dashboard-snapshot-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-snapshot-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-dashboard-snapshot-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -7064,13 +8060,13 @@ GET /api/alerts/states-for-dashboard
 
 | Code                             | Status                | Description                                                                         | Has headers | Schema                                     |
 | -------------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
-| [200](#get-dashboard-states-200) | OK                    |                                                                                     |             | [schema](#get-dashboard-states-200-schema) |
+| [200](#get-dashboard-states-200) | OK                    | (empty)                                                                             |             | [schema](#get-dashboard-states-200-schema) |
 | [400](#get-dashboard-states-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#get-dashboard-states-400-schema) |
 | [500](#get-dashboard-states-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#get-dashboard-states-500-schema) |
 
 #### Responses
 
-##### <span id="get-dashboard-states-200"></span> 200
+##### <span id="get-dashboard-states-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -7104,13 +8100,13 @@ GET /api/dashboards/tags
 
 | Code                           | Status                | Description                                                                        | Has headers | Schema                                   |
 | ------------------------------ | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
-| [200](#get-dashboard-tags-200) | OK                    |                                                                                    |             | [schema](#get-dashboard-tags-200-schema) |
+| [200](#get-dashboard-tags-200) | OK                    | (empty)                                                                            |             | [schema](#get-dashboard-tags-200-schema) |
 | [401](#get-dashboard-tags-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-dashboard-tags-401-schema) |
 | [500](#get-dashboard-tags-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-dashboard-tags-500-schema) |
 
 #### Responses
 
-##### <span id="get-dashboard-tags-200"></span> 200
+##### <span id="get-dashboard-tags-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -7134,7 +8130,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-dashboard-version"></span> Get a specific dashboard version. (_getDashboardVersion_)
+### <span id="get-dashboard-version-by-id"></span> Get a specific dashboard version. (_getDashboardVersionByID_)
 
 ```
 GET /api/dashboards/id/{DashboardID}/versions/{DashboardVersionID}
@@ -7151,53 +8147,53 @@ Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) ins
 
 #### All responses
 
-| Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
-| --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
-| [200](#get-dashboard-version-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-version-200-schema) |
-| [401](#get-dashboard-version-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-version-401-schema) |
-| [403](#get-dashboard-version-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-version-403-schema) |
-| [404](#get-dashboard-version-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-version-404-schema) |
-| [500](#get-dashboard-version-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-version-500-schema) |
+| Code                                    | Status                | Description                                                                                                 | Has headers | Schema                                            |
+| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------- |
+| [200](#get-dashboard-version-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-dashboard-version-by-id-200-schema) |
+| [401](#get-dashboard-version-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-version-by-id-401-schema) |
+| [403](#get-dashboard-version-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-version-by-id-403-schema) |
+| [404](#get-dashboard-version-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-version-by-id-404-schema) |
+| [500](#get-dashboard-version-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-version-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="get-dashboard-version-200"></span> 200
+##### <span id="get-dashboard-version-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-dashboard-version-200-schema"></span> Schema
+###### <span id="get-dashboard-version-by-id-200-schema"></span> Schema
 
 [DashboardVersionMeta](#dashboard-version-meta)
 
-##### <span id="get-dashboard-version-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-dashboard-version-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-dashboard-version-401-schema"></span> Schema
+###### <span id="get-dashboard-version-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-version-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-dashboard-version-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-dashboard-version-403-schema"></span> Schema
+###### <span id="get-dashboard-version-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-version-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="get-dashboard-version-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="get-dashboard-version-404-schema"></span> Schema
+###### <span id="get-dashboard-version-by-id-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-version-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-dashboard-version-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-dashboard-version-500-schema"></span> Schema
+###### <span id="get-dashboard-version-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -7218,7 +8214,7 @@ GET /api/dashboards/uid/{uid}/versions/{DashboardVersionID}
 
 | Code                                     | Status                | Description                                                                                                 | Has headers | Schema                                             |
 | ---------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------- |
-| [200](#get-dashboard-version-by-uid-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-version-by-uid-200-schema) |
+| [200](#get-dashboard-version-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-dashboard-version-by-uid-200-schema) |
 | [401](#get-dashboard-version-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-version-by-uid-401-schema) |
 | [403](#get-dashboard-version-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-version-by-uid-403-schema) |
 | [404](#get-dashboard-version-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-version-by-uid-404-schema) |
@@ -7226,7 +8222,7 @@ GET /api/dashboards/uid/{uid}/versions/{DashboardVersionID}
 
 #### Responses
 
-##### <span id="get-dashboard-version-by-uid-200"></span> 200
+##### <span id="get-dashboard-version-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -7266,7 +8262,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-dashboard-versions"></span> Gets all existing versions for the dashboard. (_getDashboardVersions_)
+### <span id="get-dashboard-versions-by-id"></span> Gets all existing versions for the dashboard. (_getDashboardVersionsByID_)
 
 ```
 GET /api/dashboards/id/{DashboardID}/versions
@@ -7276,61 +8272,59 @@ Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) in
 
 #### Parameters
 
-| Name        | Source  | Type                      | Go type | Separator | Required | Default | Description                                  |
-| ----------- | ------- | ------------------------- | ------- | --------- | :------: | ------- | -------------------------------------------- |
-| DashboardID | `path`  | int64 (formatted integer) | `int64` |           |    ✓     |         |                                              |
-| limit       | `query` | int64 (formatted integer) | `int64` |           |          |         | Maximum number of results to return          |
-| start       | `query` | int64 (formatted integer) | `int64` |           |          |         | Version to start from when returning queries |
+| Name        | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ----------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| DashboardID | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
-| ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
-| [200](#get-dashboard-versions-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-versions-200-schema) |
-| [401](#get-dashboard-versions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-versions-401-schema) |
-| [403](#get-dashboard-versions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-versions-403-schema) |
-| [404](#get-dashboard-versions-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-versions-404-schema) |
-| [500](#get-dashboard-versions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-versions-500-schema) |
+| Code                                     | Status                | Description                                                                                                 | Has headers | Schema                                             |
+| ---------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------- |
+| [200](#get-dashboard-versions-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-dashboard-versions-by-id-200-schema) |
+| [401](#get-dashboard-versions-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-versions-by-id-401-schema) |
+| [403](#get-dashboard-versions-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-versions-by-id-403-schema) |
+| [404](#get-dashboard-versions-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-versions-by-id-404-schema) |
+| [500](#get-dashboard-versions-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-versions-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="get-dashboard-versions-200"></span> 200
+##### <span id="get-dashboard-versions-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-dashboard-versions-200-schema"></span> Schema
+###### <span id="get-dashboard-versions-by-id-200-schema"></span> Schema
 
 [][dashboardversiondto](#dashboard-version-d-t-o)
 
-##### <span id="get-dashboard-versions-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-dashboard-versions-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-dashboard-versions-401-schema"></span> Schema
+###### <span id="get-dashboard-versions-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-versions-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-dashboard-versions-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-dashboard-versions-403-schema"></span> Schema
+###### <span id="get-dashboard-versions-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-versions-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="get-dashboard-versions-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="get-dashboard-versions-404-schema"></span> Schema
+###### <span id="get-dashboard-versions-by-id-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-dashboard-versions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-dashboard-versions-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-dashboard-versions-500-schema"></span> Schema
+###### <span id="get-dashboard-versions-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -7352,7 +8346,7 @@ GET /api/dashboards/uid/{uid}/versions
 
 | Code                                      | Status                | Description                                                                                                 | Has headers | Schema                                              |
 | ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
-| [200](#get-dashboard-versions-by-uid-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-versions-by-uid-200-schema) |
+| [200](#get-dashboard-versions-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-dashboard-versions-by-uid-200-schema) |
 | [401](#get-dashboard-versions-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-versions-by-uid-401-schema) |
 | [403](#get-dashboard-versions-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-versions-by-uid-403-schema) |
 | [404](#get-dashboard-versions-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-versions-by-uid-404-schema) |
@@ -7360,7 +8354,7 @@ GET /api/dashboards/uid/{uid}/versions
 
 #### Responses
 
-##### <span id="get-dashboard-versions-by-uid-200"></span> 200
+##### <span id="get-dashboard-versions-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -7400,7 +8394,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-datasource-by-id"></span> Get a single data source by Id. (_getDatasourceByID_)
+### <span id="get-data-source-by-id"></span> Get a single data source by Id. (_getDataSourceByID_)
 
 ```
 GET /api/datasources/{id}
@@ -7409,7 +8403,7 @@ GET /api/datasources/{id}
 If you are running Grafana Enterprise and have Fine-grained access control enabled
 you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
 
-Please refer to [updated API](#/datasources/getDatasourceByUID) instead
+Please refer to [updated API](#/datasources/getDataSourceByUID) instead
 
 #### Parameters
 
@@ -7419,66 +8413,66 @@ Please refer to [updated API](#/datasources/getDatasourceByUID) instead
 
 #### All responses
 
-| Code                             | Status                | Description                                                                                                 | Has headers | Schema                                     |
-| -------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
-| [200](#get-datasource-by-id-200) | OK                    |                                                                                                             |             | [schema](#get-datasource-by-id-200-schema) |
-| [400](#get-datasource-by-id-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#get-datasource-by-id-400-schema) |
-| [401](#get-datasource-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-datasource-by-id-401-schema) |
-| [403](#get-datasource-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-datasource-by-id-403-schema) |
-| [404](#get-datasource-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-datasource-by-id-404-schema) |
-| [500](#get-datasource-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-datasource-by-id-500-schema) |
+| Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
+| --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
+| [200](#get-data-source-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-data-source-by-id-200-schema) |
+| [400](#get-data-source-by-id-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#get-data-source-by-id-400-schema) |
+| [401](#get-data-source-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-data-source-by-id-401-schema) |
+| [403](#get-data-source-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-data-source-by-id-403-schema) |
+| [404](#get-data-source-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-data-source-by-id-404-schema) |
+| [500](#get-data-source-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-data-source-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="get-datasource-by-id-200"></span> 200
+##### <span id="get-data-source-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-datasource-by-id-200-schema"></span> Schema
+###### <span id="get-data-source-by-id-200-schema"></span> Schema
 
 [DataSource](#data-source)
 
-##### <span id="get-datasource-by-id-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="get-data-source-by-id-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="get-datasource-by-id-400-schema"></span> Schema
+###### <span id="get-data-source-by-id-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-data-source-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-datasource-by-id-401-schema"></span> Schema
+###### <span id="get-data-source-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-data-source-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-datasource-by-id-403-schema"></span> Schema
+###### <span id="get-data-source-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="get-data-source-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="get-datasource-by-id-404-schema"></span> Schema
+###### <span id="get-data-source-by-id-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-data-source-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-datasource-by-id-500-schema"></span> Schema
+###### <span id="get-data-source-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-datasource-by-name"></span> Get a single data source by Name. (_getDatasourceByName_)
+### <span id="get-data-source-by-name"></span> Get a single data source by Name. (_getDataSourceByName_)
 
 ```
 GET /api/datasources/name/{name}
@@ -7495,48 +8489,48 @@ you need to have a permission with action: `datasources:read` and scopes: `datas
 
 #### All responses
 
-| Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
-| ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
-| [200](#get-datasource-by-name-200) | OK                    |                                                                                                             |             | [schema](#get-datasource-by-name-200-schema) |
-| [401](#get-datasource-by-name-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-datasource-by-name-401-schema) |
-| [403](#get-datasource-by-name-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-datasource-by-name-403-schema) |
-| [500](#get-datasource-by-name-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-datasource-by-name-500-schema) |
+| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
+| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
+| [200](#get-data-source-by-name-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-data-source-by-name-200-schema) |
+| [401](#get-data-source-by-name-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-data-source-by-name-401-schema) |
+| [403](#get-data-source-by-name-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-data-source-by-name-403-schema) |
+| [500](#get-data-source-by-name-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-data-source-by-name-500-schema) |
 
 #### Responses
 
-##### <span id="get-datasource-by-name-200"></span> 200
+##### <span id="get-data-source-by-name-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-datasource-by-name-200-schema"></span> Schema
+###### <span id="get-data-source-by-name-200-schema"></span> Schema
 
 [DataSource](#data-source)
 
-##### <span id="get-datasource-by-name-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-data-source-by-name-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-datasource-by-name-401-schema"></span> Schema
+###### <span id="get-data-source-by-name-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-name-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-data-source-by-name-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-datasource-by-name-403-schema"></span> Schema
+###### <span id="get-data-source-by-name-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-name-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-data-source-by-name-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-datasource-by-name-500-schema"></span> Schema
+###### <span id="get-data-source-by-name-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-datasource-by-uid"></span> Get a single data source by UID. (_getDatasourceByUID_)
+### <span id="get-data-source-by-uid"></span> Get a single data source by UID. (_getDataSourceByUID_)
 
 ```
 GET /api/datasources/uid/{uid}
@@ -7553,66 +8547,66 @@ you need to have a permission with action: `datasources:read` and scopes: `datas
 
 #### All responses
 
-| Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
-| --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
-| [200](#get-datasource-by-uid-200) | OK                    |                                                                                                             |             | [schema](#get-datasource-by-uid-200-schema) |
-| [400](#get-datasource-by-uid-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#get-datasource-by-uid-400-schema) |
-| [401](#get-datasource-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-datasource-by-uid-401-schema) |
-| [403](#get-datasource-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-datasource-by-uid-403-schema) |
-| [404](#get-datasource-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-datasource-by-uid-404-schema) |
-| [500](#get-datasource-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-datasource-by-uid-500-schema) |
+| Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
+| ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
+| [200](#get-data-source-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-data-source-by-uid-200-schema) |
+| [400](#get-data-source-by-uid-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#get-data-source-by-uid-400-schema) |
+| [401](#get-data-source-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-data-source-by-uid-401-schema) |
+| [403](#get-data-source-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-data-source-by-uid-403-schema) |
+| [404](#get-data-source-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-data-source-by-uid-404-schema) |
+| [500](#get-data-source-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-data-source-by-uid-500-schema) |
 
 #### Responses
 
-##### <span id="get-datasource-by-uid-200"></span> 200
+##### <span id="get-data-source-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-datasource-by-uid-200-schema"></span> Schema
+###### <span id="get-data-source-by-uid-200-schema"></span> Schema
 
 [DataSource](#data-source)
 
-##### <span id="get-datasource-by-uid-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="get-data-source-by-uid-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="get-datasource-by-uid-400-schema"></span> Schema
+###### <span id="get-data-source-by-uid-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-data-source-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-datasource-by-uid-401-schema"></span> Schema
+###### <span id="get-data-source-by-uid-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-data-source-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-datasource-by-uid-403-schema"></span> Schema
+###### <span id="get-data-source-by-uid-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="get-data-source-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="get-datasource-by-uid-404-schema"></span> Schema
+###### <span id="get-data-source-by-uid-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-data-source-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-datasource-by-uid-500-schema"></span> Schema
+###### <span id="get-data-source-by-uid-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-datasource-id-by-name"></span> Get data source Id by Name. (_getDatasourceIdByName_)
+### <span id="get-data-source-id-by-name"></span> Get data source Id by Name. (_getDataSourceIdByName_)
 
 ```
 GET /api/datasources/id/{name}
@@ -7629,59 +8623,59 @@ you need to have a permission with action: `datasources:read` and scopes: `datas
 
 #### All responses
 
-| Code                                  | Status                | Description                                                                                                 | Has headers | Schema                                          |
-| ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------- |
-| [200](#get-datasource-id-by-name-200) | OK                    |                                                                                                             |             | [schema](#get-datasource-id-by-name-200-schema) |
-| [401](#get-datasource-id-by-name-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-datasource-id-by-name-401-schema) |
-| [403](#get-datasource-id-by-name-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-datasource-id-by-name-403-schema) |
-| [404](#get-datasource-id-by-name-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-datasource-id-by-name-404-schema) |
-| [500](#get-datasource-id-by-name-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-datasource-id-by-name-500-schema) |
+| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
+| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
+| [200](#get-data-source-id-by-name-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-data-source-id-by-name-200-schema) |
+| [401](#get-data-source-id-by-name-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-data-source-id-by-name-401-schema) |
+| [403](#get-data-source-id-by-name-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-data-source-id-by-name-403-schema) |
+| [404](#get-data-source-id-by-name-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-data-source-id-by-name-404-schema) |
+| [500](#get-data-source-id-by-name-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-data-source-id-by-name-500-schema) |
 
 #### Responses
 
-##### <span id="get-datasource-id-by-name-200"></span> 200
+##### <span id="get-data-source-id-by-name-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-datasource-id-by-name-200-schema"></span> Schema
+###### <span id="get-data-source-id-by-name-200-schema"></span> Schema
 
-[GetDatasourceIDByNameOKBody](#get-datasource-id-by-name-o-k-body)
+[GetDataSourceIDByNameOKBody](#get-data-source-id-by-name-o-k-body)
 
-##### <span id="get-datasource-id-by-name-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-data-source-id-by-name-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-datasource-id-by-name-401-schema"></span> Schema
+###### <span id="get-data-source-id-by-name-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-id-by-name-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-data-source-id-by-name-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-datasource-id-by-name-403-schema"></span> Schema
+###### <span id="get-data-source-id-by-name-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-id-by-name-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="get-data-source-id-by-name-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="get-datasource-id-by-name-404-schema"></span> Schema
+###### <span id="get-data-source-id-by-name-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasource-id-by-name-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-data-source-id-by-name-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-datasource-id-by-name-500-schema"></span> Schema
+###### <span id="get-data-source-id-by-name-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ###### Inlined models
 
-**<span id="get-datasource-id-by-name-o-k-body"></span> GetDatasourceIDByNameOKBody**
+**<span id="get-data-source-id-by-name-o-k-body"></span> GetDataSourceIDByNameOKBody**
 
 **Properties**
 
@@ -7689,7 +8683,7 @@ Status: Internal Server Error
 | ---- | ------------------------- | ------- | :------: | ------- | --------------------------------- | ------- |
 | id   | int64 (formatted integer) | `int64` |    ✓     |         | ID Identifier of the data source. | `65`    |
 
-### <span id="get-datasources"></span> Get all data sources. (_getDatasources_)
+### <span id="get-data-sources"></span> Get all data sources. (_getDataSources_)
 
 ```
 GET /api/datasources
@@ -7700,44 +8694,44 @@ you need to have a permission with action: `datasources:read` and scope: `dataso
 
 #### All responses
 
-| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
-| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#get-datasources-200) | OK                    |                                                                                                             |             | [schema](#get-datasources-200-schema) |
-| [401](#get-datasources-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-datasources-401-schema) |
-| [403](#get-datasources-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-datasources-403-schema) |
-| [500](#get-datasources-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-datasources-500-schema) |
+| Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
+| ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
+| [200](#get-data-sources-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-data-sources-200-schema) |
+| [401](#get-data-sources-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-data-sources-401-schema) |
+| [403](#get-data-sources-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-data-sources-403-schema) |
+| [500](#get-data-sources-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-data-sources-500-schema) |
 
 #### Responses
 
-##### <span id="get-datasources-200"></span> 200
+##### <span id="get-data-sources-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-datasources-200-schema"></span> Schema
+###### <span id="get-data-sources-200-schema"></span> Schema
 
 [DataSourceList](#data-source-list)
 
-##### <span id="get-datasources-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-data-sources-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-datasources-401-schema"></span> Schema
+###### <span id="get-data-sources-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasources-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-data-sources-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-datasources-403-schema"></span> Schema
+###### <span id="get-data-sources-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-datasources-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-data-sources-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-datasources-500-schema"></span> Schema
+###### <span id="get-data-sources-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -7759,7 +8753,7 @@ Returns the folder identified by id.
 
 | Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
 | ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#get-folder-by-id-200) | OK                    |                                                                                                             |             | [schema](#get-folder-by-id-200-schema) |
+| [200](#get-folder-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-folder-by-id-200-schema) |
 | [401](#get-folder-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-folder-by-id-401-schema) |
 | [403](#get-folder-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-folder-by-id-403-schema) |
 | [404](#get-folder-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-folder-by-id-404-schema) |
@@ -7767,7 +8761,7 @@ Returns the folder identified by id.
 
 #### Responses
 
-##### <span id="get-folder-by-id-200"></span> 200
+##### <span id="get-folder-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -7823,7 +8817,7 @@ GET /api/folders/{folder_uid}
 
 | Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
 | ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
-| [200](#get-folder-by-uid-200) | OK                    |                                                                                                             |             | [schema](#get-folder-by-uid-200-schema) |
+| [200](#get-folder-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-folder-by-uid-200-schema) |
 | [401](#get-folder-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-folder-by-uid-401-schema) |
 | [403](#get-folder-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-folder-by-uid-403-schema) |
 | [404](#get-folder-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-folder-by-uid-404-schema) |
@@ -7831,11 +8825,13 @@ GET /api/folders/{folder_uid}
 
 #### Responses
 
-##### <span id="get-folder-by-uid-200"></span> 200
+##### <span id="get-folder-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
 ###### <span id="get-folder-by-uid-200-schema"></span> Schema
+
+[Folder](#folder)
 
 ##### <span id="get-folder-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
@@ -7869,7 +8865,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-folder-permissions"></span> Gets all existing permissions for the folder with the given `uid`. (_getFolderPermissions_)
+### <span id="get-folder-permission-list"></span> Gets all existing permissions for the folder with the given `uid`. (_getFolderPermissionList_)
 
 ```
 GET /api/folders/{folder_uid}/permissions
@@ -7883,53 +8879,53 @@ GET /api/folders/{folder_uid}/permissions
 
 #### All responses
 
-| Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
-| ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
-| [200](#get-folder-permissions-200) | OK                    |                                                                                                             |             | [schema](#get-folder-permissions-200-schema) |
-| [401](#get-folder-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-folder-permissions-401-schema) |
-| [403](#get-folder-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-folder-permissions-403-schema) |
-| [404](#get-folder-permissions-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-folder-permissions-404-schema) |
-| [500](#get-folder-permissions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-folder-permissions-500-schema) |
+| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
+| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
+| [200](#get-folder-permission-list-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-folder-permission-list-200-schema) |
+| [401](#get-folder-permission-list-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-folder-permission-list-401-schema) |
+| [403](#get-folder-permission-list-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-folder-permission-list-403-schema) |
+| [404](#get-folder-permission-list-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-folder-permission-list-404-schema) |
+| [500](#get-folder-permission-list-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-folder-permission-list-500-schema) |
 
 #### Responses
 
-##### <span id="get-folder-permissions-200"></span> 200
+##### <span id="get-folder-permission-list-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-folder-permissions-200-schema"></span> Schema
+###### <span id="get-folder-permission-list-200-schema"></span> Schema
 
 [][dashboardaclinfodto](#dashboard-acl-info-d-t-o)
 
-##### <span id="get-folder-permissions-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-folder-permission-list-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-folder-permissions-401-schema"></span> Schema
+###### <span id="get-folder-permission-list-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-folder-permissions-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-folder-permission-list-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-folder-permissions-403-schema"></span> Schema
+###### <span id="get-folder-permission-list-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-folder-permissions-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="get-folder-permission-list-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="get-folder-permissions-404-schema"></span> Schema
+###### <span id="get-folder-permission-list-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-folder-permissions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-folder-permission-list-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-folder-permissions-500-schema"></span> Schema
+###### <span id="get-folder-permission-list-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -7952,14 +8948,14 @@ Returns all folders that the authenticated user has permission to view.
 
 | Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
 | ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#get-folders-200) | OK                    |                                                                                                             |             | [schema](#get-folders-200-schema) |
+| [200](#get-folders-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-folders-200-schema) |
 | [401](#get-folders-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-folders-401-schema) |
 | [403](#get-folders-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-folders-403-schema) |
 | [500](#get-folders-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-folders-500-schema) |
 
 #### Responses
 
-##### <span id="get-folders-200"></span> 200
+##### <span id="get-folders-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8001,13 +8997,13 @@ GET /api/dashboards/home
 
 | Code                           | Status                | Description                                                                        | Has headers | Schema                                   |
 | ------------------------------ | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
-| [200](#get-home-dashboard-200) | OK                    | Home dashboard response.                                                           |             | [schema](#get-home-dashboard-200-schema) |
+| [200](#get-home-dashboard-200) | OK                    | (empty)                                                                            |             | [schema](#get-home-dashboard-200-schema) |
 | [401](#get-home-dashboard-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-home-dashboard-401-schema) |
 | [500](#get-home-dashboard-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-home-dashboard-500-schema) |
 
 #### Responses
 
-##### <span id="get-home-dashboard-200"></span> 200 - Home dashboard response.
+##### <span id="get-home-dashboard-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8028,55 +9024,6 @@ Status: Unauthorized
 Status: Internal Server Error
 
 ###### <span id="get-home-dashboard-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="get-invites"></span> Get pending invites. (_getInvites_)
-
-```
-GET /api/org/invites
-```
-
-#### All responses
-
-| Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
-| ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#get-invites-200) | OK                    |                                                                                                             |             | [schema](#get-invites-200-schema) |
-| [401](#get-invites-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-invites-401-schema) |
-| [403](#get-invites-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-invites-403-schema) |
-| [500](#get-invites-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-invites-500-schema) |
-
-#### Responses
-
-##### <span id="get-invites-200"></span> 200
-
-Status: OK
-
-###### <span id="get-invites-200-schema"></span> Schema
-
-[][tempuserdto](#temp-user-d-t-o)
-
-##### <span id="get-invites-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="get-invites-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-invites-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="get-invites-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-invites-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="get-invites-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -8135,118 +9082,6 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-l-d-a-p-sync-status"></span> Available to grafana admins. (_getLDAPSyncStatus_)
-
-```
-GET /api/admin/ldap-sync-status
-```
-
-You need to have a permission with action `ldap.status:read`.
-
-#### All responses
-
-| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
-| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
-| [200](#get-l-d-a-p-sync-status-200) | OK                    |                                                                                                             |             | [schema](#get-l-d-a-p-sync-status-200-schema) |
-| [401](#get-l-d-a-p-sync-status-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-l-d-a-p-sync-status-401-schema) |
-| [403](#get-l-d-a-p-sync-status-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-l-d-a-p-sync-status-403-schema) |
-| [500](#get-l-d-a-p-sync-status-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-l-d-a-p-sync-status-500-schema) |
-
-#### Responses
-
-##### <span id="get-l-d-a-p-sync-status-200"></span> 200
-
-Status: OK
-
-###### <span id="get-l-d-a-p-sync-status-200-schema"></span> Schema
-
-[ActiveSyncStatusDTO](#active-sync-status-d-t-o)
-
-##### <span id="get-l-d-a-p-sync-status-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="get-l-d-a-p-sync-status-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-l-d-a-p-sync-status-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="get-l-d-a-p-sync-status-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-l-d-a-p-sync-status-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="get-l-d-a-p-sync-status-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="get-l-d-a-p-user"></span> Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced. (_getLDAPUser_)
-
-```
-GET /api/admin/ldap/{user_name}
-```
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:read`.
-
-#### Security Requirements
-
-- basic
-
-#### Parameters
-
-| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| user_name | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
-| ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#get-l-d-a-p-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#get-l-d-a-p-user-200-schema) |
-| [401](#get-l-d-a-p-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-l-d-a-p-user-401-schema) |
-| [403](#get-l-d-a-p-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-l-d-a-p-user-403-schema) |
-| [500](#get-l-d-a-p-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-l-d-a-p-user-500-schema) |
-
-#### Responses
-
-##### <span id="get-l-d-a-p-user-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="get-l-d-a-p-user-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="get-l-d-a-p-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="get-l-d-a-p-user-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-l-d-a-p-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="get-l-d-a-p-user-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-l-d-a-p-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="get-l-d-a-p-user-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
 ### <span id="get-library-element-by-name"></span> Get library element by name. (_getLibraryElementByName_)
 
 ```
@@ -8265,14 +9100,14 @@ Returns a library element with the given name.
 
 | Code                                    | Status                | Description                                                                        | Has headers | Schema                                            |
 | --------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------------------- |
-| [200](#get-library-element-by-name-200) | OK                    |                                                                                    |             | [schema](#get-library-element-by-name-200-schema) |
+| [200](#get-library-element-by-name-200) | OK                    | (empty)                                                                            |             | [schema](#get-library-element-by-name-200-schema) |
 | [401](#get-library-element-by-name-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-library-element-by-name-401-schema) |
 | [404](#get-library-element-by-name-404) | Not Found             | NotFoundError is returned when the requested resource was not found.               |             | [schema](#get-library-element-by-name-404-schema) |
 | [500](#get-library-element-by-name-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-library-element-by-name-500-schema) |
 
 #### Responses
 
-##### <span id="get-library-element-by-name-200"></span> 200
+##### <span id="get-library-element-by-name-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8322,14 +9157,14 @@ Returns a library element with the given UID.
 
 | Code                                   | Status                | Description                                                                        | Has headers | Schema                                           |
 | -------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
-| [200](#get-library-element-by-uid-200) | OK                    |                                                                                    |             | [schema](#get-library-element-by-uid-200-schema) |
+| [200](#get-library-element-by-uid-200) | OK                    | (empty)                                                                            |             | [schema](#get-library-element-by-uid-200-schema) |
 | [401](#get-library-element-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-library-element-by-uid-401-schema) |
 | [404](#get-library-element-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.               |             | [schema](#get-library-element-by-uid-404-schema) |
 | [500](#get-library-element-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-library-element-by-uid-500-schema) |
 
 #### Responses
 
-##### <span id="get-library-element-by-uid-200"></span> 200
+##### <span id="get-library-element-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8379,14 +9214,14 @@ Returns a list of connections for a library element based on the UID specified.
 
 | Code                                        | Status                | Description                                                                        | Has headers | Schema                                                |
 | ------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------- |
-| [200](#get-library-element-connections-200) | OK                    |                                                                                    |             | [schema](#get-library-element-connections-200-schema) |
+| [200](#get-library-element-connections-200) | OK                    | (empty)                                                                            |             | [schema](#get-library-element-connections-200-schema) |
 | [401](#get-library-element-connections-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-library-element-connections-401-schema) |
 | [404](#get-library-element-connections-404) | Not Found             | NotFoundError is returned when the requested resource was not found.               |             | [schema](#get-library-element-connections-404-schema) |
 | [500](#get-library-element-connections-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-library-element-connections-500-schema) |
 
 #### Responses
 
-##### <span id="get-library-element-connections-200"></span> 200
+##### <span id="get-library-element-connections-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8445,13 +9280,13 @@ You can also use the `page` query parameter to fetch library elements from any p
 
 | Code                             | Status                | Description                                                                        | Has headers | Schema                                     |
 | -------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
-| [200](#get-library-elements-200) | OK                    |                                                                                    |             | [schema](#get-library-elements-200-schema) |
+| [200](#get-library-elements-200) | OK                    | (empty)                                                                            |             | [schema](#get-library-elements-200-schema) |
 | [401](#get-library-elements-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-library-elements-401-schema) |
 | [500](#get-library-elements-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-library-elements-500-schema) |
 
 #### Responses
 
-##### <span id="get-library-elements-200"></span> 200
+##### <span id="get-library-elements-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8475,26 +9310,6 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-license-status"></span> Check license availability. (_getLicenseStatus_)
-
-```
-GET /api/licensing/check
-```
-
-#### All responses
-
-| Code                           | Status | Description | Has headers | Schema                                   |
-| ------------------------------ | ------ | ----------- | :---------: | ---------------------------------------- |
-| [200](#get-license-status-200) | OK     |             |             | [schema](#get-license-status-200-schema) |
-
-#### Responses
-
-##### <span id="get-license-status-200"></span> 200
-
-Status: OK
-
-###### <span id="get-license-status-200-schema"></span> Schema
-
 ### <span id="get-license-token"></span> Get license token. (_getLicenseToken_)
 
 ```
@@ -8507,11 +9322,11 @@ You need to have a permission with action `licensing:read`.
 
 | Code                          | Status | Description | Has headers | Schema                                  |
 | ----------------------------- | ------ | ----------- | :---------: | --------------------------------------- |
-| [200](#get-license-token-200) | OK     |             |             | [schema](#get-license-token-200-schema) |
+| [200](#get-license-token-200) | OK     | (empty)     |             | [schema](#get-license-token-200-schema) |
 
 #### Responses
 
-##### <span id="get-license-token-200"></span> 200
+##### <span id="get-license-token-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8519,56 +9334,31 @@ Status: OK
 
 [Token](#token)
 
-### <span id="get-org"></span> getOrg (_getOrg_)
+### <span id="get-metadata"></span> It exposes the SP (Grafana's) metadata for the IdP's consumption. (_getMetadata_)
 
 ```
-GET /api/org
+GET /api/saml/metadata
 ```
 
-Get current Organization
+#### Produces
+
+- application/xml;application/samlmetadata+xml
 
 #### All responses
 
-| Code                | Status                | Description                                                                                                 | Has headers | Schema                        |
-| ------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------- |
-| [200](#get-org-200) | OK                    |                                                                                                             |             | [schema](#get-org-200-schema) |
-| [401](#get-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-org-401-schema) |
-| [403](#get-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-org-403-schema) |
-| [500](#get-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-org-500-schema) |
+| Code                     | Status | Description | Has headers | Schema                             |
+| ------------------------ | ------ | ----------- | :---------: | ---------------------------------- |
+| [200](#get-metadata-200) | OK     | (empty)     |             | [schema](#get-metadata-200-schema) |
 
 #### Responses
 
-##### <span id="get-org-200"></span> 200
+##### <span id="get-metadata-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-org-200-schema"></span> Schema
+###### <span id="get-metadata-200-schema"></span> Schema
 
-[OrgDetailsDTO](#org-details-d-t-o)
-
-##### <span id="get-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="get-org-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="get-org-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="get-org-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
+[]uint8 (formatted integer)
 
 ### <span id="get-org-by-id"></span> Get Organization by ID. (_getOrgByID_)
 
@@ -8590,14 +9380,14 @@ GET /api/orgs/{org_id}
 
 | Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
 | ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#get-org-by-id-200) | OK                    |                                                                                                             |             | [schema](#get-org-by-id-200-schema) |
+| [200](#get-org-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-org-by-id-200-schema) |
 | [401](#get-org-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-org-by-id-401-schema) |
 | [403](#get-org-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-org-by-id-403-schema) |
 | [500](#get-org-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-org-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="get-org-by-id-200"></span> 200
+##### <span id="get-org-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8649,14 +9439,14 @@ GET /api/orgs/name/{org_name}
 
 | Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
 | --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#get-org-by-name-200) | OK                    |                                                                                                             |             | [schema](#get-org-by-name-200-schema) |
+| [200](#get-org-by-name-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-org-by-name-200-schema) |
 | [401](#get-org-by-name-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-org-by-name-401-schema) |
 | [403](#get-org-by-name-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-org-by-name-403-schema) |
 | [500](#get-org-by-name-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-org-by-name-500-schema) |
 
 #### Responses
 
-##### <span id="get-org-by-name-200"></span> 200
+##### <span id="get-org-by-name-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8698,14 +9488,14 @@ GET /api/org/preferences
 
 | Code                            | Status                | Description                                                                                                 | Has headers | Schema                                    |
 | ------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#get-org-preferences-200) | OK                    |                                                                                                             |             | [schema](#get-org-preferences-200-schema) |
+| [200](#get-org-preferences-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-org-preferences-200-schema) |
 | [401](#get-org-preferences-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-org-preferences-401-schema) |
 | [403](#get-org-preferences-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-org-preferences-403-schema) |
 | [500](#get-org-preferences-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-org-preferences-500-schema) |
 
 #### Responses
 
-##### <span id="get-org-preferences-200"></span> 200
+##### <span id="get-org-preferences-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8756,7 +9546,7 @@ list
 
 | Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
 | ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#get-org-quota-200) | OK                    |                                                                                                             |             | [schema](#get-org-quota-200-schema) |
+| [200](#get-org-quota-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-org-quota-200-schema) |
 | [401](#get-org-quota-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-org-quota-401-schema) |
 | [403](#get-org-quota-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-org-quota-403-schema) |
 | [404](#get-org-quota-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-org-quota-404-schema) |
@@ -8764,7 +9554,7 @@ list
 
 #### Responses
 
-##### <span id="get-org-quota-200"></span> 200
+##### <span id="get-org-quota-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8804,28 +9594,37 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-org-users"></span> Get all users within the current organization. (_getOrgUsers_)
+### <span id="get-org-users"></span> Get Users in Organization. (_getOrgUsers_)
 
 ```
-GET /api/org/users
+GET /api/orgs/{org_id}/users
 ```
 
-Returns all org users within the current organization. Accessible to users with org admin role.
 If you are running Grafana Enterprise and have Fine-grained access control enabled
 you need to have a permission with action: `org.users:read` with scope `users:*`.
+
+#### Security Requirements
+
+- basic
+
+#### Parameters
+
+| Name   | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------ | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| org_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
 | Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
 | ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#get-org-users-200) | OK                    |                                                                                                             |             | [schema](#get-org-users-200-schema) |
+| [200](#get-org-users-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-org-users-200-schema) |
 | [401](#get-org-users-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-org-users-401-schema) |
 | [403](#get-org-users-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-org-users-403-schema) |
 | [500](#get-org-users-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-org-users-500-schema) |
 
 #### Responses
 
-##### <span id="get-org-users-200"></span> 200
+##### <span id="get-org-users-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8857,85 +9656,373 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-permissions"></span> Get permissions for a data source. (_getPermissions_)
+### <span id="get-org-users-for-current-org"></span> Get all users within the current organization. (_getOrgUsersForCurrentOrg_)
 
 ```
-GET /api/datasources/{datasourceId}/permissions
+GET /api/org/users
 ```
 
-Gets all existing permissions for the data source with the given id.
-
-You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).
-
-#### Parameters
-
-| Name         | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ------------ | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasourceId | `path` | string | `string` |           |    ✓     |         |             |
+Returns all org users within the current organization. Accessible to users with org admin role.
+If you are running Grafana Enterprise and have Fine-grained access control enabled
+you need to have a permission with action: `org.users:read` with scope `users:*`.
 
 #### All responses
 
-| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
-| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#get-permissions-200) | OK                    |                                                                                                             |             | [schema](#get-permissions-200-schema) |
-| [401](#get-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-permissions-401-schema) |
-| [403](#get-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-permissions-403-schema) |
-| [404](#get-permissions-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-permissions-404-schema) |
-| [500](#get-permissions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-permissions-500-schema) |
+| Code                                      | Status                | Description                                                                                                 | Has headers | Schema                                              |
+| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
+| [200](#get-org-users-for-current-org-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-org-users-for-current-org-200-schema) |
+| [401](#get-org-users-for-current-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-org-users-for-current-org-401-schema) |
+| [403](#get-org-users-for-current-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-org-users-for-current-org-403-schema) |
+| [500](#get-org-users-for-current-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-org-users-for-current-org-500-schema) |
 
 #### Responses
 
-##### <span id="get-permissions-200"></span> 200
+##### <span id="get-org-users-for-current-org-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-permissions-200-schema"></span> Schema
+###### <span id="get-org-users-for-current-org-200-schema"></span> Schema
 
-[AddPermissionDTO](#add-permission-d-t-o)
+[][orguserdto](#org-user-d-t-o)
 
-##### <span id="get-permissions-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-org-users-for-current-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-permissions-401-schema"></span> Schema
+###### <span id="get-org-users-for-current-org-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-permissions-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-org-users-for-current-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-permissions-403-schema"></span> Schema
+###### <span id="get-org-users-for-current-org-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-permissions-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="get-permissions-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-permissions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-org-users-for-current-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-permissions-500-schema"></span> Schema
+###### <span id="get-org-users-for-current-org-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-recording-rule-write-target"></span> Get the write target. (_getRecordingRuleWriteTarget_)
+### <span id="get-org-users-for-current-org-lookup"></span> Get all users within the current organization (lookup) (_getOrgUsersForCurrentOrgLookup_)
+
+```
+GET /api/org/users/lookup
+```
+
+Returns all org users within the current organization, but with less detailed information.
+Accessible to users with org admin role, admin in any folder or admin of any team.
+Mainly used by Grafana UI for providing list of users when adding team members and when editing folder/dashboard permissions.
+
+#### Parameters
+
+| Name  | Source  | Type                      | Go type  | Separator | Required | Default | Description |
+| ----- | ------- | ------------------------- | -------- | --------- | :------: | ------- | ----------- |
+| limit | `query` | int64 (formatted integer) | `int64`  |           |          |         |             |
+| query | `query` | string                    | `string` |           |          |         |             |
+
+#### All responses
+
+| Code                                             | Status                | Description                                                                                                 | Has headers | Schema                                                     |
+| ------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------------------- |
+| [200](#get-org-users-for-current-org-lookup-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-org-users-for-current-org-lookup-200-schema) |
+| [401](#get-org-users-for-current-org-lookup-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-org-users-for-current-org-lookup-401-schema) |
+| [403](#get-org-users-for-current-org-lookup-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-org-users-for-current-org-lookup-403-schema) |
+| [500](#get-org-users-for-current-org-lookup-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-org-users-for-current-org-lookup-500-schema) |
+
+#### Responses
+
+##### <span id="get-org-users-for-current-org-lookup-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-org-users-for-current-org-lookup-200-schema"></span> Schema
+
+[][userlookupdto](#user-lookup-d-t-o)
+
+##### <span id="get-org-users-for-current-org-lookup-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-org-users-for-current-org-lookup-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-org-users-for-current-org-lookup-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-org-users-for-current-org-lookup-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-org-users-for-current-org-lookup-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-org-users-for-current-org-lookup-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="get-pending-org-invites"></span> Get pending invites. (_getPendingOrgInvites_)
+
+```
+GET /api/org/invites
+```
+
+#### All responses
+
+| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
+| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
+| [200](#get-pending-org-invites-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-pending-org-invites-200-schema) |
+| [401](#get-pending-org-invites-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-pending-org-invites-401-schema) |
+| [403](#get-pending-org-invites-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-pending-org-invites-403-schema) |
+| [500](#get-pending-org-invites-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-pending-org-invites-500-schema) |
+
+#### Responses
+
+##### <span id="get-pending-org-invites-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-pending-org-invites-200-schema"></span> Schema
+
+[][tempuserdto](#temp-user-d-t-o)
+
+##### <span id="get-pending-org-invites-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-pending-org-invites-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-pending-org-invites-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-pending-org-invites-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-pending-org-invites-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-pending-org-invites-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="get-playlist"></span> Get playlist. (_getPlaylist_)
+
+```
+GET /api/playlists/{uid}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                     | Status                | Description                                                                                                 | Has headers | Schema                             |
+| ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
+| [200](#get-playlist-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-playlist-200-schema) |
+| [401](#get-playlist-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-playlist-401-schema) |
+| [403](#get-playlist-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-playlist-403-schema) |
+| [404](#get-playlist-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-playlist-404-schema) |
+| [500](#get-playlist-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-playlist-500-schema) |
+
+#### Responses
+
+##### <span id="get-playlist-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-playlist-200-schema"></span> Schema
+
+[PlaylistDTO](#playlist-d-t-o)
+
+##### <span id="get-playlist-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-playlist-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-playlist-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-playlist-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-playlist-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="get-playlist-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-playlist-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-playlist-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="get-playlist-dashboards"></span> Get playlist dashboards. (_getPlaylistDashboards_)
+
+```
+GET /api/playlists/{uid}/dashboards
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
+| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
+| [200](#get-playlist-dashboards-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-playlist-dashboards-200-schema) |
+| [401](#get-playlist-dashboards-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-playlist-dashboards-401-schema) |
+| [403](#get-playlist-dashboards-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-playlist-dashboards-403-schema) |
+| [404](#get-playlist-dashboards-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-playlist-dashboards-404-schema) |
+| [500](#get-playlist-dashboards-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-playlist-dashboards-500-schema) |
+
+#### Responses
+
+##### <span id="get-playlist-dashboards-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-playlist-dashboards-200-schema"></span> Schema
+
+[PlaylistDashboardsSlice](#playlist-dashboards-slice)
+
+##### <span id="get-playlist-dashboards-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-playlist-dashboards-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-playlist-dashboards-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-playlist-dashboards-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-playlist-dashboards-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="get-playlist-dashboards-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-playlist-dashboards-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-playlist-dashboards-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="get-playlist-items"></span> Get playlist items. (_getPlaylistItems_)
+
+```
+GET /api/playlists/{uid}/items
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
+| ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
+| [200](#get-playlist-items-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-playlist-items-200-schema) |
+| [401](#get-playlist-items-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-playlist-items-401-schema) |
+| [403](#get-playlist-items-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-playlist-items-403-schema) |
+| [404](#get-playlist-items-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-playlist-items-404-schema) |
+| [500](#get-playlist-items-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-playlist-items-500-schema) |
+
+#### Responses
+
+##### <span id="get-playlist-items-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-playlist-items-200-schema"></span> Schema
+
+[][playlistitemdto](#playlist-item-d-t-o)
+
+##### <span id="get-playlist-items-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-playlist-items-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-playlist-items-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-playlist-items-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-playlist-items-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="get-playlist-items-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-playlist-items-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-playlist-items-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="get-recording-rule-write-target"></span> getRecordingRuleWriteTarget (_getRecordingRuleWriteTarget_)
 
 ```
 GET /api/recording-rules/writer
 ```
 
+Return the prometheus remote write target
+
 #### All responses
 
 | Code                                        | Status                | Description                                                                                                 | Has headers | Schema                                                |
 | ------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------- |
-| [200](#get-recording-rule-write-target-200) | OK                    |                                                                                                             |             | [schema](#get-recording-rule-write-target-200-schema) |
+| [200](#get-recording-rule-write-target-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-recording-rule-write-target-200-schema) |
 | [401](#get-recording-rule-write-target-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-recording-rule-write-target-401-schema) |
 | [403](#get-recording-rule-write-target-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-recording-rule-write-target-403-schema) |
 | [404](#get-recording-rule-write-target-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-recording-rule-write-target-404-schema) |
@@ -8943,7 +10030,7 @@ GET /api/recording-rules/writer
 
 #### Responses
 
-##### <span id="get-recording-rule-write-target-200"></span> 200
+##### <span id="get-recording-rule-write-target-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -8986,7 +10073,7 @@ Status: Internal Server Error
 ### <span id="get-report"></span> Get a report. (_getReport_)
 
 ```
-GET /api/reports/{reportID}
+GET /api/reports/{id}
 ```
 
 Available to org admins only and with a valid or expired license
@@ -8995,15 +10082,15 @@ You need to have a permission with action `reports:read` with scope `reports:id:
 
 #### Parameters
 
-| Name     | Source | Type                      | Go type | Separator | Required | Default | Description |
-| -------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| reportID | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| id   | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
 | Code                   | Status                | Description                                                                                                 | Has headers | Schema                           |
 | ---------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------- |
-| [200](#get-report-200) | OK                    |                                                                                                             |             | [schema](#get-report-200-schema) |
+| [200](#get-report-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-report-200-schema) |
 | [400](#get-report-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#get-report-400-schema) |
 | [401](#get-report-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-report-401-schema) |
 | [403](#get-report-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-report-403-schema) |
@@ -9012,7 +10099,7 @@ You need to have a permission with action `reports:read` with scope `reports:id:
 
 #### Responses
 
-##### <span id="get-report-200"></span> 200
+##### <span id="get-report-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -9074,14 +10161,14 @@ You need to have a permission with action `reports.settings:read`x.
 
 | Code                            | Status                | Description                                                                                                 | Has headers | Schema                                    |
 | ------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#get-report-settings-200) | OK                    |                                                                                                             |             | [schema](#get-report-settings-200-schema) |
+| [200](#get-report-settings-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-report-settings-200-schema) |
 | [401](#get-report-settings-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-report-settings-401-schema) |
 | [403](#get-report-settings-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-report-settings-403-schema) |
 | [500](#get-report-settings-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-report-settings-500-schema) |
 
 #### Responses
 
-##### <span id="get-report-settings-200"></span> 200
+##### <span id="get-report-settings-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -9127,14 +10214,14 @@ You need to have a permission with action `reports:read` with scope `reports:*`.
 
 | Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
 | ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#get-reports-200) | OK                    |                                                                                                             |             | [schema](#get-reports-200-schema) |
+| [200](#get-reports-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-reports-200-schema) |
 | [401](#get-reports-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-reports-401-schema) |
 | [403](#get-reports-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-reports-403-schema) |
 | [500](#get-reports-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-reports-500-schema) |
 
 #### Responses
 
-##### <span id="get-reports-200"></span> 200
+##### <span id="get-reports-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -9186,13 +10273,13 @@ You need to have a permission with action `roles:read` and scope `roles:*`.
 
 | Code                 | Status                | Description                                                                                                 | Has headers | Schema                         |
 | -------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------ |
-| [200](#get-role-200) | OK                    |                                                                                                             |             | [schema](#get-role-200-schema) |
+| [200](#get-role-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-role-200-schema) |
 | [403](#get-role-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-role-403-schema) |
 | [500](#get-role-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-role-500-schema) |
 
 #### Responses
 
-##### <span id="get-role-200"></span> 200
+##### <span id="get-role-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -9216,44 +10303,6 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-s-a-m-l-login"></span> It initiates the login flow by redirecting the user to the IdP. (_getSAMLLogin_)
-
-```
-GET /api/login/saml
-```
-
-#### All responses
-
-| Code                          | Status                | Description                                                                        | Has headers | Schema                                  |
-| ----------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
-| [302](#get-s-a-m-l-login-302) | Found                 |                                                                                    |             | [schema](#get-s-a-m-l-login-302-schema) |
-| [404](#get-s-a-m-l-login-404) | Not Found             | NotFoundError is returned when the requested resource was not found.               |             | [schema](#get-s-a-m-l-login-404-schema) |
-| [500](#get-s-a-m-l-login-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-s-a-m-l-login-500-schema) |
-
-#### Responses
-
-##### <span id="get-s-a-m-l-login-302"></span> 302
-
-Status: Found
-
-###### <span id="get-s-a-m-l-login-302-schema"></span> Schema
-
-##### <span id="get-s-a-m-l-login-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="get-s-a-m-l-login-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-s-a-m-l-login-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="get-s-a-m-l-login-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
 ### <span id="get-s-a-m-l-logout"></span> GetLogout initiates single logout process. (_getSAMLLogout_)
 
 ```
@@ -9264,13 +10313,13 @@ GET /api/logout/saml
 
 | Code                           | Status                | Description                                                                        | Has headers | Schema                                   |
 | ------------------------------ | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
-| [302](#get-s-a-m-l-logout-302) | Found                 |                                                                                    |             | [schema](#get-s-a-m-l-logout-302-schema) |
+| [302](#get-s-a-m-l-logout-302) | Found                 | (empty)                                                                            |             | [schema](#get-s-a-m-l-logout-302-schema) |
 | [404](#get-s-a-m-l-logout-404) | Not Found             | NotFoundError is returned when the requested resource was not found.               |             | [schema](#get-s-a-m-l-logout-404-schema) |
 | [500](#get-s-a-m-l-logout-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-s-a-m-l-logout-500-schema) |
 
 #### Responses
 
-##### <span id="get-s-a-m-l-logout-302"></span> 302
+##### <span id="get-s-a-m-l-logout-302"></span> 302 - (empty)
 
 Status: Found
 
@@ -9292,89 +10341,115 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-s-a-m-l-metadata"></span> It exposes the SP (Grafana's) metadata for the IdP's consumption. (_getSAMLMetadata_)
+### <span id="get-s-l-o"></span> It performs Single Logout (SLO) callback. (_getSLO_)
 
 ```
-GET /api/saml/metadata
+GET /api/saml/slo
 ```
 
-#### Produces
+There might be two possible requests:
 
-- application/xml;application/samlmetadata+xml
+1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.
+2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,
+   or in case of IdP-initiated logout.
 
 #### All responses
 
-| Code                             | Status | Description | Has headers | Schema                                     |
-| -------------------------------- | ------ | ----------- | :---------: | ------------------------------------------ |
-| [200](#get-s-a-m-l-metadata-200) | OK     |             |             | [schema](#get-s-a-m-l-metadata-200-schema) |
+| Code                  | Status                | Description                                                                                                 | Has headers | Schema                          |
+| --------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------- |
+| [302](#get-s-l-o-302) | Found                 | (empty)                                                                                                     |             | [schema](#get-s-l-o-302-schema) |
+| [400](#get-s-l-o-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#get-s-l-o-400-schema) |
+| [403](#get-s-l-o-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-s-l-o-403-schema) |
+| [500](#get-s-l-o-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-s-l-o-500-schema) |
 
 #### Responses
 
-##### <span id="get-s-a-m-l-metadata-200"></span> 200
+##### <span id="get-s-l-o-302"></span> 302 - (empty)
 
-Status: OK
+Status: Found
 
-###### <span id="get-s-a-m-l-metadata-200-schema"></span> Schema
+###### <span id="get-s-l-o-302-schema"></span> Schema
 
-[]uint8 (formatted integer)
+##### <span id="get-s-l-o-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
-### <span id="get-settings"></span> Fetch settings. (_getSettings_)
+Status: Bad Request
 
-```
-GET /api/admin/settings
-```
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `settings:read` and scopes: `settings:*`, `settings:auth.saml:` and `settings:auth.saml:enabled` (property level).
-
-#### Security Requirements
-
-- basic
-
-#### All responses
-
-| Code                     | Status       | Description                                                                                                 | Has headers | Schema                             |
-| ------------------------ | ------------ | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
-| [200](#get-settings-200) | OK           |                                                                                                             |             | [schema](#get-settings-200-schema) |
-| [401](#get-settings-401) | Unauthorized | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-settings-401-schema) |
-| [403](#get-settings-403) | Forbidden    | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-settings-403-schema) |
-
-#### Responses
-
-##### <span id="get-settings-200"></span> 200
-
-Status: OK
-
-###### <span id="get-settings-200-schema"></span> Schema
-
-[SettingsBag](#settings-bag)
-
-##### <span id="get-settings-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="get-settings-401-schema"></span> Schema
+###### <span id="get-s-l-o-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-settings-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-s-l-o-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-settings-403-schema"></span> Schema
+###### <span id="get-s-l-o-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-signed-in-user"></span> Get signed in User. (_getSignedInUser_)
+##### <span id="get-s-l-o-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-s-l-o-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="get-sharing-options"></span> Get snapshot sharing settings. (_getSharingOptions_)
+
+```
+GET /api/snapshot/shared-options
+```
+
+#### All responses
+
+| Code                            | Status       | Description                                                          | Has headers | Schema                                    |
+| ------------------------------- | ------------ | -------------------------------------------------------------------- | :---------: | ----------------------------------------- |
+| [200](#get-sharing-options-200) | OK           | (empty)                                                              |             | [schema](#get-sharing-options-200-schema) |
+| [401](#get-sharing-options-401) | Unauthorized | UnauthorizedError is returned when the request is not authenticated. |             | [schema](#get-sharing-options-401-schema) |
+
+#### Responses
+
+##### <span id="get-sharing-options-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-sharing-options-200-schema"></span> Schema
+
+[GetSharingOptionsOKBody](#get-sharing-options-o-k-body)
+
+##### <span id="get-sharing-options-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-sharing-options-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+###### Inlined models
+
+**<span id="get-sharing-options-o-k-body"></span> GetSharingOptionsOKBody**
+
+**Properties**
+
+| Name                 | Type    | Go type  | Required | Default | Description | Example |
+| -------------------- | ------- | -------- | :------: | ------- | ----------- | ------- |
+| externalEnabled      | boolean | `bool`   |          |         |             |         |
+| externalSnapshotName | string  | `string` |          |         |             |         |
+| externalSnapshotURL  | string  | `string` |          |         |             |         |
+
+### <span id="get-signed-in-user"></span> getSignedInUser (_getSignedInUser_)
 
 ```
 GET /api/user
 ```
 
+Get (current authenticated user)
+
 #### All responses
 
 | Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
 | ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
-| [200](#get-signed-in-user-200) | OK                    |                                                                                                             |             | [schema](#get-signed-in-user-200-schema) |
+| [200](#get-signed-in-user-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-signed-in-user-200-schema) |
 | [401](#get-signed-in-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-signed-in-user-401-schema) |
 | [403](#get-signed-in-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-signed-in-user-403-schema) |
 | [404](#get-signed-in-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-signed-in-user-404-schema) |
@@ -9382,7 +10457,7 @@ GET /api/user
 
 #### Responses
 
-##### <span id="get-signed-in-user-200"></span> 200
+##### <span id="get-signed-in-user-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -9422,57 +10497,6 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-signed-in-user-auth-tokens"></span> Auth tokens of the actual User. (_getSignedInUserAuthTokens_)
-
-```
-GET /api/user/auth-tokens
-```
-
-Return a list of all auth tokens (devices) that the actual user currently have logged in from.
-
-#### All responses
-
-| Code                                       | Status                | Description                                                                                                 | Has headers | Schema                                               |
-| ------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------------- |
-| [200](#get-signed-in-user-auth-tokens-200) | OK                    |                                                                                                             |             | [schema](#get-signed-in-user-auth-tokens-200-schema) |
-| [401](#get-signed-in-user-auth-tokens-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-signed-in-user-auth-tokens-401-schema) |
-| [403](#get-signed-in-user-auth-tokens-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-signed-in-user-auth-tokens-403-schema) |
-| [500](#get-signed-in-user-auth-tokens-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-signed-in-user-auth-tokens-500-schema) |
-
-#### Responses
-
-##### <span id="get-signed-in-user-auth-tokens-200"></span> 200
-
-Status: OK
-
-###### <span id="get-signed-in-user-auth-tokens-200-schema"></span> Schema
-
-[][usertoken](#user-token)
-
-##### <span id="get-signed-in-user-auth-tokens-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="get-signed-in-user-auth-tokens-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-signed-in-user-auth-tokens-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="get-signed-in-user-auth-tokens-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-signed-in-user-auth-tokens-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="get-signed-in-user-auth-tokens-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
 ### <span id="get-signed-in-user-org-list"></span> Organizations of the actual User. (_getSignedInUserOrgList_)
 
 ```
@@ -9489,14 +10513,14 @@ Return a list of all organizations of the current user.
 
 | Code                                    | Status                | Description                                                                                                 | Has headers | Schema                                            |
 | --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------- |
-| [200](#get-signed-in-user-org-list-200) | OK                    |                                                                                                             |             | [schema](#get-signed-in-user-org-list-200-schema) |
+| [200](#get-signed-in-user-org-list-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-signed-in-user-org-list-200-schema) |
 | [401](#get-signed-in-user-org-list-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-signed-in-user-org-list-401-schema) |
 | [403](#get-signed-in-user-org-list-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-signed-in-user-org-list-403-schema) |
 | [500](#get-signed-in-user-org-list-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-signed-in-user-org-list-500-schema) |
 
 #### Responses
 
-##### <span id="get-signed-in-user-org-list-200"></span> 200
+##### <span id="get-signed-in-user-org-list-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -9540,20 +10564,20 @@ Return a list of all teams that the current user is member of.
 
 | Code                                     | Status                | Description                                                                                                 | Has headers | Schema                                             |
 | ---------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------- |
-| [200](#get-signed-in-user-team-list-200) | OK                    |                                                                                                             |             | [schema](#get-signed-in-user-team-list-200-schema) |
+| [200](#get-signed-in-user-team-list-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-signed-in-user-team-list-200-schema) |
 | [401](#get-signed-in-user-team-list-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-signed-in-user-team-list-401-schema) |
 | [403](#get-signed-in-user-team-list-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-signed-in-user-team-list-403-schema) |
 | [500](#get-signed-in-user-team-list-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-signed-in-user-team-list-500-schema) |
 
 #### Responses
 
-##### <span id="get-signed-in-user-team-list-200"></span> 200
+##### <span id="get-signed-in-user-team-list-200"></span> 200 - (empty)
 
 Status: OK
 
 ###### <span id="get-signed-in-user-team-list-200-schema"></span> Schema
 
-[][userorgdto](#user-org-d-t-o)
+[][teamdto](#team-d-t-o)
 
 ##### <span id="get-signed-in-user-team-list-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
@@ -9579,184 +10603,78 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-snapshot-by-key"></span> Get Snapshot by Key. (_getSnapshotByKey_)
+### <span id="get-status"></span> Check license availability. (_getStatus_)
 
 ```
-GET /api/snapshots/{key}
-```
-
-#### Parameters
-
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| key  | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                            | Status                | Description                                                                        | Has headers | Schema                                    |
-| ------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#get-snapshot-by-key-200) | OK                    |                                                                                    |             | [schema](#get-snapshot-by-key-200-schema) |
-| [404](#get-snapshot-by-key-404) | Not Found             | NotFoundError is returned when the requested resource was not found.               |             | [schema](#get-snapshot-by-key-404-schema) |
-| [500](#get-snapshot-by-key-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-snapshot-by-key-500-schema) |
-
-#### Responses
-
-##### <span id="get-snapshot-by-key-200"></span> 200
-
-Status: OK
-
-###### <span id="get-snapshot-by-key-200-schema"></span> Schema
-
-##### <span id="get-snapshot-by-key-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="get-snapshot-by-key-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-snapshot-by-key-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="get-snapshot-by-key-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="get-snapshot-sharing-options"></span> Get snapshot sharing settings. (_getSnapshotSharingOptions_)
-
-```
-GET /api/snapshot/shared-options
+GET /api/licensing/check
 ```
 
 #### All responses
 
-| Code                                     | Status       | Description                                                          | Has headers | Schema                                             |
-| ---------------------------------------- | ------------ | -------------------------------------------------------------------- | :---------: | -------------------------------------------------- |
-| [200](#get-snapshot-sharing-options-200) | OK           |                                                                      |             | [schema](#get-snapshot-sharing-options-200-schema) |
-| [401](#get-snapshot-sharing-options-401) | Unauthorized | UnauthorizedError is returned when the request is not authenticated. |             | [schema](#get-snapshot-sharing-options-401-schema) |
+| Code                   | Status | Description | Has headers | Schema                           |
+| ---------------------- | ------ | ----------- | :---------: | -------------------------------- |
+| [200](#get-status-200) | OK     | (empty)     |             | [schema](#get-status-200-schema) |
 
 #### Responses
 
-##### <span id="get-snapshot-sharing-options-200"></span> 200
+##### <span id="get-status-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-snapshot-sharing-options-200-schema"></span> Schema
+###### <span id="get-status-200-schema"></span> Schema
 
-[GetSnapshotSharingOptionsOKBody](#get-snapshot-sharing-options-o-k-body)
+### <span id="get-sync-status"></span> Returns the current state of the LDAP background sync integration (_getSyncStatus_)
 
-##### <span id="get-snapshot-sharing-options-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+```
+GET /api/admin/ldap-sync-status
+```
+
+You need to have a permission with action `ldap.status:read`.
+
+#### All responses
+
+| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
+| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
+| [200](#get-sync-status-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-sync-status-200-schema) |
+| [401](#get-sync-status-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-sync-status-401-schema) |
+| [403](#get-sync-status-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-sync-status-403-schema) |
+| [500](#get-sync-status-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-sync-status-500-schema) |
+
+#### Responses
+
+##### <span id="get-sync-status-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-sync-status-200-schema"></span> Schema
+
+[ActiveSyncStatusDTO](#active-sync-status-d-t-o)
+
+##### <span id="get-sync-status-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-snapshot-sharing-options-401-schema"></span> Schema
+###### <span id="get-sync-status-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-###### Inlined models
-
-**<span id="get-snapshot-sharing-options-o-k-body"></span> GetSnapshotSharingOptionsOKBody**
-
-**Properties**
-
-| Name                 | Type    | Go type  | Required | Default | Description | Example |
-| -------------------- | ------- | -------- | :------: | ------- | ----------- | ------- |
-| externalEnabled      | boolean | `bool`   |          |         |             |         |
-| externalSnapshotName | string  | `string` |          |         |             |         |
-| externalSnapshotURL  | string  | `string` |          |         |             |         |
-
-### <span id="get-snapshots"></span> List snapshots. (_getSnapshots_)
-
-```
-GET /api/dashboard/snapshots
-```
-
-#### Parameters
-
-| Name  | Source  | Type                      | Go type  | Separator | Required | Default | Description                          |
-| ----- | ------- | ------------------------- | -------- | --------- | :------: | ------- | ------------------------------------ |
-| limit | `query` | int64 (formatted integer) | `int64`  |           |          | `1000`  | Limit the number of returned results |
-| query | `query` | string                    | `string` |           |          |         | Search Query                         |
-
-#### All responses
-
-| Code                      | Status                | Description                                                                        | Has headers | Schema                              |
-| ------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#get-snapshots-200) | OK                    |                                                                                    |             | [schema](#get-snapshots-200-schema) |
-| [500](#get-snapshots-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-snapshots-500-schema) |
-
-#### Responses
-
-##### <span id="get-snapshots-200"></span> 200
-
-Status: OK
-
-###### <span id="get-snapshots-200-schema"></span> Schema
-
-[][dashboardsnapshotdto](#dashboard-snapshot-d-t-o)
-
-##### <span id="get-snapshots-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="get-snapshots-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="get-stats"></span> Fetch Grafana Stats. (_getStats_)
-
-```
-GET /api/admin/stats
-```
-
-Only works with Basic Authentication (username and password). See introduction for an explanation.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `server:stats:read`.
-
-#### All responses
-
-| Code                  | Status                | Description                                                                                                 | Has headers | Schema                          |
-| --------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------- |
-| [200](#get-stats-200) | OK                    |                                                                                                             |             | [schema](#get-stats-200-schema) |
-| [401](#get-stats-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-stats-401-schema) |
-| [403](#get-stats-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-stats-403-schema) |
-| [500](#get-stats-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-stats-500-schema) |
-
-#### Responses
-
-##### <span id="get-stats-200"></span> 200
-
-Status: OK
-
-###### <span id="get-stats-200-schema"></span> Schema
-
-[AdminStats](#admin-stats)
-
-##### <span id="get-stats-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="get-stats-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="get-stats-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-sync-status-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-stats-403-schema"></span> Schema
+###### <span id="get-sync-status-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-stats-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-sync-status-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-stats-500-schema"></span> Schema
+###### <span id="get-sync-status-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-team"></span> Get Team By ID. (_getTeam_)
+### <span id="get-team-by-id"></span> Get Team By ID. (_getTeamByID_)
 
 ```
 GET /api/teams/{team_id}
@@ -9770,53 +10688,53 @@ GET /api/teams/{team_id}
 
 #### All responses
 
-| Code                 | Status                | Description                                                                                                 | Has headers | Schema                         |
-| -------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------ |
-| [200](#get-team-200) | OK                    |                                                                                                             |             | [schema](#get-team-200-schema) |
-| [401](#get-team-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-team-401-schema) |
-| [403](#get-team-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-team-403-schema) |
-| [404](#get-team-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-team-404-schema) |
-| [500](#get-team-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-team-500-schema) |
+| Code                       | Status                | Description                                                                                                 | Has headers | Schema                               |
+| -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
+| [200](#get-team-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-team-by-id-200-schema) |
+| [401](#get-team-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-team-by-id-401-schema) |
+| [403](#get-team-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-team-by-id-403-schema) |
+| [404](#get-team-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-team-by-id-404-schema) |
+| [500](#get-team-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-team-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="get-team-200"></span> 200
+##### <span id="get-team-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="get-team-200-schema"></span> Schema
+###### <span id="get-team-by-id-200-schema"></span> Schema
 
 [TeamDTO](#team-d-t-o)
 
-##### <span id="get-team-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="get-team-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="get-team-401-schema"></span> Schema
+###### <span id="get-team-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-team-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="get-team-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="get-team-403-schema"></span> Schema
+###### <span id="get-team-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-team-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="get-team-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="get-team-404-schema"></span> Schema
+###### <span id="get-team-by-id-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="get-team-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="get-team-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="get-team-500-schema"></span> Schema
+###### <span id="get-team-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -9836,7 +10754,7 @@ GET /api/teams/{teamId}/groups
 
 | Code                            | Status                | Description                                                                                                 | Has headers | Schema                                    |
 | ------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#get-team-groups-api-200) | OK                    |                                                                                                             |             | [schema](#get-team-groups-api-200-schema) |
+| [200](#get-team-groups-api-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-team-groups-api-200-schema) |
 | [400](#get-team-groups-api-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#get-team-groups-api-400-schema) |
 | [401](#get-team-groups-api-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-team-groups-api-401-schema) |
 | [403](#get-team-groups-api-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-team-groups-api-403-schema) |
@@ -9845,7 +10763,7 @@ GET /api/teams/{teamId}/groups
 
 #### Responses
 
-##### <span id="get-team-groups-api-200"></span> 200
+##### <span id="get-team-groups-api-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -9909,7 +10827,7 @@ GET /api/teams/{team_id}/members
 
 | Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
 | ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#get-team-members-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#get-team-members-200-schema) |
+| [200](#get-team-members-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-team-members-200-schema) |
 | [401](#get-team-members-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-team-members-401-schema) |
 | [403](#get-team-members-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-team-members-403-schema) |
 | [404](#get-team-members-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-team-members-404-schema) |
@@ -9917,13 +10835,13 @@ GET /api/teams/{team_id}/members
 
 #### Responses
 
-##### <span id="get-team-members-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="get-team-members-200"></span> 200 - (empty)
 
 Status: OK
 
 ###### <span id="get-team-members-200-schema"></span> Schema
 
-[SuccessResponseBody](#success-response-body)
+[][teammemberdto](#team-member-d-t-o)
 
 ##### <span id="get-team-members-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
@@ -9973,13 +10891,13 @@ GET /api/teams/{team_id}/preferences
 
 | Code                             | Status                | Description                                                                        | Has headers | Schema                                     |
 | -------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
-| [200](#get-team-preferences-200) | OK                    |                                                                                    |             | [schema](#get-team-preferences-200-schema) |
+| [200](#get-team-preferences-200) | OK                    | (empty)                                                                            |             | [schema](#get-team-preferences-200-schema) |
 | [401](#get-team-preferences-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-team-preferences-401-schema) |
 | [500](#get-team-preferences-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-team-preferences-500-schema) |
 
 #### Responses
 
-##### <span id="get-team-preferences-200"></span> 200
+##### <span id="get-team-preferences-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10003,6 +10921,57 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="get-user-auth-tokens"></span> Auth tokens of the actual User. (_getUserAuthTokens_)
+
+```
+GET /api/user/auth-tokens
+```
+
+Return a list of all auth tokens (devices) that the actual user currently have logged in from.
+
+#### All responses
+
+| Code                             | Status                | Description                                                                                                 | Has headers | Schema                                     |
+| -------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
+| [200](#get-user-auth-tokens-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-user-auth-tokens-200-schema) |
+| [401](#get-user-auth-tokens-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-user-auth-tokens-401-schema) |
+| [403](#get-user-auth-tokens-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-user-auth-tokens-403-schema) |
+| [500](#get-user-auth-tokens-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-user-auth-tokens-500-schema) |
+
+#### Responses
+
+##### <span id="get-user-auth-tokens-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="get-user-auth-tokens-200-schema"></span> Schema
+
+[][usertoken](#user-token)
+
+##### <span id="get-user-auth-tokens-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-user-auth-tokens-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-user-auth-tokens-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-user-auth-tokens-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-user-auth-tokens-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-user-auth-tokens-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="get-user-by-id"></span> Get user by id. (_getUserByID_)
 
 ```
@@ -10019,7 +10988,7 @@ GET /api/users/{user_id}
 
 | Code                       | Status                | Description                                                                                                 | Has headers | Schema                               |
 | -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#get-user-by-id-200) | OK                    |                                                                                                             |             | [schema](#get-user-by-id-200-schema) |
+| [200](#get-user-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-user-by-id-200-schema) |
 | [401](#get-user-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-user-by-id-401-schema) |
 | [403](#get-user-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-user-by-id-403-schema) |
 | [404](#get-user-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-user-by-id-404-schema) |
@@ -10027,7 +10996,7 @@ GET /api/users/{user_id}
 
 #### Responses
 
-##### <span id="get-user-by-id-200"></span> 200
+##### <span id="get-user-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10083,7 +11052,7 @@ GET /api/users/lookup
 
 | Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
 | -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
-| [200](#get-user-by-login-or-email-200) | OK                    |                                                                                                             |             | [schema](#get-user-by-login-or-email-200-schema) |
+| [200](#get-user-by-login-or-email-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-user-by-login-or-email-200-schema) |
 | [401](#get-user-by-login-or-email-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-user-by-login-or-email-401-schema) |
 | [403](#get-user-by-login-or-email-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-user-by-login-or-email-403-schema) |
 | [404](#get-user-by-login-or-email-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-user-by-login-or-email-404-schema) |
@@ -10091,7 +11060,7 @@ GET /api/users/lookup
 
 #### Responses
 
-##### <span id="get-user-by-login-or-email-200"></span> 200
+##### <span id="get-user-by-login-or-email-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10131,6 +11100,67 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="get-user-from-l-d-a-p"></span> Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced. (_getUserFromLDAP_)
+
+```
+GET /api/admin/ldap/{user_name}
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:read`.
+
+#### Security Requirements
+
+- basic
+
+#### Parameters
+
+| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
+| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| user_name | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
+| --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
+| [200](#get-user-from-l-d-a-p-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#get-user-from-l-d-a-p-200-schema) |
+| [401](#get-user-from-l-d-a-p-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-user-from-l-d-a-p-401-schema) |
+| [403](#get-user-from-l-d-a-p-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-user-from-l-d-a-p-403-schema) |
+| [500](#get-user-from-l-d-a-p-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-user-from-l-d-a-p-500-schema) |
+
+#### Responses
+
+##### <span id="get-user-from-l-d-a-p-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="get-user-from-l-d-a-p-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="get-user-from-l-d-a-p-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-user-from-l-d-a-p-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-user-from-l-d-a-p-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-user-from-l-d-a-p-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-user-from-l-d-a-p-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-user-from-l-d-a-p-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="get-user-org-list"></span> Get organizations for user. (_getUserOrgList_)
 
 ```
@@ -10149,7 +11179,7 @@ Get organizations for user identified by id.
 
 | Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
 | ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
-| [200](#get-user-org-list-200) | OK                    |                                                                                                             |             | [schema](#get-user-org-list-200-schema) |
+| [200](#get-user-org-list-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-user-org-list-200-schema) |
 | [401](#get-user-org-list-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-user-org-list-401-schema) |
 | [403](#get-user-org-list-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-user-org-list-403-schema) |
 | [404](#get-user-org-list-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-user-org-list-404-schema) |
@@ -10157,7 +11187,7 @@ Get organizations for user identified by id.
 
 #### Responses
 
-##### <span id="get-user-org-list-200"></span> 200
+##### <span id="get-user-org-list-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10207,13 +11237,13 @@ GET /api/user/preferences
 
 | Code                             | Status                | Description                                                                        | Has headers | Schema                                     |
 | -------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
-| [200](#get-user-preferences-200) | OK                    |                                                                                    |             | [schema](#get-user-preferences-200-schema) |
+| [200](#get-user-preferences-200) | OK                    | (empty)                                                                            |             | [schema](#get-user-preferences-200-schema) |
 | [401](#get-user-preferences-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-user-preferences-401-schema) |
 | [500](#get-user-preferences-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-user-preferences-500-schema) |
 
 #### Responses
 
-##### <span id="get-user-preferences-200"></span> 200
+##### <span id="get-user-preferences-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10259,7 +11289,7 @@ If you are running Grafana Enterprise and have Fine-grained access control enabl
 
 | Code                       | Status                | Description                                                                                                 | Has headers | Schema                               |
 | -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#get-user-quota-200) | OK                    |                                                                                                             |             | [schema](#get-user-quota-200-schema) |
+| [200](#get-user-quota-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-user-quota-200-schema) |
 | [401](#get-user-quota-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-user-quota-401-schema) |
 | [403](#get-user-quota-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-user-quota-403-schema) |
 | [404](#get-user-quota-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-user-quota-404-schema) |
@@ -10267,7 +11297,7 @@ If you are running Grafana Enterprise and have Fine-grained access control enabl
 
 #### Responses
 
-##### <span id="get-user-quota-200"></span> 200
+##### <span id="get-user-quota-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10317,7 +11347,7 @@ GET /api/user/quotas
 
 | Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
 | --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#get-user-quotas-200) | OK                    |                                                                                                             |             | [schema](#get-user-quotas-200-schema) |
+| [200](#get-user-quotas-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-user-quotas-200-schema) |
 | [401](#get-user-quotas-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-user-quotas-401-schema) |
 | [403](#get-user-quotas-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-user-quotas-403-schema) |
 | [404](#get-user-quotas-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-user-quotas-404-schema) |
@@ -10325,7 +11355,7 @@ GET /api/user/quotas
 
 #### Responses
 
-##### <span id="get-user-quotas-200"></span> 200
+##### <span id="get-user-quotas-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10383,7 +11413,7 @@ Get teams for user identified by id.
 
 | Code                       | Status                | Description                                                                                                 | Has headers | Schema                               |
 | -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#get-user-teams-200) | OK                    |                                                                                                             |             | [schema](#get-user-teams-200-schema) |
+| [200](#get-user-teams-200) | OK                    | (empty)                                                                                                     |             | [schema](#get-user-teams-200-schema) |
 | [401](#get-user-teams-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-user-teams-401-schema) |
 | [403](#get-user-teams-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-user-teams-403-schema) |
 | [404](#get-user-teams-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-user-teams-404-schema) |
@@ -10391,7 +11421,7 @@ Get teams for user identified by id.
 
 #### Responses
 
-##### <span id="get-user-teams-200"></span> 200
+##### <span id="get-user-teams-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10447,7 +11477,7 @@ POST /api/dashboards/import
 
 | Code                         | Status                | Description                                                                         | Has headers | Schema                                 |
 | ---------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#import-dashboard-200) | OK                    |                                                                                     |             | [schema](#import-dashboard-200-schema) |
+| [200](#import-dashboard-200) | OK                    | (empty)                                                                             |             | [schema](#import-dashboard-200-schema) |
 | [400](#import-dashboard-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#import-dashboard-400-schema) |
 | [401](#import-dashboard-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#import-dashboard-401-schema) |
 | [412](#import-dashboard-412) | Precondition Failed   | PreconditionFailedError                                                             |             | [schema](#import-dashboard-412-schema) |
@@ -10456,7 +11486,7 @@ POST /api/dashboards/import
 
 #### Responses
 
-##### <span id="import-dashboard-200"></span> 200
+##### <span id="import-dashboard-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10516,13 +11546,13 @@ You need to have a permission with action `roles.builtin:list` with scope `roles
 
 | Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
 | ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
-| [200](#list-builtin-roles-200) | OK                    |                                                                                                             |             | [schema](#list-builtin-roles-200-schema) |
+| [200](#list-builtin-roles-200) | OK                    | (empty)                                                                                                     |             | [schema](#list-builtin-roles-200-schema) |
 | [403](#list-builtin-roles-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#list-builtin-roles-403-schema) |
 | [500](#list-builtin-roles-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#list-builtin-roles-500-schema) |
 
 #### Responses
 
-##### <span id="list-builtin-roles-200"></span> 200
+##### <span id="list-builtin-roles-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10546,17 +11576,19 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="list-recording-rules"></span> Get all recording rules. (_listRecordingRules_)
+### <span id="list-recording-rules"></span> listRecordingRules (_listRecordingRules_)
 
 ```
 GET /api/recording-rules
 ```
 
+Lists all rules in the database: active or deleted
+
 #### All responses
 
 | Code                             | Status                | Description                                                                                                 | Has headers | Schema                                     |
 | -------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
-| [200](#list-recording-rules-200) | OK                    |                                                                                                             |             | [schema](#list-recording-rules-200-schema) |
+| [200](#list-recording-rules-200) | OK                    | (empty)                                                                                                     |             | [schema](#list-recording-rules-200-schema) |
 | [401](#list-recording-rules-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#list-recording-rules-401-schema) |
 | [403](#list-recording-rules-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#list-recording-rules-403-schema) |
 | [404](#list-recording-rules-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#list-recording-rules-404-schema) |
@@ -10564,7 +11596,7 @@ GET /api/recording-rules
 
 #### Responses
 
-##### <span id="list-recording-rules-200"></span> 200
+##### <span id="list-recording-rules-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10603,6 +11635,102 @@ Status: Internal Server Error
 ###### <span id="list-recording-rules-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
+
+### <span id="list-roles"></span> Get all roles. (_listRoles_)
+
+```
+GET /api/access-control/roles
+```
+
+Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.
+
+You need to have a permission with action `roles:list` and scope `roles:*`.
+
+#### Parameters
+
+| Name        | Source  | Type    | Go type | Separator | Required | Default | Description |
+| ----------- | ------- | ------- | ------- | --------- | :------: | ------- | ----------- |
+| delegatable | `query` | boolean | `bool`  |           |          |         |             |
+
+#### All responses
+
+| Code                   | Status                | Description                                                                                                 | Has headers | Schema                           |
+| ---------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------- |
+| [200](#list-roles-200) | OK                    | (empty)                                                                                                     |             | [schema](#list-roles-200-schema) |
+| [403](#list-roles-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#list-roles-403-schema) |
+| [500](#list-roles-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#list-roles-500-schema) |
+
+#### Responses
+
+##### <span id="list-roles-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="list-roles-200-schema"></span> Schema
+
+[][roledto](#role-d-t-o)
+
+##### <span id="list-roles-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="list-roles-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="list-roles-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="list-roles-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="list-sort-options"></span> listSortOptions (_listSortOptions_)
+
+```
+GET /api/search/sorting
+```
+
+List search sorting options
+
+#### All responses
+
+| Code                          | Status       | Description                                                          | Has headers | Schema                                  |
+| ----------------------------- | ------------ | -------------------------------------------------------------------- | :---------: | --------------------------------------- |
+| [200](#list-sort-options-200) | OK           | (empty)                                                              |             | [schema](#list-sort-options-200-schema) |
+| [401](#list-sort-options-401) | Unauthorized | UnauthorizedError is returned when the request is not authenticated. |             | [schema](#list-sort-options-401-schema) |
+
+#### Responses
+
+##### <span id="list-sort-options-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="list-sort-options-200-schema"></span> Schema
+
+[ListSortOptionsOKBody](#list-sort-options-o-k-body)
+
+##### <span id="list-sort-options-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="list-sort-options-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+###### Inlined models
+
+**<span id="list-sort-options-o-k-body"></span> ListSortOptionsOKBody**
+
+**Properties**
+
+| Name        | Type   | Go type  | Required | Default | Description | Example |
+| ----------- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| description | string | `string` |          |         |             |         |
+| displayName | string | `string` |          |         |             |         |
+| meta        | string | `string` |          |         |             |         |
+| name        | string | `string` |          |         |             |         |
 
 ### <span id="list-team-roles"></span> Get team roles. (_listTeamRoles_)
 
@@ -10661,6 +11789,75 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="list-tokens"></span> Get service account tokens (_listTokens_)
+
+```
+GET /api/serviceaccounts/{serviceAccountId}/tokens
+```
+
+Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+action: `serviceaccounts:read` scope: `global:serviceaccounts:id:1` (single service account)
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+#### Parameters
+
+| Name             | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ---------------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| serviceAccountId | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
+| ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
+| [200](#list-tokens-200) | OK                    | (empty)                                                                                                     |             | [schema](#list-tokens-200-schema) |
+| [400](#list-tokens-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#list-tokens-400-schema) |
+| [401](#list-tokens-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#list-tokens-401-schema) |
+| [403](#list-tokens-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#list-tokens-403-schema) |
+| [500](#list-tokens-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#list-tokens-500-schema) |
+
+#### Responses
+
+##### <span id="list-tokens-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="list-tokens-200-schema"></span> Schema
+
+[TokenDTO](#token-d-t-o)
+
+##### <span id="list-tokens-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="list-tokens-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="list-tokens-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="list-tokens-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="list-tokens-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="list-tokens-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="list-tokens-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="list-tokens-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="list-user-roles"></span> List roles assigned to a user. (_listUserRoles_)
 
 ```
@@ -10681,14 +11878,14 @@ You need to have a permission with action `users.roles:list` and scope `users:id
 
 | Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
 | --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#list-user-roles-200) | OK                    |                                                                                                             |             | [schema](#list-user-roles-200-schema) |
+| [200](#list-user-roles-200) | OK                    | (empty)                                                                                                     |             | [schema](#list-user-roles-200-schema) |
 | [400](#list-user-roles-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#list-user-roles-400-schema) |
 | [403](#list-user-roles-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#list-user-roles-403-schema) |
 | [500](#list-user-roles-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#list-user-roles-500-schema) |
 
 #### Responses
 
-##### <span id="list-user-roles-200"></span> 200
+##### <span id="list-user-roles-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -10717,196 +11914,6 @@ Status: Forbidden
 Status: Internal Server Error
 
 ###### <span id="list-user-roles-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="logout-user"></span> Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity. (_logoutUser_)
-
-```
-POST /api/admin/users/{user_id}/logout
-```
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global.users:*`.
-
-#### Security Requirements
-
-- basic
-
-#### Parameters
-
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
-| ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#logout-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#logout-user-200-schema) |
-| [400](#logout-user-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#logout-user-400-schema) |
-| [401](#logout-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#logout-user-401-schema) |
-| [403](#logout-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#logout-user-403-schema) |
-| [404](#logout-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#logout-user-404-schema) |
-| [500](#logout-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#logout-user-500-schema) |
-
-#### Responses
-
-##### <span id="logout-user-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="logout-user-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="logout-user-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="logout-user-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="logout-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="logout-user-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="logout-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="logout-user-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="logout-user-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="logout-user-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="logout-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="logout-user-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="lookup-alert-notification-channels"></span> Get all notification channels (lookup) (_lookupAlertNotificationChannels_)
-
-```
-GET /api/alert-notifications/lookup
-```
-
-Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.
-
-#### All responses
-
-| Code                                           | Status                | Description                                                                                                 | Has headers | Schema                                                   |
-| ---------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------------- |
-| [200](#lookup-alert-notification-channels-200) | OK                    |                                                                                                             |             | [schema](#lookup-alert-notification-channels-200-schema) |
-| [401](#lookup-alert-notification-channels-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#lookup-alert-notification-channels-401-schema) |
-| [403](#lookup-alert-notification-channels-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#lookup-alert-notification-channels-403-schema) |
-| [500](#lookup-alert-notification-channels-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#lookup-alert-notification-channels-500-schema) |
-
-#### Responses
-
-##### <span id="lookup-alert-notification-channels-200"></span> 200
-
-Status: OK
-
-###### <span id="lookup-alert-notification-channels-200-schema"></span> Schema
-
-[][alertnotificationlookup](#alert-notification-lookup)
-
-##### <span id="lookup-alert-notification-channels-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="lookup-alert-notification-channels-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="lookup-alert-notification-channels-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="lookup-alert-notification-channels-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="lookup-alert-notification-channels-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="lookup-alert-notification-channels-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="lookup-org-users"></span> Get all users within the current organization (lookup) (_lookupOrgUsers_)
-
-```
-GET /api/org/users/lookup
-```
-
-Returns all org users within the current organization, but with less detailed information.
-Accessible to users with org admin role, admin in any folder or admin of any team.
-Mainly used by Grafana UI for providing list of users when adding team members and when editing folder/dashboard permissions.
-
-#### Parameters
-
-| Name  | Source  | Type                      | Go type  | Separator | Required | Default | Description |
-| ----- | ------- | ------------------------- | -------- | --------- | :------: | ------- | ----------- |
-| limit | `query` | int64 (formatted integer) | `int64`  |           |          |         |             |
-| query | `query` | string                    | `string` |           |          |         |             |
-
-#### All responses
-
-| Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
-| ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#lookup-org-users-200) | OK                    |                                                                                                             |             | [schema](#lookup-org-users-200-schema) |
-| [401](#lookup-org-users-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#lookup-org-users-401-schema) |
-| [403](#lookup-org-users-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#lookup-org-users-403-schema) |
-| [500](#lookup-org-users-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#lookup-org-users-500-schema) |
-
-#### Responses
-
-##### <span id="lookup-org-users-200"></span> 200
-
-Status: OK
-
-###### <span id="lookup-org-users-200-schema"></span> Schema
-
-[][userlookupdto](#user-lookup-d-t-o)
-
-##### <span id="lookup-org-users-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="lookup-org-users-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="lookup-org-users-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="lookup-org-users-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="lookup-org-users-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="lookup-org-users-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -10974,14 +11981,14 @@ Adds multiple queries to query history.
 
 | Code                        | Status                | Description                                                                         | Has headers | Schema                                |
 | --------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#migrate-queries-200) | OK                    |                                                                                     |             | [schema](#migrate-queries-200-schema) |
+| [200](#migrate-queries-200) | OK                    | (empty)                                                                             |             | [schema](#migrate-queries-200-schema) |
 | [400](#migrate-queries-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#migrate-queries-400-schema) |
 | [401](#migrate-queries-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#migrate-queries-401-schema) |
 | [500](#migrate-queries-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#migrate-queries-500-schema) |
 
 #### Responses
 
-##### <span id="migrate-queries-200"></span> 200
+##### <span id="migrate-queries-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -11035,7 +12042,7 @@ Sends a test notification to the channel.
 | [400](#notification-channel-test-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#notification-channel-test-400-schema) |
 | [401](#notification-channel-test-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#notification-channel-test-401-schema) |
 | [403](#notification-channel-test-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#notification-channel-test-403-schema) |
-| [412](#notification-channel-test-412) | Precondition Failed   |                                                                                                             |             | [schema](#notification-channel-test-412-schema) |
+| [412](#notification-channel-test-412) | Precondition Failed   | (empty)                                                                                                     |             | [schema](#notification-channel-test-412-schema) |
 | [500](#notification-channel-test-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#notification-channel-test-500-schema) |
 
 #### Responses
@@ -11072,7 +12079,7 @@ Status: Forbidden
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="notification-channel-test-412"></span> 412
+##### <span id="notification-channel-test-412"></span> 412 - (empty)
 
 Status: Precondition Failed
 
@@ -11171,7 +12178,7 @@ PATCH /api/org/preferences
 
 | Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
 | --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
-| [200](#patch-org-preferences-200) | OK                    |                                                                                                             |             | [schema](#patch-org-preferences-200-schema) |
+| [200](#patch-org-preferences-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#patch-org-preferences-200-schema) |
 | [400](#patch-org-preferences-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#patch-org-preferences-400-schema) |
 | [401](#patch-org-preferences-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#patch-org-preferences-401-schema) |
 | [403](#patch-org-preferences-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#patch-org-preferences-403-schema) |
@@ -11179,13 +12186,13 @@ PATCH /api/org/preferences
 
 #### Responses
 
-##### <span id="patch-org-preferences-200"></span> 200
+##### <span id="patch-org-preferences-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
 ###### <span id="patch-org-preferences-200-schema"></span> Schema
 
-[PatchOrgPreferencesOKBody](#patch-org-preferences-o-k-body)
+[SuccessResponseBody](#success-response-body)
 
 ##### <span id="patch-org-preferences-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
@@ -11219,17 +12226,6 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-###### Inlined models
-
-**<span id="patch-org-preferences-o-k-body"></span> PatchOrgPreferencesOKBody**
-
-**Properties**
-
-| Name    | Type                      | Go type  | Required | Default | Description                        | Example             |
-| ------- | ------------------------- | -------- | :------: | ------- | ---------------------------------- | ------------------- |
-| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
-| message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
-
 ### <span id="patch-query-comment"></span> Update comment for query in query history. (_patchQueryComment_)
 
 ```
@@ -11249,14 +12245,14 @@ Updates comment for query in query history as specified by the UID.
 
 | Code                            | Status                | Description                                                                         | Has headers | Schema                                    |
 | ------------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#patch-query-comment-200) | OK                    |                                                                                     |             | [schema](#patch-query-comment-200-schema) |
+| [200](#patch-query-comment-200) | OK                    | (empty)                                                                             |             | [schema](#patch-query-comment-200-schema) |
 | [400](#patch-query-comment-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#patch-query-comment-400-schema) |
 | [401](#patch-query-comment-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#patch-query-comment-401-schema) |
 | [500](#patch-query-comment-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#patch-query-comment-500-schema) |
 
 #### Responses
 
-##### <span id="patch-query-comment-200"></span> 200
+##### <span id="patch-query-comment-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -11360,7 +12356,7 @@ POST /api/alerts/{alert_id}/pause
 
 | Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
 | ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#pause-alert-200) | OK                    |                                                                                                             |             | [schema](#pause-alert-200-schema) |
+| [200](#pause-alert-200) | OK                    | (empty)                                                                                                     |             | [schema](#pause-alert-200-schema) |
 | [401](#pause-alert-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#pause-alert-401-schema) |
 | [403](#pause-alert-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#pause-alert-403-schema) |
 | [404](#pause-alert-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#pause-alert-404-schema) |
@@ -11368,7 +12364,7 @@ POST /api/alerts/{alert_id}/pause
 
 #### Responses
 
-##### <span id="pause-alert-200"></span> 200
+##### <span id="pause-alert-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -11441,14 +12437,14 @@ POST /api/admin/pause-all-alerts
 
 | Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
 | ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#pause-all-alerts-200) | OK                    |                                                                                                             |             | [schema](#pause-all-alerts-200-schema) |
+| [200](#pause-all-alerts-200) | OK                    | (empty)                                                                                                     |             | [schema](#pause-all-alerts-200-schema) |
 | [401](#pause-all-alerts-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#pause-all-alerts-401-schema) |
 | [403](#pause-all-alerts-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#pause-all-alerts-403-schema) |
 | [500](#pause-all-alerts-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#pause-all-alerts-500-schema) |
 
 #### Responses
 
-##### <span id="pause-all-alerts-200"></span> 200
+##### <span id="pause-all-alerts-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -11509,13 +12505,13 @@ POST /api/saml/acs
 
 | Code                   | Status                | Description                                                                                                 | Has headers | Schema                           |
 | ---------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------- |
-| [302](#post-a-c-s-302) | Found                 |                                                                                                             |             | [schema](#post-a-c-s-302-schema) |
+| [302](#post-a-c-s-302) | Found                 | (empty)                                                                                                     |             | [schema](#post-a-c-s-302-schema) |
 | [403](#post-a-c-s-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#post-a-c-s-403-schema) |
 | [500](#post-a-c-s-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#post-a-c-s-500-schema) |
 
 #### Responses
 
-##### <span id="post-a-c-s-302"></span> 302
+##### <span id="post-a-c-s-302"></span> 302 - (empty)
 
 Status: Found
 
@@ -11537,6 +12533,85 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="post-annotation"></span> Create Annotation. (_postAnnotation_)
+
+```
+POST /api/annotations
+```
+
+Creates an annotation in the Grafana database. The dashboardId and panelId fields are optional. If they are not specified then an organization annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation include the timeEnd property.
+The format for `time` and `timeEnd` should be epoch numbers in millisecond resolution.
+The response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and timeEnd properties.
+
+#### Parameters
+
+| Name | Source | Type                                        | Go type                     | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------- | --------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [PostAnnotationsCmd](#post-annotations-cmd) | `models.PostAnnotationsCmd` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
+| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
+| [200](#post-annotation-200) | OK                    | (empty)                                                                                                     |             | [schema](#post-annotation-200-schema) |
+| [400](#post-annotation-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#post-annotation-400-schema) |
+| [401](#post-annotation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#post-annotation-401-schema) |
+| [403](#post-annotation-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#post-annotation-403-schema) |
+| [500](#post-annotation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#post-annotation-500-schema) |
+
+#### Responses
+
+##### <span id="post-annotation-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="post-annotation-200-schema"></span> Schema
+
+[PostAnnotationOKBody](#post-annotation-o-k-body)
+
+##### <span id="post-annotation-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="post-annotation-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="post-annotation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="post-annotation-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="post-annotation-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="post-annotation-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="post-annotation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="post-annotation-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+###### Inlined models
+
+**<span id="post-annotation-o-k-body"></span> PostAnnotationOKBody**
+
+**Properties**
+
+| Name    | Type                      | Go type  | Required | Default | Description                                | Example |
+| ------- | ------------------------- | -------- | :------: | ------- | ------------------------------------------ | ------- |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created annotation.   | `65`    |
+| message | string                    | `string` |    ✓     |         | Message Message of the created annotation. |         |
+
 ### <span id="post-dashboard"></span> Create / Update dashboard (_postDashboard_)
 
 ```
@@ -11555,7 +12630,7 @@ Creates a new dashboard or updates an existing dashboard.
 
 | Code                       | Status                | Description                                                                                                 | Has headers | Schema                               |
 | -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#post-dashboard-200) | OK                    | Create/update dashboard response.                                                                           |             | [schema](#post-dashboard-200-schema) |
+| [200](#post-dashboard-200) | OK                    | (empty)                                                                                                     |             | [schema](#post-dashboard-200-schema) |
 | [400](#post-dashboard-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#post-dashboard-400-schema) |
 | [401](#post-dashboard-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#post-dashboard-401-schema) |
 | [403](#post-dashboard-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#post-dashboard-403-schema) |
@@ -11566,7 +12641,7 @@ Creates a new dashboard or updates an existing dashboard.
 
 #### Responses
 
-##### <span id="post-dashboard-200"></span> 200 - Create/update dashboard response.
+##### <span id="post-dashboard-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -11645,159 +12720,82 @@ Status: Internal Server Error
 | url     | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
 | version | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
 
-### <span id="post-dashboard-permissions"></span> Updates permissions for a dashboard. (_postDashboardPermissions_)
+### <span id="post-graphite-annotation"></span> Create Annotation in Graphite format. (_postGraphiteAnnotation_)
 
 ```
-POST /api/dashboards/id/{DashboardID}/permissions
+POST /api/annotations/graphite
 ```
 
-Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead
-
-This operation will remove existing permissions if they’re not included in the request.
+Creates an annotation by using Graphite-compatible event format. The `when` and `data` fields are optional. If `when` is not specified then the current time will be used as annotation’s timestamp. The `tags` field can also be in prior to Graphite `0.10.0` format (string with multiple tags being separated by a space).
 
 #### Parameters
 
-| Name        | Source | Type                                                       | Go type                            | Separator | Required | Default | Description |
-| ----------- | ------ | ---------------------------------------------------------- | ---------------------------------- | --------- | :------: | ------- | ----------- |
-| DashboardID | `path` | int64 (formatted integer)                                  | `int64`                            |           |    ✓     |         |             |
-| Body        | `body` | [UpdateDashboardACLCommand](#update-dashboard-acl-command) | `models.UpdateDashboardACLCommand` |           |    ✓     |         |             |
+| Name | Source | Type                                                         | Go type                             | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------------------------ | ----------------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [PostGraphiteAnnotationsCmd](#post-graphite-annotations-cmd) | `models.PostGraphiteAnnotationsCmd` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
-| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
-| [200](#post-dashboard-permissions-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#post-dashboard-permissions-200-schema) |
-| [400](#post-dashboard-permissions-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#post-dashboard-permissions-400-schema) |
-| [401](#post-dashboard-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#post-dashboard-permissions-401-schema) |
-| [403](#post-dashboard-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#post-dashboard-permissions-403-schema) |
-| [404](#post-dashboard-permissions-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#post-dashboard-permissions-404-schema) |
-| [500](#post-dashboard-permissions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#post-dashboard-permissions-500-schema) |
+| Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
+| ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
+| [200](#post-graphite-annotation-200) | OK                    | (empty)                                                                                                     |             | [schema](#post-graphite-annotation-200-schema) |
+| [400](#post-graphite-annotation-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#post-graphite-annotation-400-schema) |
+| [401](#post-graphite-annotation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#post-graphite-annotation-401-schema) |
+| [403](#post-graphite-annotation-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#post-graphite-annotation-403-schema) |
+| [500](#post-graphite-annotation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#post-graphite-annotation-500-schema) |
 
 #### Responses
 
-##### <span id="post-dashboard-permissions-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="post-graphite-annotation-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="post-dashboard-permissions-200-schema"></span> Schema
+###### <span id="post-graphite-annotation-200-schema"></span> Schema
 
-[SuccessResponseBody](#success-response-body)
+[PostGraphiteAnnotationOKBody](#post-graphite-annotation-o-k-body)
 
-##### <span id="post-dashboard-permissions-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="post-dashboard-permissions-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="post-dashboard-permissions-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="post-dashboard-permissions-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="post-dashboard-permissions-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="post-dashboard-permissions-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="post-dashboard-permissions-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="post-dashboard-permissions-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="post-dashboard-permissions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="post-dashboard-permissions-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="post-dashboard-permissions-with-uid"></span> Updates permissions for a dashboard. (_postDashboardPermissionsWithUid_)
-
-```
-POST /api/dashboards/uid/{uid}/permissions
-```
-
-This operation will remove existing permissions if they’re not included in the request.
-
-#### Parameters
-
-| Name | Source | Type                                                       | Go type                            | Separator | Required | Default | Description |
-| ---- | ------ | ---------------------------------------------------------- | ---------------------------------- | --------- | :------: | ------- | ----------- |
-| uid  | `path` | string                                                     | `string`                           |           |    ✓     |         |             |
-| Body | `body` | [UpdateDashboardACLCommand](#update-dashboard-acl-command) | `models.UpdateDashboardACLCommand` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                            | Status                | Description                                                                                                 | Has headers | Schema                                                    |
-| ----------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------------- |
-| [200](#post-dashboard-permissions-with-uid-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#post-dashboard-permissions-with-uid-200-schema) |
-| [400](#post-dashboard-permissions-with-uid-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#post-dashboard-permissions-with-uid-400-schema) |
-| [401](#post-dashboard-permissions-with-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#post-dashboard-permissions-with-uid-401-schema) |
-| [403](#post-dashboard-permissions-with-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#post-dashboard-permissions-with-uid-403-schema) |
-| [404](#post-dashboard-permissions-with-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#post-dashboard-permissions-with-uid-404-schema) |
-| [500](#post-dashboard-permissions-with-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#post-dashboard-permissions-with-uid-500-schema) |
-
-#### Responses
-
-##### <span id="post-dashboard-permissions-with-uid-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="post-dashboard-permissions-with-uid-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="post-dashboard-permissions-with-uid-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="post-graphite-annotation-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="post-dashboard-permissions-with-uid-400-schema"></span> Schema
+###### <span id="post-graphite-annotation-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="post-dashboard-permissions-with-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="post-graphite-annotation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="post-dashboard-permissions-with-uid-401-schema"></span> Schema
+###### <span id="post-graphite-annotation-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="post-dashboard-permissions-with-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="post-graphite-annotation-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="post-dashboard-permissions-with-uid-403-schema"></span> Schema
+###### <span id="post-graphite-annotation-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="post-dashboard-permissions-with-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="post-dashboard-permissions-with-uid-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="post-dashboard-permissions-with-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="post-graphite-annotation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="post-dashboard-permissions-with-uid-500-schema"></span> Schema
+###### <span id="post-graphite-annotation-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
+
+###### Inlined models
+
+**<span id="post-graphite-annotation-o-k-body"></span> PostGraphiteAnnotationOKBody**
+
+**Properties**
+
+| Name    | Type                      | Go type  | Required | Default | Description                                | Example |
+| ------- | ------------------------- | -------- | :------: | ------- | ------------------------------------------ | ------- |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created annotation.   | `65`    |
+| message | string                    | `string` |    ✓     |         | Message Message of the created annotation. |         |
 
 ### <span id="post-license-token"></span> Create license token. (_postLicenseToken_)
 
@@ -11817,12 +12815,12 @@ You need to have a permission with action `licensing:update`.
 
 | Code                           | Status      | Description                                                                         | Has headers | Schema                                   |
 | ------------------------------ | ----------- | ----------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
-| [200](#post-license-token-200) | OK          |                                                                                     |             | [schema](#post-license-token-200-schema) |
+| [200](#post-license-token-200) | OK          | (empty)                                                                             |             | [schema](#post-license-token-200-schema) |
 | [400](#post-license-token-400) | Bad Request | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#post-license-token-400-schema) |
 
 #### Responses
 
-##### <span id="post-license-token-200"></span> 200
+##### <span id="post-license-token-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -11858,13 +12856,13 @@ You need to have a permission with action `licensing:update`.
 
 | Code                                 | Status       | Description                                                          | Has headers | Schema                                         |
 | ------------------------------------ | ------------ | -------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
-| [200](#post-renew-license-token-200) | OK           |                                                                      |             | [schema](#post-renew-license-token-200-schema) |
+| [200](#post-renew-license-token-200) | OK           | (empty)                                                              |             | [schema](#post-renew-license-token-200-schema) |
 | [401](#post-renew-license-token-401) | Unauthorized | UnauthorizedError is returned when the request is not authenticated. |             | [schema](#post-renew-license-token-401-schema) |
 | [404](#post-renew-license-token-404) | Not Found    | NotFoundError is returned when the requested resource was not found. |             | [schema](#post-renew-license-token-404-schema) |
 
 #### Responses
 
-##### <span id="post-renew-license-token-200"></span> 200
+##### <span id="post-renew-license-token-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -11892,6 +12890,12 @@ Status: Not Found
 POST /api/saml/slo
 ```
 
+There might be two possible requests:
+
+1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.
+2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,
+   or in case of IdP-initiated logout.
+
 #### Parameters
 
 | Name         | Source  | Type   | Go type  | Separator | Required | Default | Description |
@@ -11903,14 +12907,14 @@ POST /api/saml/slo
 
 | Code                   | Status                | Description                                                                                                 | Has headers | Schema                           |
 | ---------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------- |
-| [302](#post-s-l-o-302) | Found                 |                                                                                                             |             | [schema](#post-s-l-o-302-schema) |
+| [302](#post-s-l-o-302) | Found                 | (empty)                                                                                                     |             | [schema](#post-s-l-o-302-schema) |
 | [400](#post-s-l-o-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#post-s-l-o-400-schema) |
 | [403](#post-s-l-o-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#post-s-l-o-403-schema) |
 | [500](#post-s-l-o-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#post-s-l-o-500-schema) |
 
 #### Responses
 
-##### <span id="post-s-l-o-302"></span> 302
+##### <span id="post-s-l-o-302"></span> 302 - (empty)
 
 Status: Found
 
@@ -11940,7 +12944,68 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="query-metrics-with-expressions"></span> Query metrics with expressions (_queryMetricsWithExpressions_)
+### <span id="post-sync-user-with-l-d-a-p"></span> Enables a single Grafana user to be synchronized against LDAP. (_postSyncUserWithLDAP_)
+
+```
+POST /api/admin/ldap/sync/{user_id}
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:sync`.
+
+#### Security Requirements
+
+- basic
+
+#### Parameters
+
+| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                    | Status                | Description                                                                                                 | Has headers | Schema                                            |
+| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------- |
+| [200](#post-sync-user-with-l-d-a-p-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#post-sync-user-with-l-d-a-p-200-schema) |
+| [401](#post-sync-user-with-l-d-a-p-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#post-sync-user-with-l-d-a-p-401-schema) |
+| [403](#post-sync-user-with-l-d-a-p-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#post-sync-user-with-l-d-a-p-403-schema) |
+| [500](#post-sync-user-with-l-d-a-p-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#post-sync-user-with-l-d-a-p-500-schema) |
+
+#### Responses
+
+##### <span id="post-sync-user-with-l-d-a-p-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="post-sync-user-with-l-d-a-p-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="post-sync-user-with-l-d-a-p-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="post-sync-user-with-l-d-a-p-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="post-sync-user-with-l-d-a-p-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="post-sync-user-with-l-d-a-p-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="post-sync-user-with-l-d-a-p-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="post-sync-user-with-l-d-a-p-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="query-metrics-with-expressions"></span> DataSource query metrics with expressions (_queryMetricsWithExpressions_)
 
 ```
 POST /api/ds/query
@@ -11959,8 +13024,8 @@ you need to have a permission with action: `datasources:query`.
 
 | Code                                       | Status                | Description                                                                                                 | Has headers | Schema                                               |
 | ------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------------- |
-| [200](#query-metrics-with-expressions-200) | OK                    |                                                                                                             |             | [schema](#query-metrics-with-expressions-200-schema) |
-| [207](#query-metrics-with-expressions-207) | Multi-Status          |                                                                                                             |             | [schema](#query-metrics-with-expressions-207-schema) |
+| [200](#query-metrics-with-expressions-200) | OK                    | (empty)                                                                                                     |             | [schema](#query-metrics-with-expressions-200-schema) |
+| [207](#query-metrics-with-expressions-207) | Multi-Status          | (empty)                                                                                                     |             | [schema](#query-metrics-with-expressions-207-schema) |
 | [400](#query-metrics-with-expressions-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#query-metrics-with-expressions-400-schema) |
 | [401](#query-metrics-with-expressions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#query-metrics-with-expressions-401-schema) |
 | [403](#query-metrics-with-expressions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#query-metrics-with-expressions-403-schema) |
@@ -11968,7 +13033,7 @@ you need to have a permission with action: `datasources:query`.
 
 #### Responses
 
-##### <span id="query-metrics-with-expressions-200"></span> 200
+##### <span id="query-metrics-with-expressions-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -11976,7 +13041,7 @@ Status: OK
 
 [QueryDataResponse](#query-data-response)
 
-##### <span id="query-metrics-with-expressions-207"></span> 207
+##### <span id="query-metrics-with-expressions-207"></span> 207 - (empty)
 
 Status: Multi-Status
 
@@ -12028,12 +13093,12 @@ You need to have a permission with action `licensing:read`.
 
 | Code                              | Status                | Description                                                                        | Has headers | Schema                                      |
 | --------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
-| [200](#refresh-license-stats-200) | OK                    |                                                                                    |             | [schema](#refresh-license-stats-200-schema) |
+| [200](#refresh-license-stats-200) | OK                    | (empty)                                                                            |             | [schema](#refresh-license-stats-200-schema) |
 | [500](#refresh-license-stats-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#refresh-license-stats-500-schema) |
 
 #### Responses
 
-##### <span id="refresh-license-stats-200"></span> 200
+##### <span id="refresh-license-stats-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -12049,7 +13114,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="reload-l-d-a-p"></span> Reloads the LDAP configuration. (_reloadLDAP_)
+### <span id="reload-l-d-a-p-cfg"></span> Reloads the LDAP configuration. (_reloadLDAPCfg_)
 
 ```
 POST /api/admin/ldap/reload
@@ -12063,324 +13128,44 @@ If you are running Grafana Enterprise and have Fine-grained access control enabl
 
 #### All responses
 
-| Code                       | Status                | Description                                                                                                 | Has headers | Schema                               |
-| -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#reload-l-d-a-p-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#reload-l-d-a-p-200-schema) |
-| [401](#reload-l-d-a-p-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#reload-l-d-a-p-401-schema) |
-| [403](#reload-l-d-a-p-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#reload-l-d-a-p-403-schema) |
-| [500](#reload-l-d-a-p-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#reload-l-d-a-p-500-schema) |
+| Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
+| ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
+| [200](#reload-l-d-a-p-cfg-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#reload-l-d-a-p-cfg-200-schema) |
+| [401](#reload-l-d-a-p-cfg-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#reload-l-d-a-p-cfg-401-schema) |
+| [403](#reload-l-d-a-p-cfg-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#reload-l-d-a-p-cfg-403-schema) |
+| [500](#reload-l-d-a-p-cfg-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#reload-l-d-a-p-cfg-500-schema) |
 
 #### Responses
 
-##### <span id="reload-l-d-a-p-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="reload-l-d-a-p-cfg-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="reload-l-d-a-p-200-schema"></span> Schema
+###### <span id="reload-l-d-a-p-cfg-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="reload-l-d-a-p-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="reload-l-d-a-p-cfg-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="reload-l-d-a-p-401-schema"></span> Schema
+###### <span id="reload-l-d-a-p-cfg-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="reload-l-d-a-p-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="reload-l-d-a-p-cfg-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="reload-l-d-a-p-403-schema"></span> Schema
+###### <span id="reload-l-d-a-p-cfg-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="reload-l-d-a-p-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="reload-l-d-a-p-cfg-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="reload-l-d-a-p-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="reload-provisioned-access-control"></span> Reload access control provisioning configurations. (_reloadProvisionedAccessControl_)
-
-```
-POST /api/admin/provisioning/accesscontrol/reload
-```
-
-Reloads the provisioning config files for access control again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:accesscontrol`.
-
-#### Security Requirements
-
-- basic
-
-#### All responses
-
-| Code                                          | Status                | Description                                                                                                 | Has headers | Schema                                                  |
-| --------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------- |
-| [200](#reload-provisioned-access-control-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#reload-provisioned-access-control-200-schema) |
-| [401](#reload-provisioned-access-control-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#reload-provisioned-access-control-401-schema) |
-| [403](#reload-provisioned-access-control-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#reload-provisioned-access-control-403-schema) |
-| [500](#reload-provisioned-access-control-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#reload-provisioned-access-control-500-schema) |
-
-#### Responses
-
-##### <span id="reload-provisioned-access-control-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="reload-provisioned-access-control-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="reload-provisioned-access-control-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="reload-provisioned-access-control-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-access-control-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="reload-provisioned-access-control-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-access-control-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="reload-provisioned-access-control-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="reload-provisioned-alert-notifiers"></span> Reload legacy alert notifier provisioning configurations. (_reloadProvisionedAlertNotifiers_)
-
-```
-POST /api/admin/provisioning/notifications/reload
-```
-
-Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.
-
-#### Security Requirements
-
-- basic
-
-#### All responses
-
-| Code                                           | Status                | Description                                                                                                 | Has headers | Schema                                                   |
-| ---------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------------- |
-| [200](#reload-provisioned-alert-notifiers-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#reload-provisioned-alert-notifiers-200-schema) |
-| [401](#reload-provisioned-alert-notifiers-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#reload-provisioned-alert-notifiers-401-schema) |
-| [403](#reload-provisioned-alert-notifiers-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#reload-provisioned-alert-notifiers-403-schema) |
-| [500](#reload-provisioned-alert-notifiers-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#reload-provisioned-alert-notifiers-500-schema) |
-
-#### Responses
-
-##### <span id="reload-provisioned-alert-notifiers-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="reload-provisioned-alert-notifiers-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="reload-provisioned-alert-notifiers-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="reload-provisioned-alert-notifiers-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-alert-notifiers-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="reload-provisioned-alert-notifiers-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-alert-notifiers-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="reload-provisioned-alert-notifiers-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="reload-provisioned-dashboards"></span> Reload dashboard provisioning configurations. (_reloadProvisionedDashboards_)
-
-```
-POST /api/admin/provisioning/dashboards/reload
-```
-
-Reloads the provisioning config files for dashboards again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:dashboards`.
-
-#### Security Requirements
-
-- basic
-
-#### All responses
-
-| Code                                      | Status                | Description                                                                                                 | Has headers | Schema                                              |
-| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
-| [200](#reload-provisioned-dashboards-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#reload-provisioned-dashboards-200-schema) |
-| [401](#reload-provisioned-dashboards-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#reload-provisioned-dashboards-401-schema) |
-| [403](#reload-provisioned-dashboards-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#reload-provisioned-dashboards-403-schema) |
-| [500](#reload-provisioned-dashboards-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#reload-provisioned-dashboards-500-schema) |
-
-#### Responses
-
-##### <span id="reload-provisioned-dashboards-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="reload-provisioned-dashboards-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="reload-provisioned-dashboards-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="reload-provisioned-dashboards-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-dashboards-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="reload-provisioned-dashboards-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-dashboards-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="reload-provisioned-dashboards-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="reload-provisioned-datasources"></span> Reload datasource provisioning configurations. (_reloadProvisionedDatasources_)
-
-```
-POST /api/admin/provisioning/datasources/reload
-```
-
-Reloads the provisioning config files for datasources again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:datasources`.
-
-#### Security Requirements
-
-- basic
-
-#### All responses
-
-| Code                                       | Status                | Description                                                                                                 | Has headers | Schema                                               |
-| ------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------------- |
-| [200](#reload-provisioned-datasources-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#reload-provisioned-datasources-200-schema) |
-| [401](#reload-provisioned-datasources-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#reload-provisioned-datasources-401-schema) |
-| [403](#reload-provisioned-datasources-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#reload-provisioned-datasources-403-schema) |
-| [500](#reload-provisioned-datasources-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#reload-provisioned-datasources-500-schema) |
-
-#### Responses
-
-##### <span id="reload-provisioned-datasources-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="reload-provisioned-datasources-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="reload-provisioned-datasources-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="reload-provisioned-datasources-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-datasources-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="reload-provisioned-datasources-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-datasources-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="reload-provisioned-datasources-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="reload-provisioned-plugins"></span> Reload plugin provisioning configurations. (_reloadProvisionedPlugins_)
-
-```
-POST /api/admin/provisioning/plugins/reload
-```
-
-Reloads the provisioning config files for plugins again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:plugin`.
-
-#### Security Requirements
-
-- basic
-
-#### All responses
-
-| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
-| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
-| [200](#reload-provisioned-plugins-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#reload-provisioned-plugins-200-schema) |
-| [401](#reload-provisioned-plugins-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#reload-provisioned-plugins-401-schema) |
-| [403](#reload-provisioned-plugins-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#reload-provisioned-plugins-403-schema) |
-| [500](#reload-provisioned-plugins-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#reload-provisioned-plugins-500-schema) |
-
-#### Responses
-
-##### <span id="reload-provisioned-plugins-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="reload-provisioned-plugins-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="reload-provisioned-plugins-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="reload-provisioned-plugins-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-plugins-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="reload-provisioned-plugins-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="reload-provisioned-plugins-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="reload-provisioned-plugins-500-schema"></span> Schema
+###### <span id="reload-l-d-a-p-cfg-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -12454,6 +13239,141 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="remove-org-user"></span> Delete user in current organization (_removeOrgUser_)
+
+```
+DELETE /api/orgs/{org_id}/users/{user_id}
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled
+you need to have a permission with action: `org.users:remove` with scope `users:*`.
+
+#### Parameters
+
+| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| org_id  | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
+| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
+| [200](#remove-org-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#remove-org-user-200-schema) |
+| [400](#remove-org-user-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#remove-org-user-400-schema) |
+| [401](#remove-org-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#remove-org-user-401-schema) |
+| [403](#remove-org-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#remove-org-user-403-schema) |
+| [500](#remove-org-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#remove-org-user-500-schema) |
+
+#### Responses
+
+##### <span id="remove-org-user-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="remove-org-user-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="remove-org-user-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="remove-org-user-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="remove-org-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="remove-org-user-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="remove-org-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="remove-org-user-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="remove-org-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="remove-org-user-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="remove-org-user-for-current-org"></span> Delete user in current organization (_removeOrgUserForCurrentOrg_)
+
+```
+DELETE /api/org/users/{user_id}
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled
+you need to have a permission with action: `org.users:remove` with scope `users:*`.
+
+#### Parameters
+
+| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                        | Status                | Description                                                                                                 | Has headers | Schema                                                |
+| ------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------- |
+| [200](#remove-org-user-for-current-org-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#remove-org-user-for-current-org-200-schema) |
+| [400](#remove-org-user-for-current-org-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#remove-org-user-for-current-org-400-schema) |
+| [401](#remove-org-user-for-current-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#remove-org-user-for-current-org-401-schema) |
+| [403](#remove-org-user-for-current-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#remove-org-user-for-current-org-403-schema) |
+| [500](#remove-org-user-for-current-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#remove-org-user-for-current-org-500-schema) |
+
+#### Responses
+
+##### <span id="remove-org-user-for-current-org-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="remove-org-user-for-current-org-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="remove-org-user-for-current-org-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="remove-org-user-for-current-org-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="remove-org-user-for-current-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="remove-org-user-for-current-org-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="remove-org-user-for-current-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="remove-org-user-for-current-org-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="remove-org-user-for-current-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="remove-org-user-for-current-org-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="remove-team-group-api"></span> Remove External Group. (_removeTeamGroupApi_)
 
 ```
@@ -12462,10 +13382,10 @@ DELETE /api/teams/{teamId}/groups/{groupId}
 
 #### Parameters
 
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| groupId | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
-| teamId  | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name    | Source | Type                      | Go type  | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------- | -------- | --------- | :------: | ------- | ----------- |
+| groupId | `path` | string                    | `string` |           |    ✓     |         |             |
+| teamId  | `path` | int64 (formatted integer) | `int64`  |           |    ✓     |         |             |
 
 #### All responses
 
@@ -12733,7 +13653,7 @@ Status: Internal Server Error
 ### <span id="render-report-p-d-f"></span> Render report for dashboard. (_renderReportPDF_)
 
 ```
-GET /api/reports/render/pdf/{DashboardID}
+GET /api/reports/render/pdf/{dashboardID}
 ```
 
 Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.
@@ -12744,22 +13664,28 @@ Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This w
 
 #### Parameters
 
-| Name        | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ----------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| DashboardID | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name        | Source  | Type                      | Go type  | Separator | Required | Default | Description |
+| ----------- | ------- | ------------------------- | -------- | --------- | :------: | ------- | ----------- |
+| dashboardID | `path`  | int64 (formatted integer) | `int64`  |           |    ✓     |         |             |
+| from        | `query` | string                    | `string` |           |          |         |             |
+| layout      | `query` | string                    | `string` |           |          |         |             |
+| orientation | `query` | string                    | `string` |           |          |         |             |
+| title       | `query` | string                    | `string` |           |          |         |             |
+| to          | `query` | string                    | `string` |           |          |         |             |
+| variables   | `query` | string                    | `string` |           |          |         |             |
 
 #### All responses
 
 | Code                            | Status                | Description                                                                         | Has headers | Schema                                    |
 | ------------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
-| [200](#render-report-p-d-f-200) | OK                    |                                                                                     |             | [schema](#render-report-p-d-f-200-schema) |
+| [200](#render-report-p-d-f-200) | OK                    | (empty)                                                                             |             | [schema](#render-report-p-d-f-200-schema) |
 | [400](#render-report-p-d-f-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#render-report-p-d-f-400-schema) |
 | [401](#render-report-p-d-f-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#render-report-p-d-f-401-schema) |
 | [500](#render-report-p-d-f-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#render-report-p-d-f-500-schema) |
 
 #### Responses
 
-##### <span id="render-report-p-d-f-200"></span> 200
+##### <span id="render-report-p-d-f-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -12803,18 +13729,26 @@ Available to all users and with a valid license.
 
 - application/pdf
 
+#### Parameters
+
+| Name        | Source  | Type   | Go type  | Separator | Required | Default | Description |
+| ----------- | ------- | ------ | -------- | --------- | :------: | ------- | ----------- |
+| dashboardID | `query` | string | `string` |           |          |         |             |
+| layout      | `query` | string | `string` |           |          |         |             |
+| orientation | `query` | string | `string` |           |          |         |             |
+
 #### All responses
 
 | Code                             | Status                | Description                                                                         | Has headers | Schema                                     |
 | -------------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
-| [200](#render-report-p-d-fs-200) | OK                    |                                                                                     |             | [schema](#render-report-p-d-fs-200-schema) |
+| [200](#render-report-p-d-fs-200) | OK                    | (empty)                                                                             |             | [schema](#render-report-p-d-fs-200-schema) |
 | [400](#render-report-p-d-fs-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#render-report-p-d-fs-400-schema) |
 | [401](#render-report-p-d-fs-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#render-report-p-d-fs-401-schema) |
 | [500](#render-report-p-d-fs-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#render-report-p-d-fs-500-schema) |
 
 #### Responses
 
-##### <span id="render-report-p-d-fs-200"></span> 200
+##### <span id="render-report-p-d-fs-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -12846,7 +13780,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="restore-dashboard-version"></span> Restore a dashboard to a given dashboard version. (_restoreDashboardVersion_)
+### <span id="restore-dashboard-version-by-id"></span> Restore a dashboard to a given dashboard version. (_restoreDashboardVersionByID_)
 
 ```
 POST /api/dashboards/id/{DashboardID}/restore
@@ -12863,59 +13797,59 @@ Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID)
 
 #### All responses
 
-| Code                                  | Status                | Description                                                                                                 | Has headers | Schema                                          |
-| ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------- |
-| [200](#restore-dashboard-version-200) | OK                    | Create/update dashboard response.                                                                           |             | [schema](#restore-dashboard-version-200-schema) |
-| [401](#restore-dashboard-version-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#restore-dashboard-version-401-schema) |
-| [403](#restore-dashboard-version-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#restore-dashboard-version-403-schema) |
-| [404](#restore-dashboard-version-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#restore-dashboard-version-404-schema) |
-| [500](#restore-dashboard-version-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#restore-dashboard-version-500-schema) |
+| Code                                        | Status                | Description                                                                                                 | Has headers | Schema                                                |
+| ------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------- |
+| [200](#restore-dashboard-version-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#restore-dashboard-version-by-id-200-schema) |
+| [401](#restore-dashboard-version-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#restore-dashboard-version-by-id-401-schema) |
+| [403](#restore-dashboard-version-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#restore-dashboard-version-by-id-403-schema) |
+| [404](#restore-dashboard-version-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#restore-dashboard-version-by-id-404-schema) |
+| [500](#restore-dashboard-version-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#restore-dashboard-version-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="restore-dashboard-version-200"></span> 200 - Create/update dashboard response.
+##### <span id="restore-dashboard-version-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="restore-dashboard-version-200-schema"></span> Schema
+###### <span id="restore-dashboard-version-by-id-200-schema"></span> Schema
 
-[RestoreDashboardVersionOKBody](#restore-dashboard-version-o-k-body)
+[RestoreDashboardVersionByIDOKBody](#restore-dashboard-version-by-id-o-k-body)
 
-##### <span id="restore-dashboard-version-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="restore-dashboard-version-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="restore-dashboard-version-401-schema"></span> Schema
+###### <span id="restore-dashboard-version-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="restore-dashboard-version-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="restore-dashboard-version-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="restore-dashboard-version-403-schema"></span> Schema
+###### <span id="restore-dashboard-version-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="restore-dashboard-version-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="restore-dashboard-version-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="restore-dashboard-version-404-schema"></span> Schema
+###### <span id="restore-dashboard-version-by-id-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="restore-dashboard-version-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="restore-dashboard-version-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="restore-dashboard-version-500-schema"></span> Schema
+###### <span id="restore-dashboard-version-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ###### Inlined models
 
-**<span id="restore-dashboard-version-o-k-body"></span> RestoreDashboardVersionOKBody**
+**<span id="restore-dashboard-version-by-id-o-k-body"></span> RestoreDashboardVersionByIDOKBody**
 
 **Properties**
 
@@ -12945,7 +13879,7 @@ POST /api/dashboards/uid/{uid}/restore
 
 | Code                                         | Status                | Description                                                                                                 | Has headers | Schema                                                 |
 | -------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------ |
-| [200](#restore-dashboard-version-by-uid-200) | OK                    | Create/update dashboard response.                                                                           |             | [schema](#restore-dashboard-version-by-uid-200-schema) |
+| [200](#restore-dashboard-version-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#restore-dashboard-version-by-uid-200-schema) |
 | [401](#restore-dashboard-version-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#restore-dashboard-version-by-uid-401-schema) |
 | [403](#restore-dashboard-version-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#restore-dashboard-version-by-uid-403-schema) |
 | [404](#restore-dashboard-version-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#restore-dashboard-version-by-uid-404-schema) |
@@ -12953,7 +13887,7 @@ POST /api/dashboards/uid/{uid}/restore
 
 #### Responses
 
-##### <span id="restore-dashboard-version-by-uid-200"></span> 200 - Create/update dashboard response.
+##### <span id="restore-dashboard-version-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -13008,91 +13942,86 @@ Status: Internal Server Error
 | url     | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
 | version | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
 
-### <span id="revoke-auth-token"></span> Revoke auth token for user. (_revokeAuthToken_)
+### <span id="retrieve-service-account"></span> Get single serviceaccount by Id (_retrieveServiceAccount_)
 
 ```
-POST /api/admin/users/{user_id}/revoke-auth-token
+GET /api/serviceaccounts/{serviceAccountId}
 ```
 
-Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global.users:*`.
-
-#### Security Requirements
-
-- basic
+Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+action: `serviceaccounts:read` scope: `serviceaccounts:id:1` (single service account)
 
 #### Parameters
 
-| Name    | Source | Type                                         | Go type                     | Separator | Required | Default | Description |
-| ------- | ------ | -------------------------------------------- | --------------------------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer)                    | `int64`                     |           |    ✓     |         |             |
-| body    | `body` | [RevokeAuthTokenCmd](#revoke-auth-token-cmd) | `models.RevokeAuthTokenCmd` |           |    ✓     |         |             |
+| Name             | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ---------------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| serviceAccountId | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
-| ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
-| [200](#revoke-auth-token-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#revoke-auth-token-200-schema) |
-| [400](#revoke-auth-token-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#revoke-auth-token-400-schema) |
-| [401](#revoke-auth-token-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#revoke-auth-token-401-schema) |
-| [403](#revoke-auth-token-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#revoke-auth-token-403-schema) |
-| [404](#revoke-auth-token-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#revoke-auth-token-404-schema) |
-| [500](#revoke-auth-token-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#revoke-auth-token-500-schema) |
+| Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
+| ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
+| [200](#retrieve-service-account-200) | OK                    | (empty)                                                                                                     |             | [schema](#retrieve-service-account-200-schema) |
+| [400](#retrieve-service-account-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#retrieve-service-account-400-schema) |
+| [401](#retrieve-service-account-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#retrieve-service-account-401-schema) |
+| [403](#retrieve-service-account-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#retrieve-service-account-403-schema) |
+| [404](#retrieve-service-account-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#retrieve-service-account-404-schema) |
+| [500](#retrieve-service-account-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#retrieve-service-account-500-schema) |
 
 #### Responses
 
-##### <span id="revoke-auth-token-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="retrieve-service-account-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="revoke-auth-token-200-schema"></span> Schema
+###### <span id="retrieve-service-account-200-schema"></span> Schema
 
-[SuccessResponseBody](#success-response-body)
+[ServiceAccountDTO](#service-account-d-t-o)
 
-##### <span id="revoke-auth-token-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="retrieve-service-account-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="revoke-auth-token-400-schema"></span> Schema
+###### <span id="retrieve-service-account-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-auth-token-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="retrieve-service-account-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="revoke-auth-token-401-schema"></span> Schema
+###### <span id="retrieve-service-account-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-auth-token-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="retrieve-service-account-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="revoke-auth-token-403-schema"></span> Schema
+###### <span id="retrieve-service-account-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-auth-token-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="retrieve-service-account-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="revoke-auth-token-404-schema"></span> Schema
+###### <span id="retrieve-service-account-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-auth-token-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="retrieve-service-account-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="revoke-auth-token-500-schema"></span> Schema
+###### <span id="retrieve-service-account-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ### <span id="revoke-invite"></span> Revoke invite. (_revokeInvite_)
 
 ```
-DELETE /api/org/{invitation_code}/invites
+DELETE /api/org/invites/{invitation_code}/revoke
 ```
 
 #### Parameters
@@ -13153,7 +14082,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="revoke-signed-in-auth-token"></span> Revoke an auth token of the actual User. (_revokeSignedInAuthToken_)
+### <span id="revoke-user-auth-token"></span> Revoke an auth token of the actual User. (_revokeUserAuthToken_)
 
 ```
 POST /api/user/revoke-auth-token
@@ -13169,53 +14098,53 @@ Revokes the given auth token (device) for the actual user. User of issued auth t
 
 #### All responses
 
-| Code                                    | Status                | Description                                                                                                 | Has headers | Schema                                            |
-| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------- |
-| [200](#revoke-signed-in-auth-token-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#revoke-signed-in-auth-token-200-schema) |
-| [400](#revoke-signed-in-auth-token-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#revoke-signed-in-auth-token-400-schema) |
-| [401](#revoke-signed-in-auth-token-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#revoke-signed-in-auth-token-401-schema) |
-| [403](#revoke-signed-in-auth-token-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#revoke-signed-in-auth-token-403-schema) |
-| [500](#revoke-signed-in-auth-token-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#revoke-signed-in-auth-token-500-schema) |
+| Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
+| ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
+| [200](#revoke-user-auth-token-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#revoke-user-auth-token-200-schema) |
+| [400](#revoke-user-auth-token-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#revoke-user-auth-token-400-schema) |
+| [401](#revoke-user-auth-token-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#revoke-user-auth-token-401-schema) |
+| [403](#revoke-user-auth-token-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#revoke-user-auth-token-403-schema) |
+| [500](#revoke-user-auth-token-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#revoke-user-auth-token-500-schema) |
 
 #### Responses
 
-##### <span id="revoke-signed-in-auth-token-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="revoke-user-auth-token-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="revoke-signed-in-auth-token-200-schema"></span> Schema
+###### <span id="revoke-user-auth-token-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="revoke-signed-in-auth-token-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="revoke-user-auth-token-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="revoke-signed-in-auth-token-400-schema"></span> Schema
+###### <span id="revoke-user-auth-token-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-signed-in-auth-token-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="revoke-user-auth-token-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="revoke-signed-in-auth-token-401-schema"></span> Schema
+###### <span id="revoke-user-auth-token-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-signed-in-auth-token-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="revoke-user-auth-token-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="revoke-signed-in-auth-token-403-schema"></span> Schema
+###### <span id="revoke-user-auth-token-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-signed-in-auth-token-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="revoke-user-auth-token-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="revoke-signed-in-auth-token-500-schema"></span> Schema
+###### <span id="revoke-user-auth-token-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -13295,31 +14224,32 @@ GET /api/search
 
 #### Parameters
 
-| Name         | Source  | Type                        | Go type    | Separator | Required | Default       | Description                                                                                                                            |
-| ------------ | ------- | --------------------------- | ---------- | --------- | :------: | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| dashboardIds | `query` | []int64 (formatted integer) | `[]int64`  |           |          |               | List of dashboard id’s to search for                                                                                                   |
-| folderIds    | `query` | []int64 (formatted integer) | `[]int64`  |           |          |               | List of folder id’s to search in for dashboards                                                                                        |
-| limit        | `query` | int64 (formatted integer)   | `int64`    |           |          |               | Limit the number of returned results (max 5000)                                                                                        |
-| page         | `query` | int64 (formatted integer)   | `int64`    |           |          |               | Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. Only available in Grafana v6.2+. |
-| permission   | `query` | string                      | `string`   |           |          | `"View"`      | Set to `Edit` to return dashboards/folders that the user can edit                                                                      |
-| query        | `query` | string                      | `string`   |           |          |               | Search Query                                                                                                                           |
-| sort         | `query` | string                      | `string`   |           |          | `"alpha-asc"` | Sort method; for listing all the possible sort methods use the search sorting endpoint.                                                |
-| starred      | `query` | boolean                     | `bool`     |           |          |               | Flag indicating if only starred Dashboards should be returned                                                                          |
-| tag          | `query` | []string                    | `[]string` | `multi`   |          |               | List of tags to search for                                                                                                             |
-| type         | `query` | string                      | `string`   |           |          |               | Type to search for, dash-folder or dash-db                                                                                             |
+| Name          | Source  | Type                        | Go type    | Separator | Required | Default       | Description                                                                                                                            |
+| ------------- | ------- | --------------------------- | ---------- | --------- | :------: | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| dashboardIds  | `query` | []int64 (formatted integer) | `[]int64`  |           |          |               | List of dashboard id’s to search for                                                                                                   |
+| dashboardUIDs | `query` | []string                    | `[]string` |           |          |               | List of dashboard uid’s to search for                                                                                                  |
+| folderIds     | `query` | []int64 (formatted integer) | `[]int64`  |           |          |               | List of folder id’s to search in for dashboards                                                                                        |
+| limit         | `query` | int64 (formatted integer)   | `int64`    |           |          |               | Limit the number of returned results (max 5000)                                                                                        |
+| page          | `query` | int64 (formatted integer)   | `int64`    |           |          |               | Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. Only available in Grafana v6.2+. |
+| permission    | `query` | string                      | `string`   |           |          | `"View"`      | Set to `Edit` to return dashboards/folders that the user can edit                                                                      |
+| query         | `query` | string                      | `string`   |           |          |               | Search Query                                                                                                                           |
+| sort          | `query` | string                      | `string`   |           |          | `"alpha-asc"` | Sort method; for listing all the possible sort methods use the search sorting endpoint.                                                |
+| starred       | `query` | boolean                     | `bool`     |           |          |               | Flag indicating if only starred Dashboards should be returned                                                                          |
+| tag           | `query` | []string                    | `[]string` | `multi`   |          |               | List of tags to search for                                                                                                             |
+| type          | `query` | string                      | `string`   |           |          |               | Type to search for, dash-folder or dash-db                                                                                             |
 
 #### All responses
 
 | Code               | Status                | Description                                                                        | Has headers | Schema                       |
 | ------------------ | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ---------------------------- |
-| [200](#search-200) | OK                    |                                                                                    |             | [schema](#search-200-schema) |
+| [200](#search-200) | OK                    | (empty)                                                                            |             | [schema](#search-200-schema) |
 | [401](#search-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#search-401-schema) |
 | [422](#search-422) | Unprocessable Entity  | UnprocessableEntityError                                                           |             | [schema](#search-422-schema) |
 | [500](#search-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#search-500-schema) |
 
 #### Responses
 
-##### <span id="search-200"></span> 200
+##### <span id="search-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -13351,7 +14281,108 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="search-org"></span> searchOrg (_searchOrg_)
+### <span id="search-dashboard-snapshots"></span> List snapshots. (_searchDashboardSnapshots_)
+
+```
+GET /api/dashboard/snapshots
+```
+
+#### Parameters
+
+| Name  | Source  | Type                      | Go type  | Separator | Required | Default | Description                          |
+| ----- | ------- | ------------------------- | -------- | --------- | :------: | ------- | ------------------------------------ |
+| limit | `query` | int64 (formatted integer) | `int64`  |           |          | `1000`  | Limit the number of returned results |
+| query | `query` | string                    | `string` |           |          |         | Search Query                         |
+
+#### All responses
+
+| Code                                   | Status                | Description                                                                        | Has headers | Schema                                           |
+| -------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
+| [200](#search-dashboard-snapshots-200) | OK                    | (empty)                                                                            |             | [schema](#search-dashboard-snapshots-200-schema) |
+| [500](#search-dashboard-snapshots-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#search-dashboard-snapshots-500-schema) |
+
+#### Responses
+
+##### <span id="search-dashboard-snapshots-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="search-dashboard-snapshots-200-schema"></span> Schema
+
+[][dashboardsnapshotdto](#dashboard-snapshot-d-t-o)
+
+##### <span id="search-dashboard-snapshots-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="search-dashboard-snapshots-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="search-org-service-accounts-with-paging"></span> Search service accounts with paging (_searchOrgServiceAccountsWithPaging_)
+
+```
+GET /api/serviceaccounts/search
+```
+
+Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+action: `serviceaccounts:read` scope: `serviceaccounts:*`
+
+#### Parameters
+
+| Name                                             | Source  | Type                      | Go type  | Separator | Required | Default | Description                                                                   |
+| ------------------------------------------------ | ------- | ------------------------- | -------- | --------- | :------: | ------- | ----------------------------------------------------------------------------- |
+| Disabled                                         | `query` | boolean                   | `bool`   |           |          |         |                                                                               |
+| expiredTokens                                    | `query` | boolean                   | `bool`   |           |          |         |                                                                               |
+| page                                             | `query` | int64 (formatted integer) | `int64`  |           |          |         | The default value is 1.                                                       |
+| perpage                                          | `query` | int64 (formatted integer) | `int64`  |           |          |         | The default value is 1000.                                                    |
+| query                                            | `query` | string                    | `string` |           |          |         | It will return results where the query value is contained in one of the name. |
+| Query values with spaces need to be URL encoded. |
+
+#### All responses
+
+| Code                                                | Status                | Description                                                                                                 | Has headers | Schema                                                        |
+| --------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------------- |
+| [200](#search-org-service-accounts-with-paging-200) | OK                    | (empty)                                                                                                     |             | [schema](#search-org-service-accounts-with-paging-200-schema) |
+| [401](#search-org-service-accounts-with-paging-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#search-org-service-accounts-with-paging-401-schema) |
+| [403](#search-org-service-accounts-with-paging-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#search-org-service-accounts-with-paging-403-schema) |
+| [500](#search-org-service-accounts-with-paging-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#search-org-service-accounts-with-paging-500-schema) |
+
+#### Responses
+
+##### <span id="search-org-service-accounts-with-paging-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="search-org-service-accounts-with-paging-200-schema"></span> Schema
+
+[SearchServiceAccountsResult](#search-service-accounts-result)
+
+##### <span id="search-org-service-accounts-with-paging-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="search-org-service-accounts-with-paging-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="search-org-service-accounts-with-paging-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="search-org-service-accounts-with-paging-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="search-org-service-accounts-with-paging-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="search-org-service-accounts-with-paging-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="search-orgs"></span> searchOrgs (_searchOrgs_)
 
 ```
 GET /api/orgs
@@ -13375,53 +14406,91 @@ Search all Organizations
 
 #### All responses
 
-| Code                   | Status                | Description                                                                                                 | Has headers | Schema                           |
-| ---------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------- |
-| [200](#search-org-200) | OK                    |                                                                                                             |             | [schema](#search-org-200-schema) |
-| [401](#search-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#search-org-401-schema) |
-| [403](#search-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#search-org-403-schema) |
-| [409](#search-org-409) | Conflict              | ConflictError                                                                                               |             | [schema](#search-org-409-schema) |
-| [500](#search-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#search-org-500-schema) |
+| Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
+| ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
+| [200](#search-orgs-200) | OK                    | (empty)                                                                                                     |             | [schema](#search-orgs-200-schema) |
+| [401](#search-orgs-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#search-orgs-401-schema) |
+| [403](#search-orgs-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#search-orgs-403-schema) |
+| [409](#search-orgs-409) | Conflict              | ConflictError                                                                                               |             | [schema](#search-orgs-409-schema) |
+| [500](#search-orgs-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#search-orgs-500-schema) |
 
 #### Responses
 
-##### <span id="search-org-200"></span> 200
+##### <span id="search-orgs-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="search-org-200-schema"></span> Schema
+###### <span id="search-orgs-200-schema"></span> Schema
 
 [][orgdto](#org-d-t-o)
 
-##### <span id="search-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="search-orgs-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="search-org-401-schema"></span> Schema
+###### <span id="search-orgs-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="search-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="search-orgs-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="search-org-403-schema"></span> Schema
+###### <span id="search-orgs-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="search-org-409"></span> 409 - ConflictError
+##### <span id="search-orgs-409"></span> 409 - ConflictError
 
 Status: Conflict
 
-###### <span id="search-org-409-schema"></span> Schema
+###### <span id="search-orgs-409-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="search-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="search-orgs-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="search-org-500-schema"></span> Schema
+###### <span id="search-orgs-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="search-playlists"></span> Get playlists. (_searchPlaylists_)
+
+```
+GET /api/playlists
+```
+
+#### Parameters
+
+| Name  | Source  | Type                      | Go type  | Separator | Required | Default | Description |
+| ----- | ------- | ------------------------- | -------- | --------- | :------: | ------- | ----------- |
+| limit | `query` | int64 (formatted integer) | `int64`  |           |          |         | in:limit    |
+| query | `query` | string                    | `string` |           |          |         |             |
+
+#### All responses
+
+| Code                         | Status                | Description                                                                        | Has headers | Schema                                 |
+| ---------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
+| [200](#search-playlists-200) | OK                    | (empty)                                                                            |             | [schema](#search-playlists-200-schema) |
+| [500](#search-playlists-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#search-playlists-500-schema) |
+
+#### Responses
+
+##### <span id="search-playlists-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="search-playlists-200-schema"></span> Schema
+
+[Playlists](#playlists)
+
+##### <span id="search-playlists-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="search-playlists-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -13452,13 +14521,13 @@ You can also use the `page` query parameter to fetch queries from any page other
 
 | Code                       | Status                | Description                                                                        | Has headers | Schema                               |
 | -------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#search-queries-200) | OK                    |                                                                                    |             | [schema](#search-queries-200-schema) |
+| [200](#search-queries-200) | OK                    | (empty)                                                                            |             | [schema](#search-queries-200-schema) |
 | [401](#search-queries-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#search-queries-401-schema) |
 | [500](#search-queries-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#search-queries-500-schema) |
 
 #### Responses
 
-##### <span id="search-queries-200"></span> 200
+##### <span id="search-queries-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -13482,52 +14551,6 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="search-sorting"></span> searchSorting (_searchSorting_)
-
-```
-GET /api/search/sorting
-```
-
-List search sorting options
-
-#### All responses
-
-| Code                       | Status       | Description                                                          | Has headers | Schema                               |
-| -------------------------- | ------------ | -------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#search-sorting-200) | OK           |                                                                      |             | [schema](#search-sorting-200-schema) |
-| [401](#search-sorting-401) | Unauthorized | UnauthorizedError is returned when the request is not authenticated. |             | [schema](#search-sorting-401-schema) |
-
-#### Responses
-
-##### <span id="search-sorting-200"></span> 200
-
-Status: OK
-
-###### <span id="search-sorting-200-schema"></span> Schema
-
-[SearchSortingOKBody](#search-sorting-o-k-body)
-
-##### <span id="search-sorting-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="search-sorting-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-###### Inlined models
-
-**<span id="search-sorting-o-k-body"></span> SearchSortingOKBody**
-
-**Properties**
-
-| Name        | Type   | Go type  | Required | Default | Description | Example |
-| ----------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| description | string | `string` |          |         |             |         |
-| displayName | string | `string` |          |         |             |         |
-| meta        | string | `string` |          |         |             |         |
-| name        | string | `string` |          |         |             |         |
-
 ### <span id="search-teams"></span> Team Search With Paging. (_searchTeams_)
 
 ```
@@ -13548,14 +14571,14 @@ GET /api/teams/search
 
 | Code                     | Status                | Description                                                                                                 | Has headers | Schema                             |
 | ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
-| [200](#search-teams-200) | OK                    |                                                                                                             |             | [schema](#search-teams-200-schema) |
+| [200](#search-teams-200) | OK                    | (empty)                                                                                                     |             | [schema](#search-teams-200-schema) |
 | [401](#search-teams-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#search-teams-401-schema) |
 | [403](#search-teams-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#search-teams-403-schema) |
 | [500](#search-teams-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#search-teams-500-schema) |
 
 #### Responses
 
-##### <span id="search-teams-200"></span> 200
+##### <span id="search-teams-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -13606,14 +14629,14 @@ Returns all users that the authenticated user has permission to view, admin perm
 
 | Code                     | Status                | Description                                                                                                 | Has headers | Schema                             |
 | ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
-| [200](#search-users-200) | OK                    |                                                                                                             |             | [schema](#search-users-200-schema) |
+| [200](#search-users-200) | OK                    | (empty)                                                                                                     |             | [schema](#search-users-200-schema) |
 | [401](#search-users-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#search-users-401-schema) |
 | [403](#search-users-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#search-users-403-schema) |
 | [500](#search-users-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#search-users-500-schema) |
 
 #### Responses
 
-##### <span id="search-users-200"></span> 200
+##### <span id="search-users-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -13655,7 +14678,7 @@ GET /api/users/search
 
 | Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
 | ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
-| [200](#search-users-with-paging-200) | OK                    |                                                                                                             |             | [schema](#search-users-with-paging-200-schema) |
+| [200](#search-users-with-paging-200) | OK                    | (empty)                                                                                                     |             | [schema](#search-users-with-paging-200-schema) |
 | [401](#search-users-with-paging-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#search-users-with-paging-401-schema) |
 | [403](#search-users-with-paging-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#search-users-with-paging-403-schema) |
 | [404](#search-users-with-paging-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#search-users-with-paging-404-schema) |
@@ -13663,7 +14686,7 @@ GET /api/users/search
 
 #### Responses
 
-##### <span id="search-users-with-paging-200"></span> 200
+##### <span id="search-users-with-paging-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -13876,14 +14899,14 @@ PUT /api/user/helpflags/{flag_id}
 
 | Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
 | ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#set-help-flag-200) | OK                    |                                                                                                             |             | [schema](#set-help-flag-200-schema) |
+| [200](#set-help-flag-200) | OK                    | (empty)                                                                                                     |             | [schema](#set-help-flag-200-schema) |
 | [401](#set-help-flag-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#set-help-flag-401-schema) |
 | [403](#set-help-flag-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#set-help-flag-403-schema) |
 | [500](#set-help-flag-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#set-help-flag-500-schema) |
 
 #### Responses
 
-##### <span id="set-help-flag-200"></span> 200
+##### <span id="set-help-flag-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -13925,145 +14948,6 @@ Status: Internal Server Error
 | ---------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
 | helpFlags1 | int64 (formatted integer) | `int64`  |          |         |             |         |
 | message    | string                    | `string` |          |         |             |         |
-
-### <span id="set-password"></span> Set password for user. (_setPassword_)
-
-```
-PUT /api/admin/users/{user_id}/password
-```
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global.users:*`.
-
-#### Security Requirements
-
-- basic
-
-#### Parameters
-
-| Name    | Source | Type                                                            | Go type                              | Separator | Required | Default | Description |
-| ------- | ------ | --------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer)                                       | `int64`                              |           |    ✓     |         |             |
-| body    | `body` | [AdminUpdateUserPasswordForm](#admin-update-user-password-form) | `models.AdminUpdateUserPasswordForm` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                     | Status                | Description                                                                                                 | Has headers | Schema                             |
-| ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
-| [200](#set-password-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#set-password-200-schema) |
-| [400](#set-password-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#set-password-400-schema) |
-| [401](#set-password-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#set-password-401-schema) |
-| [403](#set-password-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#set-password-403-schema) |
-| [500](#set-password-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#set-password-500-schema) |
-
-#### Responses
-
-##### <span id="set-password-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="set-password-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="set-password-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="set-password-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="set-password-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="set-password-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="set-password-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="set-password-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="set-password-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="set-password-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-### <span id="set-permissions"></span> Set permissions for user. (_setPermissions_)
-
-```
-PUT /api/admin/users/{user_id}/permissions
-```
-
-Only works with Basic Authentication (username and password). See introduction for an explanation.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global.users:*`.
-
-#### Parameters
-
-| Name    | Source | Type                                                                  | Go type                                 | Separator | Required | Default | Description |
-| ------- | ------ | --------------------------------------------------------------------- | --------------------------------------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer)                                             | `int64`                                 |           |    ✓     |         |             |
-| body    | `body` | [AdminUpdateUserPermissionsForm](#admin-update-user-permissions-form) | `models.AdminUpdateUserPermissionsForm` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
-| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
-| [200](#set-permissions-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#set-permissions-200-schema) |
-| [400](#set-permissions-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#set-permissions-400-schema) |
-| [401](#set-permissions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#set-permissions-401-schema) |
-| [403](#set-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#set-permissions-403-schema) |
-| [500](#set-permissions-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#set-permissions-500-schema) |
-
-#### Responses
-
-##### <span id="set-permissions-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="set-permissions-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="set-permissions-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="set-permissions-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="set-permissions-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="set-permissions-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="set-permissions-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="set-permissions-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="set-permissions-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="set-permissions-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
 
 ### <span id="set-team-roles"></span> Update team role. (_setTeamRoles_)
 
@@ -14285,13 +15169,13 @@ Adds star to query in query history as specified by the UID.
 
 | Code                   | Status                | Description                                                                        | Has headers | Schema                           |
 | ---------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | -------------------------------- |
-| [200](#star-query-200) | OK                    |                                                                                    |             | [schema](#star-query-200-schema) |
+| [200](#star-query-200) | OK                    | (empty)                                                                            |             | [schema](#star-query-200-schema) |
 | [401](#star-query-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#star-query-401-schema) |
 | [500](#star-query-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#star-query-500-schema) |
 
 #### Responses
 
-##### <span id="star-query-200"></span> 200
+##### <span id="star-query-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -14315,67 +15199,6 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="sync-l-d-a-p-user"></span> Enables a single Grafana user to be synchronized against LDAP. (_syncLDAPUser_)
-
-```
-POST /api/admin/ldap/sync/{user_id}
-```
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:sync`.
-
-#### Security Requirements
-
-- basic
-
-#### Parameters
-
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
-| ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
-| [200](#sync-l-d-a-p-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#sync-l-d-a-p-user-200-schema) |
-| [401](#sync-l-d-a-p-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#sync-l-d-a-p-user-401-schema) |
-| [403](#sync-l-d-a-p-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#sync-l-d-a-p-user-403-schema) |
-| [500](#sync-l-d-a-p-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#sync-l-d-a-p-user-500-schema) |
-
-#### Responses
-
-##### <span id="sync-l-d-a-p-user-200"></span> 200 - An OKResponse is returned if the request was successful.
-
-Status: OK
-
-###### <span id="sync-l-d-a-p-user-200-schema"></span> Schema
-
-[SuccessResponseBody](#success-response-body)
-
-##### <span id="sync-l-d-a-p-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="sync-l-d-a-p-user-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="sync-l-d-a-p-user-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="sync-l-d-a-p-user-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="sync-l-d-a-p-user-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="sync-l-d-a-p-user-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
 ### <span id="test-alert"></span> Test alert. (_testAlert_)
 
 ```
@@ -14392,7 +15215,7 @@ POST /api/alerts/test
 
 | Code                   | Status                | Description                                                                                                 | Has headers | Schema                           |
 | ---------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------- |
-| [200](#test-alert-200) | OK                    |                                                                                                             |             | [schema](#test-alert-200-schema) |
+| [200](#test-alert-200) | OK                    | (empty)                                                                                                     |             | [schema](#test-alert-200-schema) |
 | [400](#test-alert-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#test-alert-400-schema) |
 | [403](#test-alert-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#test-alert-403-schema) |
 | [422](#test-alert-422) | Unprocessable Entity  | UnprocessableEntityError                                                                                    |             | [schema](#test-alert-422-schema) |
@@ -14400,7 +15223,7 @@ POST /api/alerts/test
 
 #### Responses
 
-##### <span id="test-alert-200"></span> 200
+##### <span id="test-alert-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -14529,13 +15352,13 @@ POST /api/dashboards/trim
 
 | Code                       | Status                | Description                                                                        | Has headers | Schema                               |
 | -------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
-| [200](#trim-dashboard-200) | OK                    | Trimmed dashboard response.                                                        |             | [schema](#trim-dashboard-200-schema) |
+| [200](#trim-dashboard-200) | OK                    | (empty)                                                                            |             | [schema](#trim-dashboard-200-schema) |
 | [401](#trim-dashboard-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#trim-dashboard-401-schema) |
 | [500](#trim-dashboard-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#trim-dashboard-500-schema) |
 
 #### Responses
 
-##### <span id="trim-dashboard-200"></span> 200 - Trimmed dashboard response.
+##### <span id="trim-dashboard-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -14643,13 +15466,13 @@ Removes star from query in query history as specified by the UID.
 
 | Code                     | Status                | Description                                                                        | Has headers | Schema                             |
 | ------------------------ | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
-| [200](#unstar-query-200) | OK                    |                                                                                    |             | [schema](#unstar-query-200-schema) |
+| [200](#unstar-query-200) | OK                    | (empty)                                                                            |             | [schema](#unstar-query-200-schema) |
 | [401](#unstar-query-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#unstar-query-401-schema) |
 | [500](#unstar-query-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#unstar-query-500-schema) |
 
 #### Responses
 
-##### <span id="unstar-query-200"></span> 200
+##### <span id="unstar-query-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -14692,7 +15515,7 @@ Updates an existing notification channel identified by ID.
 
 | Code                                          | Status                | Description                                                                                                 | Has headers | Schema                                                  |
 | --------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------- |
-| [200](#update-alert-notification-channel-200) | OK                    |                                                                                                             |             | [schema](#update-alert-notification-channel-200-schema) |
+| [200](#update-alert-notification-channel-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-alert-notification-channel-200-schema) |
 | [401](#update-alert-notification-channel-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-alert-notification-channel-401-schema) |
 | [403](#update-alert-notification-channel-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-alert-notification-channel-403-schema) |
 | [404](#update-alert-notification-channel-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-alert-notification-channel-404-schema) |
@@ -14700,7 +15523,7 @@ Updates an existing notification channel identified by ID.
 
 #### Responses
 
-##### <span id="update-alert-notification-channel-200"></span> 200
+##### <span id="update-alert-notification-channel-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -14759,7 +15582,7 @@ Updates an existing notification channel identified by uid.
 
 | Code                                                 | Status                | Description                                                                                                 | Has headers | Schema                                                         |
 | ---------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------------------- |
-| [200](#update-alert-notification-channel-by-uid-200) | OK                    |                                                                                                             |             | [schema](#update-alert-notification-channel-by-uid-200-schema) |
+| [200](#update-alert-notification-channel-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-alert-notification-channel-by-uid-200-schema) |
 | [401](#update-alert-notification-channel-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-alert-notification-channel-by-uid-401-schema) |
 | [403](#update-alert-notification-channel-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-alert-notification-channel-by-uid-403-schema) |
 | [404](#update-alert-notification-channel-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-alert-notification-channel-by-uid-404-schema) |
@@ -14767,7 +15590,7 @@ Updates an existing notification channel identified by uid.
 
 #### Responses
 
-##### <span id="update-alert-notification-channel-by-uid-200"></span> 200
+##### <span id="update-alert-notification-channel-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -14874,7 +15697,364 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="update-datasource-by-id"></span> Update an existing data source by its sequential ID. (_updateDatasourceByID_)
+### <span id="update-correlation"></span> Updates a correlation. (_updateCorrelation_)
+
+```
+PATCH /api/datasources/uid/{sourceUID}/correlations/{correlationUID}
+```
+
+#### Parameters
+
+| Name           | Source | Type                                                    | Go type                           | Separator | Required | Default | Description |
+| -------------- | ------ | ------------------------------------------------------- | --------------------------------- | --------- | :------: | ------- | ----------- |
+| correlationUID | `path` | string                                                  | `string`                          |           |    ✓     |         |             |
+| sourceUID      | `path` | string                                                  | `string`                          |           |    ✓     |         |             |
+| body           | `body` | [UpdateCorrelationCommand](#update-correlation-command) | `models.UpdateCorrelationCommand` |           |          |         |             |
+
+#### All responses
+
+| Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
+| ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
+| [200](#update-correlation-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-correlation-200-schema) |
+| [400](#update-correlation-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-correlation-400-schema) |
+| [401](#update-correlation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-correlation-401-schema) |
+| [403](#update-correlation-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-correlation-403-schema) |
+| [404](#update-correlation-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-correlation-404-schema) |
+| [500](#update-correlation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-correlation-500-schema) |
+
+#### Responses
+
+##### <span id="update-correlation-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="update-correlation-200-schema"></span> Schema
+
+[UpdateCorrelationResponseBody](#update-correlation-response-body)
+
+##### <span id="update-correlation-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="update-correlation-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-correlation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="update-correlation-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-correlation-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="update-correlation-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-correlation-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="update-correlation-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-correlation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="update-correlation-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="update-current-org"></span> Update current Organization. (_updateCurrentOrg_)
+
+```
+PUT /api/org
+```
+
+#### Parameters
+
+| Name | Source | Type                              | Go type                | Separator | Required | Default | Description |
+| ---- | ------ | --------------------------------- | ---------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [UpdateOrgForm](#update-org-form) | `models.UpdateOrgForm` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                           | Status                | Description                                                                                                 | Has headers | Schema                                   |
+| ------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------- |
+| [200](#update-current-org-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#update-current-org-200-schema) |
+| [400](#update-current-org-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-current-org-400-schema) |
+| [401](#update-current-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-current-org-401-schema) |
+| [403](#update-current-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-current-org-403-schema) |
+| [500](#update-current-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-current-org-500-schema) |
+
+#### Responses
+
+##### <span id="update-current-org-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="update-current-org-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="update-current-org-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="update-current-org-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-current-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="update-current-org-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-current-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="update-current-org-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-current-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="update-current-org-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="update-current-org-address"></span> Update current Organization's address. (_updateCurrentOrgAddress_)
+
+```
+PUT /api/org/address
+```
+
+#### Parameters
+
+| Name | Source | Type                                             | Go type                       | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------------ | ----------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [UpdateOrgAddressForm](#update-org-address-form) | `models.UpdateOrgAddressForm` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
+| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
+| [200](#update-current-org-address-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#update-current-org-address-200-schema) |
+| [400](#update-current-org-address-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-current-org-address-400-schema) |
+| [401](#update-current-org-address-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-current-org-address-401-schema) |
+| [403](#update-current-org-address-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-current-org-address-403-schema) |
+| [500](#update-current-org-address-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-current-org-address-500-schema) |
+
+#### Responses
+
+##### <span id="update-current-org-address-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="update-current-org-address-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="update-current-org-address-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="update-current-org-address-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-current-org-address-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="update-current-org-address-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-current-org-address-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="update-current-org-address-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-current-org-address-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="update-current-org-address-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="update-dashboard-permissions-by-id"></span> Updates permissions for a dashboard. (_updateDashboardPermissionsByID_)
+
+```
+POST /api/dashboards/id/{DashboardID}/permissions
+```
+
+Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead
+
+This operation will remove existing permissions if they’re not included in the request.
+
+#### Parameters
+
+| Name        | Source | Type                                                       | Go type                            | Separator | Required | Default | Description |
+| ----------- | ------ | ---------------------------------------------------------- | ---------------------------------- | --------- | :------: | ------- | ----------- |
+| DashboardID | `path` | int64 (formatted integer)                                  | `int64`                            |           |    ✓     |         |             |
+| Body        | `body` | [UpdateDashboardACLCommand](#update-dashboard-acl-command) | `models.UpdateDashboardACLCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                           | Status                | Description                                                                                                 | Has headers | Schema                                                   |
+| ---------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------------- |
+| [200](#update-dashboard-permissions-by-id-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#update-dashboard-permissions-by-id-200-schema) |
+| [400](#update-dashboard-permissions-by-id-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-dashboard-permissions-by-id-400-schema) |
+| [401](#update-dashboard-permissions-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-dashboard-permissions-by-id-401-schema) |
+| [403](#update-dashboard-permissions-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-dashboard-permissions-by-id-403-schema) |
+| [404](#update-dashboard-permissions-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-dashboard-permissions-by-id-404-schema) |
+| [500](#update-dashboard-permissions-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-dashboard-permissions-by-id-500-schema) |
+
+#### Responses
+
+##### <span id="update-dashboard-permissions-by-id-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="update-dashboard-permissions-by-id-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="update-dashboard-permissions-by-id-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="update-dashboard-permissions-by-id-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-dashboard-permissions-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="update-dashboard-permissions-by-id-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-dashboard-permissions-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="update-dashboard-permissions-by-id-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-dashboard-permissions-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="update-dashboard-permissions-by-id-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-dashboard-permissions-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="update-dashboard-permissions-by-id-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="update-dashboard-permissions-by-uid"></span> Updates permissions for a dashboard. (_updateDashboardPermissionsByUID_)
+
+```
+POST /api/dashboards/uid/{uid}/permissions
+```
+
+This operation will remove existing permissions if they’re not included in the request.
+
+#### Parameters
+
+| Name | Source | Type                                                       | Go type                            | Separator | Required | Default | Description |
+| ---- | ------ | ---------------------------------------------------------- | ---------------------------------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string                                                     | `string`                           |           |    ✓     |         |             |
+| Body | `body` | [UpdateDashboardACLCommand](#update-dashboard-acl-command) | `models.UpdateDashboardACLCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                            | Status                | Description                                                                                                 | Has headers | Schema                                                    |
+| ----------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------------- |
+| [200](#update-dashboard-permissions-by-uid-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#update-dashboard-permissions-by-uid-200-schema) |
+| [400](#update-dashboard-permissions-by-uid-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-dashboard-permissions-by-uid-400-schema) |
+| [401](#update-dashboard-permissions-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-dashboard-permissions-by-uid-401-schema) |
+| [403](#update-dashboard-permissions-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-dashboard-permissions-by-uid-403-schema) |
+| [404](#update-dashboard-permissions-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-dashboard-permissions-by-uid-404-schema) |
+| [500](#update-dashboard-permissions-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-dashboard-permissions-by-uid-500-schema) |
+
+#### Responses
+
+##### <span id="update-dashboard-permissions-by-uid-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="update-dashboard-permissions-by-uid-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="update-dashboard-permissions-by-uid-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="update-dashboard-permissions-by-uid-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-dashboard-permissions-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="update-dashboard-permissions-by-uid-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-dashboard-permissions-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="update-dashboard-permissions-by-uid-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-dashboard-permissions-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="update-dashboard-permissions-by-uid-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-dashboard-permissions-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="update-dashboard-permissions-by-uid-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="update-data-source-by-id"></span> Update an existing data source by its sequential ID. (_updateDataSourceByID_)
 
 ```
 PUT /api/datasources/{id}
@@ -14887,7 +16067,7 @@ encrypted fields are listed under secureJsonFields section in the response.
 If you are running Grafana Enterprise and have Fine-grained access control enabled
 you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
 
-Please refer to [updated API](#/datasources/updateDatasourceByUID) instead
+Please refer to [updated API](#/datasources/updateDataSourceByUID) instead
 
 #### Parameters
 
@@ -14898,50 +16078,50 @@ Please refer to [updated API](#/datasources/updateDatasourceByUID) instead
 
 #### All responses
 
-| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
-| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
-| [200](#update-datasource-by-id-200) | OK                    |                                                                                                             |             | [schema](#update-datasource-by-id-200-schema) |
-| [401](#update-datasource-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-datasource-by-id-401-schema) |
-| [403](#update-datasource-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-datasource-by-id-403-schema) |
-| [500](#update-datasource-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-datasource-by-id-500-schema) |
+| Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
+| ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
+| [200](#update-data-source-by-id-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-data-source-by-id-200-schema) |
+| [401](#update-data-source-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-data-source-by-id-401-schema) |
+| [403](#update-data-source-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-data-source-by-id-403-schema) |
+| [500](#update-data-source-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-data-source-by-id-500-schema) |
 
 #### Responses
 
-##### <span id="update-datasource-by-id-200"></span> 200
+##### <span id="update-data-source-by-id-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="update-datasource-by-id-200-schema"></span> Schema
+###### <span id="update-data-source-by-id-200-schema"></span> Schema
 
-[UpdateDatasourceByIDOKBody](#update-datasource-by-id-o-k-body)
+[UpdateDataSourceByIDOKBody](#update-data-source-by-id-o-k-body)
 
-##### <span id="update-datasource-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="update-data-source-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="update-datasource-by-id-401-schema"></span> Schema
+###### <span id="update-data-source-by-id-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="update-datasource-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="update-data-source-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="update-datasource-by-id-403-schema"></span> Schema
+###### <span id="update-data-source-by-id-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="update-datasource-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="update-data-source-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="update-datasource-by-id-500-schema"></span> Schema
+###### <span id="update-data-source-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ###### Inlined models
 
-**<span id="update-datasource-by-id-o-k-body"></span> UpdateDatasourceByIDOKBody**
+**<span id="update-data-source-by-id-o-k-body"></span> UpdateDataSourceByIDOKBody**
 
 **Properties**
 
@@ -14952,7 +16132,7 @@ Status: Internal Server Error
 | message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
 | name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 
-### <span id="update-datasource-by-uid"></span> Update an existing data source. (_updateDatasourceByUID_)
+### <span id="update-data-source-by-uid"></span> Update an existing data source. (_updateDataSourceByUID_)
 
 ```
 PUT /api/datasources/uid/{uid}
@@ -14974,50 +16154,50 @@ you need to have a permission with action: `datasources:write` and scopes: `data
 
 #### All responses
 
-| Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
-| ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
-| [200](#update-datasource-by-uid-200) | OK                    |                                                                                                             |             | [schema](#update-datasource-by-uid-200-schema) |
-| [401](#update-datasource-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-datasource-by-uid-401-schema) |
-| [403](#update-datasource-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-datasource-by-uid-403-schema) |
-| [500](#update-datasource-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-datasource-by-uid-500-schema) |
+| Code                                  | Status                | Description                                                                                                 | Has headers | Schema                                          |
+| ------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------- |
+| [200](#update-data-source-by-uid-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-data-source-by-uid-200-schema) |
+| [401](#update-data-source-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-data-source-by-uid-401-schema) |
+| [403](#update-data-source-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-data-source-by-uid-403-schema) |
+| [500](#update-data-source-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-data-source-by-uid-500-schema) |
 
 #### Responses
 
-##### <span id="update-datasource-by-uid-200"></span> 200
+##### <span id="update-data-source-by-uid-200"></span> 200 - (empty)
 
 Status: OK
 
-###### <span id="update-datasource-by-uid-200-schema"></span> Schema
+###### <span id="update-data-source-by-uid-200-schema"></span> Schema
 
-[UpdateDatasourceByUIDOKBody](#update-datasource-by-uid-o-k-body)
+[UpdateDataSourceByUIDOKBody](#update-data-source-by-uid-o-k-body)
 
-##### <span id="update-datasource-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="update-data-source-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="update-datasource-by-uid-401-schema"></span> Schema
+###### <span id="update-data-source-by-uid-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="update-datasource-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="update-data-source-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="update-datasource-by-uid-403-schema"></span> Schema
+###### <span id="update-data-source-by-uid-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="update-datasource-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="update-data-source-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="update-datasource-by-uid-500-schema"></span> Schema
+###### <span id="update-data-source-by-uid-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ###### Inlined models
 
-**<span id="update-datasource-by-uid-o-k-body"></span> UpdateDatasourceByUIDOKBody**
+**<span id="update-data-source-by-uid-o-k-body"></span> UpdateDataSourceByUIDOKBody**
 
 **Properties**
 
@@ -15048,7 +16228,7 @@ Provide the current version to safelly update the folder: if the provided versio
 
 | Code                      | Status                | Description                                                                                                 | Has headers | Schema                              |
 | ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------- |
-| [200](#update-folder-200) | OK                    |                                                                                                             |             | [schema](#update-folder-200-schema) |
+| [200](#update-folder-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-folder-200-schema) |
 | [400](#update-folder-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-folder-400-schema) |
 | [401](#update-folder-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-folder-401-schema) |
 | [403](#update-folder-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-folder-403-schema) |
@@ -15058,7 +16238,7 @@ Provide the current version to safelly update the folder: if the provided versio
 
 #### Responses
 
-##### <span id="update-folder-200"></span> 200
+##### <span id="update-folder-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -15198,7 +16378,7 @@ Updates an existing library element identified by uid.
 
 | Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
 | ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
-| [200](#update-library-element-200) | OK                    |                                                                                                             |             | [schema](#update-library-element-200-schema) |
+| [200](#update-library-element-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-library-element-200-schema) |
 | [400](#update-library-element-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-library-element-400-schema) |
 | [401](#update-library-element-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-library-element-401-schema) |
 | [403](#update-library-element-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-library-element-403-schema) |
@@ -15208,7 +16388,7 @@ Updates an existing library element identified by uid.
 
 #### Responses
 
-##### <span id="update-library-element-200"></span> 200
+##### <span id="update-library-element-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -15264,17 +16444,22 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="update-org"></span> Update current Organization. (_updateOrg_)
+### <span id="update-org"></span> Update Organization. (_updateOrg_)
 
 ```
-PUT /api/org
+PUT /api/orgs/{org_id}
 ```
+
+#### Security Requirements
+
+- basic
 
 #### Parameters
 
-| Name | Source | Type                              | Go type                | Separator | Required | Default | Description |
-| ---- | ------ | --------------------------------- | ---------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [UpdateOrgForm](#update-org-form) | `models.UpdateOrgForm` |           |    ✓     |         |             |
+| Name   | Source | Type                              | Go type                | Separator | Required | Default | Description |
+| ------ | ------ | --------------------------------- | ---------------------- | --------- | :------: | ------- | ----------- |
+| org_id | `path` | int64 (formatted integer)         | `int64`                |           |    ✓     |         |             |
+| body   | `body` | [UpdateOrgForm](#update-org-form) | `models.UpdateOrgForm` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -15328,17 +16513,18 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="update-org-address"></span> Update current Organization's address. (_updateOrgAddress_)
+### <span id="update-org-address"></span> Update Organization's address. (_updateOrgAddress_)
 
 ```
-PUT /api/org/address
+PUT /api/orgs/{org_id}/address
 ```
 
 #### Parameters
 
-| Name | Source | Type                                             | Go type                       | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------------------------------ | ----------------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [UpdateOrgAddressForm](#update-org-address-form) | `models.UpdateOrgAddressForm` |           |    ✓     |         |             |
+| Name   | Source | Type                                             | Go type                       | Separator | Required | Default | Description |
+| ------ | ------ | ------------------------------------------------ | ----------------------------- | --------- | :------: | ------- | ----------- |
+| org_id | `path` | int64 (formatted integer)                        | `int64`                       |           |    ✓     |         |             |
+| body   | `body` | [UpdateOrgAddressForm](#update-org-address-form) | `models.UpdateOrgAddressForm` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -15408,7 +16594,7 @@ PUT /api/org/preferences
 
 | Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
 | ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
-| [200](#update-org-preferences-200) | OK                    |                                                                                                             |             | [schema](#update-org-preferences-200-schema) |
+| [200](#update-org-preferences-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#update-org-preferences-200-schema) |
 | [400](#update-org-preferences-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-org-preferences-400-schema) |
 | [401](#update-org-preferences-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-org-preferences-401-schema) |
 | [403](#update-org-preferences-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-org-preferences-403-schema) |
@@ -15416,13 +16602,13 @@ PUT /api/org/preferences
 
 #### Responses
 
-##### <span id="update-org-preferences-200"></span> 200
+##### <span id="update-org-preferences-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
 ###### <span id="update-org-preferences-200-schema"></span> Schema
 
-[UpdateOrgPreferencesOKBody](#update-org-preferences-o-k-body)
+[SuccessResponseBody](#success-response-body)
 
 ##### <span id="update-org-preferences-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
@@ -15455,17 +16641,6 @@ Status: Internal Server Error
 ###### <span id="update-org-preferences-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
-
-###### Inlined models
-
-**<span id="update-org-preferences-o-k-body"></span> UpdateOrgPreferencesOKBody**
-
-**Properties**
-
-| Name    | Type                      | Go type  | Required | Default | Description                        | Example             |
-| ------- | ------------------------- | -------- | :------: | ------- | ---------------------------------- | ------------------- |
-| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
-| message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
 
 ### <span id="update-org-quota"></span> Update user quota. (_updateOrgQuota_)
 
@@ -15539,10 +16714,10 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="update-org-user"></span> Updates the given user (_updateOrgUser_)
+### <span id="update-org-user"></span> Update Users in Organization. (_updateOrgUser_)
 
 ```
-PATCH /api/org/users/{user_id}
+PATCH /api/orgs/{org_id}/users/{user_id}
 ```
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
@@ -15552,6 +16727,7 @@ you need to have a permission with action: `org.users.role:update` with scope `u
 
 | Name    | Source | Type                                             | Go type                       | Separator | Required | Default | Description |
 | ------- | ------ | ------------------------------------------------ | ----------------------------- | --------- | :------: | ------- | ----------- |
+| org_id  | `path` | int64 (formatted integer)                        | `int64`                       |           |    ✓     |         |             |
 | user_id | `path` | int64 (formatted integer)                        | `int64`                       |           |    ✓     |         |             |
 | body    | `body` | [UpdateOrgUserCommand](#update-org-user-command) | `models.UpdateOrgUserCommand` |           |    ✓     |         |             |
 
@@ -15607,11 +16783,146 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="update-recording-rule"></span> Update a recording rule. (_updateRecordingRule_)
+### <span id="update-org-user-for-current-org"></span> Updates the given user (_updateOrgUserForCurrentOrg_)
+
+```
+PATCH /api/org/users/{user_id}
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled
+you need to have a permission with action: `org.users.role:update` with scope `users:*`.
+
+#### Parameters
+
+| Name    | Source | Type                                             | Go type                       | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------------------------------ | ----------------------------- | --------- | :------: | ------- | ----------- |
+| user_id | `path` | int64 (formatted integer)                        | `int64`                       |           |    ✓     |         |             |
+| body    | `body` | [UpdateOrgUserCommand](#update-org-user-command) | `models.UpdateOrgUserCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                        | Status                | Description                                                                                                 | Has headers | Schema                                                |
+| ------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------- |
+| [200](#update-org-user-for-current-org-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#update-org-user-for-current-org-200-schema) |
+| [400](#update-org-user-for-current-org-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-org-user-for-current-org-400-schema) |
+| [401](#update-org-user-for-current-org-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-org-user-for-current-org-401-schema) |
+| [403](#update-org-user-for-current-org-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-org-user-for-current-org-403-schema) |
+| [500](#update-org-user-for-current-org-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-org-user-for-current-org-500-schema) |
+
+#### Responses
+
+##### <span id="update-org-user-for-current-org-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="update-org-user-for-current-org-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="update-org-user-for-current-org-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="update-org-user-for-current-org-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-org-user-for-current-org-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="update-org-user-for-current-org-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-org-user-for-current-org-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="update-org-user-for-current-org-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-org-user-for-current-org-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="update-org-user-for-current-org-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="update-playlist"></span> Update playlist. (_updatePlaylist_)
+
+```
+PUT /api/playlists/{uid}
+```
+
+#### Parameters
+
+| Name | Source | Type                                              | Go type                        | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------------- | ------------------------------ | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string                                            | `string`                       |           |    ✓     |         |             |
+| Body | `body` | [UpdatePlaylistCommand](#update-playlist-command) | `models.UpdatePlaylistCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                        | Status                | Description                                                                                                 | Has headers | Schema                                |
+| --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
+| [200](#update-playlist-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-playlist-200-schema) |
+| [401](#update-playlist-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-playlist-401-schema) |
+| [403](#update-playlist-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-playlist-403-schema) |
+| [404](#update-playlist-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-playlist-404-schema) |
+| [500](#update-playlist-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-playlist-500-schema) |
+
+#### Responses
+
+##### <span id="update-playlist-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="update-playlist-200-schema"></span> Schema
+
+[PlaylistDTO](#playlist-d-t-o)
+
+##### <span id="update-playlist-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="update-playlist-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-playlist-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="update-playlist-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-playlist-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="update-playlist-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-playlist-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="update-playlist-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="update-recording-rule"></span> updateRecordingRule (_updateRecordingRule_)
 
 ```
 PUT /api/recording-rules
 ```
+
+Update the active status of a rule
 
 #### Parameters
 
@@ -15623,7 +16934,7 @@ PUT /api/recording-rules
 
 | Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
 | --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
-| [200](#update-recording-rule-200) | OK                    |                                                                                                             |             | [schema](#update-recording-rule-200-schema) |
+| [200](#update-recording-rule-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-recording-rule-200-schema) |
 | [401](#update-recording-rule-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-recording-rule-401-schema) |
 | [403](#update-recording-rule-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-recording-rule-403-schema) |
 | [404](#update-recording-rule-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-recording-rule-404-schema) |
@@ -15631,7 +16942,7 @@ PUT /api/recording-rules
 
 #### Responses
 
-##### <span id="update-recording-rule-200"></span> 200
+##### <span id="update-recording-rule-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -15674,7 +16985,7 @@ Status: Internal Server Error
 ### <span id="update-report"></span> Update a report. (_updateReport_)
 
 ```
-PUT /api/reports/{reportID}
+PUT /api/reports/{id}
 ```
 
 Available to org admins only and with a valid or expired license
@@ -15683,10 +16994,10 @@ You need to have a permission with action `reports.admin:write` with scope `repo
 
 #### Parameters
 
-| Name     | Source | Type                                                    | Go type                          | Separator | Required | Default | Description |
-| -------- | ------ | ------------------------------------------------------- | -------------------------------- | --------- | :------: | ------- | ----------- |
-| reportID | `path` | int64 (formatted integer)                               | `int64`                          |           |    ✓     |         |             |
-| body     | `body` | [CreateOrUpdateConfigCmd](#create-or-update-config-cmd) | `models.CreateOrUpdateConfigCmd` |           |    ✓     |         |             |
+| Name | Source | Type                                                    | Go type                          | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------------------- | -------------------------------- | --------- | :------: | ------- | ----------- |
+| id   | `path` | int64 (formatted integer)                               | `int64`                          |           |    ✓     |         |             |
+| body | `body` | [CreateOrUpdateConfigCmd](#create-or-update-config-cmd) | `models.CreateOrUpdateConfigCmd` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -15768,7 +17079,7 @@ You need to have a permission with action `roles:write` and scope `permissions:t
 
 | Code                                     | Status                | Description                                                                                                 | Has headers | Schema                                             |
 | ---------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------- |
-| [200](#update-role-with-permissions-200) | OK                    |                                                                                                             |             | [schema](#update-role-with-permissions-200-schema) |
+| [200](#update-role-with-permissions-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-role-with-permissions-200-schema) |
 | [400](#update-role-with-permissions-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-role-with-permissions-400-schema) |
 | [403](#update-role-with-permissions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-role-with-permissions-403-schema) |
 | [404](#update-role-with-permissions-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-role-with-permissions-404-schema) |
@@ -15776,7 +17087,7 @@ You need to have a permission with action `roles:write` and scope `permissions:t
 
 #### Responses
 
-##### <span id="update-role-with-permissions-200"></span> 200
+##### <span id="update-role-with-permissions-200"></span> 200 - (empty)
 
 Status: OK
 
@@ -15816,6 +17127,96 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="update-service-account"></span> Update service account (_updateServiceAccount_)
+
+```
+PATCH /api/serviceaccounts/{serviceAccountId}
+```
+
+Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
+action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
+
+#### Parameters
+
+| Name             | Source | Type                                                     | Go type                           | Separator | Required | Default | Description |
+| ---------------- | ------ | -------------------------------------------------------- | --------------------------------- | --------- | :------: | ------- | ----------- |
+| serviceAccountId | `path` | int64 (formatted integer)                                | `int64`                           |           |    ✓     |         |             |
+| Body             | `body` | [UpdateServiceAccountForm](#update-service-account-form) | `models.UpdateServiceAccountForm` |           |          |         |             |
+
+#### All responses
+
+| Code                               | Status                | Description                                                                                                 | Has headers | Schema                                       |
+| ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------- |
+| [200](#update-service-account-200) | OK                    | (empty)                                                                                                     |             | [schema](#update-service-account-200-schema) |
+| [400](#update-service-account-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#update-service-account-400-schema) |
+| [401](#update-service-account-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-service-account-401-schema) |
+| [403](#update-service-account-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-service-account-403-schema) |
+| [404](#update-service-account-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-service-account-404-schema) |
+| [500](#update-service-account-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-service-account-500-schema) |
+
+#### Responses
+
+##### <span id="update-service-account-200"></span> 200 - (empty)
+
+Status: OK
+
+###### <span id="update-service-account-200-schema"></span> Schema
+
+[UpdateServiceAccountOKBody](#update-service-account-o-k-body)
+
+##### <span id="update-service-account-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="update-service-account-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-service-account-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="update-service-account-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-service-account-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="update-service-account-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-service-account-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="update-service-account-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-service-account-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="update-service-account-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+###### Inlined models
+
+**<span id="update-service-account-o-k-body"></span> UpdateServiceAccountOKBody**
+
+**Properties**
+
+| Name           | Type                                                       | Go type                           | Required | Default | Description | Example |
+| -------------- | ---------------------------------------------------------- | --------------------------------- | :------: | ------- | ----------- | ------- |
+| id             | int64 (formatted integer)                                  | `int64`                           |          |         |             |         |
+| message        | string                                                     | `string`                          |          |         |             |         |
+| name           | string                                                     | `string`                          |          |         |             |         |
+| serviceaccount | [ServiceAccountProfileDTO](#service-account-profile-d-t-o) | `models.ServiceAccountProfileDTO` |          |         |             |         |
+
 ### <span id="update-signed-in-user"></span> Update signed in User. (_updateSignedInUser_)
 
 ```
@@ -15832,20 +17233,20 @@ PUT /api/user
 
 | Code                              | Status                | Description                                                                                                 | Has headers | Schema                                      |
 | --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------- |
-| [200](#update-signed-in-user-200) | OK                    |                                                                                                             |             | [schema](#update-signed-in-user-200-schema) |
+| [200](#update-signed-in-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#update-signed-in-user-200-schema) |
 | [401](#update-signed-in-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-signed-in-user-401-schema) |
 | [403](#update-signed-in-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-signed-in-user-403-schema) |
 | [500](#update-signed-in-user-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-signed-in-user-500-schema) |
 
 #### Responses
 
-##### <span id="update-signed-in-user-200"></span> 200
+##### <span id="update-signed-in-user-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
 ###### <span id="update-signed-in-user-200-schema"></span> Schema
 
-[UserProfileDTO](#user-profile-d-t-o)
+[SuccessResponseBody](#success-response-body)
 
 ##### <span id="update-signed-in-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
@@ -16086,7 +17487,7 @@ Update the user identified by id.
 
 | Code                    | Status                | Description                                                                                                 | Has headers | Schema                            |
 | ----------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------- |
-| [200](#update-user-200) | OK                    |                                                                                                             |             | [schema](#update-user-200-schema) |
+| [200](#update-user-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#update-user-200-schema) |
 | [401](#update-user-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-user-401-schema) |
 | [403](#update-user-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-user-403-schema) |
 | [404](#update-user-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-user-404-schema) |
@@ -16094,13 +17495,13 @@ Update the user identified by id.
 
 #### Responses
 
-##### <span id="update-user-200"></span> 200
+##### <span id="update-user-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
 ###### <span id="update-user-200-schema"></span> Schema
 
-[UserProfileDTO](#user-profile-d-t-o)
+[SuccessResponseBody](#success-response-body)
 
 ##### <span id="update-user-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
@@ -16358,18 +17759,6 @@ Status: Internal Server Error
 | active_users              | int64 (formatted integer) | `int64` |          |         |             |         |
 | active_viewers            | int64 (formatted integer) | `int64` |          |         |             |         |
 
-### <span id="add-api-key-command"></span> AddApiKeyCommand
-
-> COMMANDS
-
-**Properties**
-
-| Name          | Type                      | Go type  | Required | Default | Description | Example |
-| ------------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| name          | string                    | `string` |          |         |             |         |
-| role          | string                    | `string` |          |         |             |         |
-| secondsToLive | int64 (formatted integer) | `int64`  |          |         |             |         |
-
 ### <span id="add-built-in-role-command"></span> AddBuiltInRoleCommand
 
 **Properties**
@@ -16379,6 +17768,16 @@ Status: Internal Server Error
 | builtInRole | string  | `string` |          |         |                                                                                                                                                                                                                                                         |         |
 | global      | boolean | `bool`   |          |         | A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information. |         |
 | roleUid     | string  | `string` |          |         |                                                                                                                                                                                                                                                         |         |
+
+### <span id="add-command"></span> AddCommand
+
+**Properties**
+
+| Name          | Type                      | Go type  | Required | Default | Description | Example |
+| ------------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| name          | string                    | `string` |          |         |             |         |
+| role          | string                    | `string` |          |         |             |         |
+| secondsToLive | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="add-data-source-command"></span> AddDataSourceCommand
 
@@ -16432,6 +17831,15 @@ Status: Internal Server Error
 | permission  | [DsPermissionType](#ds-permission-type) | `DsPermissionType` |          |         |             |         |
 | teamId      | int64 (formatted integer)               | `int64`            |          |         |             |         |
 | userId      | int64 (formatted integer)               | `int64`            |          |         |             |         |
+
+### <span id="add-service-account-token-command"></span> AddServiceAccountTokenCommand
+
+**Properties**
+
+| Name          | Type                      | Go type  | Required | Default | Description | Example |
+| ------------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| name          | string                    | `string` |          |         |             |         |
+| secondsToLive | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="add-team-member-command"></span> AddTeamMemberCommand
 
@@ -16585,10 +17993,6 @@ Status: Internal Server Error
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | url  | string | `string` |          |         |             |         |
 
-### <span id="alert-manager-not-found"></span> AlertManagerNotFound
-
-[interface{}](#interface)
-
 ### <span id="alert-manager-not-ready"></span> AlertManagerNotReady
 
 [interface{}](#interface)
@@ -16661,25 +18065,40 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name         | Type                         | Go type             | Required | Default | Description | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| annotations  | map of string                | `map[string]string` |          |         |             | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
-| condition    | string                       | `string`            |    ✓     |         |             | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| data         | [][alertquery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"-100","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":null},"reducer":{"params":null,"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
-| execErrState | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| folderUID    | string                       | `string`            |    ✓     |         |             | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| id           | int64 (formatted integer)    | `int64`             |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| labels       | map of string                | `map[string]string` |          |         |             | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
-| noDataState  | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ruleGroup    | string                       | `string`            |    ✓     |         |             | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| title        | string                       | `string`            |    ✓     |         |             | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| uid          | string                       | `string`            |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Name            | Type                         | Go type             | Required | Default | Description | Example |
+| --------------- | ---------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
+| Annotations     | map of string                | `map[string]string` |          |         |             |         |
+| Condition       | string                       | `string`            |          |         |             |         |
+| DashboardUID    | string                       | `string`            |          |         |             |         |
+| Data            | [][alertquery](#alert-query) | `[]*AlertQuery`     |          |         |             |         |
+| ExecErrState    | string                       | `string`            |          |         |             |         |
+| For             | [Duration](#duration)        | `Duration`          |          |         |             |         |
+| ID              | int64 (formatted integer)    | `int64`             |          |         |             |         |
+| IntervalSeconds | int64 (formatted integer)    | `int64`             |          |         |             |         |
+| Labels          | map of string                | `map[string]string` |          |         |             |         |
+| NamespaceUID    | string                       | `string`            |          |         |             |         |
+| NoDataState     | string                       | `string`            |          |         |             |         |
+| OrgID           | int64 (formatted integer)    | `int64`             |          |         |             |         |
+| PanelID         | int64 (formatted integer)    | `int64`             |          |         |             |         |
+| RuleGroup       | string                       | `string`            |          |         |             |         |
+| RuleGroupIndex  | int64 (formatted integer)    | `int64`             |          |         |             |         |
+| Title           | string                       | `string`            |          |         |             |         |
+| UID             | string                       | `string`            |          |         |             |         |
+| Updated         | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |         |
+| Version         | int64 (formatted integer)    | `int64`             |          |         |             |         |
 
 ### <span id="alert-rule-group"></span> AlertRuleGroup
+
+**Properties**
+
+| Name      | Type                       | Go type        | Required | Default | Description | Example |
+| --------- | -------------------------- | -------------- | :------: | ------- | ----------- | ------- |
+| folderUid | string                     | `string`       |          |         |             |         |
+| interval  | int64 (formatted integer)  | `int64`        |          |         |             |         |
+| rules     | [][alertrule](#alert-rule) | `[]*AlertRule` |          |         |             |         |
+| title     | string                     | `string`       |          |         |             |         |
+
+### <span id="alert-rule-group-metadata"></span> AlertRuleGroupMetadata
 
 **Properties**
 
@@ -16908,6 +18327,20 @@ Status: Internal Server Error
 
 [][embeddedcontactpoint](#embedded-contact-point)
 
+### <span id="correlation"></span> Correlation
+
+> Correlation is the model for correlations definitions
+
+**Properties**
+
+| Name        | Type   | Go type  | Required | Default | Description                                            | Example             |
+| ----------- | ------ | -------- | :------: | ------- | ------------------------------------------------------ | ------------------- |
+| description | string | `string` |          |         | Description of the correlation                         | `Logs to Traces`    |
+| label       | string | `string` |          |         | Label identifying the correlation                      | `My Label`          |
+| sourceUID   | string | `string` |          |         | UID of the data source the correlation originates from | `d0oxYRg4z`         |
+| targetUID   | string | `string` |          |         | UID of the data source the correlation points to       | `PE1C5CBDA0504A6A3` |
+| uid         | string | `string` |          |         | Unique identifier of the correlation                   | `50xhMlg9k`         |
+
 ### <span id="create-alert-notification-command"></span> CreateAlertNotificationCommand
 
 **Properties**
@@ -16923,6 +18356,29 @@ Status: Internal Server Error
 | settings              | [JSON](#json) | `JSON`              |          |         |             |         |
 | type                  | string        | `string`            |          |         |             |         |
 | uid                   | string        | `string`            |          |         |             |         |
+
+### <span id="create-correlation-command"></span> CreateCorrelationCommand
+
+> CreateCorrelationCommand is the command for creating a correlation
+
+**Properties**
+
+| Name        | Type   | Go type  | Required | Default | Description                                                | Example             |
+| ----------- | ------ | -------- | :------: | ------- | ---------------------------------------------------------- | ------------------- |
+| description | string | `string` |          |         | Optional description of the correlation                    | `Logs to Traces`    |
+| label       | string | `string` |          |         | Optional label identifying the correlation                 | `My label`          |
+| targetUID   | string | `string` |          |         | Target data source UID to which the correlation is created | `PE1C5CBDA0504A6A3` |
+
+### <span id="create-correlation-response-body"></span> CreateCorrelationResponseBody
+
+> CreateCorrelationResponse is the response struct for CreateCorrelationCommand
+
+**Properties**
+
+| Name    | Type                        | Go type       | Required | Default | Description | Example               |
+| ------- | --------------------------- | ------------- | :------: | ------- | ----------- | --------------------- |
+| message | string                      | `string`      |          |         |             | `Correlation created` |
+| result  | [Correlation](#correlation) | `Correlation` |          |         |             |                       |
 
 ### <span id="create-dashboard-snapshot-command"></span> CreateDashboardSnapshotCommand
 
@@ -16985,7 +18441,7 @@ Description:
 | recipients         | string                                    | `string`           |          |         |             |         |
 | replyTo            | string                                    | `string`           |          |         |             |         |
 | schedule           | [ScheduleDTO](#schedule-d-t-o)            | `ScheduleDTO`      |          |         |             |         |
-| state              | string                                    | `string`           |          |         |             |         |
+| state              | [State](#state)                           | `State`            |          |         |             |         |
 | templateVars       | [interface{}](#interface)                 | `interface{}`      |          |         |             |         |
 
 ### <span id="create-org-command"></span> CreateOrgCommand
@@ -16995,6 +18451,16 @@ Description:
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | name | string | `string` |          |         |             |         |
+
+### <span id="create-playlist-command"></span> CreatePlaylistCommand
+
+**Properties**
+
+| Name     | Type                                      | Go type              | Required | Default | Description | Example |
+| -------- | ----------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
+| interval | string                                    | `string`             |          |         |             |         |
+| items    | [][playlistitemdto](#playlist-item-d-t-o) | `[]*PlaylistItemDTO` |          |         |             |         |
+| name     | string                                    | `string`             |          |         |             |         |
 
 ### <span id="create-query-in-query-history-command"></span> CreateQueryInQueryHistoryCommand
 
@@ -17007,7 +18473,7 @@ Description:
 | datasourceUid | string        | `string` |          |         | UID of the data source for which are queries stored. | `PE1C5CBDA0504A6A3` |
 | queries       | [JSON](#json) | `JSON`   |    ✓     |         |                                                      |                     |
 
-### <span id="create-role-with-permissions-command"></span> CreateRoleWithPermissionsCommand
+### <span id="create-role-form"></span> CreateRoleForm
 
 **Properties**
 
@@ -17015,12 +18481,23 @@ Description:
 | ----------- | --------------------------- | --------------- | :------: | ------- | ----------- | ------- |
 | description | string                      | `string`        |          |         |             |         |
 | displayName | string                      | `string`        |          |         |             |         |
+| global      | boolean                     | `bool`          |          |         |             |         |
 | group       | string                      | `string`        |          |         |             |         |
 | hidden      | boolean                     | `bool`          |          |         |             |         |
 | name        | string                      | `string`        |          |         |             |         |
 | permissions | [][permission](#permission) | `[]*Permission` |          |         |             |         |
 | uid         | string                      | `string`        |          |         |             |         |
 | version     | int64 (formatted integer)   | `int64`         |          |         |             |         |
+
+### <span id="create-service-account-form"></span> CreateServiceAccountForm
+
+**Properties**
+
+| Name       | Type    | Go type  | Required | Default | Description | Example   |
+| ---------- | ------- | -------- | :------: | ------- | ----------- | --------- |
+| isDisabled | boolean | `bool`   |          |         |             | `false`   |
+| name       | string  | `string` |          |         |             | `grafana` |
+| role       | string  | `string` |          |         |             | `Admin`   |
 
 ### <span id="create-team-command"></span> CreateTeamCommand
 
@@ -17051,7 +18528,7 @@ Description:
 | url               | string                    | `string` |          |         |             |         |
 | usersCount        | int64 (formatted integer) | `int64`  |          |         |             |         |
 
-### <span id="dashboard-acl-info-d-t-o"></span> DashboardAclInfoDTO
+### <span id="dashboard-acl-info-d-t-o"></span> DashboardACLInfoDTO
 
 **Properties**
 
@@ -17079,7 +18556,7 @@ Description:
 | userId         | int64 (formatted integer)          | `int64`           |          |         |             |         |
 | userLogin      | string                             | `string`          |          |         |             |         |
 
-### <span id="dashboard-acl-update-item"></span> DashboardAclUpdateItem
+### <span id="dashboard-acl-update-item"></span> DashboardACLUpdateItem
 
 **Properties**
 
@@ -17136,6 +18613,7 @@ Description:
 | provisioned                | boolean                                        | `bool`                 |          |         |             |         |
 | provisionedExternalId      | string                                         | `string`               |          |         |             |         |
 | publicDashboardAccessToken | string                                         | `string`               |          |         |             |         |
+| publicDashboardEnabled     | boolean                                        | `bool`                 |          |         |             |         |
 | slug                       | string                                         | `string`               |          |         |             |         |
 | type                       | string                                         | `string`               |          |         |             |         |
 | updated                    | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
@@ -17325,6 +18803,45 @@ Description:
 | url         | string                    | `string`   |          |         |             |         |
 | user        | string                    | `string`   |          |         |             |         |
 
+### <span id="data-source-permission-rule-d-t-o"></span> DataSourcePermissionRuleDTO
+
+**Properties**
+
+| Name           | Type                                    | Go type            | Required | Default | Description | Example |
+| -------------- | --------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
+| builtInRole    | string                                  | `string`           |          |         |             |         |
+| created        | date-time (formatted string)            | `strfmt.DateTime`  |          |         |             |         |
+| datasourceId   | int64 (formatted integer)               | `int64`            |          |         |             |         |
+| id             | int64 (formatted integer)               | `int64`            |          |         |             |         |
+| isManaged      | boolean                                 | `bool`             |          |         |             |         |
+| permission     | [DsPermissionType](#ds-permission-type) | `DsPermissionType` |          |         |             |         |
+| permissionName | string                                  | `string`           |          |         |             |         |
+| team           | string                                  | `string`           |          |         |             |         |
+| teamAvatarUrl  | string                                  | `string`           |          |         |             |         |
+| teamEmail      | string                                  | `string`           |          |         |             |         |
+| teamId         | int64 (formatted integer)               | `int64`            |          |         |             |         |
+| updated        | date-time (formatted string)            | `strfmt.DateTime`  |          |         |             |         |
+| userAvatarUrl  | string                                  | `string`           |          |         |             |         |
+| userEmail      | string                                  | `string`           |          |         |             |         |
+| userId         | int64 (formatted integer)               | `int64`            |          |         |             |         |
+| userLogin      | string                                  | `string`           |          |         |             |         |
+
+### <span id="data-source-permissions-d-t-o"></span> DataSourcePermissionsDTO
+
+**Properties**
+
+| Name         | Type                                                                | Go type                          | Required | Default | Description | Example |
+| ------------ | ------------------------------------------------------------------- | -------------------------------- | :------: | ------- | ----------- | ------- |
+| datasourceId | int64 (formatted integer)                                           | `int64`                          |          |         |             |         |
+| enabled      | boolean                                                             | `bool`                           |          |         |             |         |
+| permissions  | [][datasourcepermissionruledto](#data-source-permission-rule-d-t-o) | `[]*DataSourcePermissionRuleDTO` |          |         |             |         |
+
+### <span id="data-topic"></span> DataTopic
+
+| Name      | Type   | Go type | Default | Description | Example |
+| --------- | ------ | ------- | ------- | ----------- | ------- |
+| DataTopic | string | string  |         |             |         |
+
 ### <span id="date-time"></span> DateTime
 
 > DateTime is a time but it serializes to ISO8601 format with millis
@@ -17348,6 +18865,14 @@ This just tries to make it worry-free. | |
 | ----- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
 | Begin | int64 (formatted integer) | `int64` |          |         |             |         |
 | End   | int64 (formatted integer) | `int64` |          |         |             |         |
+
+### <span id="delete-correlation-response-body"></span> DeleteCorrelationResponseBody
+
+**Properties**
+
+| Name    | Type   | Go type  | Required | Default | Description | Example               |
+| ------- | ------ | -------- | :------: | ------- | ----------- | --------------------- |
+| message | string | `string` |          |         |             | `Correlation deleted` |
 
 ### <span id="delete-token-command"></span> DeleteTokenCommand
 
@@ -17392,15 +18917,22 @@ Enum: 0,1 | |
 
 ### <span id="duration"></span> Duration
 
-[Duration](#duration)
+> A Duration represents the elapsed time between two instants
+> as an int64 nanosecond count. The representation limits the
+> largest representable duration to approximately 290 years.
 
-#### Inlined models
+| Name     | Type                      | Go type | Default | Description                                                 | Example |
+| -------- | ------------------------- | ------- | ------- | ----------------------------------------------------------- | ------- |
+| Duration | int64 (formatted integer) | int64   |         | A Duration represents the elapsed time between two instants |
+
+as an int64 nanosecond count. The representation limits the
+largest representable duration to approximately 290 years. | |
 
 ### <span id="duration"></span> Duration
 
-| Name     | Type                      | Go type | Default | Description | Example |
-| -------- | ------------------------- | ------- | ------- | ----------- | ------- |
-| Duration | int64 (formatted integer) | int64   |         |             |         |
+[Duration](#duration)
+
+#### Inlined models
 
 ### <span id="email-config"></span> EmailConfig
 
@@ -17537,7 +19069,7 @@ The slice data in the Field is a not exported, so methods on the Field are used 
 | Name                                                                       | Type                         | Go type       | Required | Default | Description                                                                                       | Example |
 | -------------------------------------------------------------------------- | ---------------------------- | ------------- | :------: | ------- | ------------------------------------------------------------------------------------------------- | ------- |
 | config                                                                     | [FieldConfig](#field-config) | `FieldConfig` |          |         |                                                                                                   |         |
-| labels                                                                     | [Labels](#labels)            | `Labels`      |          |         |                                                                                                   |         |
+| labels                                                                     | [FrameLabels](#frame-labels) | `FrameLabels` |          |         |                                                                                                   |         |
 | name                                                                       | string                       | `string`      |          |         | Name is default identifier of the field. The name does not have to be unique, but the combination |
 | of name and Labels should be unique for proper behavior in all situations. |                              |
 
@@ -17644,6 +19176,12 @@ or time series data depending on its content and field types.
 | Name                                                                                   | string                   | `string`    |          |         | Name is used in some Grafana visualizations.                                   |         |
 | RefID                                                                                  | string                   | `string`    |          |         | RefID is a property that can be set to match a Frame to its originating query. |         |
 
+### <span id="frame-labels"></span> FrameLabels
+
+> Labels are used to add metadata to an object. The JSON will always be sorted keys
+
+[FrameLabels](#frame-labels)
+
 ### <span id="frame-meta"></span> FrameMeta
 
 > https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11
@@ -17656,6 +19194,7 @@ or time series data depending on its content and field types.
 | ---------------------------------------------------------------------------------------------- | -------------------------- | -------------- | :------: | ------- | ------------------------------------------------------------------------------------------------ | ------- |
 | channel                                                                                        | string                     | `string`       |          |         | Channel is the path to a stream in grafana live that has real-time updates for this data.        |         |
 | custom                                                                                         | [interface{}](#interface)  | `interface{}`  |          |         | Custom datasource specific values.                                                               |         |
+| dataTopic                                                                                      | [DataTopic](#data-topic)   | `DataTopic`    |          |         |                                                                                                  |         |
 | executedQueryString                                                                            | string                     | `string`       |          |         | ExecutedQueryString is the raw query sent to the underlying system. All macros and templating    |
 | have been applied. When metadata contains this value, it will be shown in the query inspector. |                            |
 | notices                                                                                        | [][notice](#notice)        | `[]*Notice`    |          |         | Notices provide additional information about the data in the Frame that                          |
@@ -18101,18 +19640,46 @@ marshalled configuration when set to false. | |
 
 [][label](#label)
 
+### <span id="legacy-alert"></span> LegacyAlert
+
+**Properties**
+
+| Name           | Type                                | Go type           | Required | Default | Description | Example |
+| -------------- | ----------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| Created        | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
+| DashboardId    | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| EvalData       | [JSON](#json)                       | `JSON`            |          |         |             |         |
+| ExecutionError | string                              | `string`          |          |         |             |         |
+| For            | [Duration](#duration)               | `Duration`        |          |         |             |         |
+| Frequency      | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| Handler        | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| Id             | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| Message        | string                              | `string`          |          |         |             |         |
+| Name           | string                              | `string`          |          |         |             |         |
+| NewStateDate   | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
+| OrgId          | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| PanelId        | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| Settings       | [JSON](#json)                       | `JSON`            |          |         |             |         |
+| Severity       | string                              | `string`          |          |         |             |         |
+| Silenced       | boolean                             | `bool`            |          |         |             |         |
+| State          | [AlertStateType](#alert-state-type) | `AlertStateType`  |          |         |             |         |
+| StateChanges   | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| Updated        | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
+| Version        | int64 (formatted integer)           | `int64`           |          |         |             |         |
+
 ### <span id="library-element-connection-d-t-o"></span> LibraryElementConnectionDTO
 
 **Properties**
 
-| Name         | Type                                                          | Go type                     | Required | Default | Description | Example |
-| ------------ | ------------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
-| connectionId | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
-| created      | date-time (formatted string)                                  | `strfmt.DateTime`           |          |         |             |         |
-| createdBy    | [LibraryElementDTOMetaUser](#library-element-d-t-o-meta-user) | `LibraryElementDTOMetaUser` |          |         |             |         |
-| elementId    | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
-| id           | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
-| kind         | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
+| Name          | Type                                                          | Go type                     | Required | Default | Description | Example |
+| ------------- | ------------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
+| connectionId  | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
+| connectionUid | string                                                        | `string`                    |          |         |             |         |
+| created       | date-time (formatted string)                                  | `strfmt.DateTime`           |          |         |             |         |
+| createdBy     | [LibraryElementDTOMetaUser](#library-element-d-t-o-meta-user) | `LibraryElementDTOMetaUser` |          |         |             |         |
+| elementId     | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
+| id            | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
+| kind          | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
 
 ### <span id="library-element-connections-response"></span> LibraryElementConnectionsResponse
 
@@ -18264,11 +19831,12 @@ marshalled configuration when set to false. | |
 
 **Properties**
 
-| Name    | Type            | Go type  | Required | Default | Description                                                                               | Example  |
-| ------- | --------------- | -------- | :------: | ------- | ----------------------------------------------------------------------------------------- | -------- |
-| debug   | boolean         | `bool`   |          |         |                                                                                           |          |
-| from    | string          | `string` |    ✓     |         | From Start time in epoch timestamps in milliseconds or relative using Grafana time units. | `now-1h` |
-| queries | [][json](#json) | `[]JSON` |    ✓     |         | queries.refId – Specifies an identifier of the query. Is optional and default to “A”.     |
+| Name                       | Type            | Go type  | Required | Default | Description                                                                               | Example  |
+| -------------------------- | --------------- | -------- | :------: | ------- | ----------------------------------------------------------------------------------------- | -------- |
+| debug                      | boolean         | `bool`   |          |         |                                                                                           |          |
+| from                       | string          | `string` |    ✓     |         | From Start time in epoch timestamps in milliseconds or relative using Grafana time units. | `now-1h` |
+| publicDashboardAccessToken | string          | `string` |          |         |                                                                                           |          |
+| queries                    | [][json](#json) | `[]JSON` |    ✓     |         | queries.refId – Specifies an identifier of the query. Is optional and default to “A”.     |
 
 queries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.
 queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
@@ -18338,11 +19906,11 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 **Properties**
 
-| Name | Type                      | Go type  | Required | Default | Description | Example |
-| ---- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| id   | int64 (formatted integer) | `int64`  |          |         |             |         |
-| key  | string                    | `string` |          |         |             |         |
-| name | string                    | `string` |          |         |             |         |
+| Name | Type                      | Go type  | Required | Default | Description | Example                                          |
+| ---- | ------------------------- | -------- | :------: | ------- | ----------- | ------------------------------------------------ |
+| id   | int64 (formatted integer) | `int64`  |          |         |             | `1`                                              |
+| key  | string                    | `string` |          |         |             | `glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a` |
+| name | string                    | `string` |          |         |             | `grafana`                                        |
 
 ### <span id="not-found"></span> NotFound
 
@@ -18619,6 +20187,65 @@ Description:
 | -------------- | ------------------------- | ------- | ------- | ----------- | ------- |
 | PermissionType | int64 (formatted integer) | int64   |         |             |         |
 
+### <span id="playlist"></span> Playlist
+
+> Playlist model
+
+**Properties**
+
+| Name     | Type                      | Go type  | Required | Default | Description | Example |
+| -------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| id       | int64 (formatted integer) | `int64`  |          |         |             |         |
+| interval | string                    | `string` |          |         |             |         |
+| name     | string                    | `string` |          |         |             |         |
+| uid      | string                    | `string` |          |         |             |         |
+
+### <span id="playlist-d-t-o"></span> PlaylistDTO
+
+**Properties**
+
+| Name     | Type                                      | Go type              | Required | Default | Description | Example |
+| -------- | ----------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
+| id       | int64 (formatted integer)                 | `int64`              |          |         |             |         |
+| interval | string                                    | `string`             |          |         |             |         |
+| items    | [][playlistitemdto](#playlist-item-d-t-o) | `[]*PlaylistItemDTO` |          |         |             |         |
+| name     | string                                    | `string`             |          |         |             |         |
+| uid      | string                                    | `string`             |          |         |             |         |
+
+### <span id="playlist-dashboard"></span> PlaylistDashboard
+
+**Properties**
+
+| Name  | Type                      | Go type  | Required | Default | Description | Example |
+| ----- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| id    | int64 (formatted integer) | `int64`  |          |         |             |         |
+| order | int64 (formatted integer) | `int64`  |          |         |             |         |
+| slug  | string                    | `string` |          |         |             |         |
+| title | string                    | `string` |          |         |             |         |
+| uri   | string                    | `string` |          |         |             |         |
+| url   | string                    | `string` |          |         |             |         |
+
+### <span id="playlist-dashboards-slice"></span> PlaylistDashboardsSlice
+
+[][playlistdashboard](#playlist-dashboard)
+
+### <span id="playlist-item-d-t-o"></span> PlaylistItemDTO
+
+**Properties**
+
+| Name       | Type                      | Go type  | Required | Default | Description | Example |
+| ---------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| id         | int64 (formatted integer) | `int64`  |          |         |             |         |
+| order      | int64 (formatted integer) | `int64`  |          |         |             |         |
+| playlistid | int64 (formatted integer) | `int64`  |          |         |             |         |
+| title      | string                    | `string` |          |         |             |         |
+| type       | string                    | `string` |          |         |             |         |
+| value      | string                    | `string` |          |         |             |         |
+
+### <span id="playlists"></span> Playlists
+
+[][playlist](#playlist)
+
 ### <span id="point"></span> Point
 
 **Properties**
@@ -18639,7 +20266,7 @@ Description:
 | data         | [JSON](#json)             | `JSON`     |          |         |             |         |
 | panelId      | int64 (formatted integer) | `int64`    |          |         |             |         |
 | tags         | []string                  | `[]string` |          |         |             |         |
-| text         | string                    | `string`   |          |         |             |         |
+| text         | string                    | `string`   |    ✓     |         |             |         |
 | time         | int64 (formatted integer) | `int64`    |          |         |             |         |
 | timeEnd      | int64 (formatted integer) | `int64`    |          |         |             |         |
 
@@ -18791,6 +20418,28 @@ Description:
 | Name       | Type   | Go type | Default | Description | Example |
 | ---------- | ------ | ------- | ------- | ----------- | ------- |
 | Provenance | string | string  |         |             |         |
+
+### <span id="provisioned-alert-rule"></span> ProvisionedAlertRule
+
+**Properties**
+
+| Name         | Type                         | Go type             | Required | Default | Description | Example                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| annotations  | map of string                | `map[string]string` |          |         |             | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                     |
+| condition    | string                       | `string`            |    ✓     |         |             | `A`                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| data         | [][alertquery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"-100","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
+| execErrState | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| folderUID    | string                       | `string`            |    ✓     |         |             | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| id           | int64 (formatted integer)    | `int64`             |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| labels       | map of string                | `map[string]string` |          |         |             | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                      |
+| noDataState  | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ruleGroup    | string                       | `string`            |    ✓     |         |             | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                               |
+| title        | string                       | `string`            |    ✓     |         |             | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                              |
+| uid          | string                       | `string`            |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ### <span id="pushover-config"></span> PushoverConfig
 
@@ -19031,7 +20680,7 @@ may be used as an identifier to update values in a subsequent request | |
 ### <span id="responses"></span> Responses
 
 > The QueryData method the QueryDataHandler method will set the RefId
-> property on the DataRespones' frames based on these RefIDs.
+> property on the DataResponses' frames based on these RefIDs.
 
 [Responses](#responses)
 
@@ -19221,6 +20870,22 @@ same array. | |
 | timeZone          | string                       | `string`          |          |         |             |         |
 | workdaysOnly      | boolean                      | `bool`            |          |         |             |         |
 
+### <span id="search-service-accounts-result"></span> SearchServiceAccountsResult
+
+> swagger: model
+
+**Properties**
+
+| Name            | Type                                          | Go type                | Required | Default | Description                                    | Example |
+| --------------- | --------------------------------------------- | ---------------------- | :------: | ------- | ---------------------------------------------- | ------- |
+| page            | int64 (formatted integer)                     | `int64`                |          |         |                                                |         |
+| perPage         | int64 (formatted integer)                     | `int64`                |          |         |                                                |         |
+| serviceAccounts | [][serviceaccountdto](#service-account-d-t-o) | `[]*ServiceAccountDTO` |          |         |                                                |         |
+| totalCount      | int64 (formatted integer)                     | `int64`                |          |         | It can be used for pagination of the user list |
+
+E.g. if totalCount is equal to 100 users and
+the perpage parameter is set to 10 then there are 10 pages of users. | |
+
 ### <span id="search-team-query-result"></span> SearchTeamQueryResult
 
 **Properties**
@@ -19252,6 +20917,43 @@ same array. | |
 ### <span id="secret-url"></span> SecretURL
 
 - composed type [URL](#url)
+
+### <span id="service-account-d-t-o"></span> ServiceAccountDTO
+
+> swagger: model
+
+**Properties**
+
+| Name          | Type                      | Go type           | Required | Default | Description | Example                                                                                    |
+| ------------- | ------------------------- | ----------------- | :------: | ------- | ----------- | ------------------------------------------------------------------------------------------ |
+| accessControl | map of boolean            | `map[string]bool` |          |         |             | `{"serviceaccounts:delete":true,"serviceaccounts:read":true,"serviceaccounts:write":true}` |
+| avatarUrl     | string                    | `string`          |          |         |             | `/avatar/85ec38023d90823d3e5b43ef35646af9`                                                 |
+| id            | int64 (formatted integer) | `int64`           |          |         |             |                                                                                            |
+| isDisabled    | boolean                   | `bool`            |          |         |             | `false`                                                                                    |
+| login         | string                    | `string`          |          |         |             | `sa-grafana`                                                                               |
+| name          | string                    | `string`          |          |         |             | `grafana`                                                                                  |
+| orgId         | int64 (formatted integer) | `int64`           |          |         |             | `1`                                                                                        |
+| role          | string                    | `string`          |          |         |             | `Viewer`                                                                                   |
+| tokens        | int64 (formatted integer) | `int64`           |          |         |             | `0`                                                                                        |
+
+### <span id="service-account-profile-d-t-o"></span> ServiceAccountProfileDTO
+
+**Properties**
+
+| Name          | Type                         | Go type           | Required | Default | Description | Example                                    |
+| ------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------------------------------------------ |
+| accessControl | map of boolean               | `map[string]bool` |          |         |             |                                            |
+| avatarUrl     | string                       | `string`          |          |         |             | `/avatar/8ea890a677d6a223c591a1beea6ea9d2` |
+| createdAt     | date-time (formatted string) | `strfmt.DateTime` |          |         |             | `2022-03-21T14:35:33Z`                     |
+| id            | int64 (formatted integer)    | `int64`           |          |         |             | `2`                                        |
+| isDisabled    | boolean                      | `bool`            |          |         |             | `false`                                    |
+| login         | string                       | `string`          |          |         |             | `sa-grafana`                               |
+| name          | string                       | `string`          |          |         |             | `test`                                     |
+| orgId         | int64 (formatted integer)    | `int64`           |          |         |             | `1`                                        |
+| role          | string                       | `string`          |          |         |             | `Editor`                                   |
+| teams         | []string                     | `[]string`        |          |         |             | `[]`                                       |
+| tokens        | int64 (formatted integer)    | `int64`           |          |         |             |                                            |
+| updatedAt     | date-time (formatted string) | `strfmt.DateTime` |          |         |             | `2022-03-21T14:35:33Z`                     |
 
 ### <span id="set-user-roles-command"></span> SetUserRolesCommand
 
@@ -19672,6 +21374,20 @@ same array. | |
 | update_days                  | int64 (formatted integer)    | `int64`       |          |         |             |         |
 | usage_billing                | boolean                      | `bool`        |          |         |             |         |
 
+### <span id="token-d-t-o"></span> TokenDTO
+
+**Properties**
+
+| Name                   | Type                         | Go type           | Required | Default | Description | Example                |
+| ---------------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ---------------------- |
+| created                | date-time (formatted string) | `strfmt.DateTime` |          |         |             | `2022-03-23T10:31:02Z` |
+| expiration             | date-time (formatted string) | `strfmt.DateTime` |          |         |             | `2022-03-23T10:31:02Z` |
+| hasExpired             | boolean                      | `bool`            |          |         |             | `false`                |
+| id                     | int64 (formatted integer)    | `int64`           |          |         |             | `1`                    |
+| lastUsedAt             | date-time (formatted string) | `strfmt.DateTime` |          |         |             | `2022-03-23T10:31:02Z` |
+| name                   | string                       | `string`          |          |         |             | `grafana`              |
+| secondsUntilExpiration | double (formatted number)    | `float64`         |          |         |             | `0`                    |
+
 ### <span id="token-status"></span> TokenStatus
 
 | Name        | Type                      | Go type | Default | Description | Example |
@@ -19703,23 +21419,6 @@ same array. | |
 | Type | string | string  |         |             |         |
 
 ### <span id="url"></span> URL
-
-> The general form represented is:
-
-[scheme:]//[userinfo@]host][/]path[?query][#fragment]
-
-URLs that do not start with a slash after the scheme are interpreted as:
-
-scheme:opaque[?query][#fragment]
-
-Note that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.
-A consequence is that it is impossible to tell which slashes in the Path were
-slashes in the raw URL and which were %2f. This distinction is rarely important,
-but when it is, the code should use RawPath, an optional field which only gets
-set if the default encoding is different from Path.
-
-URL's String method uses the EscapedPath method to obtain the path. See the
-EscapedPath method for more details.
 
 **Properties**
 
@@ -19781,7 +21480,27 @@ EscapedPath method for more details.
 | time    | int64 (formatted integer) | `int64`    |          |         |             |         |
 | timeEnd | int64 (formatted integer) | `int64`    |          |         |             |         |
 
-### <span id="update-dashboard-acl-command"></span> UpdateDashboardAclCommand
+### <span id="update-correlation-command"></span> UpdateCorrelationCommand
+
+> UpdateCorrelationCommand is the command for updating a correlation
+
+**Properties**
+
+| Name        | Type   | Go type  | Required | Default | Description                                | Example          |
+| ----------- | ------ | -------- | :------: | ------- | ------------------------------------------ | ---------------- |
+| description | string | `string` |          |         | Optional description of the correlation    | `Logs to Traces` |
+| label       | string | `string` |          |         | Optional label identifying the correlation | `My label`       |
+
+### <span id="update-correlation-response-body"></span> UpdateCorrelationResponseBody
+
+**Properties**
+
+| Name    | Type                        | Go type       | Required | Default | Description | Example               |
+| ------- | --------------------------- | ------------- | :------: | ------- | ----------- | --------------------- |
+| message | string                      | `string`      |          |         |             | `Correlation updated` |
+| result  | [Correlation](#correlation) | `Correlation` |          |         |             |                       |
+
+### <span id="update-dashboard-acl-command"></span> UpdateDashboardACLCommand
 
 **Properties**
 
@@ -19861,6 +21580,17 @@ EscapedPath method for more details.
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | role | string | `string` |          |         |             |         |
 
+### <span id="update-playlist-command"></span> UpdatePlaylistCommand
+
+**Properties**
+
+| Name     | Type                                      | Go type              | Required | Default | Description | Example |
+| -------- | ----------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
+| interval | string                                    | `string`             |          |         |             |         |
+| items    | [][playlistitemdto](#playlist-item-d-t-o) | `[]*PlaylistItemDTO` |          |         |             |         |
+| name     | string                                    | `string`             |          |         |             |         |
+| uid      | string                                    | `string`             |          |         |             |         |
+
 ### <span id="update-prefs-cmd"></span> UpdatePrefsCmd
 
 **Properties**
@@ -19890,6 +21620,16 @@ EscapedPath method for more details.
 | name        | string                      | `string`        |          |         |             |         |
 | permissions | [][permission](#permission) | `[]*Permission` |          |         |             |         |
 | version     | int64 (formatted integer)   | `int64`         |          |         |             |         |
+
+### <span id="update-service-account-form"></span> UpdateServiceAccountForm
+
+**Properties**
+
+| Name       | Type    | Go type  | Required | Default | Description | Example |
+| ---------- | ------- | -------- | :------: | ------- | ----------- | ------- |
+| isDisabled | boolean | `bool`   |          |         |             |         |
+| name       | string  | `string` |          |         |             |         |
+| role       | string  | `string` |          |         |             |         |
 
 ### <span id="update-team-command"></span> UpdateTeamCommand
 
@@ -20151,8 +21891,6 @@ allows an unlimited number of alerts. | |
 
 ### <span id="alert-group"></span> alertGroup
 
-> AlertGroup alert group
-
 **Properties**
 
 | Name     | Type                               | Go type            | Required | Default | Description | Example |
@@ -20162,8 +21900,6 @@ allows an unlimited number of alerts. | |
 | receiver | [Receiver](#receiver)              | `Receiver`         |    ✓     |         |             |         |
 
 ### <span id="alert-groups"></span> alertGroups
-
-> AlertGroups alert groups
 
 [][alertgroup](#alert-group)
 
@@ -20216,6 +21952,8 @@ allows an unlimited number of alerts. | |
 
 ### <span id="gettable-alert"></span> gettableAlert
 
+> GettableAlert gettable alert
+
 **Properties**
 
 | Name         | Type                         | Go type           | Required | Default | Description   | Example |
@@ -20233,11 +21971,11 @@ allows an unlimited number of alerts. | |
 
 ### <span id="gettable-alerts"></span> gettableAlerts
 
+> GettableAlerts gettable alerts
+
 [][gettablealert](#gettable-alert)
 
 ### <span id="gettable-silence"></span> gettableSilence
-
-> GettableSilence gettable silence
 
 **Properties**
 
@@ -20253,6 +21991,8 @@ allows an unlimited number of alerts. | |
 | updatedAt | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | updated at  |         |
 
 ### <span id="gettable-silences"></span> gettableSilences
+
+> GettableSilences gettable silences
 
 [][gettablesilence](#gettable-silence)
 
@@ -20322,6 +22062,8 @@ allows an unlimited number of alerts. | |
 [][postablealert](#postable-alert)
 
 ### <span id="postable-silence"></span> postableSilence
+
+> PostableSilence postable silence
 
 **Properties**
 

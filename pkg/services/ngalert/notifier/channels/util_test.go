@@ -19,13 +19,13 @@ func TestWithStoredImages(t *testing.T) {
 	alerts := []*types.Alert{{
 		Alert: model.Alert{
 			Annotations: model.LabelSet{
-				models.ScreenshotTokenAnnotation: "test-image-1",
+				models.ImageTokenAnnotation: "test-image-1",
 			},
 		},
 	}, {
 		Alert: model.Alert{
 			Annotations: model.LabelSet{
-				models.ScreenshotTokenAnnotation: "test-image-2",
+				models.ImageTokenAnnotation: "test-image-2",
 			},
 		},
 	}}
@@ -45,7 +45,7 @@ func TestWithStoredImages(t *testing.T) {
 	)
 
 	// should iterate all images
-	err = withStoredImages(ctx, log.New(ctx), imageStore, func(index int, image *models.Image) error {
+	err = withStoredImages(ctx, log.New(ctx), imageStore, func(index int, image models.Image) error {
 		i += 1
 		return nil
 	}, alerts...)
@@ -54,7 +54,7 @@ func TestWithStoredImages(t *testing.T) {
 
 	// should iterate just the first image
 	i = 0
-	err = withStoredImages(ctx, log.New(ctx), imageStore, func(index int, image *models.Image) error {
+	err = withStoredImages(ctx, log.New(ctx), imageStore, func(index int, image models.Image) error {
 		i += 1
 		return ErrImagesDone
 	}, alerts...)

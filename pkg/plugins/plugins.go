@@ -81,6 +81,10 @@ func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
 }
 
+func (p PluginDTO) IsSecretsManager() bool {
+	return p.JSONData.Type == SecretsManager
+}
+
 func (p PluginDTO) IncludedInSignature(file string) bool {
 	// permit Core plugin files
 	if p.IsCorePlugin() {

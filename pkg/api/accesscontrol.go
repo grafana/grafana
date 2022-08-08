@@ -1,12 +1,16 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // API related actions
@@ -30,12 +34,18 @@ var (
 	ScopeProvisionersPlugins       = ac.Scope("provisioners", "plugins")
 	ScopeProvisionersDatasources   = ac.Scope("provisioners", "datasources")
 	ScopeProvisionersNotifications = ac.Scope("provisioners", "notifications")
+	ScopeProvisionersAlertRules    = ac.Scope("provisioners", "alerting")
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
 // grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
+	// Declare plugins roles
+	if err := plugins.DeclareRBACRoles(hs.AccessControl); err != nil {
+		return err
+	}
+
 	provisioningWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:provisioning:writer",
@@ -89,6 +99,27 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
+	builtInDatasourceReader := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:datasources.builtin:reader",
+			DisplayName: "Built in data source reader",
+			Description: "Read and query Grafana's built in test data sources.",
+			Group:       "Data sources",
+			Permissions: []ac.Permission{
+				{
+					Action: datasources.ActionRead,
+					Scope:  fmt.Sprintf("%s%s", datasources.ScopePrefix, grafanads.DatasourceUID),
+				},
+				{
+					Action: datasources.ActionQuery,
+					Scope:  fmt.Sprintf("%s%s", datasources.ScopePrefix, grafanads.DatasourceUID),
+				},
+			},
+			Hidden: true,
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
 	// when running oss or enterprise without a license all users should be able to query data sources
@@ -388,7 +419,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	return hs.AccessControl.DeclareFixedRoles(
-		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole,
+		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
@@ -449,7 +480,10 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 var apiKeyAccessEvaluator = ac.EvalPermission(ac.ActionAPIKeyRead)
 
 // serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
-var serviceAccountAccessEvaluator = ac.EvalPermission(serviceaccounts.ActionRead)
+var serviceAccountAccessEvaluator = ac.EvalAny(
+	ac.EvalPermission(serviceaccounts.ActionRead),
+	ac.EvalPermission(serviceaccounts.ActionCreate),
+)
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource

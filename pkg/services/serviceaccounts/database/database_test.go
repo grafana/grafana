@@ -2,10 +2,12 @@ package database
 
 import (
 	"context"
+	"math/rand"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -13,13 +15,43 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStore_CreateServiceAccount(t *testing.T) {
+// Service Account should not create an org on its own
+func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 	_, store := setupTestDatabase(t)
 	t.Run("create service account", func(t *testing.T) {
 		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := int64(1)
+		serviceAccountRole := models.ROLE_ADMIN
+		isDisabled := true
+		saForm := serviceaccounts.CreateServiceAccountForm{
+			Name:       serviceAccountName,
+			Role:       &serviceAccountRole,
+			IsDisabled: &isDisabled,
+		}
 
-		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, serviceAccountName)
+		_, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
+		require.Error(t, err)
+	})
+}
+
+func TestStore_CreateServiceAccount(t *testing.T) {
+	_, store := setupTestDatabase(t)
+	orgQuery := &models.CreateOrgCommand{Name: sqlstore.MainOrgName}
+	err := store.sqlStore.CreateOrg(context.Background(), orgQuery)
+	require.NoError(t, err)
+
+	t.Run("create service account", func(t *testing.T) {
+		serviceAccountName := "new Service Account"
+		serviceAccountOrgId := orgQuery.Result.Id
+		serviceAccountRole := models.ROLE_ADMIN
+		isDisabled := true
+		saForm := serviceaccounts.CreateServiceAccountForm{
+			Name:       serviceAccountName,
+			Role:       &serviceAccountRole,
+			IsDisabled: &isDisabled,
+		}
+
+		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
 		require.NoError(t, err)
 		assert.Equal(t, "sa-new-service-account", saDTO.Login)
 		assert.Equal(t, serviceAccountName, saDTO.Name)
@@ -30,6 +62,8 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, "sa-new-service-account", retrieved.Login)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
+		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
+		assert.True(t, retrieved.IsDisabled)
 
 		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
 		require.NoError(t, err)
@@ -59,7 +93,7 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, c.user)
-			err := store.DeleteServiceAccount(context.Background(), user.OrgId, user.Id)
+			err := store.DeleteServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
@@ -72,8 +106,9 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreImpl) {
 	t.Helper()
 	db := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(db, db.Cfg)
 	kvStore := kvstore.ProvideService(db)
-	return db, NewServiceAccountsStore(db, kvStore)
+	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {
@@ -98,7 +133,7 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, c.user)
-			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgId, user.Id)
+			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
@@ -238,14 +273,21 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 
 func TestStore_RevertApiKey(t *testing.T) {
 	cases := []struct {
-		desc        string
-		key         tests.TestApiKey
-		expectedErr error
+		desc                        string
+		key                         tests.TestApiKey
+		forceMismatchServiceAccount bool
+		expectedErr                 error
 	}{
 		{
 			desc:        "service account token should be reverted to api key",
 			key:         tests.TestApiKey{Name: "Test1", Role: models.ROLE_EDITOR, OrgId: 1},
 			expectedErr: nil,
+		},
+		{
+			desc:                        "should fail reverting to api key when the token is assigned to a different service account",
+			key:                         tests.TestApiKey{Name: "Test1", Role: models.ROLE_EDITOR, OrgId: 1},
+			forceMismatchServiceAccount: true,
+			expectedErr:                 ErrServiceAccountAndTokenMismatch,
 		},
 	}
 
@@ -259,9 +301,23 @@ func TestStore_RevertApiKey(t *testing.T) {
 			require.NoError(t, err)
 
 			key := tests.SetupApiKey(t, db, c.key)
-			err = store.MigrateApiKey(context.Background(), key.OrgId, key.Id)
+			err = store.CreateServiceAccountFromApikey(context.Background(), key)
 			require.NoError(t, err)
-			err = store.RevertApiKey(context.Background(), key.Id)
+
+			var saId int64
+			if c.forceMismatchServiceAccount {
+				saId = rand.Int63()
+			} else {
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+					key.OrgId: {
+						"serviceaccounts:read": {"serviceaccounts:id:*"},
+					},
+				}})
+				require.NoError(t, err)
+				saId = serviceAccounts.ServiceAccounts[0].Id
+			}
+
+			err = store.RevertApiKey(context.Background(), saId, key.Id)
 
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
@@ -277,7 +333,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 				// Service account should be deleted
 				require.Equal(t, int64(0), serviceAccounts.TotalCount)
 
-				apiKeys := store.sqlStore.GetAllAPIKeys(context.Background(), 1)
+				apiKeys := store.apiKeyService.GetAllAPIKeys(context.Background(), 1)
 				require.Len(t, apiKeys, 1)
 				apiKey := apiKeys[0]
 				require.Equal(t, c.key.Name, apiKey.Name)

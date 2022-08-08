@@ -1,15 +1,14 @@
-import React, { useCallback } from 'react';
+import React, { ReactNode, useCallback } from 'react';
 
 import { StandardEditorProps, StringFieldConfigSettings } from '@grafana/data';
 import { Input, TextArea } from '@grafana/ui';
 
-export const StringValueEditor: React.FC<StandardEditorProps<string, StringFieldConfigSettings>> = ({
-  value,
-  onChange,
-  item,
-}) => {
-  const Component = item.settings?.useTextarea ? TextArea : Input;
+interface Props extends StandardEditorProps<string, StringFieldConfigSettings> {
+  suffix?: ReactNode;
+}
 
+export const StringValueEditor: React.FC<Props> = ({ value, onChange, item, suffix }) => {
+  const Component = item.settings?.useTextarea ? TextArea : Input;
   const onValueChange = useCallback(
     (e: React.SyntheticEvent) => {
       let nextValue = value ?? '';
@@ -39,6 +38,7 @@ export const StringValueEditor: React.FC<StandardEditorProps<string, StringField
       rows={(item.settings?.useTextarea && item.settings.rows) || 5}
       onBlur={onValueChange}
       onKeyDown={onValueChange}
+      suffix={suffix}
     />
   );
 };

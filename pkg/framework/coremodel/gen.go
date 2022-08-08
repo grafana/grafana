@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"cuelang.org/go/cue/cuecontext"
@@ -59,6 +60,9 @@ func main() {
 			lins = append(lins, lin)
 		}
 	}
+	sort.Slice(lins, func(i, j int) bool {
+		return lins[i].Lineage.Name() < lins[j].Lineage.Name()
+	})
 
 	wd := gcgen.NewWriteDiffer()
 	for _, ls := range lins {

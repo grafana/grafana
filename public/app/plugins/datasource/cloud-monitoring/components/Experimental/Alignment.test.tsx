@@ -80,23 +80,4 @@ describe('Alignment', () => {
     await userEvent.click(screen.getByText('1m'));
     expect(onChange).toBeCalledWith(expect.objectContaining({ alignmentPeriod: '+60s' }));
   });
-
-  it('renders period label if alignment period and per series aligner is set', () => {
-    const datasource = createMockDatasource();
-    const query = createMockMetricQuery();
-    const onChange = jest.fn();
-
-    render(
-      <Alignment
-        refId="refId"
-        customMetaData={{ perSeriesAligner: 'ALIGN_DELTA', alignmentPeriod: '10' }}
-        datasource={datasource}
-        query={query}
-        onChange={onChange}
-        templateVariableOptions={[]}
-      />
-    );
-
-    expect(screen.getByText('10s interval (delta)'));
-  });
 });

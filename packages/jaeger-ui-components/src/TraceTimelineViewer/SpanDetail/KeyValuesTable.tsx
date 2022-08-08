@@ -108,7 +108,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
   const { data, linksGetter } = props;
   const styles = useStyles2(getStyles);
   return (
-    <div className={cx(styles.KeyValueTable)} data-test-id="KeyValueTable">
+    <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
       <table className={uWidth100}>
         <tbody className={styles.body}>
           {data.map((row, i) => {
@@ -133,7 +133,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             return (
               // `i` is necessary in the key because row.key can repeat
               <tr className={styles.row} key={`${row.key}-${i}`}>
-                <td className={styles.keyColumn} data-test-id="KeyValueTable--keyColumn">
+                <td className={styles.keyColumn} data-testid="KeyValueTable--keyColumn">
                   {row.key}
                 </td>
                 <td>{valueMarkup}</td>

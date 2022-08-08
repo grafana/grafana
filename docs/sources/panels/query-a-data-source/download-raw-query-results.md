@@ -10,13 +10,6 @@ weight: 70
 
 Grafana generates a CSV file that contains your data, including any transformations to that data. You can choose to view the data before or after the panel applies field options or field option overrides.
 
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
-- [Add a query]({{< relref "add-a-query/" >}}).
-
-**To download raw query results**:
-
 1. Edit the panel that contains the query data you want to download.
 1. In the query editor, click **Query Inspector**.
 1. Click **Data**.

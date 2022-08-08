@@ -11,6 +11,7 @@ export interface ApiKey extends WithAccessControlMetadata {
   secondsUntilExpiration?: number;
   hasExpired?: boolean;
   created?: string;
+  lastUsedAt?: string;
 }
 
 export interface NewApiKey {

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
@@ -29,7 +30,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 	}
 
 	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_VIEWER) {
-		return models.ErrFolderAccessDenied
+		return dashboards.ErrFolderAccessDenied
 	}
 	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
 	if err != nil {
@@ -43,7 +44,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 		return err
 	}
 	if !canEdit {
-		return models.ErrFolderAccessDenied
+		return dashboards.ErrFolderAccessDenied
 	}
 
 	return nil
@@ -66,21 +67,7 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 		return err
 	}
 	if !canView {
-		return models.ErrFolderAccessDenied
-	}
-
-	return nil
-}
-
-func (l *LibraryElementService) requireEditPermissionsOnDashboard(ctx context.Context, user *models.SignedInUser, dashboardID int64) error {
-	g := guardian.New(ctx, dashboardID, user.OrgId, user)
-
-	canEdit, err := g.CanEdit()
-	if err != nil {
-		return err
-	}
-	if !canEdit {
-		return models.ErrDashboardUpdateAccessDenied
+		return dashboards.ErrFolderAccessDenied
 	}
 
 	return nil
