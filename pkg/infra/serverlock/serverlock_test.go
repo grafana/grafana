@@ -15,10 +15,10 @@ import (
 func createTestableServerLock(t *testing.T) *ServerLockService {
 	t.Helper()
 
-	sqlstore := sqlstore.InitTestDB(t)
+	store := sqlstore.InitTestDB(t)
 
 	return &ServerLockService{
-		SQLStore: sqlstore,
+		SQLStore: store,
 		log:      log.New("test-logger"),
 	}
 }
@@ -103,19 +103,20 @@ func TestLockAndRelease(t *testing.T) {
 		}
 
 		// inserting a row with lock in the past
-		sl.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := sl.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			r, err := sess.Insert(lock)
 			require.NoError(t, err)
 			require.Equal(t, int64(1), r)
 			return nil
 		})
+		require.NoError(t, err)
 		duration := time.Minute * 5
 
-		err := sl.acquireForRelease(context.Background(), operationUID, duration)
+		err = sl.acquireForRelease(context.Background(), operationUID, duration)
 		require.NoError(t, err)
 
 		//validate that the lock LastExecution was updated (at least different from the original)
-		sl.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = sl.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			lockRows := []*serverLock{}
 			err := sess.Where("operation_uid = ?", operationUID).Find(&lockRows)
 			require.NoError(t, err)
@@ -123,6 +124,7 @@ func TestLockAndRelease(t *testing.T) {
 			require.NotEqual(t, pastLastExec, lockRows[0].LastExecution)
 			return nil
 		})
+		require.NoError(t, err)
 
 		err3 := sl.releaseLock(context.Background(), operationUID)
 		require.NoError(t, err3)
