@@ -26,7 +26,7 @@ export function getVariable(
 ): TypedVariableModel | undefined {
   const { id, rootStateKey } = identifier;
   const variablesState = getVariablesState(rootStateKey, state);
-  var variable = variablesState.variables[id];
+  const variable = variablesState.variables[id];
 
   if (!variable) {
     if (throwWhenMissing) {
