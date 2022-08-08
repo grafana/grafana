@@ -90,8 +90,8 @@ Data source needs to return two data frames, one for nodes and one for edges. Yo
 
 Required fields:
 
-| Field name | Type   | Description                                                                                   |
-| ---------- | ------ | --------------------------------------------------------------------------------------------- |
+| Field name | Type   | Description                                                                                  |
+| ---------- | ------ | -------------------------------------------------------------------------------------------- |
 | id         | string | Unique identifier of the node. This ID is referenced by edge in its source and target field. |
 
 Optional fields:
