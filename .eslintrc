@@ -19,7 +19,6 @@
         "alphabetize": { "order": "asc" }
       }
     ],
-    "no-var": "error",
 
     // Use typescript's no-redeclare for compatibility with overrides
     "no-redeclare": "off",
