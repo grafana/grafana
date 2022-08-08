@@ -258,7 +258,7 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *models.ReqContext) (int64, error) {
 func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) {
 	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
 	extUser := &models.ExternalUserInfo{
-		AuthModule: "authproxy",
+		AuthModule: login.AuthProxyAuthModule,
 		AuthId:     header,
 	}
 

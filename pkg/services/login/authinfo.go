@@ -35,13 +35,13 @@ func GetAuthProviderLabel(authModule string) string {
 		return "grafana.com"
 	case SAMLAuthModule:
 		return "SAML"
-	case "ldap", "":
+	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
 		return "LDAP"
 	case "jwt":
 		return "JWT"
-	case "authproxy":
+	case AuthProxyAuthModule:
 		return "Auth Proxy"
 	default:
-		return "OAuth"
+		return "OAuth" // FIXME: replace with "Unknown" and handle generic oauth as a case
 	}
 }
