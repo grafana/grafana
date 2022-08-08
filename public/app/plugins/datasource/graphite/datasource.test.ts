@@ -113,7 +113,7 @@ describe('graphiteDatasource', () => {
     const query = {
       panelId: 3,
       dashboardId: 5,
-      range: { raw: { from: 'now-1h', to: 'now' } },
+      range: { from: dateTime('2022-04-01T00:00:00'), to: dateTime('2022-07-01T00:00:00') },
       targets: [{ target: 'prod1.count' }, { target: 'prod2.count' }],
       maxDataPoints: 500,
     };
@@ -157,8 +157,8 @@ describe('graphiteDatasource', () => {
       const params = requestOptions.data.split('&');
       expect(params).toContain('target=prod1.count');
       expect(params).toContain('target=prod2.count');
-      expect(params).toContain('from=-1h');
-      expect(params).toContain('until=now');
+      expect(params).toContain('from=1648789200');
+      expect(params).toContain('until=1656655200');
     });
 
     it('should exclude undefined params', () => {
