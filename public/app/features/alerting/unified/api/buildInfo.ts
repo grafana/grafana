@@ -123,6 +123,10 @@ export async function discoverAlertmanagerFeatures(amSourceName: string): Promis
     );
   }
 
+  return await discoverAlertmanagerFeaturesByUrl(url);
+}
+
+export async function discoverAlertmanagerFeaturesByUrl(url: string): Promise<AlertmanagerApiFeatures> {
   try {
     const buildInfo = await fetchPromBuildInfo(url);
     return { lazyConfigInit: buildInfo?.data?.application === 'Grafana Mimir' };
