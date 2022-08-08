@@ -2,6 +2,7 @@ package serverlock
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,7 +17,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *ServerLockService {
 }
 
 // ServerLockService allows servers in HA mode to claim a lock
-// and execute an function if the server was granted the lock
+// and execute a function if the server was granted the lock
 type ServerLockService struct {
 	SQLStore *sqlstore.SQLStore
 	log      log.Logger
@@ -33,11 +34,8 @@ func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName stri
 	}
 
 	// avoid execution if last lock happened less than `maxInterval` ago
-	if rowLock.LastExecution != 0 {
-		lastExecutionTime := time.Unix(rowLock.LastExecution, 0)
-		if time.Since(lastExecutionTime) < maxInterval {
-			return nil
-		}
+	if sl.isLockWithinInterval(rowLock, maxInterval) {
+		return nil
 	}
 
 	// try to get lock based on rowLow version
@@ -104,9 +102,111 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 		}
 
 		result = lockRow
-
 		return nil
 	})
 
 	return result, err
+}
+
+// LockExecuteAndRelease Creates the lock, executes the func, and then release the locks. The locking mechanism is
+// based on the UNIQUE constraint of the actionName in the database (column  operation_uid), so a new process can not insert
+// a new operation if already exists one. The parameter 'maxInterval' is a timeout safeguard, if the LastExecution in the
+// database is older than maxInterval, we will assume the lock as timeouted
+func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error {
+	err := sl.acquireForRelease(ctx, actionName, maxInterval)
+	// could not get the lock, returning
+	if err != nil {
+		return err
+	}
+
+	// execute!
+	fn(ctx)
+
+	err = sl.releaseLock(ctx, actionName)
+	if err != nil {
+		// TODO at this point, should we return the error or return nil?
+		sl.log.Error("Error releasing the lock.", err)
+	}
+
+	return nil
+}
+
+// acquireForRelease will check if the lock is already on the database, if it is, will check with maxInterval if it is
+// timeouted. Returns nil error if the lock was acquired correctly
+func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName string, maxInterval time.Duration) error {
+	// getting the lock - as the action name has a Unique constraint, this will fail if the lock is already on the database
+	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		// we need to find if the lock is in the database
+		lockRows := []*serverLock{}
+		err := dbSession.Where("operation_uid = ?", actionName).Find(&lockRows)
+		if err != nil {
+			return err
+		}
+
+		if len(lockRows) > 0 {
+			result := lockRows[0]
+			if sl.isLockWithinInterval(result, maxInterval) {
+				return errors.New("there is already a lock for this operation")
+			} else {
+				// lock has timeouted, so we update the timestamp
+				result.LastExecution = time.Now().Unix()
+				cond := &serverLock{OperationUID: actionName}
+				affected, err := dbSession.Update(result, cond)
+				if err != nil {
+					return err
+				}
+				if affected != 1 {
+					sl.log.Error("Expected rows affected to be 1 if there was no error.", "rowAffected", affected)
+				}
+				return nil
+			}
+		} else {
+			// lock not found, creating it
+			lockRow := &serverLock{
+				OperationUID:  actionName,
+				LastExecution: time.Now().Unix(),
+			}
+
+			affected, err := dbSession.Insert(lockRow)
+			if err != nil {
+				return err
+			}
+
+			if affected != 1 {
+				// this means that there was no error but there is something not working correctly
+				sl.log.Error("Expected rows affected to be 1 if there was no error.", "rowAffected", affected)
+			}
+		}
+		return nil
+	})
+	return err
+}
+
+// releaseLock will delete the row at the database
+func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string) error {
+	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := `DELETE FROM server_lock WHERE operation_uid=? `
+
+		res, err := dbSession.Exec(sql, actionName)
+		if err != nil {
+			return err
+		}
+		affected, err := res.RowsAffected()
+		if affected != 1 {
+			sl.log.Debug("Error releasing lock ", "affected", affected)
+		}
+		return err
+	})
+
+	return err
+}
+
+func (sl *ServerLockService) isLockWithinInterval(lock *serverLock, maxInterval time.Duration) bool {
+	if lock.LastExecution != 0 {
+		lastExecutionTime := time.Unix(lock.LastExecution, 0)
+		if time.Since(lastExecutionTime) < maxInterval {
+			return true
+		}
+	}
+	return false
 }
