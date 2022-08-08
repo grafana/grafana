@@ -47,11 +47,11 @@ func ProvideService(
 		namespacedKVStore := GetNamespacedKVStore(kvstore)
 		if err != nil || secretsPlugin == nil {
 			logger.Error("failed to start remote secrets management plugin", "msg", err.Error())
-			if isFatal, fatalErr := isPluginStartupErrorFatal(context.Background(), namespacedKVStore); isFatal || fatalErr != nil {
+			if isFatal, readErr := isPluginStartupErrorFatal(context.Background(), namespacedKVStore); isFatal || readErr != nil {
 				// plugin error was fatal or there was an error determining if the error was fatal
 				logger.Error("secrets management plugin is required to start -- exiting app")
-				if fatalErr != nil {
-					return nil, fatalErr
+				if readErr != nil {
+					return nil, readErr
 				}
 				return nil, err
 			}
