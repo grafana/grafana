@@ -395,7 +395,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 	getAuthQuery := models.GetAuthInfoQuery{UserId: user.ID}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		authModule := getAuthQuery.Result.AuthModule
-		if authModule == models.AuthModuleLDAP || authModule == models.AuthModuleProxy {
+		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
 			return response.Error(400, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
 		}
 	}

@@ -16,7 +16,9 @@ type AuthInfoService interface {
 }
 
 const (
-	SAMLAuthModule = "auth.saml"
+	SAMLAuthModule      = "auth.saml"
+	LDAPAuthModule      = "ldap"
+	AuthProxyAuthModule = "authproxy"
 )
 
 func GetAuthProviderLabel(authModule string) string {

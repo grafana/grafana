@@ -9,11 +9,6 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const (
-	AuthModuleLDAP  = "ldap"
-	AuthModuleProxy = "authproxy"
-)
-
 type UserAuth struct {
 	Id                int64
 	UserId            int64
