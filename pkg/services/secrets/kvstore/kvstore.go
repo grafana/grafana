@@ -37,7 +37,7 @@ func ProvideService(
 			cache: make(map[int64]cachedDecrypted),
 		},
 	}
-	err := shouldUseRemoteSecretsPlugin(pluginsManager, cfg)
+	err := ShouldUseRemoteSecretsPlugin(pluginsManager, cfg)
 	if err != nil {
 		logger.Debug(err.Error())
 	} else {

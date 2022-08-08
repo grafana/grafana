@@ -191,7 +191,7 @@ func setPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.Namespaced
 	return kvstore.Set(ctx, QuitOnPluginStartupFailureKey, "true")
 }
 
-func shouldUseRemoteSecretsPlugin(mg plugins.SecretsPluginManager, cfg *setting.Cfg) error {
+func ShouldUseRemoteSecretsPlugin(mg plugins.SecretsPluginManager, cfg *setting.Cfg) error {
 	usePlugin := cfg.SectionWithEnvOverrides("secrets").Key("use_plugin").MustBool()
 	if !usePlugin {
 		return errPluginDisabledByConfig
