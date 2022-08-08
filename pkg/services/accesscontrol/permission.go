@@ -14,10 +14,13 @@ func ReducePermissions(permissions []Permission) []Permission {
 			continue
 		}
 
-		prefix, last := p.Scope[:len(p.Scope)-1], p.Scope[len(p.Scope)-1]
-		if last == '*' {
-			wildcards[p.Action] = prefix
+		if p.Scope != "" {
+			prefix, last := p.Scope[:len(p.Scope)-1], p.Scope[len(p.Scope)-1]
+			if last == '*' {
+				wildcards[p.Action] = prefix
+			}
 		}
+
 		out = append(out, p)
 	}
 	return out
