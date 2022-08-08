@@ -37,10 +37,10 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
       continue;
     }
 
-    const filterTerm = input.substring(string.from, string.to);
+    const filterTerm = input.substring(string.from, string.to).trim();
 
-    const quotedTerm = filterTerm.match(/"(.*?)"/);
-    const backtickedTerm = filterTerm.match(/`(.*?)`/);
+    const quotedTerm = filterTerm.match(/^"(.*?)"$/);
+    const backtickedTerm = filterTerm.match(/^`(.*?)`$/);
     const term = quotedTerm || backtickedTerm;
 
     if (!term) {
