@@ -15,6 +15,31 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// swagger:route GET /dashboards/uid/{uid}/permissions dashboard_permissions getDashboardPermissionsListByUID
+//
+// Gets all existing permissions for the given dashboard.
+//
+// Responses:
+// 200: getDashboardPermissionsListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /dashboards/id/{DashboardID}/permissions dashboard_permissions getDashboardPermissionsListByID
+//
+// Gets all existing permissions for the given dashboard.
+//
+// Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsListByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: getDashboardPermissionsListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
 	var dashID int64
 	var err error
@@ -46,7 +71,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return response.Error(500, "Failed to get dashboard permissions", err)
 	}
 
-	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
+	filteredACLs := make([]*models.DashboardACLInfoDTO, 0, len(acl))
 	for _, perm := range acl {
 		if perm.UserId > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
 			continue
@@ -61,16 +86,47 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 
-		filteredAcls = append(filteredAcls, perm)
+		filteredACLs = append(filteredACLs, perm)
 	}
 
-	return response.JSON(http.StatusOK, filteredAcls)
+	return response.JSON(http.StatusOK, filteredACLs)
 }
 
+// swagger:route POST /dashboards/uid/{uid}/permissions dashboard_permissions updateDashboardPermissionsByUID
+//
+// Updates permissions for a dashboard.
+//
+// This operation will remove existing permissions if they’re not included in the request.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route POST /dashboards/id/{DashboardID}/permissions dashboard_permissions updateDashboardPermissionsByID
+//
+// Updates permissions for a dashboard.
+//
+// Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead
+//
+// This operation will remove existing permissions if they’re not included in the request.
+//
+// Deprecated: true
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
 	var dashID int64
 	var err error
-	apiCmd := dtos.UpdateDashboardAclCommand{}
+	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -100,9 +156,9 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return dashboardGuardianResponse(err)
 	}
 
-	var items []*models.DashboardAcl
+	var items []*models.DashboardACL
 	for _, item := range apiCmd.Items {
-		items = append(items, &models.DashboardAcl{
+		items = append(items, &models.DashboardACL{
 			OrgID:       c.OrgId,
 			DashboardID: dashID,
 			UserID:      item.UserID,
@@ -133,7 +189,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	}
 
 	if !hs.AccessControl.IsDisabled() {
-		old, err := g.GetAcl()
+		old, err := g.GetACL()
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
@@ -144,7 +200,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	}
 
 	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), dashID, items); err != nil {
-		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
+		if errors.Is(err, models.ErrDashboardACLInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return response.Error(409, err.Error(), err)
 		}
@@ -155,7 +211,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 }
 
 // updateDashboardAccessControl is used for api backward compatibility
-func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID int64, uid string, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
+func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID int64, uid string, isFolder bool, items []*models.DashboardACL, old []*models.DashboardACLInfoDTO) error {
 	commands := []accesscontrol.SetResourcePermissionCommand{}
 	for _, item := range items {
 		permissions := item.Permission.String()
@@ -216,7 +272,7 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 	return nil
 }
 
-func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
+func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardACLCommand) error {
 	for _, item := range apiCmd.Items {
 		if item.UserID > 0 && item.TeamID > 0 {
 			return models.ErrPermissionsWithUserAndTeamNotAllowed
@@ -227,4 +283,43 @@ func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
 		}
 	}
 	return nil
+}
+
+// swagger:parameters getDashboardPermissionsListByUID
+type GetDashboardPermissionsListByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters getDashboardPermissionsListByID
+type GetDashboardPermissionsListByIDParams struct {
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters updateDashboardPermissionsByID
+type UpdateDashboardPermissionsByIDParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardACLCommand
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters updateDashboardPermissionsByUID
+type UpdateDashboardPermissionsByUIDParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardACLCommand
+	// in:path
+	// required:true
+	// description: The dashboard UID
+	UID string `json:"uid"`
+}
+
+// swagger:response getDashboardPermissionsListResponse
+type GetDashboardPermissionsResponse struct {
+	// in: body
+	Body []*models.DashboardACLInfoDTO `json:"body"`
 }

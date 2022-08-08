@@ -41,7 +41,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	}
 
 	children = append(children, &dtos.NavLink{
-		Text: "Notification history", Id: "profile/notifications", Url: hs.Cfg.AppSubURL + "profile/notifications", Icon: "bell",
+		Text: "Notification history", Id: "profile/notifications", Url: hs.Cfg.AppSubURL + "/profile/notifications", Icon: "bell",
 	})
 
 	if setting.AddChangePasswordLink() {
@@ -169,35 +169,37 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
-	starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
-	if err != nil {
-		return nil, err
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
+		starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
+		if err != nil {
+			return nil, err
+		}
+
+		navTree = append(navTree, &dtos.NavLink{
+			Text:           "Starred",
+			Id:             "starred",
+			Icon:           "star",
+			SortWeight:     dtos.WeightSavedItems,
+			Section:        dtos.NavSectionCore,
+			Children:       starredItemsLinks,
+			EmptyMessageId: "starred-empty",
+		})
+
+		dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
+
+		dashboardsUrl := "/dashboards"
+
+		navTree = append(navTree, &dtos.NavLink{
+			Text:       "Dashboards",
+			Id:         "dashboards",
+			SubTitle:   "Manage dashboards and folders",
+			Icon:       "apps",
+			Url:        hs.Cfg.AppSubURL + dashboardsUrl,
+			SortWeight: dtos.WeightDashboard,
+			Section:    dtos.NavSectionCore,
+			Children:   dashboardChildLinks,
+		})
 	}
-
-	navTree = append(navTree, &dtos.NavLink{
-		Text:           "Starred",
-		Id:             "starred",
-		Icon:           "star",
-		SortWeight:     dtos.WeightSavedItems,
-		Section:        dtos.NavSectionCore,
-		Children:       starredItemsLinks,
-		EmptyMessageId: "starred-empty",
-	})
-
-	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
-
-	dashboardsUrl := "/dashboards"
-
-	navTree = append(navTree, &dtos.NavLink{
-		Text:       "Dashboards",
-		Id:         "dashboards",
-		SubTitle:   "Manage dashboards and folders",
-		Icon:       "apps",
-		Url:        hs.Cfg.AppSubURL + dashboardsUrl,
-		SortWeight: dtos.WeightDashboard,
-		Section:    dtos.NavSectionCore,
-		Children:   dashboardChildLinks,
-	})
 
 	canExplore := func(context *models.ReqContext) bool {
 		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
@@ -234,7 +236,21 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	if err != nil {
 		return nil, err
 	}
-	navTree = append(navTree, appLinks...)
+
+	// When topnav is enabled we can test new information architecture where plugins live in Apps category
+	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		navTree = append(navTree, &dtos.NavLink{
+			Text:        "Apps",
+			Icon:        "apps",
+			Description: "App plugins",
+			Id:          "apps",
+			Children:    appLinks,
+			Section:     dtos.NavSectionCore,
+			Url:         hs.Cfg.AppSubURL + "/apps",
+		})
+	} else {
+		navTree = append(navTree, appLinks...)
+	}
 
 	configNodes := []*dtos.NavLink{}
 
@@ -289,7 +305,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	hideApiKeys, _, _ := hs.kvStore.Get(c.Req.Context(), c.OrgId, "serviceaccounts", "hideApiKeys")
-	apiKeys := hs.SQLStore.GetAllAPIKeys(c.Req.Context(), c.OrgId)
+	apiKeys := hs.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgId)
 	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
 	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && !apiKeysHidden {
 		configNodes = append(configNodes, &dtos.NavLink{
@@ -335,8 +351,11 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
+	var configNode *dtos.NavLink
+	var serverAdminNode *dtos.NavLink
+
 	if len(configNodes) > 0 {
-		configNode := &dtos.NavLink{
+		configNode = &dtos.NavLink{
 			Id:         dtos.NavIDCfg,
 			Text:       "Configuration",
 			SubTitle:   "Organization: " + c.OrgName,
@@ -352,8 +371,18 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	adminNavLinks := hs.buildAdminNavLinks(c)
 
 	if len(adminNavLinks) > 0 {
-		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks)
+		serverAdminNode = navlinks.GetServerAdminNode(adminNavLinks)
 		navTree = append(navTree, serverAdminNode)
+	}
+
+	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		// Move server admin into Configuration and rename to administration
+		if configNode != nil && serverAdminNode != nil {
+			configNode.Text = "Administration"
+			configNode.Children = append(configNode.Children, serverAdminNode)
+			adminNodeIndex := len(navTree) - 1
+			navTree = navTree[:adminNodeIndex]
+		}
 	}
 
 	navTree = hs.addHelpLinks(navTree, c)
@@ -443,23 +472,23 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 
 	dashboardChildNavs := []*dtos.NavLink{}
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-		Text: "Browse", Id: "manage-dashboards", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
+		Text: "Browse", Id: "dashboards/browse", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
 	})
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-		Text: "Playlists", Id: "playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+		Text: "Playlists", Id: "dashboards/playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 	})
 
 	if c.IsSignedIn {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Snapshots",
-			Id:   "snapshots",
+			Id:   "dashboards/snapshots",
 			Url:  hs.Cfg.AppSubURL + "/dashboard/snapshots",
 			Icon: "camera",
 		})
 
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Library panels",
-			Id:   "library-panels",
+			Id:   "dashboards/library-panels",
 			Url:  hs.Cfg.AppSubURL + "/library-panels",
 			Icon: "library-panel",
 		})
@@ -481,20 +510,20 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-				Text: "New dashboard", Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "new-dashboard", ShowIconInNavbar: true,
+				Text: "New dashboard", Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true,
 			})
 		}
 
 		if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(dashboards.ActionFoldersCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "new-folder",
+				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "dashboards/folder/new",
 				Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboards/folder/new", HideFromTabs: true, ShowIconInNavbar: true,
 			})
 		}
 
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-				Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "plus",
+				Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
 				Url: hs.Cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true,
 			})
 		}
@@ -616,14 +645,6 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 		Icon:        "bolt",
 		Description: "Manage your cloud integrations",
 		Url:         baseUrl + "/cloud-integrations",
-	})
-
-	children = append(children, &dtos.NavLink{
-		Id:          baseId + "-recorded-queries",
-		Text:        "Recorded queries",
-		Icon:        "record-audio",
-		Description: "Manage your recorded queries",
-		Url:         baseUrl + "/recorded-queries",
 	})
 
 	navLink = &dtos.NavLink{

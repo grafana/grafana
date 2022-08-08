@@ -19,11 +19,11 @@ These are the data sources that are compatible with and supported by Grafana Ale
 - [AWS CloudWatch]({{< relref "../../datasources/aws-cloudwatch/" >}})
 - [Azure Monitor]({{< relref "../../datasources/azuremonitor/" >}})
 - [Elasticsearch]({{< relref "../../datasources/elasticsearch/" >}})
-- [Google Cloud Monitoring]({{< relref "../../google-cloud-monitoring/" >}})
+- [Google Cloud Monitoring]({{< relref "../../datasources/google-cloud-monitoring/" >}})
 - [Graphite]({{< relref "../../datasources/graphite/" >}})
-- [InfluxDB]({{< relref "influxdb/" >}})
+- [InfluxDB]({{< relref "../../datasources/influxdb/" >}})
 - [Loki]({{< relref "../../datasources/loki/" >}})
-- [Microsoft SQL Server (MSSQL)]({{< relref "../../datasources/mssql/" >}})
+- [Microsoft SQL Server MSSQL]({{< relref "../../datasources/mssql/" >}})
 - [MySQL]({{< relref "../../datasources/mysql/" >}})
 - [Open TSDB]({{< relref "../../datasources/opentsdb/" >}})
 - [PostgreSQL]({{< relref "../../datasources/postgres/" >}})
@@ -35,5 +35,5 @@ These are the data sources that are compatible with and supported by Grafana Ale
 
 ## Useful links
 
-- [Grafana data sources]({{< relref "../../data-sources/" >}})
-- [Add a data source]({{< relref "../../data-sources/add-a-data-source/" >}})
+- [Grafana data sources]({{< relref "../../datasources/" >}})
+- [Add a data source]({{< relref "../../datasources/add-a-data-source/" >}})

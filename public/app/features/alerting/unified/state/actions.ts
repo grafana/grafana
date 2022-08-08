@@ -255,30 +255,34 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
       const dataSources: AsyncRequestMapSlice<PromBasedDataSource> = (getState() as StoreState).unifiedAlerting
         .dataSources;
       const hasLoaded = Boolean(dataSources[rulesSourceName]?.result);
-      return !hasLoaded;
+      const hasError = Boolean(dataSources[rulesSourceName]?.error);
+
+      return !(hasLoaded || hasError);
     },
   }
 );
 
 export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    await dispatch(fetchAllPromBuildInfoAction());
+    return Promise.all(
+      getAllRulesSourceNames().map(async (rulesSourceName) => {
+        await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-    const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
+        const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
+        const dataSourceConfig = dataSources[rulesSourceName].result;
 
-    getAllRulesSourceNames().map((rulesSourceName) => {
-      const dataSourceConfig = dataSources[rulesSourceName].result;
-      if (!dataSourceConfig) {
-        return;
-      }
+        if (!dataSourceConfig) {
+          return;
+        }
 
-      if (force || !promRules[rulesSourceName]?.loading) {
-        dispatch(fetchPromRulesAction({ rulesSourceName }));
-      }
-      if ((force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig) {
-        dispatch(fetchRulerRulesAction({ rulesSourceName }));
-      }
-    });
+        if (force || !promRules[rulesSourceName]?.loading) {
+          dispatch(fetchPromRulesAction({ rulesSourceName }));
+        }
+        if ((force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig) {
+          dispatch(fetchRulerRulesAction({ rulesSourceName }));
+        }
+      })
+    );
   };
 }
 
@@ -673,24 +677,27 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
       withSerializedError(
         (async () => {
           const { rulesSourceName, namespaceName, groupName, newNamespaceName, newGroupName, groupInterval } = options;
-          if (options.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
-            throw new Error(`this action does not support Grafana rules`);
-          }
 
           const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, rulesSourceName);
           // fetch rules and perform sanity checks
           const rulesResult = await fetchRulerRules(rulerConfig);
-          if (!rulesResult[namespaceName]) {
+
+          const existingNamespace = Boolean(rulesResult[namespaceName]);
+          if (!existingNamespace) {
             throw new Error(`Namespace "${namespaceName}" not found.`);
           }
           const existingGroup = rulesResult[namespaceName].find((group) => group.name === groupName);
           if (!existingGroup) {
             throw new Error(`Group "${groupName}" not found.`);
           }
-          if (newGroupName !== groupName && !!rulesResult[namespaceName].find((group) => group.name === newGroupName)) {
-            throw new Error(`Group "${newGroupName}" already exists.`);
+          const newGroupAlreadyExists = Boolean(
+            rulesResult[namespaceName].find((group) => group.name === newGroupName)
+          );
+          if (newGroupName !== groupName && newGroupAlreadyExists) {
+            throw new Error(`Group "${newGroupName}" already exists in namespace "${namespaceName}".`);
           }
-          if (newNamespaceName !== namespaceName && !!rulesResult[newNamespaceName]) {
+          const newNamespaceAlreadyExists = Boolean(rulesResult[newNamespaceName]);
+          if (newNamespaceName !== namespaceName && newNamespaceAlreadyExists) {
             throw new Error(`Namespace "${newNamespaceName}" already exists.`);
           }
           if (

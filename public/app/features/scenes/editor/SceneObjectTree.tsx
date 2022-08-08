@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { SceneObject, SceneLayoutState, SceneObjectList, isSceneObject } from '../core/types';
+import { SceneObject, isSceneObject, SceneLayoutChild } from '../core/types';
 
 export interface Props {
   node: SceneObject;
@@ -14,7 +14,7 @@ export interface Props {
 export function SceneObjectTree({ node, selectedObject }: Props) {
   const styles = useStyles2(getStyles);
   const state = node.useState();
-  let children: SceneObjectList = [];
+  let children: SceneLayoutChild[] = [];
 
   for (const propKey of Object.keys(state)) {
     const propValue = (state as any)[propKey];
@@ -23,9 +23,8 @@ export function SceneObjectTree({ node, selectedObject }: Props) {
     }
   }
 
-  let layoutChildren = (state as SceneLayoutState).children;
-  if (layoutChildren) {
-    for (const child of layoutChildren) {
+  if ('children' in state) {
+    for (const child of state.children) {
       children.push(child);
     }
   }

@@ -19,6 +19,15 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// swagger:route GET /org/invites org_invites getPendingOrgInvites
+//
+// Get pending invites.
+//
+// Responses:
+// 200: getPendingOrgInvitesResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Response {
 	query := models.GetTempUsersQuery{OrgId: c.OrgId, Status: models.TmpUserInvitePending}
 
@@ -33,6 +42,17 @@ func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, query.Result)
 }
 
+// swagger:route POST /org/invites org_invites addOrgInvite
+//
+// Add invite.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 412: SMTPNotEnabledError
+// 500: internalServerError
 func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	inviteDto := dtos.AddInviteForm{}
 	if err := web.Bind(c.Req, &inviteDto); err != nil {
@@ -46,14 +66,15 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	}
 
 	// first try get existing user
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
-	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery); err != nil {
-		if !errors.Is(err, models.ErrUserNotFound) {
+	userQuery := user.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
+	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
+	if err != nil {
+		if !errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(500, "Failed to query db for existing user check", err)
 		}
 	} else {
 		// Evaluate permissions for adding an existing user to the organization
-		userIDScope := ac.Scope("users", "id", strconv.Itoa(int(userQuery.Result.ID)))
+		userIDScope := ac.Scope("users", "id", strconv.Itoa(int(usr.ID)))
 		hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionOrgUsersAdd, userIDScope))
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
@@ -61,16 +82,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		if !hasAccess {
 			return response.Error(http.StatusForbidden, "Permission denied: not permitted to add an existing user to this organisation", err)
 		}
-		return hs.inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
-	}
-
-	// Evaluate permissions for inviting a new user to Grafana
-	hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionUsersCreate))
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
-	}
-	if !hasAccess {
-		return response.Error(http.StatusForbidden, "Permission denied: not permitted to create a new user", err)
+		return hs.inviteExistingUserToOrg(c, usr, &inviteDto)
 	}
 
 	if setting.DisableLoginForm {
@@ -159,6 +171,16 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.U
 	})
 }
 
+// swagger:route DELETE /org/invites/{invitation_code}/revoke org_invites revokeInvite
+//
+// Revoke invite.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) RevokeInvite(c *models.ReqContext) response.Response {
 	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), web.Params(c.Req)[":code"], models.TmpUserRevoked); !ok {
 		return rsp
@@ -221,7 +243,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 
 	usr, err := hs.Login.CreateUser(cmd)
 	if err != nil {
-		if errors.Is(err, models.ErrUserAlreadyExists) {
+		if errors.Is(err, user.ErrUserAlreadyExists) {
 			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)
 		}
 
@@ -285,4 +307,25 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, user *user.User, invi
 	}
 
 	return true, nil
+}
+
+// swagger:parameters addOrgInvite
+type AddInviteParams struct {
+	// in:body
+	// required:true
+	Body dtos.AddInviteForm `json:"body"`
+}
+
+// swagger:parameters revokeInvite
+type RevokeInviteParams struct {
+	// in:path
+	// required:true
+	Code string `json:"invitation_code"`
+}
+
+// swagger:response getPendingOrgInvitesResponse
+type GetPendingOrgInvitesResponse struct {
+	// The response message
+	// in: body
+	Body []*models.TempUserDTO `json:"body"`
 }

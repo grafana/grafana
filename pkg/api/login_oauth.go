@@ -193,7 +193,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
 
-	oauthLogger.Debug("OAuthLogin: got token", "token", fmt.Sprintf("%v", token))
+	oauthLogger.Debug("OAuthLogin: got token", "token", fmt.Sprintf("%+v", token))
 
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
@@ -305,6 +305,11 @@ func (hs *HTTPServer) SyncUser(
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
+		UserLookupParams: models.UserLookupParams{
+			Email:  &extUser.Email,
+			UserID: nil,
+			Login:  nil,
+		},
 	}
 
 	if err := hs.Login.UpsertUser(ctx.Req.Context(), cmd); err != nil {

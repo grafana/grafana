@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { EditorField, Select } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../../datasource';
 
@@ -33,19 +32,17 @@ export function Project({ refId, projectName, datasource, onChange, templateVari
   );
 
   return (
-    <EditorRow>
-      <EditorField label="Project">
-        <Select
-          width="auto"
-          allowCustomValue
-          formatCreateLabel={(v) => `Use project: ${v}`}
-          onChange={({ value }) => onChange(value!)}
-          options={projectsWithTemplateVariables}
-          value={{ value: projectName, label: projectName }}
-          placeholder="Select Project"
-          inputId={`${refId}-project`}
-        />
-      </EditorField>
-    </EditorRow>
+    <EditorField label="Project">
+      <Select
+        width="auto"
+        allowCustomValue
+        formatCreateLabel={(v) => `Use project: ${v}`}
+        onChange={({ value }) => onChange(value!)}
+        options={projectsWithTemplateVariables}
+        value={{ value: projectName, label: projectName }}
+        placeholder="Select Project"
+        inputId={`${refId}-project`}
+      />
+    </EditorField>
   );
 }

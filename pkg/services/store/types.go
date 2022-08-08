@@ -9,13 +9,22 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type WriteValueWorkflow = string
+
+var (
+	WriteValueWorkflow_Save WriteValueWorkflow = "save" // or empty
+	WriteValueWorkflow_PR   WriteValueWorkflow = "pr"
+	WriteValueWorkflow_Push WriteValueWorkflow = "push"
+)
+
 type WriteValueRequest struct {
-	Path    string
-	User    *models.SignedInUser
-	Body    json.RawMessage `json:"body,omitempty"`
-	Message string          `json:"message,omitempty"`
-	Title   string          `json:"title,omitempty"`  // For PRs
-	Action  string          `json:"action,omitempty"` // pr | save
+	User       *models.SignedInUser
+	Path       string             // added from URL
+	EntityType EntityType         `json:"kind,omitempty"` // for now only dashboard
+	Body       json.RawMessage    `json:"body,omitempty"`
+	Message    string             `json:"message,omitempty"`
+	Title      string             `json:"title,omitempty"`    // For PRs
+	Workflow   WriteValueWorkflow `json:"workflow,omitempty"` // save | pr | push
 }
 
 type WriteValueResponse struct {
@@ -30,7 +39,7 @@ type WriteValueResponse struct {
 
 type storageTree interface {
 	GetFile(ctx context.Context, orgId int64, path string) (*filestorage.File, error)
-	ListFolder(ctx context.Context, orgId int64, path string) (*StorageListFrame, error)
+	ListFolder(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter) (*StorageListFrame, error)
 }
 
 //-------------------------------------------
@@ -46,45 +55,6 @@ type storageRuntime interface {
 
 	// Different storage knows how to handle comments and tracking
 	Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error)
-}
-
-type baseStorageRuntime struct {
-	meta  RootStorageMeta
-	store filestorage.FileStorage
-}
-
-func (t *baseStorageRuntime) Meta() RootStorageMeta {
-	return t.meta
-}
-
-func (t *baseStorageRuntime) Store() filestorage.FileStorage {
-	return t.store
-}
-
-func (t *baseStorageRuntime) Sync() error {
-	return nil
-}
-
-func (t *baseStorageRuntime) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
-	return &WriteValueResponse{
-		Code:    500,
-		Message: "unsupportted operation (base)",
-	}, nil
-}
-
-func (t *baseStorageRuntime) setReadOnly(val bool) *baseStorageRuntime {
-	t.meta.ReadOnly = val
-	return t
-}
-
-func (t *baseStorageRuntime) setBuiltin(val bool) *baseStorageRuntime {
-	t.meta.Builtin = val
-	return t
-}
-
-func (t *baseStorageRuntime) setDescription(v string) *baseStorageRuntime {
-	t.meta.Config.Description = v
-	return t
 }
 
 type RootStorageMeta struct {
@@ -105,9 +75,6 @@ const (
 	nameListFrameField        = "name"
 	descriptionListFrameField = "description"
 	mediaTypeListFrameField   = "mediaType"
-	storageTypeListFrameField = "storageType"
-	readOnlyListFrameField    = "readOnly"
-	builtInListFrameField     = "builtIn"
 	sizeListFrameField        = "size"
 )
 
