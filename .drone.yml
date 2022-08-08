@@ -195,6 +195,7 @@ steps:
   - ./bin/build shellcheck
   depends_on:
   - grabpl
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
@@ -959,6 +960,7 @@ steps:
   - ./bin/build shellcheck
   depends_on:
   - grabpl
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
@@ -2115,6 +2117,7 @@ steps:
   - ./bin/build shellcheck
   depends_on:
   - grabpl
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
@@ -4033,6 +4036,7 @@ steps:
   - ./bin/build shellcheck
   depends_on:
   - grabpl
+  - compile-build-cmd
   image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
@@ -5133,6 +5137,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f770331265d2de3483a062d9d118bdc1db1fe95489cf3ec3096f597d57205cb0
+hmac: 0397ad1da4fa12ba9bbe6654866329df4f7854339610f1dc513bd14ac518ce7b
 
 ...
