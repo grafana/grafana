@@ -12,12 +12,6 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
   return { LazyLoader };
 });
 
-interface ScenarioContext {
-  props: Props;
-  setup: (fn: () => void) => void;
-  setProps: (props: Partial<Props>) => void;
-}
-
 function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel {
   const data = Object.assign(
     {
@@ -56,42 +50,14 @@ function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel 
   return new DashboardModel(data, meta);
 }
 
-function dashboardGridScenario(description: string, scenarioFn: (ctx: ScenarioContext) => void) {
-  describe(description, () => {
-    let setupFn: () => void;
-
-    const ctx: ScenarioContext = {
-      setup: (fn) => {
-        setupFn = fn;
-      },
-      props: {
-        editPanel: null,
-        viewPanel: null,
-        dashboard: getTestDashboard(),
-        cleanAndRemoveMany: jest.fn,
-      },
-      setProps: (props: Partial<Props>) => {
-        Object.assign(ctx.props, props);
-        if (ctx) {
-          ctx.setProps(ctx.props);
-        }
-      },
-    };
-
-    beforeEach(() => {
-      setupFn();
-      render(<DashboardGrid {...ctx.props} />);
-    });
-
-    scenarioFn(ctx);
-  });
-}
-
 describe('DashboardGrid', () => {
-  dashboardGridScenario('should', (ctx) => {
-    ctx.setup(() => {});
-    it('render without error', () => {
-      expect(() => render(<DashboardGrid {...ctx.props} />)).not.toThrow();
-    });
+  it('should render without error', () => {
+    const props: Props = {
+      editPanel: null,
+      viewPanel: null,
+      dashboard: getTestDashboard(),
+      cleanAndRemoveMany: jest.fn,
+    };
+    expect(() => render(<DashboardGrid {...props} />)).not.toThrow();
   });
 });
