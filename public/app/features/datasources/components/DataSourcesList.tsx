@@ -9,15 +9,15 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction } from 'app/types';
 
-import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
+import { selectAll, selectCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 
 export function DataSourcesList() {
   useLoadDataSources();
 
-  const dataSources = useSelector((state: StoreState) => getDataSources(state.dataSources));
-  const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
+  const dataSources = useSelector(selectAll);
+  const dataSourcesCount = useSelector(selectCount);
   const hasFetched = useSelector(({ dataSources }: StoreState) => dataSources.hasFetched);
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
 

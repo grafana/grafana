@@ -1,37 +1,40 @@
-import { DataSourcePluginMeta, DataSourceSettings, UrlQueryValue } from '@grafana/data';
-import { DataSourcesState } from 'app/types/datasources';
+import { createSelector } from '@reduxjs/toolkit';
 
-export const getDataSources = (state: DataSourcesState) => {
-  const regex = new RegExp(state.searchQuery, 'i');
+import { StoreState } from 'app/types';
 
-  return state.dataSources.filter((dataSource: DataSourceSettings) => {
-    return regex.test(dataSource.name) || regex.test(dataSource.database) || regex.test(dataSource.type);
-  });
-};
+import { RequestStatus } from '../types';
 
-export const getFilteredDataSourcePlugins = (state: DataSourcesState) => {
-  const regex = new RegExp(state.dataSourceTypeSearchQuery, 'i');
+import { entityAdapter } from './reducer';
 
-  return state.plugins.filter((type: DataSourcePluginMeta) => {
-    return regex.test(type.name);
-  });
-};
+export const selectRoot = (state: StoreState) => state.dataSources;
 
-export const getDataSource = (state: DataSourcesState, dataSourceId: UrlQueryValue): DataSourceSettings => {
-  if (state.dataSource.uid === dataSourceId) {
-    return state.dataSource;
-  }
-  return {} as DataSourceSettings;
-};
+export const selectItems = createSelector(selectRoot, ({ items }) => items);
 
-export const getDataSourceMeta = (state: DataSourcesState, type: string): DataSourcePluginMeta => {
-  if (state.dataSourceMeta.id === type) {
-    return state.dataSourceMeta;
-  }
+export const selectSearchQuery = createSelector(selectRoot, ({ settings }) => settings.searchQuery);
 
-  return {} as DataSourcePluginMeta;
-};
+export const selectLayoutMode = createSelector(selectRoot, ({ settings }) => settings.layoutMode);
 
-export const getDataSourcesSearchQuery = (state: DataSourcesState) => state.searchQuery;
-export const getDataSourcesLayoutMode = (state: DataSourcesState) => state.layoutMode;
-export const getDataSourcesCount = (state: DataSourcesState) => state.dataSourcesCount;
+export const selectCount = createSelector(selectItems, (items) => Object.keys(items).length);
+
+export const { selectAll, selectById } = entityAdapter.getSelectors(selectItems);
+
+export const selectFiltered = createSelector(selectAll, selectSearchQuery, (dataSources, searchQuery = '') => {
+  const regex = new RegExp(searchQuery, 'i');
+
+  return dataSources.filter(({ name, type, database }) => regex.test(name) || regex.test(database) || regex.test(type));
+});
+
+// The following selectors are used to get information about the outstanding or completed network requests.
+export const selectRequest = (actionType: string) =>
+  createSelector(selectRoot, ({ requests = {} }) => requests[actionType]);
+
+export const selectIsRequestPending = (actionType: string) =>
+  createSelector(selectRequest(actionType), (request) => request?.status === RequestStatus.Pending);
+
+export const selectRequestError = (actionType: string) =>
+  createSelector(selectRequest(actionType), (request) =>
+    request?.status === RequestStatus.Rejected ? request?.error : null
+  );
+
+export const selectIsRequestNotFetched = (actionType: string) =>
+  createSelector(selectRequest(actionType), (request) => request === undefined);

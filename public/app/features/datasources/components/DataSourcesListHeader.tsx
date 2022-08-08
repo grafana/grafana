@@ -4,14 +4,14 @@ import { AnyAction } from 'redux';
 
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types';
 
-import { getDataSourcesSearchQuery, setDataSourcesSearchQuery, useDataSourcesRoutes } from '../state';
+import { selectSearchQuery, setDataSourcesSearchQuery, useDataSourcesRoutes } from '../state';
 
 export function DataSourcesListHeader() {
   const dispatch = useDispatch();
   const setSearchQuery = useCallback((q: string) => dispatch(setDataSourcesSearchQuery(q)), [dispatch]);
-  const searchQuery = useSelector(({ dataSources }: StoreState) => getDataSourcesSearchQuery(dataSources));
+  const searchQuery = useSelector(selectSearchQuery);
   const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
 
   return (

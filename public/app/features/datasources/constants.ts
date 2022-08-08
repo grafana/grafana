@@ -10,3 +10,5 @@ export const DATASOURCES_ROUTES: DataSourcesRoutes = {
   Dashboards: '/datasources/edit/:uid/dashboards',
   New: '/datasources/new',
 } as const;
+
+export const STATE_PREFIX = 'dataSources';
