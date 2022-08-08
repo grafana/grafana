@@ -3,6 +3,7 @@ import React, { PropsWithChildren } from 'react';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { ElasticDatasource } from '../datasource';
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
 import { ElasticsearchQuery } from '../types';
 
@@ -20,7 +21,7 @@ describe('useNextId', () => {
       return (
         <ElasticsearchProvider
           query={query}
-          datasource={{} as any}
+          datasource={{} as ElasticDatasource}
           onChange={() => {}}
           onRunQuery={() => {}}
           range={getDefaultTimeRange()}
