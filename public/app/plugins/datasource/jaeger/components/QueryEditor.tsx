@@ -55,7 +55,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
   return (
     <>
-      <div className={styles.fileDropzoneContainer}>
+      <div className={styles.container}>
         <InlineFieldRow>
           <InlineField label="Query type">
             <RadioButtonGroup<JaegerQueryType>
