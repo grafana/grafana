@@ -12,6 +12,7 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/require"
@@ -46,6 +47,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		store = &sqlStore{
 			db:  sqlstore.InitTestDB(t),
 			log: log.New(),
+			cfg: setting.NewCfg(),
 		}
 
 		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")
