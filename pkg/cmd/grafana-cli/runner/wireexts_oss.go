@@ -88,8 +88,6 @@ var wireExtsSet = wire.NewSet(
 	wire.Bind(new(registry.UsageStatsProvidersRegistry), new(*usagestatssvcs.UsageStatsProvidersRegistry)),
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
-	secretsStore.ProvideRemotePluginCheck,
-	wire.Bind(new(secretsStore.UseRemoteSecretsPluginCheck), new(*secretsStore.OSSRemoteSecretsPluginCheck)),
 	encryptionprovider.ProvideEncryptionProvider,
 	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 )
