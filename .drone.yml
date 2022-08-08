@@ -2034,7 +2034,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.3
+  image: grafana/build-container:1.5.9
   name: store-npm-packages
 trigger:
   event:
@@ -2651,7 +2651,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/grafana-ci-deploy:1.3.3
+  image: grafana/build-container:1.5.9
   name: store-npm-packages
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise2  --sign ${DRONE_TAG}
@@ -5137,6 +5137,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 95d70728803bf8ff4b203111a35dc9ac74188d4cd83be5707cdddc0999c0ff83
+hmac: b9301d95898fe313f97e9b344aa74b797cc5b55871d38b8fe7a2fa5a2b2da3ad
 
 ...
