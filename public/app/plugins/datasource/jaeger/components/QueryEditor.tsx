@@ -13,6 +13,7 @@ type Props = QueryEditorProps<JaegerDatasource, JaegerQuery>;
 
 export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) {
   const theme = useTheme2();
+  const styles = getStyles();
 
   const onChangeQuery = (value: string) => {
     const nextQuery: JaegerQuery = { ...query, query: value };
@@ -55,7 +56,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
   return (
     <>
-      <div className={css({ width: '100%' })}>
+      <div className={styles.container}>
         <InlineFieldRow>
           <InlineField label="Query type">
             <RadioButtonGroup<JaegerQueryType>
@@ -80,3 +81,9 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     </>
   );
 }
+
+const getStyles = () => ({
+  container: css`
+    width: 100%;
+  `,
+});
