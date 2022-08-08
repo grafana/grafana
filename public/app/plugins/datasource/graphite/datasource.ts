@@ -193,17 +193,14 @@ export class GraphiteDatasource
       const streams: Array<Observable<DataQueryResponse>> = [];
 
       for (const target of options.targets) {
-        // hiding target is handled in buildGraphiteParams
-        if (target.fromAnnotations) {
-          streams.push(
-            new Observable((subscriber) => {
-              this.annotationEvents(options.range, target)
-                .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
-                .catch((ex) => subscriber.error(new Error(ex)))
-                .finally(() => subscriber.complete());
-            })
-          );
-        }
+        streams.push(
+          new Observable((subscriber) => {
+            this.annotationEvents(options.range, target)
+              .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+              .catch((ex) => subscriber.error(new Error(ex)))
+              .finally(() => subscriber.complete());
+          })
+        );
       }
 
       return merge(...streams);
