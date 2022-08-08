@@ -55,6 +55,7 @@ func ActivateServiceAccount() error {
 		return fmt.Errorf("failed to write GCP key file: %w", err)
 	}
 	keyArg := fmt.Sprintf("--key-file=%s", f.Name())
+	//nolint:gosec
 	cmd := exec.Command("gcloud", "auth", "activate-service-account", keyArg)
 
 	if output, err := cmd.CombinedOutput(); err != nil {

@@ -132,6 +132,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 			return []string{}, fmt.Errorf("saving Docker image failed: %w\n%s", err, output)
 		}
 		gcsURL := fmt.Sprintf("gs://grafana-prerelease/artifacts/docker/%s/%s", version, imageFile)
+		//nolint:gosec
 		cmd = exec.Command("gsutil", "cp", imageFile, gcsURL)
 		cmd.Dir = buildDir
 		if output, err := cmd.CombinedOutput(); err != nil {
@@ -142,6 +143,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	if additionalDockerRepo != "" {
 		additionalTag := fmt.Sprintf("%s:%s%s-%s", additionalDockerRepo, version, tagSuffix, arch)
 
+		//nolint:gosec
 		cmd = exec.Command("docker", "tag", tag, additionalTag)
 		cmd.Dir = buildDir
 		if output, err := cmd.CombinedOutput(); err != nil {
