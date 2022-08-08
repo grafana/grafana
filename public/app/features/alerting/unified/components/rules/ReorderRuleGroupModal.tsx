@@ -17,7 +17,7 @@ import { dispatch } from 'app/store/store';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { updateRulesOrder } from '../../state/actions';
-import { isCloudRulesSource } from '../../utils/datasource';
+import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
 import { isAlertingRule, isRecordingRule } from '../../utils/rules';
 
@@ -53,10 +53,7 @@ export const ReorderCloudGroupModal: FC<ModalProps> = (props) => {
       const newOrderedRules = reorder(rulesList, result.source.index, result.destination.index);
       setRulesList(newOrderedRules); // optimistically update the new rules list
 
-      // the rulesSource is sometimes a string (for Grafana managed) or a rulesSource object
-      const rulesSourceName =
-        typeof namespace.rulesSource === 'string' ? namespace.rulesSource : namespace.rulesSource.name;
-
+      const rulesSourceName = getRulesSourceName(namespace.rulesSource);
       const rulerRules = compact(newOrderedRules.map((rule) => rule.rulerRule));
 
       setPending(true);
