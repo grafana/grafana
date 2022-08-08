@@ -1,5 +1,7 @@
 import { e2e } from '@grafana/e2e';
 
+const flakyTimeout = 2000;
+
 e2e.scenario({
   describeName: 'Create a public dashboard',
   itName: 'Create a public dashboard',
@@ -113,8 +115,8 @@ e2e.scenario({
     // Switch off enabling toggle
     e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().click({ force: true });
 
-    // Save configuration
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
+    // Save configuration with timeout to wait for db persistence
+    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click().wait(flakyTimeout);
 
     // Url should be hidden
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('not.exist');
