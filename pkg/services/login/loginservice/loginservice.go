@@ -48,32 +48,33 @@ func (ls *Implementation) CreateUser(cmd user.CreateUserCommand) (*user.User, er
 func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
-	usr, err := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
+	usr, errAuthLookup := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
 		AuthModule:       extUser.AuthModule,
 		AuthId:           extUser.AuthId,
 		UserLookupParams: cmd.UserLookupParams,
 	})
-	if err != nil {
-		if !errors.Is(err, user.ErrUserNotFound) {
-			return err
+	if errAuthLookup != nil {
+		if !errors.Is(errAuthLookup, user.ErrUserNotFound) {
+			return errAuthLookup
 		}
+
 		if !cmd.SignupAllowed {
 			cmd.ReqContext.Logger.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
 			return login.ErrSignupNotAllowed
 		}
 
-		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
-		if err != nil {
-			cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", err)
+		limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
+		if errLimit != nil {
+			cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
 			return login.ErrGettingUserQuota
 		}
 		if limitReached {
 			return login.ErrUsersQuotaReached
 		}
 
-		result, err := ls.createUser(extUser)
-		if err != nil {
-			return err
+		result, errCreateUser := ls.createUser(extUser)
+		if errCreateUser != nil {
+			return errCreateUser
 		}
 
 		cmd.Result = &user.User{
@@ -105,49 +106,48 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 				AuthId:     extUser.AuthId,
 				OAuthToken: extUser.OAuthToken,
 			}
-			if err := ls.AuthInfoService.SetAuthInfo(ctx, cmd2); err != nil {
-				return err
+			if errSetAuth := ls.AuthInfoService.SetAuthInfo(ctx, cmd2); errSetAuth != nil {
+				return errSetAuth
 			}
 		}
 	} else {
 		cmd.Result = usr
 
-		err = ls.updateUser(ctx, cmd.Result, extUser)
-		if err != nil {
-			return err
+		if errUserMod := ls.updateUser(ctx, cmd.Result, extUser); errUserMod != nil {
+			return errUserMod
 		}
 
 		// Always persist the latest token at log-in
 		if extUser.AuthModule != "" && extUser.OAuthToken != nil {
-			err = ls.updateUserAuth(ctx, cmd.Result, extUser)
-			if err != nil {
-				return err
+			if errAuthMod := ls.updateUserAuth(ctx, cmd.Result, extUser); errAuthMod != nil {
+				return errAuthMod
 			}
 		}
 
 		if extUser.AuthModule == models.AuthModuleLDAP && usr.IsDisabled {
 			// Re-enable user when it found in LDAP
-			if err := ls.SQLStore.DisableUser(ctx, &models.DisableUserCommand{UserId: cmd.Result.ID, IsDisabled: false}); err != nil {
-				return err
+			if errDisableUser := ls.SQLStore.DisableUser(ctx,
+				&models.DisableUserCommand{
+					UserId: cmd.Result.ID, IsDisabled: false}); errDisableUser != nil {
+				return errDisableUser
 			}
 		}
 	}
 
-	if err := ls.syncOrgRoles(ctx, cmd.Result, extUser); err != nil {
-		return err
+	if errSyncRole := ls.syncOrgRoles(ctx, cmd.Result, extUser); errSyncRole != nil {
+		return errSyncRole
 	}
 
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
-		if err := ls.SQLStore.UpdateUserPermissions(cmd.Result.ID, *extUser.IsGrafanaAdmin); err != nil {
-			return err
+		if errPerms := ls.SQLStore.UpdateUserPermissions(cmd.Result.ID, *extUser.IsGrafanaAdmin); errPerms != nil {
+			return errPerms
 		}
 	}
 
 	if ls.TeamSync != nil {
-		err := ls.TeamSync(cmd.Result, extUser)
-		if err != nil {
-			return err
+		if errTeamSync := ls.TeamSync(cmd.Result, extUser); errTeamSync != nil {
+			return errTeamSync
 		}
 	}
 
@@ -209,28 +209,28 @@ func (ls *Implementation) createUser(extUser *models.ExternalUserInfo) (*user.Us
 	return ls.CreateUser(cmd)
 }
 
-func (ls *Implementation) updateUser(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {
+func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {
 	// sync user info
-	updateCmd := &models.UpdateUserCommand{
-		UserId: user.ID,
+	updateCmd := &user.UpdateUserCommand{
+		UserID: usr.ID,
 	}
 
 	needsUpdate := false
-	if extUser.Login != "" && extUser.Login != user.Login {
+	if extUser.Login != "" && extUser.Login != usr.Login {
 		updateCmd.Login = extUser.Login
-		user.Login = extUser.Login
+		usr.Login = extUser.Login
 		needsUpdate = true
 	}
 
-	if extUser.Email != "" && extUser.Email != user.Email {
+	if extUser.Email != "" && extUser.Email != usr.Email {
 		updateCmd.Email = extUser.Email
-		user.Email = extUser.Email
+		usr.Email = extUser.Email
 		needsUpdate = true
 	}
 
-	if extUser.Name != "" && extUser.Name != user.Name {
+	if extUser.Name != "" && extUser.Name != usr.Name {
 		updateCmd.Name = extUser.Name
-		user.Name = extUser.Name
+		usr.Name = extUser.Name
 		needsUpdate = true
 	}
 
@@ -238,8 +238,8 @@ func (ls *Implementation) updateUser(ctx context.Context, user *user.User, extUs
 		return nil
 	}
 
-	logger.Debug("Syncing user info", "id", user.ID, "update", updateCmd)
-	return ls.SQLStore.UpdateUser(ctx, updateCmd)
+	logger.Debug("Syncing user info", "id", usr.ID, "update", updateCmd)
+	return ls.userService.Update(ctx, updateCmd)
 }
 
 func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {

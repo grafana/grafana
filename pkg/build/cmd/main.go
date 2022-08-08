@@ -23,6 +23,18 @@ func main() {
 				&buildIDFlag,
 			},
 		},
+		{
+			Name:   "build-plugins",
+			Usage:  "Build internal plug-ins",
+			Action: ArgCountWrapper(1, BuildInternalPlugins),
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+				&signingAdminFlag,
+				&signFlag,
+				&noInstallDepsFlag,
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {

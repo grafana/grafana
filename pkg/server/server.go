@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
@@ -43,10 +44,10 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	secretMigrationService secretsMigrations.SecretMigrationService,
+	secretMigrationService secretsMigrations.SecretMigrationService, userService user.Service,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, secretMigrationService)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, secretMigrationService, userService)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
-	secretMigrationService secretsMigrations.SecretMigrationService,
+	secretMigrationService secretsMigrations.SecretMigrationService, userService user.Service,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
@@ -81,6 +82,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		buildBranch:            opts.BuildBranch,
 		backgroundServices:     backgroundServiceProvider.GetServices(),
 		secretMigrationService: secretMigrationService,
+		userService:            userService,
 	}
 
 	return s, nil
@@ -108,6 +110,7 @@ type Server struct {
 	roleRegistry           accesscontrol.RoleRegistry
 	provisioningService    provisioning.ProvisioningService
 	secretMigrationService secretsMigrations.SecretMigrationService
+	userService            user.Service
 }
 
 // init initializes the server and its services.
@@ -125,7 +128,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login)
+	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login, s.userService)
 	social.ProvideService(s.cfg)
 
 	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
