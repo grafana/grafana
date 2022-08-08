@@ -1572,8 +1572,7 @@ steps:
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
   - .\grabpl.exe gen-version --build-id $$env:DRONE_BUILD_NUMBER
-  - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads
-    --build-id $$env:DRONE_BUILD_NUMBER
+  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/oss/main/
   - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
@@ -3580,8 +3579,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
-  - ./bin/grabpl store-packages --edition oss --packages-bucket grafana-downloads
-    --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
+  - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
   - gen-version
   environment:
@@ -3636,8 +3634,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
-  - ./bin/grabpl store-packages --edition enterprise --packages-bucket grafana-downloads
-    --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
+  - ./bin/grabpl store-packages --edition enterprise --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
   - gen-version
   environment:
@@ -5137,6 +5134,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b9301d95898fe313f97e9b344aa74b797cc5b55871d38b8fe7a2fa5a2b2da3ad
+hmac: e7c5243dd58f49260d0dce8bf6c221901ecd3eb8545f9b624e4a8998ee96910e
 
 ...
