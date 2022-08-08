@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -12,7 +13,9 @@ var AllArchs = []string{"amd64", "armv7", "arm64"}
 // Init initializes the OS for Docker image building.
 func Init() error {
 	// Necessary for cross-platform builds
-	os.Setenv("DOCKER_BUILDKIT", "1")
+	if err := os.Setenv("DOCKER_BUILDKIT", "1"); err != nil {
+		log.Println("error setting DOCKER_BUILDKIT environment variable:", err)
+	}
 
 	// Enable execution of Docker images for other architectures
 	cmd := exec.Command("docker", "run", "--privileged", "--rm",

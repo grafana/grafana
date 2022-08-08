@@ -19,6 +19,7 @@ import (
 func verifyArchive(archive string) error {
 	log.Printf("Verifying checksum of %q", archive)
 
+	//nolint:gosec
 	shaB, err := ioutil.ReadFile(archive + ".sha256")
 	if err != nil {
 		return err
@@ -26,11 +27,17 @@ func verifyArchive(archive string) error {
 
 	exp := strings.TrimSpace(string(shaB))
 
+	//nolint:gosec
 	f, err := os.Open(archive)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Println("error closing file:", err)
+		}
+	}()
 
 	h := sha256.New()
 	_, err = io.Copy(h, f)
@@ -109,6 +116,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	}
 
 	log.Printf("Running Docker: docker %s", strings.Join(args, " "))
+	//nolint:gosec
 	cmd := exec.Command("docker", args...)
 	cmd.Dir = buildDir
 	cmd.Env = append(os.Environ(), "DOCKER_CLI_EXPERIMENTAL=enabled")
@@ -117,6 +125,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	}
 	if shouldSave {
 		imageFile := fmt.Sprintf("%s-%s%s-%s.img", imageFileBase, version, tagSuffix, arch)
+		//nolint:gosec
 		cmd = exec.Command("docker", "save", tag, "-o", imageFile)
 		cmd.Dir = buildDir
 		if output, err := cmd.CombinedOutput(); err != nil {

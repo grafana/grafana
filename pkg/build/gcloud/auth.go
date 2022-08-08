@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -38,8 +39,18 @@ func ActivateServiceAccount() error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(f.Name())
-	defer f.Close()
+	defer func() {
+		if err := os.Remove(f.Name()); err != nil {
+			log.Printf("error removing %s: %s", f.Name(), err)
+		}
+	}()
+
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Println("error closing file:", err)
+		}
+	}()
+
 	if _, err := f.Write(byteKey); err != nil {
 		return fmt.Errorf("failed to write GCP key file: %w", err)
 	}
