@@ -215,6 +215,33 @@ func TestPluginManager_Installer(t *testing.T) {
 			}, err)
 		})
 
+		t.Run("Update option is the same as installed version", func(t *testing.T) {
+			repository.downloadOptionsHandler = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+				return &repo.PluginDownloadOptions{
+					Version: p.Info.Version,
+				}, nil
+			}
+
+			err = pm.Add(context.Background(), p.ID, "", plugins.CompatOpts{})
+			require.ErrorIs(t, err, plugins.DuplicateError{
+				PluginID:          p.ID,
+				ExistingPluginDir: p.PluginDir,
+			})
+
+			assert.Equal(t, 1, repository.downloadCount)
+			assert.Equal(t, 0, fsm.removed)
+			assert.Equal(t, 1, fsm.added)
+			assert.Equal(t, 1, pc.startCount)
+			assert.Equal(t, 0, pc.stopCount)
+			assert.False(t, pc.exited)
+			assert.False(t, pc.decommissioned)
+
+			testPlugin, exists = pm.Plugin(context.Background(), p.ID)
+			assert.True(t, exists)
+			assert.Equal(t, p.ToDTO(), testPlugin)
+			assert.Len(t, pm.Plugins(context.Background()), 1)
+		})
+
 		t.Run("Update existing plugin", func(t *testing.T) {
 			p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
 				p.Backend = true
