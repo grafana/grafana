@@ -159,9 +159,9 @@ export function getLabelFilterPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (nodeRef): false | void => {
-      if (nodeRef.name === 'LabelFilter') {
-        positions.push({ from: nodeRef.from, to: nodeRef.to });
+    enter: ({ name, from, to }): false | void => {
+      if (name === 'LabelFilter') {
+        positions.push({ from, to });
         return false;
       }
     },
@@ -195,28 +195,28 @@ function getLogQueryPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (nodeRef): false | void => {
-      if (nodeRef.name === 'LogExpr') {
-        positions.push({ from: nodeRef.from, to: nodeRef.to });
+    enter: ({ name, from, to, node }): false | void => {
+      if (name === 'LogExpr') {
+        positions.push({ from, to });
         return false;
       }
 
       // This is a case in metrics query
-      if (nodeRef.name === 'LogRangeExpr') {
+      if (name === 'LogRangeExpr') {
         // Unfortunately, LogRangeExpr includes both log and non-log (e.g. Duration/Range/...) parts of query.
         // We get position of all log-parts within LogRangeExpr: Selector, PipelineExpr and UnwrapExpr.
         const logPartsPositions: Position[] = [];
-        const selector = nodeRef.node.getChild('Selector');
+        const selector = node.getChild('Selector');
         if (selector) {
           logPartsPositions.push({ from: selector.from, to: selector.to });
         }
 
-        const pipeline = nodeRef.node.getChild('PipelineExpr');
+        const pipeline = node.getChild('PipelineExpr');
         if (pipeline) {
           logPartsPositions.push({ from: pipeline.from, to: pipeline.to });
         }
 
-        const unwrap = nodeRef.node.getChild('UnwrapExpr');
+        const unwrap = node.getChild('UnwrapExpr');
         if (unwrap) {
           logPartsPositions.push({ from: unwrap.from, to: unwrap.to });
         }
@@ -359,9 +359,9 @@ function getLineCommentPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (nodeRef): false | void => {
-      if (nodeRef.type.id === LineComment) {
-        positions.push({ from: nodeRef.from, to: nodeRef.to });
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === LineComment) {
+        positions.push({ from, to });
         return false;
       }
     },
