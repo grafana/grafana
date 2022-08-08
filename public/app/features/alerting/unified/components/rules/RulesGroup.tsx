@@ -97,6 +97,17 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
               onClick={() => setIsEditingGroup(true)}
             />
           );
+          actionIcons.push(
+            <ActionIcon
+              aria-label="re-order rules"
+              data-testid="reorder-group"
+              key="reorder"
+              icon="exchange-alt"
+              tooltip="re-order rules"
+              className={styles.rotate90}
+              onClick={() => setIsReorderingGroup(true)}
+            />
+          );
         }
         if (isListView) {
           actionIcons.push(
