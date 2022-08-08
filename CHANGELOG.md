@@ -1,3 +1,12 @@
+<!-- 8.5.10 START -->
+
+# 8.5.10 (2022-08-08)
+
+### Bug fixes
+
+- **RBAC:** Fix Anonymous Editors missing dashboard controls. [#52649](https://github.com/grafana/grafana/pull/52649), [@gamab](https://github.com/gamab)
+
+<!-- 8.5.10 END -->
 <!-- 8.5.9 START -->
 
 # 8.5.9 (2022-07-14)
