@@ -14,4 +14,5 @@ type Service interface {
 	ChangePassword(context.Context, *ChangeUserPasswordCommand) error
 	UpdateLastSeenAt(context.Context, *UpdateUserLastSeenAtCommand) error
 	SetUsingOrg(context.Context, *SetUsingOrgCommand) error
+	GetSignedInUserWithCacheCtx(context.Context, *GetSignedInUserQuery) (*SignedInUser, error)
 }

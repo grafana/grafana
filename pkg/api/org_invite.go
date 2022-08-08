@@ -285,9 +285,9 @@ func (hs *HTTPServer) updateTempUserStatus(ctx context.Context, code string, sta
 	return true, nil
 }
 
-func (hs *HTTPServer) applyUserInvite(ctx context.Context, user *user.User, invite *models.TempUserDTO, setActive bool) (bool, response.Response) {
+func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invite *models.TempUserDTO, setActive bool) (bool, response.Response) {
 	// add to org
-	addOrgUserCmd := models.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.ID, Role: invite.Role}
+	addOrgUserCmd := models.AddOrgUserCommand{OrgId: invite.OrgId, UserId: usr.ID, Role: invite.Role}
 	if err := hs.SQLStore.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
 		if !errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return false, response.Error(500, "Error while trying to create org user", err)
@@ -301,7 +301,7 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, user *user.User, invi
 
 	if setActive {
 		// set org to active
-		if err := hs.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.ID}); err != nil {
+		if err := hs.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{OrgID: invite.OrgId, UserID: usr.ID}); err != nil {
 			return false, response.Error(500, "Failed to set org as active", err)
 		}
 	}

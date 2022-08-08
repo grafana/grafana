@@ -306,3 +306,38 @@ func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand)
 	}
 	return s.sqlStore.SetUsingOrg(ctx, q)
 }
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	q := &models.GetSignedInUserQuery{
+		UserId: query.UserID,
+		Login:  query.Login,
+		Email:  query.Email,
+		OrgId:  query.OrgID,
+	}
+	err := s.sqlStore.GetSignedInUserWithCacheCtx(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	signedInUser := &user.SignedInUser{
+		UserID:             q.Result.UserId,
+		OrgID:              q.Result.OrgId,
+		OrgName:            q.Result.OrgName,
+		OrgRole:            user.RoleType(q.Result.OrgRole),
+		ExternalAuthModule: q.Result.ExternalAuthModule,
+		ExternalAuthID:     q.Result.ExternalAuthId,
+		Login:              q.Result.Login,
+		Email:              q.Result.Email,
+		ApiKeyID:           q.Result.ApiKeyId,
+		Name:               q.Result.Name,
+		OrgCount:           q.Result.OrgCount,
+		IsGrafanaAdmin:     q.Result.IsGrafanaAdmin,
+		IsAnonymous:        q.Result.IsAnonymous,
+		IsDisabled:         q.Result.IsDisabled,
+		HelpFlags1:         user.HelpFlags1(q.Result.HelpFlags1),
+		LastSeenAt:         q.Result.LastSeenAt,
+		Teams:              q.Result.Teams,
+		Permissions:        q.Result.Permissions,
+	}
+	return signedInUser, nil
+}

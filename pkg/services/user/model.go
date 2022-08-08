@@ -91,6 +91,38 @@ type SetUsingOrgCommand struct {
 	OrgID  int64
 }
 
+type GetSignedInUserQuery struct {
+	UserID int64
+	Login  string
+	Email  string
+	OrgID  int64
+}
+
+type SignedInUser struct {
+	UserID             int64
+	OrgID              int64
+	OrgName            string
+	OrgRole            RoleType
+	ExternalAuthModule string
+	ExternalAuthID     string
+	Login              string
+	Name               string
+	Email              string
+	ApiKeyID           int64
+	OrgCount           int
+	IsGrafanaAdmin     bool
+	IsAnonymous        bool
+	IsDisabled         bool
+	HelpFlags1         HelpFlags1
+	LastSeenAt         time.Time
+	Teams              []int64
+	// Permissions grouped by orgID and actions
+	Permissions map[int64]map[string][]string `json:"-"`
+}
+
+// swagger:enum RoleType
+type RoleType string
+
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
