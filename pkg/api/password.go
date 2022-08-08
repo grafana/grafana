@@ -19,9 +19,6 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Resp
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if setting.LDAPEnabled || setting.AuthProxyEnabled {
-		return response.Error(401, "Not allowed to reset password when LDAP or Auth Proxy is enabled", nil)
-	}
 	if setting.DisableLoginForm {
 		return response.Error(401, "Not allowed to reset password when login form is disabled", nil)
 	}
@@ -32,6 +29,19 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Resp
 	if err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
 		return response.Error(http.StatusOK, "Email sent", err)
+	}
+
+	if usr.IsDisabled {
+		c.Logger.Info("Requested password reset for disabled user", "user", userQuery.LoginOrEmail)
+		return response.Error(http.StatusOK, "Email sent", nil)
+	}
+
+	getAuthQuery := models.GetAuthInfoQuery{UserId: usr.ID}
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		authModule := getAuthQuery.Result.AuthModule
+		if authModule == models.AuthModuleLDAP || authModule == models.AuthModuleProxy {
+			return response.Error(401, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
+		}
 	}
 
 	emailCmd := models.SendResetPasswordEmailCommand{User: usr}
