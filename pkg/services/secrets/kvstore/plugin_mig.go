@@ -72,7 +72,7 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 		}
 		totalSec := len(allSec)
 		// We just set it again as the current secret store should be the plugin secret
-		s.logger.Debug(fmt.Sprintf("Total ammount of secrets to migrate: %d", totalSec))
+		s.logger.Debug(fmt.Sprintf("Total amount of secrets to migrate: %d", totalSec))
 		for i, sec := range allSec {
 			s.logger.Debug(fmt.Sprintf("Migrating secret %d of %d", i+1, totalSec))
 			err = s.secretsStore.Set(ctx, *sec.OrgId, *sec.Namespace, *sec.Type, sec.Value)
