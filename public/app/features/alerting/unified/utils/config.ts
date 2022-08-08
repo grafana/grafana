@@ -6,7 +6,7 @@ export function getAllDataSources(): Array<DataSourceInstanceSettings<DataSource
 }
 
 export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery?: string) {
-  if (!alertGroupEvaluateEvery) {
+  if (!alertGroupEvaluateEvery || !isValidGoDuration(alertGroupEvaluateEvery)) {
     return { globalLimit: 0, exceedsLimit: false };
   }
 

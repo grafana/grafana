@@ -18,9 +18,20 @@
   "bin": {
     "grafana-toolkit": "./bin/grafana-toolkit.js"
   },
+  "publishConfig": {
+    "bin": {
+      "grafana-toolkit": "./dist/bin/grafana-toolkit.js"
+    },
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "grafana-toolkit toolkit:build",
-    "clean": "rimraf ./dist ./compiled",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
     "precommit": "npm run lint & npm run typecheck",
     "typecheck": "tsc --noEmit"
   },

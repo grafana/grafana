@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/web"
@@ -215,10 +216,10 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 
 	if err = api.store.DeleteServiceAccountToken(c.Req.Context(), c.OrgId, saID, tokenID); err != nil {
 		status := http.StatusNotFound
-		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
+		if err != nil && !errors.Is(err, apikey.ErrNotFound) {
 			status = http.StatusInternalServerError
 		} else {
-			err = models.ErrApiKeyNotFound
+			err = apikey.ErrNotFound
 		}
 
 		return response.Error(status, failedToDeleteMsg, err)
