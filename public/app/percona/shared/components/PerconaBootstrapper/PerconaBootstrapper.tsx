@@ -25,7 +25,7 @@ export const PerconaBootstrapper = () => {
   const dispatch = useDispatch();
   const { setCurrentStep, setIsOpen, setSteps } = useTour();
   const [modalIsOpen, setModalIsOpen] = useState(true);
-  const [showTour, setShowTour] = useLocalStorage<boolean>(PERCONA_TOUR_FLAG, true);
+  const [showTour, setShowTour] = useLocalStorage<boolean>(PERCONA_TOUR_FLAG, !navigator.webdriver);
   const styles = useStyles2(getStyles);
   const isLoggedIn = !!contextSrv.user.isSignedIn;
 

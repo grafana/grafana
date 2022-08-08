@@ -32,7 +32,7 @@ describe('GET::', () => {
     const api = new ApiRequest({});
 
     (api.axiosInstance as AxiosInstanceEx).get.mockResolvedValueOnce({ data: 'some data' });
-    const result = await api.get('/test/path', { params: { key: 'value' } });
+    const result = await api.get('/test/path', false, { params: { key: 'value' } });
 
     expect(result).toEqual('some data');
   });

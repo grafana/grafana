@@ -14,12 +14,18 @@ export class ApiRequest {
     });
   }
 
-  async get<T, B>(path: string, query?: { params: B; cancelToken?: CancelToken }): Promise<T> {
+  async get<T, B>(
+    path: string,
+    disableNotifications = false,
+    query?: { params: B; cancelToken?: CancelToken }
+  ): Promise<T> {
     return this.axiosInstance
       .get<T>(path, query)
       .then((response): T => response.data)
       .catch((e) => {
-        appEvents.emit(AppEvents.alertError, [e.message]);
+        if (!disableNotifications) {
+          appEvents.emit(AppEvents.alertError, [e.message]);
+        }
         throw e;
       });
   }
