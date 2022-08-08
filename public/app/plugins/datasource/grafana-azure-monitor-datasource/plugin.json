@@ -18,6 +18,11 @@
     { "type": "dashboard", "name": "Azure / Insights / CosmosDB", "path": "dashboards/cosmosdb.json" },
     { "type": "dashboard", "name": "Azure / Insights / Data Explorer Clusters", "path": "dashboards/adx.json" },
     { "type": "dashboard", "name": "Azure / Insights / Key Vaults", "path": "dashboards/keyvault.json" },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Networks",
+      "path": "dashboards/networkInsightsDashboard.json"
+    },
     { "type": "dashboard", "name": "Azure / Insights / SQL Database", "path": "dashboards/sqldb.json" },
     { "type": "dashboard", "name": "Azure / Insights / Storage Accounts", "path": "dashboards/storage.json" },
     {
