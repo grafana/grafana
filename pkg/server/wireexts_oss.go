@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -63,8 +63,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
 	authinfoservice.ProvideOSSUserProtectionService,
 	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
-	ossencryption.ProvideService,
-	wire.Bind(new(encryption.Internal), new(*ossencryption.Service)),
+	encryptionprovider.ProvideEncryptionProvider,
+	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 	filters.ProvideOSSSearchUserFilter,
 	wire.Bind(new(models.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
 	searchusers.ProvideUsersService,

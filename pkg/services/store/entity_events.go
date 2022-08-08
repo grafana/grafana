@@ -62,10 +62,8 @@ type EventHandler func(ctx context.Context, e *EntityEvent) error
 type EntityEventsService interface {
 	registry.BackgroundService
 	registry.CanBeDisabled
-	SaveEvent(ctx context.Context, cmd SaveEventCmd) error
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
-	OnEvent(handler EventHandler)
 
 	deleteEventsOlderThan(ctx context.Context, duration time.Duration) error
 }
@@ -88,36 +86,6 @@ type entityEventService struct {
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
 	eventHandlers []EventHandler
-}
-
-func (e *entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
-	entityEvent := &EntityEvent{
-		EventType: cmd.EventType,
-		EntityId:  cmd.EntityId,
-		Created:   time.Now().Unix(),
-	}
-	err := e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Insert(entityEvent)
-		return err
-	})
-	if err != nil {
-		return err
-	}
-	return e.broadcastEvent(ctx, entityEvent)
-}
-
-func (e *entityEventService) broadcastEvent(ctx context.Context, event *EntityEvent) error {
-	for _, h := range e.eventHandlers {
-		err := h(ctx, event)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (e *entityEventService) OnEvent(handler EventHandler) {
-	e.eventHandlers = append(e.eventHandlers, handler)
 }
 
 func (e *entityEventService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {
@@ -185,13 +153,6 @@ func (d dummyEntityEventsService) Run(ctx context.Context) error {
 
 func (d dummyEntityEventsService) IsDisabled() bool {
 	return false
-}
-
-func (d dummyEntityEventsService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
-	return nil
-}
-
-func (d dummyEntityEventsService) OnEvent(handler EventHandler) {
 }
 
 func (d dummyEntityEventsService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {

@@ -34,7 +34,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
 
     const rds = ((window as any).rudderanalytics = []);
 
-    var methods = [
+    const methods = [
       'load',
       'page',
       'track',

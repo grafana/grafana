@@ -9,6 +9,7 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromQuery } from '../../types';
 import { QueryEditorMode } from '../shared/types';
 
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 import { PromQueryEditorSelector } from './PromQueryEditorSelector';
 
 // We need to mock this because it seems jest has problem importing monaco in tests
@@ -106,6 +107,13 @@ describe('PromQueryEditorSelector', () => {
       expr: 'my_metric',
     });
     expect(screen.getByLabelText('selector').textContent).toBe('my_metric');
+  });
+
+  it('Can enable explain', async () => {
+    renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+    screen.getByLabelText('Explain').click();
+    expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 
   it('changes to code mode', async () => {

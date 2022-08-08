@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -39,7 +40,6 @@ type SQLStoreMock struct {
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 	ExpectedPersistedDashboards    models.HitList
 	ExpectedSignedInUser           *models.SignedInUser
-	ExpectedAPIKey                 *models.ApiKey
 	ExpectedUserStars              map[int64]bool
 	ExpectedLoginAttempts          int64
 
@@ -135,32 +135,6 @@ func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.D
 
 func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
 	return nil, m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
-	query.Result = m.ExpectedUser
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error {
-	query.Result = m.ExpectedUser
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetUserByEmail(ctx context.Context, query *models.GetUserByEmailQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error {
-	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
@@ -271,23 +245,6 @@ func (m *SQLStoreMock) NewSession(ctx context.Context) *sqlstore.DBSession {
 }
 
 func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error) {
-	return nil, m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-	query.Result = m.ExpectedPluginSetting
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
 	return m.ExpectedError
 }
 
@@ -519,35 +476,6 @@ func (m *SQLStoreMock) GetOrCreateAlertNotificationState(ctx context.Context, cm
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
-	return nil
-}
-
-func (m *SQLStoreMock) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
-	query.Result = m.ExpectedAPIKey
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
-	return nil
-}
-
 func (m *SQLStoreMock) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
 	return m.ExpectedError
 }
@@ -589,6 +517,6 @@ func (m *SQLStoreMock) IsAdminOfTeams(ctx context.Context, query *models.IsAdmin
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.APIKey, error) {
 	return nil, m.ExpectedError
 }

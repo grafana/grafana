@@ -73,6 +73,10 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, err
 	}
 	rule.IntervalSeconds = interval
+	err = rule.SetDashboardAndPanel()
+	if err != nil {
+		return models.AlertRule{}, err
+	}
 	rule.Updated = time.Now()
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		ids, err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
@@ -177,6 +181,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
 	rule.IntervalSeconds, err = service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	err = rule.SetDashboardAndPanel()
 	if err != nil {
 		return models.AlertRule{}, err
 	}

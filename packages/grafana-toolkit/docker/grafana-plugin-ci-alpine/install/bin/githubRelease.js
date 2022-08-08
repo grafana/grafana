@@ -1,16 +1,16 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
-var fs = require('fs');
-var path = require('path');
-var tslib_1 = require('tslib');
+const fs = require('fs');
+const path = require('path');
+const tslib_1 = require('tslib');
 
-var getPluginId_1 = require('../../config/utils/getPluginId');
-var pluginValidation_1 = require('../../config/utils/pluginValidation');
-var env_1 = require('../../plugins/env');
+const getPluginId_1 = require('../../config/utils/getPluginId');
+const pluginValidation_1 = require('../../config/utils/pluginValidation');
+const env_1 = require('../../plugins/env');
 // @ts-ignore
 // import execa = require('execa');
-var githubClient_1 = tslib_1.__importDefault(require('./githubClient'));
-var resolveContentType = function (extension) {
+const githubClient_1 = tslib_1.__importDefault(require('./githubClient'));
+const resolveContentType = function (extension) {
   if (extension.startsWith('.')) {
     extension = extension.slice(1);
   }
@@ -25,7 +25,7 @@ var resolveContentType = function (extension) {
       return 'application/octet-stream';
   }
 };
-var GitHubRelease = /** @class */ (function () {
+const GitHubRelease = /** @class */ (function () {
   function GitHubRelease(token, username, repository, releaseNotes, commitHash) {
     this.token = token;
     this.username = username;
@@ -38,12 +38,12 @@ var GitHubRelease = /** @class */ (function () {
     });
   }
   GitHubRelease.prototype.publishAssets = function (srcLocation, destUrl) {
-    var _this = this;
+    const _this = this;
     // Add the assets. Loop through files in the ci/dist folder and upload each asset.
-    var files = fs.readdirSync(srcLocation);
+    const files = fs.readdirSync(srcLocation);
     return files.map(function (file) {
       return tslib_1.__awaiter(_this, void 0, void 0, function () {
-        var fileStat, fileData;
+        let fileStat, fileData;
         return tslib_1.__generator(this, function (_a) {
           fileStat = fs.statSync(srcLocation + '/' + file);
           fileData = fs.readFileSync(srcLocation + '/' + file);
@@ -62,9 +62,9 @@ var GitHubRelease = /** @class */ (function () {
     });
   };
   GitHubRelease.prototype.release = function () {
-    var _a, _b, _c, _d;
+    let _a, _b, _c, _d;
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var ciDir,
+      let ciDir,
         distDir,
         distContentDir,
         pluginJsonFile,

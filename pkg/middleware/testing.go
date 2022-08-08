@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
@@ -39,6 +40,7 @@ type scenarioContext struct {
 	mockSQLStore         *mockstore.SQLStoreMock
 	contextHandler       *contexthandler.ContextHandler
 	loginService         *loginservice.LoginServiceMock
+	apiKeyService        *apikeytest.Service
 
 	req *http.Request
 }

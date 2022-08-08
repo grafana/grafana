@@ -14,7 +14,7 @@ import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { quickOptions } from './options';
 
-const isValidTimeRange = (range: any) => {
+const isValidTimeRange = (range: TimeRange) => {
   return dateMath.isValid(range.from) && dateMath.isValid(range.to);
 };
 
@@ -26,7 +26,9 @@ export interface TimeRangeInputProps {
   hideTimeZone?: boolean;
   placeholder?: string;
   clearable?: boolean;
+  /** Controls horizontal alignment of the picker menu */
   isReversed?: boolean;
+  /** Controls visibility of the preset time ranges (e.g. **Last 5 minutes**) in the picker menu */
   hideQuickRanges?: boolean;
   disabled?: boolean;
 }
@@ -83,7 +85,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
         onClick={onOpen}
       >
         {isValidTimeRange(value) ? (
-          <TimePickerButtonLabel value={value as TimeRange} timeZone={timeZone} />
+          <TimePickerButtonLabel value={value} timeZone={timeZone} />
         ) : (
           <span className={styles.placeholder}>{placeholder}</span>
         )}
@@ -101,7 +103,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <TimePickerContent
             timeZone={timeZone}
-            value={isValidTimeRange(value) ? (value as TimeRange) : getDefaultTimeRange()}
+            value={isValidTimeRange(value) ? value : getDefaultTimeRange()}
             onChange={onRangeChange}
             quickOptions={quickOptions}
             onChangeTimeZone={onChangeTimeZone}
@@ -136,7 +138,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
         justify-content: space-between;
         cursor: pointer;
         padding-right: 0;
-        line-height: ${theme.v1.spacing.formInputHeight - 2}px;
+        line-height: ${theme.spacing.gridSize * 4 - 2}px;
       `
     ),
     caretIcon: cx(
@@ -144,17 +146,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
       css`
         position: relative;
         top: -1px;
-        margin-left: ${theme.v1.spacing.xs};
+        margin-left: ${theme.spacing(0.5)};
       `
     ),
     clearIcon: css`
-      margin-right: ${theme.v1.spacing.xs};
+      margin-right: ${theme.spacing(0.5)};
       &:hover {
-        color: ${theme.v1.colors.linkHover};
+        color: ${theme.colors.text.maxContrast};
       }
     `,
     placeholder: css`
-      color: ${theme.v1.colors.formInputPlaceholderText};
+      color: ${theme.colors.text.disabled};
       opacity: 1;
     `,
   };

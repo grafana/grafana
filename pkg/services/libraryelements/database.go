@@ -648,10 +648,6 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
 func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, signedInUser *models.SignedInUser, elementUIDs []string, dashboardID int64) error {
-	if err := l.requireEditPermissionsOnDashboard(c, signedInUser, dashboardID); err != nil {
-		return err
-	}
-
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {

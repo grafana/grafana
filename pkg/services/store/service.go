@@ -25,6 +25,7 @@ var grafanaStorageLogger = log.New("grafanaStorageLogger")
 
 var ErrUnsupportedStorage = errors.New("storage does not support this operation")
 var ErrUploadInternalError = errors.New("upload internal error")
+var ErrQuotaReached = errors.New("file quota reached")
 var ErrValidationFailed = errors.New("request validation failed")
 var ErrFileAlreadyExists = errors.New("file exists")
 var ErrStorageNotFound = errors.New("storage not found")
@@ -300,6 +301,10 @@ type UploadRequest struct {
 }
 
 func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error {
+	if err := s.checkFileQuota(ctx, req.Path); err != nil {
+		return err
+	}
+
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(req.Path))
 	if !guardian.canWrite(req.Path) {
 		return ErrAccessDenied
@@ -348,6 +353,22 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 	return nil
 }
 
+func (s *standardStorageService) checkFileQuota(ctx context.Context, path string) error {
+	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
+	quotaReached, err := s.quotaService.CheckQuotaReached(ctx, "file", nil)
+	if err != nil {
+		grafanaStorageLogger.Error("failed while checking upload quota", "path", path, "error", err)
+		return ErrUploadInternalError
+	}
+
+	if quotaReached {
+		grafanaStorageLogger.Info("reached file quota", "path", path)
+		return ErrQuotaReached
+	}
+
+	return nil
+}
+
 func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.SignedInUser, cmd *DeleteFolderCmd) error {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(cmd.Path))
 	if !guardian.canDelete(cmd.Path) {
@@ -370,6 +391,10 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.
 }
 
 func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.SignedInUser, cmd *CreateFolderCmd) error {
+	if err := s.checkFileQuota(ctx, cmd.Path); err != nil {
+		return err
+	}
+
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(cmd.Path))
 	if !guardian.canWrite(cmd.Path) {
 		return ErrAccessDenied

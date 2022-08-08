@@ -36,7 +36,7 @@ export * from './live';
 export * from './variables';
 export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
-export {
+export type {
   CurrentUserDTO,
   BootData,
   OAuth,
@@ -46,7 +46,7 @@ export {
   LicenseInfo,
   PreloadPlugin,
 } from './config';
-export { FeatureToggles } from './featureToggles.gen';
+export type { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';

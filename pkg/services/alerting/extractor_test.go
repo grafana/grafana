@@ -200,7 +200,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Alert notifications are in DB", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := sqlStore{db: sqlstore.InitTestDB(t)}
 
 		firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 		err = sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
