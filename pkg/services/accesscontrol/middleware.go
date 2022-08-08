@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -91,7 +92,7 @@ func newID() string {
 
 type OrgIDGetter func(c *models.ReqContext) (int64, error)
 type userCache interface {
-	GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error
+	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }
 
 func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handler, OrgIDGetter, Evaluator) web.Handler {
@@ -113,14 +114,15 @@ func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handle
 				userCopy.OrgName = ""
 				userCopy.OrgRole = ""
 			} else {
-				query := models.GetSignedInUserQuery{UserId: c.UserId, OrgId: orgID}
-				if err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query); err != nil {
+				query := user.GetSignedInUserQuery{UserID: c.UserId, OrgID: orgID}
+				signedInUser, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
+				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 					return
 				}
-				userCopy.OrgId = query.Result.OrgId
-				userCopy.OrgName = query.Result.OrgName
-				userCopy.OrgRole = query.Result.OrgRole
+				userCopy.OrgId = signedInUser.OrgID
+				userCopy.OrgName = signedInUser.OrgName
+				userCopy.OrgRole = models.RoleType(signedInUser.OrgRole)
 			}
 
 			authorize(c, ac, &userCopy, evaluator)

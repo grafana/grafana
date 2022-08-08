@@ -7,9 +7,10 @@ import (
 )
 
 type FakeUserService struct {
-	ExpectedUser         *user.User
-	ExpectedSignedInUser *user.SignedInUser
-	ExpectedError        error
+	ExpectedUser             *user.User
+	ExpectedSignedInUser     *user.SignedInUser
+	ExpectedError            error
+	ExpectedSetUsingOrgError error
 }
 
 func NewUserServiceFake() *FakeUserService {
@@ -49,7 +50,7 @@ func (f *FakeUserService) UpdateLastSeenAt(ctx context.Context, cmd *user.Update
 }
 
 func (f *FakeUserService) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
-	return f.ExpectedError
+	return f.ExpectedSetUsingOrgError
 }
 
 func (f *FakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {

@@ -33,7 +33,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		return true
 	}
 
-	query := models.GetSignedInUserQuery{OrgId: orgId}
+	query := user.GetSignedInUserQuery{OrgID: orgId}
 
 	sub, _ := claims["sub"].(string)
 
@@ -83,7 +83,8 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		}
 	}
 
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query); err != nil {
+	signedInUser, err := h.userService.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query)
+	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			ctx.Logger.Debug(
 				"Failed to find user using JWT claims",
@@ -99,7 +100,26 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		return true
 	}
 
-	ctx.SignedInUser = query.Result
+	ctx.SignedInUser = &models.SignedInUser{
+		UserId:             signedInUser.UserID,
+		OrgId:              signedInUser.OrgID,
+		OrgName:            signedInUser.OrgName,
+		OrgRole:            models.RoleType(signedInUser.OrgRole),
+		ExternalAuthModule: signedInUser.ExternalAuthModule,
+		ExternalAuthId:     signedInUser.ExternalAuthID,
+		Name:               signedInUser.Name,
+		Email:              signedInUser.Email,
+		Login:              signedInUser.Login,
+		ApiKeyId:           signedInUser.ApiKeyID,
+		OrgCount:           signedInUser.OrgCount,
+		IsGrafanaAdmin:     signedInUser.IsGrafanaAdmin,
+		IsDisabled:         signedInUser.IsDisabled,
+		IsAnonymous:        signedInUser.IsAnonymous,
+		HelpFlags1:         models.HelpFlags1(signedInUser.HelpFlags1),
+		LastSeenAt:         signedInUser.LastSeenAt,
+		Teams:              signedInUser.Teams,
+		Permissions:        signedInUser.Permissions,
+	}
 	ctx.IsSignedIn = true
 
 	return true
