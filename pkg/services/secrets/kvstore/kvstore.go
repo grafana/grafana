@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -18,8 +19,6 @@ const (
 	AllOrganizations = -1
 )
 
-var logger = log.New("secrets.kvstore")
-
 func ProvideService(
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
@@ -28,6 +27,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 ) (SecretsKVStore, error) {
+	var logger = log.New("secrets.kvstore")
 	var store SecretsKVStore
 	store = &secretsKVStoreSQL{
 		sqlStore:       sqlStore,
@@ -37,21 +37,25 @@ func ProvideService(
 			cache: make(map[int64]cachedDecrypted),
 		},
 	}
-	if shouldUseRemoteSecretsPlugin(pluginsManager, cfg) {
+	err := shouldUseRemoteSecretsPlugin(pluginsManager, cfg)
+	if err != nil {
+		logger.Debug(err.Error())
+	} else {
 		// Attempt to start the plugin
-		secretsPlugin, err := startAndReturnPlugin(pluginsManager, context.Background())
+		var secretsPlugin secretsmanagerplugin.SecretsManagerPlugin
+		secretsPlugin, err = startAndReturnPlugin(pluginsManager, context.Background())
 		namespacedKVStore := GetNamespacedKVStore(kvstore)
 		if err != nil || secretsPlugin == nil {
-			if isFatal, err2 := isPluginStartupErrorFatal(context.Background(), namespacedKVStore); isFatal || err2 != nil {
+			logger.Error("failed to start remote secrets management plugin", "msg", err.Error())
+			if isFatal, fatalErr := isPluginStartupErrorFatal(context.Background(), namespacedKVStore); isFatal || fatalErr != nil {
 				// plugin error was fatal or there was an error determining if the error was fatal
 				logger.Error("secrets management plugin is required to start -- exiting app")
-				if err2 != nil {
+				if fatalErr != nil {
 					// TODO decide whether an error here should actually crash the app
-					return nil, err2
+					return nil, fatalErr
 				}
 				return nil, err
 			}
-			logger.Error("error starting secrets plugin, falling back to SQL implementation")
 		} else {
 			store = &secretsKVStorePlugin{
 				secretsPlugin:                  secretsPlugin,
@@ -61,7 +65,9 @@ func ProvideService(
 				backwardsCompatibilityDisabled: features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility),
 			}
 		}
-	} else {
+	}
+
+	if err != nil {
 		logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
 	}
 

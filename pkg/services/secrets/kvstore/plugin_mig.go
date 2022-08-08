@@ -45,7 +45,7 @@ func ProvidePluginSecretMigrationService(
 
 func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 	// Check if we should migrate to plugin - default false
-	if shouldUseRemoteSecretsPlugin(s.manager, s.cfg) {
+	if err := shouldUseRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
 		s.logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
 		// the secrets store would be the plugin.
