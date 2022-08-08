@@ -1,4 +1,4 @@
-import React, { createRef } from 'react';
+import React, { Component, createRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
 
 import { PlotProps } from './types';
@@ -36,7 +36,7 @@ type UPlotChartState = {
  * Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
  * Exposes context for uPlot instance access
  */
-export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
+export class UPlotChart extends Component<PlotProps, UPlotChartState> {
   plotContainer = createRef<HTMLDivElement>();
   plotCanvasBBox = createRef<DOMRect>();
 

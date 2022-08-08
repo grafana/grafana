@@ -26,6 +26,14 @@ load(
     'pipeline',
 )
 
+docs_paths = {
+    'include': [
+        '*.md',
+        'docs/**',
+        'packages/**',
+        'latest.json',
+    ],
+}
 
 def docs_pipelines(edition, ver_mode, trigger):
     steps = [
@@ -61,17 +69,19 @@ def lint_docs():
     }
 
 
-def trigger_docs():
+def trigger_docs_main():
+    return {
+        'branch': 'main',
+        'event': [
+            'push',
+        ],
+        'paths': docs_paths,
+    }
+
+def trigger_docs_pr():
     return {
         'event': [
             'pull_request',
         ],
-        'paths': {
-            'include': [
-                '*.md',
-                'docs/**',
-                'packages/**',
-                'latest.json',
-            ],
-        },
+        'paths': docs_paths,
     }

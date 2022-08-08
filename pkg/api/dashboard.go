@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -251,12 +251,12 @@ func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, acti
 }
 
 func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
-	query := models.GetUserByIdQuery{Id: userID}
-	err := hs.SQLStore.GetUserById(ctx, &query)
+	query := user.GetUserByIDQuery{ID: userID}
+	user, err := hs.userService.GetByID(ctx, &query)
 	if err != nil {
 		return anonString
 	}
-	return query.Result.Login
+	return user.Login
 }
 
 func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*models.Dashboard, response.Response) {
@@ -318,15 +318,6 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete dashboard", err)
 	}
 
-	if hs.entityEventsService != nil {
-		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
-			EntityId:  store.CreateDatabaseEntityId(dash.Uid, dash.OrgId, store.EntityTypeDashboard),
-			EventType: store.EntityEventTypeDelete,
-		}); err != nil {
-			hs.log.Warn("failed to save dashboard entity event", "uid", dash.Uid, "error", err)
-		}
-	}
-
 	if hs.Live != nil {
 		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.OrgId, c.ToUserDisplayDTO(), dash.Uid)
 		if err != nil {
@@ -362,7 +353,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagValidateDashboardsOnSave) {
-		cm := hs.CoremodelStaticRegistry.Dashboard()
+		cm := hs.Coremodels.Dashboard()
 
 		// Ideally, coremodel validation calls would be integrated into the web
 		// framework. But this does the job for now.
@@ -448,15 +439,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	dashboard, err := hs.DashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
-
-	if dashboard != nil && hs.entityEventsService != nil {
-		if err := hs.entityEventsService.SaveEvent(ctx, store.SaveEventCmd{
-			EntityId:  store.CreateDatabaseEntityId(dashboard.Uid, dashboard.OrgId, store.EntityTypeDashboard),
-			EventType: store.EntityEventTypeUpdate,
-		}); err != nil {
-			hs.log.Warn("failed to save dashboard entity event", "uid", dashboard.Uid, "error", err)
-		}
-	}
 
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
