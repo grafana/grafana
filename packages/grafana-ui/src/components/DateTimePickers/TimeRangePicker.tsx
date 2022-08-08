@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
+import React, { memo, FormEvent, createRef, useState } from 'react';
 
 import {
   isDateTime,
@@ -49,7 +49,7 @@ export interface State {
   isOpen: boolean;
 }
 
-export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactElement {
+export function UnthemedTimeRangePicker(props: TimeRangePickerProps) {
   const [isOpen, setOpen] = useState(false);
 
   const {
@@ -156,6 +156,8 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
   );
 }
 
+UnthemedTimeRangePicker.displayName = 'UnthemedTimeRangePicker';
+
 const ZoomOutTooltip = () => (
   <>
     Time range zoom out <br /> CTRL+Z
@@ -208,6 +210,7 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone) => {
 
 /** @public */
 export const TimeRangePicker = withTheme(UnthemedTimeRangePicker);
+TimeRangePicker.displayName = 'TimeRangePicker';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
