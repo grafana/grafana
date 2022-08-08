@@ -72,6 +72,12 @@ var sqlStoreTestCases = []sqlStoreTest{
 		dbURL: "://invalid.com/",
 		err:   &url.Error{Op: "parse", URL: "://invalid.com/", Err: errors.New("missing protocol scheme")},
 	},
+	{
+		name:          "Sql mode set to ANSI_QUOTES",
+		dbType:        "mysql",
+		dbHost:        "[::1]",
+		connStrValues: []string{"sql_mode='ANSI_QUOTES'"},
+	},
 }
 
 func TestIntegrationSQLConnectionString(t *testing.T) {
@@ -111,6 +117,8 @@ func makeSQLStoreTestConfig(t *testing.T, dbType, host, dbURL string) *setting.C
 	require.NoError(t, err)
 	_, err = sec.NewKey("password", "pass")
 	require.NoError(t, err)
+
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return true }
 
 	return cfg
 }

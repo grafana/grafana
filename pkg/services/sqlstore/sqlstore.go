@@ -281,6 +281,10 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
 		}
 
+		if ss.Cfg.IsFeatureToggleEnabled("mysqlAnsiQuotes") {
+			cnnstr += "&sql_mode='ANSI_QUOTES'"
+		}
+
 		cnnstr += ss.buildExtraConnectionString('&')
 	case migrator.Postgres:
 		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
