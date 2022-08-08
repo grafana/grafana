@@ -296,6 +296,14 @@ export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: D
   return { ...target, refId, key };
 };
 
+const queryDatasourceDetails = (queries: DataQuery[]) => {
+  const allUIDs = queries.map((query) => query.datasource?.uid);
+  return {
+    allHaveDatasource: allUIDs.length === queries.length,
+    allDatasourceSame: allUIDs.every((val, i, arr) => val === arr[0]),
+  };
+};
+
 /**
  * Ensure at least one target exists and that targets have the necessary keys
  *
@@ -325,8 +333,32 @@ export async function ensureQueries(
   }
 
   try {
-    // if a datasourse override get its ref, otherwise get the default datasource
-    const emptyQueryRef = newQueryDataSourceOverride ?? (await getDataSourceSrv().get()).getRef();
+    // use override ds if passed
+    let emptyQueryRef = newQueryDataSourceOverride;
+    if (emptyQueryRef === undefined) {
+      // with no queries, last value or default datasource
+      if (!queries || queries.length === 0) {
+        emptyQueryRef = (await getDataSourceSrv().get()).getRef();
+      } else {
+        // if all queries have the same datasource, use that
+        const queryDSDetails = queryDatasourceDetails(queries);
+        if (queryDSDetails.allHaveDatasource && queryDSDetails.allDatasourceSame) {
+          emptyQueryRef = queries[0].datasource || undefined; // will never be undefined
+        } else {
+          // if they all have datasources, they are not all the same, and mixed is allowed, datasource is mixed
+          if (
+            queryDSDetails.allHaveDatasource &&
+            !queryDSDetails.allDatasourceSame &&
+            config.featureToggles.exploreMixedDatasource
+          ) {
+            emptyQueryRef = (await getDataSourceSrv().get('-- Mixed --')).getRef();
+          } else {
+            // otherwise it is some sort of invalid state, use default
+            emptyQueryRef = (await getDataSourceSrv().get()).getRef();
+          }
+        }
+      }
+    }
 
     const emptyQuery = await generateEmptyQuery(queries ?? [], undefined, emptyQueryRef);
     return [emptyQuery];

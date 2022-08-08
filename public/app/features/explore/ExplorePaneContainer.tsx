@@ -80,7 +80,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
       const queries = await ensureQueries(initialQueries, datasourceOverride); // this will return an empty array if there are no datasources
       this.props.initializeExplore(
         exploreId,
-        initialDatasource,
+        queries[0].datasource || initialDatasource,
         queries,
         initialRange,
         width,
