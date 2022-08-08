@@ -123,12 +123,14 @@ func setupTestMigratorServiceWithDeletionError(
 		})
 		return items, nil
 	}
+	manager := NewFakeSecretsPluginManager(t, false)
 	migratorService := ProvidePluginSecretMigrationService(
 		secretskv,
 		cfg,
 		sqlStore,
 		secretsService,
 		kvstore,
+		manager,
 	)
 	// TODO refactor Migrator to allow us to override the entire sqlstore with a mock instead
 	migratorService.overrideGetAllFunc(getAllFuncOverride)
