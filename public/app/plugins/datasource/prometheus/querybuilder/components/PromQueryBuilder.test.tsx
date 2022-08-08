@@ -2,7 +2,14 @@ import { getByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { LoadingState, MutableDataFrame, PanelData, TimeRange } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  DataSourcePluginMeta,
+  LoadingState,
+  MutableDataFrame,
+  PanelData,
+  TimeRange,
+} from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
@@ -11,6 +18,7 @@ import { getLabelSelects } from '../testUtils';
 import { PromVisualQuery } from '../types';
 
 import { PromQueryBuilder } from './PromQueryBuilder';
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 
 const defaultQuery: PromVisualQuery = {
   metric: 'random_metric',
@@ -183,28 +191,69 @@ describe('PromQueryBuilder', () => {
     await userEvent.click(screen.getByText('histogram_metric_sum'));
     await waitFor(() => expect(screen.getAllByText(/hint:/)).toHaveLength(2));
   });
+
+  it('shows explain section when showExplain is true', async () => {
+    const { datasource } = createDatasource();
+    const props = createProps(datasource);
+    props.showExplain = true;
+    render(
+      <PromQueryBuilder
+        {...props}
+        query={{
+          metric: 'histogram_metric_sum',
+          labels: [],
+          operations: [],
+        }}
+      />
+    );
+    expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
+  });
+
+  it('does not show explain section when showExplain is false', async () => {
+    const { datasource } = createDatasource();
+    const props = createProps(datasource);
+    render(
+      <PromQueryBuilder
+        {...props}
+        query={{
+          metric: 'histogram_metric_sum',
+          labels: [],
+          operations: [],
+        }}
+      />
+    );
+    expect(await screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+  });
 });
 
-function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
+function createDatasource() {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
       url: '',
       jsonData: {},
-      meta: {} as any,
-    } as any,
+      meta: {} as DataSourcePluginMeta,
+    } as DataSourceInstanceSettings,
     undefined,
     undefined,
     languageProvider
   );
-  const props = {
+  return { datasource, languageProvider };
+}
+
+function createProps(datasource: PrometheusDatasource, data?: PanelData) {
+  return {
     datasource,
     onRunQuery: () => {},
     onChange: () => {},
     data,
     showExplain: false,
   };
+}
 
+function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
+  const { datasource, languageProvider } = createDatasource();
+  const props = createProps(datasource, data);
   const { container } = render(<PromQueryBuilder {...props} query={query} />);
   return { languageProvider, datasource, container };
 }

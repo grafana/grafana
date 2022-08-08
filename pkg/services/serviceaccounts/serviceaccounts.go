@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 )
 
 // this should reflect the api
@@ -27,7 +28,7 @@ type Store interface {
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	RevertApiKey(ctx context.Context, saId int64, keyId int64) error
-	ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error)
+	ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*apikey.APIKey, error)
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *AddServiceAccountTokenCommand) error
 	GetUsageMetrics(ctx context.Context) (map[string]interface{}, error)

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -26,9 +27,9 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
-	query := models.GetApiKeysQuery{OrgId: c.OrgId, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
+	query := apikey.GetApiKeysQuery{OrgId: c.OrgId, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
 
-	if err := hs.SQLStore.GetAPIKeys(c.Req.Context(), &query); err != nil {
+	if err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to list api keys", err)
 	}
 
@@ -75,11 +76,11 @@ func (hs *HTTPServer) DeleteAPIKey(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	cmd := &models.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
-	err = hs.SQLStore.DeleteApiKey(c.Req.Context(), cmd)
+	cmd := &apikey.DeleteCommand{Id: id, OrgId: c.OrgId}
+	err = hs.apiKeyService.DeleteApiKey(c.Req.Context(), cmd)
 	if err != nil {
 		var status int
-		if errors.Is(err, models.ErrApiKeyNotFound) {
+		if errors.Is(err, apikey.ErrNotFound) {
 			status = 404
 		} else {
 			status = 500
@@ -104,7 +105,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *models.ReqContext) response.Response {
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
-	cmd := models.AddApiKeyCommand{}
+	cmd := apikey.AddCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -132,11 +133,11 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
-	if err := hs.SQLStore.AddAPIKey(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
+	if err := hs.apiKeyService.AddAPIKey(c.Req.Context(), &cmd); err != nil {
+		if errors.Is(err, apikey.ErrInvalidExpiration) {
 			return response.Error(400, err.Error(), nil)
 		}
-		if errors.Is(err, models.ErrDuplicateApiKey) {
+		if errors.Is(err, apikey.ErrDuplicate) {
 			return response.Error(409, err.Error(), nil)
 		}
 		return response.Error(500, "Failed to add API Key", err)
@@ -164,7 +165,7 @@ type GetAPIkeysParams struct {
 type AddAPIkeyParams struct {
 	// in:body
 	// required:true
-	Body models.AddApiKeyCommand
+	Body apikey.AddCommand
 }
 
 // swagger:parameters deleteAPIkey

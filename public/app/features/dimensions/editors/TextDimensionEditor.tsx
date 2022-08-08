@@ -59,11 +59,14 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
         ...value,
         fixed,
       });
-
-      setRefresh(refresh + 1);
     },
-    [onChange, refresh, value]
+    [onChange, value]
   );
+
+  const onClearFixed = () => {
+    onFixedChange('');
+    setRefresh(refresh + 1);
+  };
 
   const mode = value?.mode ?? TextDimensionMode.Fixed;
 
@@ -95,9 +98,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
               onChange={onFixedChange}
               item={dummyStringSettings}
               suffix={
-                value?.fixed && (
-                  <Button icon="times" variant="secondary" fill="text" size="sm" onClick={() => onFixedChange('')} />
-                )
+                value?.fixed && <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixed} />
               }
             />
           </InlineField>

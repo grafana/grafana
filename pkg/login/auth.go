@@ -34,12 +34,14 @@ type Authenticator interface {
 type AuthenticatorService struct {
 	store        sqlstore.Store
 	loginService login.Service
+	userService  user.Service
 }
 
-func ProvideService(store sqlstore.Store, loginService login.Service) *AuthenticatorService {
+func ProvideService(store sqlstore.Store, loginService login.Service, userService user.Service) *AuthenticatorService {
 	a := &AuthenticatorService{
 		store:        store,
 		loginService: loginService,
+		userService:  userService,
 	}
 	return a
 }
@@ -54,7 +56,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 		return err
 	}
 
-	err := loginUsingGrafanaDB(ctx, query, a.store)
+	err := loginUsingGrafanaDB(ctx, query, a.userService)
 	if err == nil || (!errors.Is(err, user.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
 		!errors.Is(err, ErrUserDisabled)) {
 		query.AuthModule = "grafana"
