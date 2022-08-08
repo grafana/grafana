@@ -18,6 +18,7 @@ import (
 
 var (
 	fatalFlagOnce sync.Once
+	startupOnce   sync.Once
 )
 
 // secretsKVStorePlugin provides a key/value store backed by the Grafana plugin gRPC interface
@@ -203,7 +204,10 @@ func shouldUseRemoteSecretsPlugin(mg plugins.SecretsPluginManager, cfg *setting.
 }
 
 func startAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) (secretsmanagerplugin.SecretsManagerPlugin, error) {
-	err := mg.SecretsManager().Start(ctx)
+	var err error
+	startupOnce.Do(func() {
+		err = mg.SecretsManager().Start(ctx)
+	})
 	if err != nil {
 		logger.Error("failed to start remote secrets management plugin", "msg", err.Error())
 		return nil, err
