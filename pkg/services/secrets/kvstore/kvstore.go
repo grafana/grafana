@@ -51,7 +51,6 @@ func ProvideService(
 				// plugin error was fatal or there was an error determining if the error was fatal
 				logger.Error("secrets management plugin is required to start -- exiting app")
 				if fatalErr != nil {
-					// TODO decide whether an error here should actually crash the app
 					return nil, fatalErr
 				}
 				return nil, err
