@@ -3,11 +3,19 @@ package sqlstore
 import (
 	"bytes"
 
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 )
 
+func NewSqlBuilder(cfg *setting.Cfg) SQLBuilder {
+	return SQLBuilder{cfg: cfg}
+}
+
 type SQLBuilder struct {
+	cfg    *setting.Cfg
 	sql    bytes.Buffer
 	params []interface{}
 }
@@ -33,15 +41,22 @@ func (sb *SQLBuilder) AddParams(params ...interface{}) {
 }
 
 func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *models.SignedInUser, permission models.PermissionType) {
-	filter := permissions.DashboardPermissionFilter{
-		OrgRole:         user.OrgRole,
-		Dialect:         dialect,
-		UserId:          user.UserId,
-		OrgId:           user.OrgId,
-		PermissionLevel: permission,
+	var (
+		sql    string
+		params []interface{}
+	)
+	if !ac.IsDisabled(sb.cfg) {
+		sql, params = permissions.NewAccessControlDashboardPermissionFilter(user, permission, "").Where()
+	} else {
+		sql, params = permissions.DashboardPermissionFilter{
+			OrgRole:         user.OrgRole,
+			Dialect:         dialect,
+			UserId:          user.UserId,
+			OrgId:           user.OrgId,
+			PermissionLevel: permission,
+		}.Where()
 	}
 
-	sql, params := filter.Where()
-	sb.sql.WriteString(" AND" + sql)
+	sb.sql.WriteString(" AND " + sql)
 	sb.params = append(sb.params, params...)
 }
