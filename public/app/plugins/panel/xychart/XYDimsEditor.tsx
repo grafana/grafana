@@ -4,11 +4,11 @@ import React, { FC, useMemo } from 'react';
 import {
   SelectableValue,
   getFrameDisplayName,
-  GrafanaTheme,
   StandardEditorProps,
   getFieldDisplayName,
+  GrafanaTheme2,
 } from '@grafana/data';
-import { IconButton, Label, Select, stylesFactory, useTheme } from '@grafana/ui';
+import { IconButton, Label, Select, useStyles2 } from '@grafana/ui';
 
 import { getXYDimensions, isGraphable } from './dims';
 import { XYDimensionConfig, XYChartOptions } from './models.gen';
@@ -81,8 +81,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChar
     return v;
   }, [dims, context.data, value]);
 
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   if (!context.data) {
     return <div>No data...</div>;
@@ -142,7 +141,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChar
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   sorter: css`
     margin-top: 10px;
     display: flex;
@@ -153,15 +152,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 
   row: css`
-    padding: ${theme.spacing.xs} ${theme.spacing.sm};
-    border-radius: ${theme.border.radius.sm};
-    background: ${theme.colors.bg2};
-    min-height: ${theme.spacing.formInputHeight}px;
+    padding: ${theme.spacing(0.5, 1)};
+    border-radius: ${theme.shape.borderRadius(1)};
+    background: ${theme.colors.background.secondary};
+    min-height: ${theme.spacing(4)};
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
     margin-bottom: 3px;
-    border: 1px solid ${theme.colors.formInputBorder};
+    border: 1px solid ${theme.components.input.borderColor};
   `,
-}));
+});

@@ -10,8 +10,8 @@ export function isShallowEqual(a: any, b: any) {
     return false;
   }
 
-  var keys = Object.keys(a);
-  var length = keys.length;
+  const keys = Object.keys(a);
+  const length = keys.length;
 
   for (let i = 0; i < length; i++) {
     if (!(keys[i] in b)) {
