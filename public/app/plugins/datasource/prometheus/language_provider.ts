@@ -18,7 +18,6 @@ import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
-  fixSummariesMetadata,
   parseSelector,
   processHistogramMetrics,
   processLabels,
