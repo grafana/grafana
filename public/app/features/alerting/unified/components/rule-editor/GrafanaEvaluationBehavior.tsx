@@ -3,8 +3,7 @@ import React, { FC, useState } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Alert, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
+import { Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
@@ -14,6 +13,7 @@ import {
   positiveDurationValidationPattern,
 } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
+import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { PreviewRule } from './PreviewRule';
@@ -120,14 +120,7 @@ export const GrafanaEvaluationBehavior: FC = () => {
           </Field>
         </div>
       </Field>
-      {exceedsGlobalEvaluationLimit && (
-        <Alert severity="warning" title="Global evalutation interval limit exceeded">
-          A minimum evaluation interval of{' '}
-          <span className={styles.globalLimitValue}>{config.unifiedAlerting.minInterval}</span> has been configured in
-          Grafana. <br />
-          Please contact the administrator to configure a lower interval.
-        </Alert>
-      )}
+      {exceedsGlobalEvaluationLimit && <EvaluationIntervalLimitExceeded />}
       <CollapseToggle
         isCollapsed={!showErrorHandling}
         onToggle={(collapsed) => setShowErrorHandling(!collapsed)}

@@ -56,10 +56,6 @@ type Store interface {
 	GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error
 	NewSession(ctx context.Context) *DBSession
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
-	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error)
-	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
-	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
-	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error
 	GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error
 	GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotasQuery) error
 	UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error

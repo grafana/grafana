@@ -37,6 +37,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return "LDAP"
 	case "jwt":
 		return "JWT"
+	case "authproxy":
+		return "Auth Proxy"
 	default:
 		return "OAuth"
 	}
