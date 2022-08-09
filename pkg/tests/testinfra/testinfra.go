@@ -273,6 +273,16 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = anonSect.NewKey("plugin_admin_external_manage_enabled", "true")
 			require.NoError(t, err)
 		}
+		if o.PluginSettings != nil {
+			for pluginKey, m := range o.PluginSettings {
+				anonSect, err := cfg.NewSection(pluginKey)
+				require.NoError(t, err)
+				for k, v := range m {
+					_, err = anonSect.NewKey(k, v)
+					require.NoError(t, err)
+				}
+			}
+		}
 		if o.ViewersCanEdit {
 			usersSection, err := cfg.NewSection("users")
 			require.NoError(t, err)
@@ -329,6 +339,7 @@ type GrafanaOpts struct {
 	ViewersCanEdit                        bool
 	PluginAdminEnabled                    bool
 	PluginAdminExternalManageEnabled      bool
+	PluginSettings                        map[string]map[string]string
 	AppModeProduction                     bool
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool

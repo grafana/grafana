@@ -107,6 +107,32 @@ func TestPlugins(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("Server Admins should be able to list non-core plugins", func(t *testing.T) {
+		dir, cfgPath = testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			PluginSettings: map[string]map[string]string{
+				"plugin.datasource-id": {
+					"path": "../../../plugins/manager/testdata/test-app",
+				},
+			},
+		})
+
+		grafanaListedAddr, store = testinfra.StartGrafana(t, dir, cfgPath)
+		createUser(t, store, user.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true, SkipOrgSetup: true})
+
+		// nolint:gosec
+		resp, err := http.Get(grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins?core=0"))
+		t.Cleanup(func() {
+			require.NoError(t, resp.Body.Close())
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		expected := `[{"name":"Test App","type":"app","id":"test-app","enabled":false,"pinned":false,"info":{"author":{"name":"Test Inc.","url":"http://test.com"},"description":"Official Grafana Test App & Dashboard bundle","links":[{"name":"Project site","url":"http://project.com"},{"name":"License & Terms","url":"http://license.com"}],"logos":{"small":"public/plugins/test-app/img/logo_small.png","large":"public/plugins/test-app/img/logo_large.png"},"build":{},"screenshots":[{"name":"img1","path":"public/plugins/test-app/img/screenshot1.png"},{"name":"img2","path":"public/plugins/test-app/img/screenshot2.png"}],"version":"1.0.0","updated":"2015-02-10"},"dependencies":{"grafanaDependency":"","grafanaVersion":"3.x.x","plugins":[{"id":"graphite","type":"datasource","name":"Graphite","version":"1.0.0"},{"id":"graph","type":"panel","name":"Graph","version":"1.0.0"}]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/test-app/","category":"","state":"","signature":"valid","signatureType":"grafana","signatureOrg":"Grafana Labs"}]`
+		require.JSONEq(t, expected, string(b))
+	})
 }
 
 func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) {
