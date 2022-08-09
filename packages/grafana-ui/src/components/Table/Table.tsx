@@ -206,12 +206,14 @@ export const Table: FC<Props> = memo((props: Props) => {
     pageOptions,
   } = useTable(options, useFilters, useSortBy, usePagination, useAbsoluteLayout, useResizeColumns);
 
-  let listHeight = height - (headerHeight + footerHeight);
-  if (enablePagination) {
-    listHeight -= tableStyles.cellHeight;
-  }
-  const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
+  let windowListHeight = height - (headerHeight + footerHeight);
+  let entireListHeight = rows.length * tableStyles.cellHeight;
 
+  if (enablePagination) {
+    windowListHeight -= tableStyles.cellHeight;
+    entireListHeight /= pageOptions.length;
+  }
+  const pageSize = Math.round(windowListHeight / tableStyles.cellHeight) - 1;
   useEffect(() => {
     // Don't update the page size if it is less than 1
     if (pageSize <= 0) {
@@ -281,17 +283,23 @@ export const Table: FC<Props> = memo((props: Props) => {
     );
   }
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
-      <CustomScrollbar hideVerticalTrack={true}>
+    <div
+      {...getTableProps()}
+      className={tableStyles.table}
+      aria-label={ariaLabel}
+      role="table"
+      style={{ height: height }}
+    >
+      <CustomScrollbar>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {itemCount > 0 ? (
             <FixedSizeList
-              height={listHeight}
+              height={entireListHeight < windowListHeight ? windowListHeight : entireListHeight}
               itemCount={itemCount}
               itemSize={tableStyles.rowHeight}
               width={'100%'}
-              style={{ overflow: 'hidden auto' }}
+              style={{ overflow: 'hidden' }}
             >
               {RenderRow}
             </FixedSizeList>
