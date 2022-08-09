@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	smp "github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -203,7 +202,7 @@ func ShouldUseRemoteSecretsPlugin(mg plugins.SecretsPluginManager, cfg *setting.
 	return nil
 }
 
-func startAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) (secretsmanagerplugin.SecretsManagerPlugin, error) {
+func startAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) (smp.SecretsManagerPlugin, error) {
 	var err error
 	startupOnce.Do(func() {
 		err = mg.SecretsManager().Start(ctx)
