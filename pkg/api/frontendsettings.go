@@ -88,7 +88,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	secretsManagerPluginEnabled := kvstore.ShouldUseRemoteSecretsPlugin(hs.secretsPluginManager, hs.Cfg) == nil
+	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(hs.secretsPluginManager, hs.Cfg) == nil
 
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":                   defaultDS,
