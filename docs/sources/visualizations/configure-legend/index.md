@@ -1,7 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/working-with-panels/configure-legend/
-  - /docs/sources/panels/working-with-panels/configure-legend/
+  - /docs/grafana/latest/visualizations/configure-legend/
 title: Configure a legend
 weight: 1300
 ---
