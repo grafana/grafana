@@ -85,6 +85,8 @@ func setupFatalCrashTest(
 	isBackwardsCompatDisabled bool,
 ) (SecretsKVStore, kvstore.KVStore, *sqlstore.SQLStore, error) {
 	t.Helper()
+	fatalFlagOnce = sync.Once{}
+	startupOnce = sync.Once{}
 	cfg := setupTestConfig(t)
 	sqlStore := sqlstore.InitTestDB(t)
 	secretService := fakes.FakeSecretsService{}
@@ -108,6 +110,8 @@ func setupTestMigratorServiceWithDeletionError(
 	kvstore kvstore.KVStore,
 ) *PluginSecretMigrationService {
 	t.Helper()
+	fatalFlagOnce = sync.Once{}
+	startupOnce = sync.Once{}
 	cfg := setupTestConfig(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	getAllFuncOverride := func(ctx context.Context) ([]Item, error) {
