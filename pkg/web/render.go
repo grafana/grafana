@@ -26,7 +26,7 @@ import (
 // Renderer is a Middleware that injects a template renderer into the macaron context, enabling ctx.HTML calls in the handlers.
 // If MACARON_ENV is set to "development" then templates will be recompiled on every request. For more performance, set the
 // MACARON_ENV environment variable to "production".
-func Renderer(dir, leftDelim, rightDelim string) Middleware {
+func Renderer(dir, leftDelim, rightDelim string) func(http.Handler) http.Handler {
 	fs := os.DirFS(dir)
 	t, err := compileTemplates(fs, leftDelim, rightDelim)
 	if err != nil {

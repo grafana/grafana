@@ -4,6 +4,7 @@ package response
 //NOTE: This file belongs into pkg/web, but due to cyclic imports that are hard to resolve at the current time, it temporarily lives here.
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -23,25 +24,23 @@ type (
 
 func wrap_handler(h web.Handler) http.HandlerFunc {
 	switch handle := h.(type) {
-	case http.HandlerFunc:
-		return handle
 	case handlerStd:
 		return handle
 	case handlerStdCtx:
 		return func(w http.ResponseWriter, r *http.Request) {
-			handle(w, r, webCtx(w, r))
+			handle(w, r, web.FromContext(r.Context()))
 		}
 	case handlerStdReqCtx:
 		return func(w http.ResponseWriter, r *http.Request) {
-			handle(w, r, reqCtx(w, r))
+			handle(w, r, getReqCtx(r.Context()))
 		}
 	case handlerReqCtx:
 		return func(w http.ResponseWriter, r *http.Request) {
-			handle(reqCtx(w, r))
+			handle(getReqCtx(r.Context()))
 		}
 	case handlerReqCtxRes:
 		return func(w http.ResponseWriter, r *http.Request) {
-			ctx := reqCtx(w, r)
+			ctx := getReqCtx(r.Context())
 			res := handle(ctx)
 			if res != nil {
 				res.WriteTo(ctx)
@@ -49,27 +48,15 @@ func wrap_handler(h web.Handler) http.HandlerFunc {
 		}
 	case handlerCtx:
 		return func(w http.ResponseWriter, r *http.Request) {
-			handle(webCtx(w, r))
+			handle(web.FromContext(r.Context()))
 		}
 	}
 
 	panic(fmt.Sprintf("unexpected handler type: %T", h))
 }
 
-func webCtx(w http.ResponseWriter, r *http.Request) *web.Context {
-	ctx := web.FromContext(r.Context())
-	if ctx == nil {
-		panic("no *web.Context found")
-	}
-
-	ctx.Req = r
-	ctx.Resp = web.Rw(w, r)
-	return ctx
-}
-
-func reqCtx(w http.ResponseWriter, r *http.Request) *models.ReqContext {
-	wCtx := webCtx(w, r)
-	reqCtx, ok := wCtx.Req.Context().Value(ctxkey.Key{}).(*models.ReqContext)
+func getReqCtx(ctx context.Context) *models.ReqContext {
+	reqCtx, ok := ctx.Value(ctxkey.Key{}).(*models.ReqContext)
 	if !ok {
 		panic("no *models.ReqContext found")
 	}

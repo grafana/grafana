@@ -146,12 +146,13 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 		h = append(h, handlers...)
 		handlers = h
 	}
+	httpHandlers := validateAndWrapHandlers(handlers)
 
 	r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params map[string]string) {
 		c := r.m.createContext(resp, SetURLParams(req, params))
-		for _, h := range handlers {
-			c.mws = append(c.mws, mwFromHandler(h))
-		}
+		c.handlers = make([]http.Handler, 0, len(r.m.handlers)+len(handlers))
+		c.handlers = append(c.handlers, r.m.handlers...)
+		c.handlers = append(c.handlers, httpHandlers...)
 		c.run()
 	})
 }
@@ -193,11 +194,12 @@ func (r *Router) Any(pattern string, h ...Handler) { r.Handle("*", pattern, h) }
 // found. If it is not set, http.NotFound is used.
 // Be sure to set 404 response code in your handler.
 func (r *Router) NotFound(handlers ...Handler) {
+	httpHandlers := validateAndWrapHandlers(handlers)
 	r.notFound = func(rw http.ResponseWriter, req *http.Request) {
 		c := r.m.createContext(rw, req)
-		for _, h := range handlers {
-			c.mws = append(c.mws, mwFromHandler(h))
-		}
+		c.handlers = make([]http.Handler, 0, len(r.m.handlers)+len(handlers))
+		c.handlers = append(c.handlers, r.m.handlers...)
+		c.handlers = append(c.handlers, httpHandlers...)
 		c.run()
 	}
 }

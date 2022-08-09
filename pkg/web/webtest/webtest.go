@@ -37,7 +37,7 @@ func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
 
-	m.UseMiddleware(requestContextMiddleware())
+	m.Use(requestContextMiddleware())
 
 	routeRegister.Register(m.Router)
 	testServer := httptest.NewServer(m)
@@ -126,25 +126,24 @@ func requestContextFromRequest(req *http.Request) *models.ReqContext {
 	return val
 }
 
-func requestContextMiddleware() web.Middleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			c := ctxkey.Get(r.Context()).(*models.ReqContext)
+func requestContextMiddleware() web.Handler {
+	return func(res http.ResponseWriter, req *http.Request) {
+		c := ctxkey.Get(req.Context()).(*models.ReqContext)
 
-			ctx := requestContextFromRequest(r)
-			if ctx != nil {
-				c.SignedInUser = ctx.SignedInUser
-				c.UserToken = ctx.UserToken
-				c.IsSignedIn = ctx.IsSignedIn
-				c.IsRenderCall = ctx.IsRenderCall
-				c.AllowAnonymous = ctx.AllowAnonymous
-				c.SkipCache = ctx.SkipCache
-				c.RequestNonce = ctx.RequestNonce
-				c.PerfmonTimer = ctx.PerfmonTimer
-				c.LookupTokenErr = ctx.LookupTokenErr
-			}
+		ctx := requestContextFromRequest(req)
+		if ctx == nil {
+			c.Next()
+			return
+		}
 
-			next.ServeHTTP(w, r)
-		})
+		c.SignedInUser = ctx.SignedInUser
+		c.UserToken = ctx.UserToken
+		c.IsSignedIn = ctx.IsSignedIn
+		c.IsRenderCall = ctx.IsRenderCall
+		c.AllowAnonymous = ctx.AllowAnonymous
+		c.SkipCache = ctx.SkipCache
+		c.RequestNonce = ctx.RequestNonce
+		c.PerfmonTimer = ctx.PerfmonTimer
+		c.LookupTokenErr = ctx.LookupTokenErr
 	}
 }
