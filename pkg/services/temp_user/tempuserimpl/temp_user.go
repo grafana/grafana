@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Service struct {
@@ -17,7 +16,7 @@ type Service struct {
 func ProvideService(
 	db db.DB,
 	ss *sqlstore.SQLStore,
-) user.Service {
+) tempUserImpl.Service {
 	return &Service{
 		store: &sqlStore{
 			db:      db,
