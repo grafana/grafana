@@ -162,7 +162,7 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
-		Groups:         []string{"cn=admins,ou=groups,dc=org", "another-group-not-matched"},
+		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org", "another-group-not-matched"},
 		OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 		IsGrafanaAdmin: &isAdmin,
 	}
@@ -237,7 +237,7 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
-		Groups:         []string{"cn=admins,ou=groups,dc=org"},
+		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
 		OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 		IsGrafanaAdmin: &isAdmin,
 	}
