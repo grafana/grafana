@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,11 +83,11 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	getOrgByIdQuery := &models.GetOrgByIdQuery{Id: users[0].OrgID}
 	err := sqlStore.GetOrgById(context.Background(), getOrgByIdQuery)
 	require.NoError(t, err)
-	org := getOrgByIdQuery.Result
+	orga := getOrgByIdQuery.Result
 
 	// add 2nd user as editor
 	cmd := &models.AddOrgUserCommand{
-		OrgId:  org.Id,
+		OrgId:  orga.Id,
 		UserId: users[1].ID,
 		Role:   org.RoleEditor,
 	}
@@ -95,7 +96,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 
 	// add 3rd user as viewer
 	cmd = &models.AddOrgUserCommand{
-		OrgId:  org.Id,
+		OrgId:  orga.Id,
 		UserId: users[2].ID,
 		Role:   org.RoleViewer,
 	}
@@ -106,11 +107,11 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	getOrgByIdQuery = &models.GetOrgByIdQuery{Id: users[1].OrgID}
 	err = sqlStore.GetOrgById(context.Background(), getOrgByIdQuery)
 	require.NoError(t, err)
-	org = getOrgByIdQuery.Result
+	orga = getOrgByIdQuery.Result
 
 	// add 1st user as admin
 	cmd = &models.AddOrgUserCommand{
-		OrgId:  org.Id,
+		OrgId:  orga.Id,
 		UserId: users[0].ID,
 		Role:   org.RoleAdmin,
 	}

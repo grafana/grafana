@@ -131,7 +131,7 @@ providers:
 	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",

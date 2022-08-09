@@ -157,7 +157,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	testUser := &tests.TestUser{}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, user *tests.TestUser) {
+			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, usr *tests.TestUser) {
 				server, api := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 				marshalled, err := json.Marshal(tc.body)
 				require.NoError(t, err)
