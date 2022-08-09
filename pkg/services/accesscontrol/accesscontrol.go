@@ -140,17 +140,17 @@ var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
-// ReqViewer returns true if the current user has org.ROLE_VIEWER. Note: this can be anonymous user as well
+// ReqViewer returns true if the current user has org.RoleViewer. Note: this can be anonymous user as well
 var ReqViewer = func(c *models.ReqContext) bool {
-	return c.OrgRole.Includes(org.ROLE_VIEWER)
+	return c.OrgRole.Includes(org.RoleViewer)
 }
 
 var ReqOrgAdmin = func(c *models.ReqContext) bool {
-	return c.OrgRole == org.ROLE_ADMIN
+	return c.OrgRole == org.RoleAdmin
 }
 
 var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
-	return c.OrgRole == org.ROLE_ADMIN || c.OrgRole == org.ROLE_EDITOR
+	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
 }
 
 func BuildPermissionsMap(permissions []Permission) map[string]bool {

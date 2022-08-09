@@ -141,7 +141,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		orgUser := org.OrgUser{
 			OrgID:   orgID,
 			UserID:  usr.ID,
-			Role:    org.ROLE_ADMIN,
+			Role:    org.RoleAdmin,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}

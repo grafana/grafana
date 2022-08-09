@@ -98,7 +98,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 		permissions = append(permissions, accesscontrol.ResourcePermission{
 			Actions:     a.service.actions,
 			Scope:       "*",
-			BuiltInRole: string(org.ROLE_ADMIN),
+			BuiltInRole: string(org.RoleAdmin),
 		})
 	}
 

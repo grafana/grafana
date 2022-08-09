@@ -35,7 +35,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		mock := &mockstore.SQLStoreMock{}
 
 		loggedInUserScenarioWithRole(t, "When admin is calling GET on", "GET", "/api/teams/search", "/api/teams/search",
-			org.ROLE_ADMIN, func(sc *scenarioContext) {
+			org.RoleAdmin, func(sc *scenarioContext) {
 				_, err := hs.SQLStore.CreateTeam("team1", "", 1)
 				require.NoError(t, err)
 				_, err = hs.SQLStore.CreateTeam("team2", "", 1)
@@ -122,7 +122,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				SignedInUser: &user.SignedInUser{},
 				Logger:       logger,
 			}
-			c.OrgRole = org.ROLE_EDITOR
+			c.OrgRole = org.RoleEditor
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
@@ -139,7 +139,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				SignedInUser: &user.SignedInUser{UserId: 42},
 				Logger:       logger,
 			}
-			c.OrgRole = org.ROLE_EDITOR
+			c.OrgRole = org.RoleEditor
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)

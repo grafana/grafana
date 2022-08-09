@@ -14,12 +14,12 @@ import (
 
 func TestLibraryElementPermissions(t *testing.T) {
 	var defaultPermissions = []folderACLItem{}
-	var adminOnlyPermissions = []folderACLItem{{org.ROLE_ADMIN, models.PERMISSION_EDIT}}
-	var editorOnlyPermissions = []folderACLItem{{org.ROLE_EDITOR, models.PERMISSION_EDIT}}
-	var editorAndViewerPermissions = []folderACLItem{{org.ROLE_EDITOR, models.PERMISSION_EDIT}, {org.ROLE_VIEWER, models.PERMISSION_EDIT}}
-	var viewerOnlyPermissions = []folderACLItem{{org.ROLE_VIEWER, models.PERMISSION_EDIT}}
-	var everyonePermissions = []folderACLItem{{org.ROLE_ADMIN, models.PERMISSION_EDIT}, {org.ROLE_EDITOR, models.PERMISSION_EDIT}, {org.ROLE_VIEWER, models.PERMISSION_EDIT}}
-	var noPermissions = []folderACLItem{{org.ROLE_VIEWER, models.PERMISSION_VIEW}}
+	var adminOnlyPermissions = []folderACLItem{{org.RoleAdmin, models.PERMISSION_EDIT}}
+	var editorOnlyPermissions = []folderACLItem{{org.RoleEditor, models.PERMISSION_EDIT}}
+	var editorAndViewerPermissions = []folderACLItem{{org.RoleEditor, models.PERMISSION_EDIT}, {org.RoleViewer, models.PERMISSION_EDIT}}
+	var viewerOnlyPermissions = []folderACLItem{{org.RoleViewer, models.PERMISSION_EDIT}}
+	var everyonePermissions = []folderACLItem{{org.RoleAdmin, models.PERMISSION_EDIT}, {org.RoleEditor, models.PERMISSION_EDIT}, {org.RoleViewer, models.PERMISSION_EDIT}}
+	var noPermissions = []folderACLItem{{org.RoleViewer, models.PERMISSION_VIEW}}
 	var folderCases = [][]folderACLItem{
 		defaultPermissions,
 		adminOnlyPermissions,
@@ -42,29 +42,29 @@ func TestLibraryElementPermissions(t *testing.T) {
 		desc   string
 		status int
 	}{
-		{org.ROLE_ADMIN, defaultPermissions, defaultDesc, 200},
-		{org.ROLE_ADMIN, adminOnlyPermissions, adminOnlyDesc, 200},
-		{org.ROLE_ADMIN, editorOnlyPermissions, editorOnlyDesc, 200},
-		{org.ROLE_ADMIN, editorAndViewerPermissions, editorAndViewerDesc, 200},
-		{org.ROLE_ADMIN, viewerOnlyPermissions, viewerOnlyDesc, 200},
-		{org.ROLE_ADMIN, everyonePermissions, everyoneDesc, 200},
-		{org.ROLE_ADMIN, noPermissions, noDesc, 200},
+		{org.RoleAdmin, defaultPermissions, defaultDesc, 200},
+		{org.RoleAdmin, adminOnlyPermissions, adminOnlyDesc, 200},
+		{org.RoleAdmin, editorOnlyPermissions, editorOnlyDesc, 200},
+		{org.RoleAdmin, editorAndViewerPermissions, editorAndViewerDesc, 200},
+		{org.RoleAdmin, viewerOnlyPermissions, viewerOnlyDesc, 200},
+		{org.RoleAdmin, everyonePermissions, everyoneDesc, 200},
+		{org.RoleAdmin, noPermissions, noDesc, 200},
 
-		{org.ROLE_EDITOR, defaultPermissions, defaultDesc, 200},
-		{org.ROLE_EDITOR, adminOnlyPermissions, adminOnlyDesc, 403},
-		{org.ROLE_EDITOR, editorOnlyPermissions, editorOnlyDesc, 200},
-		{org.ROLE_EDITOR, editorAndViewerPermissions, editorAndViewerDesc, 200},
-		{org.ROLE_EDITOR, viewerOnlyPermissions, viewerOnlyDesc, 403},
-		{org.ROLE_EDITOR, everyonePermissions, everyoneDesc, 200},
-		{org.ROLE_EDITOR, noPermissions, noDesc, 403},
+		{org.RoleEditor, defaultPermissions, defaultDesc, 200},
+		{org.RoleEditor, adminOnlyPermissions, adminOnlyDesc, 403},
+		{org.RoleEditor, editorOnlyPermissions, editorOnlyDesc, 200},
+		{org.RoleEditor, editorAndViewerPermissions, editorAndViewerDesc, 200},
+		{org.RoleEditor, viewerOnlyPermissions, viewerOnlyDesc, 403},
+		{org.RoleEditor, everyonePermissions, everyoneDesc, 200},
+		{org.RoleEditor, noPermissions, noDesc, 403},
 
-		{org.ROLE_VIEWER, defaultPermissions, defaultDesc, 403},
-		{org.ROLE_VIEWER, adminOnlyPermissions, adminOnlyDesc, 403},
-		{org.ROLE_VIEWER, editorOnlyPermissions, editorOnlyDesc, 403},
-		{org.ROLE_VIEWER, editorAndViewerPermissions, editorAndViewerDesc, 200},
-		{org.ROLE_VIEWER, viewerOnlyPermissions, viewerOnlyDesc, 200},
-		{org.ROLE_VIEWER, everyonePermissions, everyoneDesc, 200},
-		{org.ROLE_VIEWER, noPermissions, noDesc, 403},
+		{org.RoleViewer, defaultPermissions, defaultDesc, 403},
+		{org.RoleViewer, adminOnlyPermissions, adminOnlyDesc, 403},
+		{org.RoleViewer, editorOnlyPermissions, editorOnlyDesc, 403},
+		{org.RoleViewer, editorAndViewerPermissions, editorAndViewerDesc, 200},
+		{org.RoleViewer, viewerOnlyPermissions, viewerOnlyDesc, 200},
+		{org.RoleViewer, everyonePermissions, everyoneDesc, 200},
+		{org.RoleViewer, noPermissions, noDesc, 403},
 	}
 
 	for _, testCase := range accessCases {
@@ -132,9 +132,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 		role   org.RoleType
 		status int
 	}{
-		{org.ROLE_ADMIN, 200},
-		{org.ROLE_EDITOR, 200},
-		{org.ROLE_VIEWER, 403},
+		{org.RoleAdmin, 200},
+		{org.RoleEditor, 200},
+		{org.RoleViewer, 403},
 	}
 
 	for _, testCase := range generalFolderCases {
@@ -197,9 +197,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 	var missingFolderCases = []struct {
 		role org.RoleType
 	}{
-		{org.ROLE_ADMIN},
-		{org.ROLE_EDITOR},
-		{org.ROLE_VIEWER},
+		{org.RoleAdmin},
+		{org.RoleEditor},
+		{org.RoleViewer},
 	}
 
 	for _, testCase := range missingFolderCases {
@@ -234,9 +234,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 		role     org.RoleType
 		statuses []int
 	}{
-		{org.ROLE_ADMIN, []int{200, 200, 200, 200, 200, 200, 200}},
-		{org.ROLE_EDITOR, []int{200, 404, 200, 200, 200, 200, 200}},
-		{org.ROLE_VIEWER, []int{200, 404, 404, 200, 200, 200, 200}},
+		{org.RoleAdmin, []int{200, 200, 200, 200, 200, 200, 200}},
+		{org.RoleEditor, []int{200, 404, 200, 200, 200, 200, 200}},
+		{org.RoleViewer, []int{200, 404, 404, 200, 200, 200, 200}},
 	}
 
 	for _, testCase := range getCases {
@@ -297,9 +297,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 		panels        int
 		folderIndexes []int
 	}{
-		{org.ROLE_ADMIN, 7, []int{0, 1, 2, 3, 4, 5, 6}},
-		{org.ROLE_EDITOR, 6, []int{0, 2, 3, 4, 5, 6}},
-		{org.ROLE_VIEWER, 5, []int{0, 3, 4, 5, 6}},
+		{org.RoleAdmin, 7, []int{0, 1, 2, 3, 4, 5, 6}},
+		{org.RoleEditor, 6, []int{0, 2, 3, 4, 5, 6}},
+		{org.RoleViewer, 5, []int{0, 3, 4, 5, 6}},
 	}
 
 	for _, testCase := range getAllCases {

@@ -39,7 +39,7 @@ func TestDashboardQuota(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
 	})
@@ -132,7 +132,7 @@ providers:
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
 	createUser(t, store, useorg.ROLErCommand{
-		DefaultOrgRole: string(org.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
 	})

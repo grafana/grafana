@@ -31,7 +31,7 @@ type TestApiKey struct {
 }
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *user.User {
-	role := string(org.ROLE_VIEWER)
+	role := string(org.RoleViewer)
 	if testUser.Role != "" {
 		role = testUser.Role
 	}
@@ -47,7 +47,7 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 }
 
 func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *apikey.APIKey {
-	role := org.ROLE_VIEWER
+	role := org.RoleViewer
 	if testKey.Role != "" {
 		role = testKey.Role
 	}

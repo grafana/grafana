@@ -50,10 +50,10 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 				ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))))
 
 			if route.ReqRole != "" {
-				if route.ReqRole == org.ROLE_ADMIN {
-					handlers = append(handlers, middleware.RoleAuth(org.ROLE_ADMIN))
-				} else if route.ReqRole == org.ROLE_EDITOR {
-					handlers = append(handlers, middleware.RoleAuth(org.ROLE_EDITOR, org.ROLE_ADMIN))
+				if route.ReqRole == org.RoleAdmin {
+					handlers = append(handlers, middleware.RoleAuth(org.RoleAdmin))
+				} else if route.ReqRole == org.RoleEditor {
+					handlers = append(handlers, middleware.RoleAuth(org.RoleEditor, org.RoleAdmin))
 				}
 			}
 

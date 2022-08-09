@@ -95,7 +95,7 @@ func TestBrowserScreenshotService(t *testing.T) {
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   2,
-			OrgRole: org.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 		ErrorOpts: rendering.ErrorOpts{
 			ErrorConcurrentLimitReached: true,

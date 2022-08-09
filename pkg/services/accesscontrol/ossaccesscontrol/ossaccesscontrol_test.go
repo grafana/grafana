@@ -68,7 +68,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			desc: "should successfully evaluate access to the endpoint",
 			user: userTestCase{
 				name:           "testuser",
-				orgRole:        org.ROLE_VIEWER,
+				orgRole:        org.RoleViewer,
 				isGrafanaAdmin: true,
 			},
 			endpoints: []endpointTestCase{
@@ -81,7 +81,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			desc: "should restrict access to the unauthorized endpoints",
 			user: userTestCase{
 				name:           "testuser",
-				orgRole:        org.ROLE_VIEWER,
+				orgRole:        org.RoleViewer,
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
@@ -363,7 +363,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 		UserId:  2,
 		OrgId:   3,
 		OrgName: "TestOrg",
-		OrgRole: org.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 		Login:   "testUser",
 		Name:    "Test User",
 		Email:   "testuser@example.org",
@@ -425,7 +425,7 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 		UserId:  2,
 		OrgId:   3,
 		OrgName: "TestOrg",
-		OrgRole: org.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 		Login:   "testUser",
 		Name:    "Test User",
 		Email:   "testuser@example.org",

@@ -506,7 +506,7 @@ func (hs *HTTPServer) canSaveAnnotation(c *models.ReqContext, annotation *annota
 		return canEditDashboard(c, annotation.DashboardId)
 	} else {
 		if hs.AccessControl.IsDisabled() {
-			return c.SignedInUser.HasRole(org.ROLE_EDITOR), nil
+			return c.SignedInUser.HasRole(org.RoleEditor), nil
 		}
 		return true, nil
 	}
@@ -622,7 +622,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int6
 			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
 			return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 		} else {
-			return c.SignedInUser.HasRole(org.ROLE_EDITOR), nil
+			return c.SignedInUser.HasRole(org.RoleEditor), nil
 		}
 	}
 }

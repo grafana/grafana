@@ -59,7 +59,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Login:      "signed_in_user",
 			Email:      "signed.in.user@test.com",
 			OrgId:      testOrgID,
-			OrgRole:    org.ROLE_VIEWER,
+			OrgRole:    org.RoleViewer,
 			LastSeenAt: time.Now(),
 		}
 

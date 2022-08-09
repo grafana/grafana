@@ -127,17 +127,17 @@ func createUserOrgDTO() []*models.UserOrgDTO {
 		{
 			OrgId: 1,
 			Name:  "Bar",
-			Role:  org.ROLE_VIEWER,
+			Role:  org.RoleViewer,
 		},
 		{
 			OrgId: 10,
 			Name:  "Foo",
-			Role:  org.ROLE_ADMIN,
+			Role:  org.RoleAdmin,
 		},
 		{
 			OrgId: 11,
 			Name:  "Stuff",
-			Role:  org.ROLE_VIEWER,
+			Role:  org.RoleViewer,
 		},
 	}
 	return users
@@ -147,7 +147,7 @@ func createSimpleExternalUser() models.ExternalUserInfo {
 	externalUser := models.ExternalUserInfo{
 		AuthModule: "ldap",
 		OrgRoles: map[int64]org.RoleType{
-			1: org.ROLE_VIEWER,
+			1: org.RoleViewer,
 		},
 	}
 

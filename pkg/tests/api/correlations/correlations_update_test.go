@@ -30,7 +30,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	}
 
 	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       editorUser.password,
 		Login:          editorUser.username,
 	})

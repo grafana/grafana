@@ -39,7 +39,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	// When using access control anyone that can create a data source should be able to list all data sources installed
 	// Fallback to only letting admins list non-core plugins
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(org.ROLE_ADMIN) {
+	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(org.RoleAdmin) {
 		coreFilter = "1"
 	}
 

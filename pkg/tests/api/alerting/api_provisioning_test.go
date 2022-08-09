@@ -25,7 +25,7 @@ func TestProvisioning(t *testing.T) {
 
 	// Create a users to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLE_VIEWER),
+		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})

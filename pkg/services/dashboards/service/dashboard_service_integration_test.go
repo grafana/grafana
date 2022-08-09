@@ -919,7 +919,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		Dashboard: cmd.GetDashboardModel(),
 		User: &user.SignedInUser{
 			UserId:  1,
-			OrgRole: org.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 	}
 
@@ -956,7 +956,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		Dashboard: cmd.GetDashboardModel(),
 		User: &user.SignedInUser{
 			UserId:  1,
-			OrgRole: org.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 	}
 

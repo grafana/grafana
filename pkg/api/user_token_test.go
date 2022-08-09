@@ -162,7 +162,7 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 			sc.context = c
 			sc.context.UserId = userId
 			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = org.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.RevokeUserAuthToken(c)
 		})
@@ -188,7 +188,7 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 			sc.context = c
 			sc.context.UserId = userId
 			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = org.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.GetUserAuthTokens(c)
 		})
@@ -211,7 +211,7 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = org.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.logoutUserFromAllDevicesInternal(context.Background(), userId)
 		})
@@ -238,7 +238,7 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.R
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = org.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 			sc.context.UserToken = token
 
 			return hs.revokeUserAuthTokenInternal(c, userId, cmd)
@@ -263,7 +263,7 @@ func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = org.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 			sc.context.UserToken = token
 
 			return hs.getUserAuthTokensInternal(c, testUserID)

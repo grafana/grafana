@@ -76,7 +76,7 @@ func removeForceLoginParams(str string) string {
 }
 
 func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
-	if !c.SignedInUser.HasRole(org.ROLE_EDITOR) && !setting.ViewersCanEdit {
+	if !c.SignedInUser.HasRole(org.RoleEditor) && !setting.ViewersCanEdit {
 		accessForbidden(c)
 	}
 }
@@ -137,11 +137,11 @@ func Auth(options *AuthOptions) web.Handler {
 // are otherwise only available to admins.
 func AdminOrEditorAndFeatureEnabled(enabled bool) web.Handler {
 	return func(c *moorg.ROLEtext) {
-		if c.OrgRole == org.ROLE_ADMIN {
+		if c.OrgRole == org.RoleAdmin {
 			return
 		}
 		org.ROLE
-		if c.OrgRole == org.ROLE_EDITOR && enabled {
+		if c.OrgRole == org.RoleEditor && enabled {
 			return
 		}
 
@@ -195,7 +195,7 @@ func shouldForceLogin(c *models.ReqContext) bool {
 
 func OrgAdminDashOrFolderAdminOrTeamAdmin(ss sqlstore.Store, ds dashboards.DashboardService) func(c *models.ReqContext) {
 	return func(c *moorg.ROLEtext) {
-		if c.OrgRole == org.ROLE_ADMIN {
+		if c.OrgRole == org.RoleAdmin {
 			return
 		}
 

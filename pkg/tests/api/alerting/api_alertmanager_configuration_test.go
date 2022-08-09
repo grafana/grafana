@@ -33,7 +33,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 
 	// create user under main organisation
 	userID := createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
 	})

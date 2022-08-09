@@ -35,7 +35,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, s, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Login:          "grafana",
 		Password:       "password",
 	})

@@ -211,7 +211,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		},
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   evalCtx.Rule.OrgID,
-			OrgRole: org.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 		Width:           1000,
 		Height:          500,

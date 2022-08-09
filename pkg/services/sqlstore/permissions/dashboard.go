@@ -21,13 +21,13 @@ type DashboardPermissionFilter struct {
 }
 
 func (d DashboardPermissionFilter) Where() (string, []interface{}) {
-	if d.OrgRole == org.ROLE_ADMIN {
+	if d.OrgRole == org.RoleAdmin {
 		return "", nil
 	}
 
 	okRoles := []interface{}{d.OrgRole}
-	if d.OrgRole == org.ROLE_EDITOR {
-		okRoles = append(okRoles, org.ROLE_VIEWER)
+	if d.OrgRole == org.RoleEditor {
+		okRoles = append(okRoles, org.RoleViewer)
 	}
 
 	falseStr := d.Dialect.BooleanStr(false)

@@ -471,7 +471,7 @@ func (sch *schedule) getRuleExtraLabels(ctx context.Context, alertRule *ngmodels
 
 	user := &user.SignedInUser{
 		UserId:  0,
-		OrgRole: org.ROLE_ADMIN,
+		OrgRole: org.RoleAdmin,
 		OrgId:   alertRule.OrgID,
 	}
 

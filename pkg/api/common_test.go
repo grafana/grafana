@@ -56,7 +56,7 @@ import (
 )
 
 func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
-	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, org.ROLE_EDITOR, fn, sqlStore)
+	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, org.RoleEditor, fn, sqlStore)
 }
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role org.RoleType, fn scenarioFunc, sqlStore sqlstore.Store) {
@@ -312,17 +312,17 @@ func setInitCtxSignedInUser(initCtx *models.ReqContext, user user.SignedInUser) 
 
 func setInitCtxSignedInViewer(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = trueorg.ROLE
-	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.ROLE_VIEWER, Login: testUserLogin}
+	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleViewer, Login: testUserLogin}
 }
 
 func setInitCtxSignedInEditor(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = trueorg.ROLE
-	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.ROLE_EDITOR, Login: testUserLogin}
+	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleEditor, Login: testUserLogin}
 }
 
 func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = trueorg.ROLE
-	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.ROLE_ADMIN, Login: testUserLogin}
+	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleAdmin, Login: testUserLogin}
 }
 
 func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
@@ -481,7 +481,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 
 var (org.ROLE
 	viewerRole = org.ROLEEWER
-	editorRole = org.ROLE_EDITOR
+	editorRole = org.RoleEditor
 )
 
 type setUpConf struct {

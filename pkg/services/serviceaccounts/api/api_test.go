@@ -291,7 +291,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	signedUser := &user.SignedInUser{
 		OrgId:   1,
 		UserId:  1,
-		OrgRole: org.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 	}
 
 	m.Use(func(c *web.Context) {
@@ -414,8 +414,8 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 		Id           int
 	}
 
-	viewerRole := org.ROLE_VIEWER
-	editorRole := org.ROLE_EDITOR
+	viewerRole := org.RoleViewer
+	editorRole := org.RoleEditor
 	var invalidRole org.RoleType = "InvalidRole"
 	testCases := []testUpdateSATestCase{
 		{

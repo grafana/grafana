@@ -152,7 +152,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 			builder.Write(")")
 		}
 
-		if query.User.OrgRole != org.ROLE_ADMIN {
+		if query.User.OrgRole != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
 		}
 

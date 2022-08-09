@@ -27,11 +27,11 @@ func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) err
 }
 
 func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user *user.SignedInUser, folderID int64) error {
-	if isGeneralFolder(folderID) && user.HasRole(org.ROLE_EDITOR) {
+	if isGeneralFolder(folderID) && user.HasRole(org.RoleEditor) {
 		return nil
 	}
 
-	if isGeneralFolder(folderID) && user.HasRole(org.ROLE_VIEWER) {
+	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return dashboards.ErrFolderAccessDenied
 	}
 	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
@@ -53,7 +53,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 }
 
 func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user *user.SignedInUser, folderID int64) error {
-	if isGeneralFolder(folderID) && user.HasRole(org.ROLE_VIEWER) {
+	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return nil
 	}
 

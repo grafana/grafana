@@ -521,7 +521,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				sc.context.UserId = testUserID
 				sc.context.OrgId = testOrgID
 				sc.context.Login = testUserLogin
-				sc.context.OrgRole = org.ROLE_VIEWER
+				sc.context.OrgRole = org.RoleViewer
 				sc.context.IsSignedIn = true
 			}
 			sc.m.Use(pretendSignInMiddleware)

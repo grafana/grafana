@@ -65,7 +65,7 @@ func TestImportDashboardService(t *testing.T) {
 			Inputs: []dashboardimport.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
-			User:     &user.SignedInUser{UserId: 2, OrgRole: org.ROLE_ADMIN, OrgId: 3},
+			User:     &user.SignedInUser{UserId: 2, OrgRole: org.RoleAdmin, OrgId: 3},
 			FolderId: 5,
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
@@ -122,7 +122,7 @@ func TestImportDashboardService(t *testing.T) {
 			Inputs: []dashboardimport.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
-			User:     &user.SignedInUser{UserId: 2, OrgRole: org.ROLE_ADMIN, OrgId: 3},
+			User:     &user.SignedInUser{UserId: 2, OrgRole: org.RoleAdmin, OrgId: 3},
 			FolderId: 5,
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)

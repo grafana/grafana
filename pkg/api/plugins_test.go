@@ -62,7 +62,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/install", strings.NewReader("{ \"version\": \"1.0.2\" }"))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserId: 1, OrgId: 1, OrgRole: org.ROLE_EDITOR, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserId: 1, OrgId: 1, OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
@@ -80,7 +80,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/uninstall", strings.NewReader("{}"))org.ROLE
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserId: 1, OrgId: 1, OrgRole: org.ROLE_VIEWER, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserId: 1, OrgId: 1, OrgRole: org.RoleViewer, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 

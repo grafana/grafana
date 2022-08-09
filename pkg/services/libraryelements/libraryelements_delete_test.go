@@ -36,7 +36,7 @@ func TestDeleteLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.reqContext.SignedInUser.OrgId = 2
-			sc.reqContext.SignedInUser.OrgRole = org.ROLE_ADMIN
+			sc.reqContext.SignedInUser.OrgRole = org.RoleAdmin
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})

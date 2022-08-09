@@ -29,7 +29,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.ROLE_VIEWER) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,

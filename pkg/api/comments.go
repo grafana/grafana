@@ -34,7 +34,7 @@ func (hs *HTTPServer) commentsCreate(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if c.SignedInUser.UserId == 0 && !c.SignedInUser.HasRole(org.ROLE_ADMIN) {
+	if c.SignedInUser.UserId == 0 && !c.SignedInUser.HasRole(org.RoleAdmin) {
 		return response.Error(http.StatusForbidden, "admin role required", nil)
 	}
 	comment, err := hs.commentsService.Create(c.Req.Context(), c.OrgId, c.SignedInUser, cmd)

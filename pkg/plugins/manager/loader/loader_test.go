@@ -1064,7 +1064,7 @@ func TestLoader_readPluginJSON(t *testing.T) {
 					},
 				},
 				Includes: []*plugins.Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.ROLE_VIEWER},
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
 					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.ROLEEWER},
 					{Name: "Nginx Panel", Type: "panel", Role: org.ROLEEWER},
 					{Name: "Nginx Datasource", Type: "datasource", Role: org.ROLEEWER},

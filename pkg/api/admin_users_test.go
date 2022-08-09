@@ -31,7 +31,7 @@ const (
 )
 
 func TestAdminAPIEndpoint(t *testing.T) {
-	const role = org.ROLE_ADMIN
+	const role = org.RoleAdmin
 	userService := usertest.NewUserServiceFake()
 	t.Run("Given a server admin attempts to remove themselves as an admin", func(t *testing.T) {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
@@ -278,7 +278,7 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = teorg.ROLE
-			sc.context.OrgRole = org.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminLogoutUser(c)
 		})
@@ -306,7 +306,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = teorg.ROLE
-			sc.context.OrgRole = org.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminRevokeUserAuthToken(c)
 		})
@@ -332,7 +332,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = teorg.ROLE
-			sc.context.OrgRole = org.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminGetUserAuthTokens(c)
 		})

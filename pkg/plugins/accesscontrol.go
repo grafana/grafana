@@ -24,7 +24,7 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 				{Action: ActionAppAccess, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
-		Grants: []string{string(org.ROLE_VIEWER)},
+		Grants: []string{string(org.RoleViewer)},
 	}
 	return acService.DeclareFixedRoles(AppPluginsReader)
 }

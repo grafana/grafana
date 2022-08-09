@@ -17,8 +17,8 @@ var (
 	})
 	ReqSignedIn            = Auth(&AuthOptions{ReqSignedIn: true})
 	ReqSignedInNoAnonymous = Auth(&AuthOptions{ReqSignedIn: true, ReqNoAnonynmous: true})
-	ReqEditorRole          = RoleAuth(org.ROLEITOR, org.ROLE_ADMIN)
-	ReqOrgAdmin            = RoleAuth(org.ROLE_ADMIN)
+	ReqEditorRole          = RoleAuth(org.ROLEITOR, org.RoleAdmin)
+	ReqOrgAdmin            = RoleAuth(org.RoleAdmin)
 )
 
 func HandleNoCacheHeader(ctx *models.ReqContext) {

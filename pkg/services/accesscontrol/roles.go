@@ -181,11 +181,11 @@ func DeclareFixedRoles(ac AccessControl) error {
 	}
 	orgUsersReader := RoleRegistration{
 		Role:   orgUsersReaderRole,
-		Grants: []string{RoleGrafanaAdmin, string(org.ROLE_ADMIN)},
+		Grants: []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
 	}
 	orgUsersWriter := RoleRegistration{
 		Role:   orgUsersWriterRole,
-		Grants: []string{RoleGrafanaAdmin, string(org.ROLE_ADMIN)},
+		Grants: []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
 	}
 	settingsReader := RoleRegistration{
 		Role:   SettingsReaderRole,
@@ -262,34 +262,34 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 
 func BuildBasicRoleDefinitions() map[string]*RoleDTO {
 	return map[string]*RoleDTO{
-		string(org.ROLE_ADMIN): {
+		string(org.RoleAdmin): {
 			Name:        BasicRolePrefix + "admin",
 			UID:         BasicRoleUIDPrefix + "admin",
 			OrgID:       GlobalOrgID,
 			Version:     1,
-			DisplayName: string(org.ROLE_ADMIN),
+			DisplayName: string(org.RoleAdmin),
 			Description: "Admin role",
 			Group:       "Basic",
 			Permissions: []Permission{},
 			Hidden:      true,
 		},
-		string(org.ROLE_EDITOR): {
+		string(org.RoleEditor): {
 			Name:        BasicRolePrefix + "editor",
 			UID:         BasicRoleUIDPrefix + "editor",
 			OrgID:       GlobalOrgID,
 			Version:     1,
-			DisplayName: string(org.ROLE_EDITOR),
+			DisplayName: string(org.RoleEditor),
 			Description: "Editor role",
 			Group:       "Basic",
 			Permissions: []Permission{},
 			Hidden:      true,
 		},
-		string(org.ROLE_VIEWER): {
+		string(org.RoleViewer): {
 			Name:        BasicRolePrefix + "viewer",
 			UID:         BasicRoleUIDPrefix + "viewer",
 			OrgID:       GlobalOrgID,
 			Version:     1,
-			DisplayName: string(org.ROLE_VIEWER),
+			DisplayName: string(org.RoleViewer),
 			Description: "Viewer role",
 			Group:       "Basic",
 			Permissions: []Permission{},

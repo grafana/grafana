@@ -67,7 +67,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	mock := mockstore.NewSQLStoreMock()
 
 	loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
-		"api/teams/:teamId/members", org.ROLE_ADMIN, func(sc *scenarioContext) {
+		"api/teams/:teamId/members", org.RoleAdmin, func(sc *scenarioContext) {
 			setUpGetTeamMembersHandler(t, sqlStore)
 
 			sc.handlerFunc = hs.GetTeamMembers
@@ -89,7 +89,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
 		loggedInUserScenarioWithRole(torg.ROLEling GET on", "GET", "api/teams/1/members",
-			"api/teams/:teamId/members", org.ROLE_ADMIN, func(sc *scenarioContext) {
+			"api/teams/:teamId/members", org.RoleAdmin, func(sc *scenarioContext) {
 				setUpGetTeamMembersHandler(t, sqlStore)
 
 				sc.handlerFunc = hs.GetTeamMembers

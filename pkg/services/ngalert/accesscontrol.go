@@ -140,7 +140,7 @@ var (
 			Group:       AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(rulesReaderRole.Role.Permissions, instancesReaderRole.Role.Permissions, notificationsReaderRole.Role.Permissions),
 		},
-		Grants: []string{string(org.ROLE_VIEWER)},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	alertingWriterRole = accesscontrol.RoleRegistration{
@@ -151,7 +151,7 @@ var (
 			Group:       AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(rulesWriterRole.Role.Permissions, instancesWriterRole.Role.Permissions, notificationsWriterRole.Role.Permissions),
 		},
-		Grants: []string{string(org.ROLE_EDITOR), string(org.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)},
 	}
 
 	alertingProvisionerRole = accesscontrol.RoleRegistration{
@@ -169,7 +169,7 @@ var (
 				},
 			},
 		},
-		Grants: []string{string(org.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 )
 

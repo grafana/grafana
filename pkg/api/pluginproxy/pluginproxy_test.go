@@ -294,7 +294,7 @@ func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *
 		route = &plugins.Route{
 			Path:    "api/v4/",
 			URL:     "https://www.google.com",
-			ReqRole: org.ROLE_EDITOR,
+			ReqRole: org.RoleEditor,
 		}
 	}
 	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, pluginSettingsService, secretsService)

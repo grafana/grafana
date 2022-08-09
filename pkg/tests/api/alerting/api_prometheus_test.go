@@ -37,7 +37,7 @@ func TestPrometheusRules(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -331,7 +331,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, useorg.ROLErCommand{
-		DefaultOrgRole: string(org.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -625,7 +625,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, org.ROLE.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -674,7 +674,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder2org.ROLE
-	removeFolderPermission(t, permissionsStore, 1, userID, org.ROLE_EDITOR, "folder2")
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
 	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that folder2 is not included in the response
@@ -699,7 +699,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder1org.ROLE
-	removeFolderPermission(t, permissionsStore, 1, userID, org.ROLE_EDITOR, "folder1")
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
 	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that no folders are included in the response

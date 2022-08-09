@@ -89,7 +89,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 		},
 	}
 	ctx := createRequestCtxInOrg(1)
-	ctx.OrgRole = org.ROLE_ADMIN
+	ctx.OrgRole = org.RoleAdmin
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			sut := createAPIAdminSut(t, test.datasources)

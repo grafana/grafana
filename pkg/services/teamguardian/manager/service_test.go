@@ -20,12 +20,12 @@ func TestUpdateTeam(t *testing.T) {
 		admin := user.SignedInUser{
 			UserId:  1,
 			OrgId:   1,
-			OrgRole: org.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		}
 		editor := user.SignedInUser{
 			UserId:  2,
 			OrgId:   1,
-			OrgRole: org.ROLE_EDITOR,
+			OrgRole: org.RoleEditor,
 		}
 		testTeam := models.Team{
 			Id:    1,

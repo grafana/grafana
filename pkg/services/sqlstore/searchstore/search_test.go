@@ -28,7 +28,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	user := &user.SignedInUser{
 		UserId:  1,
 		OrgId:   1,
-		OrgRole: org.ROLE_EDITOR,
+		OrgRole: org.RoleEditor,
 	}
 
 	db := setupTestEnvironment(t)
@@ -70,7 +70,7 @@ func TestBuilder_Pagination(t *testing.T) {
 	user := &user.SignedInUser{
 		UserId:  1,
 		OrgId:   1,
-		OrgRole: org.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 	}
 
 	db := setupTestEnvironment(t)
@@ -116,7 +116,7 @@ func TestBuilder_Permissions(t *testing.T) {
 	user := &user.SignedInUser{
 		UserId:  1,
 		OrgId:   1,
-		OrgRole: org.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 	}
 
 	db := setupTestEnvironment(t)

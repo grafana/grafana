@@ -27,7 +27,7 @@ func TestAvailableChannels(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})

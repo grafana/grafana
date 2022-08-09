@@ -99,7 +99,7 @@ func (g *dashboardGuardianImpl) CanCreate(_ int64, _ bool) (bool, error) {
 }
 
 func (g *dashboardGuardianImpl) HasPermission(permission models.PermissionType) (bool, error) {
-	if g.user.OrgRole == org.ROLE_ADMIN {
+	if g.user.OrgRole == org.RoleAdmin {
 		return g.logHasPermissionResult(permission, true, nil)
 	}
 
@@ -176,7 +176,7 @@ func (g *dashboardGuardianImpl) checkACL(permission models.PermissionType, acl [
 
 func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardACL) (bool, error) {
 	acl := []*models.DashboardACLInfoDTO{}
-	adminRole := org.ROLE_ADMIN
+	adminRole := org.RoleAdmin
 	everyoneWithAdminRole := &models.DashboardACLInfoDTO{DashboardId: g.dashId, UserId: 0, TeamId: 0, Role: &adminRole, Permission: models.PERMISSION_ADMIN}
 
 	// validate that duplicate permissions don't exists
@@ -213,7 +213,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission models.Pe
 		}
 	}
 
-	if g.user.OrgRole == org.ROLE_ADMIN {
+	if g.user.OrgRole == org.RoleAdmin {
 		return true, nil
 	}
 

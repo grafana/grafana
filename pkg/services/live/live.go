@@ -754,7 +754,7 @@ func (g *GrafanaLive) handleOnPublish(ctx context.Context, client *centrifuge.Cl
 					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 				}
 			} else {
-				if !user.HasRole(org.ROLE_ADMIN) {
+				if !user.HasRole(org.RoleAdmin) {
 					// using HTTP error codes for WS errors too.
 					code, text := publishStatusToHTTPError(backend.PublishStreamStatusPermissionDenied)
 					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
@@ -986,7 +986,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext) response.Respons
 					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
 				}
 			} else {
-				if !user.HasRole(org.ROLE_ADMIN) {
+				if !user.HasRole(org.RoleAdmin) {
 					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
 				}
 			}

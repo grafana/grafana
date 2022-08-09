@@ -163,7 +163,7 @@ func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
 }
 
 func (hs *HTTPServer) ReqCanAdminTeams(c *models.ReqContext) bool {
-	return c.OrgRole == org.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == org.ROLE_EDITOR)
+	return c.OrgRole == org.RoleAdmin || (hs.Cfg.EditorsCanAdmin && c.OrgRole == org.RoleEditor)
 }
 
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) ([]*dtos.NavLink, error) {
@@ -203,7 +203,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	canExplore := func(coorg.ROLEls.ReqContext) bool {org.ROLE
-		return c.OrgRole == org.ROLE_ADMIN || c.OrgRole == org.ROLE_EDITOR || setting.ViewersCanEdit
+		return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor || setting.ViewersCanEdit
 	}
 
 	if setting.ExploreEnabled && hasAccess(canExplore, ac.EvalPermission(ac.ActionDatasourcesExplore)) {
@@ -285,7 +285,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 org.ROLE
-	if c.OrgRole == org.ROLE_ADMIN {
+	if c.OrgRole == org.RoleAdmin {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
@@ -538,7 +538,7 @@ func (hs *HTTPServer) buildLegacyAlertNavLinks(c *models.ReqContext) []*dtos.Nav
 		Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
 	})
 org.ROLE
-	if c.HasRole(org.ROLE_EDITOR) {
+	if c.HasRole(org.RoleEditor) {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 			Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
@@ -582,7 +582,7 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 org.ROLE
-	if c.OrgRole == org.ROLE_ADMIN {
+	if c.OrgRole == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 			Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",

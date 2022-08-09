@@ -35,14 +35,14 @@ func (sb *SQLBuilder) AddParams(params ...interface{}) {
 }
 
 func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission models.PermissionType) {
-	if user.OrgRole == org.ROLE_ADMIN {
+	if user.OrgRole == org.RoleAdmin {
 		return
 	}
 
 	okRoles := []interface{}{user.OrgRole}
 
-	if user.OrgRole == org.ROLE_EDITOR {
-		okRoles = append(okRoles, org.ROLE_VIEWER)
+	if user.OrgRole == org.RoleEditor {
+		okRoles = append(okRoles, org.RoleViewer)
 	}
 
 	falseStr := dialect.BooleanStr(false)

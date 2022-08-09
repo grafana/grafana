@@ -133,9 +133,9 @@ func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) o
 	}
 
 	roleOrder := []org.RoleType{
-		org.ROLE_ADMIN,
-		org.ROLE_EDITOR,
-		org.ROLE_VIEWER,
+		org.RoleAdmin,
+		org.RoleEditor,
+		org.RoleViewer,
 	}
 
 	for _, role := range roleOrder {
@@ -148,7 +148,7 @@ func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) o
 		return org.RoleType("")
 	}
 
-	return org.ROLE_VIEWER
+	return org.RoleViewer
 }
 
 func hasRole(roles []string, role org.RoleType) bool {

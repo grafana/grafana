@@ -51,7 +51,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		token := apikey.APIKey{
 			OrgId:            cmd.OrgId,
 			Name:             cmd.Name,
-			Role:             org.ROLE_VIEWER,
+			Role:             org.RoleViewer,
 			Key:              cmd.Key,
 			Created:          updated,
 			Updated:          updated,

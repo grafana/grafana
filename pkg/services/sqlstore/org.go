@@ -122,7 +122,7 @@ func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, en
 		user := models.OrgUser{
 			OrgId:   org.Id,
 			UserId:  userID,
-			Role:    org.ROLE_ADMIN,
+			Role:    org.RoleAdmin,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}

@@ -55,7 +55,7 @@ var testUser = &user.SignedInUser{
 	UserId:  2,
 	OrgId:   3,
 	OrgName: "TestOrg",
-	OrgRole: org.ROLE_VIEWER,
+	OrgRole: org.RoleViewer,
 	Login:   "testUser",
 	Name:    "Test User",
 	Email:   "testuser@example.org",

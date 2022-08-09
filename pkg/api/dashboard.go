@@ -539,7 +539,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
-	dash.Meta.CanEdit = c.SignedInUser.HasRole(org.ROLE_EDITOR)
+	dash.Meta.CanEdit = c.SignedInUser.HasRole(org.RoleEditor)
 	dash.Meta.FolderTitle = "General"
 	dash.Dashboard = simplejson.New()
 
@@ -556,7 +556,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
 	// We only add this getting started panel for Admins who have not dismissed it,
 	// and if a custom default home dashboard hasn't been configured
-	if !c.HasUserRole(org.ROLE_ADMIN) ||
+	if !c.HasUserRole(org.RoleAdmin) ||
 		c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) ||
 		hs.Cfg.DefaultHomeDashboardPath != "" {
 		return

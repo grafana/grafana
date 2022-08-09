@@ -56,7 +56,7 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *user.SignedInU
 	parts := strings.Split(e.Path, "/")
 	if parts[0] == "gitops" {
 		// gitops gets all changes for everything, so lets make sure it is an admin user
-		if !user.HasRole(org.ROLE_ADMIN) {
+		if !user.HasRole(org.RoleAdmin) {
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 		}
 		return models.SubscribeReply{
@@ -94,7 +94,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *user.SignedInUse
 	parts := strings.Split(e.Path, "/")
 	if parts[0] == "gitops" {
 		// gitops gets all changes for everything, so lets make sure it is an admin user
-		if !user.HasRole(org.ROLE_ADMIN) {
+		if !user.HasRole(org.RoleAdmin) {
 			return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 		}
 

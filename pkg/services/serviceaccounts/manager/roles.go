@@ -20,7 +20,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 				},
 			},
 		},
-		Grants: []string{string(org.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	saCreator := accesscontrol.RoleRegistration{
@@ -35,7 +35,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 				},
 			},
 		},
-		Grants: []string{string(org.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	saWriter := accesscontrol.RoleRegistration{
@@ -66,7 +66,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 				},
 			}),
 		},
-		Grants: []string{string(org.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	if err := ac.DeclareFixedRoles(saReader, saCreator, saWriter); err != nil {

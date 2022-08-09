@@ -36,7 +36,7 @@ func TestAlertRulePermissions(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})

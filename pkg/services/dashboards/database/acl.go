@@ -98,7 +98,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *mod
 // HasEditPermissionInFolders validates that an user have access to a certain folder
 func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		if query.SignedInUser.HasRole(org.ROLE_EDITOR) {
+		if query.SignedInUser.HasRole(org.RoleEditor) {
 			query.Result = true
 			return nil
 		}
@@ -126,7 +126,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 
 func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		if query.SignedInUser.HasRole(org.ROLE_ADMIN) {
+		if query.SignedInUser.HasRole(org.RoleAdmin) {
 			query.Result = true
 			return nil
 		}

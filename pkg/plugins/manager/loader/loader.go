@@ -226,7 +226,7 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 
 	for _, include := range plugin.Includes {
 		if include.Role == "" {
-			include.Role = org.ROLE_VIEWER
+			include.Role = org.RoleViewer
 		}
 	}
 

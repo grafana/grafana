@@ -227,7 +227,7 @@ func (s *RemoteRenderScreenshotService) Take(ctx context.Context, opts Screensho
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   q.Result.OrgId,
-			OrgRole: org.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 		ErrorOpts: rendering.ErrorOpts{
 			ErrorConcurrentLimitReached: true,

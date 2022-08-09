@@ -115,7 +115,7 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 
 		// admins can see all snapshots, everyone else can only see their own snapshots
 		switch {
-		case query.SignedInUser.OrgRole == org.ROLE_ADMIN:
+		case query.SignedInUser.OrgRole == org.RoleAdmin:
 			sess.Where("org_id = ?", query.OrgId)
 		case !query.SignedInUser.IsAnonymous:
 			sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserId)

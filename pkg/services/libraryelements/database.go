@@ -233,7 +233,7 @@ func getLibraryElements(c context.Context, store *sqlstore.SQLStore, signedInUse
 		builder.Write(getFromLibraryElementDTOWithMeta(store.Dialect))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
-		if signedInUser.OrgRole != org.ROLE_ADMIN {
+		if signedInUser.OrgRole != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(signedInUser, models.PERMISSION_VIEW)
 		}
 		builder.Write(` OR dashboard.id=0`)
@@ -350,7 +350,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
 			return err
 		}
-		if signedInUser.OrgRole != org.ROLE_ADMIN {
+		if signedInUser.OrgRole != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(signedInUser, models.PERMISSION_VIEW)
 		}
 		if query.sortDirection == search.SortAlphaDesc.Name {
@@ -564,7 +564,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 		builder.Write(" LEFT JOIN " + l.SQLStore.Dialect.Quote("user") + " AS u1 ON lec.created_by = u1.id")
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
-		if signedInUser.OrgRole != org.ROLE_ADMIN {
+		if signedInUser.OrgRole != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(signedInUser, models.PERMISSION_VIEW)
 		}
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {

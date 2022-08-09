@@ -320,7 +320,7 @@ func (s *Service) declareFixedRoles() error {
 				{Action: fmt.Sprintf("%s.permissions:read", s.options.Resource), Scope: scopeAll},
 			},
 		},
-		Grants: []string{string(org.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	writerRole := accesscontrol.RoleRegistration{
@@ -332,7 +332,7 @@ func (s *Service) declareFixedRoles() error {
 				{Action: fmt.Sprintf("%s.permissions:write", s.options.Resource), Scope: scopeAll},
 			}),
 		},
-		Grants: []string{string(org.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	return s.ac.DeclareFixedRoles(readerRole, writerRole)

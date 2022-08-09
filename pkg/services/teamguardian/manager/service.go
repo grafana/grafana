@@ -18,7 +18,7 @@ func ProvideService(store teamguardian.Store) teamguardian.TeamGuardian {
 }
 
 func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *user.SignedInUser) error {
-	if user.OrgRole == org.ROLE_ADMIN {
+	if user.OrgRole == org.RoleAdmin {
 		return nil
 	}
 

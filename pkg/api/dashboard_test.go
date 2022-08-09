@@ -148,7 +148,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		setUp := func() {
 			viewerRole := org.ROLEEWER
-			editorRole := org.ROLE_EDITOR
+			editorRole := org.RoleEditor
 			dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 				q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 				q.Result = []*models.DashboardACLInfoDTO{
@@ -164,7 +164,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		// 2. user is an org editor
 
 		t.Run("Whorg.ROLEan Org Viewer", func(t *testing.T) {
-			role := org.ROLE_VIEWER
+			role := org.RoleViewer
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -196,7 +196,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("Whorg.ROLEan Org Editor", func(t *testing.T) {
-			role := org.ROLE_EDITOR
+			role := org.RoleEditor
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -285,7 +285,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		// 6. user is an org editor AND has been granted a view permission
 
 		t.Run("Whorg.ROLEan Org Viewer and has no permissions for this dashboard", func(t *testing.T) {
-			role := org.ROLE_VIEWER
+			role := org.RoleViewer
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -324,7 +324,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("Whorg.ROLEan Org Editor and has no permissions for this dashboard", func(t *testing.T) {
-			role := org.ROLE_EDITOR
+			role := org.RoleEditor
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -361,7 +361,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("Whorg.ROLEan Org Viewer but has an edit permission", func(t *testing.T) {
-			role := org.ROLE_VIEWER
+			role := org.RoleViewer
 
 			setUpInner := func() {
 				origCanEdit := setting.ViewersCanEdit
@@ -423,7 +423,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("Whorg.ROLEan Org Viewer and viewers can edit", func(t *testing.T) {
-			role := org.ROLE_VIEWER
+			role := org.RoleViewer
 
 			setUpInner := func() {
 				origCanEdit := setting.ViewersCanEdit
@@ -463,7 +463,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("Whorg.ROLEan Org Viewer but has an admin permission", func(t *testing.T) {
-			role := org.ROLE_VIEWER
+			role := org.RoleViewer
 
 			setUpInner := func() {
 				origCanEdit := setting.ViewersCanEdit
@@ -522,7 +522,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("Whorg.ROLEan Org Editor but has a view permission", func(t *testing.T) {
-			role := org.ROLE_EDITOR
+			role := org.RoleEditor
 
 			setUpInner := func() {
 				dashboardService := dashboards.NewFakeDashboardService(t)
@@ -760,7 +760,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}
 
 		t.Run("whorg.ROLEs not have permission", func(t *testing.T) {
-			role := org.ROLE_VIEWER
+			role := org.RoleViewer
 			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
 				setUp()
 
@@ -770,7 +770,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("whorg.ROLEs have permission", func(t *testing.T) {
-			role := org.ROLE_ADMIN
+			role := org.RoleAdmin
 			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
 				// This test shouldn't hit GetDashboardACLInfoList, so no setup needed
 				sc.dashboardVersionService = fakeDashboardVersionService
@@ -874,7 +874,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}).Return(nil)
 		guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
 org.ROLE
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
 			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
@@ -885,7 +885,7 @@ org.ROLE
 			assert.Equal(t, "../../../dashboard1.json", dash.Meta.ProvisionedExternalId, mockSQLStore)
 		}, mockSQLStore)
 org.ROLE
-		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
 			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
@@ -1112,7 +1112,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 				OrgId:  testOrgID,
 				UserId: testUserID,
 			}org.ROLE
-			sc.context.OrgRole = org.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.RestoreDashboardVersion(c)
 		})

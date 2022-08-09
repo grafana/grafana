@@ -23,7 +23,7 @@ func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 	t.Run("create service account", func(t *testing.T) {
 		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := int64(1)
-		serviceAccountRole := org.ROLE_ADMIN
+		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
 		saForm := serviceaccounts.CreateServiceAccountForm{
 			Name:       serviceAccountName,
@@ -45,7 +45,7 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 	t.Run("create service account", func(t *testing.T) {
 		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := orgQuery.Result.Id
-		serviceAccountRole := org.ROLE_ADMIN
+		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
 		saForm := serviceaccounts.CreateServiceAccountForm{
 			Name:       serviceAccountName,
@@ -155,7 +155,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 	}{
 		{
 			desc:        "api key should be migrated to service account token",
-			key:         tests.TestApiKey{Name: "Test1", Role: org.ROLE_EDITOR, OrgId: 1},
+			key:         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
 			expectedErr: nil,
 		},
 	}
@@ -204,9 +204,9 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 		{
 			desc: "api keys should be migrated to service account tokens within provided org",
 			keys: []tests.TestApiKey{
-				{Name: "test1", Role: org.ROLE_EDITOR, Key: "secret1", OrgId: 1},
-				{Name: "test2", Role: org.ROLE_EDITOR, Key: "secret2", OrgId: 1},
-				{Name: "test3", Role: org.ROLE_EDITOR, Key: "secret3", OrgId: 2},
+				{Name: "test1", Role: org.RoleEditor, Key: "secret1", OrgId: 1},
+				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 1},
+				{Name: "test3", Role: org.RoleEditor, Key: "secret3", OrgId: 2},
 			},
 			orgId:                  1,
 			expectedServiceAccouts: 2,
@@ -215,8 +215,8 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 		{
 			desc: "api keys from another orgs shouldn't be migrated",
 			keys: []tests.TestApiKey{
-				{Name: "test1", Role: org.ROLE_EDITOR, Key: "secret1", OrgId: 2},
-				{Name: "test2", Role: org.ROLE_EDITOR, Key: "secret2", OrgId: 2},
+				{Name: "test1", Role: org.RoleEditor, Key: "secret1", OrgId: 2},
+				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 2},
 			},
 			orgId:                  1,
 			expectedServiceAccouts: 0,
@@ -225,8 +225,8 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 		{
 			desc: "expired api keys should be migrated",
 			keys: []tests.TestApiKey{
-				{Name: "test1", Role: org.ROLE_EDITOR, Key: "secret1", OrgId: 1},
-				{Name: "test2", Role: org.ROLE_EDITOR, Key: "secret2", OrgId: 1, IsExpired: true},
+				{Name: "test1", Role: org.RoleEditor, Key: "secret1", OrgId: 1},
+				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 1, IsExpired: true},
 			},
 			orgId:                  1,
 			expectedServiceAccouts: 2,
@@ -282,12 +282,12 @@ func TestStore_RevertApiKey(t *testing.T) {
 	}{
 		{
 			desc:        "service account token should be reverted to api key",
-			key:         tests.TestApiKey{Name: "Test1", Role: org.ROLE_EDITOR, OrgId: 1},
+			key:         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
 			expectedErr: nil,
 		},
 		{
 			desc:                        "should fail reverting to api key when the token is assigned to a different service account",
-			key:                         tests.TestApiKey{Name: "Test1", Role: org.ROLE_EDITOR, OrgId: 1},
+			key:                         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
 			forceMismatchServiceAccount: true,
 			expectedErr:                 ErrServiceAccountAndTokenMismatch,
 		},

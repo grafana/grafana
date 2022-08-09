@@ -158,7 +158,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		orgUser := models.OrgUser{
 			OrgId:   orgID,
 			UserId:  usr.ID,
-			Role:    org.ROLE_ADMIN,
+			Role:    org.RoleAdmin,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
