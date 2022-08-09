@@ -647,6 +647,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
+				if !c.Resp.Written() {
+					c.Resp.WriteHeader(http.StatusOK)
+				}
 			} else {
 				t.Log("Returning JSON OK")
 				resp := make(map[string]interface{})
