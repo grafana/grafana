@@ -111,7 +111,8 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 // LockExecuteAndRelease Creates the lock, executes the func, and then release the locks. The locking mechanism is
 // based on the UNIQUE constraint of the actionName in the database (column  operation_uid), so a new process can not insert
 // a new operation if already exists one. The parameter 'maxInterval' is a timeout safeguard, if the LastExecution in the
-// database is older than maxInterval, we will assume the lock as timeouted
+// database is older than maxInterval, we will assume the lock as timeouted. The 'maxInterval' parameter should be so long
+// that is impossible for 2 processes to run at the same time.
 func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error {
 	err := sl.acquireForRelease(ctx, actionName, maxInterval)
 	// could not get the lock, returning
@@ -181,7 +182,8 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 	return err
 }
 
-// releaseLock will delete the row at the database
+// releaseLock will delete the row at the database. This is only intended to be used within the scope of LockExecuteAndRelease
+// method, but not as to manually release a Lock
 func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string) error {
 	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		sql := `DELETE FROM server_lock WHERE operation_uid=? `
