@@ -42,7 +42,8 @@ const ServiceName = "ContextHandler"
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
-	apiKeyService apikey.Service, authenticator loginpkg.Authenticator) *ContextHandler {
+	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
+) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -55,6 +56,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		authenticator:    authenticator,
 		loginService:     loginService,
 		apiKeyService:    apiKeyService,
+		userService:      userService,
 	}
 }
 
@@ -71,6 +73,7 @@ type ContextHandler struct {
 	authenticator    loginpkg.Authenticator
 	loginService     login.Service
 	apiKeyService    apikey.Service
+	userService      user.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -160,7 +163,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
 		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := h.SQLStore.UpdateUserLastSeenAt(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+		if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserId}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
@@ -189,7 +192,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	return true
 }
 
-func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string) (*models.ApiKey, error) {
+func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string) (*apikey.APIKey, error) {
 	// prefixed decode key
 	decoded, err := apikeygenprefix.Decode(keyString)
 	if err != nil {
@@ -204,14 +207,14 @@ func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string
 	return h.apiKeyService.GetAPIKeyByHash(ctx, hash)
 }
 
-func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*models.ApiKey, error) {
+func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apikey.APIKey, error) {
 	decoded, err := apikeygen.Decode(keyString)
 	if err != nil {
 		return nil, err
 	}
 
 	// fetch key
-	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
 	if err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
 		return nil, err
 	}
@@ -249,7 +252,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	defer span.End()
 
 	var (
-		apikey *models.ApiKey
+		apikey *apikey.APIKey
 		errKey error
 	)
 	if strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {
@@ -358,13 +361,13 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return true
 	}
 
-	user := authQuery.User
+	usr := authQuery.User
 
-	query := models.GetSignedInUserQuery{UserId: user.ID, OrgId: orgID}
+	query := models.GetSignedInUserQuery{UserId: usr.ID, OrgId: orgID}
 	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
-			"id", user.ID,
+			"id", usr.ID,
 			"org", orgID,
 		)
 		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)

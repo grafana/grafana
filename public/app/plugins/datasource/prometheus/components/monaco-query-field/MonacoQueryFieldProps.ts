@@ -11,6 +11,7 @@ export type Props = {
   initialValue: string;
   languageProvider: PromQlLanguageProvider;
   history: Array<HistoryItem<PromQuery>>;
+  placeholder: string;
   onRunQuery: (value: string) => void;
   onBlur: (value: string) => void;
 };

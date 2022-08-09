@@ -121,12 +121,12 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *models.ReqContext) response.Res
 		return response.Error(500, "Could not encode password", err)
 	}
 
-	cmd := models.ChangeUserPasswordCommand{
-		UserId:      userID,
+	cmd := user.ChangeUserPasswordCommand{
+		UserID:      userID,
 		NewPassword: passwordHashed,
 	}
 
-	if err := hs.SQLStore.ChangeUserPassword(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update user password", err)
 	}
 

@@ -33,6 +33,13 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 			require.Equal(t, len(storedPlaylistItems), len(items))
 		})
 
+		t.Run("Get playlist that doesn't exist", func(t *testing.T) {
+			get := &playlist.GetPlaylistByUidQuery{UID: "unknown", OrgId: 1}
+			_, err := playlistStore.Get(context.Background(), get)
+			require.Error(t, err)
+			require.ErrorIs(t, err, playlist.ErrPlaylistNotFound)
+		})
+
 		t.Run("Can update playlist", func(t *testing.T) {
 			items := []playlist.PlaylistItemDTO{
 				{Title: "influxdb", Value: "influxdb", Type: "dashboard_by_tag"},
