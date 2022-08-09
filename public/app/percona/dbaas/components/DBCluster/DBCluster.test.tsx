@@ -35,7 +35,7 @@ describe('DBCluster::', () => {
             },
             addKubernetes: { loading: false },
             deleteKubernetes: { loading: false },
-            dbCluster: { loading: false },
+            dbClusters: { loading: false },
           },
         } as StoreState)}
       >
@@ -60,7 +60,7 @@ describe('DBCluster::', () => {
             },
             addKubernetes: { loading: false },
             deleteKubernetes: { loading: false },
-            dbCluster: {
+            dbClusters: {
               loading: false,
               result: [
                 {
@@ -100,7 +100,7 @@ describe('DBCluster::', () => {
             },
             addKubernetes: { loading: false },
             deleteKubernetes: { loading: false },
-            dbCluster: {
+            dbClusters: {
               loading: false,
               result: [
                 {
@@ -140,7 +140,7 @@ describe('DBCluster::', () => {
             },
             addKubernetes: { loading: false },
             deleteKubernetes: { loading: false },
-            dbCluster: {
+            dbClusters: {
               loading: false,
               result: [
                 {

@@ -1,43 +1,32 @@
 /* eslint-disable react/display-name */
-import { Modal, logger } from '@percona/platform-core';
+import { Modal } from '@percona/platform-core';
 import React, { FC, useMemo } from 'react';
 import { FormRenderProps } from 'react-final-form';
+import { useSelector } from 'react-redux';
 
 import { useStyles } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { StepProgress } from 'app/percona/dbaas/components/StepProgress/StepProgress';
+import { useShowPMMAddressWarning } from 'app/percona/shared/components/hooks/showPMMAddressWarning';
+import { getAddDbCluster } from 'app/percona/shared/core/selectors';
 
-import { getActiveOperators, getDatabaseOptionFromOperator } from '../../Kubernetes/Kubernetes.utils';
 import { PMMServerUrlWarning } from '../../PMMServerURLWarning/PMMServerUrlWarning';
-import { newDBClusterService } from '../DBCluster.utils';
 
 import { getStyles } from './AddDBClusterModal.styles';
 import { AddDBClusterModalProps, AddDBClusterFields } from './AddDBClusterModal.types';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
-import { INITIAL_VALUES } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
-import { DBClusterTopology } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions/DBClusterBasicOptions';
 
 export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
   kubernetes,
   isVisible,
   setVisible,
-  onDBClusterAdded,
-  showMonitoringWarning,
+  onSubmit,
+  initialValues,
 }) => {
   const styles = useStyles(getStyles);
-
-  const initialValues = useMemo(() => {
-    const activeOperators = getActiveOperators(kubernetes);
-
-    return {
-      ...INITIAL_VALUES,
-      [AddDBClusterFields.databaseType]:
-        activeOperators.length === 1
-          ? getDatabaseOptionFromOperator(activeOperators[0])
-          : { value: undefined, label: undefined },
-    };
-  }, [kubernetes]);
+  const { loading } = useSelector(getAddDbCluster);
+  const [showPMMAddressWarning] = useShowPMMAddressWarning();
   const steps = useMemo(
     () => [
       {
@@ -61,50 +50,18 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
     ],
     [kubernetes]
   );
-  const onSubmit = async ({
-    name,
-    kubernetesCluster,
-    databaseType,
-    databaseVersion,
-    topology,
-    nodes,
-    single,
-    memory,
-    cpu,
-    disk,
-    expose,
-  }: Record<string, any>) => {
-    try {
-      const dbClusterService = newDBClusterService(databaseType.value);
-
-      await dbClusterService.addDBCluster({
-        kubernetesClusterName: kubernetesCluster.value,
-        clusterName: name,
-        databaseType: databaseType.value,
-        clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
-        cpu,
-        memory,
-        disk,
-        databaseImage: databaseVersion.value,
-        expose,
-      });
-      setVisible(false);
-      onDBClusterAdded();
-    } catch (e) {
-      logger.error(e);
-    }
-  };
 
   return (
-    <div className={styles.modalWrapper}>
+    <div className={styles.modalWrapper} key="add-db-cluster-modal">
       <Modal title={Messages.dbcluster.addModal.title} isVisible={isVisible} onClose={() => setVisible(false)}>
         <div className={styles.stepProgressWrapper}>
-          {showMonitoringWarning && <PMMServerUrlWarning />}
+          {showPMMAddressWarning && <PMMServerUrlWarning />}
           <StepProgress
             steps={steps}
             initialValues={initialValues}
             submitButtonMessage={Messages.dbcluster.addModal.confirm}
-            onSubmit={onSubmit}
+            onSubmit={(values) => onSubmit(values, showPMMAddressWarning)}
+            loading={loading}
           />
         </div>
       </Modal>

@@ -11,6 +11,7 @@ import { Form, FormRenderProps } from 'react-final-form';
 
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
+import { useShowPMMAddressWarning } from 'app/percona/shared/components/hooks/showPMMAddressWarning';
 
 import { PMMServerUrlWarning } from '../../PMMServerURLWarning/PMMServerUrlWarning';
 import { NewKubernetesCluster } from '../Kubernetes.types';
@@ -31,20 +32,16 @@ const {
   awsSecretAccessKeyTooltip,
 } = ModalMessages;
 
-export const AddKubernetesModal = ({
-  isVisible,
-  addKubernetes,
-  setAddModalVisible,
-  showMonitoringWarning,
-}: AddKubernetesModalProps) => {
+export const AddKubernetesModal = ({ isVisible, addKubernetes, setAddModalVisible }: AddKubernetesModalProps) => {
   const styles = useStyles(getStyles);
+  const [showPMMAddressWarning] = useShowPMMAddressWarning();
 
   return (
     <Modal title={Messages.kubernetes.addModal.title} isVisible={isVisible} onClose={() => setAddModalVisible(false)}>
-      {showMonitoringWarning && <PMMServerUrlWarning className={styles.urlWarningWrapper} />}
+      {showPMMAddressWarning && <PMMServerUrlWarning />}
       <Form
         onSubmit={(values: NewKubernetesCluster) => {
-          addKubernetes(values);
+          addKubernetes(values, showPMMAddressWarning);
           setAddModalVisible(false);
         }}
         mutators={{

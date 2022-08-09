@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
 
+import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { Connect } from './Connect';
@@ -12,7 +14,13 @@ describe('Connect::', () => {
   it('renders Connect form correctly', () => {
     render(
       <Provider store={configureStore()}>
-        <Connect />
+        <Router history={locationService.getHistory()}>
+          <Connect
+            onConnect={() => {}}
+            connecting={false}
+            initialValues={{ pmmServerId: '', pmmServerName: 'test', accessToken: '' }}
+          />
+        </Router>
       </Provider>
     );
 

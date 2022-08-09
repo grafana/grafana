@@ -35,7 +35,7 @@ export interface Kubernetes {
   status: KubernetesClusterStatus;
 }
 
-export type AddKubernetesAction = (kubernetesToAdd: NewKubernetesCluster) => void;
+export type AddKubernetesAction = (kubernetesToAdd: NewKubernetesCluster, setPMMAddress?: boolean) => void;
 export type SetKubernetesLoadingAction = (loading: boolean) => void;
 export type ManageKubernetes = [Kubernetes[], SetKubernetesLoadingAction, boolean];
 

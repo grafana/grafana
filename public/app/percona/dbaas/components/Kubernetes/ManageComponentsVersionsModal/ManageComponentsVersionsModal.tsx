@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import { LoaderButton, Modal, logger } from '@percona/platform-core';
 import { FormApi } from 'final-form';
 import React, { FC } from 'react';
@@ -38,6 +39,7 @@ export const ManageComponentsVersionsModal: FC<ManageComponentsVersionsModalProp
   selectedKubernetes,
   isVisible,
   setVisible,
+  setSelectedCluster,
 }) => {
   const styles = useStyles(getStyles);
   const [
@@ -106,6 +108,8 @@ export const ManageComponentsVersionsModal: FC<ManageComponentsVersionsModalProp
       appEvents.emit(AppEvents.alertSuccess, [Messages.success]);
     } catch (e) {
       logger.error(e);
+    } finally {
+      setSelectedCluster(null);
     }
   };
 

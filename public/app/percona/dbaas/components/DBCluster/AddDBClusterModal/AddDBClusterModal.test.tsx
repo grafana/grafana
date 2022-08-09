@@ -1,5 +1,11 @@
 import { render, fireEvent, screen } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
+
+import { locationService } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
+import { StoreState } from 'app/types';
 
 import { kubernetesStub } from '../../Kubernetes/__mocks__/kubernetesStubs';
 
@@ -23,13 +29,24 @@ describe('AddDBClusterModal::', () => {
 
   it('renders correctly', () => {
     render(
-      <AddDBClusterModal
-        kubernetes={kubernetesStub}
-        isVisible
-        setVisible={setVisibleStub}
-        onDBClusterAdded={onDBClusterAddedStub}
-        showMonitoringWarning={false}
-      />
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <Router history={locationService.getHistory()}>
+          <AddDBClusterModal
+            initialValues={{}}
+            kubernetes={kubernetesStub}
+            isVisible
+            setVisible={setVisibleStub}
+            onSubmit={onDBClusterAddedStub}
+          />
+        </Router>
+      </Provider>
     );
 
     expect(screen.findByRole('form')).toBeTruthy();
@@ -45,12 +62,24 @@ describe('AddDBClusterModal::', () => {
 
   it('should disable submit button when there is no values', () => {
     render(
-      <AddDBClusterModal
-        kubernetes={kubernetesStub}
-        isVisible
-        setVisible={setVisibleStub}
-        onDBClusterAdded={onDBClusterAddedStub}
-      />
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <Router history={locationService.getHistory()}>
+          <AddDBClusterModal
+            kubernetes={kubernetesStub}
+            isVisible
+            setVisible={setVisibleStub}
+            onSubmit={onDBClusterAddedStub}
+            initialValues={{}}
+          />
+        </Router>
+      </Provider>
     );
 
     openStep('dbcluster-advanced-options-step');
@@ -61,12 +90,24 @@ describe('AddDBClusterModal::', () => {
 
   it('should change step correctly', () => {
     render(
-      <AddDBClusterModal
-        kubernetes={kubernetesStub}
-        isVisible
-        setVisible={setVisibleStub}
-        onDBClusterAdded={onDBClusterAddedStub}
-      />
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <Router history={locationService.getHistory()}>
+          <AddDBClusterModal
+            kubernetes={kubernetesStub}
+            isVisible
+            setVisible={setVisibleStub}
+            onSubmit={onDBClusterAddedStub}
+            initialValues={{}}
+          />
+        </Router>
+      </Provider>
     );
 
     expect(isStepActive('dbcluster-basic-options-step')).toBeTruthy();

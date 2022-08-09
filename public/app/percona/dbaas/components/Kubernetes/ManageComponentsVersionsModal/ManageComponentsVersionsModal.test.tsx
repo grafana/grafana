@@ -16,7 +16,14 @@ jest.mock('./ManageComponentsVersions.hooks');
 
 describe('ManageComponentsVersionsModal::', () => {
   it('renders form with operator, component and versions field with correct values', () => {
-    render(<ManageComponentsVersionsModal isVisible selectedKubernetes={kubernetesStub[0]} setVisible={jest.fn()} />);
+    render(
+      <ManageComponentsVersionsModal
+        setSelectedCluster={() => {}}
+        isVisible
+        selectedKubernetes={kubernetesStub[0]}
+        setVisible={jest.fn()}
+      />
+    );
 
     expect(
       screen.getByTestId('kubernetes-operator').textContent?.includes(operatorsOptionsStubs[0].label)
@@ -29,7 +36,14 @@ describe('ManageComponentsVersionsModal::', () => {
   });
   it('calls setVisible on cancel', () => {
     const setVisible = jest.fn();
-    render(<ManageComponentsVersionsModal isVisible selectedKubernetes={kubernetesStub[0]} setVisible={setVisible} />);
+    render(
+      <ManageComponentsVersionsModal
+        setSelectedCluster={() => {}}
+        isVisible
+        selectedKubernetes={kubernetesStub[0]}
+        setVisible={setVisible}
+      />
+    );
 
     const btn = screen.getByTestId('kubernetes-components-versions-cancel');
     fireEvent.click(btn);

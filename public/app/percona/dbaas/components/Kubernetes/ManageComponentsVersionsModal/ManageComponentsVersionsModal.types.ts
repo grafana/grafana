@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import { SelectableValue } from '@grafana/data';
 
 import { Operators } from '../../DBCluster/AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
@@ -7,6 +8,7 @@ export interface ManageComponentsVersionsModalProps {
   selectedKubernetes: Kubernetes;
   isVisible: boolean;
   setVisible: (value: boolean) => void;
+  setSelectedCluster: (kubernetesCluster: Kubernetes | null) => void;
 }
 
 export interface ManageComponentsVersionsRenderProps {

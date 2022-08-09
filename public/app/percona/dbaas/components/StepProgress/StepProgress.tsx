@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import { LoaderButton } from '@percona/platform-core';
 import { FormApi } from 'final-form';
 import React, { FC, ReactNode, useCallback, useState } from 'react';
@@ -13,6 +14,7 @@ export interface StepProgressProps {
   initialValues?: Record<string, any>;
   submitButtonMessage: string;
   onSubmit: (values: Record<string, any>) => void;
+  loading: boolean;
 }
 
 export interface StepProps {
@@ -43,7 +45,13 @@ const getStepStatus = (
   return StepStatus.todo;
 };
 
-export const StepProgress: FC<StepProgressProps> = ({ steps, initialValues, submitButtonMessage, onSubmit }) => {
+export const StepProgress: FC<StepProgressProps> = ({
+  steps,
+  initialValues,
+  submitButtonMessage,
+  onSubmit,
+  loading,
+}) => {
   const styles = useStyles(getStyles);
   const [currentStep, setCurrentStep] = useState(0);
   const [stepsVisited, setStepsVisited] = useState([currentStep]);
@@ -59,7 +67,7 @@ export const StepProgress: FC<StepProgressProps> = ({ steps, initialValues, subm
     <Form
       initialValues={initialValues}
       onSubmit={onSubmit}
-      render={({ form, handleSubmit, valid, pristine, submitting, ...props }) => (
+      render={({ form, handleSubmit, valid, pristine, ...props }) => (
         <form onSubmit={handleSubmit} className={styles.stepProgressWrapper} data-testid="step-progress">
           {steps.map(({ render, title, fields, dataTestId }, index) => (
             <Step
@@ -76,7 +84,6 @@ export const StepProgress: FC<StepProgressProps> = ({ steps, initialValues, subm
                 handleSubmit,
                 valid,
                 pristine,
-                submitting,
                 ...props,
               })}
             </Step>
@@ -86,8 +93,8 @@ export const StepProgress: FC<StepProgressProps> = ({ steps, initialValues, subm
               data-testid="step-progress-submit-button"
               size="md"
               variant="primary"
-              disabled={!valid || pristine || submitting}
-              loading={submitting}
+              disabled={!valid || pristine || loading}
+              loading={loading}
               className={styles.createButton}
               type="submit"
             >

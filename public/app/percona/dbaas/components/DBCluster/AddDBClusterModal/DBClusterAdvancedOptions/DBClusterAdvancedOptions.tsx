@@ -79,7 +79,6 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
         setLoadingAllocatedResources(true);
       }
       const alloc = await DBClusterService.getAllocatedResources(kubernetesCluster.value);
-      console.log(alloc);
       setAllocatedResources(alloc);
     } catch (e) {
       logger.error(e);

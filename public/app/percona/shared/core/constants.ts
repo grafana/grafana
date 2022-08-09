@@ -45,3 +45,4 @@ export const PRIMARY_LABELS = [
   'replication_set',
 ];
 export const HIDDEN_LABELS = ['alertname', 'job', 'rule_id', 'template_name', 'severity', 'ia'];
+export const SETTINGS_TIMEOUT = 1500;

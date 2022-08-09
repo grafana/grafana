@@ -20,7 +20,6 @@ import {
   getDeleteKubernetes,
   getAddKubernetes,
   getPerconaSettingFlag,
-  getPerconaSettings,
 } from 'app/percona/shared/core/selectors';
 
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
@@ -56,17 +55,13 @@ export const KubernetesInventory: FC = () => {
   const { loading: deleteKubernetesLoading } = useSelector(getDeleteKubernetes);
   const { loading: addKubernetesLoading } = useSelector(getAddKubernetes);
   const loading = kubernetesLoading || deleteKubernetesLoading || addKubernetesLoading;
-  const { loading: settingsLoading, result: settings } = useSelector(getPerconaSettings);
-  const showMonitoringWarning = useMemo(
-    () => settingsLoading || !settings?.publicAddress,
-    [settings?.publicAddress, settingsLoading]
-  );
 
   const deleteKubernetesCluster = useCallback(
-    (force?: boolean) => {
+    async (force?: boolean) => {
       if (selectedCluster) {
-        dispatch(deleteKubernetesAction({ kubernetesToDelete: selectedCluster, force }));
+        await dispatch(deleteKubernetesAction({ kubernetesToDelete: selectedCluster, force }));
         setDeleteModalVisible(false);
+        setSelectedCluster(null);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -131,8 +126,14 @@ export const KubernetesInventory: FC = () => {
     [addModalVisible]
   );
 
-  const addKubernetes = useCallback((cluster: NewKubernetesCluster) => {
-    dispatch(addKubernetesAction({ kubernetesToAdd: cluster, token: generateToken(DELETE_KUBERNETES_CANCEL_TOKEN) }));
+  const addKubernetes = useCallback(async (cluster: NewKubernetesCluster, setPMMAddress = false) => {
+    await dispatch(
+      addKubernetesAction({
+        kubernetesToAdd: cluster,
+        setPMMAddress,
+        token: generateToken(DELETE_KUBERNETES_CANCEL_TOKEN),
+      })
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -169,7 +170,6 @@ export const KubernetesInventory: FC = () => {
               isVisible={addModalVisible}
               addKubernetes={addKubernetes}
               setAddModalVisible={setAddModalVisible}
-              showMonitoringWarning={showMonitoringWarning}
             />
             <Modal
               title={Messages.kubernetes.deleteModal.title}
@@ -211,6 +211,7 @@ export const KubernetesInventory: FC = () => {
                 selectedKubernetes={selectedCluster}
                 isVisible={manageComponentsModalVisible}
                 setVisible={setManageComponentsModalVisible}
+                setSelectedCluster={setSelectedCluster}
               />
             )}
             {selectedCluster && operatorToUpdate && updateOperatorModalVisible && (

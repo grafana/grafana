@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
 
+import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -18,7 +20,9 @@ describe('Platform::', () => {
           },
         } as StoreState)}
       >
-        <Platform />
+        <Router history={locationService.getHistory()}>
+          <Platform />
+        </Router>
       </Provider>
     );
 
@@ -35,7 +39,9 @@ describe('Platform::', () => {
           },
         } as StoreState)}
       >
-        <Platform />
+        <Router history={locationService.getHistory()}>
+          <Platform />
+        </Router>
       </Provider>
     );
 
