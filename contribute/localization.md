@@ -191,4 +191,4 @@ import { Plural } from "@lingui/macro"
 
 ## Documentation
 
-[Grafana's documentation](https://grafana.com/docs/grafana/latest/) is not yet open for translation and should be authored in English only.
+[Grafana's documentation](https://grafana.com/docs/grafana/latest/) is not yet open for translation and should be authored in American English only.
