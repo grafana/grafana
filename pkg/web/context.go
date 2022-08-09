@@ -46,9 +46,13 @@ func (ctx *Context) run() {
 		h = ctx.mws[i](h)
 	}
 
+	rw := ctx.Resp
 	h.ServeHTTP(ctx.Resp, ctx.Req)
 
-	if !ctx.Resp.Written() {
+	// Prevent the handler chain from not writing anything.
+	// This indicates nearly always that a middleware is misbehaving and not calling its next.ServeHTTP().
+	// In rare cases where a blank http.StatusOK without any body is wished, explicitly state that using w.WriteStatus(http.StatusOK)
+	if !rw.Written() {
 		panic("chain did not write HTTP response")
 	}
 }

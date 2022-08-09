@@ -27,6 +27,21 @@ type Middleware struct {
 // exactly as if it was passed to a middleware
 func MiddlewareContext(test Middleware, req *http.Request) *Context {
 	m := web.New()
+
+	// pkg/web requires the chain to write an HTTP response.
+	// While this ensures a basic amount of correctness for real handler chains,
+	// it is naturally incompatible with this package, as we terminate the chain early to pass its
+	// state to the surrounding test.
+	// By replacing the http.ResponseWriter and writing to the old one we make pkg/web happy.
+	m.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+
+			rw := web.Rw(httptest.NewRecorder(), r)
+			next.ServeHTTP(rw, r)
+		})
+	})
+
 	for _, mw := range test.Before {
 		m.Use(mw)
 	}
