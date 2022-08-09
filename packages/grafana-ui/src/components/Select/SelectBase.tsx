@@ -1,5 +1,5 @@
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
-import { default as ReactSelect } from 'react-select';
+import { ContainerProps, default as ReactSelect, DropdownIndicatorProps } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
@@ -317,28 +317,30 @@ export function SelectBase<T>({
               />
             );
           },
-          LoadingIndicator(props: any) {
-            return <Spinner inline={true} />;
+          LoadingIndicator() {
+            return <Spinner inline />;
           },
-          LoadingMessage(props: any) {
+          LoadingMessage() {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
           },
-          NoOptionsMessage(props: any) {
+          NoOptionsMessage() {
             return (
               <div className={styles.loadingMessage} aria-label="No options provided">
                 {noOptionsMessage}
               </div>
             );
           },
-          DropdownIndicator(props: any) {
+          DropdownIndicator(props: DropdownIndicatorProps) {
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
           SingleValue(props: any) {
             return <SingleValue {...props} disabled={disabled} />;
           },
+          SelectContainer(props: ContainerProps) {
+            return <SelectContainer {...props} invalid={!!invalid} />;
+          },
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
-          SelectContainer,
           ...components,
         }}
         styles={selectStyles}
