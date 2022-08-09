@@ -7,7 +7,7 @@ import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction, ContactPointsState, IntegrationTypesState, ReceiversState } from 'app/types';
+import { AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -117,7 +117,7 @@ interface ReceiverItem {
   provisioned?: boolean;
 }
 
-interface IntegrationItem {
+interface NotifierStatus {
   lastError?: null | string;
   lastNotify: string;
   lastNotifyDuration: string;
@@ -128,25 +128,25 @@ interface IntegrationItem {
 type RowTableColumnProps = DynamicTableColumnProps<ReceiverItem>;
 type RowItemTableProps = DynamicTableItemProps<ReceiverItem>;
 
-type RowIntegrationTableColumnProps = DynamicTableColumnProps<IntegrationItem>;
-type RowIntegrationItemTableProps = DynamicTableItemProps<IntegrationItem>;
+type NotifierTableColumnProps = DynamicTableColumnProps<NotifierStatus>;
+type NotifierItemTableProps = DynamicTableItemProps<NotifierStatus>;
 
-interface IntegrationsTableProps {
-  integrationTypesState: IntegrationTypesState;
+interface NotifiersTableProps {
+  notifiersState: NotifiersState;
 }
 
 function LastNotify({ lastNotify }: { lastNotify: string }) {
+  const lastNotifyDuration = lastNotify;
   return (
     <Stack alignItems="center">
-      <div>{dateTime(lastNotify).locale('en').fromNow(true)} ago</div>
-      <Icon name="exclamation-triangle" />
+      <div>{dateTime(lastNotifyDuration).locale('en').fromNow(true)} ago</div>
       <Icon name="clock-nine" />
-      <div>{dateTimeFormat(lastNotify, { format: 'YYYY-MM-DD HH:mm:ss' })}</div>
+      <div>{dateTimeFormat(lastNotifyDuration, { format: 'YYYY-MM-DD HH:mm:ss' })}</div>
     </Stack>
   );
 }
-function IntegrationsTable({ integrationTypesState }: IntegrationsTableProps) {
-  function getIntegrationColumns(): RowIntegrationTableColumnProps[] {
+function NotifiersTable({ notifiersState }: NotifiersTableProps) {
+  function getNotifierColumns(): NotifierTableColumnProps[] {
     return [
       {
         id: 'health',
@@ -164,7 +164,7 @@ function IntegrationsTable({ integrationTypesState }: IntegrationsTableProps) {
       },
       {
         id: 'lastNotify',
-        label: 'Last try to notify',
+        label: 'Last delivery attempt',
         renderCell: ({ data: { lastNotify } }) => <LastNotify lastNotify={lastNotify} />,
         size: 3,
       },
@@ -182,19 +182,19 @@ function IntegrationsTable({ integrationTypesState }: IntegrationsTableProps) {
       },
     ];
   }
-  const integrationRows: RowIntegrationItemTableProps[] = Object.entries(integrationTypesState).flatMap((typeState) =>
-    typeState[1].map((integrationStatus, index) => ({
+  const notifierRows: NotifierItemTableProps[] = Object.entries(notifiersState).flatMap((typeState) =>
+    typeState[1].map((notifierStatus, index) => ({
       id: index,
       data: {
         type: typeState[0],
-        lastError: integrationStatus.lastError,
-        lastNotify: integrationStatus.lastNotify,
-        lastNotifyDuration: integrationStatus.lastNotifyDuration,
+        lastError: notifierStatus.lastError,
+        lastNotify: notifierStatus.lastNotify,
+        lastNotifyDuration: notifierStatus.lastNotifyDuration,
       },
     }))
   );
 
-  return <DynamicTable items={integrationRows} cols={getIntegrationColumns()} />;
+  return <DynamicTable items={notifierRows} cols={getNotifierColumns()} />;
 }
 
 interface Props {
@@ -274,7 +274,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
         renderExpandedContent={
           errorStateAvailable
             ? ({ data: { name } }) => (
-                <IntegrationsTable integrationTypesState={contactPointsState?.receivers[name].integrations ?? {}} />
+                <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
               )
             : undefined
         }
