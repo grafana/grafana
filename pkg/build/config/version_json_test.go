@@ -40,7 +40,7 @@ var configJSON = []byte(`{
       "archs": [
         "amd64",
         "arm64",
-        "arm"
+        "armv7"
       ]
     },
     "packagesBucket": "grafana-downloads",
@@ -67,7 +67,7 @@ var configJSON = []byte(`{
       "archs": [
         "amd64",
         "arm64",
-        "arm"
+        "armv7"
       ]
     },
     "packagesBucket": "grafana-downloads",
@@ -95,7 +95,7 @@ var configJSON = []byte(`{
       "archs": [
         "amd64",
         "arm64",
-        "arm"
+        "armv7"
       ]
     },
     "packagesBucket": "grafana-prerelease/artifacts/downloads",
@@ -125,7 +125,7 @@ var configJSON = []byte(`{
       "archs": [
         "amd64",
         "arm64",
-        "arm"
+        "armv7"
       ]
     },
     "packagesBucket": "grafana-prerelease/artifacts/downloads",
@@ -155,7 +155,7 @@ var configJSON = []byte(`{
       "archs": [
         "amd64",
         "arm64",
-        "arm"
+        "armv7"
       ]
     },
     "packagesBucket": "grafana-prerelease/artifacts/downloads",

@@ -10,7 +10,10 @@
 
 interface AnnotationQuery {
   builtIn: number;
-  datasource: {};
+  datasource: {
+    type?: string;
+    uid?: string;
+  };
   enable: boolean;
   hide?: boolean;
   iconColor?: string;
@@ -125,16 +128,38 @@ enum DashboardCursorSync {
 const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSync.Off;
 
 interface Panel {
-  datasource?: {};
+  datasource?: {
+    type?: string;
+    uid?: string;
+  };
   description?: string;
   fieldConfig: {
-    defaults: {};
+    defaults: {
+      displayName?: string;
+      displayNameFromDS?: string;
+      description?: string;
+      path?: string;
+      writeable?: boolean;
+      filterable?: boolean;
+      unit?: string;
+      decimals?: number;
+      min?: number;
+      max?: number;
+      mappings?: {}[];
+      thresholds?: ThresholdsConfig;
+      color?: FieldColor;
+      links?: any[];
+      noValue?: string;
+      custom?: {};
+    };
     overrides: {
       matcher: {
         id: string;
+        options?: any;
       };
       properties: {
         id: string;
+        value?: any;
       }[];
     }[];
   };
@@ -172,7 +197,10 @@ const defaultPanel: Partial<Panel> = {
 
 interface RowPanel {
   collapsed: boolean;
-  datasource?: {};
+  datasource?: {
+    type?: string;
+    uid?: string;
+  };
   gridPos?: GridPos;
   id: number;
   panels: (Panel | {

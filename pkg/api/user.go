@@ -383,15 +383,20 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if setting.LDAPEnabled || setting.AuthProxyEnabled {
-		return response.Error(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
-	}
 
 	userQuery := user.GetUserByIDQuery{ID: c.UserId}
 
 	user, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
 		return response.Error(500, "Could not read user from database", err)
+	}
+
+	getAuthQuery := models.GetAuthInfoQuery{UserId: user.ID}
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		authModule := getAuthQuery.Result.AuthModule
+		if authModule == models.AuthModuleLDAP || authModule == models.AuthModuleProxy {
+			return response.Error(400, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
+		}
 	}
 
 	passwordHashed, err := util.EncodePassword(cmd.OldPassword, user.Salt)
@@ -491,6 +496,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return "grafana.com"
 	case "auth.saml":
 		return "SAML"
+	case "authproxy":
+		return "Auth Proxy"
 	case "ldap", "":
 		return "LDAP"
 	default:

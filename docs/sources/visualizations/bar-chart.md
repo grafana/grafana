@@ -21,7 +21,7 @@ This panel visualization allows you to graph categorical data.
 
 ## Supported data formats
 
-Only one data frame is supported and it needs to have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+Only one data frame is supported and it must have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
 
 Example:
 
@@ -106,6 +106,8 @@ Gradient color is generated based on the hue of the line color.
 ### Legend calculations
 
 Choose which of the [standard calculations]({{< relref "../panels/calculation-types/" >}}) to show in the legend. You can have more than one.
+
+For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
 ## Text size
 

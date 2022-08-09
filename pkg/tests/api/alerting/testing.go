@@ -50,10 +50,10 @@ func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
 	t.Helper()
 	// nolint:gosec
 	resp, err := http.Get(url)
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, resp.Body.Close())
 	})
-	require.NoError(t, err)
 	if expStatusCode != resp.StatusCode {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
