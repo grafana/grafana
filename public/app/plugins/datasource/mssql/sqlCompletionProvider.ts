@@ -1,17 +1,16 @@
-import { LinkedToken } from 'app/features/plugins/sql';
-import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
 import {
   ColumnDefinition,
   CompletionItemKind,
   CompletionItemPriority,
-  DB,
   LanguageCompletionProvider,
-  SQLQuery,
+  LinkedToken,
   StatementPlacementProvider,
   SuggestionKindProvider,
   TableDefinition,
   TokenType,
-} from 'app/features/plugins/sql/types';
+} from '@grafana/experimental';
+import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
+import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 
 import { SCHEMA_NAME } from './sqlUtil';
 

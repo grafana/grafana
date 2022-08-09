@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
+import { EditorField, EditorRows } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { EditorField, EditorRows, Input } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 
 import { INPUT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';

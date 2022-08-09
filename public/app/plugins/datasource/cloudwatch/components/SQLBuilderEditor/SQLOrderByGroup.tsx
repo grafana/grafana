@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorField, EditorFieldGroup, InputGroup, Select } from '@grafana/ui';
+import { AccessoryButton, EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
 import { ASC, DESC, STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';

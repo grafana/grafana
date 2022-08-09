@@ -4,10 +4,12 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { useMountedState, usePrevious } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Button, Cascader, CascaderOption, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Button, Cascader, CascaderOption, useStyles2 } from '@grafana/ui';
+
+import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
 
 import { OperationEditor } from './OperationEditor';
-import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from './types';
 
 export interface Props<T extends QueryWithOperations> {
   query: T;

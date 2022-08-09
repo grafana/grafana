@@ -1,21 +1,18 @@
-import { LinkedToken } from 'app/features/plugins/sql';
-import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
 import {
-  Aggregate,
   ColumnDefinition,
   CompletionItemKind,
   CompletionItemPriority,
-  DB,
   LanguageCompletionProvider,
-  MetaDefinition,
-  PositionContext,
-  SQLQuery,
+  LinkedToken,
   StatementPlacementProvider,
   StatementPosition,
   SuggestionKindProvider,
   TableDefinition,
   TokenType,
-} from 'app/features/plugins/sql/types';
+} from '@grafana/experimental';
+import { PositionContext } from '@grafana/experimental/dist/sql-editor/types';
+import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
+import { Aggregate, DB, MetaDefinition, SQLQuery } from 'app/features/plugins/sql/types';
 
 import { FUNCTIONS } from './functions';
 
