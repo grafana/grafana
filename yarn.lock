@@ -7814,9 +7814,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@percona/platform-core@npm:1.0.4-0":
-  version: 1.0.4-0
-  resolution: "@percona/platform-core@npm:1.0.4-0"
+"@percona/platform-core@npm:1.0.7":
+  version: 1.0.7
+  resolution: "@percona/platform-core@npm:1.0.7"
   dependencies:
     "@popperjs/core": ^2.9.2
     react-popper: ^2.2.5
@@ -7831,7 +7831,7 @@ __metadata:
     react: 17.0.1
     react-dom: 17.0.1
     react-final-form: ^6.5.3
-  checksum: 074afe21f9d2d8e8869fd2e0a4db863e8fb5d93e8f909f63e7685ee2925d416a62920832fba6fe784d36e734f918e4bcc6fbb4f59229139727f81ad2ae8b3e85
+  checksum: 1f4f4a82b5eeb5099eea89089d3a91875a2109115359d96d6f32e3528c98c6481abc3eea840798f2e3cf1dcb0bede9d52ff20fc08982b413c11dccb6a3aa6a59
   languageName: node
   linkType: hard
 
@@ -22950,7 +22950,7 @@ __metadata:
     "@opentelemetry/api": 1.1.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.2.0
-    "@percona/platform-core": 1.0.4-0
+    "@percona/platform-core": 1.0.7
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.6
     "@popperjs/core": 2.11.5
     "@react-aria/button": 3.4.4
@@ -23224,6 +23224,7 @@ __metadata:
     webpack-dev-server: 4.9.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
+    yaml: ^2.1.1
   languageName: unknown
   linkType: soft
 
@@ -41633,10 +41634,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:^2.0.0":
-  version: 2.1.0
-  resolution: "yaml@npm:2.1.0"
-  checksum: 59323a8b51b10d9ad0eab951e7a1f315f1076c123b08ffe60441add1df4fa3433b1d5783b21c50a65536e9d853b23fa567921dbd4bc0d711be2dbf14a06be03b
+"yaml@npm:^2.0.0, yaml@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "yaml@npm:2.1.1"
+  checksum: f48bb209918aa57cfaf78ef6448d1a1f8187f45c746f933268b7023dc59e5456004611879126c9bb5ea55b0a2b1c2b392dfde436931ece0c703a3d754562bb96
   languageName: node
   linkType: hard
 

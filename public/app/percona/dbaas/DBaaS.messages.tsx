@@ -30,6 +30,7 @@ export const Messages = {
         clusterName: 'Kubernetes Cluster Name',
         kubeConfig: 'Kubeconfig file',
       },
+      paste: 'Paste from clipboard',
     },
     table: {
       nameColumn: 'Kubernetes Cluster Name',

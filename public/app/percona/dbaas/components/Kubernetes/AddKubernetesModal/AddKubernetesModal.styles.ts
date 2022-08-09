@@ -11,4 +11,13 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
   urlWarningWrapper: css`
     margin-bottom: ${spacing.md};
   `,
+  pasteButton: css`
+    margin-bottom: ${spacing.md};
+  `,
+  pasteButtonWrapper: css`
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-end;
+  `,
 });
