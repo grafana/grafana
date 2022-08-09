@@ -28,7 +28,16 @@ export function pointFieldFromGeohash(geohash: Field<string>): Field<Point> {
 export function pointFieldFromLonLat(lon: Field, lat: Field): Field<Point> {
   const buffer = new Array<Point>(lon.values.length);
   for (let i = 0; i < lon.values.length; i++) {
-    buffer[i] = new Point(fromLonLat([lon.values.get(i), lat.values.get(i)]));
+    const longitude = lon.values.get(i);
+    const latitude = lat.values.get(i);
+
+    // TODO: Add unit tests to thoroughly test out edge cases
+    // If longitude or latitude are null, don't add them to buffer
+    if (longitude === null || latitude === null) {
+      continue;
+    }
+
+    buffer[i] = new Point(fromLonLat([longitude, latitude]));
   }
 
   return {
