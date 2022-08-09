@@ -1,6 +1,6 @@
 import { DataSourcePlugin } from '@grafana/data';
 
-import { ConfigurationEditor } from './configuration/ConfigurationEditor';
+import { MssqlConfigCtrl } from './config_ctrl';
 import { MssqlDatasource } from './datasource';
 import { MssqlQueryCtrl } from './query_ctrl';
 import { MssqlQuery } from './types';
@@ -30,5 +30,5 @@ class MssqlAnnotationsQueryCtrl {
 
 export const plugin = new DataSourcePlugin<MssqlDatasource, MssqlQuery>(MssqlDatasource)
   .setQueryCtrl(MssqlQueryCtrl)
-  .setConfigEditor(ConfigurationEditor)
+  .setConfigCtrl(MssqlConfigCtrl)
   .setAnnotationQueryCtrl(MssqlAnnotationsQueryCtrl);

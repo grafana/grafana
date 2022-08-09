@@ -1,9 +1,26 @@
 import { DataSourcePlugin } from '@grafana/data';
 
-import { ConfigurationEditor } from './configuration/ConfigurationEditor';
+import {
+  createChangeHandler,
+  createResetHandler,
+  PasswordFieldEnum,
+} from '../../../features/datasources/utils/passwordHandlers';
+
 import { MysqlDatasource } from './datasource';
 import { MysqlQueryCtrl } from './query_ctrl';
 import { MySQLQuery } from './types';
+
+class MysqlConfigCtrl {
+  static templateUrl = 'partials/config.html';
+  current: any;
+  onPasswordReset: ReturnType<typeof createResetHandler>;
+  onPasswordChange: ReturnType<typeof createChangeHandler>;
+
+  constructor() {
+    this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
+    this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);
+  }
+}
 
 const defaultQuery = `SELECT
     UNIX_TIMESTAMP(<time_column>) as time_sec,
@@ -31,10 +48,11 @@ export {
   MysqlDatasource,
   MysqlDatasource as Datasource,
   MysqlQueryCtrl as QueryCtrl,
+  MysqlConfigCtrl as ConfigCtrl,
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
 
 export const plugin = new DataSourcePlugin<MysqlDatasource, MySQLQuery>(MysqlDatasource)
   .setQueryCtrl(MysqlQueryCtrl)
-  .setConfigEditor(ConfigurationEditor)
+  .setConfigCtrl(MysqlConfigCtrl)
   .setAnnotationQueryCtrl(MysqlAnnotationsQueryCtrl);
