@@ -21,9 +21,9 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
   const tree = parser.parse(input);
   const filters: SyntaxNode[] = [];
   tree.iterate({
-    enter: (type, from, to, get): void => {
+    enter: ({ type, node }): void => {
       if (type.id === LineFilter) {
-        filters.push(get());
+        filters.push(node);
       }
     },
   });
