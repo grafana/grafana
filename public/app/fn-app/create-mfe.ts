@@ -7,7 +7,6 @@ window.__grafana_public_path__ =
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { toggleTheme } from 'app/core/services/toggleTheme';
 import fn_app from 'app/fn_app';
 
 class createMfe {
@@ -24,19 +23,18 @@ class createMfe {
     // eslint-disable-next-line
     return async function bootstrap() {
       await fn_app.init();
-      console.log('react app bootstraped');
+      console.log('grafana app bootstraped');
     };
   }
 
   static mountFnApp(component: React.Component) {
     // eslint-disable-next-line
     return async function mount(props: any) {
-      toggleTheme(props.theme);
-      console.log('props', props);
       ReactDOM.render(
         React.createElement(component, { ...props }),
         props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')
       );
+      console.log('mounting grafana app', props);
     };
   }
 
@@ -49,6 +47,7 @@ class createMfe {
       if (container) {
         ReactDOM.unmountComponentAtNode(container);
       }
+      console.log('unmounting grafana app', props);
     };
   }
 
