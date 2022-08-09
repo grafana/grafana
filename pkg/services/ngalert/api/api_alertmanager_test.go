@@ -382,7 +382,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           org.ROLE_VIEWER,
+			role:           org.RoleViewer,
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
@@ -400,7 +400,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           org.ROLE_ADMIN,
+			role:           org.RoleAdmin,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -427,7 +427,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           org.ROLE_VIEWER,
+			role:           org.RoleViewer,
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
@@ -445,7 +445,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           org.ROLE_ADMIN,
+			role:           org.RoleAdmin,
 			expectedStatus: http.StatusAccepted,
 		},
 	}

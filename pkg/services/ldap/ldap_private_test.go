@@ -127,7 +127,7 @@ func TestSerializeUsers(t *testing.T) {
 				Groups: []*GroupToOrgRole{{
 					GroupDN: "foo",
 					OrgId:   1,
-					OrgRole: org.ROLE_EDITOR,
+					OrgRole: org.RoleEditor,
 				}},
 			},
 			Connection: &MockConnection{},

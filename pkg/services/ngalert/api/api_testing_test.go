@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -26,7 +27,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models2.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId: 1,
 			},
 		}
@@ -94,7 +95,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				Req: &http.Request{},
 			},
 			IsSignedIn: false,
-			SignedInUser: &models2.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId: 1,
 			},
 		}
@@ -149,7 +150,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models2.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId: 1,
 			},
 		}
@@ -218,7 +219,7 @@ func TestRouteEvalQueries(t *testing.T) {
 				Req: &http.Request{},
 			},
 			IsSignedIn: false,
-			SignedInUser: &models2.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId: 1,
 			},
 		}
