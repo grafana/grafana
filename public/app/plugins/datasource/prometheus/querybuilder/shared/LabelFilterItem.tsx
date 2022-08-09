@@ -50,7 +50,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         <Select
-          placeholder="Label"
+          placeholder="Select label"
           aria-label={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
           width="auto"
@@ -87,7 +87,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
         />
 
         <Select
-          placeholder="Value"
+          placeholder="Select value"
           aria-label={selectors.components.QueryBuilder.valueSelect}
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
