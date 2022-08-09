@@ -7,7 +7,6 @@ import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import {
   Alert,
   BigValue,
-  BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
