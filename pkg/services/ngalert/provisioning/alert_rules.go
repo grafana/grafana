@@ -361,7 +361,9 @@ func syncGroupRuleFields(group *definitions.AlertRuleGroup, orgID int64) *defini
 func withoutNilAlertRules(ptrs []*models.AlertRule) []models.AlertRule {
 	result := make([]models.AlertRule, 0, len(ptrs))
 	for _, ptr := range ptrs {
-		result = append(result, *ptr)
+		if ptr != nil {
+			result = append(result, *ptr)
+		}
 	}
 	return result
 }
