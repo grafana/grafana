@@ -317,7 +317,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - yarn-install
@@ -1109,7 +1109,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - yarn-install
@@ -1818,7 +1818,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss ${DRONE_TAG}
+  - ./bin/build build-frontend --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
   - gen-version
   - yarn-install
@@ -2458,7 +2458,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition enterprise ${DRONE_TAG}
+  - ./bin/build build-frontend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
   - gen-version
   - yarn-install
@@ -3768,7 +3768,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - yarn-install
@@ -4353,7 +4353,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - yarn-install
@@ -5146,6 +5146,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 897b1edfa7ffaf637939a7ede5d5aa8a38c828c5b4ac4bc501836b988d295de9
+hmac: a37b9227237249a6caa2ec2c61d0972089660419f20fe334d4506b4fd22fc67b
 
 ...
