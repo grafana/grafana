@@ -18,15 +18,6 @@ import {
   QueryEditorPropertyExpression,
 } from './expressions';
 
-export interface SqlQueryForInterpolation {
-  dataset?: string;
-  alias?: string;
-  format?: QueryFormat;
-  rawSql?: string;
-  refId: string;
-  hide?: boolean;
-}
-
 export interface SQLConnectionLimits {
   maxOpenConns: number;
   maxIdleConns: number;
@@ -121,13 +112,6 @@ export interface SQLSelectableValue extends SelectableValue {
   type?: string;
   raqbFieldType?: RAQBFieldTypes;
 }
-
-export interface Aggregate {
-  id: string;
-  name: string;
-  description?: string;
-}
-
 export interface DB {
   init?: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;
@@ -139,7 +123,6 @@ export interface DB {
   lookup: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getSqlCompletionProvider: () => LanguageCompletionProvider;
   toRawSql?: (query: SQLQuery) => string;
-  functions: () => Promise<Aggregate[]>;
 }
 
 export interface QueryEditorProps {
