@@ -7,9 +7,9 @@ aliases:
   - /docs/grafana/latest/panels/repeat-panels-or-rows/
   - /docs/grafana/latest/panels/working-with-panels/add-title-and-description/
   - /docs/grafana/latest/panels/working-with-panels/view-json-model/
-  - /docs/grafana/latest/panels/configure-panels/
-title: Configure panels
-menuTitle: Configure panels
+  - /docs/grafana/latest/panels/configure-panel-options/
+title: Configure panel options
+menuTitle: Configure panel options
 weight: 150
 keywords:
   - panel
@@ -21,13 +21,14 @@ keywords:
   - JSON model
 ---
 
-# Configure panels
+# Configure panel options
 
 A Grafana panel is the user interface you use to define a data source query, and transform and format data that appears in visualizations.
 
 A panel editor includes a query builder and a series of options that you can use to transform data and add information to your panels.
 
 This topic describes how to:
+
 - open a panel for editing
 - add a panel title and description
 - view a panel JSON model
@@ -55,11 +56,11 @@ Add a title and description to a panel to share with users any important informa
 
 1. Enter a **Title**.
 
-   Text entered in this field is displayed at the top of your panel in the panel editor and in the dashboard.
+   Text entered in this field appears at the top of your panel in the panel editor and in the dashboard.
 
 1. Write a description of the panel and the data you are displaying.
 
-   Text entered in this field is displayed in a tooltip in the upper left corner of the panel.
+   Text entered in this field appears in a tooltip in the upper-left corner of the panel.
 
    You can use [variables you have defined]({{< relref "../../variables/" >}}) in the **Title** and **Description** field, but not [global variables]({{< relref "../../variables/variable-types/global-variables/" >}}).
 
@@ -77,9 +78,9 @@ Explore and export panel, panel data, and data frame JSON models.
 
    - **Panel JSON:** Displays a JSON object representing the panel.
    - **Panel data:** Displays a JSON object representing the data that was passed to the panel.
-   - **DataFrame structure:** Displays the raw result set with transformations, field configuration, and overrides configuration applied.
+   - **DataFrame structure:** Displays the raw result set with transformations, field configurations, and override configurations applied.
 
-1. To explore the JSON, click `>` to expand or collapse portions of the JSON.
+1. To explore the JSON, click `>` to expand or collapse portions of the JSON model.
 
 ## Configure repeating rows or panels
 
@@ -87,19 +88,23 @@ You can configure Grafana to dynamically add panels or rows to a dashboard. A dy
 
 > **Note:** Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
 
-You can see examples in the following dashboards:
+Refer to the following links for examples of repeating panels and rows:
 
-- [Prometheus repeat](https://play.grafana.org/d/000000036/prometheus-repeat)
-- [Repeated Rows Dashboard](https://play.grafana.org/d/000000153/repeat-rows)
+- [Prometheus dashboard with repeating panels](https://play.grafana.org/d/000000036/prometheus-repeat)
+- [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows)
 
-As seen above with the panels you can also repeat rows if you have variables set with `Multi-value` or
-`Include all value` selection option.
+The examples show that you can also repeat rows if you have variables set with `Multi-value` or
+`Include all values` selection option.
+
+### Configure repeating rows
+
+Complete the following steps to add repeating rows to a dashboard.
 
 **Before you begin:**
 
 - Ensure that the query includes a multi-value variable.
 
-**To configure repeating rows**:
+**To configure repeating rows:**
 
 1. On the dashboard home page, click **Add panel**.
 
@@ -107,11 +112,11 @@ As seen above with the panels you can also repeat rows if you have variables set
 
 1. Hover over the row title and click the cog icon.
 
-1. On the `Row Options` configuration panel, select the variable for which you want to add repeating rows.
+1. On the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
 
-> To help provide context to dashboard users, add the variable to the row title.
+> **Note:** To provide context to dashboard users, add the variable to the row title.
 
-## Configure repeating panels
+### Configure repeating panels
 
 For queries that return multiple values for a variable, you can configure Grafana to dynamically add panels based on those values.
 
@@ -123,9 +128,9 @@ For queries that return multiple values for a variable, you can configure Grafan
 
 **To configure repeating panels:**
 
-1. Edit the panel you want to repeat.
+1. [Edit the panel](#edit-a-panel) you want to repeat.
 
-1. On the display options pane, expand **Panel options > Repeat options**.
+1. On the display options pane, click **Panel options > Repeat options**.
 
 1. Select a `direction`.
 
