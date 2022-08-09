@@ -27,7 +27,6 @@ import {
 import { PromApplication, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { featureDiscoveryApi } from '../api/alertingApi';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -45,6 +44,7 @@ import {
 } from '../api/alertmanager';
 import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
+import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
@@ -115,7 +115,7 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
         }
 
         const { data: amFeatures } = await thunkAPI.dispatch(
-          featureDiscoveryApi.discoverAmFeatures.initiate({
+          featureDiscoveryApi.endpoints.discoverAmFeatures.initiate({
             amSourceName: alertManagerSourceName,
           })
         );

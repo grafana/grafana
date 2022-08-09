@@ -3,45 +3,20 @@ import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 
-import { PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
-
-import { discoverAlertmanagerFeatures } from './buildInfo';
-
 const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (requestOptions) => {
   try {
-    const response = await lastValueFrom(getBackendSrv().fetch<PromBuildInfoResponse>(requestOptions));
+    const { data, url, headers, redirected, status, statusText } = await lastValueFrom(
+      getBackendSrv().fetch(requestOptions)
+    );
 
-    return { data: response.data };
+    return { data: data, meta: { url, headers, redirected, status, statusText } };
   } catch (error) {
-    return {
-      error: {
-        data: error,
-      },
-    };
+    return { error: error };
   }
 };
 
 export const alertingApi = createApi({
   reducerPath: 'alertingApi',
   baseQuery: backendSrvBaseQuery(),
-  endpoints: (build) => ({
-    discoverAmFeatures: build.query({
-      queryFn: async ({ amSourceName }: { amSourceName: string }) => {
-        try {
-          const amFeatures = await discoverAlertmanagerFeatures(amSourceName);
-          return { data: amFeatures };
-        } catch (error) {
-          return { error: error };
-        }
-      },
-    }),
-  }),
+  endpoints: () => ({}),
 });
-
-const { useDiscoverAmFeaturesQuery } = alertingApi;
-const { discoverAmFeatures } = alertingApi.endpoints;
-
-export const featureDiscoveryApi = {
-  discoverAmFeatures,
-  useDiscoverAmFeaturesQuery,
-};

@@ -5,7 +5,7 @@ import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 
-import { featureDiscoveryApi } from './api/alertingApi';
+import { featureDiscoveryApi } from './api/featureDiscoveryApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
