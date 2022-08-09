@@ -1,10 +1,18 @@
 import { uniqBy } from 'lodash';
 
-import { DataFrame, MetricFindValue } from '@grafana/data';
-import { ResponseParser } from 'app/features/plugins/sql/types';
+import { AnnotationEvent, DataFrame, MetricFindValue } from '@grafana/data';
+import { BackendDataSourceResponse, toDataQueryResponse, FetchResponse } from '@grafana/runtime';
 
-export class MSSqlResponseParser implements ResponseParser {
-  transformMetricFindResponse(frame: DataFrame): MetricFindValue[] {
+export default class ResponseParser {
+  transformMetricFindResponse(raw: FetchResponse<BackendDataSourceResponse>): MetricFindValue[] {
+    const frames = toDataQueryResponse(raw).data as DataFrame[];
+
+    if (!frames || !frames.length) {
+      return [];
+    }
+
+    const frame = frames[0];
+
     const values: MetricFindValue[] = [];
     const textField = frame.fields.find((f) => f.name === '__text');
     const valueField = frame.fields.find((f) => f.name === '__value');
@@ -24,5 +32,42 @@ export class MSSqlResponseParser implements ResponseParser {
     }
 
     return uniqBy(values, 'text');
+  }
+
+  async transformAnnotationResponse(options: any, data: BackendDataSourceResponse): Promise<AnnotationEvent[]> {
+    const frames = toDataQueryResponse({ data: data }).data as DataFrame[];
+    if (!frames || !frames.length) {
+      return [];
+    }
+    const frame = frames[0];
+    const timeField = frame.fields.find((f) => f.name === 'time');
+
+    if (!timeField) {
+      return Promise.reject({ message: 'Missing mandatory time column (with time column alias) in annotation query.' });
+    }
+
+    const timeEndField = frame.fields.find((f) => f.name === 'timeend');
+    const textField = frame.fields.find((f) => f.name === 'text');
+    const tagsField = frame.fields.find((f) => f.name === 'tags');
+
+    const list: AnnotationEvent[] = [];
+    for (let i = 0; i < frame.length; i++) {
+      const timeEnd = timeEndField && timeEndField.values.get(i) ? Math.floor(timeEndField.values.get(i)) : undefined;
+      list.push({
+        annotation: options.annotation,
+        time: Math.floor(timeField.values.get(i)),
+        timeEnd,
+        text: textField && textField.values.get(i) ? textField.values.get(i) : '',
+        tags:
+          tagsField && tagsField.values.get(i)
+            ? tagsField.values
+                .get(i)
+                .trim()
+                .split(/\s*,\s*/)
+            : [],
+      });
+    }
+
+    return list;
   }
 }

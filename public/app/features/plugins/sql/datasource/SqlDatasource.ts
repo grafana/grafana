@@ -25,7 +25,15 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { VariableWithMultiSupport } from '../../../variables/types';
 import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, ResponseParser, SqlQueryModel, QueryFormat } from '../types';
+import {
+  DB,
+  SQLQuery,
+  SQLOptions,
+  SqlQueryForInterpolation,
+  ResponseParser,
+  SqlQueryModel,
+  QueryFormat,
+} from '../types';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
@@ -74,7 +82,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return value;
   };
 
-  interpolateVariablesInQueries(queries: SQLQuery[], scopedVars: ScopedVars): SQLQuery[] {
+  interpolateVariablesInQueries(
+    queries: SqlQueryForInterpolation[],
+    scopedVars: ScopedVars
+  ): SqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map((query) => {
@@ -130,8 +141,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
-  async runSql<T>(query: string, options?: RunSQLOptions) {
-    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, options);
+  async runSql<T>(query: string, options?: MetricFindQueryOptions) {
+    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table }, options);
     return new DataFrameView<T>(frame);
   }
 
@@ -201,9 +212,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 }
 
-interface RunSQLOptions extends MetricFindQueryOptions {
-  refId?: string;
-}
 interface MetricFindQueryOptions extends SearchFilterOptions {
   range?: TimeRange;
 }

@@ -18,21 +18,18 @@ import {
   QueryEditorPropertyExpression,
 } from './expressions';
 
-export interface SQLConnectionLimits {
-  maxOpenConns: number;
-  maxIdleConns: number;
-  connMaxLifetime: number;
+export interface SqlQueryForInterpolation {
+  dataset?: string;
+  alias?: string;
+  format?: QueryFormat;
+  rawSql?: string;
+  refId: string;
+  hide?: boolean;
 }
 
-export interface SQLOptions extends SQLConnectionLimits, DataSourceJsonData {
-  tlsAuth: boolean;
-  tlsAuthWithCACert: boolean;
-  timezone: string;
-  tlsSkipVerify: boolean;
-  user: string;
-  database: string;
-  url: string;
+export interface SQLOptions extends DataSourceJsonData {
   timeInterval: string;
+  database: string;
 }
 
 export enum QueryFormat {
