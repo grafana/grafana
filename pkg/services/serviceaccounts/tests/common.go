@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -45,13 +46,13 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 	return u1
 }
 
-func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *models.ApiKey {
+func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *apikey.APIKey {
 	role := models.ROLE_VIEWER
 	if testKey.Role != "" {
 		role = testKey.Role
 	}
 
-	addKeyCmd := &models.AddApiKeyCommand{
+	addKeyCmd := &apikey.AddCommand{
 		Name:  testKey.Name,
 		Role:  role,
 		OrgId: testKey.OrgId,
@@ -71,7 +72,7 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
-			key := models.ApiKey{Expires: &expires}
+			key := apikey.APIKey{Expires: &expires}
 			rowsAffected, err := sess.ID(addKeyCmd.Result.Id).Update(&key)
 			require.Equal(t, int64(1), rowsAffected)
 			return err
@@ -182,7 +183,7 @@ func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, saId int64,
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
+func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*apikey.APIKey, error) {
 	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
 	return nil, nil
 }

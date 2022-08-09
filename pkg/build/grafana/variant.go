@@ -46,9 +46,9 @@ func BuildVariant(ctx context.Context, opts BuildVariantOpts) error {
 			stderr = bytes.NewBuffer(nil)
 		)
 
-		args.BuildOpts.Workdir = grafanaDir
-		args.BuildOpts.Stdout = stdout
-		args.BuildOpts.Stderr = stderr
+		args.Workdir = grafanaDir
+		args.Stdout = stdout
+		args.Stderr = stderr
 		args.Package = pkg
 
 		if err := BuildGrafanaBinary(ctx, binary, opts.Version, args, opts.Edition); err != nil {

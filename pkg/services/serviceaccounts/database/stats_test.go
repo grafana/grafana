@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +27,7 @@ func TestStore_UsageStats(t *testing.T) {
 		OrgId:         sa.OrgID,
 		Key:           key.HashedKey,
 		SecondsToLive: 0,
-		Result:        &models.ApiKey{},
+		Result:        &apikey.APIKey{},
 	}
 
 	err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)

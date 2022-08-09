@@ -124,15 +124,17 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.Nil(t, err)
 
 		sc.handlerFunc = hs.GetUserByLoginOrEmail
+
+		userMock := usertest.NewUserServiceFake()
+		userMock.ExpectedUser = &user.User{ID: 2}
+		sc.userService = userMock
+		hs.userService = userMock
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
 		var resp models.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
-		require.Equal(t, "admin", resp.Login)
-		require.Equal(t, "admin@test.com", resp.Email)
-		require.True(t, resp.IsGrafanaAdmin)
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
