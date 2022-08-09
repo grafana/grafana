@@ -41,9 +41,9 @@ type OrgUser struct {
 type RoleType string
 
 const (
-	ROLE_VIEWER RoleType = "Viewer"
-	ROLE_EDITOR RoleType = "Editor"
-	ROLE_ADMIN  RoleType = "Admin"
+	RoleViewer RoleType = "Viewer"
+	RoleEditor RoleType = "Editor"
+	RoleAdmin  RoleType = "Admin"
 )
 
 type CreateOrgCommand struct {
@@ -62,16 +62,16 @@ type GetOrgIDForNewUserCommand struct {
 }
 
 func (r RoleType) IsValid() bool {
-	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR
+	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
 }
 
 func (r RoleType) Includes(other RoleType) bool {
-	if r == ROLE_ADMIN {
+	if r == RoleAdmin {
 		return true
 	}
 
-	if r == ROLE_EDITOR {
-		return other != ROLE_ADMIN
+	if r == RoleEditor {
+		return other != RoleAdmin
 	}
 
 	return r == other
@@ -79,10 +79,10 @@ func (r RoleType) Includes(other RoleType) bool {
 
 func (r RoleType) Children() []RoleType {
 	switch r {
-	case ROLE_ADMIN:
-		return []RoleType{ROLE_EDITOR, ROLE_VIEWER}
-	case ROLE_EDITOR:
-		return []RoleType{ROLE_VIEWER}
+	case RoleAdmin:
+		return []RoleType{RoleEditor, RoleViewer}
+	case RoleEditor:
+		return []RoleType{RoleViewer}
 	default:
 		return nil
 	}
@@ -90,10 +90,10 @@ func (r RoleType) Children() []RoleType {
 
 func (r RoleType) Parents() []RoleType {
 	switch r {
-	case ROLE_EDITOR:
-		return []RoleType{ROLE_ADMIN}
-	case ROLE_VIEWER:
-		return []RoleType{ROLE_EDITOR, ROLE_ADMIN}
+	case RoleEditor:
+		return []RoleType{RoleAdmin}
+	case RoleViewer:
+		return []RoleType{RoleEditor, RoleAdmin}
 	default:
 		return nil
 	}
@@ -109,7 +109,7 @@ func (r *RoleType) UnmarshalText(data []byte) error {
 			return fmt.Errorf("invalid role value: %s", *r)
 		}
 
-		*r = ROLE_VIEWER
+		*r = RoleViewer
 	}
 
 	return nil

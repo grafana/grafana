@@ -37,7 +37,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.ROLEEWER) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
@@ -45,7 +45,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:id:100"}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.ROLEEWER) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
@@ -53,7 +53,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "new user", "role": "` + string(org.ROLEEWER) + `"}`,
+			input:        `{"loginOrEmail": "new user", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
@@ -61,7 +61,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{},
-			input:        `{"loginOrEmail": "new user", "role": "` + string(org.ROLEEWER) + `"}`,
+			input:        `{"loginOrEmail": "new user", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 	}
 

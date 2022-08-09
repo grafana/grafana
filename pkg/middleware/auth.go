@@ -136,11 +136,11 @@ func Auth(options *AuthOptions) web.Handler {
 // Intended for when feature flags open up access to APIs that
 // are otherwise only available to admins.
 func AdminOrEditorAndFeatureEnabled(enabled bool) web.Handler {
-	return func(c *moorg.ROLEtext) {
+	return func(c *models.ReqContext) {
 		if c.OrgRole == org.RoleAdmin {
 			return
 		}
-		org.ROLE
+
 		if c.OrgRole == org.RoleEditor && enabled {
 			return
 		}
@@ -194,7 +194,7 @@ func shouldForceLogin(c *models.ReqContext) bool {
 }
 
 func OrgAdminDashOrFolderAdminOrTeamAdmin(ss sqlstore.Store, ds dashboards.DashboardService) func(c *models.ReqContext) {
-	return func(c *moorg.ROLEtext) {
+	return func(c *models.ReqContext) {
 		if c.OrgRole == org.RoleAdmin {
 			return
 		}

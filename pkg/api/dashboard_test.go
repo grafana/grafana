@@ -147,7 +147,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}
 
 		setUp := func() {
-			viewerRole := org.ROLEEWER
+			viewerRole := org.RoleViewer
 			editorRole := org.RoleEditor
 			dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 				q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
@@ -873,7 +873,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			q.Result = []*models.DashboardACLInfoDTO{{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT}}
 		}).Return(nil)
 		guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
-org.ROLE
+
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
 			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
@@ -884,7 +884,7 @@ org.ROLE
 
 			assert.Equal(t, "../../../dashboard1.json", dash.Meta.ProvisionedExternalId, mockSQLStore)
 		}, mockSQLStore)
-org.ROLE
+
 		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
 			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
@@ -1111,7 +1111,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			sc.context.SignedInUser = &user.SignedInUser{
 				OrgId:  testOrgID,
 				UserId: testUserID,
-			}org.ROLE
+			}
 			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.RestoreDashboardVersion(c)

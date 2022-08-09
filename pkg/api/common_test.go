@@ -311,17 +311,17 @@ func setInitCtxSignedInUser(initCtx *models.ReqContext, user user.SignedInUser) 
 }
 
 func setInitCtxSignedInViewer(initCtx *models.ReqContext) {
-	initCtx.IsSignedIn = trueorg.ROLE
+	initCtx.IsSignedIn = true
 	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleViewer, Login: testUserLogin}
 }
 
 func setInitCtxSignedInEditor(initCtx *models.ReqContext) {
-	initCtx.IsSignedIn = trueorg.ROLE
+	initCtx.IsSignedIn = true
 	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleEditor, Login: testUserLogin}
 }
 
 func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
-	initCtx.IsSignedIn = trueorg.ROLE
+	initCtx.IsSignedIn = true
 	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleAdmin, Login: testUserLogin}
 }
 
@@ -479,8 +479,8 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	return s
 }
 
-var (org.ROLE
-	viewerRole = org.ROLEEWER
+var (
+	viewerRole = org.RoleViewer
 	editorRole = org.RoleEditor
 )
 

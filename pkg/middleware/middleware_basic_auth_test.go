@@ -38,7 +38,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		assert.Equal(t, 200, sc.resp.Code)
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgId)
-		assert.Equal(t, org.ROLEITOR, sc.context.OrgRole)
+		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 	}, configure)
 
 	middlewareScenario(t, "Handle auth", func(t *testing.T, sc *scenarioContext) {

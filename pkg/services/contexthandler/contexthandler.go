@@ -178,7 +178,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
 	defer span.End()
 
-	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
+	orga, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
 		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
@@ -188,8 +188,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	reqContext.AllowAnonymous = true
 	reqContext.SignedInUser = &user.SignedInUser{IsAnonymous: true}
 	reqContext.OrgRole = org.RoleType(h.Cfg.AnonymousOrgRole)
-	reqContext.OrgId = org.Id
-	reqContext.OrgName = org.Name
+	reqContext.OrgId = orga.Id
+	reqContext.OrgName = orga.Name
 	return true
 }
 

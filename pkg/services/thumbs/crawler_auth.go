@@ -80,7 +80,7 @@ func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (CrawlerAuth, er
 		return nil, err
 	}
 
-	// userId:0 and ROLE_ADMIN grants the crawler process permissions to view all dashboards in all folders & orgs
+	// userId:0 and RoleAdmin grants the crawler process permissions to view all dashboards in all folders & orgs
 	// the process doesn't and shouldn't actually need to edit/modify any resources from the UI
 	orgRole := org.RoleAdmin
 

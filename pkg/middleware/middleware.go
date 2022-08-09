@@ -17,7 +17,7 @@ var (
 	})
 	ReqSignedIn            = Auth(&AuthOptions{ReqSignedIn: true})
 	ReqSignedInNoAnonymous = Auth(&AuthOptions{ReqSignedIn: true, ReqNoAnonynmous: true})
-	ReqEditorRole          = RoleAuth(org.ROLEITOR, org.RoleAdmin)
+	ReqEditorRole          = RoleAuth(org.RoleEditor, org.RoleAdmin)
 	ReqOrgAdmin            = RoleAuth(org.RoleAdmin)
 )
 

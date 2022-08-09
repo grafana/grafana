@@ -55,7 +55,7 @@ func TestGetPluginDashboards(t *testing.T) {
 	t.Run("Signed in and not org admin should return 403 Forbidden", func(t *testing.T) {
 		user := &user.SignedInUser{
 			UserId:  1,
-			OrgRole: org.ROLE_EDITOR,
+			OrgRole: org.RoleEditor,
 		}
 
 		resp, err := sendGetPluginDashboardsRequestForSignedInUser(t, s, existingPluginID, user)
@@ -68,7 +68,7 @@ func TestGetPluginDashboards(t *testing.T) {
 		user := &user.SignedInUser{
 			UserId:  1,
 			OrgId:   1,
-			OrgRole: org.ROLEMIN,
+			OrgRole: org.RoleAdmin,
 		}
 
 		t.Run("When plugin doesn't exist should return 404 Not Found", func(t *testing.T) {

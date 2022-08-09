@@ -277,7 +277,7 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 
 			sc.context = c
 			sc.context.UserId = testUserID
-			sc.context.OrgId = teorg.ROLE
+			sc.context.OrgId = 1
 			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminLogoutUser(c)
@@ -305,7 +305,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.UserId = testUserID
-			sc.context.OrgId = teorg.ROLE
+			sc.context.OrgId = 1
 			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminRevokeUserAuthToken(c)
@@ -331,7 +331,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
-			sc.context.OrgId = teorg.ROLE
+			sc.context.OrgId = 1
 			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminGetUserAuthTokens(c)

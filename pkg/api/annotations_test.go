@@ -998,8 +998,8 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	}
 }
 
-func setUpACL()org.ROLE
-	viewerRole := org.ROLEEWER
+func setUpACL() {
+	viewerRole := org.RoleViewer
 	editorRole := org.RoleEditor
 	store := mockstore.NewSQLStoreMock()
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}

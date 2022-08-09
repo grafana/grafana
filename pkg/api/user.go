@@ -446,7 +446,7 @@ func (hs *HTTPServer) SetHelpFlag(c *models.ReqContext) response.Response {
 	}
 
 	bitmask := &c.HelpFlags1
-	bitmask.AddFlag(models.HelpFlags1(flag))
+	bitmask.AddFlag(user.HelpFlags1(flag))
 
 	cmd := models.SetUserHelpFlagCommand{
 		UserId:     c.UserId,
@@ -472,7 +472,7 @@ func (hs *HTTPServer) SetHelpFlag(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) ClearHelpFlags(c *models.ReqContext) response.Response {
 	cmd := models.SetUserHelpFlagCommand{
 		UserId:     c.UserId,
-		HelpFlags1: models.HelpFlags1(0),
+		HelpFlags1: user.HelpFlags1(0),
 	}
 
 	if err := hs.SQLStore.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {

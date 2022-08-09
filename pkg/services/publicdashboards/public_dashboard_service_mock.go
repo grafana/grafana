@@ -9,6 +9,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 
 	models "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	publicdashboardsmodels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 

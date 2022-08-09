@@ -29,13 +29,13 @@ const (
 
 // DashboardEvent events related to dashboards
 type dashboardEvent struct {
-	UID       string                 `json:"uid"`
-	Action    actionType             `json:"action"` // saved, editing, deleted
-	User      *models.UserDisplayDTO `json:"user,omitempty"`
-	SessionID string                 `json:"sessionId,omitempty"`
-	Message   string                 `json:"message,omitempty"`
-	Dashboard *models.Dashboard      `json:"dashboard,omitempty"`
-	Error     string                 `json:"error,omitempty"`
+	UID       string               `json:"uid"`
+	Action    actionType           `json:"action"` // saved, editing, deleted
+	User      *user.UserDisplayDTO `json:"user,omitempty"`
+	SessionID string               `json:"sessionId,omitempty"`
+	Message   string               `json:"message,omitempty"`
+	Dashboard *models.Dashboard    `json:"dashboard,omitempty"`
+	Error     string               `json:"error,omitempty"`
 }
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
@@ -163,7 +163,7 @@ func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardSaved(orgID int64, user *models.UserDisplayDTO, message string, dashboard *models.Dashboard, err error) error {
+func (h *DashboardHandler) DashboardSaved(orgID int64, user *user.UserDisplayDTO, message string, dashboard *models.Dashboard, err error) error {
 	if err != nil && !h.HasGitOpsObserver(orgID) {
 		return nil // only broadcast if it was OK
 	}
@@ -184,7 +184,7 @@ func (h *DashboardHandler) DashboardSaved(orgID int64, user *models.UserDisplayD
 }
 
 // DashboardDeleted will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardDeleted(orgID int64, user *models.UserDisplayDTO, uid string) error {
+func (h *DashboardHandler) DashboardDeleted(orgID int64, user *user.UserDisplayDTO, uid string) error {
 	return h.publish(orgID, dashboardEvent{
 		UID:    uid,
 		Action: ActionDeleted,

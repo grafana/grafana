@@ -108,7 +108,7 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
 		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
-		OrgRoles:       map[int64]org.RoleType{1: org.ROLE_ADMIN, 2: org.ROLE_VIEWER},
+		OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin, 2: org.RoleViewer},
 		IsGrafanaAdmin: &isAdmin,
 	}
 
@@ -122,13 +122,13 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgId:   org.ROLE
-				OrgRole: org.ROLE_ADMIN,
+				OrgId:   1,
+				OrgRole: org.RoleAdmin,
 			},
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgId:   org.ROLE
-				OrgRole: org.ROLE_VIEWER,
+				OrgId:   2,
+				OrgRole: org.RoleViewer,
 			},
 		},
 	}
@@ -162,8 +162,8 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
-		Groups:         []string{"cn=admins,ou=groupsorg.ROLE,dc=org", "another-group-not-matched"},
-		OrgRoles:       map[int64]org.RoleType{1: org.ROLE_ADMIN},
+		Groups:         []string{"cn=admins,ou=groups,dc=org", "another-group-not-matched"},
+		OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 		IsGrafanaAdmin: &isAdmin,
 	}
 
@@ -177,13 +177,13 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgId:   org.ROLE
-				OrgRole: org.ROLE_ADMIN,
+				OrgId:   1,
+				OrgRole: org.RoleAdmin,
 			},
 			{
 				GroupDN: "cn=admins2,ou=groups,dc=grafana,dc=org",
-				OrgId:   org.ROLE
-				OrgRole: org.ROLE_ADMIN,
+				OrgId:   1,
+				OrgRole: org.RoleAdmin,
 			},
 		},
 	}
@@ -237,8 +237,8 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
-		Groups:         []string{"cn=admins,ou=groupsorg.ROLE,dc=org"},
-		OrgRoles:       map[int64]org.RoleType{1: org.ROLE_ADMIN},
+		Groups:         []string{"cn=admins,ou=groups,dc=org"},
+		OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 		IsGrafanaAdmin: &isAdmin,
 	}
 
@@ -252,8 +252,8 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgId:   org.ROLE
-				OrgRole: org.ROLE_ADMIN,
+				OrgId:   1,
+				OrgRole: org.RoleAdmin,
 			},
 		},
 	}

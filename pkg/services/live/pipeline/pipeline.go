@@ -141,7 +141,7 @@ type LiveChannelRule struct {
 	Subscribers []Subscriber
 
 	// PublishAuth allows providing authorization logic for publishing into a channel.
-	// If PublishAuth is not set then ROLE_ADMIN is required to publish.
+	// If PublishAuth is not set then RoleAdmin is required to publish.
 	PublishAuth PublishAuthChecker
 	// DataOutputters if set allows doing something useful with raw input data. If not set then
 	// we step further to the converter. Each DataOutputter can optionally return a slice
