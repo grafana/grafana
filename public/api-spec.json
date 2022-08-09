@@ -8262,6 +8262,9 @@
           "200": {
             "$ref": "#/responses/getDashboardSnapshotResponse"
           },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },

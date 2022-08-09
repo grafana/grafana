@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
@@ -14,13 +14,13 @@ import (
 )
 
 type store interface {
-	GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error
-	GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey
-	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
-	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
-	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
-	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
-	GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error)
+	GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery) error
+	GetAllAPIKeys(ctx context.Context, orgID int64) []*apikey.APIKey
+	DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error
+	AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
+	GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) error
+	GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) error
+	GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.APIKey, error)
 	UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error
 }
 
@@ -32,7 +32,7 @@ type sqlStore struct {
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error {
+func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var sess *xorm.Session
 
@@ -56,13 +56,13 @@ func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 			sess.And(filter.Where, filter.Args...)
 		}
 
-		query.Result = make([]*models.ApiKey, 0)
+		query.Result = make([]*apikey.APIKey, 0)
 		return sess.Find(&query.Result)
 	})
 }
 
-func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
-	result := make([]*models.ApiKey, 0)
+func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*apikey.APIKey {
+	result := make([]*apikey.APIKey, 0)
 	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		sess := dbSession.Where("service_account_id IS NULL").Asc("name")
 		if orgID != -1 {
@@ -77,7 +77,7 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.Ap
 	return result
 }
 
-func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
+func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
 		result, err := sess.Exec(rawSQL, cmd.Id, cmd.OrgId)
@@ -88,18 +88,18 @@ func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCo
 		if err != nil {
 			return err
 		} else if n == 0 {
-			return models.ErrApiKeyNotFound
+			return apikey.ErrNotFound
 		}
 		return nil
 	})
 }
 
-func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
+func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
+		key := apikey.APIKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
 		if exists {
-			return models.ErrDuplicateApiKey
+			return apikey.ErrDuplicate
 		}
 
 		updated := timeNow()
@@ -108,10 +108,10 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand)
 			v := updated.Add(time.Second * time.Duration(cmd.SecondsToLive)).Unix()
 			expires = &v
 		} else if cmd.SecondsToLive < 0 {
-			return models.ErrInvalidApiKeyExpiration
+			return apikey.ErrInvalidExpiration
 		}
 
-		t := models.ApiKey{
+		t := apikey.APIKey{
 			OrgId:            cmd.OrgId,
 			Name:             cmd.Name,
 			Role:             cmd.Role,
@@ -130,56 +130,56 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand)
 	})
 }
 
-func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error {
+func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var apikey models.ApiKey
-		has, err := sess.ID(query.ApiKeyId).Get(&apikey)
+		var key apikey.APIKey
+		has, err := sess.ID(query.ApiKeyId).Get(&key)
 
 		if err != nil {
 			return err
 		} else if !has {
-			return models.ErrInvalidApiKey
+			return apikey.ErrInvalid
 		}
 
-		query.Result = &apikey
+		query.Result = &key
 		return nil
 	})
 }
 
-func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
+func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var apikey models.ApiKey
-		has, err := sess.Where("org_id=? AND name=?", query.OrgId, query.KeyName).Get(&apikey)
+		var key apikey.APIKey
+		has, err := sess.Where("org_id=? AND name=?", query.OrgId, query.KeyName).Get(&key)
 
 		if err != nil {
 			return err
 		} else if !has {
-			return models.ErrInvalidApiKey
+			return apikey.ErrInvalid
 		}
 
-		query.Result = &apikey
+		query.Result = &key
 		return nil
 	})
 }
 
-func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
-	var apikey models.ApiKey
+func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.APIKey, error) {
+	var key apikey.APIKey
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Table("api_key").Where(fmt.Sprintf("%s = ?", ss.db.GetDialect().Quote("key")), hash).Get(&apikey)
+		has, err := sess.Table("api_key").Where(fmt.Sprintf("%s = ?", ss.db.GetDialect().Quote("key")), hash).Get(&key)
 		if err != nil {
 			return err
 		} else if !has {
-			return models.ErrInvalidApiKey
+			return apikey.ErrInvalid
 		}
 		return nil
 	})
-	return &apikey, err
+	return &key, err
 }
 
 func (ss *sqlStore) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
 	now := timeNow()
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Table("api_key").ID(tokenID).Cols("last_used_at").Update(&models.ApiKey{LastUsedAt: &now}); err != nil {
+		if _, err := sess.Table("api_key").ID(tokenID).Cols("last_used_at").Update(&apikey.APIKey{LastUsedAt: &now}); err != nil {
 			return err
 		}
 

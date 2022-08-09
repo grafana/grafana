@@ -107,7 +107,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.bodySmall.lineHeight};
     background-color: ${theme.colors.background.secondary};
-    color: ${theme.colors.text};
+    color: ${theme.colors.text.primary};
     white-space: nowrap;
     text-shadow: none;
     padding: ${theme.spacing(0.5)};

@@ -34,23 +34,23 @@ func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Servic
 }
 
 func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := s.sqlStore.GetUserByLogin(ctx, &userQuery)
+	userQuery := user.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
+	usr, err := s.userService.GetByLogin(ctx, &userQuery)
 	if err != nil {
 		return err
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.ID}
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.ID}
 	if err := s.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		return err
 	}
 
 	query.Result = &models.ExternalUserInfo{
-		UserId:     userQuery.Result.ID,
-		Login:      userQuery.Result.Login,
-		Email:      userQuery.Result.Email,
-		Name:       userQuery.Result.Name,
-		IsDisabled: userQuery.Result.IsDisabled,
+		UserId:     usr.ID,
+		Login:      usr.Login,
+		Email:      usr.Email,
+		Name:       usr.Name,
+		IsDisabled: usr.IsDisabled,
 		AuthModule: authInfoQuery.Result.AuthModule,
 		AuthId:     authInfoQuery.Result.AuthId,
 	}
@@ -234,21 +234,23 @@ func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, 
 }
 
 func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
-	query := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := s.sqlStore.GetUserByLogin(ctx, &query); err != nil {
+	query := user.GetUserByLoginQuery{LoginOrEmail: login}
+	usr, err := s.userService.GetByLogin(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return usr, nil
 }
 
 func (s *AuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
-	query := models.GetUserByEmailQuery{Email: email}
-	if err := s.sqlStore.GetUserByEmail(ctx, &query); err != nil {
+	query := user.GetUserByEmailQuery{Email: email}
+	usr, err := s.userService.GetByEmail(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return usr, nil
 }
 
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it

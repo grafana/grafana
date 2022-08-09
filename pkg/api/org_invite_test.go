@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
@@ -66,6 +68,9 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			sc := setupHTTPServer(t, true, true)
+			userService := usertest.NewUserServiceFake()
+			userService.ExpectedUser = &user.User{ID: 2}
+			sc.hs.userService = userService
 			setInitCtxSignedInViewer(sc.initCtx)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgId)

@@ -52,12 +52,12 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 		return err
 	}
 
-	cmd := models.ChangeUserPasswordCommand{
-		UserId:      AdminUserId,
+	cmd := user.ChangeUserPasswordCommand{
+		UserID:      AdminUserId,
 		NewPassword: passwordHashed,
 	}
 
-	if err := runner.SQLStore.ChangeUserPassword(context.Background(), &cmd); err != nil {
+	if err := runner.UserService.ChangePassword(context.Background(), &cmd); err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
 

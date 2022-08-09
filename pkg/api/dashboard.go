@@ -353,7 +353,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagValidateDashboardsOnSave) {
-		cm := hs.CoremodelStaticRegistry.Dashboard()
+		cm := hs.Coremodels.Dashboard()
 
 		// Ideally, coremodel validation calls would be integrated into the web
 		// framework. But this does the job for now.
