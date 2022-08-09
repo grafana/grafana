@@ -351,19 +351,6 @@ abstract class DataSourceApi<
    * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
-
-  /*
-   * Optionally, use this method to track information about queries.
-   * Only executed once, during the dashboard initialization.
-   * @alpha -- experimental
-   */
-  onTrackQuery?(options: {
-    queries: TQuery[];
-    dashboardId?: string;
-    orgId?: number;
-    userId?: number;
-    grafanaVersion?: string;
-  }): void;
 }
 
 export interface MetadataInspectorProps<

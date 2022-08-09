@@ -1,6 +1,7 @@
-import { DataQuery, locationUtil, setWeekStart } from '@grafana/data';
-import { config, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
+import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
@@ -107,39 +108,20 @@ async function fetchDashboard(
   }
 }
 
-const trackQueriesForPanels = (
-  panels: PanelModel[],
-  dashboardId: string,
-  orgId?: number,
-  userId?: number,
-  grafanaVersion?: string
-): void => {
-  const queries = getQueriesForPanelsPerDS(panels);
-  const datasourceSrv = getDataSourceSrv();
-
-  Object.keys(queries).forEach((datasourceId) => {
-    datasourceSrv.get(datasourceId).then((ds) => {
-      if (ds.onTrackQuery) {
-        ds.onTrackQuery({ queries: queries[datasourceId], dashboardId, orgId, userId, grafanaVersion });
-      }
-    });
-  });
-};
-
-const getQueriesForPanelsPerDS = (
+const getQueriesByDatasource = (
   panels: PanelModel[],
   queries: { [datasourceId: string]: DataQuery[] } = {}
 ): { [datasourceId: string]: DataQuery[] } => {
   panels.forEach((panel) => {
     if (panel.panels) {
-      getQueriesForPanelsPerDS(panel.panels, queries);
+      getQueriesByDatasource(panel.panels, queries);
     } else {
       panel.targets.forEach((target) => {
-        if (target.datasource?.uid) {
-          if (queries[target.datasource.uid]) {
-            queries[target.datasource.uid].push(target);
+        if (target.datasource?.type) {
+          if (queries[target.datasource.type]) {
+            queries[target.datasource.type].push(target);
           } else {
-            queries[target.datasource.uid] = [target];
+            queries[target.datasource.type] = [target];
           }
         }
       });
@@ -255,13 +237,15 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       setWeekStart(config.bootData.user.weekStart);
     }
 
-    // call trackQueries from data sources
-    trackQueriesForPanels(
-      dashboard.panels,
-      dashboard.uid,
-      storeState.user.orgId,
-      storeState.user.user?.id,
-      config.buildInfo.version
+    // Propagate an app-wide event about the dashboard being loaded
+    appEvents.publish(
+      new DashboardLoadedEvent({
+        dashboardId: dashboard.uid,
+        orgId: storeState.user.orgId,
+        userId: storeState.user.user?.id,
+        grafanaVersion: config.buildInfo.version,
+        queries: getQueriesByDatasource(dashboard.panels),
+      })
     );
 
     // yay we are done

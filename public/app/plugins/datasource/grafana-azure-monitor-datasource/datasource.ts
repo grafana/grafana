@@ -10,7 +10,7 @@ import {
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
+import { DataSourceWithBackend } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
@@ -208,38 +208,9 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 
-  onTrackQuery(options: {
-    queries: AzureMonitorQuery[];
-    dashboardId?: string;
-    orgId?: number;
-    userId?: number;
-    grafanaVersion?: string;
-  }) {
-    const { queries, dashboardId, orgId, userId, grafanaVersion } = options;
-    reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', {
-      grafana_version: grafanaVersion,
-      dashboard_id: dashboardId,
-      org_id: orgId,
-      user_id: userId,
-      queries: queries.map(queryToLog),
-    });
-  }
-
   getVariablesRaw() {
     return this.templateSrv.getVariables();
   }
-}
-
-type queryLog = {
-  hidden: boolean;
-  query_type?: AzureQueryType;
-};
-
-function queryToLog(query: AzureMonitorQuery): queryLog {
-  return {
-    hidden: !!query.hide,
-    query_type: query.queryType,
-  };
 }
 
 function hasQueryForType(query: AzureMonitorQuery): boolean {
