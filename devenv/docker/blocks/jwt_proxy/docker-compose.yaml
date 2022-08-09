@@ -48,7 +48,6 @@
       "--pass-access-token=true",
       "--email-domain=*",
     ]
-    # network_mode: "host"
     depends_on:
       - oauthkeycloak
     extra_hosts:
