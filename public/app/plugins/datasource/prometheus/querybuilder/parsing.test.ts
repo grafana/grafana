@@ -54,7 +54,9 @@ describe('buildVisualQueryFromString', () => {
         'avg(rate(access_evaluation_duration_count{instance="host.docker.internal:3000"}[$__rate_interval]))'
       )
     ).toEqual({
-      // @todo, determine if this error node is expected after migration from lezer-promql to @prometheus-io/lezer-promql and upgrading @lezer/common to 1.0.0
+      // after upgrading @prometheus-io/lezer-promql, strings containing global grafana variables such as $__rate_interval (https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/)
+      // started returning error nodes upon parse, but the resultant tree was otherwise the same.
+      // My assumption is that the newer version of lezer is more verbose in returning error nodes, and there should be no functional change to the parsed trees.
       errors: [
         {
           from: 107,
