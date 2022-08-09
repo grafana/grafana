@@ -16,8 +16,9 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *ServerLockService {
 	}
 }
 
-// ServerLockService allows servers in HA mode to claim a lock
-// and execute a function if the server was granted the lock
+// ServerLockService allows servers in HA mode to claim a lock and execute a function if the server was granted the lock
+// It exposes 2 services LockAndExecute and LockExecuteAndRelease, which are intended to be used independently, don't mix
+// them up (ie, use the same actionName for both of them).
 type ServerLockService struct {
 	SQLStore *sqlstore.SQLStore
 	log      log.Logger
