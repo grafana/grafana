@@ -66,7 +66,7 @@ load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', '
 def store_npm_packages_step():
     return {
         'name': 'store-npm-packages',
-        'image': publish_image,
+        'image': build_image,
         'depends_on': [
             'build-frontend-packages',
         ],
