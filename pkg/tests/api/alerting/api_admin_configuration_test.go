@@ -47,7 +47,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 	// create user under different organisation
 	createUser(t, s, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLEMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin-42",
 		Login:          "admin-42",
 		OrgID:          orgID,

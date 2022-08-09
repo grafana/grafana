@@ -77,7 +77,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStoorg.ROLEeateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -159,7 +159,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStoorg.ROLEeateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -236,7 +236,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStoorg.ROLEeateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -323,7 +323,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStoorg.ROLEeateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -436,7 +436,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStoorg.ROLEeateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -529,7 +529,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStoorg.ROLEeateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -617,7 +617,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStoorg.ROLEeateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -740,7 +740,7 @@ func TestNotificationChannels(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, env.SQLStoorg.ROLEeateUserCommand{
+	createUser(t, env.SQLStore, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",

@@ -48,12 +48,12 @@ func TestAMConfigAccess(t *testing.T) {
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -417,7 +417,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -561,17 +561,17 @@ func TestRulerAccess(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a users to make authenticated requests
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -675,12 +675,12 @@ func TestDeleteFolderWithRules(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
@@ -835,7 +835,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1878,7 +1878,7 @@ func TestQuota(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -2094,7 +2094,7 @@ func TestEval(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, useorg.ROLErCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",

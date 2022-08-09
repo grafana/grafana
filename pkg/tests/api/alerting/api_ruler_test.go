@@ -176,7 +176,7 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
 		// remove permissions from folder2
-		removeFolderPermission(t, permissionsStore, 1, userID, org.ROLEITOR, "folder2")
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
 		apiClient.ReloadCachedPermissions(t)
 
 		// make sure that folder2 is not included in the response
@@ -250,7 +250,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	}
 
 	// Remove permissions from folder1.
-	removeFolderPermission(t, permissionsStore, 1, userID, org.ROLEITOR, "folder1")
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
 	apiClient.ReloadCachedPermissions(t)
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
@@ -326,7 +326,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 
 	// Create user
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLEMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
 	})
@@ -393,7 +393,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLEITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -731,7 +731,7 @@ func TestRuleGroupSequence(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLEITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -827,7 +827,7 @@ func TestRuleUpdate(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(org.ROLEITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
