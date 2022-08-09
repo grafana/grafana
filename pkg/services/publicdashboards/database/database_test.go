@@ -24,6 +24,10 @@ var DefaultTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
 // Default time to pass in with seconds rounded
 var DefaultTime = time.Now().UTC().Round(time.Second)
 
+func TestLogPrefix(t *testing.T) {
+	assert.Equal(t, LogPrefix, "publicdashboards.store")
+}
+
 func TestIntegrationGetDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *dashboardsDB.DashboardStore

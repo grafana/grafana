@@ -1210,7 +1210,7 @@ For more information about the Grafana alerts, refer to [About Grafana Alerting]
 
 ### enabled
 
-Enable or disable Grafana Alerting. If enabled, we’ll migrate all your alert rules and notification channels to the new system as alert rules and notification channels you had previously defined will be converted into an Alertmanager configuration. Legacy alerting data is preserved to enable backwards compatibility. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
+Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
@@ -1232,11 +1232,11 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### ha_listen_address
 
-Listen address/hostname and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
+Listen IP address and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
 
 ### ha_advertise_address
 
-Explicit address/hostname and port to advertise other Grafana instances. The port is used for both TCP and UDP.
+Explicit IP address and port to advertise other Grafana instances. The port is used for both TCP and UDP.
 
 ### ha_peers
 
@@ -1320,11 +1320,11 @@ For example: `disabled_labels=grafana_folder`
 
 ## [alerting]
 
-For more information about the legacy dashboard alerting feature in Grafana, refer to [Alerts overview]({{< relref "../../alerting/" >}}).
+For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts]({{< relref "https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/" >}}).
 
 ### enabled
 
-Set to `false` to [enable Grafana Alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana Alerting, set to `true`.
+Set to `true` to [enable legacy dashboard alerting]({{<relref "#unified_alerting">}}). The default value is `false`.
 
 ### execute_alerts
 

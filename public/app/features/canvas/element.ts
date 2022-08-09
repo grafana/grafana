@@ -55,3 +55,6 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
   /** Build the configuration UI */
   registerOptionsUI?: PanelOptionsSupplier<CanvasElementOptions<TConfig>>;
 }
+
+export const defaultBgColor = '#D9D9D9';
+export const defaultTextColor = '#000000';

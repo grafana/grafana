@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.54'
+grabpl_version = 'v3.0.1'
 build_image = 'grafana/build-container:1.5.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -488,7 +488,7 @@ def build_plugins_step(edition, ver_mode):
         ],
         'commands': [
             # TODO: Use percentage for num jobs
-            './bin/grabpl build-plugins --jobs 8 --edition {}'.format(edition),
+            './bin/build  build-plugins --jobs 8 --edition {}'.format(edition),
         ],
     }
 
@@ -654,9 +654,10 @@ def shellcheck_step():
         'image': build_image,
         'depends_on': [
             'grabpl',
+            'compile-build-cmd',
         ],
         'commands': [
-            './bin/grabpl shellcheck',
+            './bin/build shellcheck',
         ],
     }
 
@@ -798,7 +799,7 @@ def copy_packages_for_docker_step():
 
 
 def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    cmd = './bin/grabpl build-docker --edition {}'.format(edition)
+    cmd = './bin/build build-docker --edition {}'.format(edition)
     if publish:
         cmd += ' --shouldSave'
 
@@ -813,7 +814,10 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     return {
         'name': 'build-docker-images' + ubuntu_sfx,
         'image': 'google/cloud-sdk',
-        'depends_on': ['copy-packages-for-docker'],
+        'depends_on': [
+          'copy-packages-for-docker',
+          'compile-build-cmd',
+        ],
         'commands': [
             cmd
         ],
@@ -994,7 +998,7 @@ def upload_packages_step(edition, ver_mode, trigger=None):
 
 def store_packages_step(edition, ver_mode):
     if ver_mode == 'release':
-        cmd = './bin/grabpl store-packages --edition {} --packages-bucket grafana-downloads --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
@@ -1045,7 +1049,6 @@ def get_windows_steps(edition, ver_mode):
     if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2'))) or ver_mode in (
         'release', 'release-branch',
     ):
-        bucket_part = ''
         bucket = '%PRERELEASE_BUCKET%/artifacts/downloads'
         if ver_mode == 'release':
             ver_part = '${DRONE_TAG}'
@@ -1053,7 +1056,6 @@ def get_windows_steps(edition, ver_mode):
         else:
             dir = 'main'
             bucket = 'grafana-downloads'
-            bucket_part = ' --packages-bucket {}'.format(bucket)
             build_no = 'DRONE_BUILD_NUMBER'
             ver_part = '--build-id $$env:{}'.format(build_no)
         installer_commands = [
@@ -1070,7 +1072,7 @@ def get_windows_steps(edition, ver_mode):
         ):
             installer_commands.extend([
                 '.\\grabpl.exe gen-version {}'.format(ver_part),
-                '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
+                '.\\grabpl.exe windows-installer --edition {} {}'.format(edition, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
             ])
             if ver_mode == 'main':
@@ -1183,6 +1185,7 @@ def trigger_test_release():
             'paths': {
                 'include': [
                     '.drone.yml',
+                    'pkg/build/**',
                 ]
             },
             'repo': [
