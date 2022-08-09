@@ -26,7 +26,6 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		filter, params := userRolesFilter(query.OrgID, query.UserID, query.Roles)
 
-		// TODO: optimize this
 		q := `SELECT
 			permission.action,
 			permission.scope
