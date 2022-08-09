@@ -11,6 +11,11 @@ const meta: ComponentMeta<typeof RelativeTimeRangePicker> = {
   title: 'Pickers and Editors/TimePickers/RelativeTimeRangePicker',
   component: RelativeTimeRangePicker,
   decorators: [withCenteredStory],
+  parameters: {
+    controls: {
+      exclude: ['onChange'],
+    },
+  },
   args: {
     timeRange: {
       from: 900,
