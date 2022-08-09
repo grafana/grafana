@@ -3,8 +3,8 @@ import React, { PropsWithChildren } from 'react';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
-import { ElasticDatasource } from '../datasource';
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
+import { ElasticDatasource } from '../datasource';
 import { ElasticsearchQuery } from '../types';
 
 import { useNextId } from './useNextId';
