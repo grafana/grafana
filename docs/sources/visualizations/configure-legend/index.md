@@ -3,7 +3,7 @@ aliases:
   - /docs/grafana/latest/panels/working-with-panels/configure-legend/
   - /docs/sources/panels/working-with-panels/configure-legend/
 title: Configure a legend
-weight: 70
+weight: 1300
 ---
 
 # Configure a legend
@@ -41,13 +41,7 @@ This topic currently applies to the following visualizations:
 
 As way to add more context to a visualization, you can add series data values to a legend. You can add as many values as you'd like; after you apply your changes, you can horizontally scroll the legend to see all values.
 
-### Before you begin
-
-- Add a panel
-
-**To add values to a legend**:
-
-1. Open a panel.
+1. Edit a panel.
 
 1. In the panel display options pane, locate the **Legend** section.
 
@@ -61,13 +55,7 @@ As way to add more context to a visualization, you can add series data values to
 
 By default, Grafana specifies the color of your series data, which you can change.
 
-### Before you begin
-
-- Add a panel
-
-**To change a series color, perform the following steps**:
-
-1. Open the panel.
+1. Edit a panel.
 
 1. In the legend, click the color bar associated with the series.
 
@@ -79,7 +67,7 @@ By default, Grafana specifies the color of your series data, which you can chang
 
 ## Sort series
 
-Change legend mode to **Table** and choose [calculations]({{< relref "../calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
+You can change legend mode to **Table** and choose [calculations]({{< relref "../../panels/calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
 The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
 
