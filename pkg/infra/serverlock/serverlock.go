@@ -124,7 +124,6 @@ func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionNa
 
 	err = sl.releaseLock(ctx, actionName)
 	if err != nil {
-		// TODO at this point, should we return the error or return nil?
 		sl.log.Error("Error releasing the lock.", err)
 	}
 
