@@ -319,6 +319,7 @@ steps:
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -1111,6 +1112,7 @@ steps:
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -1820,6 +1822,7 @@ steps:
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -2460,6 +2463,7 @@ steps:
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -3770,6 +3774,7 @@ steps:
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -4355,6 +4360,7 @@ steps:
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -5146,6 +5152,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a37b9227237249a6caa2ec2c61d0972089660419f20fe334d4506b4fd22fc67b
+hmac: b74106c3d177947303d919a5475870ffd66b733ddd63602c4d7d6d0830ae52be
 
 ...

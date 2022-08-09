@@ -422,6 +422,7 @@ def build_frontend_step(edition, ver_mode):
             'NODE_OPTIONS': '--max_old_space_size=8192',
         },
         'depends_on': [
+            'compile-build-cmd',
             'gen-version',
             'yarn-install',
         ],
