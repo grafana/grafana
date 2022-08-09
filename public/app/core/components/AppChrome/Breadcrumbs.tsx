@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { useStyles2, Icon, IconName } from '@grafana/ui';
+import { useStyles2, Icon, IconName, LinkButton } from '@grafana/ui';
 
 export interface Props {
-  sectionNav: NavModelItem;
-  pageNav?: NavModelItem;
+  breadcrumbs: Breadcrumb[];
 }
 
 export interface Breadcrumb {
@@ -15,8 +14,34 @@ export interface Breadcrumb {
   href?: string;
 }
 
-export function Breadcrumbs({ sectionNav, pageNav }: Props) {
+export function Breadcrumbs({ breadcrumbs }: Props) {
   const styles = useStyles2(getStyles);
+
+  return (
+    <ul className={styles.breadcrumbs}>
+      {breadcrumbs.map((breadcrumb, index) => (
+        <li className={styles.breadcrumb} key={index}>
+          {breadcrumb.href && breadcrumb.text && (
+            <a className={styles.breadcrumbLink} href={breadcrumb.href}>
+              {breadcrumb.text}
+            </a>
+          )}
+          {breadcrumb.href && breadcrumb.icon && (
+            <LinkButton size="md" variant="secondary" fill="text" icon={breadcrumb.icon} href={breadcrumb.href} />
+          )}
+          {!breadcrumb.href && <span className={styles.breadcrumbLink}>{breadcrumb.text}</span>}
+          {index + 1 < breadcrumbs.length && (
+            <div className={styles.separator}>
+              <Icon name="angle-right" />
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelItem) {
   const crumbs: Breadcrumb[] = [{ icon: 'home-alt', href: '/' }];
 
   function addCrumbs(node: NavModelItem) {
@@ -33,26 +58,7 @@ export function Breadcrumbs({ sectionNav, pageNav }: Props) {
     addCrumbs(pageNav);
   }
 
-  return (
-    <ul className={styles.breadcrumbs}>
-      {crumbs.map((breadcrumb, index) => (
-        <li className={styles.breadcrumb} key={index}>
-          {breadcrumb.href && (
-            <a className={styles.breadcrumbLink} href={breadcrumb.href}>
-              {breadcrumb.text}
-              {breadcrumb.icon && <Icon name={breadcrumb.icon} />}
-            </a>
-          )}
-          {!breadcrumb.href && <span className={styles.breadcrumbLink}>{breadcrumb.text}</span>}
-          {index + 1 < crumbs.length && (
-            <div className={styles.separator}>
-              <Icon name="angle-right" />
-            </div>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
+  return crumbs;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -69,10 +75,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     separator: css({
       color: theme.colors.text.secondary,
-      padding: theme.spacing(0, 0.5),
     }),
     breadcrumbLink: css({
+      alignItems: 'center',
       color: theme.colors.text.primary,
+      display: 'flex',
+      padding: theme.spacing(0, 0.5),
       whiteSpace: 'nowrap',
       '&:hover': {
         textDecoration: 'underline',

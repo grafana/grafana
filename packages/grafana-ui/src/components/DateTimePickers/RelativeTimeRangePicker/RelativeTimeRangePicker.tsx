@@ -207,21 +207,21 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
         cursor: pointer;
         padding-right: 0;
         padding-left: 0;
-        line-height: ${theme.v1.spacing.formInputHeight - 2}px;
+        line-height: ${theme.spacing.gridSize * theme.components.height.md - 2}px;
       `
     ),
     caretIcon: cx(
       inputStyles.suffix,
       css`
         position: relative;
-        margin-left: ${theme.v1.spacing.xs};
+        margin-left: ${theme.spacing(0.5)};
       `
     ),
     clockIcon: cx(
       inputStyles.prefix,
       css`
         position: relative;
-        margin-right: ${theme.v1.spacing.xs};
+        margin-right: ${theme.spacing(0.5)};
       `
     ),
     content: css`
