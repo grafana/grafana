@@ -40,7 +40,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARM, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
+				ArchARMv7, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
 			},
 		},
 		PackagesBucket:  "grafana-downloads",
@@ -67,7 +67,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARM,
+				ArchARMv7,
 			},
 		},
 		PackagesBucket:            "grafana-downloads",
@@ -95,7 +95,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARM,
+				ArchARMv7,
 			},
 		},
 		PackagesBucket:  "grafana-prerelease/artifacts/downloads",
@@ -125,7 +125,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARM,
+				ArchARMv7,
 			},
 		},
 		PackagesBucket:  "grafana-prerelease/artifacts/downloads",
@@ -155,7 +155,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARM,
+				ArchARMv7,
 			},
 		},
 		PackagesBucket:  "grafana-prerelease/artifacts/downloads",

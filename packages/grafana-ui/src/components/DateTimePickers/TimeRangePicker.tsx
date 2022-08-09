@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
+import React, { memo, FormEvent, createRef, useState } from 'react';
 
 import {
   isDateTime,
@@ -47,7 +47,7 @@ export interface State {
   isOpen: boolean;
 }
 
-export function TimeRangePicker(props: TimeRangePickerProps): ReactElement {
+export function TimeRangePicker(props: TimeRangePickerProps) {
   const [isOpen, setOpen] = useState(false);
 
   const {
@@ -152,6 +152,8 @@ export function TimeRangePicker(props: TimeRangePickerProps): ReactElement {
     </ButtonGroup>
   );
 }
+
+TimeRangePicker.displayName = 'TimeRangePicker';
 
 const ZoomOutTooltip = () => (
   <>
