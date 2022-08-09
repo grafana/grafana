@@ -82,7 +82,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			})
 		})
 
-		t.Run("Whorg.ROLEan Org Editor", func(t *testing.T) {
+		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := org.RoleEditor
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
@@ -154,7 +154,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			PanelId:      1,
 		}
 
-		t.Run("Whorg.ROLEan Org Viewer", func(t *testing.T) {
+		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := org.RoleViewer
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
@@ -187,7 +187,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			})
 		})
 
-		t.Run("Whorg.ROLEan Org Editor", func(t *testing.T) {
+		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := org.RoleEditor
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
@@ -220,7 +220,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			})
 		})
 
-		t.Run("Whorg.ROLEan Admin", func(t *testing.T) {
+		t.Run("When user is an Admin", func(t *testing.T) {
 			role := org.RoleAdmin
 
 			mockStore := mockstore.NewSQLStoreMock()

@@ -848,7 +848,7 @@ func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelp
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := user.User{
 			ID:         cmd.UserId,
-			HelpFlags1: user.HelpFlags1(cmd.HelpFlags1),
+			HelpFlags1: cmd.HelpFlags1,
 			Updated:    time.Now(),
 		}
 
