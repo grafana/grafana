@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { isAlertingRulerRule, isGrafanaRulerRule } from '../../utils/rules';
+import { isRecordingRulerRule } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 
@@ -61,14 +61,11 @@ interface EvaluationBehaviorSummaryProps {
 
 const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
   let forDuration: string | undefined;
-  let every: string | undefined;
+  let every = rule.group.interval;
 
-  if (isGrafanaRulerRule(rule.rulerRule)) {
-    forDuration = rule.rulerRule.for;
-    every = rule.group.interval;
-  } else if (isAlertingRulerRule(rule.rulerRule) && rule.rulerRule.for) {
-    forDuration = rule.rulerRule.for;
-    every = rule.group.interval;
+  // recording rules don't have a for duration
+  if (!isRecordingRulerRule(rule.rulerRule)) {
+    forDuration = rule.rulerRule?.for;
   }
 
   return (
