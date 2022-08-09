@@ -4,7 +4,7 @@ import {
   createChangeHandler,
   createResetHandler,
   PasswordFieldEnum,
-} from '../../../features/datasources/utils/passwordHandlers';
+} from '../../../features/datasources/passwordHandlers';
 
 import { MysqlDatasource } from './datasource';
 import { MysqlQueryCtrl } from './query_ctrl';
