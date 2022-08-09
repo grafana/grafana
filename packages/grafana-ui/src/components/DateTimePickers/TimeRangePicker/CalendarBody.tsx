@@ -67,7 +67,7 @@ function dateInfo(date: Date): number[] {
 export const getBodyStyles = (theme: GrafanaTheme2) => {
   return {
     title: css`
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
       background-color: ${theme.colors.background.primary};
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
@@ -90,7 +90,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
       .react-calendar__navigation {
         padding-top: 4px;
         background-color: inherit;
-        color: ${theme.colors.text};
+        color: ${theme.colors.text.primary};
         border: 0;
         font-weight: ${theme.typography.fontWeightMedium};
       }

@@ -26,8 +26,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		filter, params := userRolesFilter(query.OrgID, query.UserID, query.Roles)
 
-		// TODO: optimize this
-		q := `SELECT DISTINCT
+		q := `SELECT
 			permission.action,
 			permission.scope
 			FROM permission
@@ -45,10 +44,6 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			}
 		}
 
-		q += `
-			ORDER BY permission.scope
-		`
-
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err
 		}
@@ -61,7 +56,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 
 func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
 	params := []interface{}{}
-	q := `WHERE role.id IN (`
+	q := `INNER JOIN (`
 
 	// This is an additional security. We should never have permissions granted to userID 0.
 	// Only allow real users to get user/team permissions (anonymous/apikeys)
@@ -95,7 +90,7 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 		params = append(params, orgID, globalOrgID)
 	}
 
-	q += `)`
+	q += `) as all_role ON role.id = all_role.role_id`
 
 	return q, params
 }

@@ -28,7 +28,12 @@ SELECT DISTINCT
 	, (SELECT COUNT(connection_id) FROM ` + models.LibraryElementConnectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
 )
 
-const deleteInvalidConnections = "DELETE FROM library_element_connection WHERE connection_id IN (SELECT connection_id as id FROM library_element_connection WHERE element_id=? EXCEPT SELECT id from dashboard)"
+const deleteInvalidConnections = `
+DELETE FROM library_element_connection
+WHERE connection_id IN (
+	SELECT connection_id as id FROM library_element_connection
+	WHERE element_id=? AND connection_id NOT IN (SELECT id as connection_id from dashboard)
+)`
 
 func getFromLibraryElementDTOWithMeta(dialect migrator.Dialect) string {
 	user := dialect.Quote("user")
@@ -591,7 +596,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 	return connections, err
 }
 
-//getElementsForDashboardID gets all elements for a specific dashboard
+// getElementsForDashboardID gets all elements for a specific dashboard
 func (l *LibraryElementService) getElementsForDashboardID(c context.Context, dashboardID int64) (map[string]LibraryElementDTO, error) {
 	libraryElementMap := make(map[string]LibraryElementDTO)
 	err := l.SQLStore.WithDbSession(c, func(session *sqlstore.DBSession) error {
