@@ -23,16 +23,16 @@ class createMfe {
   static boot() {
     // eslint-disable-next-line
     return async function bootstrap() {
+      await fn_app.init();
       console.log('react app bootstraped');
     };
   }
 
-  static mountFnApp(component: React.component) {
+  static mountFnApp(component: React.Component) {
     // eslint-disable-next-line
     return async function mount(props: any) {
       toggleTheme(props.theme);
       console.log('props', props);
-      await fn_app.init();
       ReactDOM.render(
         React.createElement(component, { ...props }),
         props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')
