@@ -29,8 +29,7 @@ import (
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
-	handlers []http.Handler
-	index    int
+	mws []Middleware
 
 	*Router
 	Req      *http.Request
@@ -39,30 +38,20 @@ type Context struct {
 	logger   log.Logger
 }
 
-func (ctx *Context) handler() http.Handler {
-	if ctx.index < len(ctx.handlers) {
-		return ctx.handlers[ctx.index]
-	}
-	if ctx.index == len(ctx.handlers) {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	}
-	panic("invalid index for context handler")
-}
-
-// Next runs the next handler in the context chain
-func (ctx *Context) Next() {
-	ctx.index++
-	ctx.run()
-}
-
 func (ctx *Context) run() {
-	for ctx.index <= len(ctx.handlers) {
-		ctx.handler().ServeHTTP(ctx.Resp, ctx.Req)
+	h := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	for i := len(ctx.mws) - 1; i >= 0; i-- {
+		h = ctx.mws[i](h)
+	}
 
-		ctx.index++
-		if ctx.Resp.Written() {
-			return
-		}
+	rw := ctx.Resp
+	h.ServeHTTP(ctx.Resp, ctx.Req)
+
+	// Prevent the handler chain from not writing anything.
+	// This indicates nearly always that a middleware is misbehaving and not calling its next.ServeHTTP().
+	// In rare cases where a blank http.StatusOK without any body is wished, explicitly state that using w.WriteStatus(http.StatusOK)
+	if !rw.Written() {
+		panic("chain did not write HTTP response")
 	}
 }
 

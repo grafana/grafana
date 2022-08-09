@@ -68,6 +68,7 @@ func TestMiddleware(t *testing.T) {
 			endpointCalled := false
 			server.Get("/", func(c *models.ReqContext) {
 				endpointCalled = true
+				c.Resp.WriteHeader(http.StatusOK)
 			})
 
 			request, err := http.NewRequest(http.MethodGet, "/", nil)
