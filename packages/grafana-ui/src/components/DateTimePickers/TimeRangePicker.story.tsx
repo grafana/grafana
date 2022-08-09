@@ -8,14 +8,12 @@ import { TimeRangePicker } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { UnthemedTimeRangePicker } from './TimeRangePicker';
-
 const to = dateTime();
 const from = to.subtract(6, 'h');
 
 const meta: ComponentMeta<typeof TimeRangePicker> = {
   title: 'Pickers and Editors/TimePickers/TimeRangePicker',
-  component: UnthemedTimeRangePicker,
+  component: TimeRangePicker,
   decorators: [withCenteredStory],
   args: {
     value: {
@@ -38,7 +36,6 @@ const meta: ComponentMeta<typeof TimeRangePicker> = {
         'onMoveBackward',
         'onMoveForward',
         'onZoom',
-        'theme',
         'timeSyncButton',
       ],
     },
