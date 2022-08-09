@@ -88,7 +88,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
-		loggedInUserScenarioWithRole(t, "torg.ROLEling GET on", "GET", "api/teams/1/members",
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
 			"api/teams/:teamId/members", org.RoleAdmin, func(sc *scenarioContext) {
 				setUpGetTeamMembersHandler(t, sqlStore)
 

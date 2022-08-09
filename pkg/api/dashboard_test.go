@@ -163,7 +163,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		// 1. user is an org viewer
 		// 2. user is an org editor
 
-		t.Run("Whorg.ROLEan Org Viewer", func(t *testing.T) {
+		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := org.RoleViewer
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -195,7 +195,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}, mockSQLStore)
 		})
 
-		t.Run("Whorg.ROLEan Org Editor", func(t *testing.T) {
+		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := org.RoleEditor
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -284,7 +284,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		// 5. user is an org viewer AND has been granted an admin permission
 		// 6. user is an org editor AND has been granted a view permission
 
-		t.Run("Whorg.ROLEan Org Viewer and has no permissions for this dashboard", func(t *testing.T) {
+		t.Run("When user is an Org Viewer and has no permissions for this dashboard", func(t *testing.T) {
 			role := org.RoleViewer
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -323,7 +323,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}, mockSQLStore)
 		})
 
-		t.Run("Whorg.ROLEan Org Editor and has no permissions for this dashboard", func(t *testing.T) {
+		t.Run("When user is an Org Editor and has no permissions for this dashboard", func(t *testing.T) {
 			role := org.RoleEditor
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -360,7 +360,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}, mockSQLStore)
 		})
 
-		t.Run("Whorg.ROLEan Org Viewer but has an edit permission", func(t *testing.T) {
+		t.Run("When user is an Org Viewer but has an edit permission", func(t *testing.T) {
 			role := org.RoleViewer
 
 			setUpInner := func() {
@@ -422,7 +422,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}, mockSQLStore)
 		})
 
-		t.Run("Whorg.ROLEan Org Viewer and viewers can edit", func(t *testing.T) {
+		t.Run("When user is an Org Viewer and viewers can edit", func(t *testing.T) {
 			role := org.RoleViewer
 
 			setUpInner := func() {
@@ -462,7 +462,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}, mockSQLStore)
 		})
 
-		t.Run("Whorg.ROLEan Org Viewer but has an admin permission", func(t *testing.T) {
+		t.Run("When user is an Org Viewer but has an admin permission", func(t *testing.T) {
 			role := org.RoleViewer
 
 			setUpInner := func() {
@@ -521,7 +521,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}, mockSQLStore)
 		})
 
-		t.Run("Whorg.ROLEan Org Editor but has a view permission", func(t *testing.T) {
+		t.Run("When user is an Org Editor but has a view permission", func(t *testing.T) {
 			role := org.RoleEditor
 
 			setUpInner := func() {
@@ -759,7 +759,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			DiffType: "basic",
 		}
 
-		t.Run("whorg.ROLEs not have permission", func(t *testing.T) {
+		t.Run("when user does not have permission", func(t *testing.T) {
 			role := org.RoleViewer
 			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
 				setUp()
@@ -769,7 +769,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}, &sqlmock, fakeDashboardVersionService)
 		})
 
-		t.Run("whorg.ROLEs have permission", func(t *testing.T) {
+		t.Run("when user does have permission", func(t *testing.T) {
 			role := org.RoleAdmin
 			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
 				// This test shouldn't hit GetDashboardACLInfoList, so no setup needed

@@ -205,7 +205,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		}, hs)
 	})
 
-	t.Run("Whorg.ROLEo update team or user permissions with a role", func(t *testing.T) {
+	t.Run("When trying to update team or user permissions with a role", func(t *testing.T) {
 		role := org.RoleAdmin
 		cmds := []dtos.UpdateDashboardACLCommand{
 			{
